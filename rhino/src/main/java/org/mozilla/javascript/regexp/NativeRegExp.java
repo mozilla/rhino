@@ -47,12 +47,15 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static final Object REGEXP_TAG = new Object();
 
-    public static final int JSREG_GLOB = 0x1; // 'g' flag: global
-    public static final int JSREG_FOLD = 0x2; // 'i' flag: fold
-    public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
-    public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
-    public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
-    public static final int JSREG_UNICODE = 0x20; // 'u' flag: unicode mode
+    // Flag constants
+    public static final int JSREG_GLOB = 0x01; // 'g' flag
+    public static final int JSREG_FOLD = 0x02; // 'i' flag
+    public static final int JSREG_MULTILINE = 0x04; // 'm' flag
+    public static final int JSREG_DOTALL = 0x08; // 's' flag (ES2018)
+    public static final int JSREG_STICKY = 0x10; // 'y' flag (ES2015)
+    public static final int JSREG_UNICODE = 0x20; // 'u' flag (ES2015)
+    public static final int JSREG_HASINDICES = 0x40; // 'd' flag (ES2022)
+    public static final int JSREG_UNICODESETS = 0x80; // 'v' flag (ES2024)
 
     // type of match to perform
     public static final int TEST = 0;
@@ -248,12 +251,15 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private void appendFlags(StringBuilder buf) {
+        // Output flags in alphabetical order per ES spec
+        if ((re.flags & JSREG_HASINDICES) != 0) buf.append('d');
         if ((re.flags & JSREG_GLOB) != 0) buf.append('g');
         if ((re.flags & JSREG_FOLD) != 0) buf.append('i');
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
         if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
-        if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
         if ((re.flags & JSREG_UNICODE) != 0) buf.append('u');
+        if ((re.flags & JSREG_UNICODESETS) != 0) buf.append('v');
+        if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
     }
 
     NativeRegExp() {}
@@ -641,20 +647,33 @@ public class NativeRegExp extends IdScriptableObject {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
                 int f = 0;
-                if (c == 'g') {
-                    f = JSREG_GLOB;
-                } else if (c == 'i') {
-                    f = JSREG_FOLD;
-                } else if (c == 'm') {
-                    f = JSREG_MULTILINE;
-                } else if (c == 's') {
-                    f = JSREG_DOTALL;
-                } else if (c == 'y') {
-                    f = JSREG_STICKY;
-                } else if (c == 'u') {
-                    f = JSREG_UNICODE;
-                } else {
-                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                switch (c) {
+                    case 'g':
+                        f = JSREG_GLOB;
+                        break;
+                    case 'i':
+                        f = JSREG_FOLD;
+                        break;
+                    case 'm':
+                        f = JSREG_MULTILINE;
+                        break;
+                    case 's':
+                        f = JSREG_DOTALL;
+                        break;
+                    case 'y':
+                        f = JSREG_STICKY;
+                        break;
+                    case 'u':
+                        f = JSREG_UNICODE;
+                        break;
+                    case 'd':
+                        f = JSREG_HASINDICES;
+                        break;
+                    case 'v':
+                        f = JSREG_UNICODESETS;
+                        break;
+                    default:
+                        reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
                 if ((flags & f) != 0) {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
@@ -663,9 +682,18 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        // We don't support u and i flags together, yet.
+        // Validate flag combinations
+        // u and i flags are incompatible (current Rhino limitation)
         if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
             reportError("msg.invalid.re.flag", "u and i");
+        }
+        // u and v flags are mutually exclusive (ES2024 spec)
+        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_UNICODESETS) != 0) {
+            reportError("msg.invalid.re.flag", "u and v");
+        }
+        // v and i flags are incompatible (v implies Unicode mode)
+        if ((flags & JSREG_UNICODESETS) != 0 && (flags & JSREG_FOLD) != 0) {
+            reportError("msg.invalid.re.flag", "v and i");
         }
 
         // We support unicode mode in ES6 and later.
@@ -686,7 +714,8 @@ public class NativeRegExp extends IdScriptableObject {
             state.result.flatIndex = 0;
             state.progLength += 5;
         } else {
-            boolean unicodeMode = (flags & JSREG_UNICODE) != 0;
+            // 'v' flag (ES2024 unicodeSets) implies Unicode mode
+            boolean unicodeMode = (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
             // if unicode mode is on, named capture groups are always on
             ParserParameters params = new ParserParameters(unicodeMode, unicodeMode);
 
@@ -1573,6 +1602,21 @@ public class NativeRegExp extends IdScriptableObject {
         doFlat(state, c);
     }
 
+    enum SetOperationType {
+        SUBTRACT, // -- operator
+        INTERSECT // && operator
+    }
+
+    static class SetOperation {
+        SetOperationType type;
+        ClassContents operand;
+
+        SetOperation(SetOperationType type, ClassContents operand) {
+            this.type = type;
+            this.operand = operand;
+        }
+    }
+
     static class ClassContents {
         boolean sense = true;
         ArrayList<Character> chars = new ArrayList<>();
@@ -1582,6 +1626,8 @@ public class NativeRegExp extends IdScriptableObject {
         ArrayList<Integer> nonBMPRanges =
                 new ArrayList<Integer>(); // ranges stored as (start1, end1, start2, end2, ...)
         ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
+        ArrayList<SetOperation> setOperations = new ArrayList<>(); // For 'v' flag set operations
+        ArrayList<String> stringLiterals = new ArrayList<>(); // For 'v' flag \q{...} syntax
     }
 
     private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
@@ -1603,10 +1649,91 @@ public class NativeRegExp extends IdScriptableObject {
             contents.sense = false;
         }
 
+        // Main loop: parse characters until we hit ']' or a set operation (-- or &&)
         while (state.cp != state.cpend && src[state.cp] != ']') {
+            // Check for set operations in v flag mode
+            if ((state.flags & JSREG_UNICODESETS) != 0
+                    && params.unicodeMode
+                    && state.cp + 1 < state.cpend) {
+                char c1 = src[state.cp];
+                char c2 = src[state.cp + 1];
+                if ((c1 == '-' && c2 == '-') || (c1 == '&' && c2 == '&')) {
+                    break; // Stop main loop, parse set operation after
+                }
+            }
+
             if (src[state.cp] == '\\') {
                 state.cp++;
-                if (state.cp < state.cpend && src[state.cp] == 'b') {
+                // Handle \q{...} string literals in v flag mode
+                if ((state.flags & JSREG_UNICODESETS) != 0
+                        && params.unicodeMode
+                        && state.cp < state.cpend
+                        && src[state.cp] == 'q') {
+                    state.cp++; // Skip 'q'
+                    if (state.cp >= state.cpend || src[state.cp] != '{') {
+                        reportError("msg.bad.regexp", "\\q must be followed by {");
+                        return null;
+                    }
+                    state.cp++; // Skip '{'
+
+                    // Parse string literal(s) within braces
+                    StringBuilder literal = new StringBuilder();
+                    while (state.cp < state.cpend && src[state.cp] != '}') {
+                        if (src[state.cp] == '|') {
+                            // Multiple alternatives: \q{abc|def}
+                            if (literal.length() > 0) {
+                                contents.stringLiterals.add(literal.toString());
+                                literal = new StringBuilder();
+                            }
+                            state.cp++;
+                        } else if (src[state.cp] == '\\') {
+                            // Handle escape sequences within \q{}
+                            state.cp++;
+                            if (state.cp >= state.cpend) {
+                                reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
+                                return null;
+                            }
+                            char escapeChar = src[state.cp];
+                            if (escapeChar == 'u' || escapeChar == 'x') {
+                                // Parse unicode/hex escape
+                                if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                                    reportError("msg.invalid.escape", "");
+                                    return null;
+                                }
+                                if (state.result.op != REOP_FLAT) {
+                                    reportError("msg.bad.regexp", "Invalid escape in \\q{}");
+                                    return null;
+                                }
+                                // Append the parsed character(s)
+                                literal.append(state.result.chr);
+                                if (state.result.lowSurrogate != 0) {
+                                    literal.append(state.result.lowSurrogate);
+                                }
+                            } else {
+                                // Simple escape
+                                literal.append(escapeChar);
+                                state.cp++;
+                            }
+                        } else {
+                            // Regular character
+                            literal.appendCodePoint(
+                                    Character.codePointAt(src, state.cp, state.cpend));
+                            state.cp += Character.charCount(src[state.cp]);
+                        }
+                    }
+
+                    if (state.cp >= state.cpend) {
+                        reportError("msg.bad.regexp", "Unclosed \\q{");
+                        return null;
+                    }
+                    state.cp++; // Skip '}'
+
+                    if (literal.length() > 0) {
+                        contents.stringLiterals.add(literal.toString());
+                    }
+
+                    continue; // Skip to next iteration
+                } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
                     thisCodePoint = (char) 0x08;
                 } else if (params.unicodeMode && state.cp < state.cpend && src[state.cp] == '-') {
@@ -1642,10 +1769,18 @@ public class NativeRegExp extends IdScriptableObject {
                                 }
                             } else {
                                 // if we have a '-' after this and we're in unicode mode, we fail
+                                // UNLESS it's '--' or '&&' for v flag set operations
                                 if (state.cp < state.cpend
                                         && src[state.cp] == '-'
                                         && params.unicodeMode) {
-                                    reportError("msg.invalid.class", "");
+                                    // Allow '--' for v flag set operations
+                                    if ((state.flags & JSREG_UNICODESETS) != 0
+                                            && state.cp + 1 < state.cpend
+                                            && src[state.cp + 1] == '-') {
+                                        // This is a set operation, allow it
+                                    } else {
+                                        reportError("msg.invalid.class", "");
+                                    }
                                 }
                             }
                             // multi-character character escapes can't be part of ranges
@@ -1682,12 +1817,50 @@ public class NativeRegExp extends IdScriptableObject {
                     contents.chars.add((char) thisCodePoint);
                 }
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
-                    if (src[state.cp] == '-') {
+                    char currentChar = src[state.cp];
+
+                    if (currentChar == '-') {
                         state.cp++;
                         inRange = true;
                         rangeStart = thisCodePoint;
                     }
                 }
+            }
+        }
+
+        // Parse set operations (-- and &&) for 'v' flag
+        if ((state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode) {
+            while (state.cp + 1 < state.cpend) {
+                char c1 = src[state.cp];
+                char c2 = src[state.cp + 1];
+
+                SetOperationType opType = null;
+                if (c1 == '-' && c2 == '-') {
+                    opType = SetOperationType.SUBTRACT;
+                } else if (c1 == '&' && c2 == '&') {
+                    opType = SetOperationType.INTERSECT;
+                } else {
+                    break; // No more set operations
+                }
+
+                state.cp += 2; // Skip the operator (-- or &&)
+
+                // Expect opening bracket for nested class
+                if (state.cp >= state.cpend || src[state.cp] != '[') {
+                    reportError("msg.bad.regexp", "Set operation requires nested character class");
+                    return null;
+                }
+                state.cp++; // Skip '['
+
+                // Parse the nested character class
+                ClassContents operand = parseClassContents(state, params);
+                if (operand == null) {
+                    reportError(
+                            "msg.bad.regexp", "Invalid nested character class in set operation");
+                    return null;
+                }
+
+                contents.setOperations.add(new SetOperation(opType, operand));
             }
         }
 
@@ -2505,38 +2678,166 @@ public class NativeRegExp extends IdScriptableObject {
      *   Initialize the character set if it is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
+    /**
+     * Check if any string literal in the character class matches at the current position. Returns
+     * the length of the matched string, or 0 if no match.
+     */
+    private static int stringLiteralMatcher(RECharSet charSet, CharSequence input, int position) {
+        if (charSet.classContents == null || charSet.classContents.stringLiterals.isEmpty()) {
+            return 0;
+        }
+
+        // Try to match each string literal, return longest match for greedy matching
+        int maxMatch = 0;
+        String inputStr = input.toString();
+        for (String literal : charSet.classContents.stringLiterals) {
+            if (position + literal.length() <= input.length()
+                    && inputStr.regionMatches(position, literal, 0, literal.length())
+                    && literal.length() > maxMatch) {
+                maxMatch = literal.length();
+            }
+        }
+
+        return maxMatch;
+    }
+
     private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
         if (!charSet.converted) {
             processCharSet(gData, charSet);
         }
 
+        // Check base character class membership
+        boolean matches = false;
+
         if (codePoint <= 0xFFFF) {
             int byteIndex = codePoint >> 3;
             if (!(charSet.length == 0
                     || codePoint >= charSet.length
-                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0))
-                return charSet.classContents.sense;
-        }
-
-        if (charSet.classContents.nonBMPCodepoints.contains(codePoint))
-            return charSet.classContents.sense;
-
-        for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
-            if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
-                    && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
-                return charSet.classContents.sense;
+                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0)) {
+                matches = true;
             }
         }
 
-        for (int encodedProp : charSet.unicodeProps) {
-            if (UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+        if (!matches && charSet.classContents.nonBMPCodepoints.contains(codePoint)) {
+            matches = true;
         }
-        for (int encodedProp : charSet.negUnicodeProps) {
-            if (!UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+
+        if (!matches) {
+            for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
+                if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
+                        && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
+                    matches = true;
+                    break;
+                }
+            }
         }
-        return !charSet.classContents.sense;
+
+        if (!matches) {
+            for (int encodedProp : charSet.unicodeProps) {
+                if (UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : charSet.negUnicodeProps) {
+                if (!UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        // Apply set operations for 'v' flag
+        if (!charSet.classContents.setOperations.isEmpty()) {
+            for (SetOperation op : charSet.classContents.setOperations) {
+                boolean operandMatches = checkClassContentsMatch(gData, op.operand, codePoint);
+
+                if (op.type == SetOperationType.SUBTRACT) {
+                    // Remove from result if in subtract operand
+                    if (operandMatches) {
+                        matches = false;
+                    }
+                } else if (op.type == SetOperationType.INTERSECT) {
+                    // Keep only if also in intersect operand
+                    matches = matches && operandMatches;
+                }
+            }
+        }
+
+        return matches == charSet.classContents.sense;
+    }
+
+    // Helper method to check if codePoint matches a ClassContents
+    private static boolean checkClassContentsMatch(
+            REGlobalData gData, ClassContents contents, int codePoint) {
+        // Build a temporary RECharSet for the operand
+        RECharSet tempCharSet = new RECharSet(contents, 65536); // Standard BMP length
+
+        // Process and match
+        processCharSet(gData, tempCharSet);
+
+        boolean matches = false;
+
+        if (codePoint <= 0xFFFF) {
+            int byteIndex = codePoint >> 3;
+            if (!(tempCharSet.length == 0
+                    || codePoint >= tempCharSet.length
+                    || (tempCharSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0)) {
+                matches = true;
+            }
+        }
+
+        if (!matches && contents.nonBMPCodepoints.contains(codePoint)) {
+            matches = true;
+        }
+
+        if (!matches) {
+            for (int i = 0; i < contents.nonBMPRanges.size(); i += 2) {
+                if (codePoint >= contents.nonBMPRanges.get(i)
+                        && codePoint <= contents.nonBMPRanges.get(i + 1)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : tempCharSet.unicodeProps) {
+                if (UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : tempCharSet.negUnicodeProps) {
+                if (!UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        // Recursively apply nested set operations
+        if (!contents.setOperations.isEmpty()) {
+            for (SetOperation op : contents.setOperations) {
+                boolean operandMatches = checkClassContentsMatch(gData, op.operand, codePoint);
+
+                if (op.type == SetOperationType.SUBTRACT) {
+                    if (operandMatches) {
+                        matches = false;
+                    }
+                } else if (op.type == SetOperationType.INTERSECT) {
+                    matches = matches && operandMatches;
+                }
+            }
+        }
+
+        return matches == contents.sense;
     }
 
     private static boolean reopIsSimple(int op) {
@@ -2784,6 +3085,18 @@ public class NativeRegExp extends IdScriptableObject {
                     index = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
+                        // First, try to match string literals (v flag feature)
+                        int stringLiteralLen =
+                                stringLiteralMatcher(
+                                        gData.regexp.classList[index], input, cpToMatch);
+                        if (stringLiteralLen > 0) {
+                            // String literal matched
+                            gData.cp += stringLiteralLen;
+                            result = true;
+                            break;
+                        }
+
+                        // Fall back to single codepoint matching
                         int inputCodePoint =
                                 (gData.regexp.flags & JSREG_UNICODE) != 0
                                         ? input.codePointAt(cpToMatch)
@@ -3510,6 +3823,7 @@ public class NativeRegExp extends IdScriptableObject {
     Object executeRegExp(
             Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
+        String[] namedCaptureGroups = null; // for indices and groups
 
         int start = indexp[0];
         int end = str.length();
@@ -3557,7 +3871,6 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             SubString parsub = null;
             int num;
-            String[] namedCaptureGroups = null; // to ensure groups appear in source order
 
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
@@ -3610,6 +3923,46 @@ public class NativeRegExp extends IdScriptableObject {
             obj.put("index", obj, Integer.valueOf(start + gData.skipped));
             obj.put("input", obj, str);
             obj.put("groups", obj, groups);
+
+            // ES2022 hasIndices support ('d' flag)
+            if ((re.flags & JSREG_HASINDICES) != 0) {
+                Scriptable indices = cx.newArray(scope, re.parenCount + 1);
+                Scriptable indicesGroups = cx.newObject(scope);
+
+                // Index 0: overall match indices
+                Scriptable overallIndices = cx.newArray(scope, 2);
+                overallIndices.put(0, overallIndices, Integer.valueOf(start + gData.skipped));
+                overallIndices.put(
+                        1, overallIndices, Integer.valueOf(start + gData.skipped + matchlen));
+                indices.put(0, indices, overallIndices);
+
+                // Indices for each capture group
+                for (int num = 0; num < re.parenCount; num++) {
+                    int cap_index = gData.parensIndex(num);
+                    if (cap_index != -1) {
+                        int cap_length = gData.parensLength(num);
+                        Scriptable groupIndices = cx.newArray(scope, 2);
+                        groupIndices.put(0, groupIndices, Integer.valueOf(cap_index));
+                        groupIndices.put(1, groupIndices, Integer.valueOf(cap_index + cap_length));
+                        indices.put(num + 1, indices, groupIndices);
+
+                        // Add to indicesGroups for named captures
+                        if (namedCaptureGroups[num] != null) {
+                            indicesGroups.put(namedCaptureGroups[num], indicesGroups, groupIndices);
+                        }
+                    } else {
+                        indices.put(num + 1, indices, Undefined.instance);
+                        if (namedCaptureGroups[num] != null
+                                && !indicesGroups.has(namedCaptureGroups[num], indicesGroups)) {
+                            indicesGroups.put(
+                                    namedCaptureGroups[num], indicesGroups, Undefined.instance);
+                        }
+                    }
+                }
+
+                indices.put("groups", indices, indicesGroups);
+                obj.put("indices", obj, indices);
+            }
         }
 
         if (res.lastMatch == null) {
@@ -3680,7 +4033,9 @@ public class NativeRegExp extends IdScriptableObject {
             Id_dotAll = 7,
             Id_sticky = 8,
             Id_unicode = 9,
-            MAX_INSTANCE_ID = 9;
+            Id_hasIndices = 10,
+            Id_unicodeSets = 11,
+            MAX_INSTANCE_ID = 11;
 
     @Override
     protected int getMaxInstanceId() {
@@ -3718,6 +4073,12 @@ public class NativeRegExp extends IdScriptableObject {
             case "unicode":
                 id = Id_unicode;
                 break;
+            case "hasIndices":
+                id = Id_hasIndices;
+                break;
+            case "unicodeSets":
+                id = Id_unicodeSets;
+                break;
             default:
                 id = 0;
                 break;
@@ -3738,6 +4099,8 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_dotAll:
             case Id_sticky:
             case Id_unicode:
+            case Id_hasIndices:
+            case Id_unicodeSets:
                 attr = PERMANENT | READONLY | DONTENUM;
                 break;
             default:
@@ -3767,6 +4130,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return "sticky";
             case Id_unicode:
                 return "unicode";
+            case Id_hasIndices:
+                return "hasIndices";
+            case Id_unicodeSets:
+                return "unicodeSets";
         }
         return super.getInstanceIdName(id);
     }
@@ -3796,6 +4163,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
             case Id_unicode:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODE) != 0);
+            case Id_hasIndices:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_HASINDICES) != 0);
+            case Id_unicodeSets:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODESETS) != 0);
         }
         return super.getInstanceIdValue(id);
     }
