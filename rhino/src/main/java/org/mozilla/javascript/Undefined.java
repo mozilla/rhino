@@ -95,6 +95,11 @@ public class Undefined implements Serializable {
         public void delete(int index) {}
 
         @Override
+        public Scriptable getAncestor() {
+            return null;
+        }
+
+        @Override
         public Scriptable getPrototype() {
             return null;
         }

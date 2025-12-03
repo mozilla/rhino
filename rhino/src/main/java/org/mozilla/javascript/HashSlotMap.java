@@ -15,9 +15,9 @@ import java.util.LinkedHashMap;
  * object. However it is much more resistant to large number of hash collisions than EmbeddedSlotMap
  * and therefore we use this implementation when an object gains a large number of properties.
  */
-public class HashSlotMap implements SlotMap {
+public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
-    private final LinkedHashMap<Object, Slot> map;
+    private final LinkedHashMap<Object, Slot<T>> map;
 
     public HashSlotMap() {
         map = new LinkedHashMap<>();
@@ -27,16 +27,16 @@ public class HashSlotMap implements SlotMap {
         map = new LinkedHashMap<>(capacity);
     }
 
-    public HashSlotMap(SlotMap oldMap) {
+    public HashSlotMap(SlotMap<T> oldMap) {
         map = new LinkedHashMap<>(oldMap.size());
-        for (Slot n : oldMap) {
+        for (Slot<T> n : oldMap) {
             add(null, n.copySlot());
         }
     }
 
-    public HashSlotMap(SlotMap oldMap, Slot newSlot) {
+    public HashSlotMap(SlotMap<T> oldMap, Slot<T> newSlot) {
         map = new LinkedHashMap<>(oldMap.dirtySize() + 1);
-        for (Slot n : oldMap) {
+        for (Slot<T> n : oldMap) {
             add(null, n.copySlot());
         }
         add(null, newSlot);
@@ -53,40 +53,40 @@ public class HashSlotMap implements SlotMap {
     }
 
     @Override
-    public Slot query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         Object name = makeKey(key, index);
         return map.get(name);
     }
 
     @Override
-    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         Object name = makeKey(key, index);
-        return map.computeIfAbsent(name, n -> new Slot(key, index, attributes));
+        return map.computeIfAbsent(name, n -> new Slot<T>(key, index, attributes));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> compoundOp,
             Object key,
             int index,
-            SlotComputer<S> c) {
+            SlotComputer<S, T> c) {
         Object name = makeKey(key, index);
-        Slot ret =
+        Slot<T> ret =
                 map.compute(
                         name, (n, existing) -> c.compute(key, index, existing, compoundOp, owner));
         return (S) ret;
     }
 
     @Override
-    public void add(SlotMapOwner owner, Slot newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         Object name = makeKey(newSlot);
         map.put(name, newSlot);
     }
 
     @Override
-    public Iterator<Slot> iterator() {
+    public Iterator<Slot<T>> iterator() {
         return map.values().iterator();
     }
 
@@ -94,7 +94,7 @@ public class HashSlotMap implements SlotMap {
         return name == null ? String.valueOf(index) : name;
     }
 
-    private Object makeKey(Slot slot) {
+    private Object makeKey(Slot<T> slot) {
         return slot.name == null ? String.valueOf(slot.indexOrHash) : slot.name;
     }
 }
