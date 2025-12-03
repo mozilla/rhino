@@ -5,7 +5,8 @@ import java.util.concurrent.locks.StampedLock;
 @SuppressWarnings("AndroidJdkLibsChecker")
 // https://developer.android.com/reference/java/util/concurrent/locks/StampedLock added in API level
 // 24
-class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
+class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
+        implements LockAwareSlotMap<T> {
 
     private final StampedLock lock;
 
@@ -19,18 +20,18 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
         lock = new StampedLock();
     }
 
-    public ThreadSafeHashSlotMap(StampedLock lock, SlotMap oldMap) {
+    public ThreadSafeHashSlotMap(StampedLock lock, SlotMap<T> oldMap) {
         super(oldMap.dirtySize());
         this.lock = lock;
-        for (Slot n : oldMap) {
+        for (Slot<T> n : oldMap) {
             addWithLock(null, n.copySlot());
         }
     }
 
-    public ThreadSafeHashSlotMap(StampedLock lock, SlotMap oldMap, Slot newSlot) {
+    public ThreadSafeHashSlotMap(StampedLock lock, SlotMap<T> oldMap, Slot<T> newSlot) {
         super(oldMap.dirtySize() + 1);
         this.lock = lock;
-        for (Slot n : oldMap) {
+        for (Slot<T> n : oldMap) {
             addWithLock(null, n.copySlot());
         }
         addWithLock(null, newSlot);
@@ -75,7 +76,7 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     @Override
-    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         final long stamp = lock.writeLock();
         try {
             return super.modify(owner, key, index, attributes);
@@ -85,12 +86,12 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap mutableMap,
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> mutableMap,
             Object key,
             int index,
-            SlotComputer<S> c) {
+            SlotComputer<S, T> c) {
         final long stamp = lock.writeLock();
         try {
             return super.compute(owner, mutableMap, key, index, c);
@@ -100,9 +101,9 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     @Override
-    public Slot query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         long stamp = lock.tryOptimisticRead();
-        Slot s = super.query(key, index);
+        Slot<T> s = super.query(key, index);
         if (lock.validate(stamp)) {
             return s;
         }
@@ -116,7 +117,7 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     @Override
-    public void add(SlotMapOwner owner, Slot newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         final long stamp = lock.writeLock();
         try {
             super.add(owner, newSlot);
@@ -126,17 +127,17 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     @Override
-    public void addWithLock(SlotMapOwner owner, Slot newSlot) {
+    public void addWithLock(SlotMapOwner<T> owner, Slot<T> newSlot) {
         super.add(owner, newSlot);
     }
 
     @Override
-    public <S extends Slot> S computeWithLock(
-            SlotMapOwner owner,
-            CompoundOperationMap mutableMap,
+    public <S extends Slot<T>> S computeWithLock(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> mutableMap,
             Object key,
             int index,
-            SlotComputer<S> compute) {
+            SlotComputer<S, T> compute) {
         return super.compute(owner, mutableMap, key, index, compute);
     }
 
@@ -146,12 +147,12 @@ class ThreadSafeHashSlotMap extends HashSlotMap implements LockAwareSlotMap {
     }
 
     @Override
-    public Slot modifyWithLock(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         return super.modify(owner, key, index, attributes);
     }
 
     @Override
-    public Slot queryWithLock(Object key, int index) {
+    public Slot<T> queryWithLock(Object key, int index) {
         return super.query(key, index);
     }
 

@@ -15,18 +15,18 @@ package org.mozilla.javascript;
  * ScriptableObject are complex. Many attempts to make this interface more elegant have resulted in
  * substantial performance regressions so we are doing the best that we can.
  */
-public interface SlotMap extends Iterable<Slot> {
+public interface SlotMap<T extends PropHolder<T>> extends Iterable<Slot<T>> {
 
     @SuppressWarnings("AndroidJdkLibsChecker")
     // https://developer.android.com/reference/java/lang/FunctionalInterface added in API level 24
     @FunctionalInterface
-    public interface SlotComputer<S extends Slot> {
+    public interface SlotComputer<S extends Slot<T>, T extends PropHolder<T>> {
         S compute(
                 Object key,
                 int index,
-                Slot existing,
-                CompoundOperationMap mutableMap,
-                SlotMapOwner owner);
+                Slot<T> existing,
+                CompoundOperationMap<T> mutableMap,
+                SlotMapOwner<T> owner);
     }
 
     /** Return the size of the map. */
@@ -45,7 +45,7 @@ public interface SlotMap extends Iterable<Slot> {
      *     slots will not be modified.
      * @return a Slot, which will be created anew if no such slot exists.
      */
-    Slot modify(SlotMapOwner owner, Object key, int index, int attributes);
+    Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes);
 
     /**
      * Retrieve the slot at EITHER key or index, or return null if the slot cannot be found.
@@ -54,7 +54,7 @@ public interface SlotMap extends Iterable<Slot> {
      * @param index if key is zero, then this will be used as the key instead.
      * @return either the Slot that matched the key and index, or null
      */
-    Slot query(Object key, int index);
+    Slot<T> query(Object key, int index);
 
     /**
      * Replace the value of key with the slot computed by the "compute" method. If "compute" throws
@@ -64,31 +64,31 @@ public interface SlotMap extends Iterable<Slot> {
      * code and is more efficient than making multiple calls to this interface. In order to allow
      * use of multiple Slot subclasses, this function is templatized.
      */
-    default <S extends Slot> S compute(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+    default <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner, Object key, int index, SlotComputer<S, T> compute) {
         try (var mutableMap = owner.startCompoundOp(true)) {
             return mutableMap.compute(owner, mutableMap, key, index, compute);
         }
     }
 
-    <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap mutableMap,
+    <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> mutableMap,
             Object key,
             int index,
-            SlotComputer<S> compute);
+            SlotComputer<S, T> compute);
 
     /**
      * Insert a new slot to the map. Both "name" and "indexOrHash" must be populated. Note that
      * ScriptableObject generally adds slots via the "modify" method.
      */
-    void add(SlotMapOwner owner, Slot newSlot);
+    void add(SlotMapOwner<T> owner, Slot<T> newSlot);
 
     default int dirtySize() {
         return size();
     }
 
-    default CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
-        return new CompoundOperationMap(owner);
+    default CompoundOperationMap<T> startCompoundOp(SlotMapOwner<T> owner, boolean forWriting) {
+        return new CompoundOperationMap<T>(owner);
     }
 }
