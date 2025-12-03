@@ -50,8 +50,12 @@ import org.mozilla.javascript.debug.DebuggableObject;
  * @see org.mozilla.javascript.Scriptable
  * @author Norris Boyd
  */
-public abstract class ScriptableObject extends SlotMapOwner
-        implements Scriptable, SymbolScriptable, Serializable, DebuggableObject, ConstProperties {
+public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
+        implements Scriptable,
+                SymbolScriptable,
+                Serializable,
+                DebuggableObject,
+                ConstProperties<Scriptable> {
 
     private static final long serialVersionUID = 2829861078851942586L;
 
@@ -188,6 +192,10 @@ public abstract class ScriptableObject extends SlotMapOwner
         return null != getMap().query(name, 0);
     }
 
+    public ScriptableObject getThis() {
+        return this;
+    }
+
     /**
      * Returns true if the property index is defined.
      *
@@ -220,7 +228,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     @Override
     public Object get(String name, Scriptable start) {
-        Slot slot = getMap().query(name, 0);
+        var slot = getMap().query(name, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
         }
@@ -243,7 +251,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             return Scriptable.NOT_FOUND;
         }
 
-        Slot slot = getMap().query(null, index);
+        var slot = getMap().query(null, index);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
         }
@@ -253,7 +261,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Another version of Get that supports Symbol keyed properties. */
     @Override
     public Object get(Symbol key, Scriptable start) {
-        Slot slot = getMap().query(key, 0);
+        var slot = getMap().query(key, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
         }
@@ -387,8 +395,12 @@ public abstract class ScriptableObject extends SlotMapOwner
         getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    protected static Slot checkSlotRemoval(
-            Object key, int index, Slot slot, CompoundOperationMap compoundOp, SlotMapOwner owner) {
+    protected static <T extends PropHolder<T>> Slot<T> checkSlotRemoval(
+            Object key,
+            int index,
+            Slot<T> slot,
+            CompoundOperationMap<T> compoundOp,
+            SlotMapOwner<T> owner) {
         if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
             Context cx = Context.getContext();
             if (cx.isStrictMode()) {
@@ -418,9 +430,11 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (putConstImpl(name, 0, start, value, READONLY)) return;
 
         if (start == this) throw Kit.codeBug();
-        if (start instanceof ConstProperties)
-            ((ConstProperties) start).putConst(name, start, value);
-        else start.put(name, start, value);
+        if (start instanceof ConstProperties) {
+            @SuppressWarnings("unchecked")
+            var cstart = ((ConstProperties<Scriptable>) start);
+            cstart.putConst(name, start, value);
+        } else start.put(name, start, value);
     }
 
     @Override
@@ -428,7 +442,11 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
 
         if (start == this) throw Kit.codeBug();
-        if (start instanceof ConstProperties) ((ConstProperties) start).defineConst(name, start);
+        if (start instanceof ConstProperties) {
+            @SuppressWarnings("unchecked")
+            var cstart = ((ConstProperties<Scriptable>) start);
+            cstart.defineConst(name, start);
+        }
     }
 
     /**
@@ -439,7 +457,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     @Override
     public boolean isConst(String name) {
-        Slot slot = getMap().query(name, 0);
+        var slot = getMap().query(name, 0);
         if (slot == null) {
             return false;
         }
@@ -580,7 +598,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             // Create a new AccessorSlot, or cast it if it's already set
             aSlot = getMap().compute(this, name, index, ScriptableObject::ensureAccessorSlot);
         } else {
-            Slot slot = getMap().query(name, index);
+            var slot = getMap().query(name, index);
             if (slot instanceof AccessorSlot) {
                 aSlot = (AccessorSlot) slot;
             } else {
@@ -626,7 +644,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public Object getGetterOrSetter(String name, int index, Scriptable scope, boolean isSetter) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
-        Slot slot = getMap().query(name, index);
+        var slot = getMap().query(name, index);
         if (slot == null) return null;
         Function getterOrSetter =
                 isSetter
@@ -669,7 +687,7 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     protected boolean isGetterOrSetter(
             CompoundOperationMap map, String name, int index, boolean setter) {
-        Slot slot = map.query(name, index);
+        var slot = map.query(name, index);
         return (slot != null && slot.isSetterSlot());
     }
 
@@ -732,6 +750,11 @@ public abstract class ScriptableObject extends SlotMapOwner
     /** Returns the prototype of the object. */
     @Override
     public Scriptable getPrototype() {
+        return prototypeObject;
+    }
+
+    @Override
+    public Scriptable getAncestor() {
         return prototypeObject;
     }
 
@@ -1448,7 +1471,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public static void defineConstProperty(Scriptable destination, String propertyName) {
         if (destination instanceof ConstProperties) {
-            ConstProperties cp = (ConstProperties) destination;
+            @SuppressWarnings("unchecked")
+            var cp = (ConstProperties<Scriptable>) destination;
             cp.defineConst(propertyName, destination);
         } else defineProperty(destination, propertyName, Undefined.instance, CONST);
     }
@@ -1701,7 +1725,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             }
         }
 
-        Slot aSlot = getMap().query(key, index);
+        var aSlot = getMap().query(key, index);
 
         if (aSlot instanceof BuiltInSlot) {
             // 10.4.2.4 ArrayLengthSet requires we check that any new
@@ -1862,7 +1886,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     static boolean defineOrdinaryProperty(
             PropDescValueSetter descValueSetter,
             ScriptableObject owner,
-            CompoundOperationMap compoundOp,
+            CompoundOperationMap<Scriptable> compoundOp,
             Object id,
             DescriptorInfo info,
             boolean checkValid,
@@ -1880,11 +1904,11 @@ public abstract class ScriptableObject extends SlotMapOwner
                         owner.checkPropertyChangeForSlot(id, existing, info);
                     }
 
-                    Slot slot;
+                    Slot<Scriptable> slot;
                     int attributes;
 
                     if (existing == null) {
-                        slot = new Slot(k, ix, 0);
+                        slot = new Slot<>(k, ix, 0);
                         attributes =
                                 applyDescriptorToAttributeBitset(
                                         DONTENUM | READONLY | PERMANENT,
@@ -1911,22 +1935,22 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     interface PropDescValueSetter {
-        Slot execute(
+        Slot<Scriptable> execute(
                 ScriptableObject owner,
                 DescriptorInfo info,
                 Object key,
-                Slot existing,
-                CompoundOperationMap map,
-                Slot slot);
+                Slot<Scriptable> existing,
+                CompoundOperationMap<Scriptable> map,
+                Slot<Scriptable> slot);
     }
 
-    static Slot setSlotValue(
+    static Slot<Scriptable> setSlotValue(
             ScriptableObject owner,
             DescriptorInfo info,
             Object key,
-            Slot existing,
-            CompoundOperationMap map,
-            Slot slot) {
+            Slot<Scriptable> existing,
+            CompoundOperationMap<Scriptable> map,
+            Slot<Scriptable> slot) {
         if (info.accessorDescriptor) {
             AccessorSlot fslot;
             if (slot instanceof AccessorSlot) {
@@ -1955,7 +1979,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         } else {
             if (!slot.isValueSlot() && info.isDataDescriptor()) {
                 // Replace a non-base slot with a regular slot
-                slot = new Slot(slot);
+                slot = new Slot<>(slot);
             }
 
             if (info.value != NOT_FOUND) {
@@ -1985,7 +2009,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public void defineProperty(
             String name, Supplier<Object> getter, Consumer<Object> setter, int attributes) {
-        LambdaSlot slot = getMap().compute(this, name, 0, ScriptableObject::ensureLambdaSlot);
+        var slot = getMap().compute(this, name, 0, ScriptableObject::ensureLambdaSlot);
         slot.setAttributes(attributes);
         slot.getter = getter;
         slot.setter = setter;
@@ -2084,7 +2108,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     private LambdaAccessorSlot replaceExistingLambdaSlot(
-            Context cx, Object key, Slot existing, LambdaAccessorSlot newSlot) {
+            Context cx, Object key, Slot<Scriptable> existing, LambdaAccessorSlot newSlot) {
         LambdaAccessorSlot replacedSlot;
         if (existing instanceof LambdaAccessorSlot) {
             replacedSlot = (LambdaAccessorSlot) existing;
@@ -2453,9 +2477,9 @@ public abstract class ScriptableObject extends SlotMapOwner
         // to try to acquire a write lock while holding the read lock... and deadlock.
         // We do this in a loop because an initialization could add _other_ stuff to initialize.
 
-        List<Slot> toInitialize = new ArrayList<>();
+        List<Slot<Scriptable>> toInitialize = new ArrayList<>();
         while (!isSealed) {
-            for (Slot slot : toInitialize) {
+            for (var slot : toInitialize) {
                 // Need to check the type again, because initializing one slot _could_ have
                 // initialized another one
                 Object value = slot.value;
@@ -2471,7 +2495,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             toInitialize.clear();
 
             try (var map = startCompoundOp(false)) {
-                for (Slot slot : map) {
+                for (var slot : map) {
                     Object value = slot.value;
                     if (value instanceof LazilyLoadedCtor) {
                         toInitialize.add(slot);
@@ -2759,7 +2783,11 @@ public abstract class ScriptableObject extends SlotMapOwner
     public static void putConstProperty(Scriptable obj, String name, Object value) {
         Scriptable base = getBase(obj, name);
         if (base == null) base = obj;
-        if (base instanceof ConstProperties) ((ConstProperties) base).putConst(name, obj, value);
+        if (base instanceof ConstProperties) {
+            @SuppressWarnings("unchecked")
+            var cbase = ((ConstProperties<Scriptable>) base);
+            cbase.putConst(name, obj, value);
+        }
     }
 
     /**
@@ -3016,7 +3044,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             Object key, int index, Scriptable start, Object value, boolean isThrow) {
         // This method is very hot (basically called on each assignment),
         // so we inline the extensible/sealed checks below.
-        Slot slot;
+        Slot<Scriptable> slot;
         if (this != start) {
             slot = getMap().query(key, index);
             if (!isExtensible
@@ -3068,7 +3096,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
             }
         }
-        Slot slot;
+        Slot<Scriptable> slot;
         if (this != start) {
             slot = getMap().query(name, index);
             if (slot == null) {
@@ -3097,8 +3125,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         return slot.setValue(value, this, start);
     }
 
-    private Slot getAttributeSlot(String name, int index) {
-        Slot slot = getMap().query(name, index);
+    private Slot<Scriptable> getAttributeSlot(String name, int index) {
+        var slot = getMap().query(name, index);
         if (slot == null) {
             String str = (name != null ? name : Integer.toString(index));
             throw Context.reportRuntimeErrorById("msg.prop.not.found", str);
@@ -3106,15 +3134,16 @@ public abstract class ScriptableObject extends SlotMapOwner
         return slot;
     }
 
-    private Slot getAttributeSlot(Symbol key) {
-        Slot slot = getMap().query(key, 0);
+    private Slot<Scriptable> getAttributeSlot(Symbol key) {
+        var slot = getMap().query(key, 0);
         if (slot == null) {
             throw Context.reportRuntimeErrorById("msg.prop.not.found", key);
         }
         return slot;
     }
 
-    Object[] getIds(CompoundOperationMap map, boolean getNonEnumerable, boolean getSymbols) {
+    Object[] getIds(
+            CompoundOperationMap<Scriptable> map, boolean getNonEnumerable, boolean getSymbols) {
         Object[] a;
         int externalLen = (externalData == null ? 0 : externalData.getArrayLength());
 
@@ -3131,7 +3160,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
 
         int c = externalLen;
-        for (Slot slot : map) {
+        for (var slot : map) {
             if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
                     && (getSymbols || !(slot.name instanceof Symbol))) {
                 if (c == externalLen) {
@@ -3167,7 +3196,11 @@ public abstract class ScriptableObject extends SlotMapOwner
      * These are handy for changing slot types in one "compute" operation.
      */
     private static AccessorSlot ensureAccessorSlot(
-            Object name, int index, Slot existing, SlotMap compoundOp, SlotMapOwner owner) {
+            Object name,
+            int index,
+            Slot<Scriptable> existing,
+            SlotMap<Scriptable> compoundOp,
+            SlotMapOwner<Scriptable> owner) {
         if (existing == null) {
             return new AccessorSlot(name, index);
         } else if (existing instanceof AccessorSlot) {
@@ -3177,19 +3210,27 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
     }
 
-    private static LazyLoadSlot ensureLazySlot(
-            Object name, int index, Slot existing, SlotMap compoundOp, SlotMapOwner owner) {
+    static <T extends PropHolder<T>> LazyLoadSlot<T> ensureLazySlot(
+            Object name,
+            int index,
+            Slot<T> existing,
+            SlotMap<T> compoundOp,
+            SlotMapOwner<T> owner) {
         if (existing == null) {
-            return new LazyLoadSlot(name, index);
+            return new LazyLoadSlot<T>(name, index);
         } else if (existing instanceof LazyLoadSlot) {
-            return (LazyLoadSlot) existing;
+            return (LazyLoadSlot<T>) existing;
         } else {
-            return new LazyLoadSlot(existing);
+            return new LazyLoadSlot<>(existing);
         }
     }
 
     private static LambdaSlot ensureLambdaSlot(
-            Object name, int index, Slot existing, SlotMap compoundOp, SlotMapOwner owner) {
+            Object name,
+            int index,
+            Slot<Scriptable> existing,
+            SlotMap<Scriptable> compoundOp,
+            SlotMapOwner<Scriptable> owner) {
         if (existing == null) {
             return new LambdaSlot(name, index);
         } else if (existing instanceof LambdaSlot) {
@@ -3220,18 +3261,19 @@ public abstract class ScriptableObject extends SlotMapOwner
         int tableSize = in.readInt();
         setMap(createSlotMap(tableSize));
         for (int i = 0; i < tableSize; i++) {
-            Slot slot = (Slot) in.readObject();
+            @SuppressWarnings("unchecked")
+            var slot = (Slot<Scriptable>) in.readObject();
             getMap().add(this, slot);
         }
     }
 
     protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
-        Slot slot = querySlot(cx, id);
+        var slot = querySlot(cx, id);
         if (slot == null) return null;
         return slot.getPropertyDescriptor(cx, this);
     }
 
-    protected final Slot querySlot(Context cx, Object id) {
+    protected final Slot<Scriptable> querySlot(Context cx, Object id) {
         if (id instanceof Symbol) {
             return getMap().query(id, 0);
         }

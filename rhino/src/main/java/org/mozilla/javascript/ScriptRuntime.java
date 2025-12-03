@@ -91,12 +91,12 @@ public class ScriptRuntime {
             preventExtensions();
         }
 
-        private static Slot removeWithoutChecking(
+        private static <T extends PropHolder<T>> Slot<T> removeWithoutChecking(
                 Object key,
                 int index,
                 Slot slot,
-                CompoundOperationMap compoundOp,
-                SlotMapOwner owner) {
+                CompoundOperationMap<T> compoundOp,
+                SlotMapOwner<T> owner) {
             return null;
         }
 
