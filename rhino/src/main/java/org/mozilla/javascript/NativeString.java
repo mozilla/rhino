@@ -13,6 +13,7 @@ import java.text.Collator;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IllformedLocaleException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1115,7 +1116,11 @@ final class NativeString extends ScriptableObject {
         Locale locale = cx.getLocale();
         if (args.length > 0 && cx.hasFeature(Context.FEATURE_INTL_402)) {
             String lang = ScriptRuntime.toString(args[0]);
-            locale = new Locale(lang);
+            try {
+                locale = new Locale.Builder().setLanguageTag(lang).build();
+            } catch (final IllformedLocaleException e) {
+                // ignore and fall back to the context locale
+            }
         }
         return thisStr.toLowerCase(locale);
     }
@@ -1128,7 +1133,11 @@ final class NativeString extends ScriptableObject {
         Locale locale = cx.getLocale();
         if (args.length > 0 && cx.hasFeature(Context.FEATURE_INTL_402)) {
             String lang = ScriptRuntime.toString(args[0]);
-            locale = new Locale(lang);
+            try {
+                locale = new Locale.Builder().setLanguageTag(lang).build();
+            } catch (final IllformedLocaleException e) {
+                // ignore and fall back to the context locale
+            }
         }
         return thisStr.toUpperCase(locale);
     }

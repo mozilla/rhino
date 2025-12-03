@@ -85,7 +85,16 @@ public class Test262SuiteTest {
     static final Map<String, Script> HARNESS_SCRIPT_CACHE = new ConcurrentHashMap<>();
     static final Map<Test262Case, TestResultTracker> RESULT_TRACKERS = new LinkedHashMap<>();
 
-    static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
+    static ShellContextFactory CTX_FACTORY =
+            new ShellContextFactory() {
+                protected boolean hasFeature(Context cx, int featureIndex) {
+                    if (Context.FEATURE_INTL_402 == featureIndex) {
+                        return true;
+                    }
+
+                    return super.hasFeature(cx, featureIndex);
+                }
+            };
 
     static final Set<String> UNSUPPORTED_FEATURES =
             new HashSet<>(
