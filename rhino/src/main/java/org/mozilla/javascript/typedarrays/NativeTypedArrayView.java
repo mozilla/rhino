@@ -55,8 +55,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     protected int length;
 
     /**
-     * True if this is an auto-length view (ES2025). Auto-length views are created when a
-     * TypedArray is constructed on a resizable ArrayBuffer without specifying a length.
+     * True if this is an auto-length view (ES2025). Auto-length views are created when a TypedArray
+     * is constructed on a resizable ArrayBuffer without specifying a length.
      */
     private final boolean isAutoLength;
 
@@ -252,7 +252,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                             proto,
                             null,
                             (lcx, ls, largs) -> {
-                                throw ScriptRuntime.typeError("TypedArray constructor cannot be invoked directly");
+                                throw ScriptRuntime.typeError(
+                                        "TypedArray constructor cannot be invoked directly");
                             });
             proto.defineProperty("constructor", ta, DONTENUM);
             defineProtoProperty(ta, cx, "buffer", NativeTypedArrayView::js_buffer, null);
@@ -488,7 +489,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             }
 
             // Determine view length: -1 for auto-length (resizable buffers only)
-            int viewLength = determineViewLength(na, newLength, newByteLength, bytesPerElement, args);
+            int viewLength =
+                    determineViewLength(na, newLength, newByteLength, bytesPerElement, args);
             return constructable.construct(na, byteOff, viewLength);
         }
 
@@ -599,7 +601,19 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
      */
     public boolean isTypedArrayOutOfBounds() {
         updateLength();
-        return arrayBuffer.isDetached() || outOfRange;
+        if (arrayBuffer.isDetached() || outOfRange) {
+            return true;
+        }
+
+        // For fixed-length views on resizable buffers, check if the buffer
+        // has been resized such that the view is now out of bounds
+        if (!isAutoLength && arrayBuffer.isResizable()) {
+            int bufferByteLength = arrayBuffer.getLength();
+            int requiredByteLength = offset + (length * getBytesPerElement());
+            return offset > bufferByteLength || requiredByteLength > bufferByteLength;
+        }
+
+        return false;
     }
 
     /**
@@ -1202,15 +1216,16 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
+        long len = self.validateAndGetLength();
 
         long relativeIndex = 0;
         if (args.length >= 1) {
             relativeIndex = (long) ScriptRuntime.toInteger(args[0]);
         }
 
-        long k = (relativeIndex >= 0) ? relativeIndex : self.length + relativeIndex;
+        long k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
 
-        if ((k < 0) || (k >= self.length)) {
+        if ((k < 0) || (k >= len)) {
             return Undefined.instance;
         }
 
