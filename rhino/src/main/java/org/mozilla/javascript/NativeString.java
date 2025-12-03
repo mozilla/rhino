@@ -546,7 +546,8 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+    protected Object[] getIds(
+            CompoundOperationMap<Scriptable> map, boolean nonEnumerable, boolean getSymbols) {
         // In ES6, Strings have entries in the property map for each character.
         Context cx = Context.getCurrentContext();
         if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {

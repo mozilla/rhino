@@ -12,14 +12,14 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * implementing properties that behave like any other JavaScript property but which are implemented
  * using some native functionality without using reflection.
  */
-public class LambdaSlot extends Slot {
+public class LambdaSlot extends Slot<Scriptable> {
     private static final long serialVersionUID = -3046681698806493052L;
 
     LambdaSlot(Object name, int index) {
         super(name, index, 0);
     }
 
-    LambdaSlot(Slot oldSlot) {
+    LambdaSlot(Slot<Scriptable> oldSlot) {
         super(oldSlot);
     }
 

@@ -363,11 +363,11 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
-    public void deleteInternal(CompoundOperationMap compoundOp, String id) {
+    public void deleteInternal(CompoundOperationMap<Scriptable> compoundOp, String id) {
         compoundOp.compute(this, id, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    public void deleteInternal(CompoundOperationMap compoundOp, int index) {
+    public void deleteInternal(CompoundOperationMap<Scriptable> compoundOp, int index) {
         var slot = denseOnly ? null : compoundOp.query(null, index);
         if (dense != null
                 && 0 <= index
@@ -381,7 +381,8 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    public Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+    public Object[] getIds(
+            CompoundOperationMap<Scriptable> map, boolean nonEnumerable, boolean getSymbols) {
         Object[] superIds = super.getIds(map, nonEnumerable, getSymbols);
         if (dense == null) {
             return superIds;
@@ -544,13 +545,13 @@ public class NativeArray extends ScriptableObject implements List {
         builtIn.lengthAttr = attrs;
     }
 
-    private static Slot lengthDescSetValue(
+    private static Slot<Scriptable> lengthDescSetValue(
             ScriptableObject owner,
             DescriptorInfo info,
             Object key,
-            Slot existing,
-            CompoundOperationMap map,
-            Slot slot) {
+            Slot<Scriptable> existing,
+            CompoundOperationMap<Scriptable> map,
+            Slot<Scriptable> slot) {
         ((NativeArray) owner).setLength(map, (Double) info.value);
         return slot;
     }
@@ -743,7 +744,7 @@ public class NativeArray extends ScriptableObject implements List {
         return denseOnly;
     }
 
-    private boolean setLength(CompoundOperationMap compoundOp, double d) {
+    private boolean setLength(CompoundOperationMap<Scriptable> compoundOp, double d) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
@@ -875,7 +876,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     /* This version explicitly checks whether the target is  sealed. The other implementation which does not take a compound op does not do so explicitly, but it does rely on the underlying `delete` implementation doing that check. */
     private static void deleteElem(
-            CompoundOperationMap compoundOp, NativeArray target, long index) {
+            CompoundOperationMap<Scriptable> compoundOp, NativeArray target, long index) {
         int i = (int) index;
         if (i == index) {
             checkNotSealed(target, null, i);
