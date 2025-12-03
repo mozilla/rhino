@@ -8,9 +8,9 @@ public class DecimalFormatter {
     private static final double MAX_FIXED = 1E21;
 
     /**
-     * The algorithm of Number.prototype.toExponential. If fractionDigits is &lt; 0, then it indicates
-     * the special case that the value was previously undefined, which calls for a different
-     * precision for the calculation.
+     * The algorithm of Number.prototype.toExponential. If fractionDigits is &lt; 0, then it
+     * indicates the special case that the value was previously undefined, which calls for a
+     * different precision for the calculation.
      */
     public static String toExponential(double v, int fractionDigits) {
         assert Double.isFinite(v);
