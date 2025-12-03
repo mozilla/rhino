@@ -1831,7 +1831,7 @@ public class Parser {
                         guardPos = -1,
                         catchLine = lineNumber(),
                         catchColumn = columnNumber();
-                Name varName = null;
+                AstNode varName = null;
                 AstNode catchCond = null;
 
                 switch (peekToken()) {
@@ -1839,27 +1839,41 @@ public class Parser {
                         {
                             matchToken(Token.LP, true);
                             lp = ts.tokenBeg;
-                            if (!matchToken(Token.UNDEFINED, true)) {
-                                mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
-                            }
 
-                            varName = createNameNode();
-                            Comment jsdocNodeForName = getAndResetJsDoc();
-                            if (jsdocNodeForName != null) {
-                                varName.setJsDocNode(jsdocNodeForName);
-                            }
-                            String varNameString = varName.getIdentifier();
-                            if ("undefined".equals(varNameString)) {
-                                hasUndefinedBeenRedefined = true;
-                            }
-                            if (inUseStrictDirective) {
-                                if ("eval".equals(varNameString)
-                                        || "arguments".equals(varNameString)) {
-                                    reportError("msg.bad.id.strict", varNameString);
+                            int tt = peekToken();
+                            if (tt == Token.LB || tt == Token.LC) {
+                                // Destructuring pattern
+                                if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                                    varName = destructuringPrimaryExpr();
+                                    markDestructuring(varName);
+                                } else {
+                                    reportError("msg.catch.destructuring.requires.es6");
+                                }
+                            } else {
+                                // Simple identifier
+                                if (!matchToken(Token.UNDEFINED, true)) {
+                                    mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
+                                }
+
+                                varName = createNameNode();
+                                Comment jsdocNodeForName = getAndResetJsDoc();
+                                if (jsdocNodeForName != null) {
+                                    varName.setJsDocNode(jsdocNodeForName);
+                                }
+                                String varNameString = ((Name) varName).getIdentifier();
+                                if ("undefined".equals(varNameString)) {
+                                    hasUndefinedBeenRedefined = true;
+                                }
+                                if (inUseStrictDirective) {
+                                    if ("eval".equals(varNameString)
+                                            || "arguments".equals(varNameString)) {
+                                        reportError("msg.bad.id.strict", varNameString);
+                                    }
                                 }
                             }
 
-                            if (matchToken(Token.IF, true)) {
+                            // Non-standard extension: we support "catch (e if cond)
+                            if (varName instanceof Name && matchToken(Token.IF, true)) {
                                 guardPos = ts.tokenBeg;
                                 catchCond = expr(false);
                             } else {
