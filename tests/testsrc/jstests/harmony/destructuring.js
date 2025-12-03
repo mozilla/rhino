@@ -31,5 +31,7 @@ assertThrows("(1 ? {} : 490) = 1", SyntaxError);
 assertThrows("(1 ? [] : 490) = 1", SyntaxError);
 assertThrows("for (var {};;) {}", SyntaxError);
 assertThrows("for (let {};;) {}", SyntaxError);
+assertThrows("for (var {a};;) {}", SyntaxError);
+assertThrows("for (let {a};;) {}", SyntaxError);
 
 "success";
