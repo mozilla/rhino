@@ -473,11 +473,16 @@ public class NativeArrayBuffer extends ScriptableObject {
         return Undefined.instance;
     }
 
+    /** Return true if this ArrayBuffer is resizable (ES2024). */
+    public boolean isResizable() {
+        return maxByteLength >= 0;
+    }
+
     // ES2024 ArrayBuffer.prototype.resizable getter
     private static Object js_resizable(Scriptable thisObj) {
         NativeArrayBuffer self = getSelf(thisObj);
         // A buffer is resizable if maxByteLength was specified in constructor
-        return self.maxByteLength >= 0;
+        return self.isResizable();
     }
 
     // ES2024 ArrayBuffer.prototype.maxByteLength getter

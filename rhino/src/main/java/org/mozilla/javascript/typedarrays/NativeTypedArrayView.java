@@ -49,14 +49,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static final long serialVersionUID = -4963053773152251274L;
 
     /**
-     * The length, in elements, of the array.
-     * For auto-length views, this is recomputed dynamically via updateLength().
+     * The length in elements of the array. For auto-length views (ES2025), this is recomputed
+     * dynamically when the backing resizable buffer changes size.
      */
     protected int length;
 
     /**
-     * ES2025: Tracks whether this is an auto-length TypedArray view.
-     * Auto-length views dynamically compute their length based on the buffer size.
+     * True if this is an auto-length view (ES2025). Auto-length views are created when a
+     * TypedArray is constructed on a resizable ArrayBuffer without specifying a length.
      */
     private final boolean isAutoLength;
 
@@ -66,11 +66,15 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         isAutoLength = false;
     }
 
+    /**
+     * Construct a TypedArray view over an ArrayBuffer. If len is negative, creates an auto-length
+     * view (ES2025) that tracks the buffer's size dynamically.
+     */
     protected NativeTypedArrayView(NativeArrayBuffer ab, int off, int len, int byteLen) {
         super(ab, off, byteLen);
         this.isAutoLength = (len < 0);
+
         if (isAutoLength) {
-            // Compute initial length for auto-length views
             updateLength();
         } else {
             this.length = len;
@@ -78,9 +82,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     /**
-     * ES2025: Update the length for auto-length TypedArray views.
-     * For fixed-length views, this is a no-op.
-     * For auto-length views backed by resizable buffers, recomputes length based on current buffer size.
+     * Recomputes the length for auto-length views (ES2025). For fixed-length views, this is a
+     * no-op. For auto-length views, calculates the element count based on the current buffer size
+     * and offset.
      */
     protected void updateLength() {
         if (!isAutoLength) {
@@ -248,7 +252,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                             proto,
                             null,
                             (lcx, ls, largs) -> {
-                                throw ScriptRuntime.typeError("Fuck");
+                                throw ScriptRuntime.typeError("TypedArray constructor cannot be invoked directly");
                             });
             proto.defineProperty("constructor", ta, DONTENUM);
             defineProtoProperty(ta, cx, "buffer", NativeTypedArrayView::js_buffer, null);
@@ -383,6 +387,28 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         NativeTypedArrayView<?> realThis(Scriptable thisObj);
     }
 
+    /**
+     * Determines the view length for TypedArray construction. Returns -1 for auto-length views
+     * (ES2025), which only applies to resizable buffers when length is omitted.
+     */
+    private static int determineViewLength(
+            NativeArrayBuffer buffer,
+            int explicitLength,
+            int calculatedByteLength,
+            int bytesPerElement,
+            Object[] args) {
+
+        if (isArg(args, 2)) {
+            return explicitLength;
+        }
+
+        if (buffer.isResizable()) {
+            return -1; // Auto-length view
+        } else {
+            return calculatedByteLength / bytesPerElement;
+        }
+    }
+
     protected static NativeTypedArrayView<?> js_constructor(
             Context cx,
             Scriptable scope,
@@ -461,7 +487,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", byteOff);
             }
 
-            return constructable.construct(na, byteOff, newByteLength / bytesPerElement);
+            // Determine view length: -1 for auto-length (resizable buffers only)
+            int viewLength = determineViewLength(na, newLength, newByteLength, bytesPerElement, args);
+            return constructable.construct(na, byteOff, viewLength);
         }
 
         if (arg0 instanceof NativeArray) {
@@ -565,8 +593,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
+    /**
+     * Check if this TypedArray view is out of bounds (ES2025). For auto-length views, updates the
+     * length before checking. Returns true if the buffer is detached or the offset is out of range.
+     */
     public boolean isTypedArrayOutOfBounds() {
-        updateLength(); // ES2025: Update length for auto-length views
+        updateLength();
         return arrayBuffer.isDetached() || outOfRange;
     }
 
