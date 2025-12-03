@@ -233,7 +233,7 @@ public class ScriptRuntime {
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
         // ES2025 Iterator constructor
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ECMASCRIPT) {
             NativeES2025Iterator.init(cx, scope, sealed);
         }
 
