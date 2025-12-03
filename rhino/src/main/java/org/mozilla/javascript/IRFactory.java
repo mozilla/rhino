@@ -1210,22 +1210,61 @@ public final class IRFactory {
 
         Node catchBlocks = new Block();
         for (CatchClause cc : node.getCatchClauses()) {
-            Name varName = cc.getVarName();
+            AstNode varName = cc.getVarName();
             Node catchCond = null;
             Node varNameNode = null;
+            Scope catchBody = cc.getBody();
 
             if (varName != null) {
-                varNameNode = parser.createName(varName.getIdentifier());
+                if (varName instanceof Name) {
+                    // Simple identifier
+                    varNameNode = parser.createName(((Name) varName).getIdentifier());
 
-                AstNode ccc = cc.getCatchCondition();
-                if (ccc != null) {
-                    catchCond = transform(ccc);
-                } else {
+                    AstNode ccc = cc.getCatchCondition();
+                    if (ccc != null) {
+                        catchCond = transform(ccc);
+                    } else {
+                        catchCond = new EmptyExpression();
+                    }
+                } else if (varName instanceof org.mozilla.javascript.ast.ArrayLiteral
+                        || varName instanceof org.mozilla.javascript.ast.ObjectLiteral) {
+                    // Destructuring pattern. We basically replace:
+                    //   catch ( {message} ) { body }
+                    // into:
+                    //   catch ( $tempname ) { let {message} = $tempname; body }
+
+                    // The exception will be stored in the temp name
+                    String tempVarName = parser.currentScriptOrFn.getNextTempName();
+                    varNameNode = parser.createName(tempVarName);
+
+                    // The let statement will be used to do the destructuring
+                    VariableDeclaration letStatement = new VariableDeclaration();
+                    letStatement.setType(Token.LET);
+
+                    VariableInitializer letVar = new VariableInitializer();
+                    letStatement.addVariable(letVar);
+
+                    // LHS: the destructuring declaration
+                    letVar.setTarget(varName);
+
+                    // RHS: the temp name (which we need to wrap in a new name node)
+                    Name tempVarNameNode = new Name();
+                    tempVarNameNode.setIdentifier(tempVarName);
+                    letVar.setInitializer(tempVarNameNode);
+
+                    // Prepend the destructuring "let" to the catch body
+                    catchBody.addChildToFront(letStatement);
+
+                    // Our non-standard condition is not supported for destructuring (we throw an
+                    // error at parse time), so here we can simply force it to an empty expression
                     catchCond = new EmptyExpression();
+                } else {
+                    throw new IllegalArgumentException(
+                            "Unexpected catch parameter type: " + varName.getClass().getName());
                 }
             }
 
-            Node body = transform(cc.getBody());
+            Node body = transform(catchBody);
 
             catchBlocks.addChildToBack(
                     createCatch(varNameNode, catchCond, body, cc.getLineno(), cc.getColumn()));
