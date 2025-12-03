@@ -48,17 +48,59 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         implements List<T>, RandomAccess, ExternalArrayData {
     private static final long serialVersionUID = -4963053773152251274L;
 
-    /** The length, in elements, of the array */
-    protected final int length;
+    /**
+     * The length, in elements, of the array.
+     * For auto-length views, this is recomputed dynamically via updateLength().
+     */
+    protected int length;
+
+    /**
+     * ES2025: Tracks whether this is an auto-length TypedArray view.
+     * Auto-length views dynamically compute their length based on the buffer size.
+     */
+    private final boolean isAutoLength;
 
     protected NativeTypedArrayView() {
         super();
         length = 0;
+        isAutoLength = false;
     }
 
     protected NativeTypedArrayView(NativeArrayBuffer ab, int off, int len, int byteLen) {
         super(ab, off, byteLen);
-        length = len;
+        this.isAutoLength = (len < 0);
+        if (isAutoLength) {
+            // Compute initial length for auto-length views
+            updateLength();
+        } else {
+            this.length = len;
+        }
+    }
+
+    /**
+     * ES2025: Update the length for auto-length TypedArray views.
+     * For fixed-length views, this is a no-op.
+     * For auto-length views backed by resizable buffers, recomputes length based on current buffer size.
+     */
+    protected void updateLength() {
+        if (!isAutoLength) {
+            return;
+        }
+
+        if (arrayBuffer == null || arrayBuffer.isDetached()) {
+            length = 0;
+            return;
+        }
+
+        int bufferByteLength = arrayBuffer.getLength();
+        int availableBytes = bufferByteLength - offset;
+
+        if (availableBytes < 0) {
+            length = 0;
+            return;
+        }
+
+        length = availableBytes / getBytesPerElement();
     }
 
     // Array properties implementation.
@@ -524,6 +566,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     public boolean isTypedArrayOutOfBounds() {
+        updateLength(); // ES2025: Update length for auto-length views
         return arrayBuffer.isDetached() || outOfRange;
     }
 
@@ -578,6 +621,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private static Object js_length(Scriptable thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
+        // updateLength() is called by isTypedArrayOutOfBounds()
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
         }
