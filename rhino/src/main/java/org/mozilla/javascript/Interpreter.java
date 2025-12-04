@@ -13,8 +13,10 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -97,8 +99,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     cx.debugger != null
                             ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor())
                             : null;
-            useActivation =
-                    debuggerFrame != null || fnOrScript.getDescriptor().requiresActivationFrame();
+            useActivation = fnOrScript.getDescriptor().requiresActivationFrame();
 
             emptyStackTop = (short) (idata.itsMaxVars + idata.itsMaxLocals - 1);
             int maxFrameArray = idata.itsMaxFrameArray;
@@ -470,6 +471,130 @@ public final class Interpreter extends Icode implements Evaluator {
 
         CallFrame captureForGenerator() {
             return new CallFrame(this, true);
+        }
+
+        Object getFromVars(int offset) {
+            Object value = stack[offset];
+            if (value == DOUBLE_MARK) {
+                return sDbl[offset];
+            } else {
+                return value;
+            }
+        }
+
+        void setInVars(int offset, Object value) {
+            if (value instanceof Double && Double.isFinite((Double) value)) {
+                stack[offset] = DOUBLE_MARK;
+                sDbl[offset] = ((Double) value);
+            } else {
+                stack[offset] = value;
+            }
+        }
+    }
+
+    private static class DebugScope implements Scriptable {
+        private final CallFrame frame;
+        private volatile Map<String, Integer> offsets;
+
+        private DebugScope(CallFrame frame) {
+            this.frame = frame;
+        }
+
+        private Map<String, Integer> getOffsets() {
+            if (offsets == null) {
+                offsets = buildOffsets(frame);
+            }
+            return offsets;
+        }
+
+        private static Map<String, Integer> buildOffsets(CallFrame frame) {
+            var desc = frame.fnOrScript.getDescriptor();
+            int varCount = desc.getParamAndVarCount();
+            var map = new HashMap<String, Integer>();
+            for (int i = 0; i < varCount; i++) {
+                map.put(desc.getParamOrVarName(i), i);
+            }
+            return map;
+        }
+
+        @Override
+        public void delete(String name) {}
+
+        @Override
+        public void delete(int index) {}
+
+        @Override
+        public Object get(String name, Scriptable start) {
+            int offset = getOffsets().getOrDefault(name, -1);
+            return offset >= 0 ? frame.getFromVars(offset) : NOT_FOUND;
+        }
+
+        @Override
+        public Object get(int index, Scriptable start) {
+            return NOT_FOUND;
+        }
+
+        @Override
+        public String getClassName() {
+            return "debugscope";
+        }
+
+        @Override
+        public Object getDefaultValue(Class<?> hint) {
+            return null;
+        }
+
+        @Override
+        public Object[] getIds() {
+            return getOffsets().keySet().toArray();
+        }
+
+        @Override
+        public Scriptable getParentScope() {
+            return frame.scope;
+        }
+
+        @Override
+        public Scriptable getPrototype() {
+            return null;
+        }
+
+        @Override
+        public boolean has(String name, Scriptable start) {
+            return getOffsets().containsKey(name);
+        }
+
+        @Override
+        public boolean has(int index, Scriptable start) {
+            return false;
+        }
+
+        @Override
+        public boolean hasInstance(Scriptable instance) {
+            return false;
+        }
+
+        @Override
+        public void put(String name, Scriptable start, Object value) {
+            int offset = getOffsets().getOrDefault(name, -1);
+            if (offset >= 0) {
+                frame.setInVars(offset, value);
+            }
+        }
+
+        @Override
+        public void put(int index, Scriptable start, Object value) {
+            // Do nothing.
+        }
+
+        @Override
+        public void setParentScope(Scriptable parent) {
+            // Do nothing.
+        }
+
+        @Override
+        public void setPrototype(Scriptable prototype) {
+            // Do nothing.
         }
     }
 
@@ -4805,7 +4930,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx, CallFrame frame, Object[] args, boolean continuationRestart) {
         boolean usesActivation = frame.fnOrScript.getDescriptor().requiresActivationFrame();
         boolean isDebugged = frame.debuggerFrame != null;
-        if (usesActivation || isDebugged) {
+        if (usesActivation) {
             Scriptable scope = frame.scope;
             if (scope == null) {
                 Kit.codeBug();
@@ -4839,12 +4964,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (isDebugged) {
                 frame.debuggerFrame.onEnter(cx, scope, frame.thisObj, args);
             }
-            // Enter activation only when itsNeedsActivation true,
-            // since debugger should not interfere with activation
-            // chaining
-            if (usesActivation) {
-                ScriptRuntime.enterActivationFunction(cx, scope);
-            }
+            ScriptRuntime.enterActivationFunction(cx, scope);
+        } else if (isDebugged) {
+            frame.debuggerFrame.onEnter(cx, new DebugScope(frame), frame.thisObj, args);
         }
     }
 
