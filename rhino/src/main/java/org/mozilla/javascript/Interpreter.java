@@ -1520,7 +1520,7 @@ public final class Interpreter extends Icode implements Evaluator {
     public static Object restartContinuation(
             NativeContinuation c, Context cx, Scriptable scope, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
-            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isTopLevelStrict);
+            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isStrictMode());
         }
 
         Object arg;
