@@ -277,10 +277,6 @@ public interface TypeInfo {
         return false;
     }
 
-    default void collectComponentClass(Consumer<Class<?>> collector) {
-        collector.accept(asClass());
-    }
-
     /**
      * @see Class#isArray()
      */

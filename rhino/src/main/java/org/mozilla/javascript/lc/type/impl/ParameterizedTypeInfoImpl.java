@@ -3,7 +3,7 @@ package org.mozilla.javascript.lc.type.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
+
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -91,14 +91,6 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
     @Override
     public Object newArray(int length) {
         return rawType.newArray(length);
-    }
-
-    @Override
-    public void collectComponentClass(Consumer<Class<?>> collector) {
-        rawType.collectComponentClass(collector);
-        for (var param : params) {
-            param.collectComponentClass(collector);
-        }
     }
 
     @Override
