@@ -20,16 +20,12 @@ import java.util.NoSuchElementException;
  * property called "return" then it will be called when the caller is done iterating.
  */
 public class IteratorLikeIterable implements Iterable<Object>, Closeable {
-    private final Context cx;
-    private final Scriptable scope;
     private final Callable next;
     private final Callable returnFunc;
     private final Scriptable iterator;
     private boolean closed;
 
     public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
-        this.cx = cx;
-        this.scope = scope;
         // This will throw if "next" is not a function or undefined
         var nextCall = ScriptRuntime.getPropAndThis(target, ES6Iterator.NEXT_METHOD, cx, scope);
         next = nextCall.getCallable();
@@ -49,6 +45,21 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 
     @Override
     public void close() {
+        // Warning: This method cannot work properly without Context
+        // Use close(Context, Scriptable) instead for proper cleanup
+        if (!closed) {
+            closed = true;
+            // Cannot call returnFunc without Context - cleanup skipped
+        }
+    }
+
+    /**
+     * Context-safe close method that properly handles cleanup.
+     *
+     * @param cx Current context
+     * @param scope Current scope
+     */
+    public void close(Context cx, Scriptable scope) {
         if (!closed) {
             closed = true;
             if (returnFunc != null) {
@@ -59,12 +70,41 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 
     @Override
     public Itr iterator() {
-        return new Itr();
+        // Warning: This requires Context from current thread
+        // Use iterator(Context, Scriptable) for explicit Context passing
+        Context cx = Context.getCurrentContext();
+        if (cx == null) {
+            throw new IllegalStateException("No Context associated with current thread");
+        }
+        // Get the scope from the current context
+        Scriptable scope = ScriptableObject.getTopLevelScope(iterator);
+        return new Itr(cx, scope);
+    }
+
+    /**
+     * Context-safe iterator method. NOTE: The returned Itr still captures Context due to Java
+     * Iterator interface limitations. This is acceptable because: 1. Context is captured at
+     * iterator creation, not at IteratorLikeIterable creation 2. Iterator lifetime is short (single
+     * iteration sequence) 3. Java Iterator.hasNext()/next() cannot accept Context parameters
+     *
+     * @param cx Current context
+     * @param scope Current scope
+     * @return Iterator instance
+     */
+    public Itr iterator(Context cx, Scriptable scope) {
+        return new Itr(cx, scope);
     }
 
     public final class Itr implements Iterator<Object> {
+        private final Context cx;
+        private final Scriptable scope;
         private Object nextVal;
         private boolean isDone;
+
+        private Itr(Context cx, Scriptable scope) {
+            this.cx = cx;
+            this.scope = scope;
+        }
 
         @Override
         public boolean hasNext() {
