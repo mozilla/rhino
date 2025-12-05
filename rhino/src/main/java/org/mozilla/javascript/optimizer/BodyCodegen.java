@@ -129,19 +129,33 @@ class BodyCodegen {
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(variableObjectLocal);
 
+        // Evaluate default params for generators after creating activation scope
+        // so defaults have access to arguments and prior params.
+        // See Ecma 2026, 10.2.11 FunctionDeclarationInstantiation
+        Node paramInitBlock = ((FunctionNode) scriptOrFn).getGeneratorParamInitBlock();
+        if (paramInitBlock != null) {
+            Node paramInit = paramInitBlock.getFirstChild();
+            while (paramInit != null) {
+                generateStatement(paramInit);
+                paramInit = paramInit.getNext();
+            }
+        }
+
         generateNestedFunctionInits();
 
         // create the NativeGenerator object that we return
-        cfw.addALoad(funObjLocal);
+        cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
+        cfw.addALoad(funObjLocal);
         cfw.addLoadConstant(maxLocals);
         cfw.addLoadConstant(maxStack);
         addOptRuntimeInvoke(
                 "createNativeGenerator",
-                "(Lorg/mozilla/javascript/JSFunction;"
+                "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/Scriptable;II"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/JSFunction;II"
                         + ")Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.ARETURN);

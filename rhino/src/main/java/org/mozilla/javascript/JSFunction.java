@@ -70,6 +70,11 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
+    protected boolean isGeneratorFunction() {
+        return descriptor.isES6Generator();
+    }
+
+    @Override
     public int getLength() {
         int arity = descriptor.getArity();
         if (getLanguageVersion() != Context.VERSION_1_2) {

@@ -102,6 +102,32 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         CodeGenUtils.setConstructor(builder, theFunction);
 
         if (theFunction.isGenerator()) {
+            // For generators with default parameters, generate parameter initialization
+            // bytecode BEFORE Icode_GENERATOR so defaults are evaluated before generator
+            // object creation. Ref: Ecma 2026, 10.2.11 FunctionDeclarationInstantiation
+            Node paramInitBlock = theFunction.getGeneratorParamInitBlock();
+            if (paramInitBlock != null) {
+                // Generate bytecode for each parameter initialization statement
+                Node paramInit = paramInitBlock.getFirstChild();
+                while (paramInit != null) {
+                    visitStatement(paramInit, 0);
+                    paramInit = paramInit.getNext();
+                }
+            }
+
+            // For generators, nested function declarations must be instantiated after
+            // parameter initialization to prevent them from shadowing the 'arguments' object
+            // during default parameter evaluation. See test262 arguments-with-arguments-fn.js
+            int functionCount = theFunction.getFunctionCount();
+            if (functionCount > 0) {
+                for (int i = 0; i < functionCount; i++) {
+                    FunctionNode fn = theFunction.getFunctionNode(i);
+                    if (fn.getFunctionType() == FunctionNode.FUNCTION_STATEMENT) {
+                        addIndexOp(Icode_CLOSURE_STMT, i);
+                    }
+                }
+            }
+
             addIcode(Icode_GENERATOR);
             addUint16(theFunction.getBaseLineno() & 0xFFFF);
         }

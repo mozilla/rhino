@@ -268,9 +268,14 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static Scriptable createNativeGenerator(
-            JSFunction funObj, Scriptable scope, Scriptable thisObj, int maxLocals, int maxStack) {
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            JSFunction funObj,
+            int maxLocals,
+            int maxStack) {
         GeneratorState gs = new GeneratorState(scope, thisObj, maxLocals, maxStack);
-        if (Context.getCurrentContext().getLanguageVersion() >= Context.VERSION_ES6) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             return new ES6Generator(scope, funObj, gs);
         } else {
             return new NativeGenerator(scope, funObj, gs);

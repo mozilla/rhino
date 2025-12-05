@@ -657,12 +657,13 @@ public final class IRFactory {
             /* Process simple default parameters */
             List<Object> defaultParams = fn.getDefaultParams();
             if (defaultParams != null) {
+                Node paramInitBlock = null;
                 for (int i = defaultParams.size() - 1; i > 0; ) {
                     if (defaultParams.get(i) instanceof AstNode
                             && defaultParams.get(i - 1) instanceof String) {
                         AstNode rhs = (AstNode) defaultParams.get(i);
                         String name = (String) defaultParams.get(i - 1);
-                        body.addChildToFront(
+                        Node paramInit =
                                 createIf(
                                         createBinary(
                                                 Token.SHEQ,
@@ -678,9 +679,20 @@ public final class IRFactory {
                                                 body.getColumn()),
                                         null,
                                         body.getLineno(),
-                                        body.getColumn()));
+                                        body.getColumn());
+                        if (fn.isGenerator()) {
+                            if (paramInitBlock == null) {
+                                paramInitBlock = new Node(Token.BLOCK);
+                            }
+                            paramInitBlock.addChildToFront(paramInit);
+                        } else {
+                            body.addChildToFront(paramInit);
+                        }
                     }
                     i -= 2;
+                }
+                if (fn.isGenerator() && paramInitBlock != null) {
+                    fn.setGeneratorParamInitBlock(paramInitBlock);
                 }
             }
 

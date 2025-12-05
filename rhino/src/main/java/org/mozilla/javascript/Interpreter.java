@@ -296,7 +296,11 @@ public final class Interpreter extends Icode implements Evaluator {
                 ScriptRuntime.initScript(fnOrScript, thisObj, cx, scope, desc.isEvalFunction());
             }
 
-            if (desc.getFunctionCount() != 0) {
+            // Defer default parameters and nested function declarations until activation scope
+            // creation
+            // Ref: Ecma 2026, 10.2.11, FunctionDeclarationInstantiation
+
+            if (desc.getFunctionCount() != 0 && !desc.isES6Generator()) {
                 if (desc.getFunctionType() != 0 && !desc.requiresActivationFrame()) Kit.codeBug();
                 for (int i = 0; i < desc.getFunctionCount(); i++) {
                     JSDescriptor fdesc = desc.getFunction(i);
