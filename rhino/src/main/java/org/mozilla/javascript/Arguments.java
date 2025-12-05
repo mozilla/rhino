@@ -155,8 +155,7 @@ class Arguments extends ScriptableObject {
     }
 
     private boolean sharedWithActivation(int index) {
-        Context cx = Context.getContext();
-        if (cx.isStrictMode()) {
+        if (activation.isStrict) {
             return false;
         }
         JSFunction f = activation.function;
