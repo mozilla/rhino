@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -101,7 +103,8 @@ public class CodeGenUtils {
     }
 
     private static void fillInCommon(JSDescriptor.Builder builder, ScriptNode scriptOrFn) {
-        builder.paramAndVarNames = scriptOrFn.getParamAndVarNames();
+        builder.paramAndVarNames =
+                disambiguateNames(scriptOrFn.getParamAndVarNames(), scriptOrFn.getParamCount());
         builder.paramCount = scriptOrFn.getParamCount();
         builder.paramIsConst = scriptOrFn.getParamAndVarConst();
         builder.paramAndVarCount = scriptOrFn.getParamAndVarCount();
@@ -129,5 +132,32 @@ public class CodeGenUtils {
         } else {
             builder.constructor = new JSCode.NullBuilder<T>();
         }
+    }
+
+    /**
+     * Disambiguate all variable names after the parameters. We avoid disambiguating the parameters
+     * themselves because those names can be repeated and are not unique even if an activation frame
+     * is used.
+     *
+     * <p>This is only required when an interpreted function might have duplicate local variable
+     * names and might be run under the debugger. This can only occur if the function has nested
+     * blocks, uses `let` with a variable name in that nested block which is also used outside that
+     * block, and does not require the use of an activation frame for any other reason. When running
+     * under the debugger variables are accessed by name rather than by index, and hence those names
+     * must not include duplicates.
+     */
+    private static String[] disambiguateNames(String[] names, int paramCount) {
+        String[] result = new String[names.length];
+        var checkMap = new HashMap<String, AtomicInteger>();
+        for (int i = 0; i < names.length; i++) {
+            var counter = checkMap.computeIfAbsent(names[i], k -> new AtomicInteger());
+            var count = counter.getAndIncrement();
+            if (i >= paramCount && count > 0) {
+                result[i] = String.format("%s(%d)", names[i], count);
+            } else {
+                result[i] = names[i];
+            }
+        }
+        return result;
     }
 }

@@ -20,7 +20,7 @@ public interface Debugger {
      * @param fnOrScript object describing the function or script
      * @param source the function or script source
      */
-    void handleCompilationDone(Context cx, DebuggableScript fnOrScript, String source);
+    default void handleCompilationDone(Context cx, DebuggableScript fnOrScript, String source) {}
 
     /**
      * Called when execution entered a particular function or script.
