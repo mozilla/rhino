@@ -12,11 +12,13 @@ import org.mozilla.javascript.Token;
  * Node representing a catch-clause of a try-statement. Node type is {@link Token#CATCH}.
  *
  * <pre><i>CatchClause</i> :
- *        <b>catch</b> ( <i><b>Identifier</b></i> [<b>if</b> Expression] ) Block</pre>
+ *        <b>catch</b> ( <i><b>Identifier</b></i> [<b>if</b> Expression] ) Block
+ *        <b>catch</b> ( <i><b>ObjectPattern</b></i> ) Block
+ *        <b>catch</b> ( <i><b>ArrayPattern</b></i> ) Block</pre>
  */
 public class CatchClause extends AstNode {
 
-    private Name varName;
+    private AstNode varName;
     private AstNode catchCondition;
     private Scope body;
     private int ifPosition = -1;
@@ -40,20 +42,23 @@ public class CatchClause extends AstNode {
     /**
      * Returns catch variable node
      *
-     * @return catch variable
+     * @return catch variable (can be Name, ArrayLiteral, or ObjectLiteral)
      */
-    public Name getVarName() {
+    public AstNode getVarName() {
         return varName;
     }
 
     /**
      * Sets catch variable node, and sets its parent to this node.
      *
-     * @param varName catch variable
+     * @param varName catch variable (can be Name, ArrayLiteral, or ObjectLiteral)
      */
-    public void setVarName(Name varName) {
+    public void setVarName(AstNode varName) {
         this.varName = varName;
         if (varName != null) {
+            assert varName instanceof Name
+                    || varName instanceof ArrayLiteral
+                    || varName instanceof ObjectLiteral;
             varName.setParent(this);
         }
     }

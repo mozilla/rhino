@@ -9,6 +9,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.io.IOException;
 import java.util.List;
@@ -555,7 +556,7 @@ public class ParserTest {
         List<CatchClause> catchBlocks = tryStmt.getCatchClauses();
         CatchClause catchClause = catchBlocks.get(0);
         Scope catchVarBlock = catchClause.getBody();
-        Name catchVar = catchClause.getVarName();
+        Name catchVar = assertInstanceOf(Name.class, catchClause.getVarName());
         AstNode finallyBlock = tryStmt.getFinallyBlock();
         AstNode finallyStmt = (AstNode) finallyBlock.getFirstChild();
 
