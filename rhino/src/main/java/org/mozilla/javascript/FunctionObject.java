@@ -85,10 +85,16 @@ public class FunctionObject extends BaseFunction {
         var typeInfoFactory = TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL);
 
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor, typeInfoFactory);
+            member =
+                    new MemberBox(
+                            getDeclarationScope(),
+                            (Constructor<?>) methodOrConstructor,
+                            typeInfoFactory);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor, typeInfoFactory);
+            member =
+                    new MemberBox(
+                            getDeclarationScope(), (Method) methodOrConstructor, typeInfoFactory);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
