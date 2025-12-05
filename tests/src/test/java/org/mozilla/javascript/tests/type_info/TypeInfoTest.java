@@ -52,11 +52,10 @@ public class TypeInfoTest {
      */
     @Test
     public void primitives() {
-        var action = (Consumer<TypePack>) TypeInfoTest::primitiveTestAction;
-        test("primitives", action);
+        test("primitives", TypeInfoTest::testPrimitives);
     }
 
-    private static void primitiveTestAction(TypePack pack) {
+    private static void testPrimitives(TypePack pack) {
         var clazz = pack.clazz();
         var info = pack.resolved();
         Assertions.assertSame(clazz == int.class, info.isInt());
@@ -76,22 +75,21 @@ public class TypeInfoTest {
      */
     @Test
     public void primitiveObjects() {
-        var action =
-                (Consumer<TypePack>)
-                        pack -> {
-                            var clazz = pack.clazz();
-                            var info = pack.resolved();
-                            Assertions.assertSame(clazz == Integer.class, info.isInt());
-                            Assertions.assertSame(clazz == Short.class, info.isShort());
-                            Assertions.assertSame(clazz == Long.class, info.isLong());
-                            Assertions.assertSame(clazz == Byte.class, info.isByte());
-                            Assertions.assertSame(clazz == Character.class, info.isCharacter());
-                            Assertions.assertSame(clazz == Float.class, info.isFloat());
-                            Assertions.assertSame(clazz == Double.class, info.isDouble());
-                            Assertions.assertSame(clazz == Boolean.class, info.isBoolean());
-                            Assertions.assertSame(clazz == Void.class, info.isVoid());
-                        };
-        test("primitiveObjects", action);
+        test("primitiveObjects", TypeInfoTest::testPrimitiveObjects);
+    }
+
+    private static void testPrimitiveObjects(TypePack pack) {
+        var clazz = pack.clazz();
+        var info = pack.resolved();
+        Assertions.assertSame(clazz == Integer.class, info.isInt());
+        Assertions.assertSame(clazz == Short.class, info.isShort());
+        Assertions.assertSame(clazz == Long.class, info.isLong());
+        Assertions.assertSame(clazz == Byte.class, info.isByte());
+        Assertions.assertSame(clazz == Character.class, info.isCharacter());
+        Assertions.assertSame(clazz == Float.class, info.isFloat());
+        Assertions.assertSame(clazz == Double.class, info.isDouble());
+        Assertions.assertSame(clazz == Boolean.class, info.isBoolean());
+        Assertions.assertSame(clazz == Void.class, info.isVoid());
     }
 
     /**
@@ -100,26 +98,25 @@ public class TypeInfoTest {
      */
     @Test
     public void commonObjects() {
-        var action =
-                (Consumer<TypePack>)
-                        pack -> {
-                            var clazz = pack.clazz();
-                            var info = pack.resolved();
-                            for (int i = -2; i < 2; i++) {
-                                // TypeInfo should return NONE when input is invalid or TypeInfo
-                                // itself not
-                                // a parameterized type
-                                Assertions.assertSame(TypeInfo.NONE, info.param(1));
-                            }
-                            if (!clazz.isEnum()) {
-                                Assertions.assertTrue(info.enumConstants().isEmpty());
-                            } else {
-                                Assertions.assertEquals(
-                                        new HashSet<>(Arrays.asList(clazz.getEnumConstants())),
-                                        new HashSet<>(info.enumConstants()));
-                            }
-                        };
-        test("commonObjects", action);
+        test("commonObjects", TypeInfoTest::testCommonObjects);
+    }
+
+    private static void testCommonObjects(TypePack pack) {
+        var clazz = pack.clazz();
+        var info = pack.resolved();
+        for (int i = -2; i < 2; i++) {
+            // TypeInfo should return NONE when input is invalid or TypeInfo
+            // itself not
+            // a parameterized type
+            Assertions.assertSame(TypeInfo.NONE, info.param(1));
+        }
+        if (!clazz.isEnum()) {
+            Assertions.assertTrue(info.enumConstants().isEmpty());
+        } else {
+            Assertions.assertEquals(
+                    new HashSet<>(Arrays.asList(clazz.getEnumConstants())),
+                    new HashSet<>(info.enumConstants()));
+        }
     }
 
     /**
@@ -128,26 +125,21 @@ public class TypeInfoTest {
      */
     @Test
     public void objectArrays() {
-        var action =
-                new Consumer<TypePack>() {
-                    @Override
-                    public void accept(TypePack pack) {
-                        commonTestAction(pack);
+        test("objectArrays", TypeInfoTest::testArrays);
+    }
 
-                        var clazz = pack.clazz();
-                        var info = pack.resolved();
-                        if (clazz.isArray()) {
-                            Assertions.assertTrue(info.isArray());
-                            // recursively test array components
-                            var component =
-                                    pack.map(
-                                            c -> ((Class<?>) c).getComponentType(),
-                                            Class::getComponentType);
-                            this.accept(component);
-                        }
-                    }
-                };
-        test("objectArrays", action);
+    private static void testArrays(TypePack pack) {
+        commonTestAction(pack);
+
+        var clazz = pack.clazz();
+        var info = pack.resolved();
+        if (clazz.isArray()) {
+            Assertions.assertTrue(info.isArray());
+            // recursively test array components
+            var component =
+                    pack.map(c -> ((Class<?>) c).getComponentType(), Class::getComponentType);
+            testArrays(component);
+        }
     }
 
     /**
@@ -155,25 +147,22 @@ public class TypeInfoTest {
      */
     @Test
     public void generics() {
-        var action =
-                (Consumer<TypePack>)
-                        (pack) -> {
-                            if (!(pack.resolved() instanceof VariableTypeInfo)) {
-                                return;
-                            }
-                            var variableInfo = (VariableTypeInfo) pack.resolved();
-                            // only TypeVariable can be resolved to VariableTypeInfo
-                            var variable = (TypeVariable<?>) pack.raw();
+        test("generics", TypeInfoTest::testGenerics);
+    }
 
-                            // validate name
-                            Assertions.assertEquals(variable.getName(), variableInfo.name());
+    private static void testGenerics(TypePack pack) {
+        if (!(pack.resolved() instanceof VariableTypeInfo)) {
+            return;
+        }
+        var variableInfo = (VariableTypeInfo) pack.resolved();
+        // only TypeVariable can be resolved to VariableTypeInfo
+        var variable = (TypeVariable<?>) pack.raw();
 
-                            // validate bounds
-                            testMulti(
-                                    variable.getBounds(),
-                                    variableInfo.bounds(TypeInfoFactory.GLOBAL));
-                        };
-        test("generics", action);
+        // validate name
+        Assertions.assertEquals(variable.getName(), variableInfo.name());
+
+        // validate bounds
+        testMulti(variable.getBounds(), variableInfo.bounds(TypeInfoFactory.GLOBAL));
     }
 
     private static void testMulti(Type[] rawTypes, List<TypeInfo> resolved) {
@@ -199,29 +188,24 @@ public class TypeInfoTest {
      * @see TypesToTest#typeParam(Map, List, Function, Map, List, Function)
      */
     public void typeParam() {
-        var action =
-                (Consumer<TypePack>)
-                        pack -> {
-                            if (!(pack.resolved() instanceof ParameterizedTypeInfo)) {
-                                return;
-                            }
-                            var parameterizedInfo = (ParameterizedTypeInfo) pack.resolved();
-                            // only ParameterizedType can be resolved to ParameterizedTypeInfo
-                            var parameterized = (ParameterizedType) pack.raw();
+        test("typeParam", TypeInfoTest::testTypeParam);
+    }
 
-                            // validate raw type
-                            commonTestAction(
-                                    new TypePack(
-                                            parameterized.getRawType(),
-                                            pack.clazz(),
-                                            parameterizedInfo.rawType()));
+    private static void testTypeParam(TypePack pack) {
+        if (!(pack.resolved() instanceof ParameterizedTypeInfo)) {
+            return;
+        }
+        var parameterizedInfo = (ParameterizedTypeInfo) pack.resolved();
+        // only ParameterizedType can be resolved to ParameterizedTypeInfo
+        var parameterized = (ParameterizedType) pack.raw();
 
-                            // validate type args
-                            testMulti(
-                                    parameterized.getActualTypeArguments(),
-                                    parameterizedInfo.params());
-                        };
-        test("typeParam", action);
+        // validate raw type
+        commonTestAction(
+                new TypePack(
+                        parameterized.getRawType(), pack.clazz(), parameterizedInfo.rawType()));
+
+        // validate type args
+        testMulti(parameterized.getActualTypeArguments(), parameterizedInfo.params());
     }
 
     /**
