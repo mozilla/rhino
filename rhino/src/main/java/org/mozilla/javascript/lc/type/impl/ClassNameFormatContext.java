@@ -8,7 +8,7 @@ import org.mozilla.javascript.lc.type.VariableTypeInfo;
 /**
  * @author ZZZank
  */
-public class ClassSignatureFormatContext implements TypeFormatContext {
+public class ClassNameFormatContext implements TypeFormatContext {
     @Override
     public String getClassName(Class<?> c) {
         return c.getName();
