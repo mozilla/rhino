@@ -2,9 +2,7 @@ package org.mozilla.javascript.lc.type.impl;
 
 import java.util.Map;
 import java.util.Objects;
-
 import org.mozilla.javascript.FunctionObject;
-import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
@@ -41,11 +39,6 @@ public final class ArrayTypeInfo extends TypeInfoBase {
     public int hashCode() {
         // prevent hash collision with component type
         return component.hashCode() + 1;
-    }
-
-    @Override
-    public void append(TypeFormatContext ctx, StringBuilder builder) {
-        ctx.formatArray(builder, this);
     }
 
     @Override

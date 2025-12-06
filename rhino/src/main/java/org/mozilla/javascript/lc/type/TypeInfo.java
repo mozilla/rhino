@@ -139,12 +139,12 @@ public interface TypeInfo {
     }
 
     /**
-     * @see #append(TypeFormatContext, StringBuilder)
+     * @see #toString(TypeFormatContext)
      */
     @Override
     String toString();
 
-    void append(TypeFormatContext ctx, StringBuilder builder);
+    String toString(TypeFormatContext ctx);
 
     /**
      * @see Class#getComponentType()

@@ -3,9 +3,7 @@ package org.mozilla.javascript.lc.type.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
-import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
@@ -78,11 +76,6 @@ public final class ParameterizedTypeInfoImpl extends TypeInfoBase implements Par
                 || ((object instanceof ParameterizedTypeInfoImpl)
                         && rawType.equals(((ParameterizedTypeInfoImpl) object).rawType)
                         && params.equals(((ParameterizedTypeInfoImpl) object).params));
-    }
-
-    @Override
-    public void append(TypeFormatContext ctx, StringBuilder builder) {
-        ctx.formatParameterized(builder, this);
     }
 
     @Override

@@ -12,29 +12,48 @@ public interface TypeFormatContext {
 
     String getClassName(Class<?> c);
 
-    default void appendSpace(StringBuilder builder) {
-        builder.append(' ');
+    default void append(StringBuilder builder, TypeInfo type) {
+        if (type == TypeInfo.NONE) {
+            builder.append(getFormattedNone());
+        } else if (type.isArray()) {
+            appendArray(builder, type);
+        } else if (type instanceof VariableTypeInfo) {
+            appendVariable(builder, (VariableTypeInfo) type);
+        } else if (type instanceof ParameterizedTypeInfo) {
+            appendParameterized(builder, (ParameterizedTypeInfo) type);
+        } else {
+            builder.append(type.toString(this));
+        }
     }
 
-    default void formatArray(StringBuilder builder, TypeInfo arrayType) {
-        arrayType.getComponentType().append(this, builder);
+    default void appendArray(StringBuilder builder, TypeInfo type) {
+        append(builder, type.getComponentType());
         builder.append('[').append(']');
     }
 
-    default void formatParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
-        type.rawType().append(this, builder);
+    default void appendParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
+        append(builder, type.rawType());
 
         builder.append('<');
         var iterator = type.params().iterator();
         if (iterator.hasNext()) {
-            iterator.next().append(this, builder);
+            append(builder, iterator.next());
             while (iterator.hasNext()) {
                 builder.append(',');
-                appendSpace(builder);
-                iterator.next().append(this, builder);
+                builder.append(' ');
+                append(builder, iterator.next());
             }
         }
         builder.append('>');
+    }
+
+    default void appendVariable(StringBuilder builder, VariableTypeInfo type) {
+        builder.append(type.name());
+        var mainBound = type.mainBound();
+        if (!mainBound.isObjectExact()) {
+            builder.append(" extends ");
+            append(builder, mainBound);
+        }
     }
 
     /**

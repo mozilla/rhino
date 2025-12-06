@@ -27,8 +27,8 @@ public enum NoTypeInfo implements TypeInfo {
     }
 
     @Override
-    public void append(TypeFormatContext ctx, StringBuilder builder) {
-        builder.append(ctx.getFormattedNone());
+    public String toString(TypeFormatContext ctx) {
+        return ctx.getFormattedNone();
     }
 
     /** {@link Object} class is assignable from any class */
