@@ -33,7 +33,7 @@ public interface TypeFormatContext {
     /// | Type | Full representation | Representation using this context |
     /// | - | - | - |
     /// | Class | java.lang.String | java.lang.String |
-    /// | Array | java.lang.String[] | java.lang.String[] |
+    /// | Array | java.lang.String[] | [Ljava.lang.String; |
     /// | Parameterized | java.lang.List<java.lang.String> | java.util.List |
     /// | Variable | T extends java.lang.String | java.lang.String |
     /// | [TypeInfo#NONE] | (No standard representation) | java.lang.Object |
@@ -41,13 +41,38 @@ public interface TypeFormatContext {
 
     String getClassName(Class<?> c);
 
+    /**
+     * Format a type and push the result to a {@link StringBuilder}.
+     *
+     * @implNote Implementations are encouraged to override {@link #append(StringBuilder, TypeInfo,
+     *     boolean)} , instead of this method
+     * @param builder Formatted string of {@code type} will be pushed to this builder
+     * @param type The type to be formatted
+     */
     default void append(StringBuilder builder, TypeInfo type) {
+        append(builder, type, false);
+    }
+
+    /**
+     * This method is for overriding. Users are encouraged to use {@link #append(StringBuilder,
+     * TypeInfo)} instead of this method.
+     *
+     * @param builder Formatted string of {@code type} will be pushed to this builder
+     * @param type The type to be formatted
+     * @param isComponent {@code true} if the {@code type} is a component of another type. For
+     *     example, {@code T} in {@code T[]}, and {@code Number} in {@code Map<K, Number>}
+     */
+    default void append(StringBuilder builder, TypeInfo type, boolean isComponent) {
         if (type == TypeInfo.NONE) {
             builder.append(getFormattedNone());
         } else if (type.isArray()) {
             appendArray(builder, type);
         } else if (type instanceof VariableTypeInfo) {
-            appendVariable(builder, (VariableTypeInfo) type);
+            if (isComponent) {
+                builder.append(((VariableTypeInfo) type).name());
+            } else {
+                appendVariable(builder, (VariableTypeInfo) type);
+            }
         } else if (type instanceof ParameterizedTypeInfo) {
             appendParameterized(builder, (ParameterizedTypeInfo) type);
         } else {
@@ -56,21 +81,21 @@ public interface TypeFormatContext {
     }
 
     default void appendArray(StringBuilder builder, TypeInfo type) {
-        append(builder, type.getComponentType());
+        append(builder, type.getComponentType(), true);
         builder.append('[').append(']');
     }
 
     default void appendParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
-        append(builder, type.rawType());
+        append(builder, type.rawType(), true);
 
         builder.append('<');
         var iterator = type.params().iterator();
         if (iterator.hasNext()) {
-            append(builder, iterator.next());
+            append(builder, iterator.next(), true);
             while (iterator.hasNext()) {
                 builder.append(',');
                 builder.append(' ');
-                append(builder, iterator.next());
+                append(builder, iterator.next(), true);
             }
         }
         builder.append('>');
@@ -81,7 +106,7 @@ public interface TypeFormatContext {
         var mainBound = type.mainBound();
         if (!mainBound.isObjectExact()) {
             builder.append(" extends ");
-            append(builder, mainBound);
+            append(builder, mainBound, true);
         }
     }
 

@@ -20,6 +20,11 @@ public class ClassNameFormatContext implements TypeFormatContext {
     }
 
     @Override
+    public void append(StringBuilder builder, TypeInfo type, boolean isComponent) {
+        builder.append(type.asClass().getName());
+    }
+
+    @Override
     public void appendParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
         append(builder, type.rawType());
     }
