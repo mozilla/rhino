@@ -139,12 +139,12 @@ public interface TypeInfo {
     }
 
     /**
-     * @see #append(TypeFormatContext, StringBuilder)
+     * @see #toString(TypeFormatContext)
      */
     @Override
     String toString();
 
-    void append(TypeFormatContext ctx, StringBuilder builder);
+    String toString(TypeFormatContext ctx);
 
     /**
      * @see Class#getComponentType()
@@ -275,10 +275,6 @@ public interface TypeInfo {
      */
     default boolean isObjectExact() {
         return false;
-    }
-
-    default void collectComponentClass(Consumer<Class<?>> collector) {
-        collector.accept(asClass());
     }
 
     /**

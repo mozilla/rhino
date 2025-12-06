@@ -22,7 +22,6 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  * <p>This factory is serializable, but none of its cached objects will be serialized.
  *
  * @author ZZZank
- * @see NoCacheFactory factory with no cache
  * @see ConcurrentFactory factory with a strong-reference, high performance cache
  */
 public class WeakReferenceFactory extends WithCacheFactory {

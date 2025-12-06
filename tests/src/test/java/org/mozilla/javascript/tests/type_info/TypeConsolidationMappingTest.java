@@ -110,9 +110,9 @@ public class TypeConsolidationMappingTest {
                 (k, v) -> {
                     var builder = new StringBuilder();
 
-                    k.append(TypeFormatContext.SIMPLE, builder);
+                    TypeFormatContext.SIMPLE.append(builder, k);
                     builder.append(" -> ");
-                    v.append(TypeFormatContext.SIMPLE, builder);
+                    TypeFormatContext.SIMPLE.append(builder, v);
 
                     formatted.add(builder.toString());
                 });
