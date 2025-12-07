@@ -576,7 +576,7 @@ public final class JavaAdapter {
         return ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            ScriptableObject global = ScriptRuntime.getGlobal(cx);
+                            ScopeObject global = ScriptRuntime.getGlobal(cx);
                             script.exec(cx, global, global);
                             return global;
                         });

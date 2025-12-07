@@ -108,7 +108,7 @@ public class Undefined implements Serializable {
         public void setPrototype(Scriptable prototype) {}
 
         @Override
-        public Scriptable getParentScope() {
+        public VarScope getParentScope() {
             return null;
         }
 

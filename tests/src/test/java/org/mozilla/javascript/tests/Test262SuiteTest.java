@@ -44,6 +44,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -232,7 +233,7 @@ public class Test262SuiteTest {
             return proto;
         }
 
-        static $262 install(ScriptableObject scope, Scriptable parentScope) {
+        static $262 install(ScopeObject scope, Scriptable parentScope) {
             $262 instance = new $262(scope, parentScope);
 
             scope.put("$262", scope, instance);

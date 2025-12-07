@@ -12,9 +12,9 @@ import java.io.Serializable;
 public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, Serializable {
     private static final long serialVersionUID = -7471457301304454454L;
 
-    private final ScopeObject parentScope;
+    private final VarScope parentScope;
 
-    public ScopeObject(ScopeObject parentScope) {
+    public ScopeObject(VarScope parentScope) {
         this.parentScope = parentScope;
     }
 

@@ -324,7 +324,7 @@ public class FunctionObject extends BaseFunction {
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         setImmunePrototypeProperty(prototype);
 
-        prototype.setParentScope(this);
+        prototype.setParentScope(scope);
 
         defineProperty(prototype, "constructor", this, attributes);
         setParentScope(scope);

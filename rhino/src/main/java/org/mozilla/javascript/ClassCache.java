@@ -78,7 +78,7 @@ public class ClassCache implements Serializable {
             // we expect this to not happen frequently, so computing top scope twice is acceptable
             var topScope = ScriptableObject.getTopLevelScope(scope);
             cache = new ClassCache();
-            cache.associate(((ScriptableObject) topScope));
+            cache.associate(topScope);
         }
         return cache;
     }
@@ -92,7 +92,7 @@ public class ClassCache implements Serializable {
      *     ClassCache were successfully associated or false otherwise.
      * @see #get(Scriptable scope)
      */
-    public boolean associate(ScriptableObject topScope) {
+    public boolean associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {
             // Can only associate cache with top level scope
             throw new IllegalArgumentException();

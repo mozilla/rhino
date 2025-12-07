@@ -9,6 +9,7 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.WithScope;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -51,11 +52,12 @@ public class FunctionNullSetTest {
                             final MyHostObject jsObj = new MyHostObject();
                             jsObj.setPrototype(prototype);
                             jsObj.setParentScope(scope);
+                            var jsScope = new WithScope(scope, jsObj);
 
                             final Function realFunction_ =
-                                    cx.compileFunction(jsObj, script, "myevent", 0, null);
+                                    cx.compileFunction(jsScope, script, "myevent", 0, null);
 
-                            realFunction_.call(cx, jsObj, jsObj, new Object[0]);
+                            realFunction_.call(cx, jsScope, jsObj, new Object[0]);
 
                             assertNull(jsObj.onclick_);
                         } catch (final Exception e) {

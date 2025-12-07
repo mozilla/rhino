@@ -23,7 +23,7 @@ public class RegExpImpl implements RegExpProxy {
     @Override
     public void register(TopLevel scope, boolean sealed) {
         NativeRegExpStringIterator.init(scope, sealed);
-        new LazilyLoadedCtor(scope, "RegExp", sealed, true, NativeRegExp::init);
+        new LazilyLoadedCtor<>(scope, "RegExp", sealed, true, NativeRegExp::init);
     }
 
     @Override

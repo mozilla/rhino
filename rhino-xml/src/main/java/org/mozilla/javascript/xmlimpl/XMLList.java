@@ -19,6 +19,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.xml.XMLObject;
 
 class XMLList extends XMLObjectImpl implements Function {
@@ -79,7 +80,7 @@ class XMLList extends XMLObjectImpl implements Function {
         }
     }
 
-    XMLList(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    XMLList(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         super(lib, scope, prototype);
         _annos = new XmlNode.InternalList();
     }

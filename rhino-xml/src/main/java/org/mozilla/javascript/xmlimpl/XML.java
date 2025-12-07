@@ -17,6 +17,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.xml.XMLObject;
 
 class XML extends XMLObjectImpl {
@@ -37,11 +38,7 @@ class XML extends XMLObjectImpl {
     }
 
     public static void init(
-            Context cx,
-            ScriptableObject scope,
-            XMLObjectImpl proto,
-            boolean sealed,
-            XMLLibImpl lib) {
+            Context cx, VarScope scope, XMLObjectImpl proto, boolean sealed, XMLLibImpl lib) {
         DESCRIPTOR.buildConstructor(
                 cx,
                 scope,
@@ -114,7 +111,7 @@ class XML extends XMLObjectImpl {
         return false;
     }
 
-    XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
+    XML(XMLLibImpl lib, VarScope scope, XMLObject prototype, XmlNode node) {
         super(lib, scope, prototype);
         initialize(node);
     }
