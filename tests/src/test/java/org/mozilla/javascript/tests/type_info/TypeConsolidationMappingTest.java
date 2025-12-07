@@ -28,8 +28,7 @@ public class TypeConsolidationMappingTest {
         assertMappingMatch(E.class, "Ta -> Te[]", "Tb -> Te", "Tc -> List<String>", "Td -> String");
         assertMappingMatch(Collection.class, "T -> E");
 
-        // T from BaseStream -> T from Stream
-        assertMappingMatch(Stream.class, "S -> Stream<T>", "T -> T");
+        assertMappingMatch(Stream.class, "S extends BaseStream<T, S> -> Stream<T>", "T -> T");
 
         // TwoGenericInterfaces<A, B, C> implements Iterator<E -> B>, Map<K -> C, V -> A>
         assertMappingMatch(TwoGenericInterfaces.class, "V -> A", "E -> B", "K -> C");
@@ -52,7 +51,7 @@ public class TypeConsolidationMappingTest {
         assertMappingMatch(GenericSuperInterface.class, "Tc -> List<Number>", "Td -> Number");
 
         // E from Enum, T from Comparable
-        assertMappingMatch(NoTypeInfo.class, "T -> NoTypeInfo", "E -> NoTypeInfo");
+        assertMappingMatch(NoTypeInfo.class, "T -> NoTypeInfo", "E extends Enum<E> -> NoTypeInfo");
 
         // TwoInterfaces implements Iterator<E -> Integer>, Map<K -> String, V -> Double>
         assertMappingMatch(TwoInterfaces.class, "V -> Double", "K -> String", "E -> Integer");
