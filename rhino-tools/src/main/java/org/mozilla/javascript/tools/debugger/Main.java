@@ -15,8 +15,8 @@ import javax.swing.JFrame;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -181,7 +181,7 @@ public class Main {
             global.installRequire(cx, List.of(), false);
 
             URI uri = new File(System.getProperty("user.dir")).toURI();
-            ScriptableObject scope = ModuleScope.createModuleScope(global, uri, null);
+            ScopeObject scope = ModuleScope.createModuleScope(global, uri, null);
 
             main.setScope(scope);
 

@@ -5,27 +5,28 @@
 package org.mozilla.javascript.commonjs.module;
 
 import java.net.URI;
+import org.mozilla.javascript.DeclarationScope;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 
 /**
  * A top-level module scope. This class provides methods to retrieve the module's source and base
  * URIs in order to resolve relative module IDs and check sandbox constraints.
  */
-public class ModuleScope extends ScriptableObject {
+public class ModuleScope extends DeclarationScope {
     private static final long serialVersionUID = 1L;
     private final URI uri;
     private final URI base;
 
-    private ModuleScope(URI uri, URI base) {
+    private ModuleScope(ScopeObject scope, URI uri, URI base) {
+        super(scope);
         this.uri = uri;
         this.base = base;
     }
 
-    public static ScriptableObject createModuleScope(TopLevel global, URI uri, URI base) {
-        var moduleScope = new ModuleScope(uri, base);
-        moduleScope.setParentScope(global);
+    public static ScopeObject createModuleScope(TopLevel global, URI uri, URI base) {
+        var moduleScope = new ModuleScope(global, uri, base);
         return moduleScope;
     }
 

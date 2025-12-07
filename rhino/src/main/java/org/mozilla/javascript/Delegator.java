@@ -203,7 +203,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#getParentScope
      */
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return getDelegee().getParentScope();
     }
 

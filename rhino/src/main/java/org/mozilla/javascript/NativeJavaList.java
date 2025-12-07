@@ -108,7 +108,7 @@ public class NativeJavaList extends NativeJavaObject {
             Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
             if (cx != null) {
-                return cx.getWrapFactory().wrap(cx, this, obj, elementType);
+                return cx.getWrapFactory().wrap(cx, parent, obj, elementType);
             }
             return obj;
         }

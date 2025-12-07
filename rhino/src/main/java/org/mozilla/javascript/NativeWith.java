@@ -32,7 +32,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     private NativeWith() {}
 
     protected NativeWith(Scriptable parent, Scriptable prototype) {
-        this.parent = parent;
+        this.parent = (VarScope) parent;
         this.prototype = prototype;
     }
 
@@ -136,13 +136,13 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return parent;
     }
 
     @Override
     public void setParentScope(Scriptable parent) {
-        this.parent = parent;
+        this.parent = (VarScope) parent;
     }
 
     @Override
@@ -187,14 +187,13 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     static Object newWithSpecial(Context cx, Scriptable scope, Object[] args) {
         ScriptRuntime.checkDeprecated(cx, "With");
-        scope = ScriptableObject.getTopLevelScope(scope);
-        NativeWith thisObj = new NativeWith();
-        thisObj.setPrototype(
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        var obj =
                 args.length == 0
                         ? ScriptableObject.getObjectPrototype(scope)
-                        : ScriptRuntime.toObject(cx, scope, args[0]));
-        thisObj.setParentScope(scope);
-        return thisObj;
+                        : ScriptRuntime.toObject(cx, scope, args[0]);
+        var newWith = new WithScope(top, obj);
+        return newWith;
     }
 
     private static final Object FTAG = "With";
@@ -202,5 +201,5 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     private static final int Id_constructor = 1;
 
     protected Scriptable prototype;
-    protected Scriptable parent;
+    protected VarScope parent;
 }

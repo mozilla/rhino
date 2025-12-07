@@ -3,7 +3,8 @@ package org.mozilla.javascript;
 public class WithScope implements VarScope {
     private static final long serialVersionUID = -7471457301304454454L;
 
-    private final Scriptable obj;
+    // This cannot be final because XML dot queries mutate it!
+    private Scriptable obj;
     private final VarScope parent;
 
     public WithScope(VarScope parentScope, Scriptable obj) {
@@ -14,6 +15,10 @@ public class WithScope implements VarScope {
     @Override
     public VarScope getParentScope() {
         return parent;
+    }
+
+    public void setObject(Scriptable obj) {
+        this.obj = obj;
     }
 
     @Override
@@ -90,5 +95,11 @@ public class WithScope implements VarScope {
 
     public Scriptable getObject() {
         return obj;
+    }
+
+    /** Must return null to continue looping or the final collection result. */
+    protected Object updateDotQuery(boolean value) {
+        // NativeWith itself does not support it
+        throw new IllegalStateException();
     }
 }

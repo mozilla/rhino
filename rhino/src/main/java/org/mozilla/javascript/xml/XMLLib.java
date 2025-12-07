@@ -8,6 +8,7 @@ package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Ref;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -38,7 +39,7 @@ public abstract class XMLLib {
     }
 
     public static XMLLib extractFromScopeOrNull(Scriptable scope) {
-        ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
+        ScopeObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // If library is not yet initialized, return null
             return null;
@@ -61,7 +62,7 @@ public abstract class XMLLib {
     }
 
     protected final XMLLib bindToScope(Scriptable scope) {
-        ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
+        ScopeObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // standard library should be initialized at this point
             throw new IllegalStateException();

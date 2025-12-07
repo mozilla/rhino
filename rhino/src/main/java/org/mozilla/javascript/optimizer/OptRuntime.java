@@ -14,6 +14,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.NativeIterator;
 import org.mozilla.javascript.NewLiteralStorage;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -245,7 +246,7 @@ public final class OptRuntime extends ScriptRuntime {
         ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            ScriptableObject global = getGlobal(cx);
+                            ScopeObject global = getGlobal(cx);
 
                             // get the command line arguments and define "arguments"
                             // array in the top-level object
