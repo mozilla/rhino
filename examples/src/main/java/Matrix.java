@@ -9,6 +9,7 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Matrix: An example host object class that implements the Scriptable interface.
@@ -188,14 +189,14 @@ public class Matrix implements Scriptable {
 
     /** Get parent. */
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return parent;
     }
 
     /** Set parent. */
     @Override
     public void setParentScope(Scriptable parent) {
-        this.parent = parent;
+        this.parent = (VarScope) parent;
     }
 
     /**
@@ -239,5 +240,6 @@ public class Matrix implements Scriptable {
     private int dim;
 
     private List<Object> list;
-    private Scriptable prototype, parent;
+    private Scriptable prototype;
+    private VarScope parent;
 }

@@ -1361,7 +1361,7 @@ class NativeProxy extends ScriptableObject {
         }
 
         @Override
-        public Scriptable getDeclarationScope() {
+        public VarScope getDeclarationScope() {
             ScriptableObject target = getTargetThrowIfRevoked();
             if (target instanceof Function) {
                 return ((Function) target).getDeclarationScope();

@@ -270,7 +270,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      *
      * @return the parent scope
      */
-    public Scriptable getParentScope();
+    public VarScope getParentScope();
 
     /**
      * Set the parent scope of the object.

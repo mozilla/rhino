@@ -53,7 +53,7 @@ public interface Function extends Scriptable, Callable, Constructable {
      * it is useful to distinguish the two concepts as parent scopes are no longer supported by the
      * spec in general and present a significant barrier to future optimisations.
      */
-    default Scriptable getDeclarationScope() {
+    default VarScope getDeclarationScope() {
         return this.getParentScope();
     }
 

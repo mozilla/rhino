@@ -47,7 +47,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     public NativeJavaObject(
             Scriptable scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
-        this.parent = scope;
+        this.parent = (VarScope) scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
         this.isAdapter = isAdapter;
@@ -62,7 +62,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             dynamicType = staticType.asClass();
         }
         members = JavaMembers.lookupClass(parent, dynamicType, staticType.asClass(), isAdapter);
-        fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
+        fieldAndMethods = members.getFieldAndMethodsObjects(parent, javaObject, false);
     }
 
     @Override
@@ -91,9 +91,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 return result;
             }
         }
-        // TODO: passing 'this' as the scope is bogus since it has
-        //  no parent scope
-        return members.get(this, name, javaObject, false);
+        return members.get(this, parent, name, javaObject, false);
     }
 
     @Override
@@ -170,14 +168,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Returns the parent (enclosing) scope of the object. */
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return parent;
     }
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
     public void setParentScope(Scriptable m) {
-        parent = m;
+        parent = (VarScope) m;
     }
 
     @Override
@@ -953,7 +951,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 return Undefined.instance;
             }
             Object obj = iterator.next();
-            return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+            return cx.getWrapFactory().wrap(cx, scope, obj, obj == null ? null : obj.getClass());
         }
 
         @Override
@@ -968,7 +966,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected Scriptable prototype;
 
     /** The parent scope of this object. */
-    protected Scriptable parent;
+    protected VarScope parent;
 
     protected transient Object javaObject;
 

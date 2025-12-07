@@ -99,12 +99,15 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             var globalScope =
                     TopLevel.createIsolate(
                             topLevelScope,
-                            new BindingsObject(sc.getBindings(ScriptContext.GLOBAL_SCOPE)));
+                            new BindingsObject(
+                                    topLevelScope, sc.getBindings(ScriptContext.GLOBAL_SCOPE)));
             return TopLevel.createIsolate(
-                    globalScope, new BindingsObject(sc.getBindings(ScriptContext.ENGINE_SCOPE)));
+                    globalScope,
+                    new BindingsObject(globalScope, sc.getBindings(ScriptContext.ENGINE_SCOPE)));
         } else {
             return TopLevel.createIsolate(
-                    topLevelScope, new BindingsObject(sc.getBindings(ScriptContext.ENGINE_SCOPE)));
+                    topLevelScope,
+                    new BindingsObject(topLevelScope, sc.getBindings(ScriptContext.ENGINE_SCOPE)));
         }
     }
 

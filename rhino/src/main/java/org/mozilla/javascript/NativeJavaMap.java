@@ -86,7 +86,7 @@ public class NativeJavaMap extends NativeJavaObject {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
-                return cx.getWrapFactory().wrap(cx, this, map.get(name), valueType);
+                return cx.getWrapFactory().wrap(cx, parent, map.get(name), valueType);
             }
         }
         return super.get(name, start);
@@ -98,7 +98,7 @@ public class NativeJavaMap extends NativeJavaObject {
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             var key = Integer.valueOf(index);
             if (map.containsKey(key)) {
-                return cx.getWrapFactory().wrap(cx, this, map.get(key), valueType);
+                return cx.getWrapFactory().wrap(cx, parent, map.get(key), valueType);
             }
         }
         return super.get(index, start);
@@ -206,8 +206,8 @@ public class NativeJavaMap extends NativeJavaObject {
             Object key = e.getKey();
             Object value = e.getValue();
             WrapFactory wrapFactory = cx.getWrapFactory();
-            key = wrapFactory.wrap(cx, this, key, keyType);
-            value = wrapFactory.wrap(cx, this, value, valueType);
+            key = wrapFactory.wrap(cx, scope, key, keyType);
+            value = wrapFactory.wrap(cx, scope, value, valueType);
 
             return cx.newArray(scope, new Object[] {key, value});
         }

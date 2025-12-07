@@ -108,7 +108,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     private Scriptable prototypeObject;
 
     /** The parent scope of this object. */
-    private Scriptable parentScopeObject;
+    private VarScope parentScopeObject;
 
     // Where external array data is stored.
     private transient ExternalArrayData externalData;
@@ -152,7 +152,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         super(0);
         if (scope == null) throw new IllegalArgumentException();
 
-        parentScopeObject = scope;
+        parentScopeObject = (VarScope) scope;
         prototypeObject = prototype;
     }
 
@@ -595,14 +595,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /** Returns the parent (enclosing) scope of the object. */
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return parentScopeObject;
     }
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
     public void setParentScope(Scriptable m) {
-        parentScopeObject = m;
+        parentScopeObject = (VarScope) m;
     }
 
     /**
@@ -1089,7 +1089,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                         "jsStaticFunction must be used with static method.");
             }
 
-            FunctionObject f = new FunctionObject(name, method, proto);
+            FunctionObject f = new FunctionObject(name, method, scope);
             if (f.isVarArgsConstructor()) {
                 throw Context.reportRuntimeErrorById("msg.varargs.fun", ctorMember.getName());
             }
@@ -2737,7 +2737,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         Scriptable obj = start;
         do {
             if (obj.has(name, start)) break;
-            obj = obj.getPrototype();
+            if (obj instanceof VarScope) {
+                obj = null;
+            } else {
+                obj = obj.getPrototype();
+            }
         } while (obj != null);
         return obj;
     }
