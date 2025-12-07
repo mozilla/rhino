@@ -307,9 +307,8 @@ public class ScriptRuntime {
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(
                 s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
-        new LazilyLoadedCtor(
-                s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+        new LazilyLoadedCtor(s, "JavaAdapter", sealed, true, JavaAdapter::init);
+        new LazilyLoadedCtor(s, "JavaImporter", sealed, true, ImporterTopLevel::init);
 
         for (String packageName : getTopPackageNames()) {
             new LazilyLoadedCtor(

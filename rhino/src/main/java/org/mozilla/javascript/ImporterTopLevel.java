@@ -62,11 +62,11 @@ public class ImporterTopLevel extends TopLevel {
         return topScopeFlag ? "global" : "JavaImporter";
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
-        init(cx, scope, sealed, false);
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+        return init(cx, scope, sealed, false);
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
         LambdaConstructor ctor =
                 new LambdaConstructor(scope, "ImporterTopLevel", 0, ImporterTopLevel::js_construct);
 
@@ -84,7 +84,7 @@ public class ImporterTopLevel extends TopLevel {
             scope.put("importPackage", scope, proto.get("importPackage", proto));
         }
 
-        ScriptableObject.defineProperty(scope, "JavaImporter", ctor, DONTENUM);
+        return ctor;
     }
 
     public void initStandardObjects(Context cx, boolean sealed) {
@@ -96,7 +96,8 @@ public class ImporterTopLevel extends TopLevel {
         // this obj. Since this is scope as well, it would not allow
         // to add variables.
 
-        init(cx, this, sealed, true);
+        var ctor = init(cx, this, sealed, true);
+        ScriptableObject.defineProperty(this, "JavaImporter", ctor, DONTENUM);
 
         // delete "constructor" defined by exportAsJSClass so "constructor"
         // name would refer to Object.constructor
