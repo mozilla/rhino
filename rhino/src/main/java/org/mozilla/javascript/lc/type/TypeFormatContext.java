@@ -6,42 +6,53 @@ import org.mozilla.javascript.lc.type.impl.ClassNameFormatContext;
  * @author ZZZank
  */
 public interface TypeFormatContext {
-    /// Full feature formatting context
-    ///
-    /// | Type | Full representation | Representation using this context |
-    /// | - | - | - |
-    /// | Class | java.lang.String | java.lang.String |
-    /// | Nested Class | Entry (in java.util.Map) | java.util.Map$Entry |
-    /// | Array | java.lang.String[] | java.lang.String[] |
-    /// | Parameterized | java.lang.List<java.lang.String> | java.util.List<java.lang.String> |
-    /// | Variable | T extends java.lang.String | T extends java.lang.String |
-    /// | [TypeInfo#NONE] | (No standard representation) | ? |
+    /**
+     * Full feature formatting context
+     *
+     * <table>
+     *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
+     *   <tr><td>Class</td><td>java.lang.String</td><td>java.lang.String</td></tr>
+     *   <tr><td>Nested Class</td><td>Entry (in java.util.Map)</td><td>java.util.Map$Entry</td></tr>
+     *   <tr><td>Array</td><td>java.lang.String[]</td><td>java.lang.String[]</td></tr>
+     *   <tr><td>Parameterized</td><td>java.lang.List&lt;java.lang.String&gt;</td><td>java.util.List&lt;java.lang.String&gt;</td></tr>
+     *   <tr><td>Variable</td><td>T extends java.lang.String</td><td>T extends java.lang.String</td></tr>
+     *   <tr><td>{@link TypeInfo#NONE}</td><td>(No standard representation)</td><td>?</td></tr>
+     * </table>
+     */
     TypeFormatContext DEFAULT = Class::getName;
-    /// Full feature formatting context with class name simplified
-    ///
-    /// | Type | Full representation | Representation using this context |
-    /// | - | - | - |
-    /// | Class | java.lang.String | String |
-    /// | Nested Class | Entry (in java.util.Map) | Entry |
-    /// | Array | java.lang.String[] | String[] |
-    /// | Parameterized | java.lang.List<java.lang.String> | List\<String> |
-    /// | Variable | T extends java.lang.String | T extends String |
-    /// | [TypeInfo#NONE] | (No standard representation) | ? |
-    ///
-    /// @see Class#getSimpleName()
+
+    /**
+     * Full feature formatting context with class name simplified
+     *
+     * <table>
+     *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
+     *   <tr><td>Class</td><td>java.lang.String</td><td>String</td></tr>
+     *   <tr><td>Nested Class</td><td>Entry (in java.util.Map)</td><td>Entry</td></tr>
+     *   <tr><td>Array</td><td>java.lang.String[]</td><td>String[]</td></tr>
+     *   <tr><td>Parameterized</td><td>java.lang.List&lt;java.lang.String&gt;</td><td>List&lt;String&gt;</td></tr>
+     *   <tr><td>Variable</td><td>T extends java.lang.String</td><td>T extends String</td></tr>
+     *   <tr><td>{@link TypeInfo#NONE}</td><td>(No standard representation)</td><td>?</td></tr>
+     * </table>
+     *
+     * @see Class#getSimpleName()
+     */
     TypeFormatContext SIMPLE = Class::getSimpleName;
-    /// Formatting context that formats every type as the result of `type.asClass().getName()`
-    ///
-    /// | Type | Full representation | Representation using this context |
-    /// | - | - | - |
-    /// | Class | java.lang.String | java.lang.String |
-    /// | Nested Class | Entry (in java.util.Map) | java.util.Map$Entry |
-    /// | Array | java.lang.String[] | [Ljava.lang.String; |
-    /// | Parameterized | java.lang.List<java.lang.String> | java.util.List |
-    /// | Variable | T extends java.lang.String | java.lang.String |
-    /// | [TypeInfo#NONE] | (No standard representation) | java.lang.Object |
-    ///
-    /// @see Class#getName()
+
+    /**
+     * Formatting context that formats every type as the result of {@code type.asClass().getName()}
+     *
+     * <table>
+     *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
+     *   <tr><td>Class</td><td>java.lang.String</td><td>java.lang.String</td></tr>
+     *   <tr><td>Nested Class</td><td>Entry (in java.util.Map)</td><td>java.util.Map$Entry</td></tr>
+     *   <tr><td>Array</td><td>java.lang.String[]</td><td>[Ljava.lang.String;</td></tr>
+     *   <tr><td>Parameterized</td><td>java.lang.List&lt;java.lang.String&gt;</td><td>java.util.List</td></tr>
+     *   <tr><td>Variable</td><td>T extends java.lang.String</td><td>java.lang.String</td></tr>
+     *   <tr><td>{@link TypeInfo#NONE}</td><td>(No standard representation)</td><td>java.lang.Object</td></tr>
+     * </table>
+     *
+     * @see Class#getName()
+     */
     TypeFormatContext CLASS_NAME = new ClassNameFormatContext();
 
     String getClassName(Class<?> c);
