@@ -17,7 +17,7 @@ package org.mozilla.javascript;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-public class NativeJavaTopPackage extends NativeJavaPackage implements Function, IdFunctionCall {
+public class NativeJavaTopPackage extends NativeJavaPackage implements Function {
     private static final long serialVersionUID = -1455787259477709999L;
 
     // we know these are packages so we can skip the class check
@@ -77,8 +77,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         }
 
         // getClass implementation
-        IdFunctionObject getClass =
-                new IdFunctionObject(top, FTAG, Id_getClass, "getClass", 1, scope);
+        var getClass = new LambdaFunction(top, "getClass", 1, top::js_getClass);
 
         // We want to get a real alias, and not a distinct JavaPackage
         // with the same packageName, so that we share classes and top
@@ -96,25 +95,15 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         if (sealed) {
             getClass.sealObject();
         }
-        getClass.exportAsScopeProperty();
+        global.defineProperty("getClass", getClass, ScriptableObject.DONTENUM);
         global.defineProperty("Packages", top, ScriptableObject.DONTENUM);
         for (int i = 0; i < topNames.length; i++) {
             global.defineProperty(topNames[i], topPackages[i], ScriptableObject.DONTENUM);
         }
     }
 
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (f.hasTag(FTAG)) {
-            if (f.methodId() == Id_getClass) {
-                return js_getClass(cx, scope, args);
-            }
-        }
-        throw f.unknown();
-    }
-
-    private Scriptable js_getClass(Context cx, Scriptable scope, Object[] args) {
+    private Scriptable js_getClass(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length > 0 && args[0] instanceof Wrapper) {
             Scriptable result = this;
             Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();
@@ -135,7 +124,4 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         }
         throw Context.reportRuntimeErrorById("msg.not.java.obj");
     }
-
-    private static final Object FTAG = "JavaTopPackage";
-    private static final int Id_getClass = 1;
 }
