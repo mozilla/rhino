@@ -88,17 +88,17 @@ public interface TypeFormatContext {
     default void appendParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
         append(builder, type.rawType(), true);
 
-        builder.append('<');
         var iterator = type.params().iterator();
         if (iterator.hasNext()) {
+            builder.append('<');
             append(builder, iterator.next(), true);
             while (iterator.hasNext()) {
                 builder.append(',');
                 builder.append(' ');
                 append(builder, iterator.next(), true);
             }
+            builder.append('>');
         }
-        builder.append('>');
     }
 
     default void appendVariable(StringBuilder builder, VariableTypeInfo type) {

@@ -14,7 +14,7 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
 /**
  * @author ZZZank
  */
-public class TypeFormatContextTest {
+public class TypeFormatContextTest<T> {
 
     @Test
     public void defaultContext() throws Exception {
@@ -97,7 +97,7 @@ public class TypeFormatContextTest {
     }
 
     @SuppressWarnings("unused")
-    public interface TestCases {
+    interface TestCases {
         static Map<TypeFormatContext, String> clazz(String ignored) {
             return Map.of(
                     TypeFormatContext.DEFAULT, "java.lang.String",
@@ -147,5 +147,19 @@ public class TypeFormatContextTest {
                     TypeFormatContext.SIMPLE, "Map<K, Number>",
                     TypeFormatContext.CLASS_NAME, "java.util.Map");
         }
+
+        static <K> Map<TypeFormatContext, String> outerParameterized(
+                TypeFormatContextTest<String>.OwnerTypeTestCase ignored) {
+            return Map.of(
+                    TypeFormatContext.DEFAULT,
+                            "org.mozilla.javascript.tests.type_info.TypeFormatContextTest$OwnerTypeTestCase",
+                    TypeFormatContext.SIMPLE, "OwnerTypeTestCase",
+                    TypeFormatContext.CLASS_NAME,
+                            "org.mozilla.javascript.tests.type_info.TypeFormatContextTest$OwnerTypeTestCase");
+        }
+    }
+
+    class OwnerTypeTestCase {
+        T t;
     }
 }
