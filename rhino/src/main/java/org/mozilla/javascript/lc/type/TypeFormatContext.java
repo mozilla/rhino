@@ -11,6 +11,7 @@ public interface TypeFormatContext {
     /// | Type | Full representation | Representation using this context |
     /// | - | - | - |
     /// | Class | java.lang.String | java.lang.String |
+    /// | Nested Class | Entry (in java.util.Map) | java.util.Map$Entry |
     /// | Array | java.lang.String[] | java.lang.String[] |
     /// | Parameterized | java.lang.List<java.lang.String> | java.util.List<java.lang.String> |
     /// | Variable | T extends java.lang.String | T extends java.lang.String |
@@ -21,8 +22,9 @@ public interface TypeFormatContext {
     /// | Type | Full representation | Representation using this context |
     /// | - | - | - |
     /// | Class | java.lang.String | String |
+    /// | Nested Class | Entry (in java.util.Map) | Entry |
     /// | Array | java.lang.String[] | String[] |
-    /// | Parameterized | java.lang.List<java.lang.String> | List<String> |
+    /// | Parameterized | java.lang.List<java.lang.String> | List\<String> |
     /// | Variable | T extends java.lang.String | T extends String |
     /// | [TypeInfo#NONE] | (No standard representation) | ? |
     ///
@@ -33,10 +35,13 @@ public interface TypeFormatContext {
     /// | Type | Full representation | Representation using this context |
     /// | - | - | - |
     /// | Class | java.lang.String | java.lang.String |
+    /// | Nested Class | Entry (in java.util.Map) | java.util.Map$Entry |
     /// | Array | java.lang.String[] | [Ljava.lang.String; |
     /// | Parameterized | java.lang.List<java.lang.String> | java.util.List |
     /// | Variable | T extends java.lang.String | java.lang.String |
     /// | [TypeInfo#NONE] | (No standard representation) | java.lang.Object |
+    ///
+    /// @see Class#getName()
     TypeFormatContext CLASS_NAME = new ClassNameFormatContext();
 
     String getClassName(Class<?> c);

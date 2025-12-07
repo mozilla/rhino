@@ -105,6 +105,13 @@ public class TypeFormatContextTest<T> {
                     TypeFormatContext.CLASS_NAME, "java.lang.String");
         }
 
+        static Map<TypeFormatContext, String> nested(Map.Entry<?, ?> ignored) {
+            return Map.of(
+                    TypeFormatContext.DEFAULT, "java.util.Map$Entry<?, ?>",
+                    TypeFormatContext.SIMPLE, "Entry<?, ?>",
+                    TypeFormatContext.CLASS_NAME, "java.util.Map$Entry");
+        }
+
         static Map<TypeFormatContext, String> array(Number[] ignored) {
             return Map.of(
                     TypeFormatContext.DEFAULT, "java.lang.Number[]",
