@@ -80,7 +80,9 @@ public interface TypeFormatContext {
      *
      * @param builder Formatted string of {@code type} will be pushed to this builder
      * @param type The type to be formatted
-     * @param declaring {@code true} if the context should format the result as if the type is being declared instead of being used. For example, in {@code E extends Enum<T>}, this param is {@code true} for the first E, and {@code false} for the second, nested E
+     * @param declaring {@code true} if the context should format the result as if the type is being
+     *     declared instead of being used. For example, in {@code E extends Enum<T>}, this param is
+     *     {@code true} for the first E, and {@code false} for the second, nested E
      */
     default void append(StringBuilder builder, TypeInfo type, boolean declaring) {
         if (type == TypeInfo.NONE) {
@@ -121,7 +123,9 @@ public interface TypeFormatContext {
     }
 
     /**
-     * @param declaring {@code true} if the context should format the result as if the type is being declared instead of being used. For example, in {@code E extends Enum<T>}, {@code declaring} is {@code true} for the first E, and {@code false} for the second, nested E
+     * @param declaring {@code true} if the context should format the result as if the type is being
+     *     declared instead of being used. For example, in {@code E extends Enum<T>}, {@code
+     *     declaring} is {@code true} for the first E, and {@code false} for the second, nested E
      */
     default void appendVariable(StringBuilder builder, VariableTypeInfo type, boolean declaring) {
         builder.append(type.name());
