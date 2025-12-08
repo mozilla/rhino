@@ -6,7 +6,6 @@ package org.mozilla.javascript.testutils;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
