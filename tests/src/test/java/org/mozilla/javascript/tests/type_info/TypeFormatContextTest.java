@@ -17,75 +17,10 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
 public class TypeFormatContextTest<T> {
 
     @Test
-    public void defaultContext() throws Exception {
-        var cx = TypeFormatContext.DEFAULT;
-        for (var method : collectTestMethods()) {
-            var rawType = method.getGenericParameterTypes()[0];
-            var formatted = TypeInfoFactory.GLOBAL.create(rawType).toString(cx);
-
-            @SuppressWarnings("unchecked")
-            var expectedByContext =
-                    (Map<TypeFormatContext, String>) method.invoke(null, new Object[] {null});
-            Assertions.assertEquals(
-                    expectedByContext.get(cx),
-                    formatted,
-                    () ->
-                            String.format(
-                                    "Testing type '%s' on context 'DEFAULT'\nExpected: %s\nActual: '%s'",
-                                    rawType, expectedByContext.get(cx), formatted));
-        }
-    }
-
-    @Test
-    public void simpleContext() throws Exception {
-        var cx = TypeFormatContext.SIMPLE;
-        for (var method : collectTestMethods()) {
-            var rawType = method.getGenericParameterTypes()[0];
-            var formatted = TypeInfoFactory.GLOBAL.create(rawType).toString(cx);
-
-            @SuppressWarnings("unchecked")
-            var expectedByContext =
-                    (Map<TypeFormatContext, String>) method.invoke(null, new Object[] {null});
-            Assertions.assertEquals(
-                    expectedByContext.get(cx),
-                    formatted,
-                    () ->
-                            String.format(
-                                    "Testing type '%s' on context 'SIMPLE'\nExpected: %s\nActual: '%s'",
-                                    rawType, expectedByContext.get(cx), formatted));
-        }
-    }
-
-    @Test
-    public void classNameContext() throws Exception {
-        var cx = TypeFormatContext.CLASS_NAME;
-        for (var method : collectTestMethods()) {
-            var rawType = method.getGenericParameterTypes()[0];
-            var formatted = TypeInfoFactory.GLOBAL.create(rawType).toString(cx);
-
-            @SuppressWarnings("unchecked")
-            var expectedByContext =
-                    (Map<TypeFormatContext, String>) method.invoke(null, new Object[] {null});
-            Assertions.assertEquals(
-                    expectedByContext.get(cx),
-                    formatted,
-                    () ->
-                            String.format(
-                                    "Testing type '%s' on context 'CLASS_NAME'\nExpected: %s\nActual: '%s'",
-                                    rawType, expectedByContext.get(cx), formatted));
-        }
-    }
-
-    private Iterable<Method> collectTestMethods() {
-        return Arrays.stream(TestCases.class.getDeclaredMethods())
-                        .filter(method -> !method.isSynthetic())
-                        .filter(
-                                method -> {
-                                    var modifier = method.getModifiers();
-                                    return Modifier.isPublic(modifier)
-                                            && Modifier.isStatic(modifier);
-                                })
-                ::iterator;
+    public void test() throws Exception {
+        testImpl(TypeFormatContext.DEFAULT, "DEFAULT");
+        testImpl(TypeFormatContext.SIMPLE, "SIMPLE");
+        testImpl(TypeFormatContext.CLASS_NAME, "CLASS_NAME");
     }
 
     @Test
@@ -93,80 +28,96 @@ public class TypeFormatContextTest<T> {
         Assertions.assertEquals("?", TypeInfo.NONE.toString(TypeFormatContext.DEFAULT));
         Assertions.assertEquals("?", TypeInfo.NONE.toString(TypeFormatContext.SIMPLE));
         Assertions.assertEquals(
-                "java.lang.Object", TypeInfo.NONE.toString(TypeFormatContext.CLASS_NAME));
+            "java.lang.Object", TypeInfo.NONE.toString(TypeFormatContext.CLASS_NAME));
+    }
+
+    private static void testImpl(TypeFormatContext context, String contextName) throws Exception {
+        Iterable<Method> methods = Arrays.stream(TestCases.class.getDeclaredMethods())
+            .filter(method1 -> !method1.isSynthetic())
+            .filter(
+                method1 -> {
+                    var modifier = method1.getModifiers();
+                    return Modifier.isPublic(modifier)
+                        && Modifier.isStatic(modifier);
+                })
+            ::iterator;
+        for (var method : methods) {
+            var rawType = method.getGenericParameterTypes()[0];
+            var type = TypeInfoFactory.GLOBAL.create(rawType);
+
+            @SuppressWarnings("unchecked")
+            var expectedByContext =
+                (Map<TypeFormatContext, String>) method.invoke(null, type.createDefaultValue());
+            var formatted = type.toString(context);
+            Assertions.assertEquals(
+                expectedByContext.get(context),
+                formatted,
+                () ->
+                    String.format(
+                        "Testing type '%s' on context '%s'\nExpected: %s\nActual: '%s'",
+                        rawType, contextName, expectedByContext.get(context), formatted));
+        }
     }
 
     @SuppressWarnings("unused")
     interface TestCases {
         static Map<TypeFormatContext, String> clazz(String ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "java.lang.String",
-                    TypeFormatContext.SIMPLE, "String",
-                    TypeFormatContext.CLASS_NAME, "java.lang.String");
+            return buildResult("java.lang.String", "String", "java.lang.String");
+        }
+
+        static Map<TypeFormatContext, String> primitive(char ignored) {
+            return buildResult("char", "char", "char");
         }
 
         static Map<TypeFormatContext, String> nested(Map.Entry<?, ?> ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "java.util.Map$Entry<?, ?>",
-                    TypeFormatContext.SIMPLE, "Entry<?, ?>",
-                    TypeFormatContext.CLASS_NAME, "java.util.Map$Entry");
+            return buildResult("java.util.Map$Entry<?, ?>", "Entry<?, ?>", "java.util.Map$Entry");
         }
 
         static Map<TypeFormatContext, String> array(Number[] ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "java.lang.Number[]",
-                    TypeFormatContext.SIMPLE, "Number[]",
-                    TypeFormatContext.CLASS_NAME, "[Ljava.lang.Number;");
+            return buildResult("java.lang.Number[]", "Number[]", "[Ljava.lang.Number;");
+        }
+
+        static Map<TypeFormatContext, String> primitiveArray(char[] ignored) {
+            return buildResult("char[]", "char[]", "[C");
         }
 
         static <T> Map<TypeFormatContext, String> variable(T ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "T",
-                    TypeFormatContext.SIMPLE, "T",
-                    TypeFormatContext.CLASS_NAME, "java.lang.Object");
+            return buildResult("T", "T", "java.lang.Object");
         }
 
         static <T extends Number> Map<TypeFormatContext, String> boundedVariable(T ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "T extends java.lang.Number",
-                    TypeFormatContext.SIMPLE, "T extends Number",
-                    TypeFormatContext.CLASS_NAME, "java.lang.Number");
+            return buildResult("T extends java.lang.Number", "T extends Number", "java.lang.Number");
         }
 
         static <T extends Enum<T>> Map<TypeFormatContext, String> recursivelyBoundedVariable(
                 T ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "T extends java.lang.Enum<T>",
-                    TypeFormatContext.SIMPLE, "T extends Enum<T>",
-                    TypeFormatContext.CLASS_NAME, "java.lang.Enum");
+            return buildResult("T extends java.lang.Enum<T>", "T extends Enum<T>", "java.lang.Enum");
         }
 
         static Map<TypeFormatContext, String> parameterized(List<String> ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "java.util.List<java.lang.String>",
-                    TypeFormatContext.SIMPLE, "List<String>",
-                    TypeFormatContext.CLASS_NAME, "java.util.List");
+            return buildResult("java.util.List<java.lang.String>", "List<String>", "java.util.List");
         }
 
         static <K> Map<TypeFormatContext, String> parameterized(Map<K, Number> ignored) {
-            return Map.of(
-                    TypeFormatContext.DEFAULT, "java.util.Map<K, java.lang.Number>",
-                    TypeFormatContext.SIMPLE, "Map<K, Number>",
-                    TypeFormatContext.CLASS_NAME, "java.util.Map");
+            return buildResult("java.util.Map<K, java.lang.Number>", "Map<K, Number>", "java.util.Map");
         }
 
         static <K> Map<TypeFormatContext, String> outerParameterized(
                 TypeFormatContextTest<String>.OwnerTypeTestCase ignored) {
+            return buildResult("org.mozilla.javascript.tests.type_info.TypeFormatContextTest$OwnerTypeTestCase", "OwnerTypeTestCase", "org.mozilla.javascript.tests.type_info.TypeFormatContextTest$OwnerTypeTestCase");
+        }
+
+        private static Map<TypeFormatContext, String> buildResult(String defaultContext, String simpleContext, String classNameContext) {
             return Map.of(
-                    TypeFormatContext.DEFAULT,
-                            "org.mozilla.javascript.tests.type_info.TypeFormatContextTest$OwnerTypeTestCase",
-                    TypeFormatContext.SIMPLE, "OwnerTypeTestCase",
-                    TypeFormatContext.CLASS_NAME,
-                            "org.mozilla.javascript.tests.type_info.TypeFormatContextTest$OwnerTypeTestCase");
+                TypeFormatContext.DEFAULT, defaultContext,
+                TypeFormatContext.SIMPLE, simpleContext,
+                TypeFormatContext.CLASS_NAME, classNameContext
+            );
         }
     }
 
     class OwnerTypeTestCase {
+        @SuppressWarnings("unused")
         T t;
     }
 }

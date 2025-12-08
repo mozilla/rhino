@@ -12,8 +12,10 @@ public interface TypeFormatContext {
      * <table>
      *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
      *   <tr><td>Class</td><td>java.lang.String</td><td>java.lang.String</td></tr>
+     *   <tr><td>Primitive Class</td><td>char</td><td>char</td></tr>
      *   <tr><td>Nested Class</td><td>Entry (in java.util.Map)</td><td>java.util.Map$Entry</td></tr>
      *   <tr><td>Array</td><td>java.lang.String[]</td><td>java.lang.String[]</td></tr>
+     *   <tr><td>Primitive Array</td><td>char[]</td><td>char[]</td></tr>
      *   <tr><td>Parameterized</td><td>java.lang.List&lt;java.lang.String&gt;</td><td>java.util.List&lt;java.lang.String&gt;</td></tr>
      *   <tr><td>Variable</td><td>T extends java.lang.String</td><td>T extends java.lang.String</td></tr>
      *   <tr><td>{@link TypeInfo#NONE}</td><td>(No standard representation)</td><td>?</td></tr>
@@ -27,8 +29,10 @@ public interface TypeFormatContext {
      * <table>
      *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
      *   <tr><td>Class</td><td>java.lang.String</td><td>String</td></tr>
+     *   <tr><td>Primitive Class</td><td>char</td><td>char</td></tr>
      *   <tr><td>Nested Class</td><td>Entry (in java.util.Map)</td><td>Entry</td></tr>
      *   <tr><td>Array</td><td>java.lang.String[]</td><td>String[]</td></tr>
+     *   <tr><td>Primitive Array</td><td>char[]</td><td>char[]</td></tr>
      *   <tr><td>Parameterized</td><td>java.lang.List&lt;java.lang.String&gt;</td><td>List&lt;String&gt;</td></tr>
      *   <tr><td>Variable</td><td>T extends java.lang.String</td><td>T extends String</td></tr>
      *   <tr><td>{@link TypeInfo#NONE}</td><td>(No standard representation)</td><td>?</td></tr>
@@ -44,8 +48,10 @@ public interface TypeFormatContext {
      * <table>
      *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
      *   <tr><td>Class</td><td>java.lang.String</td><td>java.lang.String</td></tr>
+     *   <tr><td>Primitive Class</td><td>char</td><td>char</td></tr>
      *   <tr><td>Nested Class</td><td>Entry (in java.util.Map)</td><td>java.util.Map$Entry</td></tr>
      *   <tr><td>Array</td><td>java.lang.String[]</td><td>[Ljava.lang.String;</td></tr>
+     *   <tr><td>Primitive Array</td><td>char[]</td><td>[C</td></tr>
      *   <tr><td>Parameterized</td><td>java.lang.List&lt;java.lang.String&gt;</td><td>java.util.List</td></tr>
      *   <tr><td>Variable</td><td>T extends java.lang.String</td><td>java.lang.String</td></tr>
      *   <tr><td>{@link TypeInfo#NONE}</td><td>(No standard representation)</td><td>java.lang.Object</td></tr>
