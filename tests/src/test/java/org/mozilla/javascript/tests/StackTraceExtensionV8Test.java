@@ -12,6 +12,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
+import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class StackTraceExtensionV8Test {
@@ -27,17 +28,7 @@ public class StackTraceExtensionV8Test {
 
     private void testTraces(boolean interpretedMode) {
         final ContextFactory factory =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        switch (featureIndex) {
-                            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-                                return true;
-                            default:
-                                return super.hasFeature(cx, featureIndex);
-                        }
-                    }
-                };
+                Utils.contextFactoryWithFeatures(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR);
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_1_8);

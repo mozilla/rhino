@@ -13,6 +13,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
 @RunWith(Parameterized.class)
@@ -34,15 +35,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
     @Test
     public void runDoctest() {
         ContextFactory contextFactory =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        if (featureIndex == Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE) {
-                            return true;
-                        }
-                        return super.hasFeature(cx, featureIndex);
-                    }
-                };
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE);
 
         try (Context context = contextFactory.enterContext()) {
             context.setInterpretedMode(interpretedMode);

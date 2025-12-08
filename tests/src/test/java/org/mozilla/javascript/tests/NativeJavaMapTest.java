@@ -21,6 +21,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaMethod;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
@@ -29,15 +30,7 @@ public class NativeJavaMapTest {
     protected final Global global = new Global();
 
     private final ContextFactory contextFactoryWithMapAccess =
-            new ContextFactory() {
-                @Override
-                protected boolean hasFeature(Context cx, int featureIndex) {
-                    if (featureIndex == Context.FEATURE_ENABLE_JAVA_MAP_ACCESS) {
-                        return true;
-                    }
-                    return super.hasFeature(cx, featureIndex);
-                }
-            };
+            Utils.contextFactoryWithFeatures(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS);
 
     public NativeJavaMapTest() {
         global.init(ContextFactory.getGlobal());
