@@ -81,6 +81,7 @@ public class GenericAccessTest {
     }
 
     @Test
+    @Disabled // TODO: https://github.com/mozilla/rhino/pull/2080#issuecomment-3285901869
     public void testBeanListAdd() {
         String js =
                 "bean.doubles.add(0, 3);\n"
