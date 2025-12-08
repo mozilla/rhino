@@ -20,7 +20,7 @@ public class ClassNameFormatContext implements TypeFormatContext {
     }
 
     @Override
-    public void append(StringBuilder builder, TypeInfo type, boolean isComponent) {
+    public void append(StringBuilder builder, TypeInfo type, boolean declaring) {
         builder.append(type.asClass().getName());
     }
 
@@ -30,7 +30,7 @@ public class ClassNameFormatContext implements TypeFormatContext {
     }
 
     @Override
-    public void appendVariable(StringBuilder builder, VariableTypeInfo type) {
+    public void appendVariable(StringBuilder builder, VariableTypeInfo type, boolean declaring) {
         append(builder, type.mainBound());
     }
 

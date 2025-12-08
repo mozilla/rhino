@@ -58,7 +58,7 @@ public interface TypeFormatContext {
     String getClassName(Class<?> c);
 
     /**
-     * Format a type and push the result to a {@link StringBuilder}.
+     * Format a type and push the result to provided {@link StringBuilder}.
      *
      * @implNote Implementations are encouraged to override {@link #append(StringBuilder, TypeInfo,
      *     boolean)} , instead of this method
@@ -66,29 +66,23 @@ public interface TypeFormatContext {
      * @param type The type to be formatted
      */
     default void append(StringBuilder builder, TypeInfo type) {
-        append(builder, type, false);
+        append(builder, type, true);
     }
 
     /**
-     * This method is for overriding. Users are encouraged to use {@link #append(StringBuilder,
-     * TypeInfo)} instead of this method.
+     * Format a type and push the result to provided {@link StringBuilder}.
      *
      * @param builder Formatted string of {@code type} will be pushed to this builder
      * @param type The type to be formatted
-     * @param isComponent {@code true} if the {@code type} is a component of another type. For
-     *     example, {@code T} in {@code T[]}, and {@code Number} in {@code Map<K, Number>}
+     * @param declaring {@code true} if the context should format the result as if the type is being declared instead of being used. For example, in {@code E extends Enum<T>}, this param is {@code true} for the first E, and {@code false} for the second, nested E
      */
-    default void append(StringBuilder builder, TypeInfo type, boolean isComponent) {
+    default void append(StringBuilder builder, TypeInfo type, boolean declaring) {
         if (type == TypeInfo.NONE) {
             builder.append(getFormattedNone());
         } else if (type.isArray()) {
             appendArray(builder, type);
         } else if (type instanceof VariableTypeInfo) {
-            if (isComponent) {
-                builder.append(((VariableTypeInfo) type).name());
-            } else {
-                appendVariable(builder, (VariableTypeInfo) type);
-            }
+            appendVariable(builder, (VariableTypeInfo) type, declaring);
         } else if (type instanceof ParameterizedTypeInfo) {
             appendParameterized(builder, (ParameterizedTypeInfo) type);
         } else {
@@ -96,33 +90,41 @@ public interface TypeFormatContext {
         }
     }
 
+    /**
+     * @param type {@link TypeInfo#isArray()} will always be {@code true} for this object
+     */
     default void appendArray(StringBuilder builder, TypeInfo type) {
-        append(builder, type.getComponentType(), true);
+        append(builder, type.getComponentType(), false);
         builder.append('[').append(']');
     }
 
     default void appendParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
-        append(builder, type.rawType(), true);
+        append(builder, type.rawType(), false);
 
         var iterator = type.params().iterator();
         if (iterator.hasNext()) {
             builder.append('<');
-            append(builder, iterator.next(), true);
+            append(builder, iterator.next(), false);
             while (iterator.hasNext()) {
                 builder.append(',');
                 builder.append(' ');
-                append(builder, iterator.next(), true);
+                append(builder, iterator.next(), false);
             }
             builder.append('>');
         }
     }
 
-    default void appendVariable(StringBuilder builder, VariableTypeInfo type) {
+    /**
+     * @param declaring {@code true} if the context should format the result as if the type is being declared instead of being used. For example, in {@code E extends Enum<T>}, {@code declaring} is {@code true} for the first E, and {@code false} for the second, nested E
+     */
+    default void appendVariable(StringBuilder builder, VariableTypeInfo type, boolean declaring) {
         builder.append(type.name());
-        var mainBound = type.mainBound();
-        if (!mainBound.isObjectExact()) {
-            builder.append(" extends ");
-            append(builder, mainBound, true);
+        if (declaring) {
+            var mainBound = type.mainBound();
+            if (!mainBound.isObjectExact()) {
+                builder.append(" extends ");
+                append(builder, mainBound, false);
+            }
         }
     }
 
