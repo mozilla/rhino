@@ -25,42 +25,45 @@ final class NativeMath extends ScriptableObject {
 
         math.defineProperty("toSource", "Math", DONTENUM | READONLY | PERMANENT);
 
-        math.defineBuiltinProperty(scope, "abs", 1, NativeMath::abs);
-        math.defineBuiltinProperty(scope, "acos", 1, NativeMath::acos);
-        math.defineBuiltinProperty(scope, "acosh", 1, NativeMath::acosh);
-        math.defineBuiltinProperty(scope, "asin", 1, NativeMath::asin);
-        math.defineBuiltinProperty(scope, "asinh", 1, NativeMath::asinh);
-        math.defineBuiltinProperty(scope, "atan", 1, NativeMath::atan);
-        math.defineBuiltinProperty(scope, "atanh", 1, NativeMath::atanh);
-        math.defineBuiltinProperty(scope, "atan2", 2, NativeMath::atan2);
-        math.defineBuiltinProperty(scope, "cbrt", 1, NativeMath::cbrt);
-        math.defineBuiltinProperty(scope, "ceil", 1, NativeMath::ceil);
-        math.defineBuiltinProperty(scope, "clz32", 1, NativeMath::clz32);
-        math.defineBuiltinProperty(scope, "cos", 1, NativeMath::cos);
-        math.defineBuiltinProperty(scope, "cosh", 1, NativeMath::cosh);
-        math.defineBuiltinProperty(scope, "exp", 1, NativeMath::exp);
-        math.defineBuiltinProperty(scope, "expm1", 1, NativeMath::expm1);
-        math.defineBuiltinProperty(scope, "f16round", 1, NativeMath::f16round);
-        math.defineBuiltinProperty(scope, "floor", 1, NativeMath::floor);
-        math.defineBuiltinProperty(scope, "fround", 1, NativeMath::fround);
-        math.defineBuiltinProperty(scope, "hypot", 2, NativeMath::hypot);
-        math.defineBuiltinProperty(scope, "imul", 2, NativeMath::imul);
-        math.defineBuiltinProperty(scope, "log", 1, NativeMath::log);
-        math.defineBuiltinProperty(scope, "log1p", 1, NativeMath::log1p);
-        math.defineBuiltinProperty(scope, "log10", 1, NativeMath::log10);
-        math.defineBuiltinProperty(scope, "log2", 1, NativeMath::log2);
-        math.defineBuiltinProperty(scope, "max", 2, NativeMath::max);
-        math.defineBuiltinProperty(scope, "min", 2, NativeMath::min);
-        math.defineBuiltinProperty(scope, "pow", 2, NativeMath::pow);
-        math.defineBuiltinProperty(scope, "random", 0, NativeMath::random);
-        math.defineBuiltinProperty(scope, "round", 1, NativeMath::round);
-        math.defineBuiltinProperty(scope, "sign", 1, NativeMath::sign);
-        math.defineBuiltinProperty(scope, "sin", 1, NativeMath::sin);
-        math.defineBuiltinProperty(scope, "sinh", 1, NativeMath::sinh);
-        math.defineBuiltinProperty(scope, "sqrt", 1, NativeMath::sqrt);
-        math.defineBuiltinProperty(scope, "tan", 1, NativeMath::tan);
-        math.defineBuiltinProperty(scope, "tanh", 1, NativeMath::tanh);
-        math.defineBuiltinProperty(scope, "trunc", 1, NativeMath::trunc);
+        math.defineProperty(scope, "abs", 1, NativeMath::abs, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "acos", 1, NativeMath::acos, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "acosh", 1, NativeMath::acosh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "asin", 1, NativeMath::asin, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "asinh", 1, NativeMath::asinh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "atan", 1, NativeMath::atan, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "atanh", 1, NativeMath::atanh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "atan2", 2, NativeMath::atan2, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "cbrt", 1, NativeMath::cbrt, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "ceil", 1, NativeMath::ceil, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "clz32", 1, NativeMath::clz32, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "cos", 1, NativeMath::cos, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "cosh", 1, NativeMath::cosh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "exp", 1, NativeMath::exp, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "expm1", 1, NativeMath::expm1, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(
+                scope, "f16round", 1, NativeMath::f16round, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "floor", 1, NativeMath::floor, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "fround", 1, NativeMath::fround, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "hypot", 2, NativeMath::hypot, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "imul", 2, NativeMath::imul, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log", 1, NativeMath::log, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log1p", 1, NativeMath::log1p, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log10", 1, NativeMath::log10, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "log2", 1, NativeMath::log2, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "max", 2, NativeMath::max, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "min", 2, NativeMath::min, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "pow", 2, NativeMath::pow, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "random", 0, NativeMath::random, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "round", 1, NativeMath::round, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sign", 1, NativeMath::sign, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sin", 1, NativeMath::sin, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sinh", 1, NativeMath::sinh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "sqrt", 1, NativeMath::sqrt, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(
+                scope, "sumPrecise", 1, NativeMath::sumPrecise, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "tan", 1, NativeMath::tan, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "tanh", 1, NativeMath::tanh, DONTENUM, DONTENUM | READONLY);
+        math.defineProperty(scope, "trunc", 1, NativeMath::trunc, DONTENUM, DONTENUM | READONLY);
 
         math.defineProperty("E", Math.E, DONTENUM | READONLY | PERMANENT);
         math.defineProperty("PI", Math.PI, DONTENUM | READONLY | PERMANENT);
@@ -617,5 +620,141 @@ final class NativeMath extends ScriptableObject {
         double x = ScriptRuntime.toNumber(args, 0);
         x = ((x < 0.0) ? Math.ceil(x) : Math.floor(x));
         return ScriptRuntime.wrapNumber(x);
+    }
+
+    /**
+     * ES2026 Math.sumPrecise implementation. Phase 1: Array-like objects only.
+     *
+     * <p>Uses Shewchuk's algorithm for precise floating-point summation. Iterator support deferred
+     * to Phase 2 (requires Context-safe iterator from PR #2078).
+     *
+     * @param cx Current context (never stored)
+     * @param scope Current scope
+     * @param thisObj Math object
+     * @param args Arguments [items]
+     * @return Precise sum of numbers
+     */
+    private static Object sumPrecise(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (args.length == 0) {
+            throw ScriptRuntime.typeError(
+                    ScriptRuntime.getMessageById("msg.no.arg", "Math.sumPrecise"));
+        }
+
+        // Convert to object (per spec step 1)
+        Scriptable items = ScriptRuntime.toObject(cx, scope, args[0]);
+
+        // Phase 1: Array-like objects only
+        // TODO Phase 2: Add iterator support after PR #2078 (Context-safe IteratorLikeIterable)
+        if (!items.has("length", items)) {
+            throw ScriptRuntime.typeError(
+                    "Math.sumPrecise: array-like object required (iterator support coming in Phase 2)");
+        }
+
+        // Get length
+        long length = ScriptRuntime.toLength(items.get("length", items));
+
+        // Check length limit (per spec: count must not exceed 2^53)
+        if (length > (1L << 53)) {
+            throw ScriptRuntime.rangeError("Math.sumPrecise: array length exceeds maximum");
+        }
+
+        // Initialize state for Shewchuk's algorithm
+        double[] partials = new double[32]; // Initial capacity
+        int partialsSize = 0;
+
+        boolean hasPositiveInf = false;
+        boolean hasNegativeInf = false;
+        boolean allZeros = true;
+        boolean hasNegativeZero = false;
+
+        // Process array-like object
+        for (long i = 0; i < length; i++) {
+            if (!items.has((int) i, items)) {
+                continue; // Skip holes
+            }
+
+            Object element = items.get((int) i, items);
+
+            // Type check: must be Number (per spec)
+            if (!(element instanceof Number)) {
+                String type = ScriptRuntime.typeof(element);
+                throw ScriptRuntime.typeError(
+                        "Math.sumPrecise: all elements must be numbers, got " + type);
+            }
+
+            double x = ScriptRuntime.toNumber(element);
+
+            // Handle NaN (per spec: return NaN immediately)
+            if (Double.isNaN(x)) {
+                return ScriptRuntime.wrapNumber(Double.NaN);
+            }
+
+            // Track infinity states (per spec)
+            if (x == Double.POSITIVE_INFINITY) {
+                hasPositiveInf = true;
+            } else if (x == Double.NEGATIVE_INFINITY) {
+                hasNegativeInf = true;
+            } else if (x != 0.0) {
+                allZeros = false;
+            } else if (Double.doubleToRawLongBits(x) == Long.MIN_VALUE) {
+                hasNegativeZero = true;
+            }
+
+            // Shewchuk's algorithm for finite values
+            if (!Double.isInfinite(x)) {
+                int writeIdx = 0;
+                for (int j = 0; j < partialsSize; j++) {
+                    double y = partials[j];
+                    // Ensure |x| >= |y| for numerical stability
+                    if (Math.abs(x) < Math.abs(y)) {
+                        double temp = x;
+                        x = y;
+                        y = temp;
+                    }
+                    double hi = x + y;
+                    double lo = y - (hi - x);
+                    if (lo != 0.0) {
+                        partials[writeIdx++] = lo;
+                    }
+                    x = hi;
+                }
+                partialsSize = writeIdx;
+                if (x != 0.0) {
+                    // Grow array if needed
+                    if (partialsSize >= partials.length) {
+                        double[] newPartials = new double[partials.length * 2];
+                        System.arraycopy(partials, 0, newPartials, 0, partialsSize);
+                        partials = newPartials;
+                    }
+                    partials[partialsSize++] = x;
+                }
+            }
+        }
+
+        // Handle conflicting infinities (per spec: +∞ and -∞ → NaN)
+        if (hasPositiveInf && hasNegativeInf) {
+            return ScriptRuntime.wrapNumber(Double.NaN);
+        }
+        if (hasPositiveInf) {
+            return ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY);
+        }
+        if (hasNegativeInf) {
+            return ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY);
+        }
+
+        // Handle all zeros (per spec)
+        if (allZeros) {
+            // Empty input or all zeros: return -0 if any -0, else +0
+            return ScriptRuntime.wrapNumber(hasNegativeZero ? -0.0 : 0.0);
+        }
+
+        // Sum partials for final result
+        double sum = 0.0;
+        for (int i = 0; i < partialsSize; i++) {
+            sum += partials[i];
+        }
+
+        return ScriptRuntime.wrapNumber(sum);
     }
 }
