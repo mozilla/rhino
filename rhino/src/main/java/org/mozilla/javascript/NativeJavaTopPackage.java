@@ -69,36 +69,31 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function 
         top.setPrototype(getObjectPrototype(scope));
         top.setParentScope(scope);
 
-        for (int i = 0; i != commonPackages.length; i++) {
+        for (var packageParts : commonPackages) {
             NativeJavaPackage parent = top;
-            for (int j = 0; j != commonPackages[i].length; j++) {
-                parent = parent.forcePackage(commonPackages[i][j], scope);
+            for (var packagePart : packageParts) {
+                parent = parent.forcePackage(packagePart, scope);
             }
-        }
-
-        // getClass implementation
-        var getClass = new LambdaFunction(top, "getClass", 1, top::js_getClass);
-
-        // We want to get a real alias, and not a distinct JavaPackage
-        // with the same packageName, so that we share classes and top
-        // that are underneath.
-        String[] topNames = ScriptRuntime.getTopPackageNames();
-        NativeJavaPackage[] topPackages = new NativeJavaPackage[topNames.length];
-        for (int i = 0; i < topNames.length; i++) {
-            topPackages[i] = (NativeJavaPackage) top.get(topNames[i], top);
         }
 
         // It's safe to downcast here since initStandardObjects takes
         // a ScriptableObject.
         ScriptableObject global = (ScriptableObject) scope;
 
+        // getClass implementation
+        var getClass = new LambdaFunction(top, "getClass", 1, top::js_getClass);
         if (sealed) {
             getClass.sealObject();
         }
         global.defineProperty("getClass", getClass, ScriptableObject.DONTENUM);
+
         global.defineProperty("Packages", top, ScriptableObject.DONTENUM);
-        for (int i = 0; i < topNames.length; i++) {
-            global.defineProperty(topNames[i], topPackages[i], ScriptableObject.DONTENUM);
+
+        // We want to get a real alias, and not a distinct JavaPackage with the same packageName, so
+        // that we share classes and top that are underneath.
+        for (var topName : ScriptRuntime.getTopPackageNames()) {
+            var topPackage = (NativeJavaPackage) top.get(topName, top);
+            global.defineProperty(topName, topPackage, ScriptableObject.DONTENUM);
         }
     }
 
