@@ -86,7 +86,7 @@ final class NativeReflect extends ScriptableObject {
      * Reflect.construct (target, argumentsList[, newTarget])</a>
      */
     private static Scriptable construct(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         /*
          * 1. If IsConstructor(target) is false, throw a TypeError exception.
          * 2. If newTarget is not present, set newTarget to target.
@@ -311,7 +311,8 @@ final class NativeReflect extends ScriptableObject {
             if (descriptor != null) {
                 Object setter = descriptor.setter;
                 if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter).call(cx, scope, receiver, new Object[] {args[2]});
+                    ((Function) setter)
+                            .call(cx, (VarScope) scope, receiver, new Object[] {args[2]});
                     return true;
                 }
 

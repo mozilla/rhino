@@ -39,6 +39,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SerializableCallable;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
 
 /**
@@ -1252,7 +1253,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         Constructable constructable =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, this, defaultConstructor);
 
-        Scriptable newArray = constructable.construct(cx, scope, args);
+        Scriptable newArray = constructable.construct(cx, (VarScope) scope, args);
         if (newArray instanceof NativeTypedArrayView) {
             long len = ((NativeTypedArrayView<?>) newArray).validateAndGetLength();
             if (args.length == 1 && args[0] instanceof Number) {
@@ -1344,7 +1345,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return result;
     }
 
-    private static Object js_from(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_from(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (args.length < 1) {
             throw ScriptRuntime.typeErrorById("msg.missing.argument");
         }
@@ -1446,7 +1447,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return result;
     }
 
-    private static Object js_of(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_of(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (!AbstractEcmaObjectOperations.isConstructor(cx, thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.constructor.expected");
         }

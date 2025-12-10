@@ -314,13 +314,13 @@ final class NativeError extends ScriptableObject {
             if (message == NOT_FOUND) {
                 message = "";
             }
-            sb.append(ScriptRuntime.uneval(cx, scope, message));
+            sb.append(ScriptRuntime.uneval(cx, (VarScope) scope, message));
             if (fileName != NOT_FOUND || lineNumber != NOT_FOUND) {
                 sb.append(", ");
                 if (fileName == NOT_FOUND) {
                     fileName = "";
                 }
-                sb.append(ScriptRuntime.uneval(cx, scope, fileName));
+                sb.append(ScriptRuntime.uneval(cx, (VarScope) scope, fileName));
                 if (lineNumber != NOT_FOUND) {
                     int line = ScriptRuntime.toInt32(lineNumber);
                     if (line != 0) {

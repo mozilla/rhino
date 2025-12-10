@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -15,7 +15,7 @@ public class ThrowBenchmark {
     @State(Scope.Thread)
     public static class GeneratorState {
         Context cx;
-        Scriptable scope;
+        TopLevel scope;
 
         Function shallowThrow;
         Function mediumThrow;

@@ -18,6 +18,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Implements the require() function as defined by <a
@@ -173,7 +174,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (args == null || args.length < 1) {
             throw ScriptRuntime.throwError(cx, scope, "require() needs one argument");
         }
@@ -223,7 +224,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.throwError(cx, scope, "require() can not be invoked as a constructor");
     }
 

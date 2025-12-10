@@ -3414,7 +3414,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 outArgs, cx);
                 return null;
             }
-            Scriptable callerScope = frame.scope;
+            VarScope callerScope = frame.scope;
             // Iteratively reduce known function types: arrows, lambdas,
             // bound functions, call/apply, and no-such-method-handler in
             // order to make a best-effort to keep them in this interpreter

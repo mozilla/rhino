@@ -199,7 +199,7 @@ public class NativeSet extends ScriptableObject {
         for (Hashtable.Entry entry : entries) {
             Scriptable thisObj = ScriptRuntime.getThisForScope(f.getDeclarationScope(), arg2);
             final Hashtable.Entry e = entry;
-            f.call(cx, scope, thisObj, new Object[] {e.value, e.value, this});
+            f.call(cx, (VarScope) scope, thisObj, new Object[] {e.value, e.value, this});
         }
         return Undefined.instance;
     }
@@ -231,7 +231,7 @@ public class NativeSet extends ScriptableObject {
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
             for (Object val : it) {
                 final Object finalVal = val == Scriptable.NOT_FOUND ? Undefined.instance : val;
-                add.call(cx, scope, set, new Object[] {finalVal});
+                add.call(cx, (VarScope) scope, set, new Object[] {finalVal});
             }
         }
     }
@@ -317,7 +317,7 @@ public class NativeSet extends ScriptableObject {
                     ScriptRuntime.callIterator(
                             keysMethod.call(
                                     cx,
-                                    scope,
+                                    (VarScope) scope,
                                     ScriptableObject.ensureScriptable(otherObj),
                                     ScriptRuntime.emptyArgs),
                             cx,
@@ -380,7 +380,9 @@ public class NativeSet extends ScriptableObject {
         Callable keysMethod = (Callable) keysVal;
         Object iterator =
                 ScriptRuntime.callIterator(
-                        keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
+                        keysMethod.call(cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
+                        cx,
+                        scope);
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object key : it) {
                 result.js_add(key);
@@ -459,7 +461,7 @@ public class NativeSet extends ScriptableObject {
                     ScriptRuntime.callIterator(
                             keysMethod.call(
                                     cx,
-                                    scope,
+                                    (VarScope) scope,
                                     ScriptableObject.ensureScriptable(otherObj),
                                     ScriptRuntime.emptyArgs),
                             cx,
@@ -542,7 +544,9 @@ public class NativeSet extends ScriptableObject {
         // Add elements from other that are not in this
         Object iterator =
                 ScriptRuntime.callIterator(
-                        keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
+                        keysMethod.call(cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
+                        cx,
+                        scope);
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object key : it) {
                 if (js_has(key) != Boolean.TRUE) {
@@ -650,7 +654,9 @@ public class NativeSet extends ScriptableObject {
         Callable keysMethod = (Callable) keysVal;
         Object iterator =
                 ScriptRuntime.callIterator(
-                        keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
+                        keysMethod.call(cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
+                        cx,
+                        scope);
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object value : it) {
                 if (js_has(value) != Boolean.TRUE) {
@@ -715,7 +721,8 @@ public class NativeSet extends ScriptableObject {
             // Iterate through other
             Object iterator =
                     ScriptRuntime.callIterator(
-                            keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
+                            keysMethod.call(
+                                    cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
                             cx,
                             scope);
             try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
@@ -735,7 +742,11 @@ public class NativeSet extends ScriptableObject {
     private static Object callHas(
             Context cx, Scriptable scope, Object obj, Object hasMethod, Object key) {
         return ((Callable) hasMethod)
-                .call(cx, scope, ScriptableObject.ensureScriptable(obj), new Object[] {key});
+                .call(
+                        cx,
+                        (VarScope) scope,
+                        ScriptableObject.ensureScriptable(obj),
+                        new Object[] {key});
     }
 
     private static void validateSetLike(Object sizeVal, Object hasVal, Object keysVal) {
