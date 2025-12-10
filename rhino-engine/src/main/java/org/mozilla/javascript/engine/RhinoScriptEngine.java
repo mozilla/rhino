@@ -26,6 +26,7 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This is the implementation of the standard ScriptEngine interface for Rhino.
@@ -84,7 +85,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         this.builtins = new Builtins();
     }
 
-    private Scriptable initScope(Context cx, ScriptContext sc) throws ScriptException {
+    private VarScope initScope(Context cx, ScriptContext sc) throws ScriptException {
         configureContext(cx);
 
         if (topLevelScope == null) {
@@ -189,7 +190,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     Object invokeMethodRaw(Object thiz, String name, Class<?> returnType, Object... args)
             throws ScriptException, NoSuchMethodException {
         try (Context cx = ctxFactory.enterContext()) {
-            Scriptable scope = initScope(cx, context);
+            VarScope scope = initScope(cx, context);
 
             Scriptable localThis;
             if (thiz == null) {

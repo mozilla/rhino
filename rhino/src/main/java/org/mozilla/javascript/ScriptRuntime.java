@@ -102,7 +102,7 @@ public class ScriptRuntime {
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             throwNotAllowed();
             return null;
         }
@@ -138,7 +138,7 @@ public class ScriptRuntime {
          * @return the result of the call
          */
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             Object[] nestedArgs = new Object[2];
 
             nestedArgs[0] = methodName;
@@ -1196,7 +1196,7 @@ public class ScriptRuntime {
         return n.toString(base);
     }
 
-    static String uneval(Context cx, Scriptable scope, Object value) {
+    static String uneval(Context cx, VarScope scope, Object value) {
         if (value == null) {
             return "null";
         }
@@ -1286,7 +1286,7 @@ public class ScriptRuntime {
                         }
                     }
                     result.append(':');
-                    result.append(ScriptRuntime.uneval(cx, s, value));
+                    result.append(ScriptRuntime.uneval(cx, (VarScope) s, value));
                 }
             }
         } finally {
@@ -1420,7 +1420,7 @@ public class ScriptRuntime {
         if (thisObj == null) {
             throw undefCallError(null, "function");
         }
-        return function.call(cx, scope, thisObj, args);
+        return function.call(cx, (VarScope) scope, thisObj, args);
     }
 
     public static Scriptable newObject(
@@ -1430,7 +1430,7 @@ public class ScriptRuntime {
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, scope, args);
+        return ctor.construct(cx, (VarScope) scope, args);
     }
 
     public static Scriptable newBuiltinObject(
@@ -1440,7 +1440,7 @@ public class ScriptRuntime {
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, scope, args);
+        return ctor.construct(cx, (VarScope) scope, args);
     }
 
     static Scriptable newNativeError(
@@ -1450,7 +1450,7 @@ public class ScriptRuntime {
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, scope, args);
+        return ctor.construct(cx, (VarScope) scope, args);
     }
 
     /** See ECMA 9.4. */
@@ -2739,7 +2739,7 @@ public class ScriptRuntime {
         } else {
             scope = cx.topCallScope;
         }
-        Object v = f.call(cx, scope, x.obj, args);
+        Object v = f.call(cx, (VarScope) scope, x.obj, args);
         if (!(v instanceof Scriptable)) {
             throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
@@ -2775,7 +2775,7 @@ public class ScriptRuntime {
                 scope = cx.topCallScope;
             }
             try {
-                x.currentId = f.call(cx, scope, x.iterator, emptyArgs);
+                x.currentId = f.call(cx, (VarScope) scope, x.iterator, emptyArgs);
                 return Boolean.TRUE;
             } catch (JavaScriptException e) {
                 if (e.getValue() instanceof NativeIterator.StopIteration) {
@@ -2824,7 +2824,7 @@ public class ScriptRuntime {
         } else {
             scope = cx.topCallScope;
         }
-        Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
+        Object r = f.call(cx, (VarScope) scope, enumObj.iterator, emptyArgs);
         Scriptable iteratorResult = toObject(cx, scope, r);
         Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
         if (done != Scriptable.NOT_FOUND && toBoolean(done)) {
@@ -3392,7 +3392,7 @@ public class ScriptRuntime {
         final Callable getIterator =
                 ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
         final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
-        return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
+        return getIterator.call(cx, (VarScope) scope, iterable, ScriptRuntime.emptyArgs);
     }
 
     /**
@@ -3436,7 +3436,7 @@ public class ScriptRuntime {
         if (!(ctor instanceof Constructable)) {
             throw notFunctionError(ctor);
         }
-        return ((Constructable) ctor).construct(cx, scope, args);
+        return ((Constructable) ctor).construct(cx, (VarScope) scope, args);
     }
 
     public static Object callSpecial(
@@ -3466,7 +3466,7 @@ public class ScriptRuntime {
             throw Kit.codeBug();
         }
 
-        return fun.call(cx, scope, thisObj, args);
+        return fun.call(cx, (VarScope) scope, thisObj, args);
     }
 
     public static Object newSpecial(
@@ -3513,7 +3513,7 @@ public class ScriptRuntime {
             }
         }
 
-        return function.call(cx, scope, callThis, callArgs);
+        return function.call(cx, (VarScope) scope, callThis, callArgs);
     }
 
     public static Scriptable getApplyOrCallThis(
@@ -4303,7 +4303,7 @@ public class ScriptRuntime {
             } else {
                 hint = "number";
             }
-            final Object result = func.call(cx, scope, s, new Object[] {hint});
+            final Object result = func.call(cx, (VarScope) scope, s, new Object[] {hint});
             if (isObject(result)) {
                 throw typeErrorById("msg.cant.convert.to.primitive");
             }
@@ -6219,7 +6219,7 @@ public class ScriptRuntime {
          * the result with ths stored "this".
          */
         public Object call(Context cx, Scriptable scope, Object[] args) {
-            return getCallable().call(cx, scope, thisObj, args);
+            return getCallable().call(cx, (VarScope) scope, thisObj, args);
         }
     }
 

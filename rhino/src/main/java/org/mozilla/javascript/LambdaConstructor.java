@@ -128,7 +128,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
@@ -140,7 +140,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         if ((flags & CONSTRUCTOR_NEW) == 0) {
             throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
         }
@@ -148,7 +148,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     private Scriptable fireConstructor(Context cx, Scriptable scope, Object[] args) {
-        Scriptable obj = targetConstructor.construct(cx, scope, args);
+        Scriptable obj = targetConstructor.construct(cx, (VarScope) scope, args);
         obj.setPrototype(getClassPrototype());
         obj.setParentScope(scope);
         return obj;

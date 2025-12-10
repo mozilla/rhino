@@ -18,6 +18,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
@@ -87,7 +88,7 @@ public class ComplianceTest {
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             if (args.length > 1 && "fail".equals(args[1])) {
                 throw new AssertionFailedError(String.valueOf(args[0]));
             }
@@ -95,7 +96,7 @@ public class ComplianceTest {
         }
 
         @Override
-        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+        public Scriptable construct(Context cx, VarScope scope, Object[] args) {
             throw new AssertionFailedError("Shouldn't be invoked as constructor");
         }
 

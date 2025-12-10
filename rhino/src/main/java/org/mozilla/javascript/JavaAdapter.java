@@ -569,7 +569,7 @@ public final class JavaAdapter {
                 }
             }
         }
-        return f.call(cx, scope, thisObj, args);
+        return f.call(cx, (VarScope) scope, thisObj, args);
     }
 
     public static Scriptable runScript(final Script script) {

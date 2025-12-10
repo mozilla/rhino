@@ -26,6 +26,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -111,7 +112,7 @@ public abstract class ScriptTestsBase {
                         scope,
                         "AbortJS",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable localThis, Object[] args) -> {
+                        (Context lcx, VarScope lscope, Scriptable localThis, Object[] args) -> {
                             assert (args.length > 0);
                             throw new TestFailureException(ScriptRuntime.toString(args[0]));
                         }));
@@ -123,7 +124,7 @@ public abstract class ScriptTestsBase {
                         scope,
                         "EnqueueMicrotask",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable localThis, Object[] args) -> {
+                        (Context lcx, VarScope lscope, Scriptable localThis, Object[] args) -> {
                             assert (args.length > 0);
                             assert (args[0] instanceof Callable);
                             lcx.enqueueMicrotask(
@@ -138,7 +139,7 @@ public abstract class ScriptTestsBase {
                         scope,
                         "PerformMicrotaskCheckpoint",
                         0,
-                        (Context lcx, Scriptable lscope, Scriptable localThis, Object[] args) -> {
+                        (Context lcx, VarScope lscope, Scriptable localThis, Object[] args) -> {
                             lcx.processMicrotasks();
                             return Undefined.instance;
                         }));

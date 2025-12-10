@@ -8,6 +8,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 import org.openjdk.jmh.annotations.*;
 
@@ -20,7 +22,7 @@ public class ObjectBenchmark {
     // "count" should match "@OperationsPerInvocation" annotations
     static final int count = 1000;
 
-    static void runCode(Context cx, Scriptable scope, String fileName) throws IOException {
+    static void runCode(Context cx, VarScope scope, String fileName) throws IOException {
         try (FileReader rdr = new FileReader(fileName)) {
             cx.evaluateReader(scope, rdr, "test.js", 1, null);
         }
@@ -29,7 +31,7 @@ public class ObjectBenchmark {
     @State(Scope.Thread)
     public static class FieldTestState {
         Context cx;
-        Scriptable scope;
+        TopLevel scope;
         Scriptable strings;
         Scriptable ints;
 

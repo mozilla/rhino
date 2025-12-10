@@ -24,6 +24,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 public class JavaPolicySecurity extends SecurityProxy {
 
@@ -206,7 +207,7 @@ public class JavaPolicySecurity extends SecurityProxy {
             final Scriptable scope,
             final Scriptable thisObj,
             final Object[] args) {
-        return doAction(securityDomain, () -> callable.call(cx, scope, thisObj, args));
+        return doAction(securityDomain, () -> callable.call(cx, (VarScope) scope, thisObj, args));
     }
 
     @Override

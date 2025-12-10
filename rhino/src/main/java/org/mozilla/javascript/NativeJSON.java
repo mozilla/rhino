@@ -145,7 +145,7 @@ public final class NativeJSON extends ScriptableObject {
             }
         }
 
-        return reviver.call(cx, scope, holder, new Object[] {name, property});
+        return reviver.call(cx, (VarScope) scope, holder, new Object[] {name, property});
     }
 
     private static String repeat(char c, int count) {
@@ -289,7 +289,9 @@ public final class NativeJSON extends ScriptableObject {
         }
 
         if (state.replacer != null) {
-            value = state.replacer.call(state.cx, state.scope, holder, new Object[] {key, value});
+            value =
+                    state.replacer.call(
+                            state.cx, (VarScope) state.scope, holder, new Object[] {key, value});
         }
 
         if (ScriptRuntime.isSymbol(value)) return Undefined.instance;

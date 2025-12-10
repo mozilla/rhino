@@ -52,7 +52,7 @@ public class NativeMap extends ScriptableObject {
                         scope,
                         "get size",
                         0,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                                 realThis(thisObj, "size").js_getSize(),
                         false);
         desc.put("get", desc, sizeFunc);
@@ -75,7 +75,7 @@ public class NativeMap extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
         NativeMap nm = new NativeMap();
         nm.instanceOfMap = true;
         if (args.length > 0) {
@@ -186,7 +186,7 @@ public class NativeMap extends ScriptableObject {
     }
 
     private static Object js_forEach(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return realThis(thisObj, "forEach")
                 .js_forEach(
                         cx,
@@ -195,7 +195,7 @@ public class NativeMap extends ScriptableObject {
                         args.length > 1 ? args[1] : Undefined.instance);
     }
 
-    private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
+    private Object js_forEach(Context cx, VarScope scope, Object arg1, Object arg2) {
         if (!(arg1 instanceof Callable)) {
             throw ScriptRuntime.typeErrorById(
                     "msg.isnt.function", arg1, ScriptRuntime.typeof(arg1));
@@ -224,7 +224,7 @@ public class NativeMap extends ScriptableObject {
      * If an "iterable" object was passed to the constructor, there are many many things to do...
      * Make this static because NativeWeakMap has the exact same requirement.
      */
-    static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1) {
+    static void loadFromIterable(Context cx, VarScope scope, ScriptableObject map, Object arg1) {
         if ((arg1 == null) || Undefined.instance.equals(arg1)) {
             return;
         }
