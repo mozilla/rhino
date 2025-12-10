@@ -302,17 +302,34 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
-        // These depend on the legacy initialization behavior of the lazy loading mechanism
-        new LazilyLoadedCtor(
-                s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(
-                s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         new LazilyLoadedCtor(s, "JavaAdapter", sealed, true, JavaAdapter::init);
         new LazilyLoadedCtor(s, "JavaImporter", sealed, true, ImporterTopLevel::init);
 
+        // in legacy initialization code, 'Packages' and predefined top packages never seal
+        // themselves
+        var ctor = new LazilyLoadedCtor(s, "Packages", false, true, NativeJavaTopPackage::init);
+        new LazilyLoadedCtor(
+                s,
+                "getClass",
+                sealed,
+                true,
+                (_cx, _scope, _sealed) -> {
+                    ctor.init();
+                    var top = (NativeJavaTopPackage) ctor.getValue();
+                    // another weird legacy behavior, 'scope' is 'top', not '_scope'
+                    return new LambdaFunction(top, "getClass", 1, top::js_getClass);
+                });
         for (String packageName : getTopPackageNames()) {
             new LazilyLoadedCtor(
-                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+                    s,
+                    packageName,
+                    false,
+                    true,
+                    (_cx, _scope, _sealed) -> {
+                        ctor.init();
+                        var top = (NativeJavaTopPackage) ctor.getValue();
+                        return top.get(packageName, top);
+                    });
         }
 
         return s;

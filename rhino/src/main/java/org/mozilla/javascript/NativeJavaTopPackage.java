@@ -63,7 +63,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function 
         return pkg;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
         ClassLoader loader = cx.getApplicationClassLoader();
         final NativeJavaTopPackage top = new NativeJavaTopPackage(loader);
         top.setPrototype(getObjectPrototype(scope));
@@ -76,29 +76,10 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function 
             }
         }
 
-        // It's safe to downcast here since initStandardObjects takes
-        // a ScriptableObject.
-        ScriptableObject global = (ScriptableObject) scope;
-
-        // getClass implementation
-        var getClass = new LambdaFunction(top, "getClass", 1, top::js_getClass);
-        if (sealed) {
-            getClass.sealObject();
-        }
-        global.defineProperty("getClass", getClass, ScriptableObject.DONTENUM);
-
-        global.defineProperty("Packages", top, ScriptableObject.DONTENUM);
-
-        // We want to get a real alias, and not a distinct JavaPackage with the same packageName, so
-        // that we share classes and top that are underneath.
-        for (var topName : ScriptRuntime.getTopPackageNames()) {
-            var topPackage = (NativeJavaPackage) top.get(topName, top);
-            global.defineProperty(topName, topPackage, ScriptableObject.DONTENUM);
-        }
+        return top;
     }
 
-    private Scriptable js_getClass(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Scriptable js_getClass(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (args.length > 0 && args[0] instanceof Wrapper) {
             Scriptable result = this;
             Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();
