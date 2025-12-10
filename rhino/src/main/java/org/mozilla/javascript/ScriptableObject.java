@@ -22,11 +22,9 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -115,10 +113,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     // Where external array data is stored.
     private transient ExternalArrayData externalData;
 
-    private volatile Map<Object, Object> associatedValues;
-
     private boolean isExtensible = true;
-    private boolean isSealed = false;
 
     private static final Method GET_ARRAY_LENGTH;
 
@@ -180,18 +175,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     @Override
     public abstract String getClassName();
 
-    /**
-     * Returns true if the named property is defined.
-     *
-     * @param name the name of the property
-     * @param start the object in which the lookup began
-     * @return true if and only if the property was found in the object
-     */
     @Override
-    public boolean has(String name, Scriptable start) {
-        return null != getMap().query(name, 0);
-    }
-
     public ScriptableObject getThis() {
         return this;
     }
@@ -211,30 +195,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return null != getMap().query(null, index);
     }
 
-    /** A version of "has" that supports symbols. */
-    @Override
-    public boolean has(Symbol key, Scriptable start) {
-        return null != getMap().query(key, 0);
-    }
-
-    /**
-     * Returns the value of the named property or NOT_FOUND.
-     *
-     * <p>If the property was created using defineProperty, the appropriate getter method is called.
-     *
-     * @param name the name of the property
-     * @param start the object in which the lookup began
-     * @return the value of the property (may be null), or NOT_FOUND
-     */
-    @Override
-    public Object get(String name, Scriptable start) {
-        var slot = getMap().query(name, 0);
-        if (slot == null) {
-            return Scriptable.NOT_FOUND;
-        }
-        return slot.getValue(start);
-    }
-
     /**
      * Returns the value of the indexed property or NOT_FOUND.
      *
@@ -252,16 +212,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
 
         var slot = getMap().query(null, index);
-        if (slot == null) {
-            return Scriptable.NOT_FOUND;
-        }
-        return slot.getValue(start);
-    }
-
-    /** Another version of Get that supports Symbol keyed properties. */
-    @Override
-    public Object get(Symbol key, Scriptable start) {
-        var slot = getMap().query(key, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
         }
@@ -457,134 +407,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     @Override
     public boolean isConst(String name) {
-        var slot = getMap().query(name, 0);
+        Slot slot = getMap().query(name, 0);
         if (slot == null) {
             return false;
         }
         return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
-    }
-
-    /**
-     * @deprecated Use {@link #getAttributes(String name)}. The engine always ignored the start
-     *     argument.
-     */
-    @Deprecated
-    public final int getAttributes(String name, Scriptable start) {
-        return getAttributes(name);
-    }
-
-    /**
-     * @deprecated Use {@link #getAttributes(int index)}. The engine always ignored the start
-     *     argument.
-     */
-    @Deprecated
-    public final int getAttributes(int index, Scriptable start) {
-        return getAttributes(index);
-    }
-
-    /**
-     * @deprecated Use {@link #setAttributes(String name, int attributes)}. The engine always
-     *     ignored the start argument.
-     */
-    @Deprecated
-    public final void setAttributes(String name, Scriptable start, int attributes) {
-        setAttributes(name, attributes);
-    }
-
-    /**
-     * @deprecated Use {@link #setAttributes(int index, int attributes)}. The engine always ignored
-     *     the start argument.
-     */
-    @Deprecated
-    public void setAttributes(int index, Scriptable start, int attributes) {
-        setAttributes(index, attributes);
-    }
-
-    /**
-     * Get the attributes of a named property.
-     *
-     * <p>The property is specified by {@code name} as defined for {@code has}.
-     *
-     * @param name the identifier for the property
-     * @return the bitset of attributes
-     * @exception EvaluatorException if the named property is not found
-     * @see org.mozilla.javascript.ScriptableObject#has(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#READONLY
-     * @see org.mozilla.javascript.ScriptableObject#DONTENUM
-     * @see org.mozilla.javascript.ScriptableObject#PERMANENT
-     * @see org.mozilla.javascript.ScriptableObject#EMPTY
-     */
-    public int getAttributes(String name) {
-        return getAttributeSlot(name, 0).getAttributes();
-    }
-
-    /**
-     * Get the attributes of an indexed property.
-     *
-     * @param index the numeric index for the property
-     * @exception EvaluatorException if the named property is not found is not found
-     * @return the bitset of attributes
-     * @see org.mozilla.javascript.ScriptableObject#has(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#READONLY
-     * @see org.mozilla.javascript.ScriptableObject#DONTENUM
-     * @see org.mozilla.javascript.ScriptableObject#PERMANENT
-     * @see org.mozilla.javascript.ScriptableObject#EMPTY
-     */
-    public int getAttributes(int index) {
-        return getAttributeSlot(null, index).getAttributes();
-    }
-
-    public int getAttributes(Symbol sym) {
-        return getAttributeSlot(sym).getAttributes();
-    }
-
-    /**
-     * Set the attributes of a named property.
-     *
-     * <p>The property is specified by {@code name} as defined for {@code has}.
-     *
-     * <p>The possible attributes are READONLY, DONTENUM, and PERMANENT. Combinations of attributes
-     * are expressed by the bitwise OR of attributes. EMPTY is the state of no attributes set. Any
-     * unused bits are reserved for future use.
-     *
-     * @param name the name of the property
-     * @param attributes the bitset of attributes
-     * @exception EvaluatorException if the named property is not found
-     * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#READONLY
-     * @see org.mozilla.javascript.ScriptableObject#DONTENUM
-     * @see org.mozilla.javascript.ScriptableObject#PERMANENT
-     * @see org.mozilla.javascript.ScriptableObject#EMPTY
-     */
-    public void setAttributes(String name, int attributes) {
-        checkNotSealed(name, 0);
-        Slot attrSlot = getMap().modify(this, name, 0, 0);
-        attrSlot.setAttributes(attributes);
-    }
-
-    /**
-     * Set the attributes of an indexed property.
-     *
-     * @param index the numeric index for the property
-     * @param attributes the bitset of attributes
-     * @exception EvaluatorException if the named property is not found
-     * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#READONLY
-     * @see org.mozilla.javascript.ScriptableObject#DONTENUM
-     * @see org.mozilla.javascript.ScriptableObject#PERMANENT
-     * @see org.mozilla.javascript.ScriptableObject#EMPTY
-     */
-    public void setAttributes(int index, int attributes) {
-        checkNotSealed(null, index);
-        Slot attrSlot = getMap().modify(this, null, index, 0);
-        attrSlot.setAttributes(attributes);
-    }
-
-    /** Set attributes of a Symbol-keyed property. */
-    public void setAttributes(Symbol key, int attributes) {
-        checkNotSealed(key, 0);
-        Slot attrSlot = getMap().modify(this, key, 0, 0);
-        attrSlot.setAttributes(attributes);
     }
 
     /** Implement the legacy "__defineGetter__" and "__defineSetter__" methods. */
@@ -598,7 +425,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             // Create a new AccessorSlot, or cast it if it's already set
             aSlot = getMap().compute(this, name, index, ScriptableObject::ensureAccessorSlot);
         } else {
-            var slot = getMap().query(name, index);
+            Slot slot = getMap().query(name, index);
             if (slot instanceof AccessorSlot) {
                 aSlot = (AccessorSlot) slot;
             } else {
@@ -687,10 +514,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     protected boolean isGetterOrSetter(
             CompoundOperationMap map, String name, int index, boolean setter) {
-        var slot = map.query(name, index);
+        Slot slot = map.query(name, index);
         return (slot != null && slot.isSetterSlot());
     }
 
+    @Override
     void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
@@ -699,6 +527,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         lslot.value = init;
     }
 
+    @Override
     void addLazilyInitializedValue(Symbol key, int index, LazilyLoadedCtor init, int attributes) {
         if (key != null && index != 0) throw new IllegalArgumentException(key.toString());
         checkNotSealed(key, index);
@@ -1357,35 +1186,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     /**
-     * Define a JavaScript property.
-     *
-     * <p>Creates the property with an initial value and sets its attributes.
-     *
-     * @param propertyName the name of the property to define.
-     * @param value the initial value of the property
-     * @param attributes the attributes of the JavaScript property
-     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
-     */
-    public void defineProperty(String propertyName, Object value, int attributes) {
-        checkNotSealed(propertyName, 0);
-        put(propertyName, this, value);
-        setAttributes(propertyName, attributes);
-    }
-
-    /**
-     * A version of defineProperty that uses a Symbol key.
-     *
-     * @param key symbol of the property to define.
-     * @param value the initial value of the property
-     * @param attributes the attributes of the JavaScript property
-     */
-    public void defineProperty(Symbol key, Object value, int attributes) {
-        checkNotSealed(key, 0);
-        put(key, this, value);
-        setAttributes(key, attributes);
-    }
-
-    /**
      * Utility method to add properties to arbitrary Scriptable object. If destination is instance
      * of ScriptableObject, calls defineProperty there, otherwise calls put in destination ignoring
      * attributes
@@ -1395,13 +1195,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value the initial value of the property
      * @param attributes the attributes of the JavaScript property
      */
-    public static void defineProperty(
-            Scriptable destination, String propertyName, Object value, int attributes) {
-        if (!(destination instanceof ScriptableObject)) {
+    public static <T extends PropHolder<T>> void defineProperty(
+            T destination, String propertyName, Object value, int attributes) {
+        if (!(destination instanceof SlotMapOwner)) {
             destination.put(propertyName, destination, value);
             return;
         }
-        ScriptableObject so = (ScriptableObject) destination;
+        @SuppressWarnings("unchecked")
+        SlotMapOwner<T> so = (SlotMapOwner<T>) destination;
         so.defineProperty(propertyName, value, attributes);
     }
 
@@ -2009,7 +1810,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public void defineProperty(
             String name, Supplier<Object> getter, Consumer<Object> setter, int attributes) {
-        var slot = getMap().compute(this, name, 0, ScriptableObject::ensureLambdaSlot);
+        LambdaSlot slot = getMap().compute(this, name, 0, ScriptableObject::ensureLambdaSlot);
         slot.setAttributes(attributes);
         slot.getter = getter;
         slot.setter = setter;
@@ -2471,6 +2272,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *
      * @since 1.4R3
      */
+    @Override
     public void sealObject() {
         // We cannot initialize LazyLoadedCtor while holding the read lock, since they will mutate
         // the current object (case in point: NativeJavaTopPackage), which in turn would cause the
@@ -2507,24 +2309,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 }
             }
         }
-    }
-
-    /**
-     * Return true if this object is sealed.
-     *
-     * @return true if sealed, false otherwise.
-     * @since 1.4R3
-     * @see #sealObject()
-     */
-    public final boolean isSealed() {
-        return isSealed;
-    }
-
-    private void checkNotSealed(Object key, int index) {
-        if (!isSealed()) return;
-
-        String str = (key != null) ? key.toString() : Integer.toString(index);
-        throw Context.reportRuntimeErrorById("msg.modify.sealed", str);
     }
 
     protected static void checkNotSealed(ScriptableObject obj, Object key, int index) {
@@ -2977,24 +2761,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     /**
-     * Get arbitrary application-specific value associated with this object.
-     *
-     * @param key key object to select particular value.
-     * @see #associateValue(Object key, Object value)
-     */
-    public final Object getAssociatedValue(Object key) {
-        Map<Object, Object> h = associatedValues;
-        if (h == null) return null;
-        return h.get(key);
-    }
-
-    protected void copyAssociatedValue(ScriptableObject other) {
-        for (var e : other.associatedValues.entrySet()) {
-            associateValue(e.getKey(), e.getValue());
-        }
-    }
-
-    /**
      * Get arbitrary application-specific value associated with the top scope of the given scope.
      * The method first calls {@link #getTopLevelScope(Scriptable scope)} and then searches the
      * prototype chain of the top scope for the first object containing the associated value with
@@ -3007,29 +2773,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static Object getTopScopeValue(Scriptable scope, Object key) {
         var topScope = ScriptableObject.getTopLevelScope(scope);
         return topScope.getAssociatedValue(key);
-    }
-
-    /**
-     * Associate arbitrary application-specific value with this object. Value can only be associated
-     * with the given object and key only once. The method ignores any subsequent attempts to change
-     * the already associated value.
-     *
-     * <p>The associated values are not serialized.
-     *
-     * @param key key object to select particular value.
-     * @param value the value to associate
-     * @return the passed value if the method is called first time for the given key or old value
-     *     for any subsequent calls.
-     * @see #getAssociatedValue(Object key)
-     */
-    public final synchronized Object associateValue(Object key, Object value) {
-        if (value == null) throw new IllegalArgumentException();
-        Map<Object, Object> h = associatedValues;
-        if (h == null) {
-            h = new HashMap<>();
-            associatedValues = h;
-        }
-        return Kit.initHash(h, key, value);
     }
 
     /**
@@ -3124,23 +2867,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             return true;
         }
         return slot.setValue(value, this, start);
-    }
-
-    private Slot<Scriptable> getAttributeSlot(String name, int index) {
-        var slot = getMap().query(name, index);
-        if (slot == null) {
-            String str = (name != null ? name : Integer.toString(index));
-            throw Context.reportRuntimeErrorById("msg.prop.not.found", str);
-        }
-        return slot;
-    }
-
-    private Slot<Scriptable> getAttributeSlot(Symbol key) {
-        var slot = getMap().query(key, 0);
-        if (slot == null) {
-            throw Context.reportRuntimeErrorById("msg.prop.not.found", key);
-        }
-        return slot;
     }
 
     Object[] getIds(
@@ -3243,29 +2969,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
-        try (var map = startCompoundOp(false)) {
-            int objectsCount = map.dirtySize();
-            if (objectsCount == 0) {
-                out.writeInt(0);
-            } else {
-                out.writeInt(objectsCount);
-                for (Slot slot : getMap()) {
-                    out.writeObject(slot);
-                }
-            }
-        }
+        writeMaps(out);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-
-        int tableSize = in.readInt();
-        setMap(createSlotMap(tableSize));
-        for (int i = 0; i < tableSize; i++) {
-            @SuppressWarnings("unchecked")
-            var slot = (Slot<Scriptable>) in.readObject();
-            getMap().add(this, slot);
-        }
+        readMaps(in);
     }
 
     protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
