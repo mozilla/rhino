@@ -193,7 +193,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static SerializableCallable wrapConstructor(SerializableCallable target) {
-        return (Context cx, Scriptable scope, Scriptable origThis, Object[] origArgs) -> {
+        return (Context cx, VarScope scope, Scriptable origThis, Object[] origArgs) -> {
             Scriptable thisObj;
             Object[] newArgs;
             if (origArgs.length > 0) {
@@ -206,7 +206,7 @@ final class NativeString extends ScriptableObject {
                 thisObj = ScriptRuntime.toObject(cx, scope, ScriptRuntime.toCharSequence(origThis));
                 newArgs = origArgs;
             }
-            return target.call(cx, scope, thisObj, newArgs);
+            return target.call(cx, (VarScope) scope, thisObj, newArgs);
         };
     }
 
@@ -388,7 +388,7 @@ final class NativeString extends ScriptableObject {
                 return ((Callable) splitter)
                         .call(
                                 cx,
-                                scope,
+                                (VarScope) scope,
                                 ScriptRuntime.toObject(scope, separator),
                                 new Object[] {
                                     o instanceof NativeString ? ((NativeString) o).string : o,
@@ -600,7 +600,11 @@ final class NativeString extends ScriptableObject {
                             regexp, matcher, SymbolKey.MATCH.getName());
                 }
                 return ((Callable) matcher)
-                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+                        .call(
+                                cx,
+                                (VarScope) scope,
+                                ScriptRuntime.toObject(scope, regexp),
+                                new Object[] {o});
             }
         }
 
@@ -621,7 +625,7 @@ final class NativeString extends ScriptableObject {
         if (!(method instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.MATCH.getName());
         }
-        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+        return ((Callable) method).call(cx, (VarScope) scope, rx, new Object[] {s});
     }
 
     /*
@@ -845,7 +849,11 @@ final class NativeString extends ScriptableObject {
                             regexp, matcher, SymbolKey.SEARCH.getName());
                 }
                 return ((Callable) matcher)
-                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+                        .call(
+                                cx,
+                                (VarScope) scope,
+                                ScriptRuntime.toObject(scope, regexp),
+                                new Object[] {o});
             }
         }
 
@@ -865,7 +873,7 @@ final class NativeString extends ScriptableObject {
         if (!(method instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.SEARCH.getName());
         }
-        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+        return ((Callable) method).call(cx, (VarScope) scope, rx, new Object[] {s});
     }
 
     private static Object js_replace(
@@ -896,7 +904,7 @@ final class NativeString extends ScriptableObject {
                 return ((Callable) replacer)
                         .call(
                                 cx,
-                                scope,
+                                (VarScope) scope,
                                 ScriptRuntime.toObject(scope, searchValue),
                                 new Object[] {
                                     o instanceof NativeString ? ((NativeString) o).string : o,
@@ -934,7 +942,7 @@ final class NativeString extends ScriptableObject {
                     ((Callable) replaceValue)
                             .call(
                                     cx,
-                                    scope,
+                                    (VarScope) scope,
                                     callThis,
                                     new Object[] {
                                         searchString, position, string,
@@ -987,7 +995,7 @@ final class NativeString extends ScriptableObject {
                 return ((Callable) matcher)
                         .call(
                                 cx,
-                                scope,
+                                (VarScope) scope,
                                 ScriptRuntime.toObject(scope, searchValue),
                                 new Object[] {o, replaceValue});
             }
@@ -1031,7 +1039,7 @@ final class NativeString extends ScriptableObject {
                         ((Callable) replaceValue)
                                 .call(
                                         cx,
-                                        scope,
+                                        (VarScope) scope,
                                         callThis,
                                         new Object[] {
                                             searchString, p, string,
@@ -1084,7 +1092,11 @@ final class NativeString extends ScriptableObject {
                             regexp, matcher, SymbolKey.MATCH_ALL.getName());
                 }
                 return ((Callable) matcher)
-                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+                        .call(
+                                cx,
+                                (VarScope) scope,
+                                ScriptRuntime.toObject(scope, regexp),
+                                new Object[] {o});
             }
         }
 
@@ -1098,7 +1110,7 @@ final class NativeString extends ScriptableObject {
         if (!(method instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.MATCH_ALL.getName());
         }
-        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+        return ((Callable) method).call(cx, (VarScope) scope, rx, new Object[] {s});
     }
 
     private static Object js_localeCompare(

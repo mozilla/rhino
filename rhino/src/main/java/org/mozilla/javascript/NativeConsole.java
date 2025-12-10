@@ -259,7 +259,7 @@ public class NativeConsole extends ScriptableObject {
                         @Override
                         public Object call(
                                 Context callCx,
-                                Scriptable callScope,
+                                VarScope callScope,
                                 Scriptable callThisObj,
                                 Object[] callArgs) {
                             Object value = callArgs[1];

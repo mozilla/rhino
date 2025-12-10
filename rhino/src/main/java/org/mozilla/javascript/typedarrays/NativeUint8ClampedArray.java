@@ -12,6 +12,7 @@ import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * An array view that stores 8-bit quantities and implements the JavaScript "Uint8ClampedArray"
@@ -46,7 +47,7 @@ public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, VarScope lscope, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx, lscope, args, NativeUint8ClampedArray::new, 1));
         constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);

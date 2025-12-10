@@ -352,7 +352,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Function#call( Context, Scriptable, Scriptable, Object[])
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisArg, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisArg, Object[] args) {
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;

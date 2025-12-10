@@ -797,7 +797,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         // This XMLList is being called as a Function.
         // Let's find the real Function object.
         if (targetProperty == null) throw ScriptRuntime.notFunctionError(this);
@@ -836,7 +836,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
     }
 }

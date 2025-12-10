@@ -322,7 +322,8 @@ public class AbstractEcmaObjectOperations {
 
                 Object[] args = {o, i};
                 Object key =
-                        ((Callable) callback).call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                        ((Callable) callback)
+                                .call(cx, (VarScope) scope, Undefined.SCRIPTABLE_UNDEFINED, args);
                 if (keyCoercion == KEY_COERCION.PROPERTY) {
                     if (!ScriptRuntime.isSymbol(key)) {
                         key = ScriptRuntime.toString(key);

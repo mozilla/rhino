@@ -160,7 +160,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     private static Callable symbol_iterator =
-            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> {
                 if (!(thisObj instanceof NativeJavaMap)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }

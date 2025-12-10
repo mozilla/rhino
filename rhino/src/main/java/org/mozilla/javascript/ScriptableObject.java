@@ -2725,7 +2725,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         // and use ScriptableObject.getTopLevelScope(fun) if the flag is not
         // set. But that require access to Context and messy code
         // so for now it is not checked.
-        Scriptable scope = ScriptableObject.getTopLevelScope(obj);
+        VarScope scope = ScriptableObject.getTopLevelScope(obj);
         if (cx != null) {
             return fun.call(cx, scope, obj, args);
         }

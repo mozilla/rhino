@@ -126,7 +126,7 @@ class JavaMembers {
             if (bean.getter == null) {
                 return Scriptable.NOT_FOUND;
             }
-            return bean.getter.call(cx, scope, obj, ScriptRuntime.emptyArgs);
+            return bean.getter.call(cx, (VarScope) scope, obj, ScriptRuntime.emptyArgs);
         }
 
         var field = (NativeJavaField) member;

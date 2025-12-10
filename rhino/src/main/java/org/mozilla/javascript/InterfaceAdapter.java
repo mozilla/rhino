@@ -172,13 +172,13 @@ public class InterfaceAdapter {
             final Object thisObject,
             final Method method,
             final Object[] args) {
-        return cf.call(cx -> invokeImpl(cx, target, topScope, thisObject, method, args));
+        return cf.call(cx -> invokeImpl(cx, target, (VarScope) topScope, thisObject, method, args));
     }
 
     Object invokeImpl(
             Context cx,
             Object target,
-            Scriptable topScope,
+            VarScope topScope,
             Object thisObject,
             Method method,
             Object[] args) {

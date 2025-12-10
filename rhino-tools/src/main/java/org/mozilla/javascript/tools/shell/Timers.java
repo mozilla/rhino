@@ -9,6 +9,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This class supports the "setTimeout" and "clearTimeout" methods of semi-standard JavaScript. It
@@ -31,7 +32,7 @@ public class Timers {
                         scope,
                         "setTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                                 setTimeout(args));
         ScriptableObject.defineProperty(scope, "setTimeout", setTimeout, ScriptableObject.DONTENUM);
         LambdaFunction clearTimeout =
@@ -39,7 +40,7 @@ public class Timers {
                         scope,
                         "clearTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                                 clearTimeout(args));
         ScriptableObject.defineProperty(
                 scope, "clearTimeout", clearTimeout, ScriptableObject.DONTENUM);
@@ -82,7 +83,7 @@ public class Timers {
         }
         timerQueue.remove();
         timers.remove(t.id);
-        cx.enqueueMicrotask(() -> t.func.call(cx, scope, scope, t.funcArgs));
+        cx.enqueueMicrotask(() -> t.func.call(cx, (VarScope) scope, scope, t.funcArgs));
         return true;
     }
 

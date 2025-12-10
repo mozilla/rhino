@@ -112,7 +112,7 @@ public class NativeCallSite extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (!f.hasTag(CALLSITE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }

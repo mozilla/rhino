@@ -143,7 +143,7 @@ public abstract class SecurityController {
                 new Script() {
                     @Override
                     public Object exec(Context cx, Scriptable scope, Scriptable thisObjIgnored) {
-                        return callable.call(cx, scope, thisObj, args);
+                        return callable.call(cx, (VarScope) scope, thisObj, args);
                     }
                 },
                 securityDomain);

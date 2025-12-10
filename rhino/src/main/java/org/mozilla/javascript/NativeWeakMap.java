@@ -60,7 +60,7 @@ public class NativeWeakMap extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
         NativeWeakMap nm = new NativeWeakMap();
         nm.instanceOfWeakMap = true;
         if (args.length > 0) {
