@@ -186,7 +186,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
      */
     @Deprecated
-    public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
+    public static Object wrap(VarScope scope, Object obj, Class<?> staticType) {
 
         Context cx = Context.getContext();
         return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
@@ -928,7 +928,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             super();
         }
 
-        JavaIterableIterator(Scriptable scope, Iterable iterable) {
+        JavaIterableIterator(VarScope scope, Iterable iterable) {
             super(scope, ITERATOR_TAG);
             this.iterator = iterable.iterator();
         }
@@ -939,12 +939,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, VarScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, VarScope scope) {
             if (!iterator.hasNext()) {
                 return Undefined.instance;
             }

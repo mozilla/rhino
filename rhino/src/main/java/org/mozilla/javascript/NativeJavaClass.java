@@ -74,7 +74,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         }
 
         Context cx = Context.getContext();
-        Scriptable scope = ScriptableObject.getTopLevelScope(start);
+        VarScope scope = ScriptableObject.getTopLevelScope(start);
         WrapFactory wrapFactory = cx.getWrapFactory();
 
         if (javaClassPropertyName.equals(name)) {
@@ -181,11 +181,11 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     static Scriptable constructSpecific(
-            Context cx, Scriptable scope, Object[] args, ExecutableBox ctor) {
+            Context cx, VarScope scope, Object[] args, ExecutableBox ctor) {
         Object instance = constructInternal(args, ctor);
         // we need to force this to be wrapped, because construct _has_
         // to return a scriptable
-        Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
+        VarScope topLevel = ScriptableObject.getTopLevelScope(scope);
         return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
     }
 

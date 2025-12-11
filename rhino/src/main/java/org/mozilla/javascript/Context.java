@@ -1748,7 +1748,7 @@ public class Context implements Closeable {
      * @param scope global scope containing constructors for Number, Boolean, and String
      * @return new JavaScript object
      */
-    public static Scriptable toObject(Object value, Scriptable scope) {
+    public static Scriptable toObject(Object value, VarScope scope) {
         return ScriptRuntime.toObject(scope, value);
     }
 
@@ -1757,7 +1757,7 @@ public class Context implements Closeable {
      * @see #toObject(Object, Scriptable)
      */
     @Deprecated
-    public static Scriptable toObject(Object value, Scriptable scope, Class<?> staticType) {
+    public static Scriptable toObject(Object value, VarScope scope, Class<?> staticType) {
         return ScriptRuntime.toObject(scope, value);
     }
 
@@ -1787,7 +1787,7 @@ public class Context implements Closeable {
      * @param scope top scope object
      * @return value suitable to pass to any API that takes JavaScript values.
      */
-    public static Object javaToJS(Object value, Scriptable scope) {
+    public static Object javaToJS(Object value, VarScope scope) {
         return javaToJS(value, scope, null);
     }
 
@@ -1817,7 +1817,7 @@ public class Context implements Closeable {
      * @param cx context to use for wrapping LiveConnect objects
      * @return value suitable to pass to any API that takes JavaScript values.
      */
-    public static Object javaToJS(Object value, Scriptable scope, Context cx) {
+    public static Object javaToJS(Object value, VarScope scope, Context cx) {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
@@ -1892,8 +1892,8 @@ public class Context implements Closeable {
      * of {@link java.util.Map Map}, {@link java.util.Collection Collection}, or {@link
      * java.lang.Object Object[]}.
      *
-     * <p>Objects returned by the converter will converted with {@link #javaToJS(Object,
-     * Scriptable)} and then stringified themselves.
+     * <p>Objects returned by the converter will converted with {@link #javaToJS(Object, VarScope)}
+     * and then stringified themselves.
      *
      * @param javaToJSONConverter
      * @throws IllegalArgumentException if javaToJSONConverter is null

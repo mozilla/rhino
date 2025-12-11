@@ -430,7 +430,7 @@ public class TopLevel extends ScopeObject {
     }
 
     public void defineFunctionProperties(
-            Scriptable scope, String[] names, Class<?> clazz, int attributes) {
+            VarScope scope, String[] names, Class<?> clazz, int attributes) {
         getGlobalThis().defineFunctionProperties(scope, names, clazz, attributes);
     }
 }

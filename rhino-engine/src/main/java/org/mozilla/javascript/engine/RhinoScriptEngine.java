@@ -254,7 +254,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             throw new IllegalArgumentException("Not an interface");
         }
         try (Context cx = ctxFactory.enterContext()) {
-            Scriptable scope = initScope(cx, context);
+            VarScope scope = initScope(cx, context);
             Scriptable thisObj = Context.toObject(thiz, scope);
             if (methodsMissing(thisObj, clasz)) {
                 return null;

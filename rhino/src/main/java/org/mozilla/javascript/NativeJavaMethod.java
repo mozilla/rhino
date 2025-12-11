@@ -48,7 +48,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Deprecated
-    public NativeJavaMethod(Scriptable scope, Method method, String name) {
+    public NativeJavaMethod(VarScope scope, Method method, String name) {
         this(new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()), name);
     }
 
