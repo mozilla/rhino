@@ -1264,7 +1264,32 @@ public class NativeRegExp extends IdScriptableObject {
                         }
                     case '8':
                     case '9':
+                        state.cp--;
+                        return false;
                     default:
+                        // ES2024 v-mode allows escaping additional "double punctuator" characters
+                        // that would be syntax errors in u-mode
+                        // See: https://tc39.es/ecma262/#prod-ClassSetReservedPunctuator
+                        if (params.vMode) {
+                            switch (c) {
+                                case '!':
+                                case '#':
+                                case '%':
+                                case '&':
+                                case ',':
+                                case ':':
+                                case ';':
+                                case '<':
+                                case '=':
+                                case '>':
+                                case '@':
+                                case '`':
+                                case '~':
+                                    doFlat(state, c);
+                                    state.result.flatIndex = state.cp - 1;
+                                    return true;
+                            }
+                        }
                         state.cp--;
                         return false;
                 }
@@ -2794,7 +2819,9 @@ public class NativeRegExp extends IdScriptableObject {
             boolean matches;
             if (matchBackward) {
                 // For lookbehind, match backwards from position
-                int startPos = position - literal.length();
+                // position points to the last char of where we want to match
+                // For literal of length n, we need [position-n+1 ... position]
+                int startPos = position - literal.length() + 1;
                 matches = startPos >= 0
                         && inputStr.regionMatches(startPos, literal, 0, literal.length());
             } else {
@@ -2809,6 +2836,49 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         return maxMatch;
+    }
+
+    /**
+     * Unified character class matching that handles both string literals and single codepoint matching.
+     * Returns the number of characters consumed, or -1 if no match.
+     * Properly handles complement classes (REOP_NCLASS).
+     */
+    private static int matchCharacterClass(
+            REGlobalData gData,
+            RECharSet charSet,
+            String input,
+            int position,
+            boolean matchBackward,
+            boolean isNegated,
+            int cpDelta) {
+
+        // First, try to match string literals (v flag feature)
+        int stringLiteralLen = stringLiteralMatcher(charSet, input, position, matchBackward);
+        if (stringLiteralLen >= 0) {
+            // String literal matched
+            // For normal class: match if string is in the class → return length
+            // For negated class: match if string is NOT in the class → since we found it, no match
+            if (!isNegated) {
+                return stringLiteralLen;
+            } else {
+                // String is in negated class, so no overall match
+                return -1;
+            }
+        }
+
+        // Fall back to single codepoint matching
+        int inputCodePoint;
+        if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+            inputCodePoint = input.codePointAt(position);
+        } else {
+            inputCodePoint = input.charAt(position);
+        }
+
+        if (classMatcher(gData, charSet, inputCodePoint)) {
+            return cpDelta;
+        }
+
+        return -1;
     }
 
     private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
@@ -3128,40 +3198,25 @@ public class NativeRegExp extends IdScriptableObject {
                     index = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
-                        // First, try to match string literals (v flag feature)
-                        int stringLiteralLen =
-                                stringLiteralMatcher(
-                                        gData.regexp.classList[index], input, cpToMatch, matchBackward);
-                        if (stringLiteralLen >= 0) {
-                            // String literal matched (including zero-length matches)
-                            // For REOP_CLASS: match if string is in the class
-                            // For REOP_NCLASS: match if string is NOT in the class
-                            // Since we found a match, the string IS in the class
-                            if (op == REOP_CLASS) {
-                                // Update cp based on match direction
-                                if (matchBackward) {
-                                    gData.cp -= stringLiteralLen;
-                                } else {
-                                    gData.cp += stringLiteralLen;
-                                }
-                                result = true;
-                                break;
-                            } else {
-                                // REOP_NCLASS: string is in the negated class, so no match
-                                result = false;
-                                break;
-                            }
-                        }
+                        // Use unified character class matching (handles both string literals and codepoints)
+                        boolean isNegated = (op == REOP_NCLASS);
+                        int matchLen = matchCharacterClass(
+                                gData,
+                                gData.regexp.classList[index],
+                                input,
+                                cpToMatch,
+                                matchBackward,
+                                isNegated,
+                                cpDelta);
 
-                        // Fall back to single codepoint matching
-                        int inputCodePoint =
-                                (gData.regexp.flags & JSREG_UNICODE) != 0
-                                        ? input.codePointAt(cpToMatch)
-                                        : input.charAt(cpToMatch);
-                        if (classMatcher(gData, gData.regexp.classList[index], inputCodePoint)) {
-                            gData.cp += cpDelta;
+                        if (matchLen >= 0) {
+                            // Match succeeded - update position based on direction
+                            if (matchBackward) {
+                                gData.cp -= matchLen;
+                            } else {
+                                gData.cp += matchLen;
+                            }
                             result = true;
-                            break;
                         }
                     }
                 }
