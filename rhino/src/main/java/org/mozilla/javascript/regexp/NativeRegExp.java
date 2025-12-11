@@ -716,8 +716,9 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             // 'v' flag (ES2024 unicodeSets) implies Unicode mode
             boolean unicodeMode = (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
+            boolean vMode = (flags & JSREG_UNICODESETS) != 0;
             // if unicode mode is on, named capture groups are always on
-            ParserParameters params = new ParserParameters(unicodeMode, unicodeMode);
+            ParserParameters params = new ParserParameters(unicodeMode, unicodeMode, vMode);
 
             if (!parseDisjunction(state, params)) return null;
             // Need to reparse if pattern contains invalid backreferences:
@@ -863,10 +864,12 @@ public class NativeRegExp extends IdScriptableObject {
     static class ParserParameters {
         boolean namedCaptureGroups;
         boolean unicodeMode;
+        boolean vMode; // ES2024 unicodeSets mode with different escape rules
 
-        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode) {
+        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode, boolean vMode) {
             this.namedCaptureGroups = namedCaptureGroups;
             this.unicodeMode = unicodeMode;
+            this.vMode = vMode;
         }
     }
 
@@ -1157,7 +1160,7 @@ public class NativeRegExp extends IdScriptableObject {
 
             if (state.cp + 1 < state.cpend && src[state.cp] == '\\' && src[state.cp + 1] == 'u') {
                 state.cp = state.cp + 2;
-                int n = readRegExpUnicodeEscapeSequence(state, new ParserParameters(false, true));
+                int n = readRegExpUnicodeEscapeSequence(state, new ParserParameters(false, true, false));
                 if (n == -1) {
                     reportError("msg.invalid.escape", "");
                     state.cp = termBegin;
@@ -1610,6 +1613,7 @@ public class NativeRegExp extends IdScriptableObject {
     static class SetOperation {
         SetOperationType type;
         ClassContents operand;
+        RECharSet operandCharSet; // Pre-built RECharSet for efficient matching
 
         SetOperation(SetOperationType type, ClassContents operand) {
             this.type = type;
@@ -1845,18 +1849,83 @@ public class NativeRegExp extends IdScriptableObject {
 
                 state.cp += 2; // Skip the operator (-- or &&)
 
-                // Expect opening bracket for nested class
-                if (state.cp >= state.cpend || src[state.cp] != '[') {
-                    reportError("msg.bad.regexp", "Set operation requires nested character class");
+                // Parse the set operand - can be nested class, \q{}, character escape, or single char
+                ClassContents operand = new ClassContents();
+
+                if (state.cp >= state.cpend) {
+                    reportError("msg.bad.regexp", "Set operation missing operand");
                     return null;
                 }
-                state.cp++; // Skip '['
 
-                // Parse the nested character class
-                ClassContents operand = parseClassContents(state, params);
-                if (operand == null) {
-                    reportError(
-                            "msg.bad.regexp", "Invalid nested character class in set operation");
+                if (src[state.cp] == '[') {
+                    // Nested character class
+                    state.cp++; // Skip '['
+                    operand = parseClassContents(state, params);
+                    if (operand == null) {
+                        reportError(
+                                "msg.bad.regexp", "Invalid nested character class in set operation");
+                        return null;
+                    }
+                } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend && src[state.cp + 1] == 'q') {
+                    // String disjunction: \q{...}
+                    state.cp += 2; // Skip '\q'
+                    if (state.cp >= state.cpend || src[state.cp] != '{') {
+                        reportError("msg.bad.regexp", "\\q must be followed by {");
+                        return null;
+                    }
+                    state.cp++; // Skip '{'
+
+                    // Parse string literal(s) within braces
+                    StringBuilder literal = new StringBuilder();
+                    while (state.cp < state.cpend && src[state.cp] != '}') {
+                        if (src[state.cp] == '|') {
+                            if (literal.length() > 0) {
+                                operand.stringLiterals.add(literal.toString());
+                                literal = new StringBuilder();
+                            }
+                            state.cp++;
+                        } else if (src[state.cp] == '\\') {
+                            // Handle escape sequences
+                            state.cp++;
+                            if (state.cp >= state.cpend) {
+                                reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
+                                return null;
+                            }
+                            char escapeChar = src[state.cp];
+                            if (escapeChar == 'u' || escapeChar == 'x') {
+                                if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                                    reportError("msg.invalid.escape", "");
+                                    return null;
+                                }
+                                if (state.result.op != REOP_FLAT) {
+                                    reportError("msg.bad.regexp", "Invalid escape in \\q{}");
+                                    return null;
+                                }
+                                literal.append((char) state.result.chr);
+                                state.cp++;
+                            } else {
+                                literal.append(escapeChar);
+                                state.cp++;
+                            }
+                        } else {
+                            literal.append(src[state.cp]);
+                            state.cp++;
+                        }
+                    }
+
+                    if (literal.length() > 0) {
+                        operand.stringLiterals.add(literal.toString());
+                    }
+
+                    if (state.cp >= state.cpend || src[state.cp] != '}') {
+                        reportError("msg.bad.regexp", "Unclosed \\q{}");
+                        return null;
+                    }
+                    state.cp++; // Skip '}'
+                } else {
+                    // For now, require bracketed operands or \q
+                    // TODO: Support character class escapes and single characters
+                    reportError("msg.bad.regexp", "Set operation operand must be [...] or \\q{}");
                     return null;
                 }
 
@@ -1866,6 +1935,18 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (state.cp < state.cpend && src[state.cp] == ']') {
             state.cp++;
+        }
+
+        // ES2024 validation: complement classes cannot contain multi-character strings
+        if (!contents.sense && (state.flags & JSREG_UNICODESETS) != 0) {
+            for (String literal : contents.stringLiterals) {
+                if (literal.length() > 1) {
+                    reportError(
+                            "msg.bad.regexp",
+                            "Complement classes cannot contain multi-character strings");
+                    return null;
+                }
+            }
         }
 
         return contents;
@@ -2377,6 +2458,8 @@ public class NativeRegExp extends IdScriptableObject {
                     if (!t.classContents.sense) program[pc - 1] = REOP_NCLASS;
                     pc = addIndex(program, pc, t.index);
                     re.classList[t.index] = new RECharSet(t.classContents, t.bmsize);
+                    // Pre-build RECharSet objects for set operation operands
+                    buildOperandCharSets(t.classContents, t.bmsize);
                     break;
                 case REOP_UPROP:
                 case REOP_UPROP_NOT:
@@ -2592,6 +2675,22 @@ public class NativeRegExp extends IdScriptableObject {
         }
     }
 
+    /**
+     * Recursively build RECharSet objects for all set operation operands. This ensures that
+     * operands are pre-built during compilation rather than being built on every regexp execution.
+     */
+    private static void buildOperandCharSets(ClassContents contents, int bmsize) {
+        if (contents.setOperations.isEmpty()) {
+            return;
+        }
+
+        for (SetOperation op : contents.setOperations) {
+            op.operandCharSet = new RECharSet(op.operand, bmsize);
+            // Recursively build for nested set operations
+            buildOperandCharSets(op.operand, bmsize);
+        }
+    }
+
     /* Compile the source of the class into a RECharSet */
     private static void processCharSet(REGlobalData gData, RECharSet charSet) {
         synchronized (charSet) {
@@ -2680,20 +2779,31 @@ public class NativeRegExp extends IdScriptableObject {
      */
     /**
      * Check if any string literal in the character class matches at the current position. Returns
-     * the length of the matched string, or 0 if no match.
+     * the length of the matched string, or -1 if no match. Zero-length matches are valid.
+     * Supports both forward and backward matching for lookbehind assertions.
      */
-    private static int stringLiteralMatcher(RECharSet charSet, CharSequence input, int position) {
+    private static int stringLiteralMatcher(RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
         if (charSet.classContents == null || charSet.classContents.stringLiterals.isEmpty()) {
-            return 0;
+            return -1;
         }
 
         // Try to match each string literal, return longest match for greedy matching
-        int maxMatch = 0;
+        int maxMatch = -1;
         String inputStr = input.toString();
         for (String literal : charSet.classContents.stringLiterals) {
-            if (position + literal.length() <= input.length()
-                    && inputStr.regionMatches(position, literal, 0, literal.length())
-                    && literal.length() > maxMatch) {
+            boolean matches;
+            if (matchBackward) {
+                // For lookbehind, match backwards from position
+                int startPos = position - literal.length();
+                matches = startPos >= 0
+                        && inputStr.regionMatches(startPos, literal, 0, literal.length());
+            } else {
+                // For normal matching, match forwards from position
+                matches = position + literal.length() <= input.length()
+                        && inputStr.regionMatches(position, literal, 0, literal.length());
+            }
+
+            if (matches && (maxMatch == -1 || literal.length() > maxMatch)) {
                 maxMatch = literal.length();
             }
         }
@@ -2753,91 +2863,24 @@ public class NativeRegExp extends IdScriptableObject {
         // Apply set operations for 'v' flag
         if (!charSet.classContents.setOperations.isEmpty()) {
             for (SetOperation op : charSet.classContents.setOperations) {
-                boolean operandMatches = checkClassContentsMatch(gData, op.operand, codePoint);
-
                 if (op.type == SetOperationType.SUBTRACT) {
                     // Remove from result if in subtract operand
+                    boolean operandMatches = classMatcher(gData, op.operandCharSet, codePoint);
                     if (operandMatches) {
                         matches = false;
                     }
                 } else if (op.type == SetOperationType.INTERSECT) {
                     // Keep only if also in intersect operand
-                    matches = matches && operandMatches;
+                    // Optimization: skip check if matches is already false
+                    if (matches) {
+                        boolean operandMatches = classMatcher(gData, op.operandCharSet, codePoint);
+                        matches = operandMatches;
+                    }
                 }
             }
         }
 
         return matches == charSet.classContents.sense;
-    }
-
-    // Helper method to check if codePoint matches a ClassContents
-    private static boolean checkClassContentsMatch(
-            REGlobalData gData, ClassContents contents, int codePoint) {
-        // Build a temporary RECharSet for the operand
-        RECharSet tempCharSet = new RECharSet(contents, 65536); // Standard BMP length
-
-        // Process and match
-        processCharSet(gData, tempCharSet);
-
-        boolean matches = false;
-
-        if (codePoint <= 0xFFFF) {
-            int byteIndex = codePoint >> 3;
-            if (!(tempCharSet.length == 0
-                    || codePoint >= tempCharSet.length
-                    || (tempCharSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0)) {
-                matches = true;
-            }
-        }
-
-        if (!matches && contents.nonBMPCodepoints.contains(codePoint)) {
-            matches = true;
-        }
-
-        if (!matches) {
-            for (int i = 0; i < contents.nonBMPRanges.size(); i += 2) {
-                if (codePoint >= contents.nonBMPRanges.get(i)
-                        && codePoint <= contents.nonBMPRanges.get(i + 1)) {
-                    matches = true;
-                    break;
-                }
-            }
-        }
-
-        if (!matches) {
-            for (int encodedProp : tempCharSet.unicodeProps) {
-                if (UnicodeProperties.hasProperty(encodedProp, codePoint)) {
-                    matches = true;
-                    break;
-                }
-            }
-        }
-
-        if (!matches) {
-            for (int encodedProp : tempCharSet.negUnicodeProps) {
-                if (!UnicodeProperties.hasProperty(encodedProp, codePoint)) {
-                    matches = true;
-                    break;
-                }
-            }
-        }
-
-        // Recursively apply nested set operations
-        if (!contents.setOperations.isEmpty()) {
-            for (SetOperation op : contents.setOperations) {
-                boolean operandMatches = checkClassContentsMatch(gData, op.operand, codePoint);
-
-                if (op.type == SetOperationType.SUBTRACT) {
-                    if (operandMatches) {
-                        matches = false;
-                    }
-                } else if (op.type == SetOperationType.INTERSECT) {
-                    matches = matches && operandMatches;
-                }
-            }
-        }
-
-        return matches == contents.sense;
     }
 
     private static boolean reopIsSimple(int op) {
@@ -3088,12 +3131,26 @@ public class NativeRegExp extends IdScriptableObject {
                         // First, try to match string literals (v flag feature)
                         int stringLiteralLen =
                                 stringLiteralMatcher(
-                                        gData.regexp.classList[index], input, cpToMatch);
-                        if (stringLiteralLen > 0) {
-                            // String literal matched
-                            gData.cp += stringLiteralLen;
-                            result = true;
-                            break;
+                                        gData.regexp.classList[index], input, cpToMatch, matchBackward);
+                        if (stringLiteralLen >= 0) {
+                            // String literal matched (including zero-length matches)
+                            // For REOP_CLASS: match if string is in the class
+                            // For REOP_NCLASS: match if string is NOT in the class
+                            // Since we found a match, the string IS in the class
+                            if (op == REOP_CLASS) {
+                                // Update cp based on match direction
+                                if (matchBackward) {
+                                    gData.cp -= stringLiteralLen;
+                                } else {
+                                    gData.cp += stringLiteralLen;
+                                }
+                                result = true;
+                                break;
+                            } else {
+                                // REOP_NCLASS: string is in the negated class, so no match
+                                result = false;
+                                break;
+                            }
                         }
 
                         // Fall back to single codepoint matching
