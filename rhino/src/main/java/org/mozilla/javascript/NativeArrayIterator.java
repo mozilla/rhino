@@ -29,10 +29,10 @@ public final class NativeArrayIterator extends ES6Iterator {
         super();
     }
 
-    public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ARRAY_ITERATOR_TYPE type) {
+    public NativeArrayIterator(VarScope scope, Object arrayLike, ARRAY_ITERATOR_TYPE type) {
         super(scope, ITERATOR_TAG);
         this.index = 0;
-        this.arrayLike = arrayLike;
+        this.arrayLike = (Scriptable) arrayLike;
         this.type = type;
     }
 

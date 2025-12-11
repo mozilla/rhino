@@ -54,7 +54,7 @@ public final class NativeJSON extends ScriptableObject {
         return "JSON";
     }
 
-    private static Object parse(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object parse(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String jtext = ScriptRuntime.toString(args, 0);
         Object reviver = null;
         if (args.length > 1) {
@@ -66,8 +66,7 @@ public final class NativeJSON extends ScriptableObject {
         return parse(cx, scope, jtext);
     }
 
-    private static Object stringify(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object stringify(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object value = Undefined.instance, replacer = null, space = null;
 
         if (args.length > 0) {

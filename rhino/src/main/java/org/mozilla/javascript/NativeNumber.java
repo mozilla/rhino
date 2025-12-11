@@ -132,17 +132,15 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_constructorFunc(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return (args.length > 0) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
     }
 
-    private static Object js_valueOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_valueOf(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return toSelf(thisObj).doubleValue;
     }
 
-    private static Object js_toFixed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toFixed(Context cx, VarScope scope, Object thisObj, Object[] args) {
         double value = toSelf(thisObj).doubleValue;
 
         int fractionDigits;
@@ -164,7 +162,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toExponential(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         double value = toSelf(thisObj).doubleValue;
 
         double p;
@@ -190,7 +188,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toPrecision(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         double value = toSelf(thisObj).doubleValue;
         // Undefined precision, fall back to ToString()
         if (args.length == 0 || Undefined.isUndefined(args[0])) {
@@ -215,12 +213,11 @@ final class NativeNumber extends ScriptableObject {
         }
     }
 
-    private static NativeNumber toSelf(Scriptable thisObj) {
+    private static NativeNumber toSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeNumber.class);
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
         int base =
                 (args.length == 0 || Undefined.isUndefined(args[0]))
                         ? 10
@@ -229,7 +226,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toLocaleString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (!cx.hasFeature(Context.FEATURE_INTL_402)) {
             return js_toString(cx, scope, thisObj, ScriptRuntime.emptyArgs);
         }
@@ -248,7 +245,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return "(new Number(" + ScriptRuntime.toString(toSelf(thisObj).doubleValue) + "))";
     }
 
@@ -266,8 +263,7 @@ final class NativeNumber extends ScriptableObject {
         return ScriptRuntime.numberToString(doubleValue, 10);
     }
 
-    private static Object js_isFinite(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_isFinite(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Number n = argToNumber(args);
         return n == null ? Boolean.FALSE : isFinite(n);
     }
@@ -277,8 +273,7 @@ final class NativeNumber extends ScriptableObject {
         return Double.isFinite(nd);
     }
 
-    private static Object js_isNaN(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_isNaN(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Number val = argToNumber(args);
         if (val == null) {
             return false;
@@ -290,8 +285,7 @@ final class NativeNumber extends ScriptableObject {
         return Double.isNaN(d);
     }
 
-    private static Object js_isInteger(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_isInteger(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Number val = argToNumber(args);
         if (val == null) {
             return false;
@@ -303,7 +297,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_isSafeInteger(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         Number val = argToNumber(args);
         if (val == null) {
             return false;

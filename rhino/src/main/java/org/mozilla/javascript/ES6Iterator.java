@@ -63,17 +63,16 @@ public abstract class ES6Iterator extends ScriptableObject {
         setPrototype(prototype);
     }
 
-    private static ES6Iterator realThis(Scriptable thisObj) {
+    private static ES6Iterator realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, ES6Iterator.class);
     }
 
-    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Iterator iterator = realThis(thisObj);
         return iterator.next(cx, scope);
     }
 
-    private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_iterator(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return thisObj;
     }
 

@@ -81,38 +81,37 @@ public class NativeConsole extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return CLASS_NAME;
     }
 
-    private Object js_trace(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_trace(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ScriptStackElement[] stack = new EvaluatorException("[object Object]").getScriptStack();
         printer.print(cx, scope, Level.TRACE, args, stack);
         return Undefined.instance;
     }
 
-    private Object js_debug(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_debug(Context cx, VarScope scope, Object thisObj, Object[] args) {
         printer.print(cx, scope, Level.DEBUG, args, null);
         return Undefined.instance;
     }
 
-    private Object js_log(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_log(Context cx, VarScope scope, Object thisObj, Object[] args) {
         printer.print(cx, scope, Level.INFO, args, null);
         return Undefined.instance;
     }
 
-    private Object js_info(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_info(Context cx, VarScope scope, Object thisObj, Object[] args) {
         printer.print(cx, scope, Level.INFO, args, null);
         return Undefined.instance;
     }
 
-    private Object js_warn(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_warn(Context cx, VarScope scope, Object thisObj, Object[] args) {
         printer.print(cx, scope, Level.WARN, args, null);
         return Undefined.instance;
     }
 
-    private Object js_error(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_error(Context cx, VarScope scope, Object thisObj, Object[] args) {
         printer.print(cx, scope, Level.ERROR, args, null);
         return Undefined.instance;
     }
@@ -294,7 +293,7 @@ public class NativeConsole extends ScriptableObject {
         }
     }
 
-    private Object js_assert(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_assert(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (args != null && args.length > 0 && ScriptRuntime.toBoolean(args[0])) {
             return Undefined.instance;
         }
@@ -323,14 +322,14 @@ public class NativeConsole extends ScriptableObject {
         return Undefined.instance;
     }
 
-    private Object js_count(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_count(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         int count = counters.computeIfAbsent(label, l -> new AtomicInteger(0)).incrementAndGet();
         print(cx, scope, Level.INFO, label + ": " + count);
         return Undefined.instance;
     }
 
-    private Object js_countReset(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_countReset(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         AtomicInteger counter = counters.remove(label);
         if (counter == null) {
@@ -339,7 +338,7 @@ public class NativeConsole extends ScriptableObject {
         return Undefined.instance;
     }
 
-    private Object js_time(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_time(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start != null) {
@@ -350,7 +349,7 @@ public class NativeConsole extends ScriptableObject {
         return Undefined.instance;
     }
 
-    private Object js_timeEnd(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_timeEnd(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.remove(label);
         if (start == null) {
@@ -361,7 +360,7 @@ public class NativeConsole extends ScriptableObject {
         return Undefined.instance;
     }
 
-    private Object js_timeLog(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private Object js_timeLog(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start == null) {

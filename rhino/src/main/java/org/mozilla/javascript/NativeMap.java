@@ -84,8 +84,7 @@ public class NativeMap extends ScriptableObject {
         return nm;
     }
 
-    private static Object jsGroupBy(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object jsGroupBy(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object items = args.length < 1 ? Undefined.instance : args[0];
         Object callback = args.length < 2 ? Undefined.instance : args[1];
 
@@ -109,7 +108,7 @@ public class NativeMap extends ScriptableObject {
         return map;
     }
 
-    private static Object js_set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_set(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "set")
                 .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance);
     }
@@ -124,8 +123,7 @@ public class NativeMap extends ScriptableObject {
         return this;
     }
 
-    private static Object js_delete(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_delete(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "delete").js_delete(key(args));
     }
 
@@ -133,7 +131,7 @@ public class NativeMap extends ScriptableObject {
         return entries.deleteEntry(arg);
     }
 
-    private static Object js_get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_get(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "get").js_get(key(args));
     }
 
@@ -145,7 +143,7 @@ public class NativeMap extends ScriptableObject {
         return entry.value;
     }
 
-    private static Object js_has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_has(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "has").js_has(key(args));
     }
 
@@ -157,17 +155,15 @@ public class NativeMap extends ScriptableObject {
         return entries.size();
     }
 
-    private static Object js_keys(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_keys(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "keys").js_iterator(scope, NativeCollectionIterator.Type.KEYS);
     }
 
-    private static Object js_values(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_values(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "values").js_iterator(scope, NativeCollectionIterator.Type.VALUES);
     }
 
-    private static Object js_entries(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_entries(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "entries").js_iterator(scope, NativeCollectionIterator.Type.BOTH);
     }
 
@@ -175,8 +171,7 @@ public class NativeMap extends ScriptableObject {
         return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
     }
 
-    private static Object js_clear(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_clear(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "clear").js_clear();
     }
 
@@ -249,7 +244,7 @@ public class NativeMap extends ScriptableObject {
                 (key, value) -> set.call(cx, scope, map, new Object[] {key, value}));
     }
 
-    private static NativeMap realThis(Scriptable thisObj, String name) {
+    private static NativeMap realThis(Object thisObj, String name) {
         NativeMap nm = LambdaConstructor.convertThisObject(thisObj, NativeMap.class);
         if (!nm.instanceOfMap) {
             // Check for "Map internal data tag"

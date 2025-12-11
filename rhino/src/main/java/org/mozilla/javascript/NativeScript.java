@@ -114,20 +114,18 @@ class NativeScript extends BaseFunction {
         return super.decompile(indent, flags);
     }
 
-    private static Object js_compile(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_compile(Context cx, VarScope scope, Object thisObj, Object[] args) {
         NativeScript real = realThis(thisObj, "compile");
         String source = ScriptRuntime.toString(args, 0);
         real.script = compile(cx, source);
         return real;
     }
 
-    private static Object js_exec(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_exec(Context cx, VarScope scope, Object thisObj, Object[] args) {
         throw Context.reportRuntimeErrorById("msg.cant.call.indirect", "exec");
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
         NativeScript real = realThis(thisObj, "toString");
         Script realScript = real.script;
         if (realScript == null) {
@@ -137,7 +135,7 @@ class NativeScript extends BaseFunction {
     }
 
     private static Scriptable js_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return js_constructor(cx, scope, args);
     }
 
@@ -149,7 +147,7 @@ class NativeScript extends BaseFunction {
         return nscript;
     }
 
-    private static NativeScript realThis(Scriptable thisObj, String name) {
+    private static NativeScript realThis(Object thisObj, String name) {
         return ensureType(thisObj, NativeScript.class, name);
     }
 

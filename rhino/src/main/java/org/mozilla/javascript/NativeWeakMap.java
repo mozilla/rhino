@@ -69,8 +69,7 @@ public class NativeWeakMap extends ScriptableObject {
         return nm;
     }
 
-    private static Object js_delete(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_delete(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "delete").js_delete(NativeMap.key(args));
     }
 
@@ -81,7 +80,7 @@ public class NativeWeakMap extends ScriptableObject {
         return map.remove(key) != null;
     }
 
-    private static Object js_get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_get(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "get").js_get(NativeMap.key(args));
     }
 
@@ -98,7 +97,7 @@ public class NativeWeakMap extends ScriptableObject {
         return result;
     }
 
-    private static Object js_has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_has(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "has").js_has(NativeMap.key(args));
     }
 
@@ -109,7 +108,7 @@ public class NativeWeakMap extends ScriptableObject {
         return map.containsKey(key);
     }
 
-    private static Object js_set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_set(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "set")
                 .js_set(NativeMap.key(args), args.length > 1 ? args[1] : Undefined.instance);
     }
@@ -133,7 +132,7 @@ public class NativeWeakMap extends ScriptableObject {
         return ScriptRuntime.isUnregisteredSymbol(key) || ScriptRuntime.isObject(key);
     }
 
-    private static NativeWeakMap realThis(Scriptable thisObj, String name) {
+    private static NativeWeakMap realThis(Object thisObj, String name) {
         NativeWeakMap nm = LambdaConstructor.convertThisObject(thisObj, NativeWeakMap.class);
         if (!nm.instanceOfWeakMap) {
             // Check for "Map internal data tag"
