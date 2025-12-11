@@ -86,12 +86,11 @@ public final class ES6Generator extends ScriptableObject {
         return "Generator";
     }
 
-    private static ES6Generator realThis(Scriptable thisObj) {
+    private static ES6Generator realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, ES6Generator.class);
     }
 
-    private static Object js_return(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_return(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
         if (generator.delegee == null) {
@@ -100,7 +99,7 @@ public final class ES6Generator extends ScriptableObject {
         return generator.resumeDelegeeReturn(cx, scope, value);
     }
 
-    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
         if (generator.delegee == null) {
@@ -109,8 +108,7 @@ public final class ES6Generator extends ScriptableObject {
         return generator.resumeDelegee(cx, scope, value);
     }
 
-    private static Object js_throw(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_throw(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
         if (generator.delegee == null) {
@@ -119,8 +117,7 @@ public final class ES6Generator extends ScriptableObject {
         return generator.resumeDelegeeThrow(cx, scope, value);
     }
 
-    private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_iterator(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return thisObj;
     }
 

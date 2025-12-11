@@ -1248,8 +1248,7 @@ class NativeProxy extends ScriptableObject {
     }
 
     // Proxy.revocable
-    private static Object revocable(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object revocable(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }

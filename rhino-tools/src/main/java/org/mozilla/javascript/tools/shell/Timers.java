@@ -54,7 +54,7 @@ public class Timers {
      * @param scope the global scope
      * @throws InterruptedException if the thread is interrupted while sleeping
      */
-    public void runAllTimers(Context cx, Scriptable scope) throws InterruptedException {
+    public void runAllTimers(Context cx, VarScope scope) throws InterruptedException {
         boolean executed;
         do {
             cx.processMicrotasks();
@@ -72,7 +72,7 @@ public class Timers {
      * @return true if something was placed on the queue, and false if the queue is empty
      * @throws InterruptedException if the thread was interrupted
      */
-    private boolean executeNext(Context cx, Scriptable scope) throws InterruptedException {
+    private boolean executeNext(Context cx, VarScope scope) throws InterruptedException {
         Timeout t = timerQueue.peek();
         if (t == null) {
             return false;
