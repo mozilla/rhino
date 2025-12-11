@@ -38,7 +38,7 @@ public class ArrayLikeAbstractOperations {
     public static Object iterativeMethod(
             Context cx,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
@@ -53,7 +53,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             IdFunctionObject fun,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
@@ -64,7 +64,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             IdFunctionObject fun,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
@@ -89,7 +89,7 @@ public class ArrayLikeAbstractOperations {
             Object tag,
             String name,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
@@ -102,7 +102,7 @@ public class ArrayLikeAbstractOperations {
             Object tag,
             String name,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
@@ -125,8 +125,8 @@ public class ArrayLikeAbstractOperations {
     public static Object coercibleIterativeMethod(
             Context cx,
             IterativeOperation operation,
-            Scriptable scope,
-            Scriptable o,
+            VarScope scope,
+            Object o,
             Object[] args,
             long length) {
         if (operation == IterativeOperation.MAP && length > Integer.MAX_VALUE) {
@@ -168,7 +168,7 @@ public class ArrayLikeAbstractOperations {
                         : +1;
         for (long i = start; i != end; i += increment) {
             Object[] innerArgs = new Object[3];
-            Object elem = getRawElem(o, i);
+            Object elem = getRawElem((Scriptable) o, i);
             if (elem == NOT_FOUND) {
                 if (operation == IterativeOperation.FIND
                         || operation == IterativeOperation.FIND_INDEX
@@ -226,9 +226,9 @@ public class ArrayLikeAbstractOperations {
         }
     }
 
-    static Scriptable arraySpeciesCreate(Context cx, Scriptable scope, Scriptable o, int length) {
+    static Scriptable arraySpeciesCreate(Context cx, VarScope scope, Object o, int length) {
         if (o instanceof NativeArray) {
-            Object c = ScriptableObject.getProperty(o, "constructor");
+            Object c = ScriptableObject.getProperty((Scriptable) o, "constructor");
             if (c instanceof Scriptable) {
                 c = ScriptableObject.getProperty((Scriptable) c, SymbolKey.SPECIES);
                 if (c == null || c == NOT_FOUND) {
@@ -314,11 +314,7 @@ public class ArrayLikeAbstractOperations {
 
     /** Implements the methods "reduce" and "reduceRight". */
     public static Object reduceMethod(
-            Context cx,
-            ReduceOperation operation,
-            Scriptable scope,
-            Object thisObj,
-            Object[] args) {
+            Context cx, ReduceOperation operation, VarScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         long length = getLengthProperty(cx, o);
@@ -328,7 +324,7 @@ public class ArrayLikeAbstractOperations {
     public static Object reduceMethodWithLength(
             Context cx,
             ReduceOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             long length) {
@@ -345,7 +341,7 @@ public class ArrayLikeAbstractOperations {
         Object value = args.length > 1 ? args[1] : NOT_FOUND;
         for (long i = 0; i < length; i++) {
             long index = movingLeft ? i : (length - 1 - i);
-            Object elem = getRawElem(o, index);
+            Object elem = getRawElem((Scriptable) o, index);
             if (elem == NOT_FOUND) {
                 continue;
             }

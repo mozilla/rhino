@@ -4304,12 +4304,12 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_compile(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).compile(cx, s, args);
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // thisObj != scope is a strange hack but i had no better idea for the moment
         if (thisObj != s && thisObj instanceof NativeObject) {
             NativeObject realThis = (NativeObject) thisObj;
@@ -4324,17 +4324,17 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).toString();
     }
 
     private static Object js_exec(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_exec(cx, s, thisObj, args);
     }
 
     private static Object js_test(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         {
             Object x = realThis(thisObj, f).execSub(cx, s, args, TEST);
             return Boolean.TRUE.equals(x) ? Boolean.TRUE : Boolean.FALSE;
@@ -4342,32 +4342,32 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_prefix(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).execSub(cx, s, args, PREFIX);
     }
 
     private static Object js_match(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_SymbolMatch(cx, s, thisObj, args);
     }
 
     private static Object js_matchAll(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_SymbolMatchAll(cx, s, thisObj, args);
     }
 
     private static Object js_search(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_SymbolSearch(cx, s, thisObj, args);
     }
 
     private static Object js_replace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_SymbolReplace(cx, s, thisObj, args);
     }
 
     private static Object js_split(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_SymbolSplit(cx, s, thisObj, args);
     }
 
