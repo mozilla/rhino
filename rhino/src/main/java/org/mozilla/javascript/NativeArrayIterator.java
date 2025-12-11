@@ -42,7 +42,7 @@ public final class NativeArrayIterator extends ES6Iterator {
     }
 
     @Override
-    protected boolean isDone(Context cx, Scriptable scope) {
+    protected boolean isDone(Context cx, VarScope scope) {
         if (arrayLike instanceof NativeTypedArrayView) {
             NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) arrayLike;
             if (typedArray.isTypedArrayOutOfBounds()) {
@@ -53,7 +53,7 @@ public final class NativeArrayIterator extends ES6Iterator {
     }
 
     @Override
-    protected Object nextValue(Context cx, Scriptable scope) {
+    protected Object nextValue(Context cx, VarScope scope) {
         if (type == ARRAY_ITERATOR_TYPE.KEYS) {
             return Integer.valueOf(index++);
         }

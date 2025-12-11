@@ -21,13 +21,13 @@ import java.util.NoSuchElementException;
  */
 public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     private final Context cx;
-    private final Scriptable scope;
+    private final VarScope scope;
     private final Callable next;
     private final Callable returnFunc;
     private final Scriptable iterator;
     private boolean closed;
 
-    public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
+    public IteratorLikeIterable(Context cx, VarScope scope, Object target) {
         this.cx = cx;
         this.scope = scope;
         // This will throw if "next" is not a function or undefined

@@ -76,7 +76,7 @@ public class FunctionObject extends BaseFunction {
      * @param scope enclosing scope of function
      * @see org.mozilla.javascript.Scriptable
      */
-    public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
+    public FunctionObject(String name, Member methodOrConstructor, VarScope scope) {
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox(scope, (Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
@@ -161,12 +161,12 @@ public class FunctionObject extends BaseFunction {
         return JAVA_UNSUPPORTED_TYPE;
     }
 
-    public static Object convertArg(Context cx, Scriptable scope, Object arg, int typeTag) {
+    public static Object convertArg(Context cx, VarScope scope, Object arg, int typeTag) {
         return convertArg(cx, scope, arg, typeTag, false);
     }
 
     public static Object convertArg(
-            Context cx, Scriptable scope, Object arg, int typeTag, boolean isNullable) {
+            Context cx, VarScope scope, Object arg, int typeTag, boolean isNullable) {
         switch (typeTag) {
             case JAVA_STRING_TYPE:
                 if (arg instanceof String) return arg;
@@ -331,11 +331,11 @@ public class FunctionObject extends BaseFunction {
     }
 
     /**
-     * @deprecated Use {@link #getTypeTag(Class)} and {@link #convertArg(Context, Scriptable,
-     *     Object, int, boolean)} for type conversion.
+     * @deprecated Use {@link #getTypeTag(Class)} and {@link #convertArg(Context, VarScope, Object,
+     *     int, boolean)} for type conversion.
      */
     @Deprecated
-    public static Object convertArg(Context cx, Scriptable scope, Object arg, Class<?> desired) {
+    public static Object convertArg(Context cx, VarScope scope, Object arg, Class<?> desired) {
         int tag = getTypeTag(desired);
         if (tag == JAVA_UNSUPPORTED_TYPE) {
             throw Context.reportRuntimeErrorById("msg.cant.convert", desired.getName());

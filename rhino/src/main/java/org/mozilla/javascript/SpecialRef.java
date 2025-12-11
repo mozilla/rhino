@@ -13,17 +13,19 @@ class SpecialRef extends Ref {
     private static final int SPECIAL_PROTO = 1;
     private static final int SPECIAL_PARENT = 2;
 
-    private Scriptable target;
-    private int type;
-    private String name;
+    private final Scriptable target;
+    private final int type;
+    private final String name;
+    private final VarScope scope;
 
-    private SpecialRef(Scriptable target, int type, String name) {
+    private SpecialRef(Scriptable target, int type, String name, VarScope scope) {
         this.target = target;
         this.type = type;
         this.name = name;
+        this.scope = scope;
     }
 
-    static Ref createSpecial(Context cx, Scriptable scope, Object object, String name) {
+    static Ref createSpecial(Context cx, VarScope scope, Object object, String name) {
         Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
         if (target == null) {
             throw ScriptRuntime.undefReadError(object, name);
@@ -43,7 +45,7 @@ class SpecialRef extends Ref {
             type = SPECIAL_NONE;
         }
 
-        return new SpecialRef(target, type, name);
+        return new SpecialRef(target, type, name, scope);
     }
 
     @Override
@@ -78,7 +80,7 @@ class SpecialRef extends Ref {
     }
 
     @Override
-    public Object set(Context cx, Scriptable scope, Object value) {
+    public Object set(Context cx, Scriptable owner, Object value) {
         switch (type) {
             case SPECIAL_NONE:
                 return ScriptRuntime.setObjectProp(target, name, value, cx);

@@ -93,7 +93,7 @@ public final class LazilyLoadedCtor<T extends PropHolder<T>> implements Serializ
                 propertyName,
                 sealed,
                 privileged,
-                (Context lcx, Scriptable lscope, boolean lsealed) ->
+                (Context lcx, VarScope lscope, boolean lsealed) ->
                         buildUsingReflection(lscope, className, propertyName, lsealed));
     }
 
@@ -133,7 +133,7 @@ public final class LazilyLoadedCtor<T extends PropHolder<T>> implements Serializ
     @SuppressWarnings("unchecked")
     private Object buildValueInternal() {
         Context cx = Context.getCurrentContext();
-        Object value = initializer.initialize(cx, (Scriptable) scope, sealed);
+        Object value = initializer.initialize(cx, (VarScope) scope, sealed);
         if (value != null) {
             return value;
         }
@@ -141,7 +141,7 @@ public final class LazilyLoadedCtor<T extends PropHolder<T>> implements Serializ
     }
 
     private static Object buildUsingReflection(
-            Scriptable scope, String className, String propertyName, boolean sealed) {
+            VarScope scope, String className, String propertyName, boolean sealed) {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {

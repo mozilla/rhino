@@ -45,11 +45,11 @@ class JavaMembers {
 
     private static final Permission allPermission = new AllPermission();
 
-    JavaMembers(Scriptable scope, Class<?> cl) {
+    JavaMembers(VarScope scope, Class<?> cl) {
         this(scope, cl, false);
     }
 
-    JavaMembers(Scriptable scope, Class<?> cl, boolean includeProtected) {
+    JavaMembers(VarScope scope, Class<?> cl, boolean includeProtected) {
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
             ClassShutter shutter = cx.getClassShutter();
             if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
@@ -444,7 +444,7 @@ class JavaMembers {
     }
 
     private void reflect(
-            Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate) {
+            Context cx, VarScope scope, boolean includeProtected, boolean includePrivate) {
         var typeFactory = TypeInfoFactory.get(scope);
 
         var accessibleMethods = discoverAccessibleMethods(cl, includeProtected, includePrivate);
@@ -852,7 +852,7 @@ class JavaMembers {
     }
 
     private static JavaMembers createJavaMembers(
-            Scriptable associatedScope, Class<?> cl, boolean includeProtected) {
+            VarScope associatedScope, Class<?> cl, boolean includeProtected) {
         if (STRICT_REFLECTIVE_ACCESS) {
             return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
         } else {
@@ -931,7 +931,7 @@ class FieldAndMethods extends NativeJavaMethod {
                     "msg.java.internal.private", field.raw().getName());
         }
         Context cx = Context.getContext();
-        rval = cx.getWrapFactory().wrap(cx, this, rval, field.type());
+        rval = cx.getWrapFactory().wrap(cx, this.getParentScope(), rval, field.type());
         if (rval instanceof Scriptable) {
             rval = ((Scriptable) rval).getDefaultValue(hint);
         }

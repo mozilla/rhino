@@ -26,7 +26,7 @@ public class ClassCache implements Serializable {
     private transient volatile Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient volatile Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
-    private Scriptable associatedScope;
+    private VarScope associatedScope;
 
     /**
      * CacheKey is a combination of class and securityContext. This is required when classes are
@@ -205,7 +205,7 @@ public class ClassCache implements Serializable {
         }
     }
 
-    Scriptable getAssociatedScope() {
+    VarScope getAssociatedScope() {
         return associatedScope;
     }
 }

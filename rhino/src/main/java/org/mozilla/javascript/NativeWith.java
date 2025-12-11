@@ -185,7 +185,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
         return false;
     }
 
-    static Object newWithSpecial(Context cx, Scriptable scope, Object[] args) {
+    static Object newWithSpecial(Context cx, VarScope scope, Object[] args) {
         ScriptRuntime.checkDeprecated(cx, "With");
         TopLevel top = ScriptableObject.getTopLevelScope(scope);
         var obj =

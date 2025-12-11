@@ -39,11 +39,7 @@ public class NativeConsole extends ScriptableObject {
 
     public interface ConsolePrinter extends Serializable {
         void print(
-                Context cx,
-                Scriptable scope,
-                Level level,
-                Object[] args,
-                ScriptStackElement[] stack);
+                Context cx, VarScope scope, Level level, Object[] args, ScriptStackElement[] stack);
     }
 
     public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
@@ -116,11 +112,11 @@ public class NativeConsole extends ScriptableObject {
         return Undefined.instance;
     }
 
-    private void print(Context cx, Scriptable scope, Level level, String msg) {
+    private void print(Context cx, VarScope scope, Level level, String msg) {
         printer.print(cx, scope, level, new String[] {msg}, null);
     }
 
-    public static String format(Context cx, Scriptable scope, Object[] args) {
+    public static String format(Context cx, VarScope scope, Object[] args) {
         if (args == null || args.length == 0) {
             return "";
         }
@@ -233,7 +229,7 @@ public class NativeConsole extends ScriptableObject {
         return ScriptRuntime.numberToString(ScriptRuntime.toNumber(val), 10);
     }
 
-    private static String formatObj(Context cx, Scriptable scope, Object arg) {
+    private static String formatObj(Context cx, VarScope scope, Object arg) {
         if (arg == null) {
             return "null";
         }

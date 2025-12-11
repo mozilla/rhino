@@ -13,6 +13,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.config.RhinoConfig;
 
 /**
@@ -155,7 +156,7 @@ class DefaultLinker implements GuardingDynamicLinker {
                             ScriptRuntime.LookupResult.class,
                             String.class,
                             Context.class,
-                            Scriptable.class);
+                            VarScope.class);
             mh = lookup.findStatic(ScriptRuntime.class, "getNameAndThis", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
@@ -165,7 +166,7 @@ class DefaultLinker implements GuardingDynamicLinker {
                             ScriptRuntime.LookupResult.class,
                             String.class,
                             Context.class,
-                            Scriptable.class);
+                            VarScope.class);
             mh = lookup.findStatic(ScriptRuntime.class, "getNameAndThisOptional", tt);
             mh = MethodHandles.insertArguments(mh, 0, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);

@@ -54,16 +54,9 @@ public class NullableArgumentsConversionTest {
         initNullableArgumentsConversionTest(arg, typeTag, isNullable, expectedConvertedArg);
         Utils.runWithAllModes(
                 context -> {
-                    Scriptable scriptable =
-                            new ScriptableObject() {
-                                @Override
-                                public String getClassName() {
-                                    return "";
-                                }
-                            };
+                    var topLevel = context.initStandardObjects();
                     Object convertedArg =
-                            FunctionObject.convertArg(
-                                    context, scriptable, arg, typeTag, isNullable);
+                            FunctionObject.convertArg(context, topLevel, arg, typeTag, isNullable);
 
                     assertThat(convertedArg, is(expectedConvertedArg));
                     return null;

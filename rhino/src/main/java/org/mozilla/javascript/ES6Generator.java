@@ -121,7 +121,7 @@ public final class ES6Generator extends ScriptableObject {
         return thisObj;
     }
 
-    private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegee(Context cx, VarScope scope, Object value) {
         try {
             // Be super-careful and only pass an arg to next if it expects one
             Object[] nextArgs =
@@ -151,7 +151,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegeeThrow(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegeeThrow(Context cx, VarScope scope, Object value) {
         boolean returnCalled = false;
         try {
             // Delegate to "throw" method. If it's not defined we'll get an error here.
@@ -193,7 +193,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegeeReturn(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegeeReturn(Context cx, VarScope scope, Object value) {
         try {
             // Call "return" but don't throw if it can't be found
             Object retResult = callReturnOptionally(cx, scope, value);
@@ -230,7 +230,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeLocal(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeLocal(Context cx, VarScope scope, Object value) {
         if (state == State.COMPLETED) {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
@@ -308,7 +308,7 @@ public final class ES6Generator extends ScriptableObject {
         return result;
     }
 
-    private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value) {
+    private Scriptable resumeAbruptLocal(Context cx, VarScope scope, int op, Object value) {
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }
@@ -382,7 +382,7 @@ public final class ES6Generator extends ScriptableObject {
         return result;
     }
 
-    private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
+    private Object callReturnOptionally(Context cx, VarScope scope, Object value) {
         Object[] retArgs =
                 Undefined.isUndefined(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
         // Delegate to "return" method. If it's not defined we ignore it

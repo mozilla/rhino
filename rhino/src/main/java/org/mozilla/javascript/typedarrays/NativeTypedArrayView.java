@@ -238,8 +238,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     // Actual functions
 
-    static void init(
-            Context cx, Scriptable scope, LambdaConstructor constructor, RealThis realThis) {
+    static void init(Context cx, VarScope scope, LambdaConstructor constructor, RealThis realThis) {
         ScopeObject s = (ScopeObject) scope;
         // Where do we store this prototype? Top level scope for now?
 
@@ -327,7 +326,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private static void defineMethod(
             LambdaConstructor typedArray,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -336,7 +335,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private static void defineMethod(
             LambdaConstructor typedArray,
-            Scriptable scope,
+            VarScope scope,
             SymbolKey key,
             int length,
             SerializableCallable target) {
@@ -383,7 +382,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static NativeArrayBuffer makeArrayBuffer(
-            Context cx, Scriptable scope, int len, int bytesPerElement) {
+            Context cx, VarScope scope, int len, int bytesPerElement) {
         return (NativeArrayBuffer)
                 cx.newObject(
                         scope,
@@ -401,7 +400,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     protected static NativeTypedArrayView<?> js_constructor(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object[] args,
             TypedArrayConstructable constructable,
             int bytesPerElement) {
@@ -563,7 +562,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
-    private void setRange(Context cx, Scriptable scope, Scriptable source, double dbloff) {
+    private void setRange(Context cx, VarScope scope, Scriptable source, double dbloff) {
         if (isTypedArrayOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
@@ -673,17 +672,17 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static String js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return js_toStringInternal(cx, scope, thisObj, args, false);
     }
 
     private static String js_toLocaleString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return js_toStringInternal(cx, scope, thisObj, args, true);
     }
 
     private static String js_toStringInternal(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, boolean useLocale) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args, boolean useLocale) {
         NativeTypedArrayView<?> self = realThis(thisObj);
         if (self.isTypedArrayOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
@@ -703,7 +702,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return builder.toString();
     }
 
-    private Object getElemForToString(Context cx, Scriptable scope, int index, boolean useLocale) {
+    private Object getElemForToString(Context cx, VarScope scope, int index, boolean useLocale) {
         var elem = js_get(index);
         if (useLocale) {
             var toLocaleString = ScriptRuntime.getPropAndThis(elem, "toLocaleString", cx, scope);
@@ -1087,7 +1086,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return self;
     }
 
-    private Object[] sortTemporaryArray(Context cx, Scriptable scope, Object[] args) {
+    private Object[] sortTemporaryArray(Context cx, VarScope scope, Object[] args) {
         Comparator<Object> comparator;
         if (args.length > 0 && Undefined.instance != args[0]) {
             comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);

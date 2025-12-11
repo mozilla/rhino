@@ -22,6 +22,7 @@ import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /** Test NativeConsole */
 public class NativeConsoleTest {
@@ -81,7 +82,7 @@ public class NativeConsoleTest {
         @Override
         public void print(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 Level level,
                 Object[] args,
                 ScriptStackElement[] stack) {

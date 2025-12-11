@@ -169,7 +169,7 @@ public class NativeArray extends ScriptableObject implements List {
         };
     }
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static void init(Context cx, VarScope scope, boolean sealed) {
         DESCRIPTOR.buildConstructor(cx, scope, new NativeArray(0), sealed);
     }
 
@@ -214,7 +214,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     private static DescriptorInfo makeUnscopables(
-            Context cx, Scriptable scope, ScriptableObject obj) {
+            Context cx, VarScope scope, ScriptableObject obj) {
         NativeObject res;
 
         res = (NativeObject) cx.newObject(scope);
@@ -490,7 +490,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     /** See ECMA 15.4.1,2 */
     static Scriptable jsConstructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeArray res;
         if (args.length == 0) {
             res = new NativeArray(0);
@@ -1130,7 +1130,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     /** See ECMA 15.4.4.5 */
     private static Scriptable js_sort(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, f.getDeclarationScope(), thisObj);
         Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, s, args);
         return sort(cx, o, comparator);
@@ -1437,7 +1437,7 @@ public class NativeArray extends ScriptableObject implements List {
         return result;
     }
 
-    private static boolean isConcatSpreadable(Context cx, Scriptable scope, Object val) {
+    private static boolean isConcatSpreadable(Context cx, VarScope scope, Object val) {
         // First, look for the new @@isConcatSpreadable test as per ECMAScript 6 and up
         if (val instanceof Scriptable) {
             final Object spreadable =
@@ -1504,7 +1504,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     private static long doConcat(
-            Context cx, Scriptable scope, Scriptable result, Object arg, long offset) {
+            Context cx, VarScope scope, Scriptable result, Object arg, long offset) {
         if (isConcatSpreadable(cx, scope, arg)) {
             return concatSpreadArg(cx, result, (Scriptable) arg, offset);
         }

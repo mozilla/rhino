@@ -42,12 +42,12 @@ public class NativeCollectionIterator extends ES6Iterator {
     }
 
     @Override
-    protected boolean isDone(Context cx, Scriptable scope) {
+    protected boolean isDone(Context cx, VarScope scope) {
         return !iterator.hasNext();
     }
 
     @Override
-    protected Object nextValue(Context cx, Scriptable scope) {
+    protected Object nextValue(Context cx, VarScope scope) {
         final Hashtable.Entry e = iterator.next();
         switch (type) {
             case KEYS:

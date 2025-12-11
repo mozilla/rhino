@@ -156,7 +156,7 @@ public final class NativeJSON extends ScriptableObject {
     private static class StringifyState {
         StringifyState(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String indent,
                 String gap,
                 Callable replacer,
@@ -177,11 +177,11 @@ public final class NativeJSON extends ScriptableObject {
         Object[] propertyList;
 
         Context cx;
-        Scriptable scope;
+        VarScope scope;
     }
 
     public static Object stringify(
-            Context cx, Scriptable scope, Object value, Object replacer, Object space) {
+            Context cx, VarScope scope, Object value, Object replacer, Object space) {
         String indent = "";
         String gap = "";
 

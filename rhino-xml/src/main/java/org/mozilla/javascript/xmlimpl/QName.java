@@ -15,6 +15,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /** Class QName */
 final class QName extends ScriptableObject {
@@ -34,7 +35,7 @@ final class QName extends ScriptableObject {
     }
 
     static void init(Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
-        DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
+        DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
     }
 
     private static Object js_constructor(

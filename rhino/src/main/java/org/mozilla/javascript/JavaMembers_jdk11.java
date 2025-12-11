@@ -14,7 +14,7 @@ import java.util.Map;
 /** Version of {@link JavaMembers} for modular JDKs. */
 class JavaMembers_jdk11 extends JavaMembers {
 
-    JavaMembers_jdk11(Scriptable scope, Class<?> cl, boolean includeProtected) {
+    JavaMembers_jdk11(VarScope scope, Class<?> cl, boolean includeProtected) {
         super(scope, cl, includeProtected);
     }
 

@@ -366,7 +366,7 @@ public class Global extends ImporterTopLevel {
         }
         String filename = Context.toString(args[0]);
         try (FileInputStream fis = new FileInputStream(filename)) {
-            Scriptable scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
+            VarScope scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
             try (ObjectInputStream in = new ScriptableInputStream(fis, scope)) {
                 Object deserialized = in.readObject();
                 return Context.toObject(deserialized, scope);
@@ -540,7 +540,7 @@ public class Global extends ImporterTopLevel {
      * </pre>
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Scriptable scope = funObj.getParentScope();
+        VarScope scope = funObj.getParentScope();
         ContextAction<?> action = getAsyncAction(cx, args, scope);
         ContextFactory factory = cx.getFactory();
         Thread thread = new Thread(() -> factory.call(action));

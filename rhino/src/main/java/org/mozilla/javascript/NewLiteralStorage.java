@@ -60,7 +60,7 @@ public abstract class NewLiteralStorage {
         }
     }
 
-    public void spread(Context cx, Scriptable scope, Object source, int sourcePosition) {
+    public void spread(Context cx, VarScope scope, Object source, int sourcePosition) {
         int indexBefore = index;
         if (keys == null) {
             spreadArray(cx, scope, source);
@@ -75,7 +75,7 @@ public abstract class NewLiteralStorage {
         }
     }
 
-    private void spreadArray(Context cx, Scriptable scope, Object source) {
+    private void spreadArray(Context cx, VarScope scope, Object source) {
         // See ecma-262 2026, 13.2.5.5 (Array Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
@@ -134,7 +134,7 @@ public abstract class NewLiteralStorage {
         }
     }
 
-    private void spreadObject(Context cx, Scriptable scope, Object source) {
+    private void spreadObject(Context cx, VarScope scope, Object source) {
         // See ECMAScript 13.2.5.5 (Object Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
