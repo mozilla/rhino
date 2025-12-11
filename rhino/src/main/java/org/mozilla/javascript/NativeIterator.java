@@ -124,7 +124,7 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static Object jsConstructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         Scriptable target = requireIteratorTarget(cx, scope, args);
         boolean keyOnly = isKeyOnly(args);
 
@@ -166,7 +166,7 @@ public final class NativeIterator extends ScriptableObject {
         return args.length > 1 && ScriptRuntime.toBoolean(args[1]);
     }
 
-    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
         NativeIterator iterator = realThis(thisObj);
         return iterator.next(cx, scope);
     }
@@ -189,11 +189,11 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static Object js_iteratorMethod(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj);
     }
 
-    private static NativeIterator realThis(Scriptable thisObj) {
+    private static NativeIterator realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeIterator.class);
     }
 

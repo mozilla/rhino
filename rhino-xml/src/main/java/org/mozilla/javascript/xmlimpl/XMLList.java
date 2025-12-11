@@ -765,7 +765,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private Object applyOrCall(
-            boolean isApply, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         String methodName = isApply ? "apply" : "call";
         if (!(thisObj instanceof XMLList) || ((XMLList) thisObj).targetProperty == null)
             throw ScriptRuntime.typeErrorById("msg.isnt.function", methodName);

@@ -977,7 +977,7 @@ public class Dim {
         private ContextData contextData;
 
         /** The scope. */
-        private Scriptable scope;
+        private VarScope scope;
 
         /** The 'this' object. */
         private Scriptable thisObj;
@@ -1008,7 +1008,7 @@ public class Dim {
         @Override
         public void onEnter(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             contextData.pushFrame(this);
-            this.scope = scope;
+            this.scope = (VarScope) scope;
             this.thisObj = thisObj;
             if (dim.breakOnEnter) {
                 dim.handleBreakpointHit(this, cx);

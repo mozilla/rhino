@@ -55,28 +55,28 @@ final class NativeError extends ScriptableObject {
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return make(cx, s, f, args);
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_toString((Scriptable) thisObj);
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_toSource(cx, s, (Scriptable) thisObj);
     }
 
     private static Object js_captureStackTrace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         js_captureStackTrace(cx, f.getDeclarationScope(), thisObj, args);
         return Undefined.instance;
     }
 
     private static Object js_isError(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_isError(args);
     }
 
@@ -296,7 +296,8 @@ final class NativeError extends ScriptableObject {
         }
     }
 
-    private static String js_toSource(Context cx, Scriptable scope, Scriptable thisObj) {
+    private static String js_toSource(Context cx, VarScope scope, Object thisThing) {
+        var thisObj = (Scriptable) thisThing;
         // Emulation of SpiderMonkey behavior
         Object name = ScriptableObject.getProperty(thisObj, "name");
         Object message = ScriptableObject.getProperty(thisObj, "message");
@@ -335,7 +336,7 @@ final class NativeError extends ScriptableObject {
     }
 
     private static void js_captureStackTrace(
-            Context cx, Scriptable scope, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         ScriptableObject obj = (ScriptableObject) ScriptRuntime.toObject(cx, scope, args[0]);
         Function func = null;
         if (args.length > 1) {
