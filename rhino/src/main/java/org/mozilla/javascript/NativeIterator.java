@@ -130,7 +130,7 @@ public final class NativeIterator extends ScriptableObject {
 
         Iterator<?> iterator = getJavaIterator(target);
         if (iterator != null) {
-            Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
+            VarScope topScope = ScriptableObject.getTopLevelScope(scope);
             return cx.getWrapFactory()
                     .wrap(
                             cx,
@@ -147,13 +147,13 @@ public final class NativeIterator extends ScriptableObject {
         return createNativeIterator(cx, scope, target, keyOnly);
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
         Scriptable target = requireIteratorTarget(cx, scope, args);
         boolean keyOnly = isKeyOnly(args);
         return createNativeIterator(cx, scope, target, keyOnly);
     }
 
-    private static Scriptable requireIteratorTarget(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable requireIteratorTarget(Context cx, VarScope scope, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             Object argument = args.length == 0 ? Undefined.instance : args[0];
             throw ScriptRuntime.typeErrorById(
@@ -172,7 +172,7 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static NativeIterator createNativeIterator(
-            Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
+            Context cx, VarScope scope, Scriptable obj, boolean keyOnly) {
         Object objectIterator =
                 ScriptRuntime.enumInit(
                         obj,

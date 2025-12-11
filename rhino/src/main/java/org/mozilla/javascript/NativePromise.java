@@ -878,7 +878,7 @@ public class NativePromise extends ScriptableObject {
             this.capability = cap;
         }
 
-        Object reject(Context topCx, Scriptable topScope) {
+        Object reject(Context topCx, VarScope topScope) {
             int index = 0;
             // Do this first because we should catch any exception before
             // invoking the iterator.

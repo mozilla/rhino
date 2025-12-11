@@ -87,7 +87,7 @@ public class ClassDescriptor {
             this.attributes = attributes;
         }
 
-        abstract void makeProp(Context cx, Scriptable scope, ScriptableObject object);
+        abstract void makeProp(Context cx, VarScope scope, ScriptableObject object);
     }
 
     private static class LambdaGetSetPropDesc extends PropDesc {
@@ -105,7 +105,7 @@ public class ClassDescriptor {
         }
 
         @Override
-        void makeProp(Context cx, Scriptable scope, ScriptableObject obj) {
+        void makeProp(Context cx, VarScope scope, ScriptableObject obj) {
             if (name instanceof String) {
                 obj.defineProperty(cx, scope, (String) name, getter, setter, attributes);
             } else {
@@ -115,7 +115,7 @@ public class ClassDescriptor {
     }
 
     public interface ValueCreator {
-        DescriptorInfo apply(Context cx, Scriptable Scope, ScriptableObject obj);
+        DescriptorInfo apply(Context cx, VarScope scope, ScriptableObject obj);
     }
 
     private static class CreateValuePropDesc extends PropDesc {
@@ -127,7 +127,7 @@ public class ClassDescriptor {
         }
 
         @Override
-        void makeProp(Context cx, Scriptable scope, ScriptableObject obj) {
+        void makeProp(Context cx, VarScope scope, ScriptableObject obj) {
             if (name instanceof String) {
                 obj.defineOwnProperty(cx, name, creator.apply(cx, scope, obj), false);
             } else {
@@ -157,12 +157,12 @@ public class ClassDescriptor {
 
     /** Build a constructor from this descriptor. */
     public JSFunction buildConstructor(
-            Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
+            Context cx, VarScope scope, ScriptableObject proto, boolean sealed) {
         return buildConstructor(cx, scope, proto, sealed, (c, s) -> {});
     }
 
     public ScriptableObject populateGlobal(
-            Context cx, Scriptable scope, ScriptableObject global, boolean sealed) {
+            Context cx, VarScope scope, ScriptableObject global, boolean sealed) {
         var objProto = ScriptableObject.getObjectPrototype(scope);
         global.setPrototype(objProto);
         ScriptableObject.defineProperty(
@@ -194,7 +194,7 @@ public class ClassDescriptor {
      */
     public JSFunction buildConstructor(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             ScriptableObject proto,
             boolean sealed,
             BiConsumer<Context, JSFunction> customStep) {

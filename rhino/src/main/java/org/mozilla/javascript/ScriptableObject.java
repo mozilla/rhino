@@ -547,7 +547,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *     to regular property access.
      * @since 1.7.6
      */
-    public void setExternalArrayData(Scriptable scope, ExternalArrayData array) {
+    public void setExternalArrayData(VarScope scope, ExternalArrayData array) {
         externalData = array;
 
         if (array == null) {
@@ -838,7 +838,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject #defineProperty(String, Class, int)
      */
-    public static <T extends Scriptable> void defineClass(Scriptable scope, Class<T> clazz)
+    public static <T extends Scriptable> void defineClass(VarScope scope, Class<T> clazz)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         defineClass(scope, clazz, false, false);
     }
@@ -862,7 +862,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @since 1.4R3
      */
     public static <T extends Scriptable> void defineClass(
-            Scriptable scope, Class<T> clazz, boolean sealed)
+            VarScope scope, Class<T> clazz, boolean sealed)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         defineClass(scope, clazz, sealed, false);
     }
@@ -890,7 +890,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @since 1.6R2
      */
     public static <T extends Scriptable> String defineClass(
-            Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
+            VarScope scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         BaseFunction ctor = buildClassCtor(scope, clazz, sealed, mapInheritance);
         if (ctor == null) return null;
@@ -900,7 +900,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static <T extends Scriptable> BaseFunction buildClassCtor(
-            Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
+            VarScope scope, Class<T> clazz, boolean sealed, boolean mapInheritance)
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (Method method : methods) {
@@ -1294,7 +1294,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     public void defineProperty(
-            Scriptable scope, String propertyName, Class<?> clazz, int attributes) {
+            VarScope scope, String propertyName, Class<?> clazz, int attributes) {
         int length = propertyName.length();
         if (length == 0) throw new IllegalArgumentException();
         char[] buf = new char[3 + length];
@@ -1363,7 +1363,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param attributes the attributes of the JavaScript property
      */
     public void defineProperty(
-            Scriptable scope,
+            VarScope scope,
             String propertyName,
             Object delegateTo,
             Method getter,
@@ -1829,7 +1829,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * "defineProperty" method.
      */
     public interface LambdaSetterFunction extends Serializable {
-        void accept(Scriptable scope, Object value);
+        void accept(Scriptable owner, Object value);
     }
 
     /**

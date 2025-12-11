@@ -58,14 +58,14 @@ public final class OptRuntime extends ScriptRuntime {
 
     /** Implement ....(arg0, arg1, ...) call shrinking optimizer code. */
     public static Object callN(
-            Callable fun, Scriptable thisObj, Object[] args, Context cx, Scriptable scope) {
-        return fun.call(cx, (VarScope) scope, thisObj, args);
+            Callable fun, Scriptable thisObj, Object[] args, Context cx, VarScope scope) {
+        return fun.call(cx, scope, thisObj, args);
     }
 
     /** Implement name(args) call shrinking optimizer code. */
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    public static Object callName(Object[] args, String name, Context cx, Scriptable scope) {
+    public static Object callName(Object[] args, String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, (VarScope) scope, thisObj, args);
@@ -74,7 +74,7 @@ public final class OptRuntime extends ScriptRuntime {
     /** Implement name() call shrinking optimizer code. */
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    public static Object callName0(String name, Context cx, Scriptable scope) {
+    public static Object callName0(String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
@@ -82,7 +82,7 @@ public final class OptRuntime extends ScriptRuntime {
 
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    public static Object callName0Optional(String name, Context cx, Scriptable scope) {
+    public static Object callName0Optional(String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThisOptional(name, cx, scope);
         if (f == null) {
             return Undefined.instance;
@@ -94,7 +94,7 @@ public final class OptRuntime extends ScriptRuntime {
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
     /** Implement x.property() call shrinking optimizer code. */
-    public static Object callProp0(Object value, String property, Context cx, Scriptable scope) {
+    public static Object callProp0(Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
@@ -103,7 +103,7 @@ public final class OptRuntime extends ScriptRuntime {
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
     public static Object callProp0Optional(
-            Object value, String property, Context cx, Scriptable scope) {
+            Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThisOptional(value, property, cx, scope);
         if (f == null) {
             return Undefined.instance;
@@ -133,7 +133,7 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #elemIncrDecr(Object, double, Context, Scriptable, int)} instead
+     * @deprecated Use {@link #elemIncrDecr(Object, double, Context, VarScope, int)} instead
      */
     @Deprecated
     public static Object elemIncrDecr(Object obj, double index, Context cx, int incrDecrMask) {
@@ -141,7 +141,7 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static Object elemIncrDecr(
-            Object obj, double index, Context cx, Scriptable scope, int incrDecrMask) {
+            Object obj, double index, Context cx, VarScope scope, int incrDecrMask) {
         return ScriptRuntime.elemIncrDecr(obj, Double.valueOf(index), cx, scope, incrDecrMask);
     }
 
@@ -151,7 +151,7 @@ public final class OptRuntime extends ScriptRuntime {
         return result;
     }
 
-    public static void initFunction(JSFunction fn, int functionType, Scriptable scope, Context cx) {
+    public static void initFunction(JSFunction fn, int functionType, VarScope scope, Context cx) {
         ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
     }
 
@@ -183,7 +183,7 @@ public final class OptRuntime extends ScriptRuntime {
             Context cx,
             Object fun,
             Object[] args,
-            Scriptable scope,
+            VarScope scope,
             Scriptable callerThis,
             int callType) {
         return ScriptRuntime.newSpecial(cx, fun, args, scope, callType);
@@ -312,7 +312,7 @@ public final class OptRuntime extends ScriptRuntime {
 
     public static void spread(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             NewLiteralStorage store,
             Object source,
             int sourcePosition) {

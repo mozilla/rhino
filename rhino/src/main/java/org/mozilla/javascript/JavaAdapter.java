@@ -541,7 +541,7 @@ public final class JavaAdapter {
             factory = ContextFactory.getGlobal();
         }
 
-        final Scriptable scope = f.getDeclarationScope();
+        final VarScope scope = f.getDeclarationScope();
         if (argsToWrap == 0) {
             return Context.call(factory, f, scope, thisObj, args);
         }
@@ -555,7 +555,7 @@ public final class JavaAdapter {
 
     private static Object doCall(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             Function f,
             Object[] args,

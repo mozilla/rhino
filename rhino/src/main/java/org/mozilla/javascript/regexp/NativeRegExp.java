@@ -247,7 +247,7 @@ public class NativeRegExp extends ScriptableObject {
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
 
-        return DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
+        return DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
     }
 
     NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {
@@ -3914,8 +3914,7 @@ public class NativeRegExp extends ScriptableObject {
         return js_SymbolSplit(cx, s, thisObj, args);
     }
 
-    public static Object regExpExec(
-            Scriptable regexp, String string, Context cx, Scriptable scope) {
+    public static Object regExpExec(Scriptable regexp, String string, Context cx, VarScope scope) {
         // See ECMAScript spec 22.2.7.1
         Object execMethod = ScriptRuntime.getObjectProp(regexp, "exec", cx, scope);
         if (execMethod instanceof Callable) {
@@ -3926,7 +3925,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_SymbolMatch(
-            Context cx, Scriptable scope, Object thisScriptable, Object[] args) {
+            Context cx, VarScope scope, Object thisScriptable, Object[] args) {
         // See ECMAScript spec 22.2.6.8
         var thisObj = ScriptableObject.ensureScriptableObject(thisScriptable);
 
@@ -3959,7 +3958,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_SymbolSearch(
-            Context cx, Scriptable scope, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.2.6.12
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
@@ -3992,7 +3991,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_SymbolMatchAll(
-            Context cx, Scriptable scope, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.2.6.9
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
@@ -4020,7 +4019,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_SymbolReplace(
-            Context cx, Scriptable scope, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (thisObj instanceof NativeRegExp) {
             var regexp = (NativeRegExp) thisObj;
             var exec = ScriptableObject.getProperty(regexp, "exec");
@@ -4033,7 +4032,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private Object js_SymbolReplaceFast(
-            Context cx, Scriptable scope, NativeRegExp thisObj, Object[] args) {
+            Context cx, VarScope scope, NativeRegExp thisObj, Object[] args) {
         String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
         int lengthS = s.length();
         Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
@@ -4150,7 +4149,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_SymbolReplaceSlow(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         // See ECMAScript spec 22.2.6.11
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
@@ -4268,7 +4267,7 @@ public class NativeRegExp extends ScriptableObject {
 
     private static String makeComplexReplacement(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String matched,
             List<?> captures,
             int position,
@@ -4297,7 +4296,7 @@ public class NativeRegExp extends ScriptableObject {
 
     private static String makeSimpleReplacement(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String matched,
             List<?> captures,
             int position,
@@ -4313,7 +4312,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static Object js_SymbolSplit(
-            Context cx, Scriptable scope, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.2.6.14
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
@@ -4360,7 +4359,7 @@ public class NativeRegExp extends ScriptableObject {
 
     private static Object js_SymbolSplitSlow(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable splitter,
             String s,
             long lim,

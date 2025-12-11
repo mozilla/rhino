@@ -148,7 +148,7 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
-        var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
+        var ctor = DESCRIPTOR.buildConstructor(cx, (VarScope) scope, new NativeObject(), sealed);
         var proto = (Scriptable) ctor.getPrototypeProperty();
 
         if (isTopScope) {

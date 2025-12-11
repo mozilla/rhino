@@ -269,7 +269,7 @@ public class Test262SuiteTest {
         }
 
         public static Object detachArrayBuffer(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             Scriptable buf = ScriptRuntime.toObject(scope, args[0]);
             if (buf instanceof NativeArrayBuffer) {
                 ((NativeArrayBuffer) buf).detach();

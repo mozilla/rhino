@@ -81,7 +81,7 @@ final class NativeError extends ScriptableObject {
     }
 
     static void init(Context cx, Scriptable scope, boolean sealed) {
-        var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
+        var ctor = DESCRIPTOR.buildConstructor(cx, (VarScope) scope, new NativeObject(), sealed);
         NativeCallSite.init(scope, sealed);
 
         ProtoProps protoProps = new ProtoProps();
@@ -135,8 +135,7 @@ final class NativeError extends ScriptableObject {
         return obj;
     }
 
-    static NativeError makeAggregate(
-            Context cx, Scriptable scope, Function ctorObj, Object[] args) {
+    static NativeError makeAggregate(Context cx, VarScope scope, Function ctorObj, Object[] args) {
         NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;

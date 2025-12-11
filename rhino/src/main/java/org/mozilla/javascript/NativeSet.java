@@ -93,7 +93,7 @@ public class NativeSet extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
         NativeSet ns = new NativeSet();
         ns.instanceOfSet = true;
         if (args.length > 0) {
@@ -184,7 +184,7 @@ public class NativeSet extends ScriptableObject {
                         args.length > 1 ? args[1] : Undefined.SCRIPTABLE_UNDEFINED);
     }
 
-    private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
+    private Object js_forEach(Context cx, VarScope scope, Object arg1, Object arg2) {
         if (!(arg1 instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(arg1);
         }
@@ -202,7 +202,7 @@ public class NativeSet extends ScriptableObject {
      * If an "iterable" object was passed to the constructor, there are many many things to do. This
      * is common code with NativeWeakSet.
      */
-    static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject set, Object arg1) {
+    static void loadFromIterable(Context cx, VarScope scope, ScriptableObject set, Object arg1) {
         if ((arg1 == null) || Undefined.instance.equals(arg1)) {
             return;
         }
@@ -246,7 +246,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "intersection").js_intersection(cx, scope, args);
     }
 
-    private Object js_intersection(Context cx, Scriptable scope, Object[] args) {
+    private Object js_intersection(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -266,7 +266,7 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_intersectionSetLike(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object otherObj,
             NativeSet result,
             Object sizeVal,
@@ -311,7 +311,7 @@ public class NativeSet extends ScriptableObject {
                     ScriptRuntime.callIterator(
                             keysMethod.call(
                                     cx,
-                                    (VarScope) scope,
+                                    scope,
                                     ScriptableObject.ensureScriptable(otherObj),
                                     ScriptRuntime.emptyArgs),
                             cx,
@@ -332,7 +332,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "union").js_union(cx, scope, args);
     }
 
-    private Object js_union(Context cx, Scriptable scope, Object[] args) {
+    private Object js_union(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -373,9 +373,7 @@ public class NativeSet extends ScriptableObject {
         Callable keysMethod = (Callable) keysVal;
         Object iterator =
                 ScriptRuntime.callIterator(
-                        keysMethod.call(cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
-                        cx,
-                        scope);
+                        keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object key : it) {
                 result.js_add(key);
@@ -389,7 +387,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "difference").js_difference(cx, scope, args);
     }
 
-    private Object js_difference(Context cx, Scriptable scope, Object[] args) {
+    private Object js_difference(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -409,7 +407,7 @@ public class NativeSet extends ScriptableObject {
 
     private Object js_differenceSetLike(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object otherObj,
             NativeSet result,
             Object sizeVal,
@@ -489,7 +487,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "symmetricDifference").js_symmetricDifference(cx, scope, args);
     }
 
-    private Object js_symmetricDifference(Context cx, Scriptable scope, Object[] args) {
+    private Object js_symmetricDifference(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         NativeSet result = (NativeSet) cx.newObject(scope, CLASS_NAME);
@@ -536,9 +534,7 @@ public class NativeSet extends ScriptableObject {
         // Add elements from other that are not in this
         Object iterator =
                 ScriptRuntime.callIterator(
-                        keysMethod.call(cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
-                        cx,
-                        scope);
+                        keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object key : it) {
                 if (js_has(key) != Boolean.TRUE) {
@@ -612,7 +608,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "isSupersetOf").js_isSupersetOf(cx, scope, args);
     }
 
-    private Object js_isSupersetOf(Context cx, Scriptable scope, Object[] args) {
+    private Object js_isSupersetOf(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         // ES2025: GetSetRecord requires size, has, and keys properties
@@ -645,9 +641,7 @@ public class NativeSet extends ScriptableObject {
         Callable keysMethod = (Callable) keysVal;
         Object iterator =
                 ScriptRuntime.callIterator(
-                        keysMethod.call(cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
-                        cx,
-                        scope);
+                        keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs), cx, scope);
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
             for (Object value : it) {
                 if (js_has(value) != Boolean.TRUE) {
@@ -663,7 +657,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "isDisjointFrom").js_isDisjointFrom(cx, scope, args);
     }
 
-    private Object js_isDisjointFrom(Context cx, Scriptable scope, Object[] args) {
+    private Object js_isDisjointFrom(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         // ES2025: GetSetRecord requires size, has, and keys properties

@@ -740,7 +740,7 @@ class BodyCodegen {
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Ljava/lang/String;"
                                     + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + ")Lorg/mozilla/javascript/Scriptable;");
                     cfw.addAStore(local);
                 }
@@ -832,7 +832,7 @@ class BodyCodegen {
                         "enumInit",
                         "(Ljava/lang/Object;"
                                 + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + "Lorg/mozilla/javascript/VarScope;"
                                 + "I"
                                 + ")Ljava/lang/Object;");
                 cfw.addAStore(getLocalBlockRegister(node));
@@ -1032,7 +1032,7 @@ class BodyCodegen {
                     addScriptRuntimeInvoke(
                             "doObjectRest",
                             "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "Ljava/lang/Object;"
                                     + "[Ljava/lang/Object;"
                                     + ")Lorg/mozilla/javascript/Scriptable;");
@@ -1811,7 +1811,7 @@ class BodyCodegen {
                 "(Ljava/lang/Object;"
                         + "Ljava/lang/String;"
                         + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + ")Lorg/mozilla/javascript/Ref;");
     }
 
@@ -2087,7 +2087,7 @@ class BodyCodegen {
                 "initFunction",
                 "(Lorg/mozilla/javascript/JSFunction;"
                         + "I"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + "Lorg/mozilla/javascript/Context;"
                         + ")V");
     }
@@ -2330,7 +2330,7 @@ class BodyCodegen {
                         "org/mozilla/javascript/NewLiteralStorage",
                         "spread",
                         "(Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
+                                + "Lorg/mozilla/javascript/VarScope;"
                                 + "Ljava/lang/Object;"
                                 + "I"
                                 + ")V");
@@ -2427,7 +2427,7 @@ class BodyCodegen {
                     addOptRuntimeInvoke(
                             "spread",
                             "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
                                     + "Ljava/lang/Object;"
                                     + "I"
@@ -2476,7 +2476,7 @@ class BodyCodegen {
                     addOptRuntimeInvoke(
                             "spread",
                             "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "Lorg/mozilla/javascript/NewLiteralStorage;"
                                     + "Ljava/lang/Object;"
                                     + "I"
@@ -2624,7 +2624,7 @@ class BodyCodegen {
                         + "[Ljava/lang/Object;"
                         + "[I"
                         + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + ")V");
     }
 
@@ -2651,7 +2651,7 @@ class BodyCodegen {
                 "(Lorg/mozilla/javascript/Context;"
                         + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + "I"
                         + ")Ljava/lang/Object;");
     }
@@ -3075,7 +3075,7 @@ class BodyCodegen {
                                 "(Ljava/lang/Object;"
                                         + "Ljava/lang/Object;"
                                         + "Lorg/mozilla/javascript/Context;"
-                                        + "Lorg/mozilla/javascript/Scriptable;"
+                                        + "Lorg/mozilla/javascript/VarScope;"
                                         + ")Lorg/mozilla/javascript/ScriptRuntime$LookupResult;");
                     }
                     break;
@@ -3861,7 +3861,7 @@ class BodyCodegen {
                             "(Ljava/lang/Object;"
                                     + "Ljava/lang/String;"
                                     + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "I)Ljava/lang/Object;");
                     break;
                 }
@@ -3879,7 +3879,7 @@ class BodyCodegen {
                                 "(Ljava/lang/Object;"
                                         + "D"
                                         + "Lorg/mozilla/javascript/Context;"
-                                        + "Lorg/mozilla/javascript/Scriptable;"
+                                        + "Lorg/mozilla/javascript/VarScope;"
                                         + "I"
                                         + ")Ljava/lang/Object;");
                     } else {
@@ -3888,7 +3888,7 @@ class BodyCodegen {
                                 "(Ljava/lang/Object;"
                                         + "Ljava/lang/Object;"
                                         + "Lorg/mozilla/javascript/Context;"
-                                        + "Lorg/mozilla/javascript/Scriptable;"
+                                        + "Lorg/mozilla/javascript/VarScope;"
                                         + "I"
                                         + ")Ljava/lang/Object;");
                     }
@@ -3905,7 +3905,7 @@ class BodyCodegen {
                             "refIncrDecr",
                             "(Lorg/mozilla/javascript/Ref;"
                                     + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "I)Ljava/lang/Object;");
                     break;
                 }
