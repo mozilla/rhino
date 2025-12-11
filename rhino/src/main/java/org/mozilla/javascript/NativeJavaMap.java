@@ -193,12 +193,12 @@ public class NativeJavaMap extends NativeJavaObject {
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, VarScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, VarScope scope) {
             if (!iterator.hasNext()) {
                 return cx.newArray(scope, new Object[] {Undefined.instance, Undefined.instance});
             }

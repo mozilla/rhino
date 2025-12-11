@@ -96,7 +96,7 @@ public class NativeObject extends ScriptableObject implements Map {
 
     static JSFunction init(Context cx, Scriptable s, boolean sealed) {
         var desc = cx.version >= Context.VERSION_ES6 ? ES6_DESCRIPTOR : LEGACY_DESCRIPTOR;
-        return desc.buildConstructor(cx, s, new NativeObject(), sealed);
+        return desc.buildConstructor(cx, (VarScope) s, new NativeObject(), sealed);
     }
 
     @Override
@@ -239,8 +239,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Let O be ? ToObject(this value).
         2. Return ? O.[[GetPrototypeOf]]().
         */
-        ScriptableObject o = (ScriptableObject) ScriptRuntime.toObject(thisObj, thisObj);
-        return o.getPrototype();
+        return thisObj.getPrototype();
     }
 
     public static void js_protoSetter(Scriptable thisObj, Object proto) {
@@ -821,7 +820,7 @@ public class NativeObject extends ScriptableObject implements Map {
         }
     }
 
-    private static Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg) {
+    private static Scriptable getCompatibleObject(Context cx, VarScope scope, Object arg) {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
             return ensureScriptable(s);

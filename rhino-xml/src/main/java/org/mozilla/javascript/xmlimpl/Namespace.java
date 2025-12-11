@@ -15,6 +15,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /** Class Namespace */
 class Namespace extends ScriptableObject {
@@ -37,7 +38,7 @@ class Namespace extends ScriptableObject {
     }
 
     public static void init(Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
-        DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
+        DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
     }
 
     private Namespace prototype;

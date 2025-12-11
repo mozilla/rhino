@@ -76,11 +76,11 @@ public abstract class ES6Iterator extends ScriptableObject {
         return thisObj;
     }
 
-    protected abstract boolean isDone(Context cx, Scriptable scope);
+    protected abstract boolean isDone(Context cx, VarScope scope);
 
-    protected abstract Object nextValue(Context cx, Scriptable scope);
+    protected abstract Object nextValue(Context cx, VarScope scope);
 
-    protected Object next(Context cx, Scriptable scope) {
+    protected Object next(Context cx, VarScope scope) {
         Object value = Undefined.instance;
         boolean done = isDone(cx, scope) || this.exhausted;
         if (!done) {
@@ -96,11 +96,11 @@ public abstract class ES6Iterator extends ScriptableObject {
     }
 
     // 25.1.1.3 The IteratorResult Interface
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
+    static Scriptable makeIteratorResult(Context cx, VarScope scope, Boolean done) {
         return makeIteratorResult(cx, scope, done, Undefined.instance);
     }
 
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
+    static Scriptable makeIteratorResult(Context cx, VarScope scope, Boolean done, Object value) {
         final Scriptable iteratorResult = cx.newObject(scope);
         ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);

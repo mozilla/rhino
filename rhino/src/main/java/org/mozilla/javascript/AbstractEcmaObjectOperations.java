@@ -285,7 +285,7 @@ public class AbstractEcmaObjectOperations {
      */
     static Map<Object, List<Object>> groupBy(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             IdFunctionObject f,
             Object items,
             Object callback,
@@ -295,7 +295,7 @@ public class AbstractEcmaObjectOperations {
 
     static Map<Object, List<Object>> groupBy(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object classTag,
             String functionName,
             Object items,
@@ -535,7 +535,7 @@ public class AbstractEcmaObjectOperations {
      * <p><a href="https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isregexp">7.2.6
      * IsRegExp (argument)</a>
      */
-    static boolean isRegExp(Context cx, Scriptable scope, Object argument) {
+    static boolean isRegExp(Context cx, VarScope scope, Object argument) {
         if (!ScriptRuntime.isObject(argument)) {
             return false;
         }
