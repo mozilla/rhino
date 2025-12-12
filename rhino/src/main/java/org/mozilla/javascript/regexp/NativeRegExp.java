@@ -57,6 +57,10 @@ public class NativeRegExp extends IdScriptableObject {
     public static final int JSREG_HASINDICES = 0x40; // 'd' flag (ES2022)
     public static final int JSREG_UNICODESETS = 0x80; // 'v' flag (ES2024)
 
+    // Unicode constants
+    private static final int BMP_MAX_CODEPOINT =
+            0xFFFF; // Maximum Basic Multilingual Plane codepoint
+
     // type of match to perform
     public static final int TEST = 0;
     public static final int MATCH = 1;
@@ -1160,7 +1164,9 @@ public class NativeRegExp extends IdScriptableObject {
 
             if (state.cp + 1 < state.cpend && src[state.cp] == '\\' && src[state.cp + 1] == 'u') {
                 state.cp = state.cp + 2;
-                int n = readRegExpUnicodeEscapeSequence(state, new ParserParameters(false, true, false));
+                int n =
+                        readRegExpUnicodeEscapeSequence(
+                                state, new ParserParameters(false, true, false));
                 if (n == -1) {
                     reportError("msg.invalid.escape", "");
                     state.cp = termBegin;
@@ -1386,7 +1392,7 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (n < 0) {
             return false;
-        } else if (n <= 0xFFFF) doFlat(state, (char) n);
+        } else if (n <= BMP_MAX_CODEPOINT) doFlat(state, (char) n);
         else {
             doFlatSurrogatePair(state, Character.highSurrogate(n), Character.lowSurrogate(n));
         }
@@ -1632,6 +1638,122 @@ public class NativeRegExp extends IdScriptableObject {
         ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
         ArrayList<SetOperation> setOperations = new ArrayList<>(); // For 'v' flag set operations
         ArrayList<String> stringLiterals = new ArrayList<>(); // For 'v' flag \q{...} syntax
+
+        /**
+         * Merge all contents from another ClassContents object into this one. Used for nested
+         * classes and set operations.
+         */
+        void mergeFrom(ClassContents other) {
+            this.chars.addAll(other.chars);
+            this.bmpRanges.addAll(other.bmpRanges);
+            this.nonBMPCodepoints.addAll(other.nonBMPCodepoints);
+            this.nonBMPRanges.addAll(other.nonBMPRanges);
+            this.stringLiterals.addAll(other.stringLiterals);
+            this.escapeNodes.addAll(other.escapeNodes);
+        }
+    }
+
+    /**
+     * Parse \q{...} string literals in v-mode. Expects state.cp to point to '\' before 'q'.
+     * Advances state.cp past the closing '}'.
+     *
+     * @param state Compiler state
+     * @param params Parser parameters
+     * @param target ClassContents to add string literals to
+     * @return true if successful, false on error
+     */
+    private static boolean parseStringLiterals(
+            CompilerState state, ParserParameters params, ClassContents target) {
+        char[] src = state.cpbegin;
+
+        // Expect state.cp to point to '\'
+        if (state.cp >= state.cpend || src[state.cp] != '\\') {
+            reportError("msg.bad.regexp", "Expected \\ before q");
+            return false;
+        }
+        state.cp++; // Skip '\'
+
+        // Check for 'q'
+        if (state.cp >= state.cpend || src[state.cp] != 'q') {
+            reportError("msg.bad.regexp", "Expected q after \\");
+            return false;
+        }
+        state.cp++; // Skip 'q'
+
+        // Check for '{'
+        if (state.cp >= state.cpend || src[state.cp] != '{') {
+            reportError("msg.bad.regexp", "\\q must be followed by {");
+            return false;
+        }
+        state.cp++; // Skip '{'
+
+        // Parse string literal(s) within braces
+        StringBuilder literal = new StringBuilder();
+        while (state.cp < state.cpend && src[state.cp] != '}') {
+            if (src[state.cp] == '|') {
+                // Multiple alternatives: \q{abc|def}
+                if (literal.length() > 0) {
+                    target.stringLiterals.add(literal.toString());
+                    literal = new StringBuilder();
+                }
+                state.cp++;
+            } else if (src[state.cp] == '\\') {
+                // Handle escape sequences within \q{}
+                state.cp++;
+                if (state.cp >= state.cpend) {
+                    reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
+                    return false;
+                }
+                char escapeChar = src[state.cp];
+                if (escapeChar == 'u' || escapeChar == 'x') {
+                    // Parse unicode/hex escape
+                    if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                        reportError("msg.invalid.escape", "");
+                        return false;
+                    }
+                    if (state.result.op != REOP_FLAT) {
+                        reportError("msg.bad.regexp", "Invalid escape in \\q{}");
+                        return false;
+                    }
+                    // Append the parsed character(s)
+                    literal.append(state.result.chr);
+                    if (state.result.lowSurrogate != 0) {
+                        literal.append(state.result.lowSurrogate);
+                    }
+                } else {
+                    // Simple escape
+                    literal.append(escapeChar);
+                    state.cp++;
+                }
+            } else {
+                // Regular character
+                literal.appendCodePoint(Character.codePointAt(src, state.cp, state.cpend));
+                state.cp += Character.charCount(src[state.cp]);
+            }
+        }
+
+        if (state.cp >= state.cpend) {
+            reportError("msg.bad.regexp", "Unclosed \\q{");
+            return false;
+        }
+        state.cp++; // Skip '}'
+
+        // Always add the literal, even if it's empty (zero-length strings are valid in ES2024)
+        target.stringLiterals.add(literal.toString());
+
+        return true;
+    }
+
+    /**
+     * Check if v-mode (unicodeSets) is enabled. V-mode requires both the JSREG_UNICODESETS flag and
+     * unicodeMode parameter.
+     *
+     * @param state Compiler state containing flags
+     * @param params Parser parameters containing unicodeMode
+     * @return true if v-mode is enabled
+     */
+    private static boolean isVMode(CompilerState state, ParserParameters params) {
+        return (state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode;
     }
 
     private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
@@ -1656,9 +1778,7 @@ public class NativeRegExp extends IdScriptableObject {
         // Main loop: parse characters until we hit ']' or a set operation (-- or &&)
         while (state.cp != state.cpend && src[state.cp] != ']') {
             // Check for set operations in v flag mode
-            if ((state.flags & JSREG_UNICODESETS) != 0
-                    && params.unicodeMode
-                    && state.cp + 1 < state.cpend) {
+            if (isVMode(state, params) && state.cp + 1 < state.cpend) {
                 char c1 = src[state.cp];
                 char c2 = src[state.cp + 1];
                 if ((c1 == '-' && c2 == '-') || (c1 == '&' && c2 == '&')) {
@@ -1669,73 +1789,11 @@ public class NativeRegExp extends IdScriptableObject {
             if (src[state.cp] == '\\') {
                 state.cp++;
                 // Handle \q{...} string literals in v flag mode
-                if ((state.flags & JSREG_UNICODESETS) != 0
-                        && params.unicodeMode
-                        && state.cp < state.cpend
-                        && src[state.cp] == 'q') {
-                    state.cp++; // Skip 'q'
-                    if (state.cp >= state.cpend || src[state.cp] != '{') {
-                        reportError("msg.bad.regexp", "\\q must be followed by {");
+                if (isVMode(state, params) && state.cp < state.cpend && src[state.cp] == 'q') {
+                    state.cp--; // Back up to '\' for parseStringLiterals
+                    if (!parseStringLiterals(state, params, contents)) {
                         return null;
                     }
-                    state.cp++; // Skip '{'
-
-                    // Parse string literal(s) within braces
-                    StringBuilder literal = new StringBuilder();
-                    while (state.cp < state.cpend && src[state.cp] != '}') {
-                        if (src[state.cp] == '|') {
-                            // Multiple alternatives: \q{abc|def}
-                            if (literal.length() > 0) {
-                                contents.stringLiterals.add(literal.toString());
-                                literal = new StringBuilder();
-                            }
-                            state.cp++;
-                        } else if (src[state.cp] == '\\') {
-                            // Handle escape sequences within \q{}
-                            state.cp++;
-                            if (state.cp >= state.cpend) {
-                                reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
-                                return null;
-                            }
-                            char escapeChar = src[state.cp];
-                            if (escapeChar == 'u' || escapeChar == 'x') {
-                                // Parse unicode/hex escape
-                                if (!parseCharacterAndCharacterClassEscape(state, params)) {
-                                    reportError("msg.invalid.escape", "");
-                                    return null;
-                                }
-                                if (state.result.op != REOP_FLAT) {
-                                    reportError("msg.bad.regexp", "Invalid escape in \\q{}");
-                                    return null;
-                                }
-                                // Append the parsed character(s)
-                                literal.append(state.result.chr);
-                                if (state.result.lowSurrogate != 0) {
-                                    literal.append(state.result.lowSurrogate);
-                                }
-                            } else {
-                                // Simple escape
-                                literal.append(escapeChar);
-                                state.cp++;
-                            }
-                        } else {
-                            // Regular character
-                            literal.appendCodePoint(
-                                    Character.codePointAt(src, state.cp, state.cpend));
-                            state.cp += Character.charCount(src[state.cp]);
-                        }
-                    }
-
-                    if (state.cp >= state.cpend) {
-                        reportError("msg.bad.regexp", "Unclosed \\q{");
-                        return null;
-                    }
-                    state.cp++; // Skip '}'
-
-                    if (literal.length() > 0) {
-                        contents.stringLiterals.add(literal.toString());
-                    }
-
                     continue; // Skip to next iteration
                 } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
@@ -1801,13 +1859,73 @@ public class NativeRegExp extends IdScriptableObject {
                     state.cp++;
                 }
             }
+
+            // ES2024: Handle nested classes in v-mode
+            if (isVMode(state, params) && thisCodePoint == '[') {
+                // This is a nested class - parse it recursively
+                ClassContents nestedContents = parseClassContents(state, params);
+                if (nestedContents == null) {
+                    reportError("msg.bad.regexp", "Invalid nested character class");
+                    return null;
+                }
+                // Merge the nested class contents into our contents
+                contents.mergeFrom(nestedContents);
+                continue; // Skip the rest of the loop, we've handled this character
+            }
+
+            // ES2024: Validate syntax characters in v-mode (only for non-escaped literals)
+            if ((state.flags & JSREG_UNICODESETS) != 0) {
+                char current = (char) thisCodePoint;
+
+                // Check for single syntax characters that must be escaped in v-mode
+                // Note: '{' and '}' are handled by \q{} parsing
+                switch (current) {
+                    case '(':
+                    case ')':
+                    case '/':
+                    case '|':
+                    case '-':
+                        reportError("msg.invalid.class", "");
+                        return null;
+                }
+
+                // Check for invalid double punctuators (excluding && and -- which are operators)
+                if (state.cp < state.cpend) {
+                    char next = src[state.cp];
+                    if (current == next) {
+                        switch (current) {
+                            case '!':
+                            case '#':
+                            case '$':
+                            case '%':
+                            case '*':
+                            case '+':
+                            case ',':
+                            case '.':
+                            case ':':
+                            case ';':
+                            case '<':
+                            case '=':
+                            case '>':
+                            case '?':
+                            case '@':
+                            case '^':
+                            case '`':
+                            case '~':
+                                reportError("msg.invalid.class", "");
+                                return null;
+                        }
+                    }
+                }
+            }
+
             if (inRange) {
                 if (rangeStart > thisCodePoint) {
                     reportError("msg.bad.range", "");
                     return null;
                 }
                 inRange = false;
-                if (rangeStart > 0xFFFF || thisCodePoint > 0xFFFF) {
+                if (rangeStart > BMP_MAX_CODEPOINT || thisCodePoint > BMP_MAX_CODEPOINT) {
                     contents.nonBMPRanges.add(rangeStart);
                     contents.nonBMPRanges.add(thisCodePoint);
                 } else {
@@ -1815,7 +1933,7 @@ public class NativeRegExp extends IdScriptableObject {
                     contents.bmpRanges.add((char) thisCodePoint);
                 }
             } else {
-                if (thisCodePoint > 0xFFFF) {
+                if (thisCodePoint > BMP_MAX_CODEPOINT) {
                     contents.nonBMPCodepoints.add(thisCodePoint);
                 } else {
                     contents.chars.add((char) thisCodePoint);
@@ -1833,7 +1951,7 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         // Parse set operations (-- and &&) for 'v' flag
-        if ((state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode) {
+        if (isVMode(state, params)) {
             while (state.cp + 1 < state.cpend) {
                 char c1 = src[state.cp];
                 char c2 = src[state.cp + 1];
@@ -1849,7 +1967,8 @@ public class NativeRegExp extends IdScriptableObject {
 
                 state.cp += 2; // Skip the operator (-- or &&)
 
-                // Parse the set operand - can be nested class, \q{}, character escape, or single char
+                // Parse the set operand - can be nested class, \q{}, character escape, or single
+                // char
                 ClassContents operand = new ClassContents();
 
                 if (state.cp >= state.cpend) {
@@ -1863,65 +1982,17 @@ public class NativeRegExp extends IdScriptableObject {
                     operand = parseClassContents(state, params);
                     if (operand == null) {
                         reportError(
-                                "msg.bad.regexp", "Invalid nested character class in set operation");
+                                "msg.bad.regexp",
+                                "Invalid nested character class in set operation");
                         return null;
                     }
-                } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend && src[state.cp + 1] == 'q') {
+                } else if (src[state.cp] == '\\'
+                        && state.cp + 1 < state.cpend
+                        && src[state.cp + 1] == 'q') {
                     // String disjunction: \q{...}
-                    state.cp += 2; // Skip '\q'
-                    if (state.cp >= state.cpend || src[state.cp] != '{') {
-                        reportError("msg.bad.regexp", "\\q must be followed by {");
+                    if (!parseStringLiterals(state, params, operand)) {
                         return null;
                     }
-                    state.cp++; // Skip '{'
-
-                    // Parse string literal(s) within braces
-                    StringBuilder literal = new StringBuilder();
-                    while (state.cp < state.cpend && src[state.cp] != '}') {
-                        if (src[state.cp] == '|') {
-                            if (literal.length() > 0) {
-                                operand.stringLiterals.add(literal.toString());
-                                literal = new StringBuilder();
-                            }
-                            state.cp++;
-                        } else if (src[state.cp] == '\\') {
-                            // Handle escape sequences
-                            state.cp++;
-                            if (state.cp >= state.cpend) {
-                                reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
-                                return null;
-                            }
-                            char escapeChar = src[state.cp];
-                            if (escapeChar == 'u' || escapeChar == 'x') {
-                                if (!parseCharacterAndCharacterClassEscape(state, params)) {
-                                    reportError("msg.invalid.escape", "");
-                                    return null;
-                                }
-                                if (state.result.op != REOP_FLAT) {
-                                    reportError("msg.bad.regexp", "Invalid escape in \\q{}");
-                                    return null;
-                                }
-                                literal.append((char) state.result.chr);
-                                state.cp++;
-                            } else {
-                                literal.append(escapeChar);
-                                state.cp++;
-                            }
-                        } else {
-                            literal.append(src[state.cp]);
-                            state.cp++;
-                        }
-                    }
-
-                    if (literal.length() > 0) {
-                        operand.stringLiterals.add(literal.toString());
-                    }
-
-                    if (state.cp >= state.cpend || src[state.cp] != '}') {
-                        reportError("msg.bad.regexp", "Unclosed \\q{}");
-                        return null;
-                    }
-                    state.cp++; // Skip '}'
                 } else {
                     // For now, require bracketed operands or \q
                     // TODO: Support character class escapes and single characters
@@ -1935,15 +2006,17 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (state.cp < state.cpend && src[state.cp] == ']') {
             state.cp++;
+        } else if (isVMode(state, params)) {
+            // In v-mode, closing ']' is required for all character classes
+            reportError("msg.unterm.class", "");
+            return null;
         }
 
         // ES2024 validation: complement classes cannot contain multi-character strings
         if (!contents.sense && (state.flags & JSREG_UNICODESETS) != 0) {
             for (String literal : contents.stringLiterals) {
                 if (literal.length() > 1) {
-                    reportError(
-                            "msg.bad.regexp",
-                            "Complement classes cannot contain multi-character strings");
+                    reportError("msg.invalid.complement.class", "");
                     return null;
                 }
             }
@@ -2302,7 +2375,7 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static int addIndex(byte[] array, int pc, int index) {
         if (index < 0) throw Kit.codeBug();
-        if (index > 0xFFFF) throw Context.reportRuntimeError("Too complex regexp");
+        if (index > BMP_MAX_CODEPOINT) throw Context.reportRuntimeError("Too complex regexp");
         array[pc] = (byte) (index >> 8);
         array[pc + 1] = (byte) index;
         return pc + 2;
@@ -2779,10 +2852,11 @@ public class NativeRegExp extends IdScriptableObject {
      */
     /**
      * Check if any string literal in the character class matches at the current position. Returns
-     * the length of the matched string, or -1 if no match. Zero-length matches are valid.
-     * Supports both forward and backward matching for lookbehind assertions.
+     * the length of the matched string, or -1 if no match. Zero-length matches are valid. Supports
+     * both forward and backward matching for lookbehind assertions.
      */
-    private static int stringLiteralMatcher(RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
+    private static int stringLiteralMatcher(
+            RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
         if (charSet.classContents == null || charSet.classContents.stringLiterals.isEmpty()) {
             return -1;
         }
@@ -2795,12 +2869,14 @@ public class NativeRegExp extends IdScriptableObject {
             if (matchBackward) {
                 // For lookbehind, match backwards from position
                 int startPos = position - literal.length();
-                matches = startPos >= 0
-                        && inputStr.regionMatches(startPos, literal, 0, literal.length());
+                matches =
+                        startPos >= 0
+                                && inputStr.regionMatches(startPos, literal, 0, literal.length());
             } else {
                 // For normal matching, match forwards from position
-                matches = position + literal.length() <= input.length()
-                        && inputStr.regionMatches(position, literal, 0, literal.length());
+                matches =
+                        position + literal.length() <= input.length()
+                                && inputStr.regionMatches(position, literal, 0, literal.length());
             }
 
             if (matches && (maxMatch == -1 || literal.length() > maxMatch)) {
@@ -2819,7 +2895,7 @@ public class NativeRegExp extends IdScriptableObject {
         // Check base character class membership
         boolean matches = false;
 
-        if (codePoint <= 0xFFFF) {
+        if (codePoint <= BMP_MAX_CODEPOINT) {
             int byteIndex = codePoint >> 3;
             if (!(charSet.length == 0
                     || codePoint >= charSet.length
@@ -3131,7 +3207,10 @@ public class NativeRegExp extends IdScriptableObject {
                         // First, try to match string literals (v flag feature)
                         int stringLiteralLen =
                                 stringLiteralMatcher(
-                                        gData.regexp.classList[index], input, cpToMatch, matchBackward);
+                                        gData.regexp.classList[index],
+                                        input,
+                                        cpToMatch,
+                                        matchBackward);
                         if (stringLiteralLen >= 0) {
                             // String literal matched (including zero-length matches)
                             // For REOP_CLASS: match if string is in the class

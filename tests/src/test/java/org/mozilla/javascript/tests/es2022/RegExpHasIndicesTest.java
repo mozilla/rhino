@@ -219,4 +219,87 @@ public class RegExpHasIndicesTest {
                         + "match.indices.groups.name.length === 2";
         Utils.assertWithAllModes(true, script);
     }
+
+    // ES2024 v flag (unicodeSets) validation tests
+
+    @Test
+    public void testComplementClassWithMultiCharStringError() {
+        String script =
+                "try {"
+                        + "  eval('var re = /[^\\\\q{abc}]/v;');"
+                        + "  false;"
+                        + "} catch(e) {"
+                        + "  e instanceof SyntaxError;"
+                        + "}";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testComplementClassWithSingleCharStringWorks() {
+        String script =
+                "var re = /[^\\q{a}]/v;" + "re.test('b') === true && re.test('a') === false";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testDoublePunctuatorError() {
+        String script =
+                "try {"
+                        + "  eval('var re = /[!!]/v;');"
+                        + "  false;"
+                        + "} catch(e) {"
+                        + "  e instanceof SyntaxError;"
+                        + "}";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testDoublePunctuatorHashError() {
+        String script =
+                "try {"
+                        + "  eval('var re = /[##]/v;');"
+                        + "  false;"
+                        + "} catch(e) {"
+                        + "  e instanceof SyntaxError;"
+                        + "}";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testSinglePunctuatorWorks() {
+        String script = "var re = /[!]/v;" + "re.test('!') === true";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testLoneLeftBracketError() {
+        String script =
+                "try {"
+                        + "  eval('var re = /[[]/v;');"
+                        + "  false;"
+                        + "} catch(e) {"
+                        + "  e instanceof SyntaxError;"
+                        + "}";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testNestedClassWithoutOperatorWorks() {
+        String script = "var re = /[[a-z]]/v;" + "re.test('m') === true && re.test('5') === false";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testSetIntersectionWorks() {
+        String script =
+                "var re = /[[a-z]&&[e-h]]/v;" + "re.test('f') === true && re.test('a') === false";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testStringLiteralWorks() {
+        String script =
+                "var re = /[\\q{foo}]/v;" + "re.test('foo') === true && re.test('bar') === false";
+        Utils.assertWithAllModes(true, script);
+    }
 }

@@ -614,8 +614,6 @@ public class NativeRegExpTest {
     }
 
     @Test
-    @org.junit.Ignore(
-            "Lookbehind with overlapping quantified captures requires backtracking support that is not yet implemented")
     public void lookbehindCapture() throws Exception {
         // This shows that the lookbehind matches the input backwards
         // this is why, the second capture group is 'bc' and not 'c'
@@ -658,8 +656,6 @@ public class NativeRegExpTest {
     }
 
     @Test
-    @org.junit.Ignore(
-            "Lookbehind with overlapping quantified captures requires backtracking support that is not yet implemented")
     public void lookbehindNested() throws Exception {
         // lookbehind inside a lookbehind matches the input backwards
         // TODO: Implement backtracking support for lookbehind
@@ -677,8 +673,6 @@ public class NativeRegExpTest {
     }
 
     @Test
-    @org.junit.Ignore(
-            "Lookbehind with overlapping quantified captures requires backtracking support that is not yet implemented")
     public void lookbehindLookahead() throws Exception {
         // lookahead inside a lookbehind matches forward
         // TODO: Implement backtracking support for lookbehind
