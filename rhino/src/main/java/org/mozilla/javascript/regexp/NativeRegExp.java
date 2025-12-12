@@ -1993,10 +1993,44 @@ public class NativeRegExp extends IdScriptableObject {
                     if (!parseStringLiterals(state, params, operand)) {
                         return null;
                     }
+                } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend) {
+                    // Character class escapes: \d, \D, \w, \W, \s, \S
+                    char escapeChar = src[state.cp + 1];
+                    RENode escapeNode = null;
+
+                    switch (escapeChar) {
+                        case 'd':
+                            escapeNode = new RENode(REOP_DIGIT);
+                            break;
+                        case 'D':
+                            escapeNode = new RENode(REOP_NONDIGIT);
+                            break;
+                        case 'w':
+                            escapeNode = new RENode(REOP_ALNUM);
+                            break;
+                        case 'W':
+                            escapeNode = new RENode(REOP_NONALNUM);
+                            break;
+                        case 's':
+                            escapeNode = new RENode(REOP_SPACE);
+                            break;
+                        case 'S':
+                            escapeNode = new RENode(REOP_NONSPACE);
+                            break;
+                        default:
+                            reportError(
+                                    "msg.bad.regexp",
+                                    "Set operation operand must be [...], \\q{}, or character class escape (\\d, \\w, \\s, etc.)");
+                            return null;
+                    }
+
+                    operand.escapeNodes.add(escapeNode);
+                    state.cp += 2; // Skip '\' and escape character
                 } else {
-                    // For now, require bracketed operands or \q
-                    // TODO: Support character class escapes and single characters
-                    reportError("msg.bad.regexp", "Set operation operand must be [...] or \\q{}");
+                    // Operand must be bracketed class, \q{}, or character class escape
+                    reportError(
+                            "msg.bad.regexp",
+                            "Set operation operand must be [...], \\q{}, or character class escape (\\d, \\w, \\s, etc.)");
                     return null;
                 }
 
