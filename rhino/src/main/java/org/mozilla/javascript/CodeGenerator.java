@@ -604,6 +604,51 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(1);
                 break;
 
+            case Token.OBJECT_REST:
+                {
+                    // Handle object rest operation: {...rest} in destructuring
+                    visitExpression(child, 0); // source object
+                    Object[] excludedKeys = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+
+                    // Count static vs computed keys
+                    int staticKeyCount = 0;
+                    int computedKeyCount = 0;
+                    for (Object key : excludedKeys) {
+                        if (key instanceof Node) {
+                            computedKeyCount++;
+                        } else {
+                            staticKeyCount++;
+                        }
+                    }
+
+                    // Evaluate & push computed keys onto stack
+                    for (Object key : excludedKeys) {
+                        if (key instanceof Node) {
+                            visitExpression((Node) key, 0); // Evaluate computed key expression
+                        }
+                    }
+
+                    addIcode(Icode_OBJECT_REST);
+                    addUint16(staticKeyCount);
+                    addUint16(computedKeyCount);
+
+                    // Emit static keys as string indices
+                    for (Object key : excludedKeys) {
+                        if (!(key instanceof Node)) {
+                            String keyStr = key.toString();
+                            int keyIndex = strings.getOrDefault(keyStr, -1);
+                            if (keyIndex == -1) {
+                                keyIndex = strings.size();
+                                strings.put(keyStr, keyIndex);
+                            }
+                            addUint16(keyIndex);
+                        }
+                    }
+
+                    stackChange(-computedKeyCount); // Computed keys removed from stack
+                }
+                break;
+
             case Token.REF_CALL:
             case Token.CALL:
             case Token.NEW:
