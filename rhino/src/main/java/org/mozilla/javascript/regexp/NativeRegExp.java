@@ -1733,10 +1733,9 @@ public class NativeRegExp extends IdScriptableObject {
         while (state.cp < state.cpend && src[state.cp] != '}') {
             if (src[state.cp] == '|') {
                 // Multiple alternatives: \q{abc|def}
-                if (literal.length() > 0) {
-                    target.stringLiterals.add(literal.toString());
-                    literal = new StringBuilder();
-                }
+                // Always add the literal, even if empty (zero-length strings are valid)
+                target.stringLiterals.add(literal.toString());
+                literal = new StringBuilder();
                 state.cp++;
             } else if (src[state.cp] == '\\') {
                 // Handle escape sequences within \q{}
@@ -1768,8 +1767,9 @@ public class NativeRegExp extends IdScriptableObject {
                 }
             } else {
                 // Regular character
-                literal.appendCodePoint(Character.codePointAt(src, state.cp, state.cpend));
-                state.cp += Character.charCount(src[state.cp]);
+                int codePoint = Character.codePointAt(src, state.cp, state.cpend);
+                literal.appendCodePoint(codePoint);
+                state.cp += Character.charCount(codePoint);
             }
         }
 
@@ -1797,7 +1797,18 @@ public class NativeRegExp extends IdScriptableObject {
         return (state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode;
     }
 
-    private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
+    private static final int MAX_CLASS_NESTING_DEPTH = 50;
+
+    private static ClassContents parseClassContents(
+            CompilerState state, ParserParameters params, int depth) {
+        // Protect against stack overflow from deeply nested character classes
+        if (depth > MAX_CLASS_NESTING_DEPTH) {
+            reportError(
+                    "msg.bad.regexp",
+                    "Character class nesting too deep (max " + MAX_CLASS_NESTING_DEPTH + ")");
+            return null;
+        }
+
         char[] src = state.cpbegin;
         int rangeStart = 0;
         boolean inRange = false;
@@ -1904,7 +1915,7 @@ public class NativeRegExp extends IdScriptableObject {
             // ES2024: Handle nested classes in v-mode
             if (isVMode(state, params) && thisCodePoint == '[') {
                 // This is a nested class - parse it recursively
-                ClassContents nestedContents = parseClassContents(state, params);
+                ClassContents nestedContents = parseClassContents(state, params, depth + 1);
                 if (nestedContents == null) {
                     reportError("msg.bad.regexp", "Invalid nested character class");
                     return null;
@@ -2020,7 +2031,7 @@ public class NativeRegExp extends IdScriptableObject {
                 if (src[state.cp] == '[') {
                     // Nested character class
                     state.cp++; // Skip '['
-                    operand = parseClassContents(state, params);
+                    operand = parseClassContents(state, params, depth + 1);
                     if (operand == null) {
                         reportError(
                                 "msg.bad.regexp",
@@ -2275,7 +2286,7 @@ public class NativeRegExp extends IdScriptableObject {
                 reportError("msg.re.unmatched.right.paren", "");
                 return false;
             case '[':
-                ClassContents classContents = parseClassContents(state, params);
+                ClassContents classContents = parseClassContents(state, params, 0);
                 if (classContents == null) {
                     reportError("msg.unterm.class", "");
                     return false;
@@ -2915,8 +2926,10 @@ public class NativeRegExp extends IdScriptableObject {
      */
     /**
      * Check if any string literal in the character class matches at the current position. Returns
-     * the length of the matched string, or -1 if no match. Zero-length matches are valid. Supports
-     * both forward and backward matching for lookbehind assertions.
+     * the length of the matched string, or -1 if no match. Zero-length matches are valid.
+     *
+     * <p>NOTE: The matchBackward parameter is present for future lookbehind support but is not
+     * currently used. All calls pass false. Lookbehind with string literals is not yet implemented.
      */
     private static int stringLiteralMatcher(
             RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
