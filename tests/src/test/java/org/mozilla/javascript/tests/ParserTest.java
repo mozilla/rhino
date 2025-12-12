@@ -1498,6 +1498,18 @@ public class ParserTest {
                 new String[] {"Missing = in destructuring declaration", "syntax error"});
     }
 
+    @Test
+    public void commentValueIsNotTruncatedBecauseOfEof() {
+        String source = "// comment";
+
+        AstRoot root = parse(source);
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        Comment comment = root.getComments().first();
+        assertEquals(source, comment.getValue());
+        assertEquals(10, comment.getLength());
+    }
+
     private void expectParseErrors(String string, String[] errors) {
         parse(string, errors, null, false);
     }
