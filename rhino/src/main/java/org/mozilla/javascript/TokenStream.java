@@ -2261,8 +2261,18 @@ class TokenStream implements Parser.CurrentPositionReporter {
         // skip to end of line
         int c;
         while ((c = getChar()) != EOF_CHAR && c != '\n') {}
-        ungetChar(c);
-        tokenEnd = cursor;
+        if (c == EOF_CHAR) {
+            // If we've hit EOF, the cursor hasn't been incremented, so we need to save tokenEnd
+            // _before_ ungetChar
+            tokenEnd = cursor;
+            ungetChar(c);
+        } else {
+            // If we've hit a newline, the cursor has been incremented past it, and ungetChar will
+            // point at the newline, so saving tokenEnd after ungetChar will correctly exclude the
+            // newline
+            ungetChar(c);
+            tokenEnd = cursor;
+        }
     }
 
     /** Returns the offset into the current line. */
