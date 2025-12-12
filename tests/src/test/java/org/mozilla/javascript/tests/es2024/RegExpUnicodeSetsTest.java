@@ -94,24 +94,21 @@ public class RegExpUnicodeSetsTest {
     @Test
     public void testCharClassEscapeAsOperandSubtraction() {
         // Test \d as operand in subtraction
-        String script =
-                "var re = /[\\w--\\d]/v; re.test('a') && re.test('_') && !re.test('5')";
+        String script = "var re = /[\\w--\\d]/v; re.test('a') && re.test('_') && !re.test('5')";
         Utils.assertWithAllModes(true, script);
     }
 
     @Test
     public void testMultipleCharClassEscapeOperands() {
         // Test \w && \d (should match digits only)
-        String script =
-                "var re = /[\\w&&\\d]/v; re.test('0') && re.test('9') && !re.test('a')";
+        String script = "var re = /[\\w&&\\d]/v; re.test('0') && re.test('9') && !re.test('a')";
         Utils.assertWithAllModes(true, script);
     }
 
     @Test
     public void testNonWordCharClassEscapeOperand() {
         // Test \W (non-word) intersection with specific punctuation
-        String script =
-                "var re = /[\\W&&[!@#]]/v; re.test('!') && re.test('@') && !re.test('$')";
+        String script = "var re = /[\\W&&[!@#]]/v; re.test('!') && re.test('@') && !re.test('$')";
         Utils.assertWithAllModes(true, script);
     }
 
@@ -120,6 +117,65 @@ public class RegExpUnicodeSetsTest {
         // Test \s intersection
         String script =
                 "var re = /[\\s&&[ \\t]]/v; re.test(' ') && re.test('\\t') && !re.test('\\n')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyEscapeBasic() {
+        // Test \p{Letter} in u-mode
+        String script = "var re = /\\p{Letter}/u; re.test('a') && re.test('Z') && !re.test('5')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyEscapeInCharClass() {
+        // Test \p{} in character class with u-mode
+        String script = "var re = /[\\p{Letter}]/u; re.test('a') && re.test('Z') && !re.test('5')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyEscapeInVMode() {
+        // Test \p{} in v-mode character class
+        String script = "var re = /[\\p{Letter}]/v; re.test('a') && re.test('Z') && !re.test('5')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyAsOperandIntersection() {
+        // Test \p{} as operand in intersection
+        String script =
+                "var re = /[[a-z]&&\\p{Letter}]/v; re.test('a') && re.test('z') && !re.test('A')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyAsOperandSubtraction() {
+        // Test \p{} as operand in subtraction
+        String script =
+                "var re = /[\\p{Letter}--[aeiou]]/v; re.test('b') && re.test('z') && !re.test('a')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyNegated() {
+        // Test \P{} negated property
+        String script = "var re = /\\P{Letter}/u; re.test('5') && re.test('!') && !re.test('a')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyCategoryShorthand() {
+        // Test general category shorthand \p{L}
+        String script = "var re = /\\p{L}/u; re.test('a') && re.test('Z') && !re.test('5')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testUnicodePropertyCombined() {
+        // Test multiple \p{} in character class
+        String script =
+                "var re = /[\\p{Letter}\\p{Number}]/u; re.test('a') && re.test('5') && !re.test('!')";
         Utils.assertWithAllModes(true, script);
     }
 }

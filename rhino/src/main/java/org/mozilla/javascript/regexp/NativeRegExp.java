@@ -1994,43 +1994,55 @@ public class NativeRegExp extends IdScriptableObject {
                         return null;
                     }
                 } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend) {
-                    // Character class escapes: \d, \D, \w, \W, \s, \S
+                    // Character class escapes and Unicode property escapes:
+                    // \d, \D, \w, \W, \s, \S, \p{}, \P{}
                     char escapeChar = src[state.cp + 1];
                     RENode escapeNode = null;
 
-                    switch (escapeChar) {
-                        case 'd':
-                            escapeNode = new RENode(REOP_DIGIT);
-                            break;
-                        case 'D':
-                            escapeNode = new RENode(REOP_NONDIGIT);
-                            break;
-                        case 'w':
-                            escapeNode = new RENode(REOP_ALNUM);
-                            break;
-                        case 'W':
-                            escapeNode = new RENode(REOP_NONALNUM);
-                            break;
-                        case 's':
-                            escapeNode = new RENode(REOP_SPACE);
-                            break;
-                        case 'S':
-                            escapeNode = new RENode(REOP_NONSPACE);
-                            break;
-                        default:
-                            reportError(
-                                    "msg.bad.regexp",
-                                    "Set operation operand must be [...], \\q{}, or character class escape (\\d, \\w, \\s, etc.)");
+                    // Check for Unicode property escapes first
+                    if (escapeChar == 'p' || escapeChar == 'P') {
+                        state.cp++; // Move to 'p' or 'P'
+                        if (!parseUnicodePropertyEscape(state)) {
+                            reportError("msg.invalid.property", "");
                             return null;
+                        }
+                        escapeNode = state.result;
+                    } else {
+                        // Character class escapes
+                        switch (escapeChar) {
+                            case 'd':
+                                escapeNode = new RENode(REOP_DIGIT);
+                                break;
+                            case 'D':
+                                escapeNode = new RENode(REOP_NONDIGIT);
+                                break;
+                            case 'w':
+                                escapeNode = new RENode(REOP_ALNUM);
+                                break;
+                            case 'W':
+                                escapeNode = new RENode(REOP_NONALNUM);
+                                break;
+                            case 's':
+                                escapeNode = new RENode(REOP_SPACE);
+                                break;
+                            case 'S':
+                                escapeNode = new RENode(REOP_NONSPACE);
+                                break;
+                            default:
+                                reportError(
+                                        "msg.bad.regexp",
+                                        "Set operation operand must be [...], \\q{}, or character class/property escape");
+                                return null;
+                        }
+                        state.cp += 2; // Skip '\' and escape character
                     }
 
                     operand.escapeNodes.add(escapeNode);
-                    state.cp += 2; // Skip '\' and escape character
                 } else {
-                    // Operand must be bracketed class, \q{}, or character class escape
+                    // Operand must be bracketed class, \q{}, or character class/property escape
                     reportError(
                             "msg.bad.regexp",
-                            "Set operation operand must be [...], \\q{}, or character class escape (\\d, \\w, \\s, etc.)");
+                            "Set operation operand must be [...], \\q{}, or character class/property escape");
                     return null;
                 }
 
