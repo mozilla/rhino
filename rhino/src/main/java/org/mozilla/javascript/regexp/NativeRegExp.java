@@ -1447,6 +1447,47 @@ public class NativeRegExp extends IdScriptableObject {
         return true;
     }
 
+    /**
+     * Parse a character class escape as a set operation operand. Handles \d, \D, \w, \W, \s, \S. On
+     * success, sets state.result to the appropriate RENode and returns true. On failure, returns
+     * false without modifying state.cp.
+     */
+    private static boolean parseCharacterClassEscapeOperand(CompilerState state) {
+        if (state.cp >= state.cpend) {
+            return false;
+        }
+
+        char escapeChar = state.cpbegin[state.cp];
+        RENode escapeNode;
+
+        switch (escapeChar) {
+            case 'd':
+                escapeNode = new RENode(REOP_DIGIT);
+                break;
+            case 'D':
+                escapeNode = new RENode(REOP_NONDIGIT);
+                break;
+            case 'w':
+                escapeNode = new RENode(REOP_ALNUM);
+                break;
+            case 'W':
+                escapeNode = new RENode(REOP_NONALNUM);
+                break;
+            case 's':
+                escapeNode = new RENode(REOP_SPACE);
+                break;
+            case 'S':
+                escapeNode = new RENode(REOP_NONSPACE);
+                break;
+            default:
+                return false;
+        }
+
+        state.result = escapeNode;
+        state.cp++; // Move past the escape character
+        return true;
+    }
+
     // Follows Annex B.1.2 of the ECMAScript specification
     private static boolean parseCharacterAndCharacterClassEscape(
             CompilerState state, ParserParameters params) {
@@ -1997,47 +2038,23 @@ public class NativeRegExp extends IdScriptableObject {
                     // Character class escapes and Unicode property escapes:
                     // \d, \D, \w, \W, \s, \S, \p{}, \P{}
                     char escapeChar = src[state.cp + 1];
-                    RENode escapeNode = null;
+                    state.cp++; // Move to the escape character
 
-                    // Check for Unicode property escapes first
+                    // Try Unicode property escapes first
                     if (escapeChar == 'p' || escapeChar == 'P') {
-                        state.cp++; // Move to 'p' or 'P'
                         if (!parseUnicodePropertyEscape(state)) {
                             reportError("msg.invalid.property", "");
                             return null;
                         }
-                        escapeNode = state.result;
+                        operand.escapeNodes.add(state.result);
+                    } else if (parseCharacterClassEscapeOperand(state)) {
+                        operand.escapeNodes.add(state.result);
                     } else {
-                        // Character class escapes
-                        switch (escapeChar) {
-                            case 'd':
-                                escapeNode = new RENode(REOP_DIGIT);
-                                break;
-                            case 'D':
-                                escapeNode = new RENode(REOP_NONDIGIT);
-                                break;
-                            case 'w':
-                                escapeNode = new RENode(REOP_ALNUM);
-                                break;
-                            case 'W':
-                                escapeNode = new RENode(REOP_NONALNUM);
-                                break;
-                            case 's':
-                                escapeNode = new RENode(REOP_SPACE);
-                                break;
-                            case 'S':
-                                escapeNode = new RENode(REOP_NONSPACE);
-                                break;
-                            default:
-                                reportError(
-                                        "msg.bad.regexp",
-                                        "Set operation operand must be [...], \\q{}, or character class/property escape");
-                                return null;
-                        }
-                        state.cp += 2; // Skip '\' and escape character
+                        reportError(
+                                "msg.bad.regexp",
+                                "Set operation operand must be [...], \\q{}, or character class/property escape");
+                        return null;
                     }
-
-                    operand.escapeNodes.add(escapeNode);
                 } else {
                     // Operand must be bracketed class, \q{}, or character class/property escape
                     reportError(
