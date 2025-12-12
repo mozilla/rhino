@@ -218,13 +218,7 @@ public class GenericAccessTest {
     }
 
     private static final ContextFactory CONTEXT_FACTORY =
-            new ContextFactory() {
-                @Override
-                protected boolean hasFeature(Context cx, int featureIndex) {
-                    return featureIndex == Context.FEATURE_ENABLE_JAVA_MAP_ACCESS
-                            || super.hasFeature(cx, featureIndex);
-                }
-            };
+            Utils.contextFactoryWithFeatures(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS);
 
     private static Object readClassAndValue(
             Context cx, Scriptable scope, Scriptable thiz, Object[] args) {

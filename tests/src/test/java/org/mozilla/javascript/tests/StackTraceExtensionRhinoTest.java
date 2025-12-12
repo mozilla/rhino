@@ -8,22 +8,16 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class StackTraceExtensionRhinoTest {
     private void testTraces(boolean interpretedMode, boolean debug) {
         final ContextFactory factory =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        switch (featureIndex) {
-                            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-                                return debug;
-                            default:
-                                return super.hasFeature(cx, featureIndex);
-                        }
-                    }
-                };
+                debug
+                        ? Utils.contextFactoryWithFeatures(
+                                Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)
+                        : new ContextFactory();
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_1_8);

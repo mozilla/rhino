@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.Utils;
 
 public abstract class JsTestsBase {
     private boolean interpretedMode;
@@ -21,16 +22,7 @@ public abstract class JsTestsBase {
 
     @BeforeClass
     public static void init() {
-        threadSafeFactory =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        if (featureIndex == Context.FEATURE_THREAD_SAFE_OBJECTS) {
-                            return true;
-                        }
-                        return super.hasFeature(cx, featureIndex);
-                    }
-                };
+        threadSafeFactory = Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS);
     }
 
     public void setInterpretedMode(boolean interpretedMode) {

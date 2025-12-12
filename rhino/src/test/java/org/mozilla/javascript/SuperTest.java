@@ -345,16 +345,7 @@ class SuperTest {
 
         @Test
         void getPropMissingWithContextFeatureStrictMode() {
-            ContextFactory factory =
-                    new ContextFactory() {
-                        @Override
-                        protected boolean hasFeature(Context cx, int featureIndex) {
-                            if (featureIndex == Context.FEATURE_STRICT_MODE) {
-                                return true;
-                            }
-                            return super.hasFeature(cx, featureIndex);
-                        }
-                    };
+            ContextFactory factory = Utils.contextFactoryWithFeatures(Context.FEATURE_STRICT_MODE);
 
             Utils.runWithAllModes(
                     factory,

@@ -7,20 +7,13 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.testutils.Utils;
 
 public class DeadlockReproTest {
     @Test
     public void redefinePropertyWithThreadSafeSlotMap() {
         final ContextFactory factory =
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        if (featureIndex == Context.FEATURE_THREAD_SAFE_OBJECTS) {
-                            return true;
-                        }
-                        return super.hasFeature(cx, featureIndex);
-                    }
-                };
+                Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS);
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_ES6);

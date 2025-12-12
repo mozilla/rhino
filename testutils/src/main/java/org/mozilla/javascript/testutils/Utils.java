@@ -498,14 +498,25 @@ public class Utils {
 
         @Override
         protected boolean hasFeature(Context cx, int featureIndex) {
-            if (IntStream.of(enabledFeatures).anyMatch(x -> x == featureIndex)) {
+            if (contains(enabledFeatures, featureIndex)) {
                 return true;
             }
-            if (IntStream.of(disabledFeatures).anyMatch(x -> x == featureIndex)) {
+            if (contains(disabledFeatures, featureIndex)) {
                 return false;
             }
 
             return super.hasFeature(cx, featureIndex);
+        }
+
+        private static boolean contains(int[] array, int target) {
+            // shortcut for no and single modified feature
+            if (array.length == 0) {
+                return false;
+            } else if (array.length == 1) {
+                return target == array[0];
+            }
+
+            return IntStream.of(array).anyMatch(x -> x == target);
         }
     }
 }
