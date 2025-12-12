@@ -61,6 +61,13 @@ public class NativeRegExp extends IdScriptableObject {
     private static final int BMP_MAX_CODEPOINT =
             0xFFFF; // Maximum Basic Multilingual Plane codepoint
 
+    // Bit manipulation constants
+    private static final int BYTE_BIT_MASK = 0x7; // Mask for extracting bit position within byte
+    private static final int BIT_SHIFT_FOR_BYTE_INDEX = 3; // Right shift to get byte index (divide by 8)
+
+    // Special characters
+    private static final char BACKSPACE_CHAR = 0x08; // Backspace character (\b in character class)
+
     // type of match to perform
     public static final int TEST = 0;
     public static final int MATCH = 1;
@@ -1849,7 +1856,7 @@ public class NativeRegExp extends IdScriptableObject {
                     continue; // Skip to next iteration
                 } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
-                    thisCodePoint = (char) 0x08;
+                    thisCodePoint = BACKSPACE_CHAR;
                 } else if (params.unicodeMode && state.cp < state.cpend && src[state.cp] == '-') {
                     state.cp++;
                     thisCodePoint = '-';
@@ -2796,7 +2803,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (c >= cs.length) {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
-        cs.bits[byteIndex] |= (byte) (1 << (c & 0x7));
+        cs.bits[byteIndex] |= (byte) (1 << (c & BYTE_BIT_MASK));
     }
 
     /* Add a character range, c1 to c2 (inclusive) to the RECharSet */
@@ -2810,8 +2817,8 @@ public class NativeRegExp extends IdScriptableObject {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
 
-        c1 = (char) (c1 & 0x7);
-        c2 = (char) (c2 & 0x7);
+        c1 = (char) (c1 & BYTE_BIT_MASK);
+        c2 = (char) (c2 & BYTE_BIT_MASK);
 
         if (byteIndex1 == byteIndex2) {
             cs.bits[byteIndex1] |= (byte) ((0xFF >> (7 - (c2 - c1))) << c1);
@@ -2972,10 +2979,10 @@ public class NativeRegExp extends IdScriptableObject {
         boolean matches = false;
 
         if (codePoint <= BMP_MAX_CODEPOINT) {
-            int byteIndex = codePoint >> 3;
+            int byteIndex = codePoint >> BIT_SHIFT_FOR_BYTE_INDEX;
             if (!(charSet.length == 0
                     || codePoint >= charSet.length
-                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0)) {
+                    || (charSet.bits[byteIndex] & (1 << (codePoint & BYTE_BIT_MASK))) == 0)) {
                 matches = true;
             }
         }
