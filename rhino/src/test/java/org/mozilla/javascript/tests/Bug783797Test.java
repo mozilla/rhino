@@ -27,9 +27,9 @@ public class Bug783797Test {
     private static ContextAction<Void> action(final String fn, final Action a) {
         return cx -> {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
-            ScriptableObject scope1 = cx.initStandardObjects();
-            ScriptableObject scope2 = cx.initStandardObjects();
-            scope1.put("scope2", scope1, scope2);
+            TopLevel scope1 = cx.initStandardObjects();
+            TopLevel scope2 = cx.initStandardObjects();
+            scope1.put("scope2", scope1, scope2.getGlobalThis());
 
             eval(cx, scope2, fn);
             a.run(cx, scope1, scope2);
@@ -519,10 +519,10 @@ public class Bug783797Test {
                                 assertSame(globalThis2, eval(cx, scope2, "test()"));
                                 assertSame(globalThis2, eval(cx, scope2, "test.call(null)"));
                                 assertSame(globalThis2, eval(cx, scope1, "scope2.test()"));
-                                assertSame(globalThis1, eval(cx, scope1, "scope2.test.call(null)"));
-                                assertSame(globalThis1, eval(cx, scope1, "var t=scope2.test; t()"));
+                                assertSame(globalThis2, eval(cx, scope1, "scope2.test.call(null)"));
+                                assertSame(globalThis2, eval(cx, scope1, "var t=scope2.test; t()"));
                                 assertSame(
-                                        globalThis1,
+                                        globalThis2,
                                         eval(cx, scope1, "var t=scope2.test; t.call(null)"));
                             }
                         }));
@@ -568,22 +568,22 @@ public class Bug783797Test {
                                 assertSame(globalThis2, eval(cx, scope2, "test.call(null)"));
                                 assertSame(globalThis2, eval(cx, scope2, "test.call(null, null)"));
 
-                                assertSame(globalThis1, eval(cx, scope1, "scope2.test()"));
-                                assertSame(globalThis1, eval(cx, scope1, "scope2.test(null)"));
-                                assertSame(globalThis1, eval(cx, scope1, "scope2.test.call(null)"));
+                                assertSame(globalThis2, eval(cx, scope1, "scope2.test()"));
+                                assertSame(globalThis2, eval(cx, scope1, "scope2.test(null)"));
+                                assertSame(globalThis2, eval(cx, scope1, "scope2.test.call(null)"));
                                 assertSame(
-                                        globalThis1,
+                                        globalThis2,
                                         eval(cx, scope1, "scope2.test.call(null, null)"));
 
-                                assertSame(globalThis1, eval(cx, scope1, "var t=scope2.test; t()"));
+                                assertSame(globalThis2, eval(cx, scope1, "var t=scope2.test; t()"));
                                 assertSame(
-                                        globalThis1,
+                                        globalThis2,
                                         eval(cx, scope1, "var t=scope2.test; t(null)"));
                                 assertSame(
-                                        globalThis1,
+                                        globalThis2,
                                         eval(cx, scope1, "var t=scope2.test; t.call(null)"));
                                 assertSame(
-                                        globalThis1,
+                                        globalThis2,
                                         eval(cx, scope1, "var t=scope2.test; t.call(null, null)"));
                             }
                         }));
@@ -673,17 +673,17 @@ public class Bug783797Test {
                                         eval(
                                                 cx,
                                                 scope1,
-                                                "String.prototype === scope2.test.call(null)"));
+                                                "String.prototype !== scope2.test.call(null)"));
                                 assertTRUE(
                                         eval(
                                                 cx,
                                                 scope1,
-                                                "var t=scope2.test; String.prototype === t()"));
+                                                "var t=scope2.test; String.prototype !== t()"));
                                 assertTRUE(
                                         eval(
                                                 cx,
                                                 scope1,
-                                                "var t=scope2.test; String.prototype === t.call(null)"));
+                                                "var t=scope2.test; String.prototype !== t.call(null)"));
                             }
                         }));
     }

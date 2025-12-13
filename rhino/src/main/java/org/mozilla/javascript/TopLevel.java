@@ -136,6 +136,10 @@ public class TopLevel extends ScriptableObject {
         var newGlobal = new NativeObject();
         newGlobal.setPrototype(parent.getGlobalThis());
         newGlobal.setParentScope(null);
+        newGlobal.put("globalThis", newGlobal, newGlobal);
+        newGlobal.setAttributes("globalThis", ScriptableObject.DONTENUM);
+        newGlobal.put("global", newGlobal, newGlobal);
+        newGlobal.setAttributes("global", ScriptableObject.DONTENUM);
         var isolate = new TopLevel(newGlobal);
         isolate.copyAssociatedValue(parent);
         isolate.copyBuiltins(parent, false);
