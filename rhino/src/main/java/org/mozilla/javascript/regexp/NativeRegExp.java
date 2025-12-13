@@ -1659,11 +1659,13 @@ public class NativeRegExp extends IdScriptableObject {
         doFlat(state, c);
     }
 
+    /** ES2024 v-flag set operation types: subtraction (--) and intersection (&&). */
     enum SetOperationType {
         SUBTRACT, // -- operator
         INTERSECT // && operator
     }
 
+    /** Represents a set operation in ES2024 v-flag character classes. */
     static class SetOperation {
         SetOperationType type;
         ClassContents operand;
@@ -1675,6 +1677,10 @@ public class NativeRegExp extends IdScriptableObject {
         }
     }
 
+    /**
+     * Represents parsed character class contents. Stores individual chars, ranges,
+     * escape nodes (\d, \p{}), and ES2024 v-flag features (string literals, set operations).
+     */
     static class ClassContents {
         boolean sense = true;
         ArrayList<Character> chars = new ArrayList<>();
@@ -1977,6 +1983,16 @@ public class NativeRegExp extends IdScriptableObject {
         return true;
     }
 
+    /**
+     * Parse character class contents ([...]). Handles traditional classes and ES2024 v-flag
+     * features: nested classes, string literals (\q{}), set operations (&&, --).
+     * Protects against excessive nesting (max 50 levels).
+     *
+     * @param state Compiler state
+     * @param params Parser parameters
+     * @param depth Current nesting depth
+     * @return Parsed ClassContents, or null on error
+     */
     private static ClassContents parseClassContents(
             CompilerState state, ParserParameters params, int depth) {
         // Protect against stack overflow from deeply nested character classes
