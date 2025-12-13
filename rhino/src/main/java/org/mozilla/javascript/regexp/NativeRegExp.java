@@ -1997,9 +1997,7 @@ public class NativeRegExp extends IdScriptableObject {
             CompilerState state, ParserParameters params, int depth) {
         // Protect against stack overflow from deeply nested character classes
         if (depth > MAX_CLASS_NESTING_DEPTH) {
-            reportError(
-                    "msg.bad.regexp",
-                    "Character class nesting too deep (max " + MAX_CLASS_NESTING_DEPTH + ")");
+            reportError(MSG_INVALID_NESTED_CLASS, "");
             return null;
         }
 
@@ -2111,7 +2109,7 @@ public class NativeRegExp extends IdScriptableObject {
                 // This is a nested class - parse it recursively
                 ClassContents nestedContents = parseClassContents(state, params, depth + 1);
                 if (nestedContents == null) {
-                    reportError("msg.bad.regexp", "Invalid nested character class");
+                    reportError(MSG_INVALID_NESTED_CLASS, "");
                     return null;
                 }
                 // Merge the nested class contents into our contents
