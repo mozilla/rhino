@@ -4,7 +4,6 @@
 
 package org.mozilla.javascript.tools.shell;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeConsole;
@@ -27,19 +26,15 @@ class ShellConsolePrinter implements NativeConsole.ConsolePrinter {
         }
 
         String msg = NativeConsole.format(cx, scope, args);
-        ShellConsole console = Main.getGlobal().getConsole(Charset.defaultCharset());
-        try {
-            console.println(level + " " + msg);
+        var console = Main.getGlobal().getConsole(Charset.defaultCharset());
+        console.println(level + " " + msg);
 
-            if (stack != null) {
-                for (ScriptStackElement element : stack) {
-                    console.println(element.toString());
-                }
+        if (stack != null) {
+            for (ScriptStackElement element : stack) {
+                console.println(element.toString());
             }
-
-            console.flush();
-        } catch (IOException e) {
-            throw Context.reportRuntimeError(e.getMessage());
         }
+
+        console.flush();
     }
 }

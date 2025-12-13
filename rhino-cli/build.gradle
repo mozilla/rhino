@@ -1,54 +1,26 @@
 plugins {
     id 'rhino.library-conventions'
-    id 'com.gradleup.shadow' version '9.3.1'
-    id 'application'
-}
-
-application {
-    mainClass = 'org.mozilla.javascript.tools.shell.Main'
-}
-
-run {
-    standardInput = System.in
 }
 
 dependencies {
     implementation project(':rhino')
     implementation project(':rhino-tools')
-    implementation project(':rhino-xml')
-    implementation project(':rhino-cli')
-}
-
-shadowJar {
-    // Ensure that the "jar" from this step is the shadowed one that we want to 
-    // publish in Maven.
-    archiveClassifier.set('')
-    // Merge service files, but fail on other duplicates.
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE // Or WARN.
-    mergeServiceFiles()
-    filesNotMatching('META-INF/services/**') {
-        duplicatesStrategy = DuplicatesStrategy.FAIL // Or FAIL.
-    }
-}
-
-startScripts {
-    dependsOn 'shadowJar'
-}
-
-startShadowScripts {
-    dependsOn 'jar'
+    implementation 'org.jline:jline-terminal:3.30.0'
+    implementation 'org.jline:jline-reader:3.30.0'
+    runtimeOnly 'org.jline:jline-terminal-ffm:3.30.0'
+    runtimeOnly 'org.jline:jline-terminal-jni:3.30.0'
 }
 
 publishing {
     publications {
-        rhinoall(MavenPublication) {
+        rhinotools(MavenPublication) {
             from components.java
             artifacts = [jar, sourceJar, javadocJar]
             pom.withXml {
                 def root = asNode()
 
-                root.appendNode('name', 'rhino-all')
-                root.appendNode('description', "Rhino JavaScript all-in-one JAR, not for use with modular Java projects")
+                root.appendNode('name', 'rhino-cli')
+                root.appendNode('description', "Rhino CLI support for JLine")
                 root.appendNode("url", "https://mozilla.github.io/rhino/")
 
                 def p = root.appendNode("parent")
