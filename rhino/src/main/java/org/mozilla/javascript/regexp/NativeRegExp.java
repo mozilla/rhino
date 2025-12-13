@@ -1812,6 +1812,171 @@ public class NativeRegExp extends IdScriptableObject {
     private static final String MSG_SET_OP_MISSING_OPERAND = "msg.regexp.set.op.missing.operand";
     private static final String MSG_INVALID_SET_OP_OPERAND = "msg.regexp.invalid.set.op.operand";
 
+    /**
+     * Parses set operations (-- and &&) in v-mode character classes.
+     * Adds all parsed operations to the contents.
+     *
+     * @param state the compiler state
+     * @param params parser parameters (for mode flags)
+     * @param depth current nesting depth
+     * @param contents the ClassContents to add operations to
+     * @return true if successful, false on error
+     */
+    private static boolean parseSetOperations(
+            CompilerState state, ParserParameters params, int depth, ClassContents contents) {
+        if (!isVMode(state, params)) {
+            return true; // Set operations only in v-mode
+        }
+
+        char[] src = state.cpbegin;
+        while (state.cp + 1 < state.cpend) {
+            char c1 = src[state.cp];
+            char c2 = src[state.cp + 1];
+
+            SetOperationType opType = null;
+            if (c1 == '-' && c2 == '-') {
+                opType = SetOperationType.SUBTRACT;
+            } else if (c1 == '&' && c2 == '&') {
+                opType = SetOperationType.INTERSECT;
+            } else {
+                break; // No more set operations
+            }
+
+            state.cp += 2; // Skip the operator (-- or &&)
+
+            // Parse the set operand
+            ClassContents operand = parseSetOperand(state, params, depth);
+            if (operand == null) {
+                return false;
+            }
+
+            contents.setOperations.add(new SetOperation(opType, operand));
+        }
+
+        return true;
+    }
+
+    /**
+     * Parses a set operation operand in v-mode character classes.
+     * Operands can be: nested character class [...], string literal \q{...},
+     * character class escape (\d, \w, etc.), or Unicode property escape (\p{}, \P{}).
+     *
+     * @param state the compiler state
+     * @param params parser parameters (for mode flags)
+     * @param depth current nesting depth
+     * @return the parsed operand as ClassContents, or null on error
+     */
+    private static ClassContents parseSetOperand(
+            CompilerState state, ParserParameters params, int depth) {
+        char[] src = state.cpbegin;
+        ClassContents operand = new ClassContents();
+
+        if (state.cp >= state.cpend) {
+            reportError(MSG_SET_OP_MISSING_OPERAND, "");
+            return null;
+        }
+
+        if (src[state.cp] == '[') {
+            // Nested character class
+            state.cp++; // Skip '['
+            operand = parseClassContents(state, params, depth + 1);
+            if (operand == null) {
+                reportError(MSG_INVALID_NESTED_CLASS, "");
+                return null;
+            }
+        } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend && src[state.cp + 1] == 'q') {
+            // String disjunction: \q{...}
+            if (!parseStringLiterals(state, params, operand)) {
+                return null;
+            }
+        } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend) {
+            // Character class escapes and Unicode property escapes:
+            // \d, \D, \w, \W, \s, \S, \p{}, \P{}
+            char escapeChar = src[state.cp + 1];
+            state.cp++; // Move to the escape character
+
+            // Try Unicode property escapes first
+            if (escapeChar == 'p' || escapeChar == 'P') {
+                if (!parseUnicodePropertyEscape(state)) {
+                    reportError("msg.invalid.property", "");
+                    return null;
+                }
+                operand.escapeNodes.add(state.result);
+            } else if (parseCharacterClassEscapeOperand(state)) {
+                operand.escapeNodes.add(state.result);
+            } else {
+                reportError(MSG_INVALID_SET_OP_OPERAND, "");
+                return null;
+            }
+        } else {
+            // Operand must be bracketed class, \q{}, or character class/property escape
+            reportError(MSG_INVALID_SET_OP_OPERAND, "");
+            return null;
+        }
+
+        return operand;
+    }
+
+    /**
+     * Validates syntax characters in v-mode (ES2024 unicodeSets).
+     * Checks for invalid unescaped syntax characters and double punctuators.
+     *
+     * @param state the compiler state
+     * @param thisCodePoint the current character code point to validate
+     * @return true if valid, false if error was reported
+     */
+    private static boolean validateVModeSyntax(
+            CompilerState state, int thisCodePoint) {
+        if ((state.flags & JSREG_UNICODESETS) == 0) {
+            return true; // Not in v-mode, no validation needed
+        }
+
+        char current = (char) thisCodePoint;
+        char[] src = state.cpbegin;
+
+        // Check for single syntax characters that must be escaped in v-mode
+        switch (current) {
+            case '(':
+            case ')':
+            case '/':
+            case '|':
+            case '-':
+                reportError("msg.invalid.class", "");
+                return false;
+        }
+
+        // Check for invalid double punctuators (excluding && and -- which are operators)
+        if (state.cp < state.cpend) {
+            char next = src[state.cp];
+            if (current == next) {
+                switch (current) {
+                    case '!':
+                    case '#':
+                    case '$':
+                    case '%':
+                    case '*':
+                    case '+':
+                    case ',':
+                    case '.':
+                    case ':':
+                    case ';':
+                    case '<':
+                    case '=':
+                    case '>':
+                    case '?':
+                    case '@':
+                    case '^':
+                    case '`':
+                    case '~':
+                        reportError("msg.invalid.class", "");
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private static ClassContents parseClassContents(
             CompilerState state, ParserParameters params, int depth) {
         // Protect against stack overflow from deeply nested character classes
@@ -1939,49 +2104,8 @@ public class NativeRegExp extends IdScriptableObject {
             }
 
             // ES2024: Validate syntax characters in v-mode (only for non-escaped literals)
-            if ((state.flags & JSREG_UNICODESETS) != 0) {
-                char current = (char) thisCodePoint;
-
-                // Check for single syntax characters that must be escaped in v-mode
-                // Note: '{' and '}' are handled by \q{} parsing
-                switch (current) {
-                    case '(':
-                    case ')':
-                    case '/':
-                    case '|':
-                    case '-':
-                        reportError("msg.invalid.class", "");
-                        return null;
-                }
-
-                // Check for invalid double punctuators (excluding && and -- which are operators)
-                if (state.cp < state.cpend) {
-                    char next = src[state.cp];
-                    if (current == next) {
-                        switch (current) {
-                            case '!':
-                            case '#':
-                            case '$':
-                            case '%':
-                            case '*':
-                            case '+':
-                            case ',':
-                            case '.':
-                            case ':':
-                            case ';':
-                            case '<':
-                            case '=':
-                            case '>':
-                            case '?':
-                            case '@':
-                            case '^':
-                            case '`':
-                            case '~':
-                                reportError("msg.invalid.class", "");
-                                return null;
-                        }
-                    }
-                }
+            if (!validateVModeSyntax(state, thisCodePoint)) {
+                return null;
             }
 
             if (inRange) {
@@ -2016,79 +2140,8 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         // Parse set operations (-- and &&) for 'v' flag
-        if (isVMode(state, params)) {
-            while (state.cp + 1 < state.cpend) {
-                char c1 = src[state.cp];
-                char c2 = src[state.cp + 1];
-
-                SetOperationType opType = null;
-                if (c1 == '-' && c2 == '-') {
-                    opType = SetOperationType.SUBTRACT;
-                } else if (c1 == '&' && c2 == '&') {
-                    opType = SetOperationType.INTERSECT;
-                } else {
-                    break; // No more set operations
-                }
-
-                state.cp += 2; // Skip the operator (-- or &&)
-
-                // Parse the set operand - can be nested class, \q{}, character escape, or single
-                // char
-                ClassContents operand = new ClassContents();
-
-                if (state.cp >= state.cpend) {
-                    reportError("msg.bad.regexp", "Set operation missing operand");
-                    return null;
-                }
-
-                if (src[state.cp] == '[') {
-                    // Nested character class
-                    state.cp++; // Skip '['
-                    operand = parseClassContents(state, params, depth + 1);
-                    if (operand == null) {
-                        reportError(
-                                "msg.bad.regexp",
-                                "Invalid nested character class in set operation");
-                        return null;
-                    }
-                } else if (src[state.cp] == '\\'
-                        && state.cp + 1 < state.cpend
-                        && src[state.cp + 1] == 'q') {
-                    // String disjunction: \q{...}
-                    if (!parseStringLiterals(state, params, operand)) {
-                        return null;
-                    }
-                } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend) {
-                    // Character class escapes and Unicode property escapes:
-                    // \d, \D, \w, \W, \s, \S, \p{}, \P{}
-                    char escapeChar = src[state.cp + 1];
-                    state.cp++; // Move to the escape character
-
-                    // Try Unicode property escapes first
-                    if (escapeChar == 'p' || escapeChar == 'P') {
-                        if (!parseUnicodePropertyEscape(state)) {
-                            reportError("msg.invalid.property", "");
-                            return null;
-                        }
-                        operand.escapeNodes.add(state.result);
-                    } else if (parseCharacterClassEscapeOperand(state)) {
-                        operand.escapeNodes.add(state.result);
-                    } else {
-                        reportError(
-                                "msg.bad.regexp",
-                                "Set operation operand must be [...], \\q{}, or character class/property escape");
-                        return null;
-                    }
-                } else {
-                    // Operand must be bracketed class, \q{}, or character class/property escape
-                    reportError(
-                            "msg.bad.regexp",
-                            "Set operation operand must be [...], \\q{}, or character class/property escape");
-                    return null;
-                }
-
-                contents.setOperations.add(new SetOperation(opType, operand));
-            }
+        if (!parseSetOperations(state, params, depth, contents)) {
+            return null;
         }
 
         if (state.cp < state.cpend && src[state.cp] == ']') {
