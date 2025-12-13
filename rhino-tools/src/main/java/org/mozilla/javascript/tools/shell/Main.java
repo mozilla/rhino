@@ -40,6 +40,7 @@ import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.config.RhinoConfig;
+import org.mozilla.javascript.tools.Console;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
@@ -148,7 +149,7 @@ public class Main {
 
     /** Execute the given arguments, but don't System.exit at the end. */
     public static int exec(String origArgs[]) {
-        errorReporter = new ToolErrorReporter(false, global.getErr());
+        errorReporter = new ToolErrorReporter(false, global.getConsole().getErr());
         shellContextFactory.setErrorReporter(errorReporter);
         String[] args = processOptions(origArgs);
         if (exitCode > 0) {
@@ -391,7 +392,7 @@ public class Main {
             }
             if (arg.equals("-?") || arg.equals("-help")) {
                 // print usage message
-                global.getOut()
+                global.getConsole()
                         .println(
                                 ToolErrorReporter.getMessage(
                                         "msg.shell.usage", Main.class.getName()));
@@ -402,8 +403,8 @@ public class Main {
             break goodUsage;
         }
         // print error and usage message
-        global.getOut().println(ToolErrorReporter.getMessage("msg.shell.invalid", usageError));
-        global.getOut()
+        global.getConsole().println(ToolErrorReporter.getMessage("msg.shell.invalid", usageError));
+        global.getConsole()
                 .println(ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
         exitCode = 1;
         return null;
@@ -445,10 +446,11 @@ public class Main {
             } else {
                 cs = Charset.defaultCharset();
             }
-            ShellConsole console = global.getConsole(cs);
+            Console console = global.getConsole(cs);
             if (filename == null) {
                 // print implementation version
-                console.println(cx.getImplementationVersion());
+                console.println(cx.getImplementationVersion() + " (" +
+                        console.getImplementation() + ')');
             }
 
             int lineno = 1;
@@ -665,24 +667,12 @@ public class Main {
         }
     }
 
-    public static InputStream getIn() {
-        return getGlobal().getIn();
-    }
-
     public static void setIn(InputStream in) {
         getGlobal().setIn(in);
     }
 
-    public static PrintStream getOut() {
-        return getGlobal().getOut();
-    }
-
     public static void setOut(PrintStream out) {
         getGlobal().setOut(out);
-    }
-
-    public static PrintStream getErr() {
-        return getGlobal().getErr();
     }
 
     public static void setErr(PrintStream err) {

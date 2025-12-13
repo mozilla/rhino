@@ -4,5 +4,6 @@ plugins {
 }
 rootProject.name = 'rhino-root'
 include 'rhino', 'rhino-engine', 'rhino-tools', 'rhino-xml', 'rhino-all', 'examples', 'testutils', 'tests', 'benchmarks'
+include 'rhino-cli'
 include 'rhino-kotlin'
 include 'it-android'
