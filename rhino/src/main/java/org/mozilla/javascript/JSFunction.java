@@ -140,8 +140,19 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
-        var realThis = descriptor.hasLexicalThis() ? lexicalThis : thisObj;
+        var realThis = getThisObj(thisObj);
         return descriptor.getCode().execute(cx, this, Undefined.instance, scope, realThis, args);
+    }
+
+    public final Scriptable getThisObj(Scriptable thisObj) {
+        if (descriptor.hasLexicalThis()) {
+            return lexicalThis;
+        } else if (!descriptor.isStrict() && (thisObj == null || Undefined.isUndefined(thisObj))) {
+            var res = ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
+            return res;
+        } else {
+            return thisObj;
+        }
     }
 
     @Override
