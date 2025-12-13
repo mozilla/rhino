@@ -140,7 +140,7 @@ public class ArrayLikeAbstractOperations {
         TopLevel parent = ScriptableObject.getTopLevelScope(f);
         Scriptable thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = parent.getGlobalThis();
+            thisArg = Undefined.SCRIPTABLE_UNDEFINED;
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
@@ -340,7 +340,6 @@ public class ArrayLikeAbstractOperations {
         }
         Function f = (Function) callbackArg;
         TopLevel parent = ScriptableObject.getTopLevelScope(f);
-        Scriptable globalThis = parent.getGlobalThis();
         // hack to serve both reduce and reduceRight with the same loop
         boolean movingLeft = operation == ReduceOperation.REDUCE;
         Object value = args.length > 1 ? args[1] : NOT_FOUND;
@@ -355,7 +354,7 @@ public class ArrayLikeAbstractOperations {
                 value = elem;
             } else {
                 Object[] innerArgs = {value, elem, index, o};
-                value = f.call(cx, parent, globalThis, innerArgs);
+                value = f.call(cx, parent, Undefined.SCRIPTABLE_UNDEFINED, innerArgs);
             }
         }
         if (value == NOT_FOUND) {

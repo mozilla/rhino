@@ -352,10 +352,14 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Function#call( Context, Scriptable, Scriptable, Object[])
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Scriptable thisArg, Object[] args) {
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;
+        Scriptable thisObj = ScriptRuntime.getThisForScope(getDeclarationScope(), thisArg);
+        if (thisObj == null || Undefined.isUndefined(thisObj)) {
+            thisObj = ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
+        }
 
         if (parmsLength < 0) {
             for (int i = 0; i < argsLength; i++) {
@@ -386,8 +390,20 @@ public class FunctionObject extends BaseFunction {
                     thisObj = ((Delegator) thisObj).getDelegee();
                 }
                 if (!clazz.isInstance(thisObj)) {
+                    boolean compatible = false;
+                    var top1 = ScriptableObject.getTopLevelScope(scope);
+                    var top2 = ScriptableObject.getTopLevelScope(getDeclarationScope());
+                    if (top1 != top2 && thisArg != thisObj) {
+                        thisObj = top1.getGlobalThis();
+                        if (clazz.isInstance(thisObj)) {
+                            compatible = true;
+                        }
+                    }
+
                     // Couldn't find an object to call this on.
-                    throw ScriptRuntime.typeErrorById("msg.incompat.call", functionName);
+                    if (!compatible) {
+                        throw ScriptRuntime.typeErrorById("msg.incompat.call", functionName);
+                    }
                 }
             }
 

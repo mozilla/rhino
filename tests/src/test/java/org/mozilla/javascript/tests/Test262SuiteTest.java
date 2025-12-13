@@ -285,8 +285,8 @@ public class Test262SuiteTest {
         }
     }
 
-    private Scriptable buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
-        ScriptableObject scope = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
+    private TopLevel buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
+        TopLevel scope = cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
             String harnessKey = harnessFile + '-' + interpretedMode;
@@ -304,7 +304,7 @@ public class Test262SuiteTest {
                                             "Error reading test file " + harnessPath, ioe);
                                 }
                             });
-            harnessScript.exec(cx, scope, scope);
+            harnessScript.exec(cx, scope, scope.getGlobalThis());
         }
 
         $262 proto = $262.init(cx, scope);
@@ -342,7 +342,7 @@ public class Test262SuiteTest {
 
             boolean failedEarly = false;
             try {
-                Scriptable scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
+                TopLevel scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
                 String str = testCase.source;
                 int line = 1;
                 if (useStrict) {
@@ -354,7 +354,7 @@ public class Test262SuiteTest {
                 Script caseScript = cx.compileString(str, testFilePath, line, null);
 
                 failedEarly = false; // not after this line
-                caseScript.exec(cx, scope, scope);
+                caseScript.exec(cx, scope, scope.getGlobalThis());
 
                 if (testCase.isNegative()) {
                     fail(

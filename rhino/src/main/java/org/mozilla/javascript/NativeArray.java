@@ -655,7 +655,7 @@ public class NativeArray extends ScriptableObject implements List {
             mapFn = (Function) mapArg;
 
             Object callThisArg = args.length >= 3 ? args[2] : Undefined.SCRIPTABLE_UNDEFINED;
-            thisArg = ScriptRuntime.getApplyOrCallThis(cx, s, callThisArg, 1, mapFn);
+            thisArg = ScriptRuntime.getThisForScope(mapFn.getDeclarationScope(), callThisArg);
         }
 
         Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
@@ -1892,7 +1892,7 @@ public class NativeArray extends ScriptableObject implements List {
         Scriptable parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
         Scriptable thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = parent;
+            thisArg = Undefined.SCRIPTABLE_UNDEFINED;
         } else {
             thisArg = ScriptRuntime.toObject(cx, s, args[1]);
         }

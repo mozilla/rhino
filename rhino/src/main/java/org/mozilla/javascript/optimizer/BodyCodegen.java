@@ -2865,6 +2865,16 @@ class BodyCodegen {
         cfw.add(ByteCode.IF_ACMPNE, regularCall);
 
         // stack: ... directFunct
+        if (type != Token.NEW) {
+            cfw.add(ByteCode.DUP);
+            cfw.addALoad(thisObjLocal);
+            cfw.addInvoke(
+                    ByteCode.INVOKEVIRTUAL,
+                    "org/mozilla/javascript/JSFunction",
+                    "getThisObj",
+                    "(Lorg/mozilla/javascript/Scriptable;)Lorg/mozilla/javascript/Scriptable;");
+            cfw.addAStore(thisObjLocal);
+        }
         cfw.addALoad(contextLocal);
         cfw.add(ByteCode.SWAP);
         cfw.addALoad(newTargetLocal);

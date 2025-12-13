@@ -2438,7 +2438,7 @@ public class ScriptRuntime {
             String name,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj = scope;
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2470,7 +2470,6 @@ public class ScriptRuntime {
                 if (result != Scriptable.NOT_FOUND) {
                     // ECMA 262 requires that this for nested funtions
                     // should be top scope
-                    thisObj = ScriptableObject.getTopLevelScope(parentScope);
                     break;
                 }
             } else {
@@ -2478,7 +2477,6 @@ public class ScriptRuntime {
                 // scopes are useful for what ever reasons.
                 result = ScriptableObject.getProperty(scope, name);
                 if (result != Scriptable.NOT_FOUND) {
-                    thisObj = scope;
                     break;
                 }
             }
@@ -2489,8 +2487,6 @@ public class ScriptRuntime {
                 if (result == Scriptable.NOT_FOUND) {
                     throw notFoundError(scope, name);
                 }
-                // For top scope thisObj for functions is always scope itself.
-                thisObj = scope;
                 break;
             }
         }
@@ -3029,7 +3025,12 @@ public class ScriptRuntime {
                 }
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            return new LookupResult(result, scope, name);
+            return new LookupResult(
+                    result,
+                    scope instanceof NativeWith
+                            ? scope.getPrototype()
+                            : Undefined.SCRIPTABLE_UNDEFINED,
+                    name);
         }
 
         // name will call storeScriptable(cx, thisObj);
@@ -3379,18 +3380,7 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        Scriptable thisObj = null;
-        if (f instanceof Function) {
-            thisObj = ((Function) f).getDeclarationScope();
-        }
-        if (thisObj == null) {
-            if (cx.topCallScope == null) throw new IllegalStateException();
-            thisObj = cx.topCallScope;
-        }
-        if (thisObj instanceof NativeCall) {
-            // nested functions should have top scope as their thisObj
-            thisObj = ScriptableObject.getTopLevelScope(thisObj);
-        }
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
 
         return new LookupResult(f, thisObj, value);
     }
@@ -3508,7 +3498,8 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis = getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, function);
+        Scriptable callThis =
+                getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, (Function) function);
 
         Object[] callArgs;
         if (isApply) {
@@ -3528,7 +3519,7 @@ public class ScriptRuntime {
     }
 
     public static Scriptable getApplyOrCallThis(
-            Context cx, Scriptable scope, Object arg0, int l, Callable target) {
+            Context cx, Scriptable scope, Object arg0, int l, Function target) {
         Scriptable callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             // Legacy behavior
@@ -3538,8 +3529,9 @@ public class ScriptRuntime {
                 callThis = null;
             }
             if (callThis == null) {
-                // This covers the case of args[0] == (null|undefined) as well.
-                callThis = getTopCallScope(cx).getGlobalThis();
+                callThis =
+                        ScriptableObject.getTopLevelScope(target.getDeclarationScope())
+                                .getGlobalThis();
             }
         } else {
             // Spec-compliant behavior
@@ -3550,15 +3542,6 @@ public class ScriptRuntime {
                                 : toObjectOrNull(cx, arg0, scope);
             } else {
                 callThis = Undefined.SCRIPTABLE_UNDEFINED;
-            }
-
-            // Replace missing this with global object only for non-strict functions
-            boolean missingCallThis =
-                    callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
-            boolean isFunctionStrict =
-                    !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
-            if (missingCallThis && !isFunctionStrict) {
-                callThis = getTopCallScope(cx).getGlobalThis();
             }
         }
 
@@ -6225,6 +6208,15 @@ public class ScriptRuntime {
         }
     }
 
+    public static Scriptable getThisForScope(Scriptable scope, Object callThisArg) {
+        if (Undefined.isUndefined(callThisArg)) {
+            callThisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        } else if (callThisArg == null) {
+            return null;
+        }
+        return ScriptRuntime.toObject(scope, callThisArg);
+    }
+
     /**
      * This is returned from the various "getFooAndThis" methods, so it can return the result, the
      * appropriate "this" object, and the name of the property so that a proper exception can be
@@ -6239,8 +6231,7 @@ public class ScriptRuntime {
 
         LookupResult(Object result, Scriptable thisObj, Object name) {
             this.result = result;
-            this.thisObj =
-                    thisObj instanceof TopLevel ? ((TopLevel) thisObj).getGlobalThis() : thisObj;
+            this.thisObj = thisObj;
             this.name = name;
         }
 
