@@ -23,7 +23,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.lc.type.impl.factory.NoCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
 
 /**
@@ -61,14 +60,6 @@ public interface TypeInfoFactory extends Serializable {
                     return GLOBAL;
                 }
             };
-
-    /**
-     * TypeInfoFactory used by very few actions with the intention of not caching any used types
-     *
-     * <p>This factory does not cache {@link TypeInfo}. If the same type is passed to this factory
-     * multiple times, the return result may or may not be the exact same object
-     */
-    TypeInfoFactory NO_CACHE = NoCacheFactory.INSTANCE;
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 

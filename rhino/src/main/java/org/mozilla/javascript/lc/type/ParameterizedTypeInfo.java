@@ -32,6 +32,11 @@ public interface ParameterizedTypeInfo extends TypeInfo {
     }
 
     /**
+     * @see ParameterizedType#getOwnerType()
+     */
+    TypeInfo ownerType();
+
+    /**
      * Extract consolidation mapping based on {@link #params()} and {@link
      * Class#getTypeParameters()}
      *
@@ -49,13 +54,18 @@ public interface ParameterizedTypeInfo extends TypeInfo {
                     String.format(
                             "Expecting %s type params for class '%s', but got %s",
                             len, this.asClass().getName(), actualParams.size()));
-        } else if (len == 0) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Base class '%s' is not a generic class", this.asClass().getName()));
         }
 
-        if (len == 1) {
+        Map<VariableTypeInfo, TypeInfo> ownerTypeMapping;
+        var ownerType = this.ownerType();
+        if (ownerType instanceof ParameterizedTypeInfo) {
+            ownerTypeMapping =
+                    ((ParameterizedTypeInfo) ownerType).extractConsolidationMapping(factory);
+        } else {
+            ownerTypeMapping = Map.of();
+        }
+
+        if (len == 1 && ownerTypeMapping.isEmpty()) {
             return Map.of((VariableTypeInfo) factory.create(typeVariables[0]), actualParams.get(0));
         }
 
@@ -63,6 +73,7 @@ public interface ParameterizedTypeInfo extends TypeInfo {
         for (int i = 0; i < len; i++) {
             mapping.put((VariableTypeInfo) factory.create(typeVariables[i]), actualParams.get(i));
         }
+        mapping.putAll(ownerTypeMapping);
         return mapping;
     }
 
