@@ -187,27 +187,17 @@ public class NativeSet extends ScriptableObject {
                         cx,
                         scope,
                         NativeMap.key(args),
-                        args.length > 1 ? args[1] : Undefined.instance);
+                        args.length > 1 ? args[1] : Undefined.SCRIPTABLE_UNDEFINED);
     }
 
     private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
         if (!(arg1 instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(arg1);
         }
-        final Callable f = (Callable) arg1;
+        final Function f = (Function) arg1;
 
-        boolean isStrict = cx.isStrictMode();
         for (Hashtable.Entry entry : entries) {
-            // Per spec must convert every time so that primitives are always regenerated...
-            Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
-
-            if (thisObj == null && !isStrict) {
-                thisObj = ScriptableObject.getTopLevelScope(scope).getGlobalThis();
-            }
-            if (thisObj == null) {
-                thisObj = Undefined.SCRIPTABLE_UNDEFINED;
-            }
-
+            Scriptable thisObj = ScriptRuntime.getThisForScope(f.getDeclarationScope(), arg2);
             final Hashtable.Entry e = entry;
             f.call(cx, scope, thisObj, new Object[] {e.value, e.value, this});
         }

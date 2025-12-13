@@ -8,6 +8,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.util.ArrayList;
 
 /**
@@ -46,6 +48,21 @@ import java.util.ArrayList;
  */
 public class ImporterTopLevel extends TopLevel {
     private static final long serialVersionUID = -9095380847465315412L;
+
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        var builder =
+                new ClassDescriptor.Builder(
+                                "JavaImporter",
+                                0,
+                                ImporterTopLevel::js_construct,
+                                ImporterTopLevel::js_construct)
+                        .withMethod(PROTO, "importClass", 1, ImporterTopLevel::js_importClass)
+                        .withMethod(PROTO, "importPackage", 1, ImporterTopLevel::js_importPackage);
+
+        DESCRIPTOR = builder.build();
+    }
 
     public static class ImporterGlobalThis extends TopLevel.GlobalThis {
 
@@ -131,24 +148,13 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
-        LambdaConstructor ctor =
-                new LambdaConstructor(scope, "ImporterTopLevel", 0, ImporterTopLevel::js_construct);
-
-        ctor.definePrototypeMethod(scope, "importClass", 1, ImporterTopLevel::js_importClass);
-        ctor.definePrototypeMethod(scope, "importPackage", 1, ImporterTopLevel::js_importPackage);
-
-        if (sealed) {
-            ctor.sealObject();
-        }
-
+        var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
         var proto = (Scriptable) ctor.getPrototypeProperty();
 
         if (isTopScope) {
             scope.put("importClass", scope, proto.get("importClass", proto));
             scope.put("importPackage", scope, proto.get("importPackage", proto));
         }
-
-        ScriptableObject.defineProperty(scope, "JavaImporter", ctor, DONTENUM);
     }
 
     public void initStandardObjects(Context cx, boolean sealed) {
@@ -188,13 +194,14 @@ public class ImporterTopLevel extends TopLevel {
      */
     @Deprecated
     public void importPackage(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        js_importPackage(cx, funObj.getDeclarationScope(), this, args);
+        js_importPackage(cx, funObj, null, funObj.getDeclarationScope(), this, args);
     }
 
     // The result from the constructor needs to be an object rather
     // than a scope, and then we need to work out to how make the
     // import work on the correct thing.
-    private static Scriptable js_construct(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_construct(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
         ImporterGlobalThis result = new ImporterGlobalThis(false);
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
@@ -212,12 +219,16 @@ public class ImporterTopLevel extends TopLevel {
         // would keep them set to null. It also allows to use
         // JavaImporter without new and still get properly
         // initialized object.
-        result.setParentScope(scope);
+        result.setPrototype((Scriptable) f.getPrototypeProperty());
+        result.setParentScope(s);
         return result;
     }
 
     private static Object js_importClass(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Function f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        if (Undefined.isUndefined(thisObj)) {
+            thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
+        }
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaClass)) {
@@ -229,7 +240,10 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     private static Object js_importPackage(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, Function f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        if (Undefined.isUndefined(thisObj)) {
+            thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
+        }
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaPackage)) {
