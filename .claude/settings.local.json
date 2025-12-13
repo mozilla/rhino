@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api:*)",
+      "Bash(/tmp/pr_full_diff.txt)",
+      "Bash(./gradlew :tests:test:*)",
+      "Bash(RHINO_TEST_JAVA_VERSION=11 ./gradlew:*)",
+      "Bash(./gradlew spotlessApply:*)",
+      "Bash(./gradlew:*)",
+      "Bash(java -jar rhino/build/libs/rhino-1.7.16-SNAPSHOT.jar:*)",
+      "Bash(java -jar rhino/build/libs/rhino-1.8.2-SNAPSHOT.jar:*)",
+      "WebSearch",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -9,8 +9,10 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.Callable;
@@ -866,6 +868,16 @@ public class NativeRegExp extends IdScriptableObject {
         return (cl < 128) ? ch : cl;
     }
 
+    /**
+     * Check if Unicode mode is enabled (u or v flag).
+     *
+     * @param flags The regexp flags
+     * @return true if either JSREG_UNICODE or JSREG_UNICODESETS flag is set
+     */
+    private static boolean isUnicodeMode(int flags) {
+        return (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
+    }
+
     /** Case-insensitive character comparison that respects Unicode mode. */
     private static boolean charsEqual(char c1, char c2, boolean unicodeMode) {
         if (c1 == c2) return true;
@@ -884,25 +896,28 @@ public class NativeRegExp extends IdScriptableObject {
      * @param results List to add case variants to (will include ch itself)
      */
     private static void getUnicodeCaseVariants(char ch, List<Character> results) {
+        // Use a Set for O(1) lookups instead of O(n) List.contains()
+        Set<Character> seen = new HashSet<>();
+        seen.add(ch);
         results.add(ch);
 
         char lower = Character.toLowerCase(ch);
         char upper = Character.toUpperCase(ch);
 
-        if (lower != ch && !results.contains(lower)) {
+        if (lower != ch && seen.add(lower)) {
             results.add(lower);
             // Add uppercase of the lowercase (handles cases like İ/i in some locales)
             char upperOfLower = Character.toUpperCase(lower);
-            if (upperOfLower != ch && upperOfLower != upper && !results.contains(upperOfLower)) {
+            if (upperOfLower != ch && upperOfLower != upper && seen.add(upperOfLower)) {
                 results.add(upperOfLower);
             }
         }
 
-        if (upper != ch && !results.contains(upper)) {
+        if (upper != ch && seen.add(upper)) {
             results.add(upper);
             // Add lowercase of the uppercase
             char lowerOfUpper = Character.toLowerCase(upper);
-            if (lowerOfUpper != ch && lowerOfUpper != lower && !results.contains(lowerOfUpper)) {
+            if (lowerOfUpper != ch && lowerOfUpper != lower && seen.add(lowerOfUpper)) {
                 results.add(lowerOfUpper);
             }
         }
@@ -2811,9 +2826,7 @@ public class NativeRegExp extends IdScriptableObject {
             REGlobalData gData, int matchChars, int length, String input, int end) {
         if ((gData.cp + length) > end) return false;
         char[] source = gData.regexp.source;
-        boolean unicode =
-                (gData.regexp.flags & JSREG_UNICODE) != 0
-                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+        boolean unicode = isUnicodeMode(gData.regexp.flags);
 
         for (int i = 0; i < length; i++) {
             if (!charsEqual(source[matchChars + i], input.charAt(gData.cp + i), unicode)) {
@@ -2827,9 +2840,7 @@ public class NativeRegExp extends IdScriptableObject {
     private static boolean flatNIMatcherBackward(
             REGlobalData gData, int matchChars, int length, String input) {
         if ((gData.cp - length) < 0) return false;
-        boolean unicode =
-                (gData.regexp.flags & JSREG_UNICODE) != 0
-                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+        boolean unicode = isUnicodeMode(gData.regexp.flags);
 
         for (int i = 1; i <= length; i++) {
             if (!charsEqual(
@@ -3391,9 +3402,7 @@ public class NativeRegExp extends IdScriptableObject {
                 {
                     matchCodePoint = (program[pc++] & 0xFF);
                     if (cpInBounds) {
-                        boolean unicode =
-                                (gData.regexp.flags & JSREG_UNICODE) != 0
-                                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+                        boolean unicode = isUnicodeMode(gData.regexp.flags);
                         if (charsEqual((char) matchCodePoint, input.charAt(cpToMatch), unicode)) {
                             result = true;
                             gData.cp += cpDelta;
@@ -3424,9 +3433,7 @@ public class NativeRegExp extends IdScriptableObject {
                     matchCodePoint = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
-                        boolean unicode =
-                                (gData.regexp.flags & JSREG_UNICODE) != 0
-                                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+                        boolean unicode = isUnicodeMode(gData.regexp.flags);
                         if (charsEqual((char) matchCodePoint, input.charAt(cpToMatch), unicode)) {
                             result = true;
                             gData.cp += cpDelta;
@@ -4145,8 +4152,7 @@ public class NativeRegExp extends IdScriptableObject {
                     }
 
                     int charCount;
-                    if ((gData.regexp.flags & JSREG_UNICODE) != 0
-                            || (gData.regexp.flags & JSREG_UNICODESETS) != 0) {
+                    if (isUnicodeMode(gData.regexp.flags)) {
                         int matchCodePoint = input.codePointAt(i);
                         boolean matches = matchCodePoint == anchorCodePoint;
                         if (!matches && (gData.regexp.flags & JSREG_FOLD) != 0) {
