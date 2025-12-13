@@ -63,7 +63,8 @@ public class NativeRegExp extends IdScriptableObject {
 
     // Bit manipulation constants
     private static final int BYTE_BIT_MASK = 0x7; // Mask for extracting bit position within byte
-    private static final int BIT_SHIFT_FOR_BYTE_INDEX = 3; // Right shift to get byte index (divide by 8)
+    private static final int BIT_SHIFT_FOR_BYTE_INDEX =
+            3; // Right shift to get byte index (divide by 8)
 
     // Special characters
     private static final char BACKSPACE_CHAR = 0x08; // Backspace character (\b in character class)
@@ -1678,8 +1679,8 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /**
-     * Represents parsed character class contents. Stores individual chars, ranges,
-     * escape nodes (\d, \p{}), and ES2024 v-flag features (string literals, set operations).
+     * Represents parsed character class contents. Stores individual chars, ranges, escape nodes
+     * (\d, \p{}), and ES2024 v-flag features (string literals, set operations).
      */
     static class ClassContents {
         boolean sense = true;
@@ -1819,8 +1820,8 @@ public class NativeRegExp extends IdScriptableObject {
     private static final String MSG_INVALID_SET_OP_OPERAND = "msg.regexp.invalid.set.op.operand";
 
     /**
-     * Parses set operations (-- and &&) in v-mode character classes.
-     * Adds all parsed operations to the contents.
+     * Parses set operations (-- and &&) in v-mode character classes. Adds all parsed operations to
+     * the contents.
      *
      * @param state the compiler state
      * @param params parser parameters (for mode flags)
@@ -1863,9 +1864,9 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /**
-     * Parses a set operation operand in v-mode character classes.
-     * Operands can be: nested character class [...], string literal \q{...},
-     * character class escape (\d, \w, etc.), or Unicode property escape (\p{}, \P{}).
+     * Parses a set operation operand in v-mode character classes. Operands can be: nested character
+     * class [...], string literal \q{...}, character class escape (\d, \w, etc.), or Unicode
+     * property escape (\p{}, \P{}).
      *
      * @param state the compiler state
      * @param params parser parameters (for mode flags)
@@ -1890,7 +1891,9 @@ public class NativeRegExp extends IdScriptableObject {
                 reportError(MSG_INVALID_NESTED_CLASS, "");
                 return null;
             }
-        } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend && src[state.cp + 1] == 'q') {
+        } else if (src[state.cp] == '\\'
+                && state.cp + 1 < state.cpend
+                && src[state.cp + 1] == 'q') {
             // String disjunction: \q{...}
             if (!parseStringLiterals(state, params, operand)) {
                 return null;
@@ -1924,15 +1927,14 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /**
-     * Validates syntax characters in v-mode (ES2024 unicodeSets).
-     * Checks for invalid unescaped syntax characters and double punctuators.
+     * Validates syntax characters in v-mode (ES2024 unicodeSets). Checks for invalid unescaped
+     * syntax characters and double punctuators.
      *
      * @param state the compiler state
      * @param thisCodePoint the current character code point to validate
      * @return true if valid, false if error was reported
      */
-    private static boolean validateVModeSyntax(
-            CompilerState state, int thisCodePoint) {
+    private static boolean validateVModeSyntax(CompilerState state, int thisCodePoint) {
         if ((state.flags & JSREG_UNICODESETS) == 0) {
             return true; // Not in v-mode, no validation needed
         }
@@ -1985,8 +1987,8 @@ public class NativeRegExp extends IdScriptableObject {
 
     /**
      * Parse character class contents ([...]). Handles traditional classes and ES2024 v-flag
-     * features: nested classes, string literals (\q{}), set operations (&&, --).
-     * Protects against excessive nesting (max 50 levels).
+     * features: nested classes, string literals (\q{}), set operations (&&, --). Protects against
+     * excessive nesting (max 50 levels).
      *
      * @param state Compiler state
      * @param params Parser parameters
