@@ -492,14 +492,28 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
+    /**
+     * This class is intended as proxy to give {@link DebugFrame} access to the contents of local
+     * variables. We take this approach rather than forcing the interpreter to introduce activation
+     * frames because it is faster (assuming local variable manipulation by the interpreter is more
+     * common than inspection by the debugger) and it reduces the chance that programs might
+     * evexcute differently in debug mode.
+     */
     private static class DebugScope implements Scriptable {
         private final CallFrame frame;
         private volatile Map<String, Integer> offsets;
 
+        /** Create a new debug scope associated with a particular call frame. */
         private DebugScope(CallFrame frame) {
             this.frame = frame;
         }
 
+        /**
+         * Populate the map associating names to variable indices. Most names should have been made
+         * unique as part of the compilation process, but arguments with duplicate names will not
+         * have been.The map is build so that duplicate argument names resolve to the last index as
+         * this is also what the compiler does - at least once we are past setting default values.
+         */
         private Map<String, Integer> getOffsets() {
             if (offsets == null) {
                 offsets = buildOffsets(frame);
