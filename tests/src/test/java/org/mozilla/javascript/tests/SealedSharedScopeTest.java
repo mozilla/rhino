@@ -41,12 +41,8 @@ public class SealedSharedScopeTest {
 
         ctx = Context.enter();
         ctx.setLanguageVersion(Context.VERSION_DEFAULT);
-        scope1 = ctx.newObject(sharedScope);
-        scope1.setPrototype(sharedScope);
-        scope1.setParentScope(null);
-        scope2 = ctx.newObject(sharedScope);
-        scope2.setPrototype(sharedScope);
-        scope2.setParentScope(null);
+        scope1 = sharedScope.createIsolate();
+        scope2 = sharedScope.createIsolate();
     }
 
     @After
