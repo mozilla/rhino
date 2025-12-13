@@ -1804,7 +1804,13 @@ public class NativeRegExp extends IdScriptableObject {
         return (state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode;
     }
 
+    // Character class parsing limits
     private static final int MAX_CLASS_NESTING_DEPTH = 50;
+
+    // Error message keys for character class parsing
+    private static final String MSG_INVALID_NESTED_CLASS = "msg.regexp.invalid.nested.class";
+    private static final String MSG_SET_OP_MISSING_OPERAND = "msg.regexp.set.op.missing.operand";
+    private static final String MSG_INVALID_SET_OP_OPERAND = "msg.regexp.invalid.set.op.operand";
 
     private static ClassContents parseClassContents(
             CompilerState state, ParserParameters params, int depth) {

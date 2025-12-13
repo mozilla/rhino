@@ -178,4 +178,16 @@ public class RegExpUnicodeSetsTest {
                 "var re = /[\\p{Letter}\\p{Number}]/u; re.test('a') && re.test('5') && !re.test('!')";
         Utils.assertWithAllModes(true, script);
     }
+
+    @Test
+    public void testChainedIntersection() {
+        // Test chained intersection: [a-z&&[a-m]&&[e-k]] should match only e-k
+        String script =
+                "var re = /[a-z&&[a-m]&&[e-k]]/v; "
+                        + "re.test('e') && re.test('f') && re.test('k') && "
+                        + "!re.test('a') && !re.test('d') && "
+                        + "!re.test('l') && !re.test('m') && "
+                        + "!re.test('n') && !re.test('z')";
+        Utils.assertWithAllModes(true, script);
+    }
 }
