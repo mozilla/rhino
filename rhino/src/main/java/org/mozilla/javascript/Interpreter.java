@@ -850,6 +850,27 @@ public final class Interpreter extends Icode implements Evaluator {
                         out.println(tname + " \"" + str + '"');
                         break;
                     }
+                case Icode_OBJECT_REST:
+                    {
+                        // read key counts (static & computed)
+                        int staticKeyCount = getIndex(iCode, pc);
+                        pc += 2;
+                        int computedKeyCount = getIndex(iCode, pc);
+                        pc += 2;
+
+                        StringBuilder keys = new StringBuilder();
+                        keys.append("[static: ");
+                        for (int i = 0; i < staticKeyCount; i++) {
+                            if (i > 0) keys.append(", ");
+                            int keyIndex = getIndex(iCode, pc);
+                            pc += 2;
+                            keys.append("\"").append(strings[keyIndex]).append("\"");
+                        }
+                        keys.append("; computed: ").append(computedKeyCount).append("]");
+                        out.println(tname + " excluding " + keys);
+                        icodeLength = pc - old_pc;
+                        break;
+                    }
                 case Icode_REG_IND_C0:
                     indexReg = 0;
                     out.println(tname);
@@ -1588,6 +1609,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
+        instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -4412,6 +4434,47 @@ public final class Interpreter extends Icode implements Evaluator {
             } else {
                 store.spread(cx, frame.scope, source, 0);
             }
+            return null;
+        }
+    }
+
+    private static class DoObjectRest extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // read key counts (static & computed)
+            int staticKeyCount = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
+            int computedKeyCount = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
+
+            Object[] excludeKeys = new Object[staticKeyCount + computedKeyCount];
+
+            // fill static keys from the strings table [ bytecode idx ]
+            for (int i = 0; i < staticKeyCount; i++) {
+                int keyIndex = getIndex(frame.idata.itsICode, frame.pc);
+                frame.pc += 2;
+                excludeKeys[i] = frame.idata.itsStringTable[keyIndex];
+            }
+
+            // pop computed keys from stack: [source, computed_key_1, ..., computed_key_N]
+            for (int i = computedKeyCount - 1; i >= 0; i--) {
+                Object computedKey = frame.stack[state.stackTop];
+                if (computedKey == DOUBLE_MARK) {
+                    computedKey = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                }
+                excludeKeys[staticKeyCount + i] = ScriptRuntime.toString(computedKey);
+                state.stackTop--;
+            }
+
+            Object source = frame.stack[state.stackTop];
+            if (source == DOUBLE_MARK) {
+                source = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            }
+
+            // create rest object
+            Scriptable result = ScriptRuntime.doObjectRest(cx, frame.scope, source, excludeKeys);
+
+            frame.stack[state.stackTop] = result;
             return null;
         }
     }
