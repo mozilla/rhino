@@ -190,4 +190,59 @@ public class RegExpUnicodeSetsTest {
                         + "!re.test('n') && !re.test('z')";
         Utils.assertWithAllModes(true, script);
     }
+
+    @Test
+    public void testPositiveLookbehindWithStringLiteral() {
+        // Test (?<=[\q{foo}])bar - should match "bar" preceded by "foo"
+        String script =
+                "var re = /(?<=[\\q{foo}])bar/v; "
+                        + "re.test('foobar') && !re.test('quxbar') && !re.test('bar')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testNegativeLookbehindWithStringLiteral() {
+        // Test (?<![\q{foo}])bar - should match "bar" NOT preceded by "foo"
+        String script =
+                "var re = /(?<![\\q{foo}])bar/v; "
+                        + "!re.test('foobar') && re.test('quxbar') && re.test('bar')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testLookbehindWithMultipleStringLiterals() {
+        // Test (?<=[\q{foo|baz}])bar - should match "bar" preceded by "foo" OR "baz"
+        String script =
+                "var re = /(?<=[\\q{foo|baz}])bar/v; "
+                        + "re.test('foobar') && re.test('bazbar') && !re.test('quxbar')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testLookbehindWithVariableLengthStringLiterals() {
+        // Test (?<=[\q{a|abc}])x - should match longest alternative
+        String script =
+                "var re = /(?<=[\\q{a|abc}])x/v; "
+                        + "re.test('ax') && re.test('abcx') && !re.test('bx')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testLookbehindStringLiteralWithUnicode() {
+        // Test (?<=[\q{😀}])test - should match "test" preceded by emoji
+        String script =
+                "var re = /(?<=[\\q{\ud83d\ude00}])test/v; "
+                        + "re.test('\ud83d\ude00test') && !re.test('test')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testLookbehindStringLiteralInComplexPattern() {
+        // Test complex pattern with lookbehind + string literal + capture
+        String script =
+                "var re = /(?<=[\\q{prefix}])(\\w+)/v; "
+                        + "var match = 'prefixword'.match(re); "
+                        + "match !== null && match[1] === 'word'";
+        Utils.assertWithAllModes(true, script);
+    }
 }

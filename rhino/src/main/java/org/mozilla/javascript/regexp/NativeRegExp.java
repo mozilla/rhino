@@ -3009,8 +3009,14 @@ public class NativeRegExp extends IdScriptableObject {
      * Check if any string literal in the character class matches at the current position. Returns
      * the length of the matched string, or -1 if no match. Zero-length matches are valid.
      *
-     * <p>NOTE: The matchBackward parameter is present for future lookbehind support but is not
-     * currently used. All calls pass false. Lookbehind with string literals is not yet implemented.
+     * @param charSet The character class containing string literals
+     * @param input The input string to match against
+     * @param position The position in the input where the match should occur. For forward matching,
+     *     this is the start position. For backward matching (lookbehind), this is the end position
+     *     (exclusive).
+     * @param matchBackward true for lookbehind matching (match backwards from position), false for
+     *     normal forward matching
+     * @return The length of the matched string literal, or -1 if no match
      */
     private static int stringLiteralMatcher(
             RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
@@ -3362,11 +3368,15 @@ public class NativeRegExp extends IdScriptableObject {
                     pc += INDEX_LEN;
                     if (cpInBounds) {
                         // First, try to match string literals (v flag feature)
+                        // For string literals in backward mode, use gData.cp (not cpToMatch)
+                        // because string literals match ending at the current position,
+                        // whereas cpToMatch is for single-character matching
+                        int stringLiteralPos = matchBackward ? gData.cp : cpToMatch;
                         int stringLiteralLen =
                                 stringLiteralMatcher(
                                         gData.regexp.classList[index],
                                         input,
-                                        cpToMatch,
+                                        stringLiteralPos,
                                         matchBackward);
                         if (stringLiteralLen >= 0) {
                             // String literal matched (including zero-length matches)
