@@ -203,7 +203,6 @@ public class ClassDescriptor {
         if (proto != null) {
             ctor.setPrototypeProperty(proto);
             ctor.setPrototypePropertyAttributes(ctorDesc.stdAttrs);
-            proto.setParentScope(scope);
             proto.put("constructor", proto, ctor);
         }
 

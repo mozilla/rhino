@@ -140,7 +140,7 @@ public class PrimitiveTypeScopeResolutionTest {
                     scope2.put("myObject", scope2, myObject);
                     cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 
-                    scope1.put("scope2", scope1, scope2);
+                    scope1.put("scope2", scope1, scope2.getGlobalThis());
 
                     return cx.evaluateString(scope1, scriptScope1, "source1", 1, null);
                 });
