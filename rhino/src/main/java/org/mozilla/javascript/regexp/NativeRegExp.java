@@ -4145,9 +4145,17 @@ public class NativeRegExp extends IdScriptableObject {
                     }
 
                     int charCount;
-                    if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                    if ((gData.regexp.flags & JSREG_UNICODE) != 0
+                            || (gData.regexp.flags & JSREG_UNICODESETS) != 0) {
                         int matchCodePoint = input.codePointAt(i);
-                        if (matchCodePoint == anchorCodePoint) {
+                        boolean matches = matchCodePoint == anchorCodePoint;
+                        if (!matches && (gData.regexp.flags & JSREG_FOLD) != 0) {
+                            // Unicode case-insensitive comparison
+                            matches =
+                                    Character.toLowerCase(matchCodePoint)
+                                            == Character.toLowerCase(anchorCodePoint);
+                        }
+                        if (matches) {
                             break;
                         }
                         charCount = Character.charCount(matchCodePoint);
