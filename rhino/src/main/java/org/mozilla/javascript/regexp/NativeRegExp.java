@@ -2076,17 +2076,16 @@ public class NativeRegExp extends IdScriptableObject {
                                     reportError("msg.invalid.class", "");
                                 }
                             } else {
-                                // if we have a '-' after this and we're in unicode mode, we fail
-                                // UNLESS it's '--' or '&&' for v flag set operations
+                                // In unicode mode, '-' after a character class escape is invalid
+                                // unless it's the start of a v-flag set operation (-- or &&)
                                 if (state.cp < state.cpend
                                         && src[state.cp] == '-'
                                         && params.unicodeMode) {
-                                    // Allow '--' for v flag set operations
-                                    if ((state.flags & JSREG_UNICODESETS) != 0
-                                            && state.cp + 1 < state.cpend
-                                            && src[state.cp + 1] == '-') {
-                                        // This is a set operation, allow it
-                                    } else {
+                                    boolean isSetOperationStart =
+                                            (state.flags & JSREG_UNICODESETS) != 0
+                                                    && state.cp + 1 < state.cpend
+                                                    && src[state.cp + 1] == '-';
+                                    if (!isSetOperationStart) {
                                         reportError("msg.invalid.class", "");
                                     }
                                 }
