@@ -9,8 +9,10 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.Callable;
@@ -47,12 +49,27 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static final Object REGEXP_TAG = new Object();
 
-    public static final int JSREG_GLOB = 0x1; // 'g' flag: global
-    public static final int JSREG_FOLD = 0x2; // 'i' flag: fold
-    public static final int JSREG_MULTILINE = 0x4; // 'm' flag: multiline
-    public static final int JSREG_DOTALL = 0x8; // 's' flag: dotAll
-    public static final int JSREG_STICKY = 0x10; // 'y' flag: sticky
-    public static final int JSREG_UNICODE = 0x20; // 'u' flag: unicode mode
+    // Flag constants
+    public static final int JSREG_GLOB = 0x01; // 'g' flag
+    public static final int JSREG_FOLD = 0x02; // 'i' flag
+    public static final int JSREG_MULTILINE = 0x04; // 'm' flag
+    public static final int JSREG_DOTALL = 0x08; // 's' flag (ES2018)
+    public static final int JSREG_STICKY = 0x10; // 'y' flag (ES2015)
+    public static final int JSREG_UNICODE = 0x20; // 'u' flag (ES2015)
+    public static final int JSREG_HASINDICES = 0x40; // 'd' flag (ES2022)
+    public static final int JSREG_UNICODESETS = 0x80; // 'v' flag (ES2024)
+
+    // Unicode constants
+    private static final int BMP_MAX_CODEPOINT =
+            0xFFFF; // Maximum Basic Multilingual Plane codepoint
+
+    // Bit manipulation constants
+    private static final int BYTE_BIT_MASK = 0x7; // Mask for extracting bit position within byte
+    private static final int BIT_SHIFT_FOR_BYTE_INDEX =
+            3; // Right shift to get byte index (divide by 8)
+
+    // Special characters
+    private static final char BACKSPACE_CHAR = 0x08; // Backspace character (\b in character class)
 
     // type of match to perform
     public static final int TEST = 0;
@@ -248,12 +265,15 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private void appendFlags(StringBuilder buf) {
+        // Output flags in alphabetical order per ES spec
+        if ((re.flags & JSREG_HASINDICES) != 0) buf.append('d');
         if ((re.flags & JSREG_GLOB) != 0) buf.append('g');
         if ((re.flags & JSREG_FOLD) != 0) buf.append('i');
         if ((re.flags & JSREG_MULTILINE) != 0) buf.append('m');
         if ((re.flags & JSREG_DOTALL) != 0) buf.append('s');
-        if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
         if ((re.flags & JSREG_UNICODE) != 0) buf.append('u');
+        if ((re.flags & JSREG_UNICODESETS) != 0) buf.append('v');
+        if ((re.flags & JSREG_STICKY) != 0) buf.append('y');
     }
 
     NativeRegExp() {}
@@ -641,20 +661,33 @@ public class NativeRegExp extends IdScriptableObject {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
                 int f = 0;
-                if (c == 'g') {
-                    f = JSREG_GLOB;
-                } else if (c == 'i') {
-                    f = JSREG_FOLD;
-                } else if (c == 'm') {
-                    f = JSREG_MULTILINE;
-                } else if (c == 's') {
-                    f = JSREG_DOTALL;
-                } else if (c == 'y') {
-                    f = JSREG_STICKY;
-                } else if (c == 'u') {
-                    f = JSREG_UNICODE;
-                } else {
-                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                switch (c) {
+                    case 'g':
+                        f = JSREG_GLOB;
+                        break;
+                    case 'i':
+                        f = JSREG_FOLD;
+                        break;
+                    case 'm':
+                        f = JSREG_MULTILINE;
+                        break;
+                    case 's':
+                        f = JSREG_DOTALL;
+                        break;
+                    case 'y':
+                        f = JSREG_STICKY;
+                        break;
+                    case 'u':
+                        f = JSREG_UNICODE;
+                        break;
+                    case 'd':
+                        f = JSREG_HASINDICES;
+                        break;
+                    case 'v':
+                        f = JSREG_UNICODESETS;
+                        break;
+                    default:
+                        reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
                 if ((flags & f) != 0) {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
@@ -663,10 +696,12 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
-        // We don't support u and i flags together, yet.
-        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
-            reportError("msg.invalid.re.flag", "u and i");
+        // Validate flag combinations
+        // u and v flags are mutually exclusive (ES2024 spec)
+        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_UNICODESETS) != 0) {
+            reportError("msg.invalid.re.flag", "u and v");
         }
+        // Note: u+i and v+i combinations are now supported with Unicode case folding
 
         // We support unicode mode in ES6 and later.
         if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
@@ -686,9 +721,11 @@ public class NativeRegExp extends IdScriptableObject {
             state.result.flatIndex = 0;
             state.progLength += 5;
         } else {
-            boolean unicodeMode = (flags & JSREG_UNICODE) != 0;
+            // 'v' flag (ES2024 unicodeSets) implies Unicode mode
+            boolean unicodeMode = (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
+            boolean vMode = (flags & JSREG_UNICODESETS) != 0;
             // if unicode mode is on, named capture groups are always on
-            ParserParameters params = new ParserParameters(unicodeMode, unicodeMode);
+            ParserParameters params = new ParserParameters(unicodeMode, unicodeMode, vMode);
 
             if (!parseDisjunction(state, params)) return null;
             // Need to reparse if pattern contains invalid backreferences:
@@ -831,13 +868,70 @@ public class NativeRegExp extends IdScriptableObject {
         return (cl < 128) ? ch : cl;
     }
 
+    /**
+     * Check if Unicode mode is enabled (u or v flag).
+     *
+     * @param flags The regexp flags
+     * @return true if either JSREG_UNICODE or JSREG_UNICODESETS flag is set
+     */
+    private static boolean isUnicodeMode(int flags) {
+        return (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
+    }
+
+    /** Case-insensitive character comparison that respects Unicode mode. */
+    private static boolean charsEqual(char c1, char c2, boolean unicodeMode) {
+        if (c1 == c2) return true;
+        if (unicodeMode) {
+            return Character.toLowerCase(c1) == Character.toLowerCase(c2);
+        } else {
+            return upcase(c1) == upcase(c2);
+        }
+    }
+
+    /**
+     * Get all case variants of a character for Unicode mode. Implements "deep case closure" -
+     * bidirectional case equivalence.
+     *
+     * @param ch The character to get case variants for
+     * @param results List to add case variants to (will include ch itself)
+     */
+    private static void getUnicodeCaseVariants(char ch, List<Character> results) {
+        // Use a Set for O(1) lookups instead of O(n) List.contains()
+        Set<Character> seen = new HashSet<>();
+        seen.add(ch);
+        results.add(ch);
+
+        char lower = Character.toLowerCase(ch);
+        char upper = Character.toUpperCase(ch);
+
+        if (lower != ch && seen.add(lower)) {
+            results.add(lower);
+            // Add uppercase of the lowercase (handles cases like İ/i in some locales)
+            char upperOfLower = Character.toUpperCase(lower);
+            if (upperOfLower != ch && upperOfLower != upper && seen.add(upperOfLower)) {
+                results.add(upperOfLower);
+            }
+        }
+
+        if (upper != ch && seen.add(upper)) {
+            results.add(upper);
+            // Add lowercase of the uppercase
+            char lowerOfUpper = Character.toLowerCase(upper);
+            if (lowerOfUpper != ch && lowerOfUpper != lower && seen.add(lowerOfUpper)) {
+                results.add(lowerOfUpper);
+            }
+        }
+    }
+
     static class ParserParameters {
         boolean namedCaptureGroups;
         boolean unicodeMode;
+        boolean vMode; // ES2024 unicodeSets mode with different escape rules
 
-        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode) {
+        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode, boolean vMode) {
             this.namedCaptureGroups = namedCaptureGroups;
             this.unicodeMode = unicodeMode;
+            this.vMode = vMode;
         }
     }
 
@@ -1128,7 +1222,9 @@ public class NativeRegExp extends IdScriptableObject {
 
             if (state.cp + 1 < state.cpend && src[state.cp] == '\\' && src[state.cp + 1] == 'u') {
                 state.cp = state.cp + 2;
-                int n = readRegExpUnicodeEscapeSequence(state, new ParserParameters(false, true));
+                int n =
+                        readRegExpUnicodeEscapeSequence(
+                                state, new ParserParameters(false, true, false));
                 if (n == -1) {
                     reportError("msg.invalid.escape", "");
                     state.cp = termBegin;
@@ -1354,7 +1450,7 @@ public class NativeRegExp extends IdScriptableObject {
 
         if (n < 0) {
             return false;
-        } else if (n <= 0xFFFF) doFlat(state, (char) n);
+        } else if (n <= BMP_MAX_CODEPOINT) doFlat(state, (char) n);
         else {
             doFlatSurrogatePair(state, Character.highSurrogate(n), Character.lowSurrogate(n));
         }
@@ -1406,6 +1502,47 @@ public class NativeRegExp extends IdScriptableObject {
         state.result.unicodeProperty = encodedProp;
         state.progLength += 3;
 
+        return true;
+    }
+
+    /**
+     * Parse a character class escape as a set operation operand. Handles \d, \D, \w, \W, \s, \S. On
+     * success, sets state.result to the appropriate RENode and returns true. On failure, returns
+     * false without modifying state.cp.
+     */
+    private static boolean parseCharacterClassEscapeOperand(CompilerState state) {
+        if (state.cp >= state.cpend) {
+            return false;
+        }
+
+        char escapeChar = state.cpbegin[state.cp];
+        RENode escapeNode;
+
+        switch (escapeChar) {
+            case 'd':
+                escapeNode = new RENode(REOP_DIGIT);
+                break;
+            case 'D':
+                escapeNode = new RENode(REOP_NONDIGIT);
+                break;
+            case 'w':
+                escapeNode = new RENode(REOP_ALNUM);
+                break;
+            case 'W':
+                escapeNode = new RENode(REOP_NONALNUM);
+                break;
+            case 's':
+                escapeNode = new RENode(REOP_SPACE);
+                break;
+            case 'S':
+                escapeNode = new RENode(REOP_NONSPACE);
+                break;
+            default:
+                return false;
+        }
+
+        state.result = escapeNode;
+        state.cp++; // Move past the escape character
         return true;
     }
 
@@ -1573,6 +1710,28 @@ public class NativeRegExp extends IdScriptableObject {
         doFlat(state, c);
     }
 
+    /** ES2024 v-flag set operation types: subtraction (--) and intersection (&&). */
+    enum SetOperationType {
+        SUBTRACT, // -- operator
+        INTERSECT // && operator
+    }
+
+    /** Represents a set operation in ES2024 v-flag character classes. */
+    static class SetOperation {
+        SetOperationType type;
+        ClassContents operand;
+        RECharSet operandCharSet; // Pre-built RECharSet for efficient matching
+
+        SetOperation(SetOperationType type, ClassContents operand) {
+            this.type = type;
+            this.operand = operand;
+        }
+    }
+
+    /**
+     * Represents parsed character class contents. Stores individual chars, ranges, escape nodes
+     * (\d, \p{}), and ES2024 v-flag features (string literals, set operations).
+     */
     static class ClassContents {
         boolean sense = true;
         ArrayList<Character> chars = new ArrayList<>();
@@ -1582,9 +1741,318 @@ public class NativeRegExp extends IdScriptableObject {
         ArrayList<Integer> nonBMPRanges =
                 new ArrayList<Integer>(); // ranges stored as (start1, end1, start2, end2, ...)
         ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
+        ArrayList<SetOperation> setOperations = new ArrayList<>(); // For 'v' flag set operations
+        ArrayList<String> stringLiterals = new ArrayList<>(); // For 'v' flag \q{...} syntax
+
+        /**
+         * Merge all contents from another ClassContents object into this one. Used for nested
+         * classes and set operations.
+         */
+        void mergeFrom(ClassContents other) {
+            this.chars.addAll(other.chars);
+            this.bmpRanges.addAll(other.bmpRanges);
+            this.nonBMPCodepoints.addAll(other.nonBMPCodepoints);
+            this.nonBMPRanges.addAll(other.nonBMPRanges);
+            this.stringLiterals.addAll(other.stringLiterals);
+            this.escapeNodes.addAll(other.escapeNodes);
+        }
     }
 
-    private static ClassContents parseClassContents(CompilerState state, ParserParameters params) {
+    /**
+     * Parse \q{...} string literals in v-mode. Expects state.cp to point to '\' before 'q'.
+     * Advances state.cp past the closing '}'.
+     *
+     * @param state Compiler state
+     * @param params Parser parameters
+     * @param target ClassContents to add string literals to
+     * @return true if successful, false on error
+     */
+    private static boolean parseStringLiterals(
+            CompilerState state, ParserParameters params, ClassContents target) {
+        char[] src = state.cpbegin;
+
+        // Expect state.cp to point to '\'
+        if (state.cp >= state.cpend || src[state.cp] != '\\') {
+            reportError("msg.bad.regexp", "Expected \\ before q");
+            return false;
+        }
+        state.cp++; // Skip '\'
+
+        // Check for 'q'
+        if (state.cp >= state.cpend || src[state.cp] != 'q') {
+            reportError("msg.bad.regexp", "Expected q after \\");
+            return false;
+        }
+        state.cp++; // Skip 'q'
+
+        // Check for '{'
+        if (state.cp >= state.cpend || src[state.cp] != '{') {
+            reportError("msg.bad.regexp", "\\q must be followed by {");
+            return false;
+        }
+        state.cp++; // Skip '{'
+
+        // Parse string literal(s) within braces
+        StringBuilder literal = new StringBuilder();
+        while (state.cp < state.cpend && src[state.cp] != '}') {
+            if (src[state.cp] == '|') {
+                // Multiple alternatives: \q{abc|def}
+                // Always add the literal, even if empty (zero-length strings are valid)
+                target.stringLiterals.add(literal.toString());
+                literal = new StringBuilder();
+                state.cp++;
+            } else if (src[state.cp] == '\\') {
+                // Handle escape sequences within \q{}
+                state.cp++;
+                if (state.cp >= state.cpend) {
+                    reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
+                    return false;
+                }
+                char escapeChar = src[state.cp];
+                if (escapeChar == 'u' || escapeChar == 'x') {
+                    // Parse unicode/hex escape
+                    if (!parseCharacterAndCharacterClassEscape(state, params)) {
+                        reportError("msg.invalid.escape", "");
+                        return false;
+                    }
+                    if (state.result.op != REOP_FLAT) {
+                        reportError("msg.bad.regexp", "Invalid escape in \\q{}");
+                        return false;
+                    }
+                    // Append the parsed character(s)
+                    literal.append(state.result.chr);
+                    if (state.result.lowSurrogate != 0) {
+                        literal.append(state.result.lowSurrogate);
+                    }
+                } else {
+                    // Simple escape
+                    literal.append(escapeChar);
+                    state.cp++;
+                }
+            } else {
+                // Regular character
+                int codePoint = Character.codePointAt(src, state.cp, state.cpend);
+                literal.appendCodePoint(codePoint);
+                state.cp += Character.charCount(codePoint);
+            }
+        }
+
+        if (state.cp >= state.cpend) {
+            reportError("msg.bad.regexp", "Unclosed \\q{");
+            return false;
+        }
+        state.cp++; // Skip '}'
+
+        // Always add the literal, even if it's empty (zero-length strings are valid in ES2024)
+        target.stringLiterals.add(literal.toString());
+
+        return true;
+    }
+
+    /**
+     * Check if v-mode (unicodeSets) is enabled. V-mode requires both the JSREG_UNICODESETS flag and
+     * unicodeMode parameter.
+     *
+     * @param state Compiler state containing flags
+     * @param params Parser parameters containing unicodeMode
+     * @return true if v-mode is enabled
+     */
+    private static boolean isVMode(CompilerState state, ParserParameters params) {
+        return (state.flags & JSREG_UNICODESETS) != 0 && params.unicodeMode;
+    }
+
+    // Character class parsing limits
+    private static final int MAX_CLASS_NESTING_DEPTH = 50;
+
+    // Error message keys for character class parsing
+    private static final String MSG_INVALID_NESTED_CLASS = "msg.regexp.invalid.nested.class";
+    private static final String MSG_SET_OP_MISSING_OPERAND = "msg.regexp.set.op.missing.operand";
+    private static final String MSG_INVALID_SET_OP_OPERAND = "msg.regexp.invalid.set.op.operand";
+
+    /**
+     * Parses set operations (-- and &&) in v-mode character classes. Adds all parsed operations to
+     * the contents.
+     *
+     * @param state the compiler state
+     * @param params parser parameters (for mode flags)
+     * @param depth current nesting depth
+     * @param contents the ClassContents to add operations to
+     * @return true if successful, false on error
+     */
+    private static boolean parseSetOperations(
+            CompilerState state, ParserParameters params, int depth, ClassContents contents) {
+        if (!isVMode(state, params)) {
+            return true; // Set operations only in v-mode
+        }
+
+        char[] src = state.cpbegin;
+        while (state.cp + 1 < state.cpend) {
+            char c1 = src[state.cp];
+            char c2 = src[state.cp + 1];
+
+            SetOperationType opType = null;
+            if (c1 == '-' && c2 == '-') {
+                opType = SetOperationType.SUBTRACT;
+            } else if (c1 == '&' && c2 == '&') {
+                opType = SetOperationType.INTERSECT;
+            } else {
+                break; // No more set operations
+            }
+
+            state.cp += 2; // Skip the operator (-- or &&)
+
+            // Parse the set operand
+            ClassContents operand = parseSetOperand(state, params, depth);
+            if (operand == null) {
+                return false;
+            }
+
+            contents.setOperations.add(new SetOperation(opType, operand));
+        }
+
+        return true;
+    }
+
+    /**
+     * Parses a set operation operand in v-mode character classes. Operands can be: nested character
+     * class [...], string literal \q{...}, character class escape (\d, \w, etc.), or Unicode
+     * property escape (\p{}, \P{}).
+     *
+     * @param state the compiler state
+     * @param params parser parameters (for mode flags)
+     * @param depth current nesting depth
+     * @return the parsed operand as ClassContents, or null on error
+     */
+    private static ClassContents parseSetOperand(
+            CompilerState state, ParserParameters params, int depth) {
+        char[] src = state.cpbegin;
+        ClassContents operand = new ClassContents();
+
+        if (state.cp >= state.cpend) {
+            reportError(MSG_SET_OP_MISSING_OPERAND, "");
+            return null;
+        }
+
+        if (src[state.cp] == '[') {
+            // Nested character class
+            state.cp++; // Skip '['
+            operand = parseClassContents(state, params, depth + 1);
+            if (operand == null) {
+                reportError(MSG_INVALID_NESTED_CLASS, "");
+                return null;
+            }
+        } else if (src[state.cp] == '\\'
+                && state.cp + 1 < state.cpend
+                && src[state.cp + 1] == 'q') {
+            // String disjunction: \q{...}
+            if (!parseStringLiterals(state, params, operand)) {
+                return null;
+            }
+        } else if (src[state.cp] == '\\' && state.cp + 1 < state.cpend) {
+            // Character class escapes and Unicode property escapes:
+            // \d, \D, \w, \W, \s, \S, \p{}, \P{}
+            char escapeChar = src[state.cp + 1];
+            state.cp++; // Move to the escape character
+
+            // Try Unicode property escapes first
+            if (escapeChar == 'p' || escapeChar == 'P') {
+                if (!parseUnicodePropertyEscape(state)) {
+                    reportError("msg.invalid.property", "");
+                    return null;
+                }
+                operand.escapeNodes.add(state.result);
+            } else if (parseCharacterClassEscapeOperand(state)) {
+                operand.escapeNodes.add(state.result);
+            } else {
+                reportError(MSG_INVALID_SET_OP_OPERAND, "");
+                return null;
+            }
+        } else {
+            // Operand must be bracketed class, \q{}, or character class/property escape
+            reportError(MSG_INVALID_SET_OP_OPERAND, "");
+            return null;
+        }
+
+        return operand;
+    }
+
+    /**
+     * Validates syntax characters in v-mode (ES2024 unicodeSets). Checks for invalid unescaped
+     * syntax characters and double punctuators.
+     *
+     * @param state the compiler state
+     * @param thisCodePoint the current character code point to validate
+     * @return true if valid, false if error was reported
+     */
+    private static boolean validateVModeSyntax(CompilerState state, int thisCodePoint) {
+        if ((state.flags & JSREG_UNICODESETS) == 0) {
+            return true; // Not in v-mode, no validation needed
+        }
+
+        char current = (char) thisCodePoint;
+        char[] src = state.cpbegin;
+
+        // Check for single syntax characters that must be escaped in v-mode
+        switch (current) {
+            case '(':
+            case ')':
+            case '/':
+            case '|':
+            case '-':
+                reportError("msg.invalid.class", "");
+                return false;
+        }
+
+        // Check for invalid double punctuators (excluding && and -- which are operators)
+        if (state.cp < state.cpend) {
+            char next = src[state.cp];
+            if (current == next) {
+                switch (current) {
+                    case '!':
+                    case '#':
+                    case '$':
+                    case '%':
+                    case '*':
+                    case '+':
+                    case ',':
+                    case '.':
+                    case ':':
+                    case ';':
+                    case '<':
+                    case '=':
+                    case '>':
+                    case '?':
+                    case '@':
+                    case '^':
+                    case '`':
+                    case '~':
+                        reportError("msg.invalid.class", "");
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Parse character class contents ([...]). Handles traditional classes and ES2024 v-flag
+     * features: nested classes, string literals (\q{}), set operations (&&, --). Protects against
+     * excessive nesting (max 50 levels).
+     *
+     * @param state Compiler state
+     * @param params Parser parameters
+     * @param depth Current nesting depth
+     * @return Parsed ClassContents, or null on error
+     */
+    private static ClassContents parseClassContents(
+            CompilerState state, ParserParameters params, int depth) {
+        // Protect against stack overflow from deeply nested character classes
+        if (depth > MAX_CLASS_NESTING_DEPTH) {
+            reportError(MSG_INVALID_NESTED_CLASS, "");
+            return null;
+        }
+
         char[] src = state.cpbegin;
         int rangeStart = 0;
         boolean inRange = false;
@@ -1603,12 +2071,29 @@ public class NativeRegExp extends IdScriptableObject {
             contents.sense = false;
         }
 
+        // Main loop: parse characters until we hit ']' or a set operation (-- or &&)
         while (state.cp != state.cpend && src[state.cp] != ']') {
+            // Check for set operations in v flag mode
+            if (isVMode(state, params) && state.cp + 1 < state.cpend) {
+                char c1 = src[state.cp];
+                char c2 = src[state.cp + 1];
+                if ((c1 == '-' && c2 == '-') || (c1 == '&' && c2 == '&')) {
+                    break; // Stop main loop, parse set operation after
+                }
+            }
+
             if (src[state.cp] == '\\') {
                 state.cp++;
-                if (state.cp < state.cpend && src[state.cp] == 'b') {
+                // Handle \q{...} string literals in v flag mode
+                if (isVMode(state, params) && state.cp < state.cpend && src[state.cp] == 'q') {
+                    state.cp--; // Back up to '\' for parseStringLiterals
+                    if (!parseStringLiterals(state, params, contents)) {
+                        return null;
+                    }
+                    continue; // Skip to next iteration
+                } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
-                    thisCodePoint = (char) 0x08;
+                    thisCodePoint = BACKSPACE_CHAR;
                 } else if (params.unicodeMode && state.cp < state.cpend && src[state.cp] == '-') {
                     state.cp++;
                     thisCodePoint = '-';
@@ -1641,11 +2126,18 @@ public class NativeRegExp extends IdScriptableObject {
                                     reportError("msg.invalid.class", "");
                                 }
                             } else {
-                                // if we have a '-' after this and we're in unicode mode, we fail
+                                // In unicode mode, '-' after a character class escape is invalid
+                                // unless it's the start of a v-flag set operation (-- or &&)
                                 if (state.cp < state.cpend
                                         && src[state.cp] == '-'
                                         && params.unicodeMode) {
-                                    reportError("msg.invalid.class", "");
+                                    boolean isSetOperationStart =
+                                            (state.flags & JSREG_UNICODESETS) != 0
+                                                    && state.cp + 1 < state.cpend
+                                                    && src[state.cp + 1] == '-';
+                                    if (!isSetOperationStart) {
+                                        reportError("msg.invalid.class", "");
+                                    }
                                 }
                             }
                             // multi-character character escapes can't be part of ranges
@@ -1662,13 +2154,32 @@ public class NativeRegExp extends IdScriptableObject {
                     state.cp++;
                 }
             }
+
+            // ES2024: Handle nested classes in v-mode
+            if (isVMode(state, params) && thisCodePoint == '[') {
+                // This is a nested class - parse it recursively
+                ClassContents nestedContents = parseClassContents(state, params, depth + 1);
+                if (nestedContents == null) {
+                    reportError(MSG_INVALID_NESTED_CLASS, "");
+                    return null;
+                }
+                // Merge the nested class contents into our contents
+                contents.mergeFrom(nestedContents);
+                continue; // Skip the rest of the loop, we've handled this character
+            }
+
+            // ES2024: Validate syntax characters in v-mode (only for non-escaped literals)
+            if (!validateVModeSyntax(state, thisCodePoint)) {
+                return null;
+            }
+
             if (inRange) {
                 if (rangeStart > thisCodePoint) {
                     reportError("msg.bad.range", "");
                     return null;
                 }
                 inRange = false;
-                if (rangeStart > 0xFFFF || thisCodePoint > 0xFFFF) {
+                if (rangeStart > BMP_MAX_CODEPOINT || thisCodePoint > BMP_MAX_CODEPOINT) {
                     contents.nonBMPRanges.add(rangeStart);
                     contents.nonBMPRanges.add(thisCodePoint);
                 } else {
@@ -1676,13 +2187,15 @@ public class NativeRegExp extends IdScriptableObject {
                     contents.bmpRanges.add((char) thisCodePoint);
                 }
             } else {
-                if (thisCodePoint > 0xFFFF) {
+                if (thisCodePoint > BMP_MAX_CODEPOINT) {
                     contents.nonBMPCodepoints.add(thisCodePoint);
                 } else {
                     contents.chars.add((char) thisCodePoint);
                 }
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
-                    if (src[state.cp] == '-') {
+                    char currentChar = src[state.cp];
+
+                    if (currentChar == '-') {
                         state.cp++;
                         inRange = true;
                         rangeStart = thisCodePoint;
@@ -1691,8 +2204,27 @@ public class NativeRegExp extends IdScriptableObject {
             }
         }
 
+        // Parse set operations (-- and &&) for 'v' flag
+        if (!parseSetOperations(state, params, depth, contents)) {
+            return null;
+        }
+
         if (state.cp < state.cpend && src[state.cp] == ']') {
             state.cp++;
+        } else if (isVMode(state, params)) {
+            // In v-mode, closing ']' is required for all character classes
+            reportError("msg.unterm.class", "");
+            return null;
+        }
+
+        // ES2024 validation: complement classes cannot contain multi-character strings
+        if (!contents.sense && (state.flags & JSREG_UNICODESETS) != 0) {
+            for (String literal : contents.stringLiterals) {
+                if (literal.length() > 1) {
+                    reportError("msg.invalid.complement.class", "");
+                    return null;
+                }
+            }
         }
 
         return contents;
@@ -1885,7 +2417,7 @@ public class NativeRegExp extends IdScriptableObject {
                 reportError("msg.re.unmatched.right.paren", "");
                 return false;
             case '[':
-                ClassContents classContents = parseClassContents(state, params);
+                ClassContents classContents = parseClassContents(state, params, 0);
                 if (classContents == null) {
                     reportError("msg.unterm.class", "");
                     return false;
@@ -2048,7 +2580,7 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static int addIndex(byte[] array, int pc, int index) {
         if (index < 0) throw Kit.codeBug();
-        if (index > 0xFFFF) throw Context.reportRuntimeError("Too complex regexp");
+        if (index > BMP_MAX_CODEPOINT) throw Context.reportRuntimeError("Too complex regexp");
         array[pc] = (byte) (index >> 8);
         array[pc + 1] = (byte) index;
         return pc + 2;
@@ -2204,6 +2736,8 @@ public class NativeRegExp extends IdScriptableObject {
                     if (!t.classContents.sense) program[pc - 1] = REOP_NCLASS;
                     pc = addIndex(program, pc, t.index);
                     re.classList[t.index] = new RECharSet(t.classContents, t.bmsize);
+                    // Pre-build RECharSet objects for set operation operands
+                    buildOperandCharSets(t.classContents, t.bmsize);
                     break;
                 case REOP_UPROP:
                 case REOP_UPROP_NOT:
@@ -2292,10 +2826,10 @@ public class NativeRegExp extends IdScriptableObject {
             REGlobalData gData, int matchChars, int length, String input, int end) {
         if ((gData.cp + length) > end) return false;
         char[] source = gData.regexp.source;
+        boolean unicode = isUnicodeMode(gData.regexp.flags);
+
         for (int i = 0; i < length; i++) {
-            char c1 = source[matchChars + i];
-            char c2 = input.charAt(gData.cp + i);
-            if (c1 != c2 && upcase(c1) != upcase(c2)) {
+            if (!charsEqual(source[matchChars + i], input.charAt(gData.cp + i), unicode)) {
                 return false;
             }
         }
@@ -2306,13 +2840,13 @@ public class NativeRegExp extends IdScriptableObject {
     private static boolean flatNIMatcherBackward(
             REGlobalData gData, int matchChars, int length, String input) {
         if ((gData.cp - length) < 0) return false;
+        boolean unicode = isUnicodeMode(gData.regexp.flags);
 
-        // in the input, start from cp - 1 and go back length chars
-        // in the regex source, do it the other way
         for (int i = 1; i <= length; i++) {
-            char c1 = gData.regexp.source[matchChars + length - i];
-            char c2 = input.charAt(gData.cp - i);
-            if (c1 != c2 && upcase(c1) != upcase(c2)) {
+            if (!charsEqual(
+                    gData.regexp.source[matchChars + length - i],
+                    input.charAt(gData.cp - i),
+                    unicode)) {
                 return false;
             }
         }
@@ -2393,7 +2927,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (c >= cs.length) {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
-        cs.bits[byteIndex] |= (byte) (1 << (c & 0x7));
+        cs.bits[byteIndex] |= (byte) (1 << (c & BYTE_BIT_MASK));
     }
 
     /* Add a character range, c1 to c2 (inclusive) to the RECharSet */
@@ -2407,8 +2941,8 @@ public class NativeRegExp extends IdScriptableObject {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
 
-        c1 = (char) (c1 & 0x7);
-        c2 = (char) (c2 & 0x7);
+        c1 = (char) (c1 & BYTE_BIT_MASK);
+        c2 = (char) (c2 & BYTE_BIT_MASK);
 
         if (byteIndex1 == byteIndex2) {
             cs.bits[byteIndex1] |= (byte) ((0xFF >> (7 - (c2 - c1))) << c1);
@@ -2416,6 +2950,22 @@ public class NativeRegExp extends IdScriptableObject {
             cs.bits[byteIndex1] |= (byte) (0xFF << c1);
             for (i = byteIndex1 + 1; i < byteIndex2; i++) cs.bits[i] = (byte) 0xFF;
             cs.bits[byteIndex2] |= (byte) (0xFF >> (7 - c2));
+        }
+    }
+
+    /**
+     * Recursively build RECharSet objects for all set operation operands. This ensures that
+     * operands are pre-built during compilation rather than being built on every regexp execution.
+     */
+    private static void buildOperandCharSets(ClassContents contents, int bmsize) {
+        if (contents.setOperations.isEmpty()) {
+            return;
+        }
+
+        for (SetOperation op : contents.setOperations) {
+            op.operandCharSet = new RECharSet(op.operand, bmsize);
+            // Recursively build for nested set operations
+            buildOperandCharSets(op.operand, bmsize);
         }
     }
 
@@ -2438,9 +2988,26 @@ public class NativeRegExp extends IdScriptableObject {
         byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
 
+        // Determine if we should use Unicode case folding (deep case closure)
+        boolean unicodeCaseFolding =
+                (gData.regexp.flags & JSREG_FOLD) != 0
+                        && ((gData.regexp.flags & JSREG_UNICODE) != 0
+                                || (gData.regexp.flags & JSREG_UNICODESETS) != 0);
+        boolean basicCaseFolding = (gData.regexp.flags & JSREG_FOLD) != 0 && !unicodeCaseFolding;
+
         for (char ch : classContents.chars) {
             addCharacterToCharSet(charSet, ch);
-            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+            if (unicodeCaseFolding) {
+                // Deep case closure for Unicode mode (u or v flags)
+                List<Character> variants = new ArrayList<>();
+                getUnicodeCaseVariants(ch, variants);
+                for (char variant : variants) {
+                    if (variant != ch) {
+                        addCharacterToCharSet(charSet, variant);
+                    }
+                }
+            } else if (basicCaseFolding) {
+                // Basic case folding for non-Unicode mode
                 char uch = upcase(ch);
                 char dch = downcase(ch);
                 if (ch != uch) addCharacterToCharSet(charSet, uch);
@@ -2451,7 +3018,21 @@ public class NativeRegExp extends IdScriptableObject {
         for (int j = 0; j < classContents.bmpRanges.size(); j += 2) {
             char start = classContents.bmpRanges.get(j);
             char end = classContents.bmpRanges.get(j + 1);
-            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+            if (unicodeCaseFolding) {
+                // Deep case closure for Unicode mode - expand each character in range
+                for (char ch = start; ch <= end; ) {
+                    addCharacterToCharSet(charSet, ch);
+                    List<Character> variants = new ArrayList<>();
+                    getUnicodeCaseVariants(ch, variants);
+                    for (char variant : variants) {
+                        if (variant != ch) {
+                            addCharacterToCharSet(charSet, variant);
+                        }
+                    }
+                    if (++ch == 0) break; // overflow
+                }
+            } else if (basicCaseFolding) {
+                // Basic case folding for non-Unicode mode
                 for (char ch = start; ch <= end; ) {
                     addCharacterToCharSet(charSet, ch);
                     char uch = upcase(ch);
@@ -2460,7 +3041,9 @@ public class NativeRegExp extends IdScriptableObject {
                     if (ch != dch) addCharacterToCharSet(charSet, dch);
                     if (++ch == 0) break; // overflow
                 }
-            } else addCharacterRangeToCharSet(charSet, start, end);
+            } else {
+                addCharacterRangeToCharSet(charSet, start, end);
+            }
         }
 
         for (RENode escape : classContents.escapeNodes) {
@@ -2505,38 +3088,121 @@ public class NativeRegExp extends IdScriptableObject {
      *   Initialize the character set if it is the first call.
      *   Test the bit - if the ^ flag was specified, non-inclusion is a success
      */
+    /**
+     * Check if any string literal in the character class matches at the current position. Returns
+     * the length of the matched string, or -1 if no match. Zero-length matches are valid.
+     *
+     * @param charSet The character class containing string literals
+     * @param input The input string to match against
+     * @param position The position in the input where the match should occur. For forward matching,
+     *     this is the start position. For backward matching (lookbehind), this is the end position
+     *     (exclusive).
+     * @param matchBackward true for lookbehind matching (match backwards from position), false for
+     *     normal forward matching
+     * @return The length of the matched string literal, or -1 if no match
+     */
+    private static int stringLiteralMatcher(
+            RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
+        if (charSet.classContents == null || charSet.classContents.stringLiterals.isEmpty()) {
+            return -1;
+        }
+
+        // Try to match each string literal, return longest match for greedy matching
+        int maxMatch = -1;
+        String inputStr = input.toString();
+        for (String literal : charSet.classContents.stringLiterals) {
+            boolean matches;
+            if (matchBackward) {
+                // For lookbehind, match backwards from position
+                int startPos = position - literal.length();
+                matches =
+                        startPos >= 0
+                                && inputStr.regionMatches(startPos, literal, 0, literal.length());
+            } else {
+                // For normal matching, match forwards from position
+                matches =
+                        position + literal.length() <= input.length()
+                                && inputStr.regionMatches(position, literal, 0, literal.length());
+            }
+
+            if (matches && (maxMatch == -1 || literal.length() > maxMatch)) {
+                maxMatch = literal.length();
+            }
+        }
+
+        return maxMatch;
+    }
+
     private static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
         if (!charSet.converted) {
             processCharSet(gData, charSet);
         }
 
-        if (codePoint <= 0xFFFF) {
-            int byteIndex = codePoint >> 3;
+        // Check base character class membership
+        boolean matches = false;
+
+        if (codePoint <= BMP_MAX_CODEPOINT) {
+            int byteIndex = codePoint >> BIT_SHIFT_FOR_BYTE_INDEX;
             if (!(charSet.length == 0
                     || codePoint >= charSet.length
-                    || (charSet.bits[byteIndex] & (1 << (codePoint & 0x7))) == 0))
-                return charSet.classContents.sense;
-        }
-
-        if (charSet.classContents.nonBMPCodepoints.contains(codePoint))
-            return charSet.classContents.sense;
-
-        for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
-            if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
-                    && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
-                return charSet.classContents.sense;
+                    || (charSet.bits[byteIndex] & (1 << (codePoint & BYTE_BIT_MASK))) == 0)) {
+                matches = true;
             }
         }
 
-        for (int encodedProp : charSet.unicodeProps) {
-            if (UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+        if (!matches && charSet.classContents.nonBMPCodepoints.contains(codePoint)) {
+            matches = true;
         }
-        for (int encodedProp : charSet.negUnicodeProps) {
-            if (!UnicodeProperties.hasProperty(encodedProp, codePoint))
-                return charSet.classContents.sense;
+
+        if (!matches) {
+            for (int i = 0; i < charSet.classContents.nonBMPRanges.size(); i += 2) {
+                if (codePoint >= charSet.classContents.nonBMPRanges.get(i)
+                        && codePoint <= charSet.classContents.nonBMPRanges.get(i + 1)) {
+                    matches = true;
+                    break;
+                }
+            }
         }
-        return !charSet.classContents.sense;
+
+        if (!matches) {
+            for (int encodedProp : charSet.unicodeProps) {
+                if (UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        if (!matches) {
+            for (int encodedProp : charSet.negUnicodeProps) {
+                if (!UnicodeProperties.hasProperty(encodedProp, codePoint)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+
+        // Apply set operations for 'v' flag
+        if (!charSet.classContents.setOperations.isEmpty()) {
+            for (SetOperation op : charSet.classContents.setOperations) {
+                if (op.type == SetOperationType.SUBTRACT) {
+                    // Remove from result if in subtract operand
+                    boolean operandMatches = classMatcher(gData, op.operandCharSet, codePoint);
+                    if (operandMatches) {
+                        matches = false;
+                    }
+                } else if (op.type == SetOperationType.INTERSECT) {
+                    // Keep only if also in intersect operand
+                    // Optimization: skip check if matches is already false
+                    if (matches) {
+                        boolean operandMatches = classMatcher(gData, op.operandCharSet, codePoint);
+                        matches = operandMatches;
+                    }
+                }
+            }
+        }
+
+        return matches == charSet.classContents.sense;
     }
 
     private static boolean reopIsSimple(int op) {
@@ -2734,11 +3400,10 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_FLAT1i:
                 {
-                    // Note: No support for unicode with REOP_FLAT1i
                     matchCodePoint = (program[pc++] & 0xFF);
                     if (cpInBounds) {
-                        char c = input.charAt(cpToMatch);
-                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
+                        boolean unicode = isUnicodeMode(gData.regexp.flags);
+                        if (charsEqual((char) matchCodePoint, input.charAt(cpToMatch), unicode)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
@@ -2765,12 +3430,11 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_UCFLAT1i:
                 {
-                    // Note: No support for unicode with REOP_UCFLAT1i
                     matchCodePoint = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
-                        char c = input.charAt(cpToMatch);
-                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
+                        boolean unicode = isUnicodeMode(gData.regexp.flags);
+                        if (charsEqual((char) matchCodePoint, input.charAt(cpToMatch), unicode)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
@@ -2784,6 +3448,39 @@ public class NativeRegExp extends IdScriptableObject {
                     index = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
+                        // First, try to match string literals (v flag feature)
+                        // For string literals in backward mode, use gData.cp (not cpToMatch)
+                        // because string literals match ending at the current position,
+                        // whereas cpToMatch is for single-character matching
+                        int stringLiteralPos = matchBackward ? gData.cp : cpToMatch;
+                        int stringLiteralLen =
+                                stringLiteralMatcher(
+                                        gData.regexp.classList[index],
+                                        input,
+                                        stringLiteralPos,
+                                        matchBackward);
+                        if (stringLiteralLen >= 0) {
+                            // String literal matched (including zero-length matches)
+                            // For REOP_CLASS: match if string is in the class
+                            // For REOP_NCLASS: match if string is NOT in the class
+                            // Since we found a match, the string IS in the class
+                            if (op == REOP_CLASS) {
+                                // Update cp based on match direction
+                                if (matchBackward) {
+                                    gData.cp -= stringLiteralLen;
+                                } else {
+                                    gData.cp += stringLiteralLen;
+                                }
+                                result = true;
+                                break;
+                            } else {
+                                // REOP_NCLASS: string is in the negated class, so no match
+                                result = false;
+                                break;
+                            }
+                        }
+
+                        // Fall back to single codepoint matching
                         int inputCodePoint =
                                 (gData.regexp.flags & JSREG_UNICODE) != 0
                                         ? input.codePointAt(cpToMatch)
@@ -3455,9 +4152,16 @@ public class NativeRegExp extends IdScriptableObject {
                     }
 
                     int charCount;
-                    if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                    if (isUnicodeMode(gData.regexp.flags)) {
                         int matchCodePoint = input.codePointAt(i);
-                        if (matchCodePoint == anchorCodePoint) {
+                        boolean matches = matchCodePoint == anchorCodePoint;
+                        if (!matches && (gData.regexp.flags & JSREG_FOLD) != 0) {
+                            // Unicode case-insensitive comparison
+                            matches =
+                                    Character.toLowerCase(matchCodePoint)
+                                            == Character.toLowerCase(anchorCodePoint);
+                        }
+                        if (matches) {
                             break;
                         }
                         charCount = Character.charCount(matchCodePoint);
@@ -3510,6 +4214,7 @@ public class NativeRegExp extends IdScriptableObject {
     Object executeRegExp(
             Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
+        String[] namedCaptureGroups = null; // for indices and groups
 
         int start = indexp[0];
         int end = str.length();
@@ -3557,7 +4262,6 @@ public class NativeRegExp extends IdScriptableObject {
         } else {
             SubString parsub = null;
             int num;
-            String[] namedCaptureGroups = null; // to ensure groups appear in source order
 
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
@@ -3610,6 +4314,46 @@ public class NativeRegExp extends IdScriptableObject {
             obj.put("index", obj, Integer.valueOf(start + gData.skipped));
             obj.put("input", obj, str);
             obj.put("groups", obj, groups);
+
+            // ES2022 hasIndices support ('d' flag)
+            if ((re.flags & JSREG_HASINDICES) != 0) {
+                Scriptable indices = cx.newArray(scope, re.parenCount + 1);
+                Scriptable indicesGroups = cx.newObject(scope);
+
+                // Index 0: overall match indices
+                Scriptable overallIndices = cx.newArray(scope, 2);
+                overallIndices.put(0, overallIndices, Integer.valueOf(start + gData.skipped));
+                overallIndices.put(
+                        1, overallIndices, Integer.valueOf(start + gData.skipped + matchlen));
+                indices.put(0, indices, overallIndices);
+
+                // Indices for each capture group
+                for (int num = 0; num < re.parenCount; num++) {
+                    int cap_index = gData.parensIndex(num);
+                    if (cap_index != -1) {
+                        int cap_length = gData.parensLength(num);
+                        Scriptable groupIndices = cx.newArray(scope, 2);
+                        groupIndices.put(0, groupIndices, Integer.valueOf(cap_index));
+                        groupIndices.put(1, groupIndices, Integer.valueOf(cap_index + cap_length));
+                        indices.put(num + 1, indices, groupIndices);
+
+                        // Add to indicesGroups for named captures
+                        if (namedCaptureGroups[num] != null) {
+                            indicesGroups.put(namedCaptureGroups[num], indicesGroups, groupIndices);
+                        }
+                    } else {
+                        indices.put(num + 1, indices, Undefined.instance);
+                        if (namedCaptureGroups[num] != null
+                                && !indicesGroups.has(namedCaptureGroups[num], indicesGroups)) {
+                            indicesGroups.put(
+                                    namedCaptureGroups[num], indicesGroups, Undefined.instance);
+                        }
+                    }
+                }
+
+                indices.put("groups", indices, indicesGroups);
+                obj.put("indices", obj, indices);
+            }
         }
 
         if (res.lastMatch == null) {
@@ -3680,7 +4424,9 @@ public class NativeRegExp extends IdScriptableObject {
             Id_dotAll = 7,
             Id_sticky = 8,
             Id_unicode = 9,
-            MAX_INSTANCE_ID = 9;
+            Id_hasIndices = 10,
+            Id_unicodeSets = 11,
+            MAX_INSTANCE_ID = 11;
 
     @Override
     protected int getMaxInstanceId() {
@@ -3718,6 +4464,12 @@ public class NativeRegExp extends IdScriptableObject {
             case "unicode":
                 id = Id_unicode;
                 break;
+            case "hasIndices":
+                id = Id_hasIndices;
+                break;
+            case "unicodeSets":
+                id = Id_unicodeSets;
+                break;
             default:
                 id = 0;
                 break;
@@ -3738,6 +4490,8 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_dotAll:
             case Id_sticky:
             case Id_unicode:
+            case Id_hasIndices:
+            case Id_unicodeSets:
                 attr = PERMANENT | READONLY | DONTENUM;
                 break;
             default:
@@ -3767,6 +4521,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return "sticky";
             case Id_unicode:
                 return "unicode";
+            case Id_hasIndices:
+                return "hasIndices";
+            case Id_unicodeSets:
+                return "unicodeSets";
         }
         return super.getInstanceIdName(id);
     }
@@ -3796,6 +4554,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
             case Id_unicode:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODE) != 0);
+            case Id_hasIndices:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_HASINDICES) != 0);
+            case Id_unicodeSets:
+                return ScriptRuntime.wrapBoolean((re.flags & JSREG_UNICODESETS) != 0);
         }
         return super.getInstanceIdValue(id);
     }
