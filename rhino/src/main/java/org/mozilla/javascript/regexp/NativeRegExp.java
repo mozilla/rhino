@@ -695,18 +695,11 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         // Validate flag combinations
-        // u and i flags are incompatible (current Rhino limitation)
-        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_FOLD) != 0) {
-            reportError("msg.invalid.re.flag", "u and i");
-        }
         // u and v flags are mutually exclusive (ES2024 spec)
         if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_UNICODESETS) != 0) {
             reportError("msg.invalid.re.flag", "u and v");
         }
-        // v and i flags are incompatible (v implies Unicode mode)
-        if ((flags & JSREG_UNICODESETS) != 0 && (flags & JSREG_FOLD) != 0) {
-            reportError("msg.invalid.re.flag", "v and i");
-        }
+        // Note: u+i and v+i combinations are now supported with Unicode case folding
 
         // We support unicode mode in ES6 and later.
         if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
@@ -871,6 +864,48 @@ public class NativeRegExp extends IdScriptableObject {
         }
         char cl = Character.toLowerCase(ch);
         return (cl < 128) ? ch : cl;
+    }
+
+    /** Case-insensitive character comparison that respects Unicode mode. */
+    private static boolean charsEqual(char c1, char c2, boolean unicodeMode) {
+        if (c1 == c2) return true;
+        if (unicodeMode) {
+            return Character.toLowerCase(c1) == Character.toLowerCase(c2);
+        } else {
+            return upcase(c1) == upcase(c2);
+        }
+    }
+
+    /**
+     * Get all case variants of a character for Unicode mode. Implements "deep case closure" -
+     * bidirectional case equivalence.
+     *
+     * @param ch The character to get case variants for
+     * @param results List to add case variants to (will include ch itself)
+     */
+    private static void getUnicodeCaseVariants(char ch, List<Character> results) {
+        results.add(ch);
+
+        char lower = Character.toLowerCase(ch);
+        char upper = Character.toUpperCase(ch);
+
+        if (lower != ch && !results.contains(lower)) {
+            results.add(lower);
+            // Add uppercase of the lowercase (handles cases like İ/i in some locales)
+            char upperOfLower = Character.toUpperCase(lower);
+            if (upperOfLower != ch && upperOfLower != upper && !results.contains(upperOfLower)) {
+                results.add(upperOfLower);
+            }
+        }
+
+        if (upper != ch && !results.contains(upper)) {
+            results.add(upper);
+            // Add lowercase of the uppercase
+            char lowerOfUpper = Character.toLowerCase(upper);
+            if (lowerOfUpper != ch && lowerOfUpper != lower && !results.contains(lowerOfUpper)) {
+                results.add(lowerOfUpper);
+            }
+        }
     }
 
     static class ParserParameters {
@@ -2776,10 +2811,12 @@ public class NativeRegExp extends IdScriptableObject {
             REGlobalData gData, int matchChars, int length, String input, int end) {
         if ((gData.cp + length) > end) return false;
         char[] source = gData.regexp.source;
+        boolean unicode =
+                (gData.regexp.flags & JSREG_UNICODE) != 0
+                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+
         for (int i = 0; i < length; i++) {
-            char c1 = source[matchChars + i];
-            char c2 = input.charAt(gData.cp + i);
-            if (c1 != c2 && upcase(c1) != upcase(c2)) {
+            if (!charsEqual(source[matchChars + i], input.charAt(gData.cp + i), unicode)) {
                 return false;
             }
         }
@@ -2790,13 +2827,15 @@ public class NativeRegExp extends IdScriptableObject {
     private static boolean flatNIMatcherBackward(
             REGlobalData gData, int matchChars, int length, String input) {
         if ((gData.cp - length) < 0) return false;
+        boolean unicode =
+                (gData.regexp.flags & JSREG_UNICODE) != 0
+                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
 
-        // in the input, start from cp - 1 and go back length chars
-        // in the regex source, do it the other way
         for (int i = 1; i <= length; i++) {
-            char c1 = gData.regexp.source[matchChars + length - i];
-            char c2 = input.charAt(gData.cp - i);
-            if (c1 != c2 && upcase(c1) != upcase(c2)) {
+            if (!charsEqual(
+                    gData.regexp.source[matchChars + length - i],
+                    input.charAt(gData.cp - i),
+                    unicode)) {
                 return false;
             }
         }
@@ -2938,9 +2977,26 @@ public class NativeRegExp extends IdScriptableObject {
         byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
 
+        // Determine if we should use Unicode case folding (deep case closure)
+        boolean unicodeCaseFolding =
+                (gData.regexp.flags & JSREG_FOLD) != 0
+                        && ((gData.regexp.flags & JSREG_UNICODE) != 0
+                                || (gData.regexp.flags & JSREG_UNICODESETS) != 0);
+        boolean basicCaseFolding = (gData.regexp.flags & JSREG_FOLD) != 0 && !unicodeCaseFolding;
+
         for (char ch : classContents.chars) {
             addCharacterToCharSet(charSet, ch);
-            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+            if (unicodeCaseFolding) {
+                // Deep case closure for Unicode mode (u or v flags)
+                List<Character> variants = new ArrayList<>();
+                getUnicodeCaseVariants(ch, variants);
+                for (char variant : variants) {
+                    if (variant != ch) {
+                        addCharacterToCharSet(charSet, variant);
+                    }
+                }
+            } else if (basicCaseFolding) {
+                // Basic case folding for non-Unicode mode
                 char uch = upcase(ch);
                 char dch = downcase(ch);
                 if (ch != uch) addCharacterToCharSet(charSet, uch);
@@ -2951,7 +3007,21 @@ public class NativeRegExp extends IdScriptableObject {
         for (int j = 0; j < classContents.bmpRanges.size(); j += 2) {
             char start = classContents.bmpRanges.get(j);
             char end = classContents.bmpRanges.get(j + 1);
-            if ((gData.regexp.flags & JSREG_FOLD) != 0) {
+            if (unicodeCaseFolding) {
+                // Deep case closure for Unicode mode - expand each character in range
+                for (char ch = start; ch <= end; ) {
+                    addCharacterToCharSet(charSet, ch);
+                    List<Character> variants = new ArrayList<>();
+                    getUnicodeCaseVariants(ch, variants);
+                    for (char variant : variants) {
+                        if (variant != ch) {
+                            addCharacterToCharSet(charSet, variant);
+                        }
+                    }
+                    if (++ch == 0) break; // overflow
+                }
+            } else if (basicCaseFolding) {
+                // Basic case folding for non-Unicode mode
                 for (char ch = start; ch <= end; ) {
                     addCharacterToCharSet(charSet, ch);
                     char uch = upcase(ch);
@@ -2960,7 +3030,9 @@ public class NativeRegExp extends IdScriptableObject {
                     if (ch != dch) addCharacterToCharSet(charSet, dch);
                     if (++ch == 0) break; // overflow
                 }
-            } else addCharacterRangeToCharSet(charSet, start, end);
+            } else {
+                addCharacterRangeToCharSet(charSet, start, end);
+            }
         }
 
         for (RENode escape : classContents.escapeNodes) {
@@ -3317,11 +3389,12 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_FLAT1i:
                 {
-                    // Note: No support for unicode with REOP_FLAT1i
                     matchCodePoint = (program[pc++] & 0xFF);
                     if (cpInBounds) {
-                        char c = input.charAt(cpToMatch);
-                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
+                        boolean unicode =
+                                (gData.regexp.flags & JSREG_UNICODE) != 0
+                                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+                        if (charsEqual((char) matchCodePoint, input.charAt(cpToMatch), unicode)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
@@ -3348,12 +3421,13 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             case REOP_UCFLAT1i:
                 {
-                    // Note: No support for unicode with REOP_UCFLAT1i
                     matchCodePoint = getIndex(program, pc);
                     pc += INDEX_LEN;
                     if (cpInBounds) {
-                        char c = input.charAt(cpToMatch);
-                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
+                        boolean unicode =
+                                (gData.regexp.flags & JSREG_UNICODE) != 0
+                                        || (gData.regexp.flags & JSREG_UNICODESETS) != 0;
+                        if (charsEqual((char) matchCodePoint, input.charAt(cpToMatch), unicode)) {
                             result = true;
                             gData.cp += cpDelta;
                         }
