@@ -449,8 +449,8 @@ public class Main {
             Console console = global.getConsole(cs);
             if (filename == null) {
                 // print implementation version
-                console.println(cx.getImplementationVersion() + " (" +
-                        console.getImplementation() + ')');
+                console.println(
+                        cx.getImplementationVersion() + " (" + console.getImplementation() + ')');
             }
 
             int lineno = 1;
