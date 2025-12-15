@@ -13,8 +13,10 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -97,8 +99,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     cx.debugger != null
                             ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor())
                             : null;
-            useActivation =
-                    debuggerFrame != null || fnOrScript.getDescriptor().requiresActivationFrame();
+            useActivation = fnOrScript.getDescriptor().requiresActivationFrame();
 
             emptyStackTop = (short) (idata.itsMaxVars + idata.itsMaxLocals - 1);
             int maxFrameArray = idata.itsMaxFrameArray;
@@ -470,6 +471,144 @@ public final class Interpreter extends Icode implements Evaluator {
 
         CallFrame captureForGenerator() {
             return new CallFrame(this, true);
+        }
+
+        Object getFromVars(int offset) {
+            Object value = stack[offset];
+            if (value == DOUBLE_MARK) {
+                return sDbl[offset];
+            } else {
+                return value;
+            }
+        }
+
+        void setInVars(int offset, Object value) {
+            if (value instanceof Double && Double.isFinite((Double) value)) {
+                stack[offset] = DOUBLE_MARK;
+                sDbl[offset] = ((Double) value);
+            } else {
+                stack[offset] = value;
+            }
+        }
+    }
+
+    /**
+     * This class is intended as proxy to give {@link DebugFrame} access to the contents of local
+     * variables. We take this approach rather than forcing the interpreter to introduce activation
+     * frames because it is faster (assuming local variable manipulation by the interpreter is more
+     * common than inspection by the debugger) and it reduces the chance that programs might
+     * evexcute differently in debug mode.
+     */
+    private static class DebugScope implements Scriptable {
+        private final CallFrame frame;
+        private volatile Map<String, Integer> offsets;
+
+        /** Create a new debug scope associated with a particular call frame. */
+        private DebugScope(CallFrame frame) {
+            this.frame = frame;
+        }
+
+        /**
+         * Populate the map associating names to variable indices. Most names should have been made
+         * unique as part of the compilation process, but arguments with duplicate names will not
+         * have been.The map is build so that duplicate argument names resolve to the last index as
+         * this is also what the compiler does - at least once we are past setting default values.
+         */
+        private Map<String, Integer> getOffsets() {
+            if (offsets == null) {
+                offsets = buildOffsets(frame);
+            }
+            return offsets;
+        }
+
+        private static Map<String, Integer> buildOffsets(CallFrame frame) {
+            var desc = frame.fnOrScript.getDescriptor();
+            int varCount = desc.getParamAndVarCount();
+            var map = new HashMap<String, Integer>();
+            for (int i = 0; i < varCount; i++) {
+                map.put(desc.getParamOrVarName(i), i);
+            }
+            return map;
+        }
+
+        @Override
+        public void delete(String name) {}
+
+        @Override
+        public void delete(int index) {}
+
+        @Override
+        public Object get(String name, Scriptable start) {
+            int offset = getOffsets().getOrDefault(name, -1);
+            return offset >= 0 ? frame.getFromVars(offset) : NOT_FOUND;
+        }
+
+        @Override
+        public Object get(int index, Scriptable start) {
+            return NOT_FOUND;
+        }
+
+        @Override
+        public String getClassName() {
+            return "debugscope";
+        }
+
+        @Override
+        public Object getDefaultValue(Class<?> hint) {
+            return null;
+        }
+
+        @Override
+        public Object[] getIds() {
+            return getOffsets().keySet().toArray();
+        }
+
+        @Override
+        public Scriptable getParentScope() {
+            return frame.scope;
+        }
+
+        @Override
+        public Scriptable getPrototype() {
+            return null;
+        }
+
+        @Override
+        public boolean has(String name, Scriptable start) {
+            return getOffsets().containsKey(name);
+        }
+
+        @Override
+        public boolean has(int index, Scriptable start) {
+            return false;
+        }
+
+        @Override
+        public boolean hasInstance(Scriptable instance) {
+            return false;
+        }
+
+        @Override
+        public void put(String name, Scriptable start, Object value) {
+            int offset = getOffsets().getOrDefault(name, -1);
+            if (offset >= 0) {
+                frame.setInVars(offset, value);
+            }
+        }
+
+        @Override
+        public void put(int index, Scriptable start, Object value) {
+            // Do nothing.
+        }
+
+        @Override
+        public void setParentScope(Scriptable parent) {
+            // Do nothing.
+        }
+
+        @Override
+        public void setPrototype(Scriptable prototype) {
+            // Do nothing.
         }
     }
 
@@ -3775,29 +3914,15 @@ public final class Interpreter extends Icode implements Evaluator {
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
-            if (!frame.useActivation) {
-                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                    throw Context.reportRuntimeErrorById(
-                            "msg.var.redecl",
-                            frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
-                }
-                if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
-                    vars[state.indexReg] = frame.stack[state.stackTop];
-                    varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
-                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
-                }
-            } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                Object val = frame.stack[state.stackTop];
-                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-                String stringReg =
-                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                if (frame.scope instanceof ConstProperties) {
-                    ConstProperties cp = (ConstProperties) frame.scope;
-                    cp.putConst(stringReg, frame.scope, val);
-                } else throw Kit.codeBug();
+            if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
+            if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+                vars[state.indexReg] = frame.stack[state.stackTop];
+                varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
             }
             return null;
         }
@@ -3809,29 +3934,15 @@ public final class Interpreter extends Icode implements Evaluator {
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
-            if (!frame.useActivation) {
-                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                    throw Context.reportRuntimeErrorById(
-                            "msg.var.redecl",
-                            frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
-                }
-                if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
-                    vars[state.indexReg] = frame.stack[state.stackTop];
-                    varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
-                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
-                }
-            } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                Object val = frame.stack[state.stackTop];
-                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-                String stringReg =
-                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                if (frame.scope instanceof ConstProperties) {
-                    ConstProperties cp = (ConstProperties) frame.scope;
-                    cp.putConst(stringReg, frame.scope, val);
-                } else throw Kit.codeBug();
+            if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
+            if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+                vars[state.indexReg] = frame.stack[state.stackTop];
+                varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
             }
             return null;
         }
@@ -3844,20 +3955,9 @@ public final class Interpreter extends Icode implements Evaluator {
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
-            if (!frame.useActivation) {
-                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                    vars[state.indexReg] = frame.stack[state.stackTop];
-                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
-                }
-            } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                Object val = frame.stack[state.stackTop];
-                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-                String stringReg =
-                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                frame.scope.put(stringReg, frame.scope, val);
+            if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                vars[state.indexReg] = frame.stack[state.stackTop];
+                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
             }
             return null;
         }
@@ -3869,20 +3969,9 @@ public final class Interpreter extends Icode implements Evaluator {
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
-            if (!frame.useActivation) {
-                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                    vars[state.indexReg] = frame.stack[state.stackTop];
-                    varDbls[state.indexReg] = frame.sDbl[state.stackTop];
-                }
-            } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                Object val = frame.stack[state.stackTop];
-                if (val == DOUBLE_MARK) val = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-                String stringReg =
-                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                frame.scope.put(stringReg, frame.scope, val);
+            if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                vars[state.indexReg] = frame.stack[state.stackTop];
+                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
             }
             return null;
         }
@@ -3895,17 +3984,8 @@ public final class Interpreter extends Icode implements Evaluator {
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
             ++state.stackTop;
-            if (!frame.useActivation) {
-                frame.stack[state.stackTop] = vars[state.indexReg];
-                frame.sDbl[state.stackTop] = varDbls[state.indexReg];
-            } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                String stringReg =
-                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                frame.stack[state.stackTop] = frame.scope.get(stringReg, frame.scope);
-            }
+            frame.stack[state.stackTop] = vars[state.indexReg];
+            frame.sDbl[state.stackTop] = varDbls[state.indexReg];
             return null;
         }
     }
@@ -3916,17 +3996,8 @@ public final class Interpreter extends Icode implements Evaluator {
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
             ++state.stackTop;
-            if (!frame.useActivation) {
-                frame.stack[state.stackTop] = vars[state.indexReg];
-                frame.sDbl[state.stackTop] = varDbls[state.indexReg];
-            } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                String stringReg =
-                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                frame.stack[state.stackTop] = frame.scope.get(stringReg, frame.scope);
-            }
+            frame.stack[state.stackTop] = vars[state.indexReg];
+            frame.sDbl[state.stackTop] = varDbls[state.indexReg];
             return null;
         }
     }
@@ -3940,67 +4011,58 @@ public final class Interpreter extends Icode implements Evaluator {
             // indexReg : varindex
             ++state.stackTop;
             int incrDecrMask = frame.idata.itsICode[frame.pc];
-            if (!frame.useActivation) {
-                Object varValue = vars[state.indexReg];
-                double d = 0.0;
-                BigInteger bi = null;
-                if (varValue == DOUBLE_MARK) {
-                    d = varDbls[state.indexReg];
+            Object varValue = vars[state.indexReg];
+            double d = 0.0;
+            BigInteger bi = null;
+            if (varValue == DOUBLE_MARK) {
+                d = varDbls[state.indexReg];
+            } else {
+                Number num = ScriptRuntime.toNumeric(varValue);
+                if (num instanceof BigInteger) {
+                    bi = (BigInteger) num;
                 } else {
-                    Number num = ScriptRuntime.toNumeric(varValue);
-                    if (num instanceof BigInteger) {
-                        bi = (BigInteger) num;
-                    } else {
-                        d = num.doubleValue();
-                    }
+                    d = num.doubleValue();
                 }
-                if (bi == null) {
-                    // double
-                    double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0) ? d + 1.0 : d - 1.0;
-                    boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                    if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                        if (varValue != DOUBLE_MARK) {
-                            vars[state.indexReg] = DOUBLE_MARK;
-                        }
-                        varDbls[state.indexReg] = d2;
+            }
+            if (bi == null) {
+                // double
+                double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0) ? d + 1.0 : d - 1.0;
+                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                    if (varValue != DOUBLE_MARK) {
+                        vars[state.indexReg] = DOUBLE_MARK;
+                    }
+                    varDbls[state.indexReg] = d2;
+                    frame.stack[state.stackTop] = DOUBLE_MARK;
+                    frame.sDbl[state.stackTop] = post ? d : d2;
+                } else {
+                    if (post && varValue != DOUBLE_MARK) {
+                        frame.stack[state.stackTop] = varValue;
+                    } else {
                         frame.stack[state.stackTop] = DOUBLE_MARK;
                         frame.sDbl[state.stackTop] = post ? d : d2;
-                    } else {
-                        if (post && varValue != DOUBLE_MARK) {
-                            frame.stack[state.stackTop] = varValue;
-                        } else {
-                            frame.stack[state.stackTop] = DOUBLE_MARK;
-                            frame.sDbl[state.stackTop] = post ? d : d2;
-                        }
-                    }
-                } else {
-                    // BigInt
-                    BigInteger result;
-                    if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                        result = bi.add(BigInteger.ONE);
-                    } else {
-                        result = bi.subtract(BigInteger.ONE);
-                    }
-
-                    boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                    if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                        vars[state.indexReg] = result;
-                        frame.stack[state.stackTop] = post ? bi : result;
-                    } else {
-                        if (post && varValue != DOUBLE_MARK) {
-                            frame.stack[state.stackTop] = varValue;
-                        } else {
-                            frame.stack[state.stackTop] = post ? bi : result;
-                        }
                     }
                 }
             } else {
-                // This only occurs if we are using the debugger, in
-                // which case `frame.scope` will be an activation
-                // frame for this function.
-                String varName = frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg);
-                frame.stack[state.stackTop] =
-                        ScriptRuntime.nameIncrDecr(frame.scope, varName, cx, incrDecrMask);
+                // BigInt
+                BigInteger result;
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    result = bi.add(BigInteger.ONE);
+                } else {
+                    result = bi.subtract(BigInteger.ONE);
+                }
+
+                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+                if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                    vars[state.indexReg] = result;
+                    frame.stack[state.stackTop] = post ? bi : result;
+                } else {
+                    if (post && varValue != DOUBLE_MARK) {
+                        frame.stack[state.stackTop] = varValue;
+                    } else {
+                        frame.stack[state.stackTop] = post ? bi : result;
+                    }
+                }
             }
             ++frame.pc;
             return null;
@@ -4805,7 +4867,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx, CallFrame frame, Object[] args, boolean continuationRestart) {
         boolean usesActivation = frame.fnOrScript.getDescriptor().requiresActivationFrame();
         boolean isDebugged = frame.debuggerFrame != null;
-        if (usesActivation || isDebugged) {
+        if (usesActivation) {
             Scriptable scope = frame.scope;
             if (scope == null) {
                 Kit.codeBug();
@@ -4839,12 +4901,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (isDebugged) {
                 frame.debuggerFrame.onEnter(cx, scope, frame.thisObj, args);
             }
-            // Enter activation only when itsNeedsActivation true,
-            // since debugger should not interfere with activation
-            // chaining
-            if (usesActivation) {
-                ScriptRuntime.enterActivationFunction(cx, scope);
-            }
+            ScriptRuntime.enterActivationFunction(cx, scope);
+        } else if (isDebugged) {
+            frame.debuggerFrame.onEnter(cx, new DebugScope(frame), frame.thisObj, args);
         }
     }
 
