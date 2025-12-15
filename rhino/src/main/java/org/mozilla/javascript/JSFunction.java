@@ -28,6 +28,23 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         }
     }
 
+    JSFunction(
+            Scriptable scope,
+            JSDescriptor<JSFunction> descriptor,
+            Scriptable lexicalThis,
+            Scriptable homeObject) {
+        this.descriptor = descriptor;
+        this.lexicalThis = lexicalThis;
+        this.homeObject = homeObject;
+        setParentScope(scope);
+        setPrototype(ScriptableObject.getFunctionPrototype(scope));
+    }
+
+    @Override
+    protected void setPrototypeProperty(Object prototype) {
+        super.setPrototypeProperty(prototype);
+    }
+
     @Override
     public Scriptable getDeclarationScope() {
         return this.getParentScope();
@@ -134,6 +151,10 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         }
         var realThis = descriptor.hasLexicalThis() ? lexicalThis : thisObj;
         return descriptor.getCode().execute(cx, this, Undefined.instance, scope, realThis, args);
+    }
+
+    public boolean isConstructor() {
+        return descriptor.getConstructor() != null;
     }
 
     @Override

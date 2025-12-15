@@ -536,6 +536,10 @@ public class AbstractEcmaObjectOperations {
             return isConstructor(cx, f);
         }
 
+        if (argument instanceof JSFunction) {
+            return ((JSFunction) argument).isConstructor();
+        }
+
         return argument instanceof Constructable;
     }
 
