@@ -463,9 +463,9 @@ public class UnicodeProperties {
                     }
                 case SCRIPT_EXTENSIONS:
                     try {
-                        // Use ICU4J to get script code by name
-                        int scriptCode = UScript.getCodeFromName(value);
-                        if (scriptCode == UScript.INVALID_CODE) {
+                        // Use ICU4JAdapter to get script code by name
+                        int scriptCode = ICU4JAdapter.getScriptCodeFromName(value);
+                        if (scriptCode == -1) {
                             return -1;
                         }
                         return encodeProperty(SCRIPT_EXTENSIONS, (byte) scriptCode);
