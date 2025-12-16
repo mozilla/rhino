@@ -19,13 +19,13 @@ public class UnicodeProperties {
     // ==================================================================================
     // THREAD-LOCAL REUSABLE OBJECTS
     // ==================================================================================
-
-    /**
-     * Thread-local BitSet for Script_Extensions lookups. Reusing BitSet objects across calls
-     * prevents millions of allocations when running large test suites.
-     */
-    private static final ThreadLocal<BitSet> SCRIPT_EXTENSIONS_BITSET =
-            ThreadLocal.withInitial(BitSet::new);
+    //
+    // NOTE: Previously used ThreadLocal<BitSet> for Script_Extensions lookups, but this
+    // caused a memory leak. BitSet.clear() doesn't shrink the internal word array, so it
+    // grew unbounded across 105k+ tests, eventually causing OutOfMemoryError.
+    //
+    // Solution: Allocate new BitSet per call. The performance cost is negligible compared
+    // to the memory leak (BitSet allocation is ~100ns, test suite runs for minutes).
 
     // ==================================================================================
     // REGEX PATTERNS
@@ -712,8 +712,8 @@ public class UnicodeProperties {
                 return Character.UnicodeScript.of(codePoint) == UnicodeScriptValues[valueByte];
             case SCRIPT_EXTENSIONS:
                 // Script_Extensions uses ICU4J to check if codepoint belongs to the script
-                // Reuse thread-local BitSet to avoid millions of allocations
-                BitSet scriptExtensions = SCRIPT_EXTENSIONS_BITSET.get();
+                // Create new BitSet for each call to prevent memory leak
+                BitSet scriptExtensions = new BitSet();
                 ICU4JAdapter.getScriptExtensions(codePoint, scriptExtensions);
                 // Check if the desired script is in the extensions
                 return scriptExtensions.get(valueByte);
