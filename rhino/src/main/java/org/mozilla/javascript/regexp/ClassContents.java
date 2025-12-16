@@ -42,56 +42,57 @@ import java.util.ArrayList;
  * <p>Ranges are stored as flattened lists: [start1, end1, start2, end2, ...] for efficient
  * iteration.
  *
+ * <p><b>Performance Note:</b> Fields are package-private for performance-critical access during
+ * parsing and compilation within the regexp package. External access should use getter methods.
+ *
  * <p>Extracted from NativeRegExp to improve modularity during refactoring.
  *
  * @see SetOperation
  * @see RECharSet
  */
-class ClassContents {
-    /** True if normal class, false if negated (from [^...]). */
+final class ClassContents {
+    /** True if normal class, false if negated (from [^...]). Package-private for internal use. */
     boolean sense = true;
 
-    /** Individual BMP characters in the class. */
-    ArrayList<Character> chars = new ArrayList<>();
+    /** Individual BMP characters. Package-private for internal mutation during parsing. */
+    final ArrayList<Character> chars = new ArrayList<>();
 
     /**
-     * BMP character ranges stored as (start1, end1, start2, end2, ...). Each pair defines an
-     * inclusive range of characters.
+     * BMP character ranges stored as (start1, end1, start2, end2, ...). Package-private for
+     * internal mutation.
      */
-    ArrayList<Character> bmpRanges = new ArrayList<>();
+    final ArrayList<Character> bmpRanges = new ArrayList<>();
 
     /**
-     * Escape sequence nodes (\d, \D, \s, \S, \w, \W, \p{}, \P{}). These are stored as RENode
-     * objects with appropriate opcodes (REOP_DIGIT, REOP_UPROP, etc.).
+     * Escape sequence nodes (\d, \D, \s, \S, \w, \W, \p{}, \P{}). Package-private for internal
+     * mutation.
      */
-    ArrayList<RENode> escapeNodes = new ArrayList<>();
+    final ArrayList<RENode> escapeNodes = new ArrayList<>();
 
     /**
-     * Non-BMP character ranges stored as (start1, end1, start2, end2, ...). Values are int
-     * codepoints beyond U+FFFF.
+     * Non-BMP character ranges stored as (start1, end1, start2, end2, ...). Package-private for
+     * internal mutation.
      */
-    ArrayList<Integer> nonBMPRanges = new ArrayList<Integer>();
+    final ArrayList<Integer> nonBMPRanges = new ArrayList<>();
 
-    /** Individual non-BMP codepoints (beyond U+FFFF). */
-    ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
-
-    /**
-     * ES2024 v-flag set operations (intersection, subtraction). Applied left-to-right to the base
-     * character class.
-     */
-    ArrayList<SetOperation> setOperations = new ArrayList<>();
+    /** Individual non-BMP codepoints (beyond U+FFFF). Package-private for internal mutation. */
+    final ArrayList<Integer> nonBMPCodepoints = new ArrayList<>();
 
     /**
-     * ES2024 v-flag string literals from \q{...} syntax. Allows matching multi-character strings
-     * within character classes.
+     * ES2024 v-flag set operations (intersection, subtraction). Package-private for internal
+     * mutation.
      */
-    ArrayList<String> stringLiterals = new ArrayList<>();
+    final ArrayList<SetOperation> setOperations = new ArrayList<>();
 
     /**
-     * ES2024 Property of Strings (emoji sequences). StringMatcher objects for properties like
-     * \p{RGI_Emoji} that match multi-character sequences.
+     * ES2024 v-flag string literals from \q{...} syntax. Package-private for internal mutation.
      */
-    ArrayList<StringMatcher> stringMatchers = new ArrayList<>();
+    final ArrayList<String> stringLiterals = new ArrayList<>();
+
+    /**
+     * ES2024 Property of Strings (emoji sequences). Package-private for internal mutation.
+     */
+    final ArrayList<StringMatcher> stringMatchers = new ArrayList<>();
 
     /**
      * Merge all contents from another ClassContents object into this one.
