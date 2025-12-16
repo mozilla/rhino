@@ -4,20 +4,20 @@ import java.io.Serializable;
 import java.util.Arrays;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.debug.DebugFrame;
+import org.mozilla.javascript.debug.DebuggableScript;
 
 /** Class to hold data corresponding to one interpreted call stack frame. */
-class CallFrame implements Cloneable, Serializable {
+final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     private static final long serialVersionUID = -2843792508994958978L;
 
-    // fields marked "final" in a comment are effectively final except when they're
-    // modified
+    // fields marked "final" in a comment are effectively final except when they're modified
     // immediately after cloning.
 
     final CallFrame parentFrame;
     // amount of stack frames before this one on the interpretation stack
     final short frameIndex;
     // The frame that the iterator was executing.
-    final CallFrame previousInterpreterFrame;
+    final ACallFrame previousInterpreterFrame;
     final int parentPC;
     // If true indicates read-only frame that is a part of continuation
     boolean frozen;
@@ -64,7 +64,7 @@ class CallFrame implements Cloneable, Serializable {
             ScriptOrFn fnOrScript,
             InterpreterData code,
             CallFrame parentFrame,
-            CallFrame previousInterpreterFrame) {
+            ACallFrame previousInterpreterFrame) {
         idata = code;
         debuggerFrame =
                 cx.debugger != null ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor()) : null;
@@ -87,7 +87,7 @@ class CallFrame implements Cloneable, Serializable {
             this.parentPC =
                     previousInterpreterFrame == null
                             ? -1
-                            : previousInterpreterFrame.pcSourceLineStart;
+                            : previousInterpreterFrame.getPcSourceLineStart();
         } else {
             this.parentPC = parentFrame.pcSourceLineStart;
         }
@@ -112,12 +112,10 @@ class CallFrame implements Cloneable, Serializable {
                 makeOrphan ? null : original.previousInterpreterFrame);
     }
 
-    /*
-     * Copy the frame for *continuations*. Here we want to make
-     * fresh copies of the stack and everything related to it.
-     */
+    /* Copy the frame for *continuations*. Here we want to make
+    fresh copies of the stack and everything related to it. */
     private CallFrame(
-            CallFrame original, CallFrame parentFrame, CallFrame previousInterpreterFrame) {
+            CallFrame original, CallFrame parentFrame, ACallFrame previousInterpreterFrame) {
         if (!original.frozen) Kit.codeBug();
 
         stack = Arrays.copyOf(original.stack, original.stack.length);
@@ -132,7 +130,7 @@ class CallFrame implements Cloneable, Serializable {
             parentPC =
                     previousInterpreterFrame == null
                             ? -1
-                            : previousInterpreterFrame.pcSourceLineStart;
+                            : previousInterpreterFrame.getPcSourceLineStart();
         } else {
             frameIndex = original.frameIndex;
             parentPC = parentFrame.pcSourceLineStart;
@@ -162,15 +160,13 @@ class CallFrame implements Cloneable, Serializable {
         throwable = original.throwable;
     }
 
-    /*
-     * Copy the stack for running a generator. We're only doing
-     * this to maintain the correct chain of parents for exception
-     * stacks, so we'll reuse the existing stack arrays.
-     */
+    /* Copy the stack for running a generator. We're only doing
+    this to maintain the correct chain of parents for exception
+    stacks, so we'll reuse the existing stack arrays. */
     private CallFrame(
             CallFrame original,
             CallFrame parentFrame,
-            CallFrame previousInterpreterFrame,
+            ACallFrame previousInterpreterFrame,
             boolean keepFrozen) {
         if (!original.frozen) Kit.codeBug();
 
@@ -186,7 +182,7 @@ class CallFrame implements Cloneable, Serializable {
             parentPC =
                     previousInterpreterFrame == null
                             ? -1
-                            : previousInterpreterFrame.pcSourceLineStart;
+                            : previousInterpreterFrame.getPcSourceLineStart();
         } else {
             frameIndex = original.frameIndex;
             parentPC = parentFrame.pcSourceLineStart;
@@ -268,8 +264,7 @@ class CallFrame implements Cloneable, Serializable {
             ScriptRuntime.initScript(fnOrScript, thisObj, cx, scope, desc.isEvalFunction());
         }
 
-        // Defer default parameters and nested function declarations until activation
-        // scope
+        // Defer default parameters and nested function declarations until activation scope
         // creation
         // Ref: Ecma 2026, 10.2.11, FunctionDeclarationInstantiation
 
@@ -333,7 +328,7 @@ class CallFrame implements Cloneable, Serializable {
         return new CallFrame(this, false);
     }
 
-    CallFrame shallowCloneFrozen(CallFrame newPreviousInterpreeterFrame) {
+    CallFrame shallowCloneFrozen(ACallFrame newPreviousInterpreeterFrame) {
         return new CallFrame(this, this.parentFrame, newPreviousInterpreeterFrame, true);
     }
 
@@ -463,5 +458,39 @@ class CallFrame implements Cloneable, Serializable {
         } else {
             stack[offset] = value;
         }
+    }
+
+    // ACallFrame implementation
+
+    @Override
+    public int getFrameIndex() {
+        return frameIndex;
+    }
+
+    @Override
+    public ACallFrame getParentFrame() {
+        return parentFrame;
+    }
+
+    @Override
+    public int getPcSourceLineStart() {
+        return pcSourceLineStart;
+    }
+
+    @Override
+    public DebuggableScript getData() {
+        return fnOrScript.getDescriptor();
+    }
+
+    public int getParentPC() {
+        return parentPC;
+    }
+
+    public ACallFrame getPreviousInterpreterFrame() {
+        return previousInterpreterFrame;
+    }
+
+    public ScriptOrFn<?> getFnOrScript() {
+        return fnOrScript;
     }
 }
