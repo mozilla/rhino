@@ -1,6 +1,5 @@
 package org.mozilla.javascript.regexp;
 
-import com.ibm.icu.lang.UScript;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -715,8 +714,7 @@ public class UnicodeProperties {
                 // Script_Extensions uses ICU4J to check if codepoint belongs to the script
                 // Reuse thread-local BitSet to avoid millions of allocations
                 BitSet scriptExtensions = SCRIPT_EXTENSIONS_BITSET.get();
-                scriptExtensions.clear();
-                UScript.getScriptExtensions(codePoint, scriptExtensions);
+                ICU4JAdapter.getScriptExtensions(codePoint, scriptExtensions);
                 // Check if the desired script is in the extensions
                 return scriptExtensions.get(valueByte);
             default:
