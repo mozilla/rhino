@@ -241,7 +241,7 @@ class CharacterClassCompiler {
      * @return true if v-mode is enabled
      */
     static boolean isVMode(CompilerState state, ParserParameters params) {
-        return params.vMode;
+        return params.isVMode();
     }
 
     /**
@@ -480,12 +480,12 @@ class CharacterClassCompiler {
                 } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
                     thisCodePoint = NativeRegExp.BACKSPACE_CHAR;
-                } else if (params.unicodeMode && state.cp < state.cpend && src[state.cp] == '-') {
+                } else if (params.isUnicodeMode() && state.cp < state.cpend && src[state.cp] == '-') {
                     state.cp++;
                     thisCodePoint = '-';
                 } else {
                     if (!NativeRegExp.parseCharacterAndCharacterClassEscape(state, params)) {
-                        if (src[state.cp] == 'c' && !params.unicodeMode) {
+                        if (src[state.cp] == 'c' && !params.isUnicodeMode()) {
                             thisCodePoint = '\\';
                         } else {
                             NativeRegExp.reportError("msg.invalid.escape", "");
@@ -555,7 +555,7 @@ class CharacterClassCompiler {
                             }
 
                             if (inRange) {
-                                if (!params.unicodeMode) {
+                                if (!params.isUnicodeMode()) {
                                     contents.chars.add('-');
                                     inRange = false;
                                 } else {
@@ -566,7 +566,7 @@ class CharacterClassCompiler {
                                 // unless it's the start of a v-flag set operation (-- or &&)
                                 if (state.cp < state.cpend
                                         && src[state.cp] == '-'
-                                        && params.unicodeMode) {
+                                        && params.isUnicodeMode()) {
                                     boolean isSetOperationStart =
                                             (state.flags & NativeRegExp.JSREG_UNICODESETS) != 0
                                                     && state.cp + 1 < state.cpend

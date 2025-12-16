@@ -6,8 +6,10 @@
 
 package org.mozilla.javascript.regexp;
 
+import java.util.Objects;
+
 /**
- * Parameters controlling regular expression parsing behavior.
+ * Immutable value object controlling regular expression parsing behavior.
  *
  * <p>This class encapsulates the various modes and flags that affect how a regular expression
  * pattern is parsed. These parameters are determined by the regexp flags (u, v) and language
@@ -19,15 +21,17 @@ package org.mozilla.javascript.regexp;
  *   <li>Unicode Sets mode (v flag - ES2024 set operations, string literals, etc.)
  * </ul>
  *
+ * <p>Instances are immutable and thread-safe, suitable for sharing across parsing operations.
+ *
  * <p>Extracted from NativeRegExp to improve modularity during refactoring while maintaining API
  * compatibility.
  */
-class ParserParameters {
+final class ParserParameters {
     /** Whether named capture groups ((?<name>...)) are supported. */
-    boolean namedCaptureGroups;
+    private final boolean namedCaptureGroups;
 
     /** Whether Unicode mode (u flag) is enabled - affects escape sequences and matching. */
-    boolean unicodeMode;
+    private final boolean unicodeMode;
 
     /**
      * Whether Unicode Sets mode (v flag, ES2024) is enabled. This enables:
@@ -39,7 +43,7 @@ class ParserParameters {
      *   <li>Different escape rules in character classes
      * </ul>
      */
-    boolean vMode;
+    private final boolean vMode;
 
     /**
      * Creates parser parameters with specified parsing modes.
@@ -52,5 +56,54 @@ class ParserParameters {
         this.namedCaptureGroups = namedCaptureGroups;
         this.unicodeMode = unicodeMode;
         this.vMode = vMode;
+    }
+
+    /**
+     * Returns whether named capture groups are enabled.
+     *
+     * @return true if named capture groups ((?<name>...)) are supported
+     */
+    boolean hasNamedCaptureGroups() {
+        return namedCaptureGroups;
+    }
+
+    /**
+     * Returns whether Unicode mode is enabled.
+     *
+     * @return true if Unicode mode (u flag) is enabled
+     */
+    boolean isUnicodeMode() {
+        return unicodeMode;
+    }
+
+    /**
+     * Returns whether Unicode Sets mode (v flag) is enabled.
+     *
+     * @return true if v flag is enabled
+     */
+    boolean isVMode() {
+        return vMode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof ParserParameters)) return false;
+        ParserParameters other = (ParserParameters) obj;
+        return this.namedCaptureGroups == other.namedCaptureGroups
+                && this.unicodeMode == other.unicodeMode
+                && this.vMode == other.vMode;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(namedCaptureGroups, unicodeMode, vMode);
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "ParserParameters{namedCaptureGroups=%s, unicodeMode=%s, vMode=%s}",
+                namedCaptureGroups, unicodeMode, vMode);
     }
 }

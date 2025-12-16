@@ -684,7 +684,7 @@ public class NativeRegExp extends IdScriptableObject {
             // specified in \#, the \# is taken as an octal escape"
             CompilerState reParseState = null;
             if (state.maxBackReference > state.parenCount) {
-                if (params.unicodeMode) {
+                if (params.isUnicodeMode()) {
                     reportError("msg.invalid.escape", "");
                 } else {
                     // Need to reparse if pattern contains invalid backreferences:
@@ -694,8 +694,8 @@ public class NativeRegExp extends IdScriptableObject {
                     reParseState.backReferenceLimit = state.parenCount;
                 }
             }
-            if (state.namedCaptureGroupsFound && !params.namedCaptureGroups) {
-                params.namedCaptureGroups = true;
+            if (state.namedCaptureGroupsFound && !params.hasNamedCaptureGroups()) {
+                params = new ParserParameters(true, params.isUnicodeMode(), params.isVMode());
                 if (reParseState == null) {
                     reParseState = new CompilerState(cx, regexp.source, length, flags);
                 }
@@ -1208,7 +1208,7 @@ public class NativeRegExp extends IdScriptableObject {
         if (state.cp < state.cpend) {
             char c = src[state.cp++];
 
-            if (params.unicodeMode) {
+            if (params.isUnicodeMode()) {
                 switch (c) {
                     case '^':
                     case '$':
@@ -1238,7 +1238,7 @@ public class NativeRegExp extends IdScriptableObject {
                 }
             } else {
                 if ('c' != c) {
-                    if (params.namedCaptureGroups) {
+                    if (params.hasNamedCaptureGroups()) {
                         if ('k' != c) {
                             doFlat(state, c);
                             state.result.flatIndex = state.cp - 1;
@@ -1266,7 +1266,7 @@ public class NativeRegExp extends IdScriptableObject {
         for (int i = 0; i < nDigits; i++) {
             if (state.cp >= state.cpend) {
                 // in unicode mode, we need exact number of digits
-                if (params.unicodeMode || i == 0) {
+                if (params.isUnicodeMode() || i == 0) {
                     state.cp = termBegin;
                     return -1;
                 } else {
@@ -1323,10 +1323,10 @@ public class NativeRegExp extends IdScriptableObject {
 
         int n = readNHexDigits(state, 4, params);
         if (n < 0) {
-            if (params.unicodeMode) return parseUnicodeCodePoint(state);
+            if (params.isUnicodeMode()) return parseUnicodeCodePoint(state);
         }
 
-        if (params.unicodeMode) {
+        if (params.isUnicodeMode()) {
             if (Character.isHighSurrogate((char) n)) {
                 if (state.cp + 2 < state.cpend
                         && src[state.cp] == '\\'
@@ -1456,7 +1456,7 @@ public class NativeRegExp extends IdScriptableObject {
                 // in non-unicode mode, if next character is a decimal digit, then it must be
                 // an octal escape.
                 if (state.cp < state.cpend && isDigit(src[state.cp])) {
-                    if (params.unicodeMode) {
+                    if (params.isUnicodeMode()) {
                         reportError("msg.invalid.escape", "");
                         return false;
                     } else {
@@ -1476,7 +1476,7 @@ public class NativeRegExp extends IdScriptableObject {
             case '5':
             case '6':
             case '7':
-                if (params.unicodeMode) {
+                if (params.isUnicodeMode()) {
                     reportError("msg.invalid.escape", "");
                     return false;
                 }
@@ -1644,7 +1644,7 @@ public class NativeRegExp extends IdScriptableObject {
                             // decimal escape
                             termStart = state.cp - 1;
                             num = getDecimalValue(c, state, "msg.overlarge.backref");
-                            if (!params.unicodeMode && num > state.backReferenceLimit) {
+                            if (!params.isUnicodeMode() && num > state.backReferenceLimit) {
                                 reportWarning(state.cx, "msg.bad.backref", "");
                                 state.cp = termStart;
                                 if (!parseCharacterAndCharacterClassEscape(state, params))
@@ -1660,7 +1660,7 @@ public class NativeRegExp extends IdScriptableObject {
                             break;
                         case '0':
                             if (state.cp < state.cpend && src[state.cp] == '0') {
-                                if (params.unicodeMode) {
+                                if (params.isUnicodeMode()) {
                                     reportError("msg.invalid.escape", "");
                                 } else {
                                     /*
@@ -1680,7 +1680,7 @@ public class NativeRegExp extends IdScriptableObject {
                         default:
                             state.cp--;
                             if (!parseCharacterAndCharacterClassEscape(state, params)) {
-                                if (c == 'k' && params.namedCaptureGroups) {
+                                if (c == 'k' && params.hasNamedCaptureGroups()) {
                                     state.cp++;
                                     StringBuilder groupNameBuilder = new StringBuilder();
 
@@ -1698,7 +1698,7 @@ public class NativeRegExp extends IdScriptableObject {
                                         state.progLength += 3;
                                     } else reportError("msg.invalid.named.backref", "");
                                 } else if ('c' == c
-                                        && !params.unicodeMode) { // in ExtendedAtom, when
+                                        && !params.isUnicodeMode()) { // in ExtendedAtom, when
                                     // lookahead=c, parse the \\ as a
                                     // literal
                                     doFlat(state, '\\');
@@ -1817,10 +1817,10 @@ public class NativeRegExp extends IdScriptableObject {
                 return false;
             default:
                 {
-                    if (params.unicodeMode && (c == ']' || c == '{' || c == '}'))
+                    if (params.isUnicodeMode() && (c == ']' || c == '{' || c == '}'))
                         reportError("msg.lone.quantifier.bracket", "");
 
-                    if (params.unicodeMode
+                    if (params.isUnicodeMode()
                             && Character.isHighSurrogate(c)
                             && state.cp < state.cpend
                             && Character.isLowSurrogate(src[state.cp])) {
@@ -1923,7 +1923,7 @@ public class NativeRegExp extends IdScriptableObject {
             return false;
         }
 
-        if (params.unicodeMode && (term.op == REOP_ASSERT || term.op == REOP_ASSERT_NOT)) {
+        if (params.isUnicodeMode() && (term.op == REOP_ASSERT || term.op == REOP_ASSERT_NOT)) {
             reportError("msg.bad.quant", "");
             return false;
         }
