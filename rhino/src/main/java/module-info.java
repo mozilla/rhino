@@ -25,4 +25,5 @@ module org.mozilla.rhino {
     requires java.compiler;
     requires jdk.dynalink;
     requires transitive java.desktop;
+    requires static com.ibm.icu;
 }

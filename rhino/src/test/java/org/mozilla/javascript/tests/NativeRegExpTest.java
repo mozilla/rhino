@@ -617,6 +617,8 @@ public class NativeRegExpTest {
     public void lookbehindCapture() throws Exception {
         // This shows that the lookbehind matches the input backwards
         // this is why, the second capture group is 'bc' and not 'c'
+        // TODO: Implement backtracking support for lookbehind with multiple quantified captures
+        // where character classes overlap (e.g., ([ab]+)([bc]+))
         final String script =
                 "var regex = /(?<=([ab]+)([bc]+))$/;\n"
                         + "var result = 'abc'.match(regex);\n"
@@ -656,6 +658,7 @@ public class NativeRegExpTest {
     @Test
     public void lookbehindNested() throws Exception {
         // lookbehind inside a lookbehind matches the input backwards
+        // TODO: Implement backtracking support for lookbehind
         final String script =
                 "var regex = /(?<=([ab]+)([bc]+)(?<=([ab]+)([bc]+)))$/;\n"
                         + "var result = 'abcabc'.match(regex);\n"
@@ -672,6 +675,7 @@ public class NativeRegExpTest {
     @Test
     public void lookbehindLookahead() throws Exception {
         // lookahead inside a lookbehind matches forward
+        // TODO: Implement backtracking support for lookbehind
         final String script =
                 "var regex = /(?<=([ab]+)([bc]+)(?=([xy]+)([yz]+)))/;\n"
                         + "var result = 'abcxyz'.match(regex);\n"

@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation 'com.ibm.icu:icu4j:74.2'
     testImplementation project(':testutils')
 }
 
