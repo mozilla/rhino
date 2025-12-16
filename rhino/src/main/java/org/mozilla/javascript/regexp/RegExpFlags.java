@@ -9,10 +9,10 @@ package org.mozilla.javascript.regexp;
 import org.mozilla.javascript.Context;
 
 /**
- * Regular expression flag parsing and validation.
+ * Immutable value object representing regular expression flags.
  *
- * <p>Handles parsing of RegExp flag strings (e.g., "gim", "vu") into integer bitmasks and
- * validates flag combinations according to ECMAScript specifications.
+ * <p>Encapsulates RegExp flag parsing, validation, and querying. Instances are immutable and
+ * thread-safe.
  *
  * <p><b>Supported Flags:</b>
  *
@@ -35,11 +35,18 @@ import org.mozilla.javascript.Context;
  *   <li>u flag requires ES6+
  * </ul>
  *
- * <p>Extracted from NativeRegExp to improve modularity.
+ * <p><b>Usage:</b>
+ *
+ * <pre>
+ * RegExpFlags flags = RegExpFlags.parse("gim", cx);
+ * if (flags.isGlobal()) { ... }
+ * if (flags.isUnicodeMode()) { ... }
+ * int bitmask = flags.getBitmask(); // for legacy code
+ * </pre>
  */
-class RegExpFlags {
+final class RegExpFlags {
 
-    // Flag bit masks (must match NativeRegExp constants)
+    // Flag bit masks (package-private for NativeRegExp compatibility)
     static final int JSREG_GLOB = 0x01; // 'g'
     static final int JSREG_FOLD = 0x02; // 'i'
     static final int JSREG_MULTILINE = 0x04; // 'm'
@@ -49,8 +56,19 @@ class RegExpFlags {
     static final int JSREG_HASINDICES = 0x40; // 'd'
     static final int JSREG_UNICODESETS = 0x80; // 'v'
 
+    private final int bitmask;
+
     /**
-     * Parse flag string into integer bitmask.
+     * Private constructor. Use {@link #parse} or {@link #fromBitmask} to create instances.
+     *
+     * @param bitmask the flag bitmask
+     */
+    private RegExpFlags(int bitmask) {
+        this.bitmask = bitmask;
+    }
+
+    /**
+     * Parse flag string into RegExpFlags instance.
      *
      * <p>Validates:
      *
@@ -63,12 +81,12 @@ class RegExpFlags {
      *
      * @param flagString Flag string (e.g., "gim"), can be null
      * @param cx Context for language version checking
-     * @return Integer bitmask of flags
+     * @return RegExpFlags instance
      * @throws org.mozilla.javascript.EvaluatorException if flags are invalid
      */
-    static int parseFlags(String flagString, Context cx) {
+    static RegExpFlags parse(String flagString, Context cx) {
         if (flagString == null || flagString.isEmpty()) {
-            return 0;
+            return new RegExpFlags(0);
         }
 
         int flags = 0;
@@ -92,7 +110,26 @@ class RegExpFlags {
         // Validate flag combinations
         validateFlagCombinations(flags, cx);
 
-        return flags;
+        return new RegExpFlags(flags);
+    }
+
+    /**
+     * Create RegExpFlags from existing bitmask. For compatibility with legacy code.
+     *
+     * @param bitmask the flag bitmask
+     * @return RegExpFlags instance
+     */
+    static RegExpFlags fromBitmask(int bitmask) {
+        return new RegExpFlags(bitmask);
+    }
+
+    /**
+     * Get the flag bitmask. For compatibility with legacy code.
+     *
+     * @return the flag bitmask
+     */
+    int getBitmask() {
+        return bitmask;
     }
 
     /**
@@ -148,80 +185,165 @@ class RegExpFlags {
     /**
      * Check if Unicode mode is enabled (u or v flag).
      *
-     * @param flags Flag bitmask
      * @return true if either JSREG_UNICODE or JSREG_UNICODESETS is set
      */
-    static boolean isUnicodeMode(int flags) {
-        return (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
+    boolean isUnicodeMode() {
+        return (bitmask & JSREG_UNICODE) != 0 || (bitmask & JSREG_UNICODESETS) != 0;
     }
 
     /**
      * Check if UnicodeSets mode (v flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_UNICODESETS is set
      */
-    static boolean isUnicodeSetsMode(int flags) {
-        return (flags & JSREG_UNICODESETS) != 0;
+    boolean isUnicodeSetsMode() {
+        return (bitmask & JSREG_UNICODESETS) != 0;
     }
 
     /**
      * Check if case-insensitive mode (i flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_FOLD is set
      */
-    static boolean isCaseInsensitive(int flags) {
-        return (flags & JSREG_FOLD) != 0;
+    boolean isCaseInsensitive() {
+        return (bitmask & JSREG_FOLD) != 0;
     }
 
     /**
      * Check if global mode (g flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_GLOB is set
      */
-    static boolean isGlobal(int flags) {
-        return (flags & JSREG_GLOB) != 0;
+    boolean isGlobal() {
+        return (bitmask & JSREG_GLOB) != 0;
     }
 
     /**
      * Check if multiline mode (m flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_MULTILINE is set
      */
-    static boolean isMultiline(int flags) {
-        return (flags & JSREG_MULTILINE) != 0;
+    boolean isMultiline() {
+        return (bitmask & JSREG_MULTILINE) != 0;
     }
 
     /**
      * Check if dotAll mode (s flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_DOTALL is set
      */
-    static boolean isDotAll(int flags) {
-        return (flags & JSREG_DOTALL) != 0;
+    boolean isDotAll() {
+        return (bitmask & JSREG_DOTALL) != 0;
     }
 
     /**
      * Check if sticky mode (y flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_STICKY is set
      */
-    static boolean isSticky(int flags) {
-        return (flags & JSREG_STICKY) != 0;
+    boolean isSticky() {
+        return (bitmask & JSREG_STICKY) != 0;
     }
 
     /**
      * Check if hasIndices mode (d flag) is enabled.
      *
-     * @param flags Flag bitmask
      * @return true if JSREG_HASINDICES is set
      */
+    boolean hasIndices() {
+        return (bitmask & JSREG_HASINDICES) != 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof RegExpFlags)) return false;
+        RegExpFlags other = (RegExpFlags) obj;
+        return this.bitmask == other.bitmask;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(bitmask);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (isGlobal()) sb.append('g');
+        if (isCaseInsensitive()) sb.append('i');
+        if (isMultiline()) sb.append('m');
+        if (isDotAll()) sb.append('s');
+        if (isSticky()) sb.append('y');
+        if ((bitmask & JSREG_UNICODE) != 0) sb.append('u');
+        if (hasIndices()) sb.append('d');
+        if (isUnicodeSetsMode()) sb.append('v');
+        return sb.toString();
+    }
+
+    // Static helper methods for backward compatibility with code that uses int flags
+    // TODO: Gradually migrate all callers to use RegExpFlags instances
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isUnicodeMode()} instead
+     */
+    static boolean isUnicodeMode(int flags) {
+        return fromBitmask(flags).isUnicodeMode();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isUnicodeSetsMode()} instead
+     */
+    static boolean isUnicodeSetsMode(int flags) {
+        return fromBitmask(flags).isUnicodeSetsMode();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isCaseInsensitive()} instead
+     */
+    static boolean isCaseInsensitive(int flags) {
+        return fromBitmask(flags).isCaseInsensitive();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isGlobal()} instead
+     */
+    static boolean isGlobal(int flags) {
+        return fromBitmask(flags).isGlobal();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isMultiline()} instead
+     */
+    static boolean isMultiline(int flags) {
+        return fromBitmask(flags).isMultiline();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isDotAll()} instead
+     */
+    static boolean isDotAll(int flags) {
+        return fromBitmask(flags).isDotAll();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #isSticky()} instead
+     */
+    static boolean isSticky(int flags) {
+        return fromBitmask(flags).isSticky();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} and {@link #hasIndices()} instead
+     */
     static boolean hasIndices(int flags) {
-        return (flags & JSREG_HASINDICES) != 0;
+        return fromBitmask(flags).hasIndices();
+    }
+
+    /**
+     * @deprecated Use {@link #parse} instead
+     */
+    static int parseFlags(String flagString, Context cx) {
+        return parse(flagString, cx).getBitmask();
     }
 }
