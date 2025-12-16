@@ -654,58 +654,9 @@ public class NativeRegExp extends IdScriptableObject {
     static RECompiled compileRE(Context cx, String str, String global, boolean flat) {
         RECompiled regexp = new RECompiled(str);
         int length = str.length();
-        int flags = 0;
-        if (global != null) {
-            for (int i = 0; i < global.length(); i++) {
-                char c = global.charAt(i);
-                int f = 0;
-                switch (c) {
-                    case 'g':
-                        f = JSREG_GLOB;
-                        break;
-                    case 'i':
-                        f = JSREG_FOLD;
-                        break;
-                    case 'm':
-                        f = JSREG_MULTILINE;
-                        break;
-                    case 's':
-                        f = JSREG_DOTALL;
-                        break;
-                    case 'y':
-                        f = JSREG_STICKY;
-                        break;
-                    case 'u':
-                        f = JSREG_UNICODE;
-                        break;
-                    case 'd':
-                        f = JSREG_HASINDICES;
-                        break;
-                    case 'v':
-                        f = JSREG_UNICODESETS;
-                        break;
-                    default:
-                        reportError("msg.invalid.re.flag", String.valueOf(c));
-                }
-                if ((flags & f) != 0) {
-                    reportError("msg.invalid.re.flag", String.valueOf(c));
-                }
-                flags |= f;
-            }
-        }
 
-        // Validate flag combinations
-        // u and v flags are mutually exclusive (ES2024 spec)
-        if ((flags & JSREG_UNICODE) != 0 && (flags & JSREG_UNICODESETS) != 0) {
-            reportError("msg.invalid.re.flag", "u and v");
-        }
-        // Note: u+i and v+i combinations are supported with Unicode case folding
-
-        // We support unicode mode in ES6 and later.
-        if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
-            reportError("msg.invalid.re.flag", "u");
-        }
-
+        // Parse and validate flags using RegExpFlags
+        int flags = RegExpFlags.parseFlags(global, cx);
         regexp.flags = flags;
 
         CompilerState state = new CompilerState(cx, regexp.source, length, flags);
@@ -870,9 +821,11 @@ public class NativeRegExp extends IdScriptableObject {
      *
      * @param flags The regexp flags
      * @return true if either JSREG_UNICODE or JSREG_UNICODESETS flag is set
+     * @deprecated Use RegExpFlags.isUnicodeMode(flags) instead
      */
+    @Deprecated
     private static boolean isUnicodeMode(int flags) {
-        return (flags & JSREG_UNICODE) != 0 || (flags & JSREG_UNICODESETS) != 0;
+        return RegExpFlags.isUnicodeMode(flags);
     }
 
     /**
@@ -913,18 +866,15 @@ public class NativeRegExp extends IdScriptableObject {
     // ==================================================================================
     // INNER CLASSES (within NativeRegExp)
     // ==================================================================================
-
-    static class ParserParameters {
-        boolean namedCaptureGroups;
-        boolean unicodeMode;
-        boolean vMode; // ES2024 unicodeSets mode with different escape rules
-
-        ParserParameters(boolean namedCaptureGroups, boolean unicodeMode, boolean vMode) {
-            this.namedCaptureGroups = namedCaptureGroups;
-            this.unicodeMode = unicodeMode;
-            this.vMode = vMode;
-        }
-    }
+    //
+    // NOTE: The following classes have been extracted to separate files for better modularity:
+    // - ParserParameters.java
+    // - SetOperationType.java
+    // - SetOperation.java
+    // - ClassContents.java
+    //
+    // Remaining inner classes (to be extracted in future refactoring):
+    // - RENode, RECompiled, CompilerState (already package-level, easy to extract)
 
     /*
      * Top-down regular expression grammar, based closely on Perl4.
@@ -1734,55 +1684,8 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     /** ES2024 v-flag set operation types: subtraction (--) and intersection (&&). */
-    enum SetOperationType {
-        SUBTRACT, // -- operator
-        INTERSECT // && operator
-    }
-
-    /** Represents a set operation in ES2024 v-flag character classes. */
-    static class SetOperation {
-        SetOperationType type;
-        ClassContents operand;
-        RECharSet operandCharSet; // Pre-built RECharSet for efficient matching
-
-        SetOperation(SetOperationType type, ClassContents operand) {
-            this.type = type;
-            this.operand = operand;
-        }
-    }
-
-    /**
-     * Represents parsed character class contents. Stores individual chars, ranges, escape nodes
-     * (\d, \p{}), and ES2024 v-flag features (string literals, set operations).
-     */
-    static class ClassContents {
-        boolean sense = true;
-        ArrayList<Character> chars = new ArrayList<>();
-        ArrayList<Character> bmpRanges =
-                new ArrayList<>(); // ranges stored as (start1, end1, start2, end2, ...)
-        ArrayList<RENode> escapeNodes = new ArrayList<>();
-        ArrayList<Integer> nonBMPRanges =
-                new ArrayList<Integer>(); // ranges stored as (start1, end1, start2, end2, ...)
-        ArrayList<Integer> nonBMPCodepoints = new ArrayList<Integer>();
-        ArrayList<SetOperation> setOperations = new ArrayList<>(); // For 'v' flag set operations
-        ArrayList<String> stringLiterals = new ArrayList<>(); // For 'v' flag \q{...} syntax
-        ArrayList<StringMatcher> stringMatchers =
-                new ArrayList<>(); // For Property of Strings (emoji sequences)
-
-        /**
-         * Merge all contents from another ClassContents object into this one. Used for nested
-         * classes and set operations.
-         */
-        void mergeFrom(ClassContents other) {
-            this.chars.addAll(other.chars);
-            this.bmpRanges.addAll(other.bmpRanges);
-            this.nonBMPCodepoints.addAll(other.nonBMPCodepoints);
-            this.nonBMPRanges.addAll(other.nonBMPRanges);
-            this.stringLiterals.addAll(other.stringLiterals);
-            this.stringMatchers.addAll(other.stringMatchers);
-            this.escapeNodes.addAll(other.escapeNodes);
-        }
-    }
+    // SetOperationType, SetOperation, and ClassContents have been extracted to separate files.
+    // See: SetOperationType.java, SetOperation.java, ClassContents.java
 
     /**
      * Parse \q{...} string literals in v-mode. Expects state.cp to point to '\' before 'q'.
@@ -4408,7 +4311,8 @@ public class NativeRegExp extends IdScriptableObject {
         }
     }
 
-    private static void reportError(String messageId, String arg) {
+    // Package-private to allow access from extracted classes (RegExpFlags, etc.)
+    static void reportError(String messageId, String arg) {
         String msg = ScriptRuntime.getMessageById(messageId, arg);
         throw ScriptRuntime.constructError("SyntaxError", msg);
     }
@@ -5160,7 +5064,7 @@ class RENode {
     /* or a character class */
     int bmsize; /* bitmap size, based on max char code */
     int index; /* index into class list */
-    NativeRegExp.ClassContents classContents;
+    ClassContents classContents;
 
     /* or a literal sequence */
     char chr; /* of one character */
@@ -5317,13 +5221,13 @@ final class RECharSet implements Serializable {
     ArrayList<Integer> unicodeProps = new ArrayList<Integer>();
     ArrayList<Integer> negUnicodeProps = new ArrayList<Integer>();
 
-    RECharSet(NativeRegExp.ClassContents classContents, int length) {
+    RECharSet(ClassContents classContents, int length) {
         this.length = length;
         this.classContents = classContents;
     }
 
     final int length;
-    final NativeRegExp.ClassContents classContents;
+    final ClassContents classContents;
 
     transient volatile boolean converted;
     transient volatile byte[] bits;
