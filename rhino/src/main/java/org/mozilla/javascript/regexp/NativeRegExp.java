@@ -4424,6 +4424,121 @@ class RENode {
 
     /* or a string matcher (ES2024 universal string matching) */
     StringMatcher stringMatcher;
+
+    /**
+     * Fluent builder for RENode construction.
+     *
+     * <p>Provides a type-safe, readable API for creating RENode instances:
+     *
+     * <pre>
+     * RENode node = RENode.builder(REOP_QUANT)
+     *     .range(0, -1)
+     *     .greedy(true)
+     *     .kid(childNode)
+     *     .build();
+     * </pre>
+     *
+     * <p>The builder mutates an underlying RENode and returns it via build(). This is acceptable
+     * as RENodes are created during parsing and remain immutable afterward.
+     */
+    static class Builder {
+        private final RENode node;
+
+        Builder(byte op) {
+            this.node = new RENode(op);
+        }
+
+        Builder next(RENode next) {
+            node.next = next;
+            return this;
+        }
+
+        Builder kid(RENode kid) {
+            node.kid = kid;
+            return this;
+        }
+
+        Builder kid2(RENode kid2) {
+            node.kid2 = kid2;
+            return this;
+        }
+
+        Builder parenIndex(int parenIndex) {
+            node.parenIndex = parenIndex;
+            return this;
+        }
+
+        Builder range(int min, int max) {
+            node.min = min;
+            node.max = max;
+            return this;
+        }
+
+        Builder parenCount(int parenCount) {
+            node.parenCount = parenCount;
+            return this;
+        }
+
+        Builder greedy(boolean greedy) {
+            node.greedy = greedy;
+            return this;
+        }
+
+        Builder classInfo(int bmsize, int index, ClassContents classContents) {
+            node.bmsize = bmsize;
+            node.index = index;
+            node.classContents = classContents;
+            return this;
+        }
+
+        Builder literal(char chr, int length, int flatIndex) {
+            node.chr = chr;
+            node.length = length;
+            node.flatIndex = flatIndex;
+            return this;
+        }
+
+        Builder surrogatePair(char chr, char lowSurrogate) {
+            node.chr = chr;
+            node.lowSurrogate = lowSurrogate;
+            return this;
+        }
+
+        Builder namedCapture(String name) {
+            node.namedCaptureGroupName = name;
+            return this;
+        }
+
+        Builder namedBackRef(int index) {
+            node.namedCaptureGroupBackRefIndex = index;
+            return this;
+        }
+
+        Builder unicodeProperty(int unicodeProperty, String propertyName) {
+            node.unicodeProperty = unicodeProperty;
+            node.propertyName = propertyName;
+            return this;
+        }
+
+        Builder stringMatcher(StringMatcher stringMatcher) {
+            node.stringMatcher = stringMatcher;
+            return this;
+        }
+
+        RENode build() {
+            return node;
+        }
+    }
+
+    /**
+     * Creates a new builder for constructing an RENode.
+     *
+     * @param op the regex operation bytecode
+     * @return a new builder instance
+     */
+    static Builder builder(byte op) {
+        return new Builder(op);
+    }
 }
 
 class CompilerState {
