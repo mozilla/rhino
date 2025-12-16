@@ -28,16 +28,16 @@ package org.mozilla.javascript.regexp;
  * @see SetOperationType
  * @see ClassContents
  */
-class SetOperation {
+final class SetOperation {
     /** The type of set operation (SUBTRACT or INTERSECT). */
-    SetOperationType type;
+    private final SetOperationType type;
 
     /** The right-hand operand of the operation (parsed character class contents). */
-    ClassContents operand;
+    private final ClassContents operand;
 
     /**
      * Pre-built RECharSet for efficient matching at runtime. Computed during compilation by
-     * buildOperandCharSets().
+     * buildOperandCharSets(). Package-private for mutation during compilation.
      */
     RECharSet operandCharSet;
 
@@ -50,5 +50,32 @@ class SetOperation {
     SetOperation(SetOperationType type, ClassContents operand) {
         this.type = type;
         this.operand = operand;
+    }
+
+    /**
+     * Gets the operation type.
+     *
+     * @return the operation type (SUBTRACT or INTERSECT)
+     */
+    SetOperationType getType() {
+        return type;
+    }
+
+    /**
+     * Gets the right-hand operand.
+     *
+     * @return the operand character class contents
+     */
+    ClassContents getOperand() {
+        return operand;
+    }
+
+    /**
+     * Gets the pre-built character set for runtime matching.
+     *
+     * @return the compiled character set, or null if not yet compiled
+     */
+    RECharSet getOperandCharSet() {
+        return operandCharSet;
     }
 }

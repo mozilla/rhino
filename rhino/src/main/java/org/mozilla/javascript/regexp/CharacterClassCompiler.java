@@ -679,9 +679,9 @@ class CharacterClassCompiler {
         }
 
         for (SetOperation op : contents.setOperations) {
-            op.operandCharSet = new RECharSet(op.operand, bmsize);
+            op.operandCharSet = new RECharSet(op.getOperand(), bmsize);
             // Recursively build for nested set operations
-            buildOperandCharSets(op.operand, bmsize);
+            buildOperandCharSets(op.getOperand(), bmsize);
         }
     }
 }

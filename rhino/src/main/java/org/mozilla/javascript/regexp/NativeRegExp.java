@@ -2504,17 +2504,17 @@ public class NativeRegExp extends IdScriptableObject {
         // Apply set operations for 'v' flag
         if (!charSet.classContents.setOperations.isEmpty()) {
             for (SetOperation op : charSet.classContents.setOperations) {
-                if (op.type == SetOperationType.SUBTRACT) {
+                if (op.getType() == SetOperationType.SUBTRACT) {
                     // Remove from result if in subtract operand
-                    boolean operandMatches = classMatcher(gData, op.operandCharSet, codePoint);
+                    boolean operandMatches = classMatcher(gData, op.getOperandCharSet(), codePoint);
                     if (operandMatches) {
                         matches = false;
                     }
-                } else if (op.type == SetOperationType.INTERSECT) {
+                } else if (op.getType() == SetOperationType.INTERSECT) {
                     // Keep only if also in intersect operand
                     // Optimization: skip check if matches is already false
                     if (matches) {
-                        boolean operandMatches = classMatcher(gData, op.operandCharSet, codePoint);
+                        boolean operandMatches = classMatcher(gData, op.getOperandCharSet(), codePoint);
                         matches = operandMatches;
                     }
                 }
