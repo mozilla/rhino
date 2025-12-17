@@ -904,6 +904,115 @@ public class ScriptRuntime {
         return result;
     }
 
+    /**
+     * Helper for object rest properties in destructuring. Creates a shallow copy of the source
+     * object excluding the specified keys.
+     *
+     * @param cx the current Context
+     * @param scope the current scope
+     * @param source the source object
+     * @param excludeKeys array of property names to exclude
+     * @return a new object with all properties except the excluded ones
+     */
+    // TODO - simplify:
+    // 1. Integer IDs are converted to strings for exclusion checking (line ~935), which may not
+    //    correctly distinguish between numeric and string properties
+    // 2. The enumerable check uses double-negative logic that could be clearer
+    // 3. Two separate loops are needed (regular properties vs symbols) because getIds() doesn't
+    //    return symbols - could we unify this?
+    // 4. Integer vs String ID handling is scattered across attribute checking and value copying
+    public static Scriptable doObjectRest(
+            Context cx, Scriptable scope, Object source, Object[] excludeKeys) {
+        Scriptable sourceObj = toObject(cx, scope, source);
+        Scriptable result = cx.newObject(scope);
+
+        // Collect keys to exclude
+        java.util.Set<String> exclude = new java.util.HashSet<>();
+        java.util.Set<Object> excludeSymbols = new java.util.HashSet<>();
+        for (Object key : excludeKeys) {
+            if (key != null) {
+                if (key instanceof org.mozilla.javascript.Symbol) {
+                    excludeSymbols.add(key);
+                } else {
+                    exclude.add(toString(key));
+                }
+            }
+        }
+
+        // Copy all enumerable properties except excluded ones
+        Object[] ids = sourceObj.getIds();
+        for (Object id : ids) {
+            String propName;
+            if (id instanceof String) {
+                propName = (String) id;
+            } else {
+                propName = toString(id);
+            }
+
+            // Skip excluded keys
+            if (exclude.contains(propName)) {
+                continue;
+            }
+
+            // Now check if property is enumerable
+            int attributes = 0;
+            if (sourceObj instanceof ScriptableObject) {
+                if (id instanceof String) {
+                    attributes = ((ScriptableObject) sourceObj).getAttributes(propName);
+                } else if (id instanceof Integer) {
+                    attributes = ((ScriptableObject) sourceObj).getAttributes((Integer) id);
+                }
+            }
+
+            // Skip non-enumerable properties
+            if (!(sourceObj instanceof ScriptableObject)
+                    || (attributes & ScriptableObject.DONTENUM) == 0) {
+                // Get the property values
+                Object value;
+                if (id instanceof Integer) {
+                    int index = ((Integer) id).intValue();
+                    value = getObjectIndex(sourceObj, index, cx);
+                    if (value != Scriptable.NOT_FOUND) {
+                        // Use integer-based put for integer properties
+                        result.put(index, result, value);
+                    }
+                } else {
+                    value = getObjectProp(sourceObj, propName, cx, scope);
+                    if (value != Scriptable.NOT_FOUND) {
+                        result.put(propName, result, value);
+                    }
+                }
+            }
+        }
+
+        // Handle Symbol properties if sourceObj is a ScriptableObject
+        if (sourceObj instanceof ScriptableObject) {
+            ScriptableObject so = (ScriptableObject) sourceObj;
+            try (var map = so.startCompoundOp(false)) {
+                Object[] allIds =
+                        so.getIds(map, false, true); // Get only enumerable, including symbols
+                for (Object id : allIds) {
+                    if (id instanceof org.mozilla.javascript.Symbol) {
+                        org.mozilla.javascript.Symbol sym = (org.mozilla.javascript.Symbol) id;
+
+                        // Skip if this symbol is excluded
+                        if (excludeSymbols.contains(sym)) {
+                            continue;
+                        }
+
+                        // Set symbol property values
+                        Object value = so.get(sym, so);
+                        if (value != Scriptable.NOT_FOUND && result instanceof ScriptableObject) {
+                            ((ScriptableObject) result).put(sym, result, value);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
     public static String escapeString(String s) {
         return escapeString(s, '"');
     }
