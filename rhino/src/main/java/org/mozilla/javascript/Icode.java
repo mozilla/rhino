@@ -165,8 +165,11 @@ abstract class Icode {
             // spread
             Icode_SPREAD = Icode_DELPROP_SUPER - 1,
 
+            // object rest - create object excluding extracted keys
+            Icode_OBJECT_REST = Icode_SPREAD - 1,
+
             // Last icode
-            MIN_ICODE = Icode_SPREAD;
+            MIN_ICODE = Icode_OBJECT_REST;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -358,6 +361,8 @@ abstract class Icode {
                 return "DELPROP_SUPER";
             case Icode_SPREAD:
                 return "SPREAD";
+            case Icode_OBJECT_REST:
+                return "OBJECT_REST";
         }
 
         // icode without name

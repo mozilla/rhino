@@ -467,7 +467,19 @@ public class NodeTransformer {
                             objectLiteral.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
-                    current = c.getFirstChild(); // should be a NAME, checked below
+                    // Process all NAME children of the inner LET node (not just the first)
+                    // This includes the main temp variable ($0) and any computed property temps
+                    // ($1, $2, etc.)
+                    for (Node child = c.getFirstChild(); child != null; child = child.getNext()) {
+                        if (child.getType() != Token.NAME) throw Kit.codeBug();
+                        list.add(ScriptRuntime.getIndexObject(child.getString()));
+                        Node init = child.getFirstChild();
+                        if (init == null) {
+                            init = new Node(Token.VOID, Node.newNumber(0.0));
+                        }
+                        objectLiteral.addChildToBack(init);
+                    }
+                    continue; // Already processed all children, move to next sibling of LETEXPR
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
@@ -500,7 +512,20 @@ public class NodeTransformer {
                     }
                     // We're removing the LETEXPR, so move the symbols
                     Scope.joinScopes((Scope) current, (Scope) scopeNode);
-                    current = c.getFirstChild(); // should be a NAME, checked below
+                    // Process all NAME children of the inner LET node (not just the first)
+                    // This includes the main temp variable ($0) and any computed property temps
+                    // ($1, $2, etc.)
+                    for (Node child = c.getFirstChild(); child != null; child = child.getNext()) {
+                        if (child.getType() != Token.NAME) throw Kit.codeBug();
+                        Node stringNode = Node.newString(child.getString());
+                        stringNode.setScope((Scope) scopeNode);
+                        Node init = child.getFirstChild();
+                        if (init == null) {
+                            init = new Node(Token.VOID, Node.newNumber(0.0));
+                        }
+                        newVars.addChildToBack(new Node(Token.SETVAR, stringNode, init));
+                    }
+                    continue; // Already processed all children, move to next sibling of LETEXPR
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 Node stringNode = Node.newString(current.getString());
