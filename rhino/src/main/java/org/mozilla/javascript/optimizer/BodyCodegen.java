@@ -987,6 +987,54 @@ class BodyCodegen {
                 }
                 break;
 
+            case Token.OBJECT_REST:
+                {
+                    // Handle object rest operation: {...rest} in destructuring
+                    cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
+                    generateExpression(child, node); // source
+
+                    Object[] excludedKeys = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+
+                    // Create Object array to hold all keys
+                    cfw.addPush(excludedKeys.length);
+                    cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                    int arrayIndex = 0;
+
+                    // Fill static keys
+                    for (Object key : excludedKeys) {
+                        if (!(key instanceof org.mozilla.javascript.Node)) {
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(arrayIndex++);
+                            cfw.addPush(key.toString());
+                            cfw.add(ByteCode.AASTORE);
+                        }
+                    }
+
+                    // Fill computed keys (evaluate expressions at runtime)
+                    for (Object key : excludedKeys) {
+                        if (key instanceof org.mozilla.javascript.Node) {
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(arrayIndex++);
+                            // Generate code to evaluate the computed key expression
+                            generateExpression((org.mozilla.javascript.Node) key, node);
+                            cfw.add(ByteCode.AASTORE);
+                        }
+                    }
+
+                    // Stack: [Context, Scriptable (scope), Object (source), Object[] (excludeKeys)]
+                    // Call: ScriptRuntime.doObjectRest(cx, scope, source, excludeKeys) ->
+                    // Scriptable
+                    addScriptRuntimeInvoke(
+                            "doObjectRest",
+                            "(Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Ljava/lang/Object;"
+                                    + "[Ljava/lang/Object;"
+                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                }
+                break;
+
             case Token.CALL:
             case Token.NEW:
                 {

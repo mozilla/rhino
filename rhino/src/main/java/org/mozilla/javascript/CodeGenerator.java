@@ -604,6 +604,49 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(1);
                 break;
 
+            case Token.OBJECT_REST:
+                {
+                    // Handle object rest operation: {...rest} in destructuring
+                    visitExpression(child, 0); // source object
+                    Object[] excludedKeys = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+
+                    // Count static vs computed keys and build static key indices array
+                    int computedKeyCount = 0;
+                    java.util.List<Integer> staticKeyIndices = new java.util.ArrayList<>();
+                    for (Object key : excludedKeys) {
+                        if (key instanceof Node) {
+                            computedKeyCount++;
+                        } else {
+                            String keyStr = key.toString();
+                            int keyIndex = strings.getOrDefault(keyStr, -1);
+                            if (keyIndex == -1) {
+                                keyIndex = strings.size();
+                                strings.put(keyStr, keyIndex);
+                            }
+                            staticKeyIndices.add(keyIndex);
+                        }
+                    }
+
+                    // Store static key indices in literalIds
+                    int staticKeysLiteralId = literalIds.size();
+                    int[] staticKeyArray = staticKeyIndices.stream().mapToInt(i -> i).toArray();
+                    literalIds.add(staticKeyArray);
+
+                    // Evaluate & push computed keys onto stack
+                    for (Object key : excludedKeys) {
+                        if (key instanceof Node) {
+                            visitExpression((Node) key, 0); // Evaluate computed key expression
+                        }
+                    }
+
+                    // Bytecode: [Icode_OBJECT_REST] [literalId:index] [computedKeyCount:uint8]
+                    addIndexOp(Icode_OBJECT_REST, staticKeysLiteralId);
+                    addUint8(computedKeyCount);
+
+                    stackChange(-computedKeyCount); // Computed keys removed from stack
+                }
+                break;
+
             case Token.REF_CALL:
             case Token.CALL:
             case Token.NEW:
