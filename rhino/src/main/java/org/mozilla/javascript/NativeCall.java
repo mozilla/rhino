@@ -24,7 +24,11 @@ public final class NativeCall extends IdScriptableObject {
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    NativeCall() {}
+    NativeCall() {
+        function = null;
+        originalArgs = null;
+        isStrict = false;
+    }
 
     NativeCall(
             JSFunction function,
@@ -142,9 +146,9 @@ public final class NativeCall extends IdScriptableObject {
 
     private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
 
-    JSFunction function;
-    Object[] originalArgs;
-    boolean isStrict;
+    final JSFunction function;
+    final Object[] originalArgs;
+    final boolean isStrict;
 
     transient NativeCall parentActivationCall;
 }
