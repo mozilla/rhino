@@ -108,8 +108,8 @@ public class ComputedPropertiesTest {
     }
 
     @Test
-    public void unsupportedInDestructuringInVariableDeclaration() {
-        Utils.assertEvaluatorExceptionES6(
-                "Unsupported computed property in destructuring. (test#1)", "var { [a]: b } = {};");
+    public void supportedInDestructuringInVariableDeclaration() {
+        Utils.assertWithAllModes_ES6(
+                100, Utils.lines("var a = 'x';", "var { [a]: b } = { x: 100 };", "b"));
     }
 }
