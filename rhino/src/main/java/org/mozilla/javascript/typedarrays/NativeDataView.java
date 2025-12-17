@@ -74,6 +74,7 @@ public class NativeDataView extends NativeArrayBufferView {
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
+        constructor.definePrototypeMethod(scope, "getFloat16", 1, NativeDataView::js_getFloat16);
         constructor.definePrototypeMethod(scope, "getFloat32", 1, NativeDataView::js_getFloat32);
         constructor.definePrototypeMethod(scope, "getFloat64", 1, NativeDataView::js_getFloat64);
         constructor.definePrototypeMethod(scope, "getInt8", 1, NativeDataView::js_getInt8);
@@ -239,6 +240,12 @@ public class NativeDataView extends NativeArrayBufferView {
         return realThis.js_getFloat(cx, scope, 8, args);
     }
 
+    private static Object js_getFloat16(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getFloat(cx, scope, 2, args);
+    }
+
     private Object js_getFloat(Context cx, Scriptable scope, int bytes, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
@@ -254,6 +261,8 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         switch (bytes) {
+            case 2:
+                return ByteIo.readFloat16(arrayBuffer.buffer, offset + pos, littleEndian);
             case 4:
                 return ByteIo.readFloat32(arrayBuffer.buffer, offset + pos, littleEndian);
             case 8:
@@ -386,6 +395,13 @@ public class NativeDataView extends NativeArrayBufferView {
         return Undefined.instance;
     }
 
+    private static Object js_setFloat16(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setFloat(cx, scope, 2, args);
+        return Undefined.instance;
+    }
+
     private void js_setFloat(Context cx, Scriptable scope, int bytes, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
@@ -403,6 +419,9 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         switch (bytes) {
+            case 2:
+                ByteIo.writeFloat16(arrayBuffer.buffer, offset + pos, val, littleEndian);
+                break;
             case 4:
                 ByteIo.writeFloat32(arrayBuffer.buffer, offset + pos, val, littleEndian);
                 break;
