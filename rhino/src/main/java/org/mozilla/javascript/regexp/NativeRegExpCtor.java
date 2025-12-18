@@ -19,9 +19,11 @@ import org.mozilla.javascript.Undefined;
 /**
  * This class implements the RegExp constructor native object.
  *
- * <p>Revision History: Implementation in C by Brendan Eich Initial port to Java by Norris Boyd from
- * jsregexp.c version 1.36 Merged up to version 1.38, which included Unicode support. Merged bug
- * fixes in version 1.39. Merged JSFUN13_BRANCH changes up to 1.32.2.11
+ * <p>See ECMA 262 §22.2.
+ *
+ * <p>Implementation in C by Brendan Eich. Port to Java by Norris Boyd from jsregexp.c version 1.36.
+ * Merged up to version 1.38 with Unicode support. Merged bug fixes in version 1.39 and
+ * JSFUN13_BRANCH changes up to 1.32.2.11. ES2025 RegExp.escape() added.
  *
  * @author Brendan Eich
  * @author Norris Boyd
@@ -81,6 +83,22 @@ class NativeRegExpCtor {
                     null,
                     PERMANENT);
         }
+
+        // ES2025: RegExp.escape(S)
+        ctor.defineConstructorMethod(
+                scope,
+                "escape",
+                1,
+                (thisCx, thisScope, thisObj, args) -> {
+                    if (args.length == 0) {
+                        return js_escape("undefined");
+                    }
+                    String str = ScriptRuntime.toString(args[0]);
+                    return js_escape(str);
+                },
+                PERMANENT,
+                PERMANENT);
+
         return ctor;
     }
 
@@ -112,5 +130,49 @@ class NativeRegExpCtor {
     private static RegExpImpl getImpl() {
         Context cx = Context.getCurrentContext();
         return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
+    }
+
+    /**
+     * ES2025 §22.2.4.3 RegExp.escape(S). Escapes RegExp syntax characters for safe use in patterns.
+     *
+     * @param str The string to escape
+     * @return Escaped string safe for use in RegExp pattern
+     */
+    private static String js_escape(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+
+        StringBuilder result = new StringBuilder(str.length() * 2);
+
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+
+            // ES2025: Escape syntax characters
+            switch (c) {
+                case '^':
+                case '$':
+                case '\\':
+                case '.':
+                case '*':
+                case '+':
+                case '?':
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '{':
+                case '}':
+                case '|':
+                    result.append('\\');
+                    result.append(c);
+                    break;
+                default:
+                    result.append(c);
+                    break;
+            }
+        }
+
+        return result.toString();
     }
 }

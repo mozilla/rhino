@@ -12,20 +12,8 @@ import java.util.Optional;
 /**
  * Substring view that avoids string copying.
  *
- * <p>Represents a substring by storing a reference to the original string plus offset and length,
- * avoiding the memory overhead of creating new String objects for temporary substrings during regex
- * matching.
- *
- * <p>This class is particularly useful for capture groups in regular expressions, where a pattern
- * might create hundreds of temporary substrings. By storing only references and offsets, we
- * minimize memory allocation and garbage collection overhead.
- *
- * <p><b>Performance Note:</b> SubString instances are reused and mutated in place during regex
- * matching for performance. While not thread-safe during mutation, this is acceptable as each
- * matching operation uses its own RegExpImpl instance.
- *
- * <p><b>Memory:</b> ~24 bytes (8-byte string reference + 2×4-byte integers + padding) regardless
- * of substring length.
+ * <p>Stores reference to original string plus offset and length, avoiding memory overhead of
+ * creating new String objects. Used for regex capture groups.
  */
 public final class SubString {
 
@@ -132,10 +120,7 @@ public final class SubString {
     }
 
     /**
-     * Appends this substring to a StringBuilder.
-     *
-     * <p>More efficient than toString() when building strings, as it avoids creating an
-     * intermediate String object.
+     * Appends this substring to a StringBuilder. More efficient than toString().
      *
      * @param sb the StringBuilder to append to
      * @return the same StringBuilder for chaining

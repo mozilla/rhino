@@ -16,6 +16,9 @@ dependencies {
     implementation project(':rhino')
     implementation project(':rhino-tools')
     implementation project(':rhino-xml')
+    // ICU4J is optional - provides enhanced Unicode support for ES2024 regex features
+    // Included in rhino-all for full functionality
+    implementation 'com.ibm.icu:icu4j:74.2'
 }
 
 shadowJar {

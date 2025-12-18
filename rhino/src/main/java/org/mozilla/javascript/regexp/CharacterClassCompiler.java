@@ -12,18 +12,10 @@ import java.util.Map;
 /**
  * Character class compilation for regular expressions.
  *
- * <p>Handles parsing and compilation of character classes ([...]) including ES2024 v-flag features:
+ * <p>Handles parsing and compilation of character classes including ES2024 v-flag features: set
+ * operations (&&, --), string literals (\q{}), nested classes, and Property of Strings.
  *
- * <ul>
- *   <li>Traditional character classes: [a-z], [^0-9], [\d\w\s]
- *   <li>Unicode property escapes: [\p{Letter}], [\P{Number}]
- *   <li>ES2024 v-flag set operations: [a-z&&[^aeiou]], [\w--\d]
- *   <li>ES2024 string literals: [\q{abc|def}]
- *   <li>ES2024 nested classes: [[a-z]&&[^aeiou]]
- *   <li>ES2024 Property of Strings: [\p{RGI_Emoji}]
- * </ul>
- *
- * <p>Extracted from NativeRegExp to improve modularity.
+ * <p>See ECMA 262 §22.2.1.
  *
  * @see ClassContents
  * @see SetOperation
@@ -44,8 +36,7 @@ class CharacterClassCompiler {
                     Map.of(
                             "basicemoji", EmojiSequenceData::getBasicEmoji,
                             "emojikeycapsequence", EmojiSequenceData::getKeycapSequences,
-                            "rgiemojimodifiersequence",
-                                    EmojiSequenceData::getModifierSequences,
+                            "rgiemojimodifiersequence", EmojiSequenceData::getModifierSequences,
                             "rgiemojiflagsequence", EmojiSequenceData::getFlagSequences,
                             "rgiemojitagsequence", EmojiSequenceData::getTagSequences,
                             "rgiemojizwjsequence", EmojiSequenceData::getZWJSequences,
@@ -62,13 +53,13 @@ class CharacterClassCompiler {
     static boolean calculateBitmapSize(int flags, ClassContents classContents, RENode target) {
         int max = 0;
 
-        for (char ch : classContents.chars) {
+        for (int ch : classContents.codepoints) {
             if (ch > max) {
                 max = ch;
             }
-            if ((flags & NativeRegExp.JSREG_FOLD) != 0) {
-                char cu = NativeRegExp.upcase(ch);
-                char cd = NativeRegExp.downcase(ch);
+            if ((flags & NativeRegExp.JSREG_FOLD) != 0 && ch <= Character.MAX_VALUE) {
+                char cu = StringMatcher.toUpperCase((char) ch);
+                char cd = StringMatcher.toLowerCase((char) ch);
                 int n = (cu >= cd) ? cu : cd;
                 if (n > max) {
                     max = n;
@@ -76,14 +67,14 @@ class CharacterClassCompiler {
             }
         }
 
-        for (int i = 1; i < classContents.bmpRanges.size(); i += 2) {
-            char rangeEnd = classContents.bmpRanges.get(i);
+        for (int i = 1; i < classContents.ranges.size(); i += 2) {
+            int rangeEnd = classContents.ranges.get(i);
             if (rangeEnd > max) {
                 max = rangeEnd;
             }
-            if ((flags & NativeRegExp.JSREG_FOLD) != 0) {
-                char cu = NativeRegExp.upcase(rangeEnd);
-                char cd = NativeRegExp.downcase(rangeEnd);
+            if ((flags & NativeRegExp.JSREG_FOLD) != 0 && rangeEnd <= Character.MAX_VALUE) {
+                char cu = StringMatcher.toUpperCase((char) rangeEnd);
+                char cd = StringMatcher.toLowerCase((char) rangeEnd);
                 int n = (cu >= cd) ? cu : cd;
                 if (n > max) {
                     max = n;
@@ -114,33 +105,31 @@ class CharacterClassCompiler {
         }
 
         char escapeChar = state.cpbegin[state.cp];
-        RENode escapeNode;
+        byte opcode = NativeRegExp.getCharacterClassOpcode(escapeChar);
 
-        switch (escapeChar) {
-            case 'd':
-                escapeNode = new RENode(NativeRegExp.REOP_DIGIT);
-                break;
-            case 'D':
-                escapeNode = new RENode(NativeRegExp.REOP_NONDIGIT);
-                break;
-            case 'w':
-                escapeNode = new RENode(NativeRegExp.REOP_ALNUM);
-                break;
-            case 'W':
-                escapeNode = new RENode(NativeRegExp.REOP_NONALNUM);
-                break;
-            case 's':
-                escapeNode = new RENode(NativeRegExp.REOP_SPACE);
-                break;
-            case 'S':
-                escapeNode = new RENode(NativeRegExp.REOP_NONSPACE);
-                break;
-            default:
-                return false;
+        if (opcode == -1) {
+            return false;
         }
 
-        state.result = escapeNode;
+        state.result = new RENode(opcode);
         state.cp++; // Move past the escape character
+        return true;
+    }
+
+    /**
+     * Expect a specific character at the current position and advance past it.
+     *
+     * @param state Compiler state
+     * @param expected The expected character
+     * @param errorMsg Error message if character not found
+     * @return true if character found and consumed, false otherwise
+     */
+    private static boolean expectChar(CompilerState state, char expected, String errorMsg) {
+        if (state.cp >= state.cpend || state.cpbegin[state.cp] != expected) {
+            NativeRegExp.reportError("msg.bad.regexp", errorMsg);
+            return false;
+        }
+        state.cp++;
         return true;
     }
 
@@ -156,26 +145,10 @@ class CharacterClassCompiler {
             CompilerState state, ParserParameters params, ClassContents target) {
         char[] src = state.cpbegin;
 
-        // Expect state.cp to point to '\'
-        if (state.cp >= state.cpend || src[state.cp] != '\\') {
-            NativeRegExp.reportError("msg.bad.regexp", "Expected \\ before q");
-            return false;
-        }
-        state.cp++; // Skip '\'
-
-        // Check for 'q'
-        if (state.cp >= state.cpend || src[state.cp] != 'q') {
-            NativeRegExp.reportError("msg.bad.regexp", "Expected q after \\");
-            return false;
-        }
-        state.cp++; // Skip 'q'
-
-        // Check for '{'
-        if (state.cp >= state.cpend || src[state.cp] != '{') {
-            NativeRegExp.reportError("msg.bad.regexp", "\\q must be followed by {");
-            return false;
-        }
-        state.cp++; // Skip '{'
+        // Expect \q{ sequence
+        if (!expectChar(state, '\\', "Expected \\ before q")) return false;
+        if (!expectChar(state, 'q', "Expected q after \\")) return false;
+        if (!expectChar(state, '{', "\\q must be followed by {")) return false;
 
         // Parse string literal(s) within braces
         StringBuilder literal = new StringBuilder();
@@ -264,11 +237,11 @@ class CharacterClassCompiler {
             char c1 = src[state.cp];
             char c2 = src[state.cp + 1];
 
-            SetOperationType opType = null;
+            SetOperation.Type opType = null;
             if (c1 == '-' && c2 == '-') {
-                opType = SetOperationType.SUBTRACT;
+                opType = SetOperation.Type.SUBTRACT;
             } else if (c1 == '&' && c2 == '&') {
-                opType = SetOperationType.INTERSECT;
+                opType = SetOperation.Type.INTERSECT;
             } else {
                 break; // No more set operations
             }
@@ -295,8 +268,7 @@ class CharacterClassCompiler {
      * @param depth Current nesting depth
      * @return Parsed operand as ClassContents, or null on error
      */
-    static ClassContents parseSetOperand(
-            CompilerState state, ParserParameters params, int depth) {
+    static ClassContents parseSetOperand(CompilerState state, ParserParameters params, int depth) {
         char[] src = state.cpbegin;
         ClassContents operand = new ClassContents();
 
@@ -348,7 +320,7 @@ class CharacterClassCompiler {
     }
 
     /**
-     * Validate syntax characters in v-mode (ES2024 unicodeSets).
+     * Validate syntax characters in v-mode.
      *
      * @param state Compiler state
      * @param thisCodePoint Current character code point to validate
@@ -421,10 +393,7 @@ class CharacterClassCompiler {
     }
 
     /**
-     * Parse character class contents ([...]).
-     *
-     * <p>Handles traditional classes and ES2024 v-flag features: nested classes, string literals
-     * (\q{}), set operations (&&, --).
+     * Parse character class contents ([...]) with ES2024 v-flag features.
      *
      * @param state Compiler state
      * @param params Parser parameters
@@ -480,7 +449,9 @@ class CharacterClassCompiler {
                 } else if (state.cp < state.cpend && src[state.cp] == 'b') {
                     state.cp++;
                     thisCodePoint = NativeRegExp.BACKSPACE_CHAR;
-                } else if (params.isUnicodeMode() && state.cp < state.cpend && src[state.cp] == '-') {
+                } else if (params.isUnicodeMode()
+                        && state.cp < state.cpend
+                        && src[state.cp] == '-') {
                     state.cp++;
                     thisCodePoint = '-';
                 } else {
@@ -556,7 +527,7 @@ class CharacterClassCompiler {
 
                             if (inRange) {
                                 if (!params.isUnicodeMode()) {
-                                    contents.chars.add('-');
+                                    contents.codepoints.add((int) '-');
                                     inRange = false;
                                 } else {
                                     NativeRegExp.reportError("msg.invalid.class", "");
@@ -582,7 +553,7 @@ class CharacterClassCompiler {
                     }
                 }
             } else {
-                if (RegExpFlags.isUnicodeMode(state.flags)) {
+                if (RegExpFlags.fromBitmask(state.flags).isUnicodeMode()) {
                     thisCodePoint = Character.codePointAt(src, state.cp, state.cpend);
                     state.cp += Character.charCount(thisCodePoint);
                 } else {
@@ -615,20 +586,12 @@ class CharacterClassCompiler {
                     return null;
                 }
                 inRange = false;
-                if (rangeStart > NativeRegExp.BMP_MAX_CODEPOINT
-                        || thisCodePoint > NativeRegExp.BMP_MAX_CODEPOINT) {
-                    contents.nonBMPRanges.add(rangeStart);
-                    contents.nonBMPRanges.add(thisCodePoint);
-                } else {
-                    contents.bmpRanges.add((char) rangeStart);
-                    contents.bmpRanges.add((char) thisCodePoint);
-                }
+                // Unified Unicode storage - no BMP vs non-BMP split
+                contents.ranges.add(rangeStart);
+                contents.ranges.add(thisCodePoint);
             } else {
-                if (thisCodePoint > NativeRegExp.BMP_MAX_CODEPOINT) {
-                    contents.nonBMPCodepoints.add(thisCodePoint);
-                } else {
-                    contents.chars.add((char) thisCodePoint);
-                }
+                // Unified Unicode storage - no BMP vs non-BMP split
+                contents.codepoints.add(thisCodePoint);
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
                     char currentChar = src[state.cp];
 

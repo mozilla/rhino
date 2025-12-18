@@ -6,13 +6,12 @@ import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
- * Unicode properties handler for Java 11 Character class. Handles binary properties from ECMA-262
- * and general category values.
+ * Unicode properties handler for regular expressions.
  *
- * <p>This class provides lookups for Unicode properties used in regular expressions, including
- * binary properties (Alphabetic, Emoji, etc.), general categories (Letter, Number, etc.), and
- * scripts. It uses both Java's built-in Character class and ICU4J for comprehensive Unicode
- * support.
+ * <p>Provides lookups for Unicode properties: binary properties (Alphabetic, Emoji, etc.), general
+ * categories (Letter, Number, etc.), and scripts. Uses Java's Character class and ICU4J.
+ *
+ * <p>See ECMA 262 §22.2.1.
  */
 public class UnicodeProperties {
 
@@ -165,196 +164,116 @@ public class UnicodeProperties {
     // ==================================================================================
     // PROPERTY NAME MAPPINGS
     // ==================================================================================
-    public static final Map<String, Byte> PROPERTY_NAMES =
-            Map.ofEntries(
-                    Map.entry("Alphabetic", ALPHABETIC),
-                    Map.entry("Alpha", ALPHABETIC),
-                    Map.entry("ASCII", ASCII),
-                    Map.entry("Case_Ignorable", CASE_IGNORABLE),
-                    Map.entry("CI", CASE_IGNORABLE),
-                    Map.entry("General_Category", GENERAL_CATEGORY),
-                    Map.entry("gc", GENERAL_CATEGORY),
-                    Map.entry("Script", SCRIPT),
-                    Map.entry("sc", SCRIPT),
-                    Map.entry("Script_Extensions", SCRIPT_EXTENSIONS),
-                    Map.entry("scx", SCRIPT_EXTENSIONS),
-                    Map.entry("ASCII_Hex_Digit", ASCII_HEX_DIGIT),
-                    Map.entry("AHex", ASCII_HEX_DIGIT),
-                    Map.entry("Hex_Digit", HEX_DIGIT),
-                    Map.entry("Hex", HEX_DIGIT),
-                    Map.entry("ID_Continue", ID_CONTINUE),
-                    Map.entry("IDC", ID_CONTINUE),
-                    Map.entry("ID_Start", ID_START),
-                    Map.entry("IDS", ID_START),
-                    Map.entry("Lowercase", LOWERCASE),
-                    Map.entry("Lower", LOWERCASE),
-                    Map.entry("Uppercase", UPPERCASE),
-                    Map.entry("Upper", UPPERCASE),
-                    Map.entry("White_Space", WHITE_SPACE),
-                    Map.entry("space", WHITE_SPACE),
-                    Map.entry("Any", ANY),
-                    Map.entry("Assigned", ASSIGNED),
-                    Map.entry("XID_Start", XID_START),
-                    Map.entry("XIDS", XID_START),
-                    Map.entry("XID_Continue", XID_CONTINUE),
-                    Map.entry("XIDC", XID_CONTINUE),
-                    Map.entry("Cased", CASED),
-                    // High-Impact Basic Properties
-                    Map.entry("Ideographic", IDEOGRAPHIC),
-                    Map.entry("Ideo", IDEOGRAPHIC),
-                    Map.entry("Math", MATH),
-                    Map.entry("Dash", DASH),
-                    Map.entry("Noncharacter_Code_Point", NONCHARACTER_CODE_POINT),
-                    Map.entry("NChar", NONCHARACTER_CODE_POINT),
-                    Map.entry("Bidi_Mirrored", BIDI_MIRRORED),
-                    Map.entry("Bidi_M", BIDI_MIRRORED),
-                    Map.entry("Pattern_White_Space", PATTERN_WHITE_SPACE),
-                    Map.entry("Pat_WS", PATTERN_WHITE_SPACE),
-                    // Text Processing Properties
-                    Map.entry("Grapheme_Base", GRAPHEME_BASE),
-                    Map.entry("Gr_Base", GRAPHEME_BASE),
-                    Map.entry("Grapheme_Extend", GRAPHEME_EXTEND),
-                    Map.entry("Gr_Ext", GRAPHEME_EXTEND),
-                    Map.entry("Extender", EXTENDER),
-                    Map.entry("Ext", EXTENDER),
-                    Map.entry("Pattern_Syntax", PATTERN_SYNTAX),
-                    Map.entry("Pat_Syn", PATTERN_SYNTAX),
-                    Map.entry("Join_Control", JOIN_CONTROL),
-                    Map.entry("Join_C", JOIN_CONTROL),
-                    // Case Change Properties
-                    Map.entry("Changes_When_Lowercased", CHANGES_WHEN_LOWERCASED),
-                    Map.entry("CWL", CHANGES_WHEN_LOWERCASED),
-                    Map.entry("Changes_When_Uppercased", CHANGES_WHEN_UPPERCASED),
-                    Map.entry("CWU", CHANGES_WHEN_UPPERCASED),
-                    Map.entry("Changes_When_Titlecased", CHANGES_WHEN_TITLECASED),
-                    Map.entry("CWT", CHANGES_WHEN_TITLECASED),
-                    Map.entry("Changes_When_Casefolded", CHANGES_WHEN_CASEFOLDED),
-                    Map.entry("CWCF", CHANGES_WHEN_CASEFOLDED),
-                    Map.entry("Changes_When_Casemapped", CHANGES_WHEN_CASEMAPPED),
-                    Map.entry("CWCM", CHANGES_WHEN_CASEMAPPED),
-                    Map.entry("Changes_When_NFKC_Casefolded", CHANGES_WHEN_NFKC_CASEFOLDED),
-                    Map.entry("CWKCF", CHANGES_WHEN_NFKC_CASEFOLDED),
-                    // Additional ICU4J-based properties
-                    Map.entry("Default_Ignorable_Code_Point", DEFAULT_IGNORABLE_CODE_POINT),
-                    Map.entry("DI", DEFAULT_IGNORABLE_CODE_POINT),
-                    Map.entry("Emoji", EMOJI),
-                    Map.entry("Emoji_Presentation", EMOJI_PRESENTATION),
-                    Map.entry("EPres", EMOJI_PRESENTATION),
-                    Map.entry("Emoji_Modifier", EMOJI_MODIFIER),
-                    Map.entry("EMod", EMOJI_MODIFIER),
-                    Map.entry("Emoji_Modifier_Base", EMOJI_MODIFIER_BASE),
-                    Map.entry("EBase", EMOJI_MODIFIER_BASE),
-                    Map.entry("Emoji_Component", EMOJI_COMPONENT),
-                    Map.entry("EComp", EMOJI_COMPONENT),
-                    Map.entry("Extended_Pictographic", EXTENDED_PICTOGRAPHIC),
-                    Map.entry("ExtPict", EXTENDED_PICTOGRAPHIC),
-                    Map.entry("Regional_Indicator", REGIONAL_INDICATOR),
-                    Map.entry("RI", REGIONAL_INDICATOR),
-                    Map.entry("Quotation_Mark", QUOTATION_MARK),
-                    Map.entry("QMark", QUOTATION_MARK),
-                    Map.entry("Sentence_Terminal", SENTENCE_TERMINAL),
-                    Map.entry("STerm", SENTENCE_TERMINAL),
-                    Map.entry("Terminal_Punctuation", TERMINAL_PUNCTUATION),
-                    Map.entry("Term", TERMINAL_PUNCTUATION),
-                    Map.entry("Variation_Selector", VARIATION_SELECTOR),
-                    Map.entry("VS", VARIATION_SELECTOR),
-                    Map.entry("Radical", RADICAL),
-                    Map.entry("Unified_Ideograph", UNIFIED_IDEOGRAPH),
-                    Map.entry("UIdeo", UNIFIED_IDEOGRAPH),
-                    Map.entry("Deprecated", DEPRECATED),
-                    Map.entry("Dep", DEPRECATED),
-                    Map.entry("Soft_Dotted", SOFT_DOTTED),
-                    Map.entry("SD", SOFT_DOTTED),
-                    Map.entry("Logical_Order_Exception", LOGICAL_ORDER_EXCEPTION),
-                    Map.entry("LOE", LOGICAL_ORDER_EXCEPTION),
-                    Map.entry("Diacritic", DIACRITIC),
-                    Map.entry("Dia", DIACRITIC),
-                    Map.entry("IDS_Binary_Operator", IDS_BINARY_OPERATOR),
-                    Map.entry("IDSB", IDS_BINARY_OPERATOR),
-                    Map.entry("IDS_Trinary_Operator", IDS_TRINARY_OPERATOR),
-                    Map.entry("IDST", IDS_TRINARY_OPERATOR));
+    public static final Map<String, Byte> PROPERTY_NAMES;
+
+    static {
+        Map<String, Byte> m = new HashMap<>();
+        // Binary Properties (ECMA-262)
+        add(m, ALPHABETIC, "Alphabetic", "Alpha");
+        add(m, ASCII, "ASCII");
+        add(m, CASE_IGNORABLE, "Case_Ignorable", "CI");
+        add(m, GENERAL_CATEGORY, "General_Category", "gc");
+        add(m, SCRIPT, "Script", "sc");
+        add(m, SCRIPT_EXTENSIONS, "Script_Extensions", "scx");
+        add(m, ASCII_HEX_DIGIT, "ASCII_Hex_Digit", "AHex");
+        add(m, HEX_DIGIT, "Hex_Digit", "Hex");
+        add(m, ID_CONTINUE, "ID_Continue", "IDC");
+        add(m, ID_START, "ID_Start", "IDS");
+        add(m, LOWERCASE, "Lowercase", "Lower");
+        add(m, UPPERCASE, "Uppercase", "Upper");
+        add(m, WHITE_SPACE, "White_Space", "space");
+        add(m, ANY, "Any");
+        add(m, ASSIGNED, "Assigned");
+        add(m, XID_START, "XID_Start", "XIDS");
+        add(m, XID_CONTINUE, "XID_Continue", "XIDC");
+        add(m, CASED, "Cased");
+        // High-Impact Basic Properties
+        add(m, IDEOGRAPHIC, "Ideographic", "Ideo");
+        add(m, MATH, "Math");
+        add(m, DASH, "Dash");
+        add(m, NONCHARACTER_CODE_POINT, "Noncharacter_Code_Point", "NChar");
+        add(m, BIDI_MIRRORED, "Bidi_Mirrored", "Bidi_M");
+        add(m, PATTERN_WHITE_SPACE, "Pattern_White_Space", "Pat_WS");
+        // Text Processing Properties
+        add(m, GRAPHEME_BASE, "Grapheme_Base", "Gr_Base");
+        add(m, GRAPHEME_EXTEND, "Grapheme_Extend", "Gr_Ext");
+        add(m, EXTENDER, "Extender", "Ext");
+        add(m, PATTERN_SYNTAX, "Pattern_Syntax", "Pat_Syn");
+        add(m, JOIN_CONTROL, "Join_Control", "Join_C");
+        // Case Change Properties
+        add(m, CHANGES_WHEN_LOWERCASED, "Changes_When_Lowercased", "CWL");
+        add(m, CHANGES_WHEN_UPPERCASED, "Changes_When_Uppercased", "CWU");
+        add(m, CHANGES_WHEN_TITLECASED, "Changes_When_Titlecased", "CWT");
+        add(m, CHANGES_WHEN_CASEFOLDED, "Changes_When_Casefolded", "CWCF");
+        add(m, CHANGES_WHEN_CASEMAPPED, "Changes_When_Casemapped", "CWCM");
+        add(m, CHANGES_WHEN_NFKC_CASEFOLDED, "Changes_When_NFKC_Casefolded", "CWKCF");
+        // Additional ICU4J-based properties
+        add(m, DEFAULT_IGNORABLE_CODE_POINT, "Default_Ignorable_Code_Point", "DI");
+        add(m, EMOJI, "Emoji");
+        add(m, EMOJI_PRESENTATION, "Emoji_Presentation", "EPres");
+        add(m, EMOJI_MODIFIER, "Emoji_Modifier", "EMod");
+        add(m, EMOJI_MODIFIER_BASE, "Emoji_Modifier_Base", "EBase");
+        add(m, EMOJI_COMPONENT, "Emoji_Component", "EComp");
+        add(m, EXTENDED_PICTOGRAPHIC, "Extended_Pictographic", "ExtPict");
+        add(m, REGIONAL_INDICATOR, "Regional_Indicator", "RI");
+        add(m, QUOTATION_MARK, "Quotation_Mark", "QMark");
+        add(m, SENTENCE_TERMINAL, "Sentence_Terminal", "STerm");
+        add(m, TERMINAL_PUNCTUATION, "Terminal_Punctuation", "Term");
+        add(m, VARIATION_SELECTOR, "Variation_Selector", "VS");
+        add(m, RADICAL, "Radical");
+        add(m, UNIFIED_IDEOGRAPH, "Unified_Ideograph", "UIdeo");
+        add(m, DEPRECATED, "Deprecated", "Dep");
+        add(m, SOFT_DOTTED, "Soft_Dotted", "SD");
+        add(m, LOGICAL_ORDER_EXCEPTION, "Logical_Order_Exception", "LOE");
+        add(m, DIACRITIC, "Diacritic", "Dia");
+        add(m, IDS_BINARY_OPERATOR, "IDS_Binary_Operator", "IDSB");
+        add(m, IDS_TRINARY_OPERATOR, "IDS_Trinary_Operator", "IDST");
+        PROPERTY_NAMES = Map.copyOf(m);
+
+        // Property Values (General Category names and aliases)
+        Map<String, Byte> v = new HashMap<>();
+        add(v, OTHER, "Other", "C");
+        add(v, CONTROL, "Control", "Cc", "cntrl");
+        add(v, FORMAT, "Format", "Cf");
+        add(v, UNASSIGNED, "Unassigned", "Cn");
+        add(v, PRIVATE_USE, "Private_Use", "Co");
+        add(v, SURROGATE, "Surrogate", "Cs");
+        add(v, LETTER, "Letter", "L");
+        add(v, LOWERCASE_LETTER, "Lowercase_Letter", "Ll");
+        add(v, MODIFIER_LETTER, "Modifier_Letter", "Lm");
+        add(v, OTHER_LETTER, "Other_Letter", "Lo");
+        add(v, TITLECASE_LETTER, "Titlecase_Letter", "Lt");
+        add(v, UPPERCASE_LETTER, "Uppercase_Letter", "Lu");
+        add(v, MARK, "Mark", "M", "Combining_Mark");
+        add(v, SPACING_MARK, "Spacing_Mark", "Mc");
+        add(v, ENCLOSING_MARK, "Enclosing_Mark", "Me");
+        add(v, NONSPACING_MARK, "Nonspacing_Mark", "Mn");
+        add(v, NUMBER, "Number", "N", "digit");
+        add(v, DECIMAL_NUMBER, "Decimal_Number", "Nd");
+        add(v, LETTER_NUMBER, "Letter_Number", "Nl");
+        add(v, OTHER_NUMBER, "Other_Number", "No");
+        add(v, PUNCTUATION, "Punctuation", "P", "punct");
+        add(v, CONNECTOR_PUNCTUATION, "Connector_Punctuation", "Pc");
+        add(v, DASH_PUNCTUATION, "Dash_Punctuation", "Pd");
+        add(v, CLOSE_PUNCTUATION, "Close_Punctuation", "Pe");
+        add(v, FINAL_PUNCTUATION, "Final_Punctuation", "Pf");
+        add(v, INITIAL_PUNCTUATION, "Initial_Punctuation", "Pi");
+        add(v, OTHER_PUNCTUATION, "Other_Punctuation", "Po");
+        add(v, OPEN_PUNCTUATION, "Open_Punctuation", "Ps");
+        add(v, SYMBOL, "Symbol", "S");
+        add(v, CURRENCY_SYMBOL, "Currency_Symbol", "Sc");
+        add(v, MODIFIER_SYMBOL, "Modifier_Symbol", "Sk");
+        add(v, MATH_SYMBOL, "Math_Symbol", "Sm");
+        add(v, OTHER_SYMBOL, "Other_Symbol", "So");
+        add(v, SEPARATOR, "Separator", "Z");
+        add(v, LINE_SEPARATOR, "Line_Separator", "Zl");
+        add(v, PARAGRAPH_SEPARATOR, "Paragraph_Separator", "Zp");
+        add(v, SPACE_SEPARATOR, "Space_Separator", "Zs");
+        PROPERTY_VALUES = Map.copyOf(v);
+    }
 
     /** Property Value Map for General Category (canonical names and aliases). */
-    public static final Map<String, Byte> PROPERTY_VALUES =
-            Map.<String, Byte>ofEntries(
-                    Map.entry("Other", OTHER),
-                    Map.entry("C", OTHER),
-                    Map.entry("Control", CONTROL),
-                    Map.entry("Cc", CONTROL),
-                    Map.entry("cntrl", CONTROL),
-                    Map.entry("Format", FORMAT),
-                    Map.entry("Cf", FORMAT),
-                    Map.entry("Unassigned", UNASSIGNED),
-                    Map.entry("Cn", UNASSIGNED),
-                    Map.entry("Private_Use", PRIVATE_USE),
-                    Map.entry("Co", PRIVATE_USE),
-                    Map.entry("Surrogate", SURROGATE),
-                    Map.entry("Cs", SURROGATE),
-                    Map.entry("Letter", LETTER),
-                    Map.entry("L", LETTER),
-                    Map.entry("Lowercase_Letter", LOWERCASE_LETTER),
-                    Map.entry("Ll", LOWERCASE_LETTER),
-                    Map.entry("Modifier_Letter", MODIFIER_LETTER),
-                    Map.entry("Lm", MODIFIER_LETTER),
-                    Map.entry("Other_Letter", OTHER_LETTER),
-                    Map.entry("Lo", OTHER_LETTER),
-                    Map.entry("Titlecase_Letter", TITLECASE_LETTER),
-                    Map.entry("Lt", TITLECASE_LETTER),
-                    Map.entry("Uppercase_Letter", UPPERCASE_LETTER),
-                    Map.entry("Lu", UPPERCASE_LETTER),
-                    Map.entry("Mark", MARK),
-                    Map.entry("M", MARK),
-                    Map.entry("Combining_Mark", MARK),
-                    Map.entry("Spacing_Mark", SPACING_MARK),
-                    Map.entry("Mc", SPACING_MARK),
-                    Map.entry("Enclosing_Mark", ENCLOSING_MARK),
-                    Map.entry("Me", ENCLOSING_MARK),
-                    Map.entry("Nonspacing_Mark", NONSPACING_MARK),
-                    Map.entry("Mn", NONSPACING_MARK),
-                    Map.entry("Number", NUMBER),
-                    Map.entry("N", NUMBER),
-                    Map.entry("Decimal_Number", DECIMAL_NUMBER),
-                    Map.entry("Nd", DECIMAL_NUMBER),
-                    Map.entry("digit", NUMBER),
-                    Map.entry("Letter_Number", LETTER_NUMBER),
-                    Map.entry("Nl", LETTER_NUMBER),
-                    Map.entry("Other_Number", OTHER_NUMBER),
-                    Map.entry("No", OTHER_NUMBER),
-                    Map.entry("Punctuation", PUNCTUATION),
-                    Map.entry("P", PUNCTUATION),
-                    Map.entry("punct", PUNCTUATION),
-                    Map.entry("Connector_Punctuation", CONNECTOR_PUNCTUATION),
-                    Map.entry("Pc", CONNECTOR_PUNCTUATION),
-                    Map.entry("Dash_Punctuation", DASH_PUNCTUATION),
-                    Map.entry("Pd", DASH_PUNCTUATION),
-                    Map.entry("Close_Punctuation", CLOSE_PUNCTUATION),
-                    Map.entry("Pe", CLOSE_PUNCTUATION),
-                    Map.entry("Final_Punctuation", FINAL_PUNCTUATION),
-                    Map.entry("Pf", FINAL_PUNCTUATION),
-                    Map.entry("Initial_Punctuation", INITIAL_PUNCTUATION),
-                    Map.entry("Pi", INITIAL_PUNCTUATION),
-                    Map.entry("Other_Punctuation", OTHER_PUNCTUATION),
-                    Map.entry("Po", OTHER_PUNCTUATION),
-                    Map.entry("Open_Punctuation", OPEN_PUNCTUATION),
-                    Map.entry("Ps", OPEN_PUNCTUATION),
-                    Map.entry("Symbol", SYMBOL),
-                    Map.entry("S", SYMBOL),
-                    Map.entry("Currency_Symbol", CURRENCY_SYMBOL),
-                    Map.entry("Sc", CURRENCY_SYMBOL),
-                    Map.entry("Modifier_Symbol", MODIFIER_SYMBOL),
-                    Map.entry("Sk", MODIFIER_SYMBOL),
-                    Map.entry("Math_Symbol", MATH_SYMBOL),
-                    Map.entry("Sm", MATH_SYMBOL),
-                    Map.entry("Other_Symbol", OTHER_SYMBOL),
-                    Map.entry("So", OTHER_SYMBOL),
-                    Map.entry("Separator", SEPARATOR),
-                    Map.entry("Z", SEPARATOR),
-                    Map.entry("Line_Separator", LINE_SEPARATOR),
-                    Map.entry("Zl", LINE_SEPARATOR),
-                    Map.entry("Paragraph_Separator", PARAGRAPH_SEPARATOR),
-                    Map.entry("Zp", PARAGRAPH_SEPARATOR),
-                    Map.entry("Space_Separator", SPACE_SEPARATOR),
-                    Map.entry("Zs", SPACE_SEPARATOR));
+    public static final Map<String, Byte> PROPERTY_VALUES;
 
     // Normalized (case-insensitive) lookup maps - created via static initialization
     private static final Map<String, Byte> NORMALIZED_PROPERTY_NAMES;
@@ -376,9 +295,7 @@ public class UnicodeProperties {
     }
 
     /**
-     * Normalizes a Unicode property name or value for case-insensitive, whitespace-insensitive
-     * comparison. According to UAX#44, property names and values are matched by removing all
-     * underscores, hyphens, and spaces, and comparing case-insensitively.
+     * Normalizes a Unicode property name for case-insensitive comparison per UAX#44.
      *
      * @param name The property name or value to normalize
      * @return Normalized name (lowercase, no underscores/hyphens/spaces)
@@ -726,44 +643,46 @@ public class UnicodeProperties {
     // ICU4J Property Mapping
     // --------------------------------------------------
 
-    /** Maps our property byte constants to ICU4J UProperty integer constants. */
-    private static final Map<Byte, Integer> ICU4J_PROPERTY_MAP =
-            Map.<Byte, Integer>ofEntries(
-                    Map.entry(
-                            DEFAULT_IGNORABLE_CODE_POINT,
-                            com.ibm.icu.lang.UProperty.DEFAULT_IGNORABLE_CODE_POINT),
-                    Map.entry(EMOJI, com.ibm.icu.lang.UProperty.EMOJI),
-                    Map.entry(EMOJI_PRESENTATION, com.ibm.icu.lang.UProperty.EMOJI_PRESENTATION),
-                    Map.entry(EMOJI_MODIFIER, com.ibm.icu.lang.UProperty.EMOJI_MODIFIER),
-                    Map.entry(EMOJI_MODIFIER_BASE, com.ibm.icu.lang.UProperty.EMOJI_MODIFIER_BASE),
-                    Map.entry(EMOJI_COMPONENT, com.ibm.icu.lang.UProperty.EMOJI_COMPONENT),
-                    Map.entry(
-                            EXTENDED_PICTOGRAPHIC,
-                            com.ibm.icu.lang.UProperty.EXTENDED_PICTOGRAPHIC),
-                    Map.entry(REGIONAL_INDICATOR, com.ibm.icu.lang.UProperty.REGIONAL_INDICATOR),
-                    Map.entry(QUOTATION_MARK, com.ibm.icu.lang.UProperty.QUOTATION_MARK),
-                    Map.entry(SENTENCE_TERMINAL, com.ibm.icu.lang.UProperty.S_TERM),
-                    Map.entry(
-                            TERMINAL_PUNCTUATION, com.ibm.icu.lang.UProperty.TERMINAL_PUNCTUATION),
-                    Map.entry(VARIATION_SELECTOR, com.ibm.icu.lang.UProperty.VARIATION_SELECTOR),
-                    Map.entry(RADICAL, com.ibm.icu.lang.UProperty.RADICAL),
-                    Map.entry(UNIFIED_IDEOGRAPH, com.ibm.icu.lang.UProperty.UNIFIED_IDEOGRAPH),
-                    Map.entry(DEPRECATED, com.ibm.icu.lang.UProperty.DEPRECATED),
-                    Map.entry(SOFT_DOTTED, com.ibm.icu.lang.UProperty.SOFT_DOTTED),
-                    Map.entry(
-                            LOGICAL_ORDER_EXCEPTION,
-                            com.ibm.icu.lang.UProperty.LOGICAL_ORDER_EXCEPTION),
-                    Map.entry(DIACRITIC, com.ibm.icu.lang.UProperty.DIACRITIC),
-                    Map.entry(IDS_BINARY_OPERATOR, com.ibm.icu.lang.UProperty.IDS_BINARY_OPERATOR),
-                    Map.entry(
-                            IDS_TRINARY_OPERATOR, com.ibm.icu.lang.UProperty.IDS_TRINARY_OPERATOR));
+    /**
+     * Maps our property byte constants to ICU4J UProperty constant names.
+     *
+     * <p>Uses String names instead of direct UProperty references to avoid compile-time dependency
+     * on ICU4J. ICU4JAdapter uses reflection to look up these constants at runtime.
+     */
+    private static final Map<Byte, String> ICU4J_PROPERTY_NAMES =
+            Map.<Byte, String>ofEntries(
+                    Map.entry(DEFAULT_IGNORABLE_CODE_POINT, "DEFAULT_IGNORABLE_CODE_POINT"),
+                    Map.entry(EMOJI, "EMOJI"),
+                    Map.entry(EMOJI_PRESENTATION, "EMOJI_PRESENTATION"),
+                    Map.entry(EMOJI_MODIFIER, "EMOJI_MODIFIER"),
+                    Map.entry(EMOJI_MODIFIER_BASE, "EMOJI_MODIFIER_BASE"),
+                    Map.entry(EMOJI_COMPONENT, "EMOJI_COMPONENT"),
+                    Map.entry(EXTENDED_PICTOGRAPHIC, "EXTENDED_PICTOGRAPHIC"),
+                    Map.entry(REGIONAL_INDICATOR, "REGIONAL_INDICATOR"),
+                    Map.entry(QUOTATION_MARK, "QUOTATION_MARK"),
+                    Map.entry(SENTENCE_TERMINAL, "S_TERM"),
+                    Map.entry(TERMINAL_PUNCTUATION, "TERMINAL_PUNCTUATION"),
+                    Map.entry(VARIATION_SELECTOR, "VARIATION_SELECTOR"),
+                    Map.entry(RADICAL, "RADICAL"),
+                    Map.entry(UNIFIED_IDEOGRAPH, "UNIFIED_IDEOGRAPH"),
+                    Map.entry(DEPRECATED, "DEPRECATED"),
+                    Map.entry(SOFT_DOTTED, "SOFT_DOTTED"),
+                    Map.entry(LOGICAL_ORDER_EXCEPTION, "LOGICAL_ORDER_EXCEPTION"),
+                    Map.entry(DIACRITIC, "DIACRITIC"),
+                    Map.entry(IDS_BINARY_OPERATOR, "IDS_BINARY_OPERATOR"),
+                    Map.entry(IDS_TRINARY_OPERATOR, "IDS_TRINARY_OPERATOR"));
 
-    /** Helper to check ICU4J binary properties */
+    /**
+     * Helper to check ICU4J binary properties via reflection.
+     *
+     * <p>Uses ICU4JAdapter to avoid direct compile-time dependency on ICU4J classes. This allows
+     * Rhino to compile and run without ICU4J on the classpath (with reduced Unicode property
+     * support).
+     */
     private static boolean checkICU4JProperty(byte property, int codePoint, byte valueByte) {
-        Integer icu4jProperty = ICU4J_PROPERTY_MAP.get(property);
-        if (icu4jProperty != null) {
-            return com.ibm.icu.lang.UCharacter.hasBinaryProperty(codePoint, icu4jProperty)
-                    == (valueByte == TRUE);
+        String propertyName = ICU4J_PROPERTY_NAMES.get(property);
+        if (propertyName != null) {
+            return ICU4JAdapter.hasBinaryProperty(codePoint, propertyName) == (valueByte == TRUE);
         }
         return false;
     }
@@ -974,5 +893,18 @@ public class UnicodeProperties {
                 || codePoint == 0x3030
                 || (codePoint >= 0xFD3E && codePoint <= 0xFD3F)
                 || (codePoint >= 0xFE45 && codePoint <= 0xFE46);
+    }
+
+    /**
+     * Helper to add multiple property name aliases to a map.
+     *
+     * @param map the map to add entries to
+     * @param value the property value
+     * @param names one or more property name aliases
+     */
+    private static void add(Map<String, Byte> map, byte value, String... names) {
+        for (String name : names) {
+            map.put(name, value);
+        }
     }
 }

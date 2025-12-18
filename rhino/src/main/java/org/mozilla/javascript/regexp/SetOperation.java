@@ -7,30 +7,24 @@
 package org.mozilla.javascript.regexp;
 
 /**
- * Represents a set operation in ES2024 v-flag character classes.
+ * Represents a set operation in ES2024 v-flag character classes (intersection, subtraction).
  *
- * <p>In ES2024, the v (unicodeSets) flag enables set operations within character classes. This
- * class represents a single operation (intersection or subtraction) with its right-hand operand.
+ * <p>See ECMA 262 §22.2.1.
  *
- * <p>Example: In {@code /[\w--[0-9]]/v}, the {@code --[0-9]} part is represented as a SetOperation
- * with:
- *
- * <ul>
- *   <li>type = SUBTRACT
- *   <li>operand = ClassContents containing [0-9]
- * </ul>
- *
- * <p>The {@code operandCharSet} field is computed during compilation for efficient runtime
- * matching.
- *
- * <p>Extracted from NativeRegExp to improve modularity during refactoring.
- *
- * @see SetOperationType
  * @see ClassContents
  */
 final class SetOperation {
+    /** Types of set operations: SUBTRACT (--) and INTERSECT (&&). */
+    enum Type {
+        /** Subtraction operator (--): characters in left operand but not in right operand. */
+        SUBTRACT,
+
+        /** Intersection operator (&&): only characters present in both operands. */
+        INTERSECT
+    }
+
     /** The type of set operation (SUBTRACT or INTERSECT). */
-    private final SetOperationType type;
+    private final Type type;
 
     /** The right-hand operand of the operation (parsed character class contents). */
     private final ClassContents operand;
@@ -47,7 +41,7 @@ final class SetOperation {
      * @param type The operation type (SUBTRACT or INTERSECT)
      * @param operand The right-hand operand (character class contents)
      */
-    SetOperation(SetOperationType type, ClassContents operand) {
+    SetOperation(Type type, ClassContents operand) {
         this.type = type;
         this.operand = operand;
     }
@@ -57,7 +51,7 @@ final class SetOperation {
      *
      * @return the operation type (SUBTRACT or INTERSECT)
      */
-    SetOperationType getType() {
+    Type getType() {
         return type;
     }
 

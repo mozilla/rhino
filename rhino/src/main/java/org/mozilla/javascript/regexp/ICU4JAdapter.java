@@ -12,100 +12,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Adapter for optional ICU4J support.
+ * Adapter for optional ICU4J Unicode support via reflection.
  *
- * <p>ICU4J is an optional dependency that provides full Unicode support for:
+ * <p>ICU4J is optional. When present, provides full ES2024 Property of Strings support (emoji
+ * sequences), comprehensive script properties, and Script_Extensions. When absent, falls back to
+ * Java's built-in Unicode APIs with limited functionality.
  *
- * <ul>
- *   <li><b>Property of Strings (ES2024):</b> Emoji sequences via {@code \p{RGI_Emoji}}
- *   <li><b>Script properties:</b> Script name resolution (e.g., {@code \p{Script=Latin}})
- *   <li><b>Script_Extensions:</b> Multi-script character support
- * </ul>
- *
- * <h3>ARCHITECTURAL DECISION: Why ICU4J is Optional</h3>
- *
- * <p><b>Context:</b> Rhino master branch has no ICU4J dependency. Adding ES2024 Property of Strings
- * support required Unicode data for ~3000+ emoji sequences and ~160 scripts.
- *
- * <p><b>Problem:</b> ICU4J provides comprehensive Unicode data but adds ~15MB to JAR size. Making
- * it required would break master compatibility and force all users to accept the size increase.
- *
- * <p><b>Decision:</b> Use reflection-based adapter with graceful fallback to built-in Java APIs.
- *
- * <p><b>Rationale:</b>
- *
- * <ul>
- *   <li>Preserves master compatibility (2MB JAR without ICU4J)
- *   <li>Users opt-in for full ES2024 support by adding ICU4J explicitly
- *   <li>Basic Unicode functionality always works via fallback
- *   <li>No runtime crashes or errors in either configuration
- * </ul>
- *
- * <p><b>Alternatives Considered:</b>
- *
- * <ul>
- *   <li><i>Make ICU4J required →</i> Rejected: breaks master compatibility
- *   <li><i>No Unicode support →</i> Rejected: ES2024 compliance needed
- *   <li><i>ServiceLoader pattern →</i> Rejected: requires META-INF configuration, reflection
- *       simpler
- * </ul>
- *
- * <h3>ARCHITECTURAL DECISION: Caching Strategy</h3>
- *
- * <p><b>Problem:</b> Reflection calls to ICU4J for script lookups are expensive (~100ns per call).
- * Regex patterns often use the same script names repeatedly (e.g., {@code \p{Script=Latin}+}).
- *
- * <p><b>Decision:</b> Cache script codes in ConcurrentHashMap with computeIfAbsent for thread-safe
- * lazy initialization.
- *
- * <p><b>Benefits:</b>
- *
- * <ul>
- *   <li>Eliminates repeated reflection overhead after first lookup
- *   <li>Thread-safe with zero contention (read-only after first write)
- *   <li>Minimal memory footprint (max ~160 entries, ~10KB)
- * </ul>
- *
- * <h3>Graceful Degradation:</h3>
- *
- * <ul>
- *   <li><b>With ICU4J:</b> Full emoji support (thousands of sequences), all scripts (~160)
- *   <li><b>Without ICU4J:</b> Minimal emoji fallback (~100 sequences), common scripts only (~30)
- * </ul>
- *
- * <h3>Performance:</h3>
- *
- * <ul>
- *   <li>ICU4J detection: One-time at class initialization (~1ms)
- *   <li>Script lookup (with ICU4J, first call): ~100ns reflection overhead
- *   <li>Script lookup (with ICU4J, cached): ~2ns HashMap lookup
- *   <li>Script lookup (without ICU4J): ~5ns switch statement
- * </ul>
- *
- * <h3>Debugging:</h3>
- *
- * <p>Enable ICU4J detection logging: {@code -Drhino.debug.unicode=true}
- *
- * <pre>{@code
- * $ java -Drhino.debug.unicode=true -jar rhino.jar
- * [Rhino] ICU4J: available (full ES2024 support)
- * }</pre>
- *
- * <h3>Usage:</h3>
- *
- * <pre>{@code
- * // Check if ICU4J is available
- * if (ICU4JAdapter.isAvailable()) {
- *     // Full Unicode support available
- * }
- *
- * // Get script code (uses ICU4J if available, fallback otherwise)
- * int scriptCode = ICU4JAdapter.getScriptCodeFromName("Latin");
- *
- * // Get script extensions (uses ICU4J if available, fallback otherwise)
- * BitSet extensions = new BitSet();
- * ICU4JAdapter.getScriptExtensions(codePoint, extensions);
- * }</pre>
+ * <p>Uses ConcurrentHashMap to cache script code lookups for performance. Enable debug logging with
+ * {@code -Drhino.debug.unicode=true}.
  *
  * @see EmojiSequenceData
  * @see UnicodeProperties
@@ -115,18 +29,12 @@ class ICU4JAdapter {
     private static final Class<?> USCRIPT_CLASS;
     private static final Method GET_CODE_FROM_NAME;
     private static final Method GET_SCRIPT_EXTENSIONS;
+    private static final Class<?> UCHARACTER_CLASS;
+    private static final Method HAS_BINARY_PROPERTY;
+    private static final Class<?> UPROPERTY_CLASS;
     private static final int INVALID_CODE = -1;
 
-    /**
-     * Cache for script code lookups.
-     *
-     * <p>ConcurrentHashMap with computeIfAbsent for thread-safe lazy initialization. Avoids
-     * repeated reflection calls for the same script names (e.g., "Latin" is commonly used in regex
-     * patterns).
-     *
-     * <p>Maximum size is ~160 entries (total number of Unicode scripts), minimal memory overhead
-     * (~10KB).
-     */
+    /** Cache for script code lookups to avoid repeated reflection overhead. */
     private static final Map<String, Integer> SCRIPT_CODE_CACHE = new ConcurrentHashMap<>();
 
     static {
@@ -134,6 +42,9 @@ class ICU4JAdapter {
         Class<?> uscriptClass = null;
         Method getCodeFromName = null;
         Method getScriptExtensions = null;
+        Class<?> ucharacterClass = null;
+        Method hasBinaryProperty = null;
+        Class<?> upropertyClass = null;
 
         try {
             // Try to load ICU4J classes via reflection
@@ -141,6 +52,10 @@ class ICU4JAdapter {
             getCodeFromName = uscriptClass.getMethod("getCodeFromName", String.class);
             getScriptExtensions =
                     uscriptClass.getMethod("getScriptExtensions", int.class, BitSet.class);
+            ucharacterClass = Class.forName("com.ibm.icu.lang.UCharacter");
+            hasBinaryProperty =
+                    ucharacterClass.getMethod("hasBinaryProperty", int.class, int.class);
+            upropertyClass = Class.forName("com.ibm.icu.lang.UProperty");
             available = true;
         } catch (ClassNotFoundException | NoSuchMethodException e) {
             // ICU4J not available - will use fallback implementations
@@ -150,6 +65,9 @@ class ICU4JAdapter {
         USCRIPT_CLASS = uscriptClass;
         GET_CODE_FROM_NAME = getCodeFromName;
         GET_SCRIPT_EXTENSIONS = getScriptExtensions;
+        UCHARACTER_CLASS = ucharacterClass;
+        HAS_BINARY_PROPERTY = hasBinaryProperty;
+        UPROPERTY_CLASS = upropertyClass;
 
         // Debug logging for troubleshooting classpath issues
         if (Boolean.getBoolean("rhino.debug.unicode")) {
@@ -169,10 +87,7 @@ class ICU4JAdapter {
     }
 
     /**
-     * Get script code from script name.
-     *
-     * <p>If ICU4J is available, uses {@code UScript.getCodeFromName()} for comprehensive script
-     * support. Otherwise, uses a fallback mapping covering common scripts.
+     * Get script code from script name. Uses ICU4J if available, otherwise fallback.
      *
      * @param name Script name (e.g., "Latin", "Greek", "Cyrillic")
      * @return Script code (positive integer), or -1 if unknown
@@ -201,14 +116,7 @@ class ICU4JAdapter {
     }
 
     /**
-     * Get script extensions for a code point.
-     *
-     * <p>Script_Extensions includes all scripts a character is used with. For most characters, this
-     * equals the single Script. For characters used by multiple scripts (e.g., digits,
-     * punctuation), it includes all applicable scripts.
-     *
-     * <p>If ICU4J is available, uses {@code UScript.getScriptExtensions()} for accurate
-     * multi-script support. Otherwise, uses a simplified fallback (single script only).
+     * Get script extensions for a code point. Uses ICU4J if available, otherwise fallback.
      *
      * @param codePoint Unicode code point
      * @param result BitSet to populate with script codes (cleared before use)
@@ -228,12 +136,7 @@ class ICU4JAdapter {
     }
 
     /**
-     * Fallback: Minimal script name to code mapping.
-     *
-     * <p>Covers common scripts for basic functionality. For comprehensive script support, include
-     * ICU4J on the classpath.
-     *
-     * <p>Script codes from Unicode Standard / ISO 15924.
+     * Fallback: Minimal script name to code mapping for common scripts (ISO 15924 codes).
      *
      * @param name Script name (case-insensitive, with or without underscores)
      * @return Script code, or -1 if unknown
@@ -340,11 +243,7 @@ class ICU4JAdapter {
     }
 
     /**
-     * Fallback: Basic Script_Extensions support.
-     *
-     * <p>Returns the single script for most characters. This is a simplification - some characters
-     * (digits, punctuation) are actually used by multiple scripts. For accurate multi-script
-     * support, include ICU4J.
+     * Fallback: Returns single script for character using Java's built-in APIs.
      *
      * @param codePoint Unicode code point
      * @param result BitSet to populate with script code
@@ -370,10 +269,7 @@ class ICU4JAdapter {
     }
 
     /**
-     * Map Java's Character.UnicodeScript enum to ICU4J script codes.
-     *
-     * <p>This is approximate - Java's enum ordinals don't exactly match ICU4J codes, but we map the
-     * most common scripts for basic functionality.
+     * Map Java's Character.UnicodeScript enum to approximate ICU4J script codes.
      *
      * @param script Java UnicodeScript enum value
      * @return Approximate ICU4J script code
@@ -452,6 +348,67 @@ class ICU4JAdapter {
                 return 41;
             default:
                 return INVALID_CODE;
+        }
+    }
+
+    /**
+     * Check if a code point has a binary Unicode property. Uses ICU4J if available, otherwise
+     * fallback.
+     *
+     * @param codePoint Unicode code point to check
+     * @param propertyName Property name (e.g., "EMOJI", "DEFAULT_IGNORABLE_CODE_POINT")
+     * @return true if the code point has the property, false otherwise or if ICU4J unavailable
+     */
+    static boolean hasBinaryProperty(int codePoint, String propertyName) {
+        if (!ICU4J_AVAILABLE) {
+            return hasBinaryPropertyFallback(codePoint, propertyName);
+        }
+
+        try {
+            // Get the UProperty constant via reflection
+            java.lang.reflect.Field field = UPROPERTY_CLASS.getField(propertyName);
+            int propertyConstant = field.getInt(null);
+
+            // Call UCharacter.hasBinaryProperty(codePoint, property)
+            return (Boolean) HAS_BINARY_PROPERTY.invoke(null, codePoint, propertyConstant);
+        } catch (Exception e) {
+            // Property not found or error - fallback
+            return hasBinaryPropertyFallback(codePoint, propertyName);
+        }
+    }
+
+    /**
+     * Fallback: Basic property checking using Java's Character class.
+     *
+     * @param codePoint Unicode code point to check
+     * @param propertyName Property name
+     * @return true if the code point has the property (best-effort approximation)
+     */
+    private static boolean hasBinaryPropertyFallback(int codePoint, String propertyName) {
+        // Without ICU4J, we can only provide minimal fallback for some properties
+        // Most ES2024 properties (Emoji, Extended_Pictographic, etc.) are not available
+        // in Java's standard library
+        switch (propertyName) {
+            case "ALPHABETIC":
+                return Character.isAlphabetic(codePoint);
+            case "LOWERCASE":
+                return Character.isLowerCase(codePoint);
+            case "UPPERCASE":
+                return Character.isUpperCase(codePoint);
+            case "WHITE_SPACE":
+                return Character.isWhitespace(codePoint);
+            case "IDEOGRAPHIC":
+                return Character.isIdeographic(codePoint);
+            case "DIACRITIC":
+                // Approximate: combining marks are often diacritics
+                int type = Character.getType(codePoint);
+                return type == Character.NON_SPACING_MARK
+                        || type == Character.COMBINING_SPACING_MARK
+                        || type == Character.ENCLOSING_MARK;
+            default:
+                // For Emoji and other ES2024 properties, we have no fallback
+                // Return false (property not matched)
+                return false;
         }
     }
 }

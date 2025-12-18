@@ -7,35 +7,13 @@
 package org.mozilla.javascript.regexp;
 
 import java.io.Serializable;
+import java.util.stream.IntStream;
 
 /**
  * Universal string matcher for regular expressions.
  *
- * <p>Revolutionary unification: ALL string matching (single char, multi-char, emoji) uses ONE
- * implementation. Replaces 8 duplicate opcodes with a single REOP_STRING_MATCHER opcode.
- *
- * <h3>Replaces These Opcodes (Now Deprecated):</h3>
- *
- * <ul>
- *   <li>REOP_FLAT1 - Single ASCII character
- *   <li>REOP_FLAT1i - Single ASCII case-insensitive
- *   <li>REOP_UCFLAT1 - Single Unicode character
- *   <li>REOP_UCFLAT1i - Single Unicode case-insensitive
- *   <li>REOP_UCSPFLAT1 - Unicode surrogate pair
- *   <li>REOP_FLAT - Multi-character string
- *   <li>REOP_FLATi - Multi-character case-insensitive
- *   <li>(Plus ES2024 Property of Strings emoji sequences)
- * </ul>
- *
- * <h3>Why Unification Works:</h3>
- *
- * <p>Fundamental insight: 'a' === "a" === "abc" === "#️⃣" - all are just "match this string at
- * current position". No need for separate ASCII/Unicode/BMP/emoji code paths.
- *
- * <h3>ES2024 Property of Strings:</h3>
- *
- * <p>Enables matching multi-character emoji sequences: keycaps (#️⃣), ZWJ sequences (👨‍💻), flags
- * (🇺🇸), skin tones, etc.
+ * <p>Unified implementation for all string matching: single char, multi-char, emoji sequences.
+ * Supports ES2024 Property of Strings for emoji matching.
  *
  * @see EmojiSequenceData
  * @see NativeRegExp#REOP_STRING_MATCHER
@@ -78,6 +56,32 @@ public final class StringMatcher implements Serializable {
     }
 
     /**
+     * Check if literal matches at the specified position in the input.
+     *
+     * @param input Input to match against
+     * @param startPos Starting position in input
+     * @return true if literal matches at startPos
+     */
+    private boolean matchesAt(CharSequence input, int startPos) {
+        for (int i = 0; i < literal.length(); i++) {
+            char inputChar = input.charAt(startPos + i);
+            char literalChar = literal.charAt(i);
+
+            if (caseInsensitive) {
+                if (inputChar != literalChar
+                        && Character.toUpperCase(inputChar) != Character.toUpperCase(literalChar)) {
+                    return false;
+                }
+            } else {
+                if (inputChar != literalChar) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Match forwards from the specified position.
      *
      * @param input Input to match against
@@ -90,30 +94,11 @@ public final class StringMatcher implements Serializable {
             return -1;
         }
 
-        // Character-by-character comparison
-        for (int i = 0; i < literal.length(); i++) {
-            char inputChar = input.charAt(position + i);
-            char literalChar = literal.charAt(i);
-
-            if (caseInsensitive) {
-                if (!charsEqualIgnoreCase(inputChar, literalChar)) {
-                    return -1;
-                }
-            } else {
-                if (inputChar != literalChar) {
-                    return -1;
-                }
-            }
-        }
-
-        return literal.length();
+        return matchesAt(input, position) ? literal.length() : -1;
     }
 
     /**
-     * Match backwards from the specified position.
-     *
-     * <p>Used for lookbehind assertions. The position parameter is the END of the match
-     * (exclusive), and we match backwards to find the start.
+     * Match backwards from the specified position (for lookbehind assertions).
      *
      * @param input Input to match against
      * @param position End position (exclusive) to match backwards from
@@ -127,45 +112,7 @@ public final class StringMatcher implements Serializable {
             return -1;
         }
 
-        // Character-by-character comparison (same logic as forward)
-        for (int i = 0; i < literal.length(); i++) {
-            char inputChar = input.charAt(startPos + i);
-            char literalChar = literal.charAt(i);
-
-            if (caseInsensitive) {
-                if (!charsEqualIgnoreCase(inputChar, literalChar)) {
-                    return -1;
-                }
-            } else {
-                if (inputChar != literalChar) {
-                    return -1;
-                }
-            }
-        }
-
-        return literal.length();
-    }
-
-    /**
-     * Case-insensitive character comparison.
-     *
-     * <p>Compares two characters ignoring case. Uses both toLowerCase and toUpperCase to handle all
-     * Unicode case mappings correctly.
-     *
-     * @param c1 First character
-     * @param c2 Second character
-     * @return True if characters are equal ignoring case
-     */
-    private static boolean charsEqualIgnoreCase(char c1, char c2) {
-        // Fast path: exact match
-        if (c1 == c2) {
-            return true;
-        }
-
-        // Slow path: case folding
-        // Use both toLowerCase and toUpperCase for proper Unicode handling
-        return Character.toLowerCase(c1) == Character.toLowerCase(c2)
-                || Character.toUpperCase(c1) == Character.toUpperCase(c2);
+        return matchesAt(input, startPos) ? literal.length() : -1;
     }
 
     /**
@@ -191,14 +138,16 @@ public final class StringMatcher implements Serializable {
         StringBuilder sb = new StringBuilder("StringMatcher[");
 
         // Show literal with escape sequences for non-printable chars
-        for (int i = 0; i < literal.length(); i++) {
-            char c = literal.charAt(i);
-            if (c >= 32 && c < 127) {
-                sb.append(c);
-            } else {
-                sb.append(String.format("\\u%04X", (int) c));
-            }
-        }
+        IntStream.range(0, literal.length())
+                .map(literal::charAt)
+                .forEach(
+                        c -> {
+                            if (c >= 32 && c < 127) {
+                                sb.append((char) c);
+                            } else {
+                                sb.append(String.format("\\u%04X", c));
+                            }
+                        });
 
         if (caseInsensitive) {
             sb.append(", case-insensitive");
@@ -206,5 +155,38 @@ public final class StringMatcher implements Serializable {
 
         sb.append("]");
         return sb.toString();
+    }
+
+    /** Case folding utilities for regular expressions. */
+
+    /**
+     * Convert character to uppercase using Unicode case folding.
+     *
+     * @param ch Character to convert
+     * @return Uppercase character
+     */
+    static char toUpperCase(char ch) {
+        return Character.toUpperCase(ch);
+    }
+
+    /**
+     * Convert character to lowercase using Unicode case folding.
+     *
+     * @param ch Character to convert
+     * @return Lowercase character
+     */
+    static char toLowerCase(char ch) {
+        return Character.toLowerCase(ch);
+    }
+
+    /**
+     * Compare two characters for equality, ignoring case.
+     *
+     * @param c1 First character
+     * @param c2 Second character
+     * @return True if characters are equal ignoring case
+     */
+    static boolean equalsIgnoreCase(char c1, char c2) {
+        return c1 == c2 || Character.toUpperCase(c1) == Character.toUpperCase(c2);
     }
 }

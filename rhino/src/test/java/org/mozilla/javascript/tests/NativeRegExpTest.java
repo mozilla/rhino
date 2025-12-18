@@ -568,21 +568,23 @@ public class NativeRegExpTest {
                     assertTrue(result instanceof NativeRegExp);
 
                     NativeRegExp nr = (NativeRegExp) result;
-                    // use reflection to access the private member 're' of the nativeregexp object
-                    // of the NativeRegExp object and call the
-                    // private method prettyPrintRE static method with the 're' member
-                    // to make sure it doesn't blow up
+                    // Access the private member 're' and test RegExpDebugger to make sure it
+                    // doesn't blow up
                     try {
                         java.lang.reflect.Field reField = NativeRegExp.class.getDeclaredField("re");
                         reField.setAccessible(true);
                         Object re = reField.get(nr);
-                        java.lang.reflect.Method prettyPrintRE =
-                                NativeRegExp.class.getDeclaredMethod(
-                                        "prettyPrintRE", re.getClass());
-                        prettyPrintRE.setAccessible(true);
-                        prettyPrintRE.invoke(NativeRegExp.class, re);
+                        // Test RegExpDebugger.logCompilation (replaces old prettyPrintRE)
+                        java.lang.reflect.Method logCompilation =
+                                org.mozilla.javascript.regexp.RegExpDebugger.class
+                                        .getDeclaredMethod(
+                                                "logCompilation",
+                                                String.class,
+                                                int.class,
+                                                re.getClass());
+                        logCompilation.invoke(null, "(a{3,6})(?=\\1)", 0, re);
                     } catch (Exception e) {
-                        fail("NativeRegExp::prettyPrintRE blew up");
+                        fail("RegExpDebugger::logCompilation blew up: " + e.getMessage());
                     }
                     return null;
                 });

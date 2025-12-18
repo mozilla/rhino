@@ -7,45 +7,17 @@
 package org.mozilla.javascript.regexp;
 
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 
 /**
- * Represents parsed character class contents for regular expressions.
+ * Parsed character class contents for regular expressions.
  *
- * <p>This class stores all the components that can appear in a character class (e.g., {@code
- * [a-z\d\p{Letter}]}), including:
+ * <p>Stores components of a character class: individual codepoints, ranges, escape sequences (\d,
+ * \p{}, etc.), and ES2024 v-flag features (string literals, set operations, emoji sequences).
  *
- * <ul>
- *   <li><b>Individual characters</b> - stored in {@code chars}
- *   <li><b>Character ranges</b> - stored in {@code bmpRanges} (BMP) and {@code nonBMPRanges} (non-BMP)
- *   <li><b>Escape sequences</b> - stored as RENode objects in {@code escapeNodes} (\d, \s, \p{},
- *       etc.)
- *   <li><b>ES2024 v-flag features:</b>
- *       <ul>
- *         <li>String literals from \q{...} syntax - stored in {@code stringLiterals}
- *         <li>Set operations (union, intersection, subtraction) - stored in {@code setOperations}
- *         <li>Properties of Strings (emoji sequences) - stored in {@code stringMatchers}
- *       </ul>
- * </ul>
- *
- * <p>The {@code sense} field indicates whether the class is normal (true) or negated (false, from
- * {@code [^...]}).
- *
- * <p><b>BMP vs Non-BMP:</b> Characters are separated by Unicode plane:
- *
- * <ul>
- *   <li><b>BMP</b> (Basic Multilingual Plane, U+0000-U+FFFF) - fits in a single char, stored in
- *       {@code chars} and {@code bmpRanges}
- *   <li><b>Non-BMP</b> (U+10000 and above) - requires surrogate pairs, stored in {@code
- *       nonBMPCodepoints} and {@code nonBMPRanges}
- * </ul>
- *
- * <p>Ranges are stored as flattened lists: [start1, end1, start2, end2, ...] for efficient
- * iteration.
- *
- * <p><b>Performance Note:</b> Fields are package-private for performance-critical access during
- * parsing and compilation within the regexp package. External access should use getter methods.
- *
- * <p>Extracted from NativeRegExp to improve modularity during refactoring.
+ * <p>Ranges stored as flattened pairs: [start1, end1, start2, end2, ...]. All characters stored as
+ * Unicode codepoints (0 to 0x10FFFF).
  *
  * @see SetOperation
  * @see RECharSet
@@ -54,14 +26,17 @@ final class ClassContents {
     /** True if normal class, false if negated (from [^...]). Package-private for internal use. */
     boolean sense = true;
 
-    /** Individual BMP characters. Package-private for internal mutation during parsing. */
-    final ArrayList<Character> chars = new ArrayList<>();
+    /**
+     * Individual codepoints (all Unicode codepoints, both BMP and non-BMP). Package-private for
+     * internal mutation during parsing.
+     */
+    final ArrayList<Integer> codepoints = new ArrayList<>();
 
     /**
-     * BMP character ranges stored as (start1, end1, start2, end2, ...). Package-private for
-     * internal mutation.
+     * Character ranges stored as (start1, end1, start2, end2, ...) for all Unicode codepoints.
+     * Package-private for internal mutation.
      */
-    final ArrayList<Character> bmpRanges = new ArrayList<>();
+    final ArrayList<Integer> ranges = new ArrayList<>();
 
     /**
      * Escape sequence nodes (\d, \D, \s, \S, \w, \W, \p{}, \P{}). Package-private for internal
@@ -70,52 +45,54 @@ final class ClassContents {
     final ArrayList<RENode> escapeNodes = new ArrayList<>();
 
     /**
-     * Non-BMP character ranges stored as (start1, end1, start2, end2, ...). Package-private for
-     * internal mutation.
-     */
-    final ArrayList<Integer> nonBMPRanges = new ArrayList<>();
-
-    /** Individual non-BMP codepoints (beyond U+FFFF). Package-private for internal mutation. */
-    final ArrayList<Integer> nonBMPCodepoints = new ArrayList<>();
-
-    /**
      * ES2024 v-flag set operations (intersection, subtraction). Package-private for internal
      * mutation.
      */
     final ArrayList<SetOperation> setOperations = new ArrayList<>();
 
-    /**
-     * ES2024 v-flag string literals from \q{...} syntax. Package-private for internal mutation.
-     */
+    /** ES2024 v-flag string literals from \q{...} syntax. Package-private for internal mutation. */
     final ArrayList<String> stringLiterals = new ArrayList<>();
 
-    /**
-     * ES2024 Property of Strings (emoji sequences). Package-private for internal mutation.
-     */
+    /** ES2024 Property of Strings (emoji sequences). Package-private for internal mutation. */
     final ArrayList<StringMatcher> stringMatchers = new ArrayList<>();
 
     /**
-     * Merge all contents from another ClassContents object into this one.
-     *
-     * <p>Used for:
-     *
-     * <ul>
-     *   <li>Nested character classes
-     *   <li>Set operations (union, intersection, subtraction)
-     *   <li>Building composite character classes
-     * </ul>
-     *
-     * <p>The {@code sense} field is not merged - caller must handle negation logic separately.
+     * Merge all contents from another ClassContents object into this one. Does not merge the sense
+     * field.
      *
      * @param other The ClassContents to merge from
      */
     void mergeFrom(ClassContents other) {
-        this.chars.addAll(other.chars);
-        this.bmpRanges.addAll(other.bmpRanges);
-        this.nonBMPCodepoints.addAll(other.nonBMPCodepoints);
-        this.nonBMPRanges.addAll(other.nonBMPRanges);
+        this.codepoints.addAll(other.codepoints);
+        this.ranges.addAll(other.ranges);
         this.stringLiterals.addAll(other.stringLiterals);
         this.stringMatchers.addAll(other.stringMatchers);
         this.escapeNodes.addAll(other.escapeNodes);
+    }
+
+    /**
+     * Iterate over all character ranges.
+     *
+     * @param consumer The BiConsumer to apply to each (start, end) pair
+     */
+    void forEachRange(BiConsumer<Integer, Integer> consumer) {
+        for (int i = 0; i < ranges.size(); i += 2) {
+            consumer.accept(ranges.get(i), ranges.get(i + 1));
+        }
+    }
+
+    /**
+     * Test if any range matches the given predicate. Short-circuits on first match.
+     *
+     * @param predicate The BiPredicate to test each (start, end) pair
+     * @return true if any range matches the predicate
+     */
+    boolean anyRangeMatches(BiPredicate<Integer, Integer> predicate) {
+        for (int i = 0; i < ranges.size(); i += 2) {
+            if (predicate.test(ranges.get(i), ranges.get(i + 1))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

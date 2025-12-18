@@ -9,40 +9,11 @@ package org.mozilla.javascript.regexp;
 import org.mozilla.javascript.Context;
 
 /**
- * Immutable value object representing regular expression flags.
+ * Immutable value object representing regular expression flags (g, i, m, s, u, v, y, d).
  *
- * <p>Encapsulates RegExp flag parsing, validation, and querying. Instances are immutable and
- * thread-safe.
+ * <p>Handles flag parsing, validation, and querying. Flags u and v are mutually exclusive.
  *
- * <p><b>Supported Flags:</b>
- *
- * <ul>
- *   <li><b>g</b> - Global: match all occurrences, not just first
- *   <li><b>i</b> - IgnoreCase: case-insensitive matching
- *   <li><b>m</b> - Multiline: ^ and $ match line boundaries
- *   <li><b>s</b> - DotAll: . matches newlines (ES2018)
- *   <li><b>u</b> - Unicode: Unicode mode with strict escapes (ES2015)
- *   <li><b>v</b> - UnicodeSets: ES2024 set operations and string literals
- *   <li><b>y</b> - Sticky: match at exact position (ES2015)
- *   <li><b>d</b> - HasIndices: capture group indices (ES2022)
- * </ul>
- *
- * <p><b>Flag Constraints:</b>
- *
- * <ul>
- *   <li>Each flag can appear at most once
- *   <li>u and v flags are mutually exclusive
- *   <li>u flag requires ES6+
- * </ul>
- *
- * <p><b>Usage:</b>
- *
- * <pre>
- * RegExpFlags flags = RegExpFlags.parse("gim", cx);
- * if (flags.isGlobal()) { ... }
- * if (flags.isUnicodeMode()) { ... }
- * int bitmask = flags.getBitmask(); // for legacy code
- * </pre>
+ * <p>See ECMA 262 §22.2.7.
  */
 final class RegExpFlags {
 
@@ -68,16 +39,8 @@ final class RegExpFlags {
     }
 
     /**
-     * Parse flag string into RegExpFlags instance.
-     *
-     * <p>Validates:
-     *
-     * <ul>
-     *   <li>All characters are valid flags
-     *   <li>No duplicate flags
-     *   <li>Flag combinations are legal (u and v mutually exclusive)
-     *   <li>Language version supports flags (u requires ES6+)
-     * </ul>
+     * Parse flag string into RegExpFlags instance. Validates flag combinations and version
+     * requirements.
      *
      * @param flagString Flag string (e.g., "gim"), can be null
      * @param cx Context for language version checking
@@ -287,6 +250,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isUnicodeMode()} instead
      */
+    @Deprecated
     static boolean isUnicodeMode(int flags) {
         return fromBitmask(flags).isUnicodeMode();
     }
@@ -294,6 +258,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isUnicodeSetsMode()} instead
      */
+    @Deprecated
     static boolean isUnicodeSetsMode(int flags) {
         return fromBitmask(flags).isUnicodeSetsMode();
     }
@@ -301,6 +266,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isCaseInsensitive()} instead
      */
+    @Deprecated
     static boolean isCaseInsensitive(int flags) {
         return fromBitmask(flags).isCaseInsensitive();
     }
@@ -308,6 +274,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isGlobal()} instead
      */
+    @Deprecated
     static boolean isGlobal(int flags) {
         return fromBitmask(flags).isGlobal();
     }
@@ -315,6 +282,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isMultiline()} instead
      */
+    @Deprecated
     static boolean isMultiline(int flags) {
         return fromBitmask(flags).isMultiline();
     }
@@ -322,6 +290,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isDotAll()} instead
      */
+    @Deprecated
     static boolean isDotAll(int flags) {
         return fromBitmask(flags).isDotAll();
     }
@@ -329,6 +298,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #isSticky()} instead
      */
+    @Deprecated
     static boolean isSticky(int flags) {
         return fromBitmask(flags).isSticky();
     }
@@ -336,6 +306,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} and {@link #hasIndices()} instead
      */
+    @Deprecated
     static boolean hasIndices(int flags) {
         return fromBitmask(flags).hasIndices();
     }
@@ -343,6 +314,7 @@ final class RegExpFlags {
     /**
      * @deprecated Use {@link #parse} instead
      */
+    @Deprecated
     static int parseFlags(String flagString, Context cx) {
         return parse(flagString, cx).getBitmask();
     }

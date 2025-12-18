@@ -11,20 +11,7 @@ import java.util.Objects;
 /**
  * Immutable value object controlling regular expression parsing behavior.
  *
- * <p>This class encapsulates the various modes and flags that affect how a regular expression
- * pattern is parsed. These parameters are determined by the regexp flags (u, v) and language
- * version, and control parsing rules for:
- *
- * <ul>
- *   <li>Named capture groups ((?<name>...))
- *   <li>Unicode mode (u flag - strict escapes, surrogate pairs, etc.)
- *   <li>Unicode Sets mode (v flag - ES2024 set operations, string literals, etc.)
- * </ul>
- *
- * <p>Instances are immutable and thread-safe, suitable for sharing across parsing operations.
- *
- * <p>Extracted from NativeRegExp to improve modularity during refactoring while maintaining API
- * compatibility.
+ * <p>Encapsulates parsing modes determined by regexp flags (u, v) and language version.
  */
 final class ParserParameters {
     /** Whether named capture groups ((?<name>...)) are supported. */
@@ -33,16 +20,7 @@ final class ParserParameters {
     /** Whether Unicode mode (u flag) is enabled - affects escape sequences and matching. */
     private final boolean unicodeMode;
 
-    /**
-     * Whether Unicode Sets mode (v flag, ES2024) is enabled. This enables:
-     *
-     * <ul>
-     *   <li>Set operations in character classes (union, intersection, subtraction)
-     *   <li>String literals via \q{...} syntax
-     *   <li>Properties of Strings (emoji sequences)
-     *   <li>Different escape rules in character classes
-     * </ul>
-     */
+    /** Whether Unicode Sets mode (v flag, ES2024) is enabled. */
     private final boolean vMode;
 
     /**

@@ -3,7 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation 'com.ibm.icu:icu4j:74.2'
+    // ICU4J is optional - used via reflection in ICU4JAdapter for enhanced Unicode support
+    testImplementation 'com.ibm.icu:icu4j:74.2'
     testImplementation project(':testutils')
 }
 
