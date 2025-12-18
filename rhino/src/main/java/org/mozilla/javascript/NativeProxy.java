@@ -1288,7 +1288,7 @@ class NativeProxy extends ScriptableObject {
         return targetObj;
     }
 
-    private static class NativeProxyFunction extends NativeProxy implements Function {
+    static class NativeProxyFunction extends NativeProxy implements Function {
 
         NativeProxyFunction(ScriptableObject target, Scriptable handler) {
             super(target, handler);

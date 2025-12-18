@@ -531,6 +531,10 @@ public class AbstractEcmaObjectOperations {
         if (argument instanceof LambdaFunction) {
             return false;
         }
+        if (argument instanceof NativeProxy.NativeProxyFunction) {
+            var f = ((NativeProxy) argument).getTargetThrowIfRevoked();
+            return isConstructor(cx, f);
+        }
 
         return argument instanceof Constructable;
     }
