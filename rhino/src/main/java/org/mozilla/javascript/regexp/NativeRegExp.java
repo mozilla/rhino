@@ -818,12 +818,13 @@ public class NativeRegExp extends IdScriptableObject {
                 break;
             }
             if (!overflow) {
-                int v = value * 10 + (c - '0');
-                if (v < 65535) {
-                    value = v;
-                } else {
+                int digit = c - '0';
+                // Check for overflow BEFORE multiplication to prevent integer wraparound
+                if (value > (65535 - digit) / 10) {
                     overflow = true;
                     value = 65535;
+                } else {
+                    value = value * 10 + digit;
                 }
             }
         }
@@ -1813,7 +1814,8 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static int addIndex(byte[] array, int pc, int index) {
         if (index < 0) throw Kit.codeBug();
-        if (index > BMP_MAX_CODEPOINT) throw Context.reportRuntimeError("Too complex regexp");
+        // Maximum value that fits in 16 bits is 0xFFFF (65535)
+        if (index > 0xFFFF) throw Context.reportRuntimeError("Too complex regexp");
         array[pc] = (byte) (index >> 8);
         array[pc + 1] = (byte) index;
         return pc + 2;
@@ -2040,6 +2042,9 @@ public class NativeRegExp extends IdScriptableObject {
     */
     static boolean backrefMatcher(
             REGlobalData gData, int parenIndex, String input, int end, boolean matchBackward) {
+        if (input == null) {
+            throw new IllegalArgumentException("input cannot be null");
+        }
         int len;
         int i;
         if (gData.parens == null || parenIndex >= gData.parens.length) return false;
@@ -4127,11 +4132,17 @@ class REGlobalData {
 
     /** Get start of parenthesis capture contents, -1 for empty. */
     int parensIndex(int i) {
+        if (parens == null || i < 0 || i >= parens.length) {
+            return -1;
+        }
         return (int) parens[i];
     }
 
     /** Get length of parenthesis capture contents. */
     int parensLength(int i) {
+        if (parens == null || i < 0 || i >= parens.length) {
+            return 0;
+        }
         return (int) (parens[i] >>> 32);
     }
 

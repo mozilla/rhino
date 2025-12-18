@@ -145,7 +145,12 @@ public final class ExecutionContext {
     public int getMatchPosition() {
         if (isUnicodeMode() && gData.cp < end) {
             if (matchBackward) {
-                if (gData.cp - 2 >= 0
+                // Ensure we have at least one character to match
+                if (gData.cp < 1) {
+                    return -1; // Out of bounds
+                }
+                // Check for surrogate pair
+                if (gData.cp >= 2
                         && Character.isSurrogatePair(
                                 input.charAt(gData.cp - 2), input.charAt(gData.cp - 1))) {
                     return gData.cp - 2;
@@ -156,7 +161,9 @@ public final class ExecutionContext {
                 return gData.cp;
             }
         } else {
-            return gData.cp + (matchBackward ? -1 : 0);
+            int pos = gData.cp + (matchBackward ? -1 : 0);
+            if (pos < 0) return -1; // Out of bounds
+            return pos;
         }
     }
 

@@ -93,25 +93,39 @@ class ICU4JAdapter {
      * @return Script code (positive integer), or -1 if unknown
      */
     static int getScriptCodeFromName(String name) {
-        if (ICU4J_AVAILABLE) {
-            // Cache lookups to avoid repeated reflection overhead
-            return SCRIPT_CODE_CACHE.computeIfAbsent(name, ICU4JAdapter::lookupScriptCode);
-        } else {
+        if (!ICU4J_AVAILABLE) {
             return getScriptCodeFromNameFallback(name);
         }
+
+        // Check cache first
+        Integer cached = SCRIPT_CODE_CACHE.get(name);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Perform lookup outside of computeIfAbsent to avoid caching failures
+        Integer result = lookupScriptCode(name);
+
+        // Only cache valid results to prevent caching transient errors
+        if (result != null && result != INVALID_CODE) {
+            SCRIPT_CODE_CACHE.putIfAbsent(name, result);
+        }
+
+        return result != null ? result : INVALID_CODE;
     }
 
     /**
      * Helper method for script code cache lookup via reflection.
      *
      * @param name Script name to look up
-     * @return Script code, or INVALID_CODE if lookup fails
+     * @return Script code, null if lookup fails, or INVALID_CODE if script not found
      */
     private static Integer lookupScriptCode(String name) {
         try {
             return (Integer) GET_CODE_FROM_NAME.invoke(null, name);
         } catch (Exception e) {
-            return INVALID_CODE;
+            // Don't cache reflection failures - they may be transient
+            return null;
         }
     }
 
