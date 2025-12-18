@@ -9,8 +9,8 @@ package org.mozilla.javascript.typedarrays;
 public class ByteIo {
 
     // Float16 constants
-    private static final double FLOAT16_MIN_NORMAL = Math.pow(2, -14);
-    private static final double FLOAT16_MIN_SUBNORMAL = Math.pow(2, -24);
+    private static final double FLOAT16_MIN_NORMAL = 6.103515625e-5;     // 2^-14
+    private static final double FLOAT16_MIN_SUBNORMAL = 5.960464477539063e-8; // 2^-24
 
     public static Byte readInt8(byte[] buf, int offset) {
         return Byte.valueOf(buf[offset]);
