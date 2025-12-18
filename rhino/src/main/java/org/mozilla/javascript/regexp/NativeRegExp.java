@@ -2190,6 +2190,16 @@ public class NativeRegExp extends IdScriptableObject {
         }
         charSet.ensureBuilt(gData);
 
+        // Fast path: check cache for set operations (ES2024 v-flag)
+        if (!charSet.classContents.setOperations.isEmpty()) {
+            if (charSet.setOpCache != null) {
+                Boolean cached = charSet.setOpCache.get(codePoint);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+        }
+
         // Unified Unicode path - no special-casing ASCII
         boolean matches = false;
 
@@ -2251,6 +2261,18 @@ public class NativeRegExp extends IdScriptableObject {
                     }
                 }
             }
+
+            // Cache the result for set operations (thread-safe via ConcurrentHashMap)
+            boolean finalResult = matches == charSet.classContents.sense;
+            if (charSet.setOpCache == null) {
+                synchronized (charSet) {
+                    if (charSet.setOpCache == null) {
+                        charSet.setOpCache = new java.util.concurrent.ConcurrentHashMap<>();
+                    }
+                }
+            }
+            charSet.setOpCache.put(codePoint, finalResult);
+            return finalResult;
         }
 
         return matches == charSet.classContents.sense;
@@ -4216,6 +4238,13 @@ final class RECharSet implements Serializable {
 
     transient volatile boolean converted;
     transient volatile byte[] bits;
+
+    /**
+     * Cache for set operation results. Only allocated if class has set operations. Key: codepoint,
+     * Value: match result after applying all set operations. transient: not serialized, will be
+     * rebuilt on first use after deserialization.
+     */
+    transient volatile java.util.Map<Integer, Boolean> setOpCache;
 
     /**
      * Ensure the character set bitmap is built. Thread-safe lazy initialization.

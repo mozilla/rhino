@@ -10,8 +10,8 @@ import org.mozilla.javascript.testutils.Utils;
 /**
  * Rhino-specific regexp implementation tests.
  *
- * <p>Tests internal optimizations and edge cases specific to Rhino's bytecode compiler that are
- * not covered by Test262.
+ * <p>Tests internal optimizations and edge cases specific to Rhino's bytecode compiler that are not
+ * covered by Test262.
  */
 public class RegExpInternalTest {
 
@@ -67,8 +67,7 @@ public class RegExpInternalTest {
     @Test
     public void repeatingCaptureGroupClears() {
         // Rhino-specific: quantified capture groups clear on each iteration
-        final String script =
-                "var re = /(\\d)+/;\n" + "var m = re.exec('123');\n" + "'' + m[1];";
+        final String script = "var re = /(\\d)+/;\n" + "var m = re.exec('123');\n" + "'' + m[1];";
         Utils.assertWithAllModes_ES6("3", script);
     }
 
