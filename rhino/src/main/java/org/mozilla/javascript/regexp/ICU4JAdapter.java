@@ -150,16 +150,18 @@ class ICU4JAdapter {
     }
 
     /**
-     * Fallback: Minimal script name to code mapping for common scripts (ISO 15924 codes).
+     * Fallback: Minimal script name to code mapping for common scripts.
+     *
+     * <p>Returns ICU4J UScript integer constants, not ISO 15924 numeric codes.
      *
      * @param name Script name (case-insensitive, with or without underscores)
-     * @return Script code, or -1 if unknown
+     * @return ICU4J UScript code, or -1 if unknown
      */
     private static int getScriptCodeFromNameFallback(String name) {
         // Normalize: lowercase, remove underscores
         String normalized = name.replace("_", "").toLowerCase(java.util.Locale.ROOT);
 
-        // Common scripts with their ISO 15924 codes
+        // Common scripts with their ICU4J UScript codes
         switch (normalized) {
             case "common":
             case "zyyy":
@@ -185,13 +187,13 @@ class ICU4JAdapter {
                 return 8;
             case "devanagari":
             case "deva":
-                return 9;
+                return 10;
             case "greek":
             case "grek":
-                return 23;
+                return 14;
             case "hebrew":
             case "hebr":
-                return 24;
+                return 19;
             case "han":
             case "hani":
                 return 17;
@@ -203,7 +205,7 @@ class ICU4JAdapter {
                 return 20;
             case "katakana":
             case "kana":
-                return 21;
+                return 22;
             case "latin":
             case "latn":
                 return 25;
@@ -211,25 +213,25 @@ class ICU4JAdapter {
                 return 38;
             case "gurmukhi":
             case "guru":
-                return 15;
+                return 16;
             case "gujarati":
             case "gujr":
-                return 14;
+                return 15;
             case "kannada":
             case "knda":
-                return 22;
+                return 21;
             case "malayalam":
             case "mlym":
                 return 26;
             case "oriya":
             case "orya":
-                return 30;
+                return 31;
             case "tamil":
             case "taml":
-                return 37;
+                return 35;
             case "telugu":
             case "telu":
-                return 39;
+                return 36;
             case "ethiopic":
             case "ethi":
                 return 11;
@@ -241,7 +243,7 @@ class ICU4JAdapter {
                 return 33;
             case "tibetan":
             case "tibt":
-                return 40;
+                return 39;
             case "myanmar":
             case "mymr":
                 return 28;
@@ -250,7 +252,7 @@ class ICU4JAdapter {
                 return 24;
             case "khmer":
             case "khmr":
-                return 19;
+                return 23;
             default:
                 return INVALID_CODE;
         }
@@ -283,10 +285,10 @@ class ICU4JAdapter {
     }
 
     /**
-     * Map Java's Character.UnicodeScript enum to approximate ICU4J script codes.
+     * Map Java's Character.UnicodeScript enum to ICU4J UScript codes.
      *
      * @param script Java UnicodeScript enum value
-     * @return Approximate ICU4J script code
+     * @return ICU4J UScript code
      */
     private static int getScriptCodeFromJavaEnum(Character.UnicodeScript script) {
         switch (script) {
@@ -295,31 +297,31 @@ class ICU4JAdapter {
             case LATIN:
                 return 25;
             case GREEK:
-                return 23;
+                return 14;
             case CYRILLIC:
                 return 8;
             case ARMENIAN:
                 return 3;
             case HEBREW:
-                return 24;
+                return 19;
             case ARABIC:
                 return 2;
             case DEVANAGARI:
-                return 9;
+                return 10;
             case BENGALI:
                 return 4;
             case GURMUKHI:
-                return 15;
+                return 16;
             case GUJARATI:
-                return 14;
+                return 15;
             case ORIYA:
-                return 30;
+                return 31;
             case TAMIL:
-                return 37;
+                return 35;
             case TELUGU:
-                return 39;
+                return 36;
             case KANNADA:
-                return 22;
+                return 21;
             case MALAYALAM:
                 return 26;
             case SINHALA:
@@ -327,9 +329,9 @@ class ICU4JAdapter {
             case THAI:
                 return 38;
             case LAO:
-                return 23;
+                return 24;
             case TIBETAN:
-                return 40;
+                return 39;
             case MYANMAR:
                 return 28;
             case GEORGIAN:
@@ -347,13 +349,13 @@ class ICU4JAdapter {
             case RUNIC:
                 return 32;
             case KHMER:
-                return 19;
+                return 23;
             case MONGOLIAN:
                 return 27;
             case HIRAGANA:
                 return 20;
             case KATAKANA:
-                return 21;
+                return 22;
             case BOPOMOFO:
                 return 5;
             case HAN:
