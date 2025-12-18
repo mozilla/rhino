@@ -1,6 +1,6 @@
 plugins {
     id 'rhino.library-conventions'
-    id 'com.gradleup.shadow' version '9.3.0'
+    id 'com.gradleup.shadow' version '9.1.0'
     id 'application'
 }
 
@@ -16,15 +16,15 @@ dependencies {
     implementation project(':rhino')
     implementation project(':rhino-tools')
     implementation project(':rhino-xml')
-    // ICU4J is optional - provides enhanced Unicode support for ES2024 regex features
-    // Included in rhino-all for full functionality
-    implementation 'com.ibm.icu:icu4j:74.2'
 }
 
 shadowJar {
     // Ensure that the "jar" from this step is the shadowed one that we want to 
     // publish in Maven.
     archiveClassifier.set('')
+    manifest {
+      inheritFrom(project.tasks.jar.manifest)
+    }
 }
 
 startScripts {
@@ -43,7 +43,6 @@ publishing {
             pom.withXml {
                 def root = asNode()
 
-                root.appendNode('name', 'rhino-all')
                 root.appendNode('description', "Rhino JavaScript all-in-one JAR, not for use with modular Java projects")
                 root.appendNode("url", "https://mozilla.github.io/rhino/")
 
@@ -64,11 +63,6 @@ publishing {
                 def o = root.appendNode("organization")
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
-
-                def d = root.appendNode("developers")
-                def dd = d.appendNode("developer")
-                dd.appendNode("name", "Greg Brail")
-                dd.appendNode("email", "gbrail@users.noreply.github.com")
             }
         }
     }

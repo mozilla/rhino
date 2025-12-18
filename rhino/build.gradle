@@ -3,8 +3,6 @@ plugins {
 }
 
 dependencies {
-    // ICU4J is optional - used via reflection in ICU4JAdapter for enhanced Unicode support
-    testImplementation 'com.ibm.icu:icu4j:74.2'
     testImplementation project(':testutils')
 }
 
@@ -18,10 +16,8 @@ publishing {
             // attribute otherwise, and without it Maven Central verification
             // will fail.
             pom.withXml {
-  
-               def root = asNode()
+                def root = asNode()
 
-                root.appendNode('name', 'rhino')
                 root.appendNode('description', "Rhino JavaScript runtime jar, excludes XML, tools, and ScriptEngine wrapper")
                 root.appendNode("url", "https://mozilla.github.io/rhino/")
 
@@ -42,11 +38,6 @@ publishing {
                 def o = root.appendNode("organization")
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
-
-                def d = root.appendNode("developers")
-                def dd = d.appendNode("developer")
-                dd.appendNode("name", "Greg Brail")
-                dd.appendNode("email", "gbrail@users.noreply.github.com")
             }
         }
     }
@@ -102,7 +93,6 @@ decycle {
     ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory"
 
     // currently accepted cycles (may be resolved, when it is clear, how to separate the liveconnect stuff)
-    ignoring from: "org.mozilla.javascript.lc.type.*", to: "org.mozilla.javascript.(Scriptable|ScriptableObject)"
     ignoring from: "org.mozilla.javascript.lc.type.TypeInfoFactory", to: "org.mozilla.javascript.lc.type.impl.factory.*"
     ignoring from: "org.mozilla.javascript.lc.type.TypeInfo", to: "org.mozilla.javascript.lc.type.impl.*"
     ignoring from: "org.mozilla.javascript.lc.type.TypeFormatContext", to: "org.mozilla.javascript.lc.type.impl.ClassSignatureFormatContext"
