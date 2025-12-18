@@ -563,9 +563,10 @@ public class NativeRegExp extends IdScriptableObject {
     /**
      * Check if Unicode mode is enabled (u or v flag).
      *
-     * @param flags The regexp flags
+     * @param flags The regexp flags bitmask
      * @return true if either JSREG_UNICODE or JSREG_UNICODESETS flag is set
-     * @deprecated Use RegExpFlags.isUnicodeMode(flags) instead
+     * @deprecated Internal use only. External callers should use {@link
+     *     RegExpFlags#isUnicodeMode()}
      */
     @Deprecated
     private static boolean isUnicodeMode(int flags) {
@@ -609,16 +610,19 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     // ==================================================================================
-    // INNER CLASSES (within NativeRegExp)
+    // REGEXP PARSER AND COMPILER
     // ==================================================================================
     //
-    // NOTE: The following classes have been extracted to separate files for better modularity:
-    // - ParserParameters.java
-    // - SetOperation.java (includes nested SetOperation.Type enum)
-    // - ClassContents.java
+    // NOTE: Several classes have been extracted to separate files for better modularity:
+    // - ParserParameters.java - Parser configuration and flags
+    // - SetOperation.java - Unicode set operations for v-mode
+    // - ClassContents.java - Character class contents (ranges, codepoints, strings)
+    // - ExecutionContext.java - Regex execution state and context
+    // - OpcodeTable.java - Table-driven opcode handlers
+    // - StringMatcher.java - Optimized literal string matching
     //
-    // Remaining inner classes (to be extracted in future refactoring):
-    // - RENode, RECompiled, CompilerState (already package-level, easy to extract)
+    // Package-level helper classes (RENode, RECompiled, CompilerState, etc.) remain
+    // in this file as they are tightly coupled to the parser/compiler implementation.
 
     /*
      * Top-down regular expression grammar, based closely on Perl4.
@@ -639,11 +643,12 @@ public class NativeRegExp extends IdScriptableObject {
             result.kid2 = state.result;
             state.result = result;
             /*
-             * Look at both alternates to see if there's a FLAT or a CLASS at
-             * the start of each. If so, use a prerequisite match.
+             * Optimization: Look at both alternates to see if there's a FLAT or CLASS at
+             * the start of each. If so, use a prerequisite match to quickly reject
+             * non-matching input without backtracking through the full alternation.
              *
-             * TODO: Include FLAT with non-zero lowSurrogate for a
-             *  prerequisite match.
+             * Note: Currently only handles FLAT with lowSurrogate == 0 (simple chars).
+             * Could be extended to handle surrogate pairs for additional optimization.
              */
             if (result.kid.op == REOP_FLAT
                     && result.kid2.op == REOP_FLAT
@@ -3244,11 +3249,11 @@ public class NativeRegExp extends IdScriptableObject {
         return super.getInstanceIdName(id);
     }
 
-    // TODO: ES spec requires flag getters (global, ignoreCase, multiline, dotAll, etc.) to be
-    // prototype accessors with validation (throw TypeError for non-RegExp this values, return
-    // undefined for RegExp.prototype). Currently implemented as instance properties which works
-    // for basic functionality but fails Test262 validation tests. Fixing requires architectural
-    // change to define these as prototype getters instead of instance properties.
+    // SPEC DEVIATION: ES spec requires flag getters (global, ignoreCase, multiline, dotAll, etc.)
+    // to be prototype accessors with validation (throw TypeError for non-RegExp this values,
+    // return undefined for RegExp.prototype). Currently implemented as instance properties.
+    // This works for basic functionality but fails strict Test262 validation.
+    // Fixing requires architectural changes to IdScriptableObject's property system.
     @Override
     protected Object getInstanceIdValue(int id) {
         switch (id) {

@@ -16,7 +16,12 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
-/** */
+/**
+ * Default RegExp implementation for Rhino.
+ *
+ * <p>Integrates the regex engine with Rhino's scripting environment, handling registration,
+ * compilation, and execution of regular expressions.
+ */
 public class RegExpImpl implements RegExpProxy {
 
     @Override

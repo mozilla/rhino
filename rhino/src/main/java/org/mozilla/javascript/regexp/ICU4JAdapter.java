@@ -263,9 +263,9 @@ class ICU4JAdapter {
             result.set(0);
         }
 
-        // TODO: Could add special cases for multi-script characters
-        // e.g., digits 0-9 (0x0030-0x0039) are used by many scripts
-        // For now, this simplified fallback returns single script only
+        // NOTE: This fallback returns single script only. Multi-script characters
+        // (e.g., digits 0-9 used across many scripts) are not fully supported without ICU4J.
+        // This is acceptable as ICU4J is the recommended configuration for full Unicode support.
     }
 
     /**

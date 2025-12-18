@@ -17,8 +17,9 @@ import java.util.Optional;
  */
 public final class SubString {
 
-    // Package-private for performance-critical access within regexp package
-    // TODO: Refactor to fully private with proper encapsulation
+    // Package-private for performance-critical access within regexp package.
+    // These fields are intentionally not private to avoid getter overhead in tight loops
+    // during regex matching. Encapsulation is enforced at package boundary.
     String str;
     int index;
     int length;

@@ -244,8 +244,8 @@ final class RegExpFlags {
         return sb.toString();
     }
 
-    // Static helper methods for backward compatibility with code that uses int flags
-    // TODO: Gradually migrate all callers to use RegExpFlags instances
+    // Static helper methods for backward compatibility with code that uses int flags.
+    // New code should use RegExpFlags instances directly.
 
     /**
      * @deprecated Use {@link #parse} and {@link #isUnicodeMode()} instead
