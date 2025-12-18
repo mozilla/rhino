@@ -796,6 +796,11 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private static void doFlatSurrogatePair(CompilerState state, char high, char low) {
+        // Validate surrogate pair
+        if (!Character.isHighSurrogate(high) || !Character.isLowSurrogate(low)) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid surrogate pair: U+%04X U+%04X", (int) high, (int) low));
+        }
         state.result = new RENode(REOP_STRING_MATCHER);
         boolean caseInsensitive = (state.flags & JSREG_FOLD) != 0;
         String literal = new String(new char[] {high, low});
@@ -1805,7 +1810,12 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static void resolveForwardJump(byte[] array, int from, int pc) {
         if (from > pc) throw Kit.codeBug();
-        addIndex(array, from, pc - from);
+        // Check for overflow before subtraction
+        long offset = (long) pc - (long) from;
+        if (offset > 0xFFFF) {
+            throw Context.reportRuntimeError("Too complex regexp");
+        }
+        addIndex(array, from, (int) offset);
     }
 
     private static int getOffset(byte[] array, int pc) {
@@ -2108,6 +2118,9 @@ public class NativeRegExp extends IdScriptableObject {
      */
     public static int stringLiteralMatcher(
             RECharSet charSet, CharSequence input, int position, boolean matchBackward) {
+        if (input == null) {
+            throw new IllegalArgumentException("input cannot be null");
+        }
         if (charSet.classContents == null) {
             return -1;
         }
