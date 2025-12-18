@@ -1836,8 +1836,19 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     static final int INDEX_LEN = 2;
+    private static final int MAX_RECURSION_DEPTH = 1000;
 
     private static int emitREBytecode(CompilerState state, RECompiled re, int pc, RENode t) {
+        return emitREBytecode(state, re, pc, t, 0);
+    }
+
+    private static int emitREBytecode(
+            CompilerState state, RECompiled re, int pc, RENode t, int depth) {
+        // Check recursion depth to prevent stack overflow
+        if (depth > MAX_RECURSION_DEPTH) {
+            throw Context.reportRuntimeError("regexp too complex (excessive nesting)");
+        }
+
         RENode nextAlt;
         int nextAltFixup, nextTermFixup;
         byte[] program = re.program;
@@ -1868,12 +1879,12 @@ public class NativeRegExp extends IdScriptableObject {
                     nextAlt = t.kid2;
                     nextAltFixup = pc; /* address of next alternate */
                     pc += INDEX_LEN;
-                    pc = emitREBytecode(state, re, pc, t.kid);
+                    pc = emitREBytecode(state, re, pc, t.kid, depth + 1);
                     program[pc++] = REOP_JUMP;
                     nextTermFixup = pc; /* address of following term */
                     pc += INDEX_LEN;
                     resolveForwardJump(program, nextAltFixup, pc);
-                    pc = emitREBytecode(state, re, pc, nextAlt);
+                    pc = emitREBytecode(state, re, pc, nextAlt, depth + 1);
 
                     program[pc++] = REOP_JUMP;
                     nextAltFixup = pc;
@@ -1894,7 +1905,7 @@ public class NativeRegExp extends IdScriptableObject {
                     break;
                 case REOP_LPAREN:
                     pc = addIndex(program, pc, t.parenIndex);
-                    pc = emitREBytecode(state, re, pc, t.kid);
+                    pc = emitREBytecode(state, re, pc, t.kid, depth + 1);
                     program[pc++] = REOP_RPAREN;
                     pc = addIndex(program, pc, t.parenIndex);
                     break;
@@ -1938,7 +1949,7 @@ public class NativeRegExp extends IdScriptableObject {
                 case REOP_ASSERTBACK:
                     nextTermFixup = pc;
                     pc += INDEX_LEN;
-                    pc = emitREBytecode(state, re, pc, t.kid);
+                    pc = emitREBytecode(state, re, pc, t.kid, depth + 1);
                     program[pc++] = t.op == REOP_ASSERT ? REOP_ASSERTTEST : REOP_ASSERTBACKTEST;
                     resolveForwardJump(program, nextTermFixup, pc);
                     break;
@@ -1946,7 +1957,7 @@ public class NativeRegExp extends IdScriptableObject {
                 case REOP_ASSERTBACK_NOT:
                     nextTermFixup = pc;
                     pc += INDEX_LEN;
-                    pc = emitREBytecode(state, re, pc, t.kid);
+                    pc = emitREBytecode(state, re, pc, t.kid, depth + 1);
                     program[pc++] =
                             t.op == REOP_ASSERT_NOT ? REOP_ASSERTNOTTEST : REOP_ASSERTBACKNOTTEST;
                     resolveForwardJump(program, nextTermFixup, pc);
@@ -1968,7 +1979,7 @@ public class NativeRegExp extends IdScriptableObject {
                     pc = addIndex(program, pc, t.parenIndex);
                     nextTermFixup = pc;
                     pc += INDEX_LEN;
-                    pc = emitREBytecode(state, re, pc, t.kid);
+                    pc = emitREBytecode(state, re, pc, t.kid, depth + 1);
                     program[pc++] = REOP_ENDCHILD;
                     resolveForwardJump(program, nextTermFixup, pc);
                     break;
@@ -2305,7 +2316,12 @@ public class NativeRegExp extends IdScriptableObject {
          */
         if (gData.regexp.anchorCodePoint < 0 && reopIsSimple(op)) {
             boolean anchor = false;
+            // Add instruction counting for ReDoS protection in anchor loop
+            final boolean instructionCountingAnchor = cx.getInstructionObserverThreshold() != 0;
             while (gData.cp <= end) {
+                if (instructionCountingAnchor) {
+                    ScriptRuntime.addInstructionCount(cx, 1);
+                }
                 int match = executeSimpleOpcode(gData, input, op, program, pc, end, true, false);
                 if (match < 0) {
                     if ((gData.regexp.flags & JSREG_STICKY) != 0) {
