@@ -34,7 +34,6 @@ final class NativeBoolean extends ScriptableObject {
     static void init(Scriptable scope, boolean sealed) {
         // Boolean is an unusual object in that the prototype is itself a Boolean
         var constructor = DESCRIPTOR.buildConstructor(scope, new NativeBoolean(false));
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
 
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {

@@ -1,6 +1,7 @@
 package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 
 import java.io.Serializable;
@@ -35,6 +36,7 @@ public class ClassDescriptor {
             ctor.put(e.getKey(), f, DONTENUM);
         }
         ctor.setPrototypeProperty(proto);
+        ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
         proto.put("constructor", proto, ctor);
         var objProto = ScriptableObject.getObjectPrototype(scope);
         if (proto != objProto) {
@@ -89,8 +91,8 @@ public class ClassDescriptor {
         private JSDescriptor<JSFunction> buildDescriptor(
                 String name, int length, JSCode<JSFunction> call, JSCode<JSFunction> construct) {
             var builder = new JSDescriptor.Builder<JSFunction>();
-            builder.code = identitiyBuilder(call);
-            builder.constructor = identitiyBuilder(construct);
+            builder.code = identityBuilder(call);
+            builder.constructor = identityBuilder(construct);
             builder.name = name;
             builder.arity = length;
             // Built in functions do not default `thisObj` or perform
@@ -154,7 +156,7 @@ public class ClassDescriptor {
     public interface BuiltInJSCodeResume<U extends ScriptOrFn<U>>
             extends JSCodeExec<U>, Serializable {}
 
-    private static JSCode.Builder<JSFunction> identitiyBuilder(JSCode<JSFunction> code) {
+    private static JSCode.Builder<JSFunction> identityBuilder(JSCode<JSFunction> code) {
         return new JSCode.Builder<JSFunction>() {
             @Override
             public JSCode<JSFunction> build() {
