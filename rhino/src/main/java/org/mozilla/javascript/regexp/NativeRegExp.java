@@ -1843,6 +1843,10 @@ public class NativeRegExp extends IdScriptableObject {
         byte[] program = re.program;
 
         while (t != null) {
+            // Check for bytecode overflow before writing
+            if (pc >= program.length) {
+                throw Context.reportRuntimeError("regexp bytecode overflow");
+            }
             program[pc++] = t.op;
             switch (t.op) {
                 case REOP_EMPTY:
@@ -2168,6 +2172,10 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     public static boolean classMatcher(REGlobalData gData, RECharSet charSet, int codePoint) {
+        // Validate codepoint is in valid Unicode range
+        if (codePoint < 0 || codePoint > Character.MAX_CODE_POINT) {
+            return false;
+        }
         charSet.ensureBuilt(gData);
 
         // Unified Unicode path - no special-casing ASCII
@@ -4217,12 +4225,16 @@ final class RECharSet implements Serializable {
 
     /** Add a character range (inclusive) to the bitmap. */
     private void addCharacterRange(char c1, char c2) {
-        int byteIndex1 = (c1 / 8);
-        int byteIndex2 = (c2 / 8);
-
-        if ((c2 >= length) || (c1 > c2)) {
+        // Validate codepoints before calculating byte indices
+        if (c1 >= length) {
             throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
         }
+        if (c2 >= length || c1 > c2) {
+            throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
+        }
+
+        int byteIndex1 = (c1 / 8);
+        int byteIndex2 = (c2 / 8);
 
         c1 = (char) (c1 & NativeRegExp.BYTE_BIT_MASK);
         c2 = (char) (c2 & NativeRegExp.BYTE_BIT_MASK);
@@ -4273,7 +4285,19 @@ final class RECharSet implements Serializable {
      * @param gData global regex data containing flags
      */
     private void build(REGlobalData gData) {
+        // Validate length to prevent overflow in bitmap size calculation
+        if (length < 0) {
+            throw new IllegalArgumentException("Invalid bitmap length: " + length);
+        }
+        // Allow up to MAX_CODE_POINT for Unicode support (non-BMP handled separately)
+        if (length > Character.MAX_CODE_POINT + 1) {
+            throw new IllegalArgumentException("Bitmap length too large: " + length);
+        }
         int byteLength = (length + 7) / 8;
+        // Check for integer overflow in byteLength calculation
+        if (byteLength < 0) {
+            throw new IllegalArgumentException("Bitmap size overflow: " + length);
+        }
         bits = new byte[byteLength];
 
         // Determine if we should use Unicode case folding (deep case closure)
