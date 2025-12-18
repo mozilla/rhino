@@ -69,6 +69,16 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             ctor.setStandardPropertyAttributes(READONLY | DONTENUM);
         }
+
+        if (!cx.isStrictMode() && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ctor.definePrototypeProperty(
+                    cx,
+                    "arguments",
+                    BaseFunction::js_protoArgumentsGetter,
+                    BaseFunction::js_protoArgumentsSetter,
+                    DONTENUM | READONLY);
+        }
+
         ScriptableObject.defineProperty(scope, FUNCTION_CLASS, ctor, DONTENUM);
         if (sealed) {
             ctor.sealObject();
@@ -177,20 +187,21 @@ public class BaseFunction extends ScriptableObject implements Function {
                 DONTENUM | READONLY,
                 BaseFunction::nameGetter,
                 BaseFunction::nameSetter);
-        if (includeNonStandardProps()) {
+
+        Context cx = Context.getCurrentContext();
+        if (cx == null || !cx.isStrictMode()) {
             ScriptableObject.defineBuiltInProperty(
                     this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
-            ScriptableObject.defineBuiltInProperty(
-                    this,
-                    "arguments",
-                    PERMANENT | DONTENUM,
-                    BaseFunction::argumentsGetter,
-                    BaseFunction::argumentsSetter);
-        }
-    }
 
-    protected boolean includeNonStandardProps() {
-        return !Context.isCurrentContextStrict();
+            if (cx == null || cx.getLanguageVersion() < Context.VERSION_ES6) {
+                ScriptableObject.defineBuiltInProperty(
+                        this,
+                        "arguments",
+                        PERMANENT | DONTENUM,
+                        BaseFunction::argumentsGetter,
+                        BaseFunction::argumentsSetter);
+            }
+        }
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
@@ -627,6 +638,14 @@ public class BaseFunction extends ScriptableObject implements Function {
         return 0;
     }
 
+    private static Object js_protoArgumentsGetter(Scriptable thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, BaseFunction.class).getArguments();
+    }
+
+    private static void js_protoArgumentsSetter(Scriptable thisObj, Object value) {
+        LambdaConstructor.convertThisObject(thisObj, BaseFunction.class).setArguments(value);
+    }
+
     public String getFunctionName() {
         return "";
     }
@@ -713,7 +732,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         return obj;
     }
 
-    private Object getArguments() {
+    Object getArguments() {
         // <Function name>.arguments is deprecated, so we use a slow
         // way of getting it that doesn't add to the invocation cost.
         // TODO: add warning, error based on version
@@ -731,12 +750,17 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (activation == null) {
             return null;
         }
+        if (activation.isStrict && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            throw ScriptRuntime.typeErrorById("msg.op.not.allowed");
+        }
         Object arguments = activation.get("arguments", activation);
         if (arguments instanceof Arguments && cx.getLanguageVersion() >= Context.VERSION_ES6) {
             return new Arguments.ReadonlyArguments((Arguments) arguments, cx);
         }
         return arguments;
     }
+
+    void setArguments(Object caller) {}
 
     private static Scriptable jsConstructor(
             Context cx, Scriptable scope, Object[] args, boolean isGeneratorFunction) {
