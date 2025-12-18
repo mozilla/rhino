@@ -16,7 +16,7 @@ import java.util.Objects;
  *
  * @author Ronald Brill
  */
-final class NativeProxy extends ScriptableObject implements Function {
+class NativeProxy extends ScriptableObject {
     private static final long serialVersionUID = 6676871870513494844L;
 
     private static final String PROXY_TAG = "Proxy";
@@ -100,41 +100,6 @@ final class NativeProxy extends ScriptableObject implements Function {
     public String getClassName() {
         ScriptableObject target = getTargetThrowIfRevoked();
         return target.getClassName();
-    }
-
-    /**
-     * see <a
-     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget">10.5.13
-     * [[Construct]] (argumentsList, newTarget)</a>
-     */
-    @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-        /*
-         * 1. Let handler be O.[[ProxyHandler]].
-         * 2. If handler is null, throw a TypeError exception.
-         * 3. Assert: Type(handler) is Object.
-         * 4. Let target be O.[[ProxyTarget]].
-         * 5. Assert: IsConstructor(target) is true.
-         * 6. Let trap be ? GetMethod(handler, "construct").
-         * 7. If trap is undefined, then
-         *     a. Return ? Construct(target, argumentsList, newTarget).
-         * 8. Let argArray be ! CreateArrayFromList(argumentsList).
-         * 9. Let newObj be ? Call(trap, handler, « target, argArray, newTarget »).
-         * 10. If Type(newObj) is not Object, throw a TypeError exception.
-         * 11. Return newObj.
-         */
-        ScriptableObject target = getTargetThrowIfRevoked();
-
-        Function trap = getTrap(TRAP_CONSTRUCT);
-        if (trap != null) {
-            Object result = callTrap(trap, new Object[] {target, args, this});
-            if (!(result instanceof Scriptable) || ScriptRuntime.isSymbol(result)) {
-                throw ScriptRuntime.typeError("Constructor trap has to return a scriptable.");
-            }
-            return (ScriptableObject) result;
-        }
-
-        return ((Constructable) target).construct(cx, scope, args);
     }
 
     /**
@@ -1259,47 +1224,6 @@ final class NativeProxy extends ScriptableObject implements Function {
         target.setPrototype(prototype);
     }
 
-    /**
-     * see <a
-     * href="https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist">10.5.12
-     * [[Call]] (thisArgument, argumentsList)</a>
-     */
-    @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        /*
-         * 1. Let handler be O.[[ProxyHandler]].
-         * 2. If handler is null, throw a TypeError exception.
-         * 3. Assert: Type(handler) is Object.
-         * 4. Let target be O.[[ProxyTarget]].
-         * 5. Let trap be ? GetMethod(handler, "apply").
-         * 6. If trap is undefined, then
-         *     a. Return ? Call(target, thisArgument, argumentsList).
-         * 7. Let argArray be ! CreateArrayFromList(argumentsList).
-         * 8. Return ? Call(trap, handler, « target, thisArgument, argArray »).
-         */
-        ScriptableObject target = getTargetThrowIfRevoked();
-
-        Scriptable argumentsList = cx.newArray(scope, args);
-
-        Function trap = getTrap(TRAP_APPLY);
-        if (trap != null) {
-            return callTrap(trap, new Object[] {target, thisObj, argumentsList});
-        }
-
-        return ScriptRuntime.applyOrCall(
-                true, cx, scope, target, new Object[] {thisObj, argumentsList});
-    }
-
-    @Override
-    public Scriptable getDeclarationScope() {
-        ScriptableObject target = getTargetThrowIfRevoked();
-        if (target instanceof Function) {
-            return ((Function) target).getDeclarationScope();
-        }
-        Kit.codeBug();
-        return null;
-    }
-
     private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
@@ -1311,7 +1235,13 @@ final class NativeProxy extends ScriptableObject implements Function {
         ScriptableObject target = ensureScriptableObjectButNotSymbol(args[0]);
         ScriptableObject handler = ensureScriptableObjectButNotSymbol(args[1]);
 
-        NativeProxy proxy = new NativeProxy(target, handler);
+        NativeProxy proxy;
+        if (target instanceof Function) {
+            proxy = new NativeProxyFunction(target, handler);
+        } else {
+            proxy = new NativeProxy(target, handler);
+        }
+
         proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(scope, PROXY_TAG));
         proxy.setParentScope(scope);
         return proxy;
@@ -1332,7 +1262,7 @@ final class NativeProxy extends ScriptableObject implements Function {
         return revocable;
     }
 
-    private Function getTrap(String trapName) {
+    protected final Function getTrap(String trapName) {
         Object handlerProp = ScriptableObject.getProperty(handlerObj, trapName);
         if (Scriptable.NOT_FOUND == handlerProp) {
             return null;
@@ -1347,7 +1277,7 @@ final class NativeProxy extends ScriptableObject implements Function {
         return (Function) handlerProp;
     }
 
-    private Object callTrap(Function trap, Object[] args) {
+    protected final Object callTrap(Function trap, Object[] args) {
         return trap.call(Context.getContext(), trap.getDeclarationScope(), handlerObj, args);
     }
 
@@ -1356,5 +1286,88 @@ final class NativeProxy extends ScriptableObject implements Function {
             throw ScriptRuntime.typeError("Illegal operation attempted on a revoked proxy");
         }
         return targetObj;
+    }
+
+    private static class NativeProxyFunction extends NativeProxy implements Function {
+
+        NativeProxyFunction(ScriptableObject target, Scriptable handler) {
+            super(target, handler);
+        }
+
+        /**
+         * see <a href=
+         * "https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget">10.5.13
+         * [[Construct]] (argumentsList, newTarget)</a>
+         */
+        @Override
+        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+            /*
+             * 1. Let handler be O.[[ProxyHandler]].
+             * 2. If handler is null, throw a TypeError exception.
+             * 3. Assert: Type(handler) is Object.
+             * 4. Let target be O.[[ProxyTarget]].
+             * 5. Assert: IsConstructor(target) is true.
+             * 6. Let trap be ? GetMethod(handler, "construct").
+             * 7. If trap is undefined, then
+             * a. Return ? Construct(target, argumentsList, newTarget).
+             * 8. Let argArray be ! CreateArrayFromList(argumentsList).
+             * 9. Let newObj be ? Call(trap, handler, « target, argArray, newTarget »).
+             * 10. If Type(newObj) is not Object, throw a TypeError exception.
+             * 11. Return newObj.
+             */
+            ScriptableObject target = getTargetThrowIfRevoked();
+
+            Function trap = getTrap(TRAP_CONSTRUCT);
+            if (trap != null) {
+                Object result = callTrap(trap, new Object[] {target, args, this});
+                if (!(result instanceof Scriptable) || ScriptRuntime.isSymbol(result)) {
+                    throw ScriptRuntime.typeError("Constructor trap has to return a scriptable.");
+                }
+                return (ScriptableObject) result;
+            }
+
+            return ((Constructable) target).construct(cx, scope, args);
+        }
+
+        /**
+         * see <a href=
+         * "https://262.ecma-international.org/12.0/#sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist">10.5.12
+         * [[Call]] (thisArgument, argumentsList)</a>
+         */
+        @Override
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            /*
+             * 1. Let handler be O.[[ProxyHandler]].
+             * 2. If handler is null, throw a TypeError exception.
+             * 3. Assert: Type(handler) is Object.
+             * 4. Let target be O.[[ProxyTarget]].
+             * 5. Let trap be ? GetMethod(handler, "apply").
+             * 6. If trap is undefined, then
+             * a. Return ? Call(target, thisArgument, argumentsList).
+             * 7. Let argArray be ! CreateArrayFromList(argumentsList).
+             * 8. Return ? Call(trap, handler, « target, thisArgument, argArray »).
+             */
+            ScriptableObject target = getTargetThrowIfRevoked();
+
+            Scriptable argumentsList = cx.newArray(scope, args);
+
+            Function trap = getTrap(TRAP_APPLY);
+            if (trap != null) {
+                return callTrap(trap, new Object[] {target, thisObj, argumentsList});
+            }
+
+            return ScriptRuntime.applyOrCall(
+                    true, cx, scope, target, new Object[] {thisObj, argumentsList});
+        }
+
+        @Override
+        public Scriptable getDeclarationScope() {
+            ScriptableObject target = getTargetThrowIfRevoked();
+            if (target instanceof Function) {
+                return ((Function) target).getDeclarationScope();
+            }
+            Kit.codeBug();
+            return null;
+        }
     }
 }
