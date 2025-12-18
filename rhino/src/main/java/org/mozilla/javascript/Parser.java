@@ -4920,7 +4920,10 @@ public class Parser {
         boolean defaultValuesSetup = false;
 
         for (AbstractObjectProperty abstractProp : node.getElements()) {
-            if (abstractProp instanceof SpreadObjectProperty) throw Kit.codeBug();
+            if (abstractProp instanceof SpreadObjectProperty) {
+                reportError("msg.no.object.rest");
+                return false;
+            }
             ObjectProperty prop = (ObjectProperty) abstractProp;
 
             int lineno = 0, column = 0;
