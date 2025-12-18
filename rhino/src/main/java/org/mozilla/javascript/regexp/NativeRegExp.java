@@ -99,7 +99,8 @@ public class NativeRegExp extends IdScriptableObject {
     // --------------------------------------------------
     // RegExp Operation Codes (REOP)
     // --------------------------------------------------
-    static final byte REOP_SIMPLE_START = 1; /* start of 'simple opcodes' */
+    static final byte REOP_SIMPLE_START =
+            1; /* start of 'simple opcodes' - table-driven without complex state */
     static final byte REOP_EMPTY = REOP_SIMPLE_START; /* match rest of input against rest of r.e. */
     static final byte REOP_BOL = REOP_EMPTY + 1; /* beginning of input (or line if multiline) */
     static final byte REOP_EOL = REOP_BOL + 1; /* end of input (or line if multiline) */

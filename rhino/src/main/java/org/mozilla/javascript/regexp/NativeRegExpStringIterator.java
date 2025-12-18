@@ -56,10 +56,10 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
 
     @Override
     protected boolean isDone(Context cx, Scriptable scope) {
-        // The base class calls _first_ isDone and _then_ nextValue, so we'll just compute the next
-        // value here and return it form "nextValue".
-        // Also, for non-global regexp, we need to return the first match and then "done" on the
-        // next iteration.
+        // The base class calls _first_ isDone and _then_ nextValue, so we compute the next
+        // value in isDone() and cache it to return from nextValue().
+        // For non-global regexp (without 'g' flag), we return the first match once, then set
+        // nextDone=true to signal completion on the next isDone() call.
 
         if (nextDone) {
             return true;

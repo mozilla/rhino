@@ -446,7 +446,7 @@ public final class RegExpDebugger {
     }
 
     /**
-     * Read a multi-byte index from the program bytecode.
+     * Read a 2-byte (16-bit) index from the program bytecode.
      *
      * @param program the bytecode array
      * @param pc program counter

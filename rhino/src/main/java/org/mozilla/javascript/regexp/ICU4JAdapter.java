@@ -152,7 +152,8 @@ class ICU4JAdapter {
     /**
      * Fallback: Minimal script name to code mapping for common scripts.
      *
-     * <p>Returns ICU4J UScript integer constants, not ISO 15924 numeric codes.
+     * <p>Returns ICU4J UScript integer constants (not ISO 15924 numeric codes). These hardcoded
+     * values match ICU4J's UScript enum ordinals exactly.
      *
      * @param name Script name (case-insensitive, with or without underscores)
      * @return ICU4J UScript code, or -1 if unknown
