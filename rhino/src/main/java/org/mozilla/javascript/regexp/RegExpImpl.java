@@ -381,9 +381,9 @@ public class RegExpImpl implements RegExpProxy {
             args[parenCount + 1] = Integer.valueOf(reImpl.leftContext.length);
             args[parenCount + 2] = rdata.str;
             // This is a hack to prevent expose of reImpl data to
-            // JS function which can run new regexps modifing
-            // regexp that are used later by the engine.
-            // TODO: redesign is necessary
+            // JS function can run new regexps, potentially modifying regexp state
+            // used later by the engine. Workaround: create temporary RegExpImpl
+            // and restore after lambda execution to prevent state corruption.
             if (reImpl != ScriptRuntime.getRegExpProxy(cx)) Kit.codeBug();
             RegExpImpl re2 = new RegExpImpl();
             re2.multiline = reImpl.multiline;

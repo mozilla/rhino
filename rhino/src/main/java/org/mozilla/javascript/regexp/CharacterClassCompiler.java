@@ -200,7 +200,6 @@ class CharacterClassCompiler {
         }
         state.cp++; // Skip '}'
 
-        // Always add the literal, even if empty
         target.stringLiterals.add(literal.toString());
 
         return true;
