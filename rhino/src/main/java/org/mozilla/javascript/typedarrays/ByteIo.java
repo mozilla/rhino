@@ -7,6 +7,11 @@
 package org.mozilla.javascript.typedarrays;
 
 public class ByteIo {
+
+    // Float16 constants
+    private static final double FLOAT16_MIN_NORMAL = Math.pow(2, -14);
+    private static final double FLOAT16_MIN_SUBNORMAL = Math.pow(2, -24);
+
     public static Byte readInt8(byte[] buf, int offset) {
         return Byte.valueOf(buf[offset]);
     }
@@ -173,24 +178,30 @@ public class ByteIo {
         // Handle special cases
         if (exponent == 0) {
             if (mantissa == 0) {
+
                 // Zero
                 return Float.valueOf(sign == 0 ? 0.0f : -0.0f);
-            } else {
-                // Denormalized number
-                float value = (float) (mantissa / 1024.0 * Math.pow(2, -14));
-                return Float.valueOf(sign == 0 ? value : -value);
             }
+
+            // Denormalized number
+            float value = (float) ((double) mantissa / (1 << 10) * FLOAT16_MIN_NORMAL);
+            return Float.valueOf(sign == 0 ? value : -value);
+
         } else if (exponent == 31) {
             if (mantissa == 0) {
+
                 // Infinity
                 return Float.valueOf(sign == 0 ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY);
-            } else {
-                // NaN
-                return Float.valueOf(Float.NaN);
             }
+
+            // NaN
+            return Float.valueOf(Float.NaN);
+
         } else {
+
             // Normalized number
-            float value = (float) ((1.0 + mantissa / 1024.0) * Math.pow(2, exponent - 15));
+            float value =
+                    (float) ((1.0 + (double) mantissa / (1 << 10)) * Math.pow(2, exponent - 15));
             return Float.valueOf(sign == 0 ? value : -value);
         }
     }
@@ -208,12 +219,14 @@ public class ByteIo {
         float absVal = Math.abs(fval);
 
         if (Float.isInfinite(fval)) {
+
             // Infinity
             doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
             return;
         }
 
         if (absVal == 0.0f) {
+
             // Zero
             doWriteInt16(buf, offset, sign << 15, littleEndian);
             return;
@@ -224,33 +237,43 @@ public class ByteIo {
         int mantissa;
 
         if (absVal > 65504.0f) {
+
             // Overflow to infinity
             doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
             return;
-        } else if (absVal < (float) Math.pow(2, -14)) {
+        }
+        if (absVal < (float) FLOAT16_MIN_NORMAL) {
+
             // Denormalized or underflow to zero
-            if (absVal < (float) Math.pow(2, -24)) {
+            if (absVal < (float) FLOAT16_MIN_SUBNORMAL) {
+
                 // Underflow to zero
                 doWriteInt16(buf, offset, sign << 15, littleEndian);
                 return;
             }
+
             // Denormalized
             exponent = 0;
-            mantissa = (int) Math.round(absVal / Math.pow(2, -24));
+            mantissa = (int) Math.round(absVal / FLOAT16_MIN_SUBNORMAL);
         } else {
+
             // Normalized
             int exp32 = ((Float.floatToIntBits(fval) >>> 23) & 0xff) - 127;
             exponent = exp32 + 15;
 
             if (exponent >= 31) {
+
                 // Overflow to infinity
                 doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
                 return;
-            } else if (exponent <= 0) {
+            }
+            if (exponent <= 0) {
+
                 // Denormalized
                 exponent = 0;
-                mantissa = (int) Math.round((absVal / Math.pow(2, -14)) * 1024.0) & 0x3ff;
+                mantissa = (int) Math.round((absVal / FLOAT16_MIN_NORMAL) * (1 << 10)) & 0x3ff;
             } else {
+
                 // Normalized
                 int mant32 = Float.floatToIntBits(fval) & 0x7fffff;
                 mantissa = (mant32 + 0x1000) >>> 13;
@@ -260,6 +283,7 @@ public class ByteIo {
                     exponent++;
                     mantissa = 0;
                     if (exponent >= 31) {
+
                         // Overflow to infinity
                         doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
                         return;
