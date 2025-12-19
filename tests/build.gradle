@@ -19,6 +19,7 @@ dependencies {
     testImplementation "org.yaml:snakeyaml:2.5"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     testImplementation "javax.activation:javax.activation-api:1.2.0"
+    testImplementation 'com.ibm.icu:icu4j:74.2'
 }
 
 tasks.withType(JavaCompile) {
