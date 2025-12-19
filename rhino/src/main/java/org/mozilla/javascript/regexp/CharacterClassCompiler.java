@@ -67,17 +67,34 @@ class CharacterClassCompiler {
             }
         }
 
-        for (int i = 1; i < classContents.ranges.size(); i += 2) {
-            int rangeEnd = classContents.ranges.get(i);
+        for (int i = 0; i < classContents.ranges.size(); i += 2) {
+            int rangeStart = classContents.ranges.get(i);
+            int rangeEnd = classContents.ranges.get(i + 1);
+
+            // Check both range start and end for max value
             if (rangeEnd > max) {
                 max = rangeEnd;
             }
-            if ((flags & NativeRegExp.JSREG_FOLD) != 0 && rangeEnd <= Character.MAX_VALUE) {
-                char cu = Character.toUpperCase((char) rangeEnd);
-                char cd = Character.toLowerCase((char) rangeEnd);
-                int n = (cu >= cd) ? cu : cd;
-                if (n > max) {
-                    max = n;
+
+            // Apply case folding to both range start and end
+            if ((flags & NativeRegExp.JSREG_FOLD) != 0) {
+                // Check range start
+                if (rangeStart <= Character.MAX_VALUE) {
+                    char cu = Character.toUpperCase((char) rangeStart);
+                    char cd = Character.toLowerCase((char) rangeStart);
+                    int n = (cu >= cd) ? cu : cd;
+                    if (n > max) {
+                        max = n;
+                    }
+                }
+                // Check range end
+                if (rangeEnd <= Character.MAX_VALUE) {
+                    char cu = Character.toUpperCase((char) rangeEnd);
+                    char cd = Character.toLowerCase((char) rangeEnd);
+                    int n = (cu >= cd) ? cu : cd;
+                    if (n > max) {
+                        max = n;
+                    }
                 }
             }
         }
@@ -162,7 +179,7 @@ class CharacterClassCompiler {
                 // Handle escape sequences within \q{}
                 state.cp++;
                 if (state.cp >= state.cpend) {
-                    NativeRegExp.reportError("msg.bad.regexp", "Incomplete escape in \\q{}");
+                    NativeRegExp.reportError("msg.regexp.incomplete.escape.in.string.literal", "");
                     return false;
                 }
                 char escapeChar = src[state.cp];
@@ -173,7 +190,7 @@ class CharacterClassCompiler {
                         return false;
                     }
                     if (state.result.op != NativeRegExp.REOP_FLAT) {
-                        NativeRegExp.reportError("msg.bad.regexp", "Invalid escape in \\q{}");
+                        NativeRegExp.reportError("msg.regexp.invalid.escape.in.string.literal", "");
                         return false;
                     }
                     // Append the parsed character(s)
@@ -195,7 +212,7 @@ class CharacterClassCompiler {
         }
 
         if (state.cp >= state.cpend) {
-            NativeRegExp.reportError("msg.bad.regexp", "Unclosed \\q{");
+            NativeRegExp.reportError("msg.regexp.unclosed.string.literal", "");
             return false;
         }
         state.cp++; // Skip '}'
