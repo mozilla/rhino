@@ -58,8 +58,8 @@ class CharacterClassCompiler {
                 max = ch;
             }
             if ((flags & NativeRegExp.JSREG_FOLD) != 0 && ch <= Character.MAX_VALUE) {
-                char cu = StringMatcher.toUpperCase((char) ch);
-                char cd = StringMatcher.toLowerCase((char) ch);
+                char cu = Character.toUpperCase((char) ch);
+                char cd = Character.toLowerCase((char) ch);
                 int n = (cu >= cd) ? cu : cd;
                 if (n > max) {
                     max = n;
@@ -73,8 +73,8 @@ class CharacterClassCompiler {
                 max = rangeEnd;
             }
             if ((flags & NativeRegExp.JSREG_FOLD) != 0 && rangeEnd <= Character.MAX_VALUE) {
-                char cu = StringMatcher.toUpperCase((char) rangeEnd);
-                char cd = StringMatcher.toLowerCase((char) rangeEnd);
+                char cu = Character.toUpperCase((char) rangeEnd);
+                char cd = Character.toLowerCase((char) rangeEnd);
                 int n = (cu >= cd) ? cu : cd;
                 if (n > max) {
                     max = n;

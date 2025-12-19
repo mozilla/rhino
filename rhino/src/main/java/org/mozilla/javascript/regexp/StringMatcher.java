@@ -157,36 +157,70 @@ public final class StringMatcher implements Serializable {
         return sb.toString();
     }
 
-    /** Case folding utilities for regular expressions. */
+    // ==================================================================================
+    // UNICODE CASE FOLDING FOR REGULAR EXPRESSIONS
+    // ==================================================================================
 
     /**
-     * Convert character to uppercase using Unicode case folding.
+     * Get all case variants of a character for Unicode mode. Implements "deep case closure" -
+     * bidirectional case equivalence using Java's built-in Unicode case mapping (CLDR data).
      *
-     * @param ch Character to convert
-     * @return Uppercase character
+     * <p>Java's Character.toLowerCase(int) and Character.toUpperCase(int) implement full Unicode
+     * case folding including special mappings like:
+     *
+     * <ul>
+     *   <li>U+212A (KELVIN SIGN) → U+006B ('k')
+     *   <li>U+2126 (OHM SIGN) → U+03C9 ('ω')
+     *   <li>U+212B (ANGSTROM SIGN) → U+00E5 ('å')
+     * </ul>
+     *
+     * <p>By using codepoint-based APIs (int parameter), this method supports both BMP characters
+     * (U+0000-U+FFFF) and supplementary characters (U+10000-U+10FFFF).
+     *
+     * @param codePoint The Unicode codepoint to get case variants for
+     * @param results List to add case variants to (will include codePoint itself)
      */
-    static char toUpperCase(char ch) {
-        return Character.toUpperCase(ch);
+    public static void getUnicodeCaseVariants(int codePoint, java.util.List<Integer> results) {
+        // Use a Set for O(1) lookups instead of O(n) List.contains()
+        java.util.Set<Integer> seen = new java.util.HashSet<>();
+        seen.add(codePoint);
+        results.add(codePoint);
+
+        // Get case variants using Java's built-in Unicode case mapping
+        int lower = Character.toLowerCase(codePoint);
+        int upper = Character.toUpperCase(codePoint);
+
+        if (lower != codePoint && seen.add(lower)) {
+            results.add(lower);
+            // Add uppercase of the lowercase (handles bidirectional mappings)
+            int upperOfLower = Character.toUpperCase(lower);
+            if (upperOfLower != codePoint && upperOfLower != upper && seen.add(upperOfLower)) {
+                results.add(upperOfLower);
+            }
+        }
+
+        if (upper != codePoint && seen.add(upper)) {
+            results.add(upper);
+            // Add lowercase of the uppercase (completes bidirectional closure)
+            int lowerOfUpper = Character.toLowerCase(upper);
+            if (lowerOfUpper != codePoint && lowerOfUpper != lower && seen.add(lowerOfUpper)) {
+                results.add(lowerOfUpper);
+            }
+        }
     }
 
     /**
-     * Convert character to lowercase using Unicode case folding.
+     * Get all case variants of a BMP character for Unicode mode. Convenience overload for char
+     * input - delegates to codepoint version.
      *
-     * @param ch Character to convert
-     * @return Lowercase character
+     * @param ch The character to get case variants for
+     * @param results List to add case variants to (will include ch itself)
      */
-    static char toLowerCase(char ch) {
-        return Character.toLowerCase(ch);
-    }
-
-    /**
-     * Compare two characters for equality, ignoring case.
-     *
-     * @param c1 First character
-     * @param c2 Second character
-     * @return True if characters are equal ignoring case
-     */
-    static boolean equalsIgnoreCase(char c1, char c2) {
-        return c1 == c2 || Character.toUpperCase(c1) == Character.toUpperCase(c2);
+    public static void getUnicodeCaseVariants(char ch, java.util.List<Character> results) {
+        java.util.List<Integer> codePointResults = new java.util.ArrayList<>();
+        getUnicodeCaseVariants((int) ch, codePointResults);
+        for (int cp : codePointResults) {
+            results.add((char) cp); // Safe cast - input was char, so all results are BMP
+        }
     }
 }

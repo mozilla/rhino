@@ -10,10 +10,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.IntStream;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
@@ -572,42 +570,6 @@ public class NativeRegExp extends IdScriptableObject {
     @Deprecated
     private static boolean isUnicodeMode(int flags) {
         return RegExpFlags.fromBitmask(flags).isUnicodeMode();
-    }
-
-    /**
-     * Get all case variants of a character for Unicode mode. Implements "deep case closure" -
-     * bidirectional case equivalence.
-     *
-     * @param ch The character to get case variants for
-     * @param results List to add case variants to (will include ch itself)
-     */
-    static void getUnicodeCaseVariants(
-            char ch, List<Character> results) { // package-private for RECharSet
-        // Use a Set for O(1) lookups instead of O(n) List.contains()
-        Set<Character> seen = new HashSet<>();
-        seen.add(ch);
-        results.add(ch);
-
-        char lower = Character.toLowerCase(ch);
-        char upper = Character.toUpperCase(ch);
-
-        if (lower != ch && seen.add(lower)) {
-            results.add(lower);
-            // Add uppercase of the lowercase (handles cases like İ/i in some locales)
-            char upperOfLower = Character.toUpperCase(lower);
-            if (upperOfLower != ch && upperOfLower != upper && seen.add(upperOfLower)) {
-                results.add(upperOfLower);
-            }
-        }
-
-        if (upper != ch && seen.add(upper)) {
-            results.add(upper);
-            // Add lowercase of the uppercase
-            char lowerOfUpper = Character.toLowerCase(upper);
-            if (lowerOfUpper != ch && lowerOfUpper != lower && seen.add(lowerOfUpper)) {
-                results.add(lowerOfUpper);
-            }
-        }
     }
 
     // ==================================================================================
@@ -1868,12 +1830,12 @@ public class NativeRegExp extends IdScriptableObject {
                 case REOP_ALTPREREQi:
                 case REOP_ALTPREREQ2:
                     boolean ignoreCase = t.op == REOP_ALTPREREQi;
-                    addIndex(program, pc, ignoreCase ? StringMatcher.toUpperCase(t.chr) : t.chr);
+                    addIndex(program, pc, ignoreCase ? Character.toUpperCase(t.chr) : t.chr);
                     pc += INDEX_LEN;
                     addIndex(
                             program,
                             pc,
-                            ignoreCase ? StringMatcher.toUpperCase((char) t.index) : t.index);
+                            ignoreCase ? Character.toUpperCase((char) t.index) : t.index);
                     pc += INDEX_LEN;
                 // fall through to REOP_ALT
                 case REOP_ALT:
@@ -2089,7 +2051,7 @@ public class NativeRegExp extends IdScriptableObject {
                 for (i = 0; i < len; i++) {
                     char c1 = input.charAt(parenContent + i);
                     char c2 = input.charAt(gData.cp + i - len);
-                    if (c1 != c2 && StringMatcher.toUpperCase(c1) != StringMatcher.toUpperCase(c2))
+                    if (c1 != c2 && Character.toUpperCase(c1) != Character.toUpperCase(c2))
                         return false;
                 }
             } else if (!input.regionMatches(parenContent, input, gData.cp - len, len)) {
@@ -2103,7 +2065,7 @@ public class NativeRegExp extends IdScriptableObject {
                 for (i = 0; i < len; i++) {
                     char c1 = input.charAt(parenContent + i);
                     char c2 = input.charAt(gData.cp + i);
-                    if (c1 != c2 && StringMatcher.toUpperCase(c1) != StringMatcher.toUpperCase(c2))
+                    if (c1 != c2 && Character.toUpperCase(c1) != Character.toUpperCase(c2))
                         return false;
                 }
             } else if (!input.regionMatches(parenContent, input, gData.cp, len)) {
@@ -2409,7 +2371,7 @@ public class NativeRegExp extends IdScriptableObject {
                                     break;
                                 }
                             } else {
-                                if (op == REOP_ALTPREREQi) c = StringMatcher.toUpperCase(c);
+                                if (op == REOP_ALTPREREQi) c = Character.toUpperCase(c);
                                 if (c != matchCh1 && c != matchCh2) {
                                     result = false;
                                     break;
@@ -2962,9 +2924,8 @@ public class NativeRegExp extends IdScriptableObject {
                         char matchCh = input.charAt(i);
                         if (matchCh == anchorCodePoint
                                 || ((gData.regexp.flags & JSREG_FOLD) != 0
-                                        && StringMatcher.toUpperCase(matchCh)
-                                                == StringMatcher.toUpperCase(
-                                                        (char) anchorCodePoint))) {
+                                        && Character.toUpperCase(matchCh)
+                                                == Character.toUpperCase((char) anchorCodePoint))) {
                             break;
                         }
                         charCount = 1;
@@ -4309,17 +4270,17 @@ final class RECharSet implements Serializable {
 
         if (unicodeCaseFolding) {
             // Deep case closure for Unicode mode (u or v flags with i flag)
-            // Gets all Unicode case variants for this character
+            // Gets all Unicode case variants using Java's built-in CLDR case mapping
             List<Character> variants = new ArrayList<>();
-            NativeRegExp.getUnicodeCaseVariants(ch, variants);
+            StringMatcher.getUnicodeCaseVariants(ch, variants);
             variants.stream()
                     .filter(variant -> variant != ch) // Don't add the original again
                     .forEach(this::addCharacter);
         } else if (basicCaseFolding) {
             // Basic case folding for non-Unicode mode (i flag without u/v)
             // Only handles ASCII-style upper/lower case
-            char upper = StringMatcher.toUpperCase(ch);
-            char lower = StringMatcher.toLowerCase(ch);
+            char upper = Character.toUpperCase(ch);
+            char lower = Character.toLowerCase(ch);
             if (ch != upper) addCharacter(upper);
             if (ch != lower) addCharacter(lower);
         }
