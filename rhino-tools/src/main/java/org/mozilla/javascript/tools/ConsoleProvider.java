@@ -1,14 +1,12 @@
 package org.mozilla.javascript.tools;
 
-import org.mozilla.javascript.Scriptable;
-
 /**
  * This is a service interface to provide consoles. It allows there to be multiple console
  * implementations at runtime based on classpath.
  */
 public interface ConsoleProvider {
     /** Create the console. Must not be called unless "isSupported" returned true. */
-    Console newConsole(Scriptable scope);
+    Console newConsole();
 
     /** Return whether the console is possible to use at all */
     boolean isSupported();

@@ -16,7 +16,10 @@ dependencies {
     implementation project(':rhino')
     implementation project(':rhino-tools')
     implementation project(':rhino-xml')
-    implementation project(':rhino-cli')
+    runtimeOnly 'org.jline:jline-terminal:3.30.0'
+    runtimeOnly 'org.jline:jline-reader:3.30.0'
+    runtimeOnly 'org.jline:jline-terminal-ffm:3.30.0'
+    runtimeOnly 'org.jline:jline-terminal-jni:3.30.0'
 }
 
 shadowJar {

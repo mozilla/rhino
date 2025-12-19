@@ -24,6 +24,9 @@ public class BasicConsole implements Console {
     }
 
     @Override
+    public void close() throws IOException {}
+
+    @Override
     public String getImplementation() {
         return "Default console";
     }

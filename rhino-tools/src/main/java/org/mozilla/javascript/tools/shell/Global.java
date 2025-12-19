@@ -64,15 +64,37 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
  * @author Norris Boyd
  */
 public class Global extends ImporterTopLevel {
-    static final long serialVersionUID = 4029130780977538005L;
+    private static final long serialVersionUID = 4029130780977538005L;
+
+    private static final String[] TOP_COMMANDS = {
+        "defineClass",
+        "deserialize",
+        "doctest",
+        "gc",
+        "help",
+        "load",
+        "loadClass",
+        "print",
+        "quit",
+        "readline",
+        "readFile",
+        "readUrl",
+        "runCommand",
+        "seal",
+        "serialize",
+        "spawn",
+        "sync",
+        "toint32",
+        "version",
+        "write"
+    };
 
     NativeArray history;
-    boolean attemptedJLineLoad;
     private Console console;
     private boolean sealedStdLib = false;
     boolean initialized;
     private QuitAction quitAction;
-    private String[] prompts = {"js> ", "  > "};
+    private static final String[] prompts = {"js> ", "  > "};
     private HashMap<String, String> doctestCanonicalizations;
 
     public Global() {}
@@ -106,29 +128,7 @@ public class Global extends ImporterTopLevel {
         // that these functions are not part of ECMA.
         initStandardObjects(cx, sealedStdLib);
         NativeConsole.init(this, sealedStdLib, new ShellConsolePrinter());
-        String[] names = {
-            "defineClass",
-            "deserialize",
-            "doctest",
-            "gc",
-            "help",
-            "load",
-            "loadClass",
-            "print",
-            "quit",
-            "readline",
-            "readFile",
-            "readUrl",
-            "runCommand",
-            "seal",
-            "serialize",
-            "spawn",
-            "sync",
-            "toint32",
-            "version",
-            "write"
-        };
-        defineFunctionProperties(names, Global.class, ScriptableObject.DONTENUM);
+        defineFunctionProperties(TOP_COMMANDS, Global.class, ScriptableObject.DONTENUM);
 
         // Set up "environment" in the global scope to provide access to the
         // System environment variables.
@@ -140,6 +140,15 @@ public class Global extends ImporterTopLevel {
         defineProperty("history", history, ScriptableObject.DONTENUM);
 
         initialized = true;
+    }
+
+    public void cleanup() {
+        if (console != null) {
+            try {
+                console.close();
+            } catch (IOException ignore) {
+            }
+        }
     }
 
     public Require installRequire(Context cx, List<String> modulePath, boolean sandboxed) {
@@ -400,8 +409,8 @@ public class Global extends ImporterTopLevel {
             Context cx, Scriptable scope, String session, String sourceName, int lineNumber) {
         doctestCanonicalizations = new HashMap<String, String>();
         String[] lines = session.split("\r\n?|\n", -1);
-        String prompt0 = this.prompts[0].trim();
-        String prompt1 = this.prompts[1].trim();
+        String prompt0 = prompts[0].trim();
+        String prompt1 = prompts[1].trim();
         int testCount = 0;
         int i = 0;
         while (i < lines.length && !lines[i].trim().startsWith(prompt0)) {
@@ -721,13 +730,13 @@ public class Global extends ImporterTopLevel {
         // Find the first interactive, command-line editing console
         for (var p : loader) {
             if (p.isSupported() && p.supportsEditing()) {
-                return p.newConsole(this);
+                return p.newConsole();
             }
         }
         // Find the first one that at least works
         for (var p : loader) {
             if (p.isSupported()) {
-                return p.newConsole(this);
+                return p.newConsole();
             }
         }
         // Fall back
@@ -740,6 +749,12 @@ public class Global extends ImporterTopLevel {
      */
     private BasicConsole getBasicConsole() {
         if (!(console instanceof BasicConsole)) {
+            if (console != null) {
+                try {
+                    console.close();
+                } catch (IOException ignore) {
+                }
+            }
             console = new BasicConsole();
         }
         return (BasicConsole) console;
