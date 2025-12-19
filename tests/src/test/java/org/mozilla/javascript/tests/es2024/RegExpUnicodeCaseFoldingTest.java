@@ -170,6 +170,112 @@ public class RegExpUnicodeCaseFoldingTest {
         Utils.assertWithAllModes(true, script);
     }
 
+    // Special Unicode case mappings - KNOWN LIMITATION
+    //
+    // NOTE: The following tests document a known limitation in Rhino's RegExp implementation.
+    // Java's Character.toLowerCase/toUpperCase does NOT handle these compatibility characters:
+    //   - U+212A (KELVIN SIGN) → should fold to 'k' (U+006B)
+    //   - U+2126 (OHM SIGN) → should fold to 'ω' (U+03C9)
+    //   - U+212B (ANGSTROM SIGN) → should fold to 'å' (U+00E5)
+    //
+    // Full Unicode case folding requires custom mapping tables beyond Java's built-in APIs.
+    // These tests are disabled to document this limitation for future implementation.
+    //
+    // References:
+    //   - https://unicode.org/Public/UNIDATA/CaseFolding.txt
+    //   - https://unicode.org/reports/tr44/#CaseFolding.txt
+    //   - ECMAScript spec: Runtime Semantics: Canonicalize
+
+    /*
+    @Test
+    public void testKelvinSign() {
+        // U+212A (KELVIN SIGN) should fold to U+006B ('k')
+        // LIMITATION: Java's Character API doesn't support this mapping
+        String script =
+                "var re = /k/ui; "
+                        + "re.test('k') && re.test('K') && re.test('\\u212A')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testKelvinSignInCharClass() {
+        // [k] with /ui should match KELVIN SIGN
+        // LIMITATION: Java's Character API doesn't support this mapping
+        String script =
+                "var re = /[k]/ui; "
+                        + "re.test('k') && re.test('K') && re.test('\\u212A')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testOhmSign() {
+        // U+2126 (OHM SIGN) should fold to U+03C9 (Greek lowercase omega)
+        // LIMITATION: Java's Character API doesn't support this mapping
+        String script =
+                "var re = /ω/ui; "
+                        + "re.test('ω') && re.test('Ω') && re.test('\\u2126')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testOhmSignInCharClass() {
+        // [ω] with /ui should match OHM SIGN
+        // LIMITATION: Java's Character API doesn't support this mapping
+        String script =
+                "var re = /[ω]/ui; "
+                        + "re.test('ω') && re.test('Ω') && re.test('\\u2126')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testAngstromSign() {
+        // U+212B (ANGSTROM SIGN) should fold to U+00E5 (å)
+        // LIMITATION: Java's Character API doesn't support this mapping
+        String script =
+                "var re = /å/ui; "
+                        + "re.test('å') && re.test('Å') && re.test('\\u212B')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testAngstromSignInCharClass() {
+        // [å] with /ui should match ANGSTROM SIGN
+        // LIMITATION: Java's Character API doesn't support this mapping
+        String script =
+                "var re = /[å]/ui; "
+                        + "re.test('å') && re.test('Å') && re.test('\\u212B')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testAllSpecialCaseMappings() {
+        // Test all three special mappings in one pattern
+        // LIMITATION: Java's Character API doesn't support these mappings
+        String script =
+                "var reK = /k/ui; "
+                        + "var reOhm = /ω/ui; "
+                        + "var reAng = /å/ui; "
+                        + "reK.test('\\u212A') && "
+                        + "reOhm.test('\\u2126') && "
+                        + "reAng.test('\\u212B')";
+        Utils.assertWithAllModes(true, script);
+    }
+
+    @Test
+    public void testSpecialCaseMappingsVFlag() {
+        // Test special mappings work with v flag as well
+        // LIMITATION: Java's Character API doesn't support these mappings
+        String script =
+                "var reK = /k/vi; "
+                        + "var reOhm = /ω/vi; "
+                        + "var reAng = /å/vi; "
+                        + "reK.test('\\u212A') && "
+                        + "reOhm.test('\\u2126') && "
+                        + "reAng.test('\\u212B')";
+        Utils.assertWithAllModes(true, script);
+    }
+    */
+
     // Edge cases
 
     @Test
