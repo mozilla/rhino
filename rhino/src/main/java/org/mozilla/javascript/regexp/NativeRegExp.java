@@ -2224,12 +2224,12 @@ public class NativeRegExp extends IdScriptableObject {
                 }
             }
 
-            // Cache the result for set operations (thread-safe via ConcurrentHashMap)
+            // Cache the result for set operations (bounded LRU to prevent memory leak)
             boolean finalResult = matches == charSet.classContents.sense;
             if (charSet.setOpCache == null) {
                 synchronized (charSet) {
                     if (charSet.setOpCache == null) {
-                        charSet.setOpCache = new java.util.concurrent.ConcurrentHashMap<>();
+                        charSet.setOpCache = createBoundedCache(1000);
                     }
                 }
             }
@@ -2238,6 +2238,30 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         return matches == charSet.classContents.sense;
+    }
+
+    /**
+     * Create a bounded LRU cache for set operation results.
+     *
+     * <p>Prevents memory leak by limiting cache size. ES2024 v-flag character classes with set
+     * operations (intersection, subtraction) cache match results per codepoint. Without bounds,
+     * this could grow to 1.1M entries (full Unicode range). LRU eviction keeps memory usage under
+     * control.
+     *
+     * @param maxSize Maximum number of entries before LRU eviction
+     * @return Thread-safe bounded LRU cache
+     */
+    private static java.util.Map<Integer, Boolean> createBoundedCache(final int maxSize) {
+        return java.util.Collections.synchronizedMap(
+                new java.util.LinkedHashMap<Integer, Boolean>(32, 0.75f, true) {
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    protected boolean removeEldestEntry(
+                            java.util.Map.Entry<Integer, Boolean> eldest) {
+                        return size() > maxSize;
+                    }
+                });
     }
 
     private static boolean reopIsSimple(int op) {

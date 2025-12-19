@@ -8,8 +8,9 @@ package org.mozilla.javascript.regexp;
 
 import java.lang.reflect.Method;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Adapter for optional ICU4J Unicode support via reflection.
@@ -34,8 +35,25 @@ class ICU4JAdapter {
     private static final Class<?> UPROPERTY_CLASS;
     private static final int INVALID_CODE = -1;
 
-    /** Cache for script code lookups to avoid repeated reflection overhead. */
-    private static final Map<String, Integer> SCRIPT_CODE_CACHE = new ConcurrentHashMap<>();
+    /**
+     * Bounded LRU cache for script code lookups to avoid repeated reflection overhead.
+     *
+     * <p>Max size: 256 entries. Script names are limited to ~200 valid values (Unicode 15.0), but
+     * we allow extra space for typos and test data. LRU eviction prevents unbounded growth.
+     *
+     * <p>Synchronization: Access is synchronized via Collections.synchronizedMap(). Not using
+     * ConcurrentHashMap because LinkedHashMap's LRU ordering is not thread-safe.
+     */
+    private static final Map<String, Integer> SCRIPT_CODE_CACHE =
+            Collections.synchronizedMap(
+                    new LinkedHashMap<String, Integer>(32, 0.75f, true) {
+                        private static final int MAX_CACHE_SIZE = 256;
+
+                        @Override
+                        protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+                            return size() > MAX_CACHE_SIZE;
+                        }
+                    });
 
     static {
         boolean available = false;
