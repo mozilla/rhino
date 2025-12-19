@@ -1,21 +1,26 @@
-package org.mozilla.javascript.cli;
+package org.mozilla.javascript.tools.shell;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.Console;
 
 public class JLineConsole implements Console {
     private final Terminal terminal;
     private final LineReader reader;
 
-    JLineConsole(Terminal t, Scriptable scope) {
+    JLineConsole(Terminal t) {
         this.terminal = t;
         this.reader = LineReaderBuilder.builder().terminal(t).build();
+    }
+
+    @Override
+    public void close() throws IOException {
+        terminal.close();
     }
 
     @Override

@@ -132,7 +132,7 @@ public class Main {
      * it with the current thread. Then set up the execution environment and begin to execute
      * scripts.
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         try {
             if (RhinoConfig.get("rhino.use_java_policy_security", false)) {
                 initJavaPolicySecuritySupport();
@@ -141,14 +141,19 @@ public class Main {
             ex.printStackTrace(System.err);
         }
 
-        int result = exec(args);
+        int result;
+        try {
+            result = exec(args);
+        } finally {
+            global.cleanup();
+        }
         if (result != 0) {
             System.exit(result);
         }
     }
 
     /** Execute the given arguments, but don't System.exit at the end. */
-    public static int exec(String origArgs[]) {
+    public static int exec(String[] origArgs) {
         errorReporter = new ToolErrorReporter(false, global.getConsole().getErr());
         shellContextFactory.setErrorReporter(errorReporter);
         String[] args = processOptions(origArgs);

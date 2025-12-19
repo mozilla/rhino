@@ -1,9 +1,7 @@
-package org.mozilla.javascript.cli;
+package org.mozilla.javascript.tools.shell;
 
-import java.io.IOException;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.Console;
 import org.mozilla.javascript.tools.ConsoleProvider;
 
@@ -16,16 +14,17 @@ public class JLineConsoleProvider implements ConsoleProvider {
             // Initialize JLine so it will try to use a fancy console, but
             // won't print out a warning if it can't.
             t = TerminalBuilder.builder().system(true).dumb(true).build();
-        } catch (IOException ioe) {
+        } catch (Throwable e) {
+            // Most likely reason for this is that JLine isn't in the path
             t = null;
         }
         terminal = t;
     }
 
     @Override
-    public Console newConsole(Scriptable scope) {
+    public Console newConsole() {
         assert terminal != null;
-        return new JLineConsole(terminal, scope);
+        return new JLineConsole(terminal);
     }
 
     @Override
