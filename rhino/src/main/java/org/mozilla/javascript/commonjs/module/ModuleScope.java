@@ -5,6 +5,7 @@
 package org.mozilla.javascript.commonjs.module;
 
 import java.net.URI;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 
@@ -12,7 +13,7 @@ import org.mozilla.javascript.TopLevel;
  * A top-level module scope. This class provides methods to retrieve the module's source and base
  * URIs in order to resolve relative module IDs and check sandbox constraints.
  */
-public class ModuleScope extends TopLevel.GlobalThis {
+public class ModuleScope extends ScriptableObject {
     private static final long serialVersionUID = 1L;
     private final URI uri;
     private final URI base;
@@ -24,8 +25,8 @@ public class ModuleScope extends TopLevel.GlobalThis {
 
     public static ScriptableObject createModuleScope(TopLevel global, URI uri, URI base) {
         var moduleScope = new ModuleScope(uri, base);
-        var scope = global.createIsolate(moduleScope);
-        return scope;
+        moduleScope.setParentScope(global);
+        return moduleScope;
     }
 
     public URI getUri() {
@@ -34,5 +35,22 @@ public class ModuleScope extends TopLevel.GlobalThis {
 
     public URI getBase() {
         return base;
+    }
+
+    @Override
+    public String getClassName() {
+        return "module";
+    }
+
+    /** Search up the chain of scopes to find a module scope. */
+    public static ModuleScope findModuleScope(Scriptable scope) {
+        Scriptable current = scope;
+        while (current != null) {
+            if (current instanceof ModuleScope) {
+                return (ModuleScope) current;
+            }
+            current = current.getParentScope();
+        }
+        return null;
     }
 }
