@@ -4052,6 +4052,21 @@ class RENode {
 class CompilerState {
 
     CompilerState(Context cx, char[] source, int length, int flags) {
+        // Validate parameters
+        if (cx == null) {
+            throw new IllegalArgumentException("Context cannot be null");
+        }
+        if (source == null) {
+            throw new IllegalArgumentException("Source cannot be null");
+        }
+        if (length < 0) {
+            throw new IllegalArgumentException("Length cannot be negative: " + length);
+        }
+        if (length > source.length) {
+            throw new IllegalArgumentException(
+                    "Length (" + length + ") exceeds source length (" + source.length + ")");
+        }
+
         this.cx = cx;
         this.cpbegin = source;
         this.cp = 0;

@@ -129,6 +129,22 @@ public final class RegExpDebugger {
                     }
                     break;
 
+                case NativeRegExp.REOP_NAMED_BACKREF:
+                    {
+                        int index = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("NAMED_BACKREF #").append(index).append("\n");
+                    }
+                    break;
+
+                case NativeRegExp.REOP_STRING_MATCHER:
+                    {
+                        int index = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("STRING_MATCHER index=").append(index).append("\n");
+                    }
+                    break;
+
                 case NativeRegExp.REOP_FLAT:
                     {
                         int offset = readIndex(program, pc);
@@ -232,27 +248,64 @@ public final class RegExpDebugger {
                     break;
 
                 case NativeRegExp.REOP_STAR:
-                    sb.append("STAR (*)\n");
+                    {
+                        int parenCount = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int parenIndex = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int next = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("STAR (*) parenCount=")
+                                .append(parenCount)
+                                .append(" parenIndex=")
+                                .append(parenIndex)
+                                .append(" next=")
+                                .append(next)
+                                .append("\n");
+                    }
                     break;
 
                 case NativeRegExp.REOP_PLUS:
-                    sb.append("PLUS (+)\n");
+                    {
+                        int parenCount = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int parenIndex = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int next = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("PLUS (+) parenCount=")
+                                .append(parenCount)
+                                .append(" parenIndex=")
+                                .append(parenIndex)
+                                .append(" next=")
+                                .append(next)
+                                .append("\n");
+                    }
                     break;
 
                 case NativeRegExp.REOP_OPT:
-                    sb.append("OPT (?)\n");
+                    {
+                        int parenCount = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int parenIndex = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int next = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("OPT (?) parenCount=")
+                                .append(parenCount)
+                                .append(" parenIndex=")
+                                .append(parenIndex)
+                                .append(" next=")
+                                .append(next)
+                                .append("\n");
+                    }
                     break;
 
                 case NativeRegExp.REOP_LPAREN:
                     {
                         int index = readIndex(program, pc);
                         pc += NativeRegExp.INDEX_LEN;
-                        int min = readIndex(program, pc);
-                        pc += NativeRegExp.INDEX_LEN;
-                        int max = readIndex(program, pc);
-                        pc += NativeRegExp.INDEX_LEN;
-                        sb.append("LPAREN #").append(index);
-                        sb.append(" {").append(min).append(",").append(max).append("}\n");
+                        sb.append("LPAREN #").append(index).append("\n");
                     }
                     break;
 
