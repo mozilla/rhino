@@ -14,7 +14,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import org.mozilla.javascript.commonjs.module.ModuleScope;
 
 public class FunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
@@ -387,22 +386,8 @@ public class FunctionObject extends BaseFunction {
                     thisObj = ((Delegator) thisObj).getDelegee();
                 }
                 if (!clazz.isInstance(thisObj)) {
-                    boolean compatible = false;
-                    if (thisObj == scope || thisObj instanceof ModuleScope) {
-                        Scriptable parentScope = getDeclarationScope();
-                        if (scope != parentScope) {
-                            // Call with dynamic scope for standalone function,
-                            // use parentScope as thisObj
-                            compatible = clazz.isInstance(parentScope);
-                            if (compatible) {
-                                thisObj = parentScope;
-                            }
-                        }
-                    }
-                    if (!compatible) {
-                        // Couldn't find an object to call this on.
-                        throw ScriptRuntime.typeErrorById("msg.incompat.call", functionName);
-                    }
+                    // Couldn't find an object to call this on.
+                    throw ScriptRuntime.typeErrorById("msg.incompat.call", functionName);
                 }
             }
 
