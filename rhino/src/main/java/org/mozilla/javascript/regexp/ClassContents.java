@@ -27,10 +27,10 @@ final class ClassContents {
     boolean sense = true;
 
     /**
-     * Individual codepoints (all Unicode codepoints, both BMP and non-BMP). Package-private for
+     * Individual code points (all Unicode code points, both BMP and non-BMP). Package-private for
      * internal mutation during parsing.
      */
-    final ArrayList<Integer> codepoints = new ArrayList<>();
+    final ArrayList<Integer> codePoints = new ArrayList<>();
 
     /**
      * Character ranges stored as (start1, end1, start2, end2, ...) for all Unicode codepoints.
@@ -63,7 +63,7 @@ final class ClassContents {
      * @param other The ClassContents to merge from
      */
     void mergeFrom(ClassContents other) {
-        this.codepoints.addAll(other.codepoints);
+        this.codePoints.addAll(other.codePoints);
         this.ranges.addAll(other.ranges);
         this.stringLiterals.addAll(other.stringLiterals);
         this.stringMatchers.addAll(other.stringMatchers);

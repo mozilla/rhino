@@ -97,6 +97,33 @@ public class NativeRegExp extends IdScriptableObject {
     // --------------------------------------------------
     // RegExp Operation Codes (REOP)
     // --------------------------------------------------
+    //
+    // BYTECODE FORMAT REFERENCE
+    //
+    // The compiled RegExp program is a sequence of opcodes with operands encoded as follows:
+    //
+    // INDEX encoding: 16-bit big-endian integer (2 bytes)
+    //   - Used for offsets, lengths, indices, and character values
+    //   - Encoding: [high_byte][low_byte]
+    //   - Example: 0x1234 → [0x12][0x34]
+    //
+    // Opcode format notation: [opcode:1][operand1:2][operand2:2]...
+    //   - Numbers indicate byte count
+    //   - All operands use INDEX encoding unless noted
+    //
+    // Common opcodes:
+    //   REOP_EMPTY:          [opcode:1]
+    //   REOP_FLAT1:          [opcode:1][char:2]
+    //   REOP_BACKREF:        [opcode:1][parenIndex:2]
+    //   REOP_CLASS:          [opcode:1][classIndex:2]
+    //   REOP_QUANT:          [opcode:1][min:2][max:2][offset:2][parenIdx:2][parenCount:2]
+    //   REOP_STAR:           [opcode:1][parenCount:2][parenIndex:2][offset:2]
+    //   REOP_ALT:            [opcode:1][offset:2]
+    //   REOP_LPAREN:         [opcode:1][parenIndex:2]
+    //   REOP_STRING_MATCHER: [opcode:1][matcherIndex:2]
+    //
+    // See RegExpDebugger.disassemble() for complete opcode operand descriptions.
+    //
     static final byte REOP_SIMPLE_START =
             1; /* start of 'simple opcodes' - table-driven without complex state */
     static final byte REOP_EMPTY = REOP_SIMPLE_START; /* match rest of input against rest of r.e. */
@@ -587,11 +614,18 @@ public class NativeRegExp extends IdScriptableObject {
     // Package-level helper classes (RENode, RECompiled, CompilerState, etc.) remain
     // in this file as they are tightly coupled to the parser/compiler implementation.
 
-    /*
-     * Top-down regular expression grammar, based closely on Perl4.
+    /**
+     * Parse a disjunction (top-level alternation).
      *
-     *  regexp:     altern                  A regular expression is one or more
-     *              altern '|' regexp       alternatives separated by vertical bar.
+     * <p>Top-down regular expression grammar, based closely on Perl4.
+     *
+     * <p>Grammar: regexp: altern | altern '|' regexp
+     *
+     * <p>A regular expression is one or more alternatives separated by vertical bar.
+     *
+     * @param state Compiler state with current parse position and AST
+     * @param params Parser parameters (flags, mode, etc.)
+     * @return true if parsing succeeded, false on error
      */
     private static boolean parseDisjunction(CompilerState state, ParserParameters params) {
         if (!parseAlternative(state, params)) return false;
@@ -653,9 +687,16 @@ public class NativeRegExp extends IdScriptableObject {
         return true;
     }
 
-    /*
-     *  altern:     item                    An alternative is one or more items,
-     *              item altern             concatenated together.
+    /**
+     * Parse an alternative (sequence of concatenated items).
+     *
+     * <p>Grammar: altern: item | item altern
+     *
+     * <p>An alternative is one or more items concatenated together.
+     *
+     * @param state Compiler state with current parse position and AST
+     * @param params Parser parameters (flags, mode, etc.)
+     * @return true if parsing succeeded, false on error
      */
     private static boolean parseAlternative(CompilerState state, ParserParameters params) {
         RENode headTerm = null;
@@ -1689,6 +1730,16 @@ public class NativeRegExp extends IdScriptableObject {
         }
     }
 
+    /**
+     * Parse a term (atom with optional quantifier).
+     *
+     * <p>Parses atoms (characters, character classes, groups, assertions) and applies quantifiers
+     * (*, +, ?, {n,m}) if present.
+     *
+     * @param state Compiler state with current parse position and AST
+     * @param params Parser parameters (flags, mode, etc.)
+     * @return true if parsing succeeded, false on error
+     */
     private static boolean parseTerm(CompilerState state, ParserParameters params) {
         char[] src = state.cpbegin;
         char c = src[state.cp++];
@@ -2175,7 +2226,7 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         // Unified Unicode storage - check codepoints list (for all codepoints not in bitmap)
-        if (!matches && charSet.classContents.codepoints.contains(codePoint)) {
+        if (!matches && charSet.classContents.codePoints.contains(codePoint)) {
             matches = true;
         }
 
@@ -4356,7 +4407,7 @@ final class RECharSet implements Serializable {
 
         // Unified Unicode storage - process all codepoints
         // Non-BMP codepoints are stored but not added to bitmap (handled by codepoints list check)
-        classContents.codepoints.stream()
+        classContents.codePoints.stream()
                 .filter(codepoint -> codepoint <= Character.MAX_VALUE)
                 .forEach(
                         codepoint -> {

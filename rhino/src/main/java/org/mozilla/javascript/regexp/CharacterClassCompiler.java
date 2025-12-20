@@ -19,6 +19,9 @@ import java.util.Map;
  *
  * @see ClassContents
  * @see SetOperation
+ * @see UnicodeProperties
+ * @see EmojiSequenceData
+ * @see StringMatcher
  */
 class CharacterClassCompiler {
 
@@ -53,7 +56,7 @@ class CharacterClassCompiler {
     static boolean calculateBitmapSize(int flags, ClassContents classContents, RENode target) {
         int max = 0;
 
-        for (int ch : classContents.codepoints) {
+        for (int ch : classContents.codePoints) {
             if (ch > max) {
                 max = ch;
             }
@@ -319,7 +322,11 @@ class CharacterClassCompiler {
                     NativeRegExp.reportError("msg.invalid.property", "");
                     return null;
                 }
-                operand.escapeNodes.add(state.result);
+
+                // Handle Property of Strings expansion (ES2024) or regular property
+                if (!handleUnicodePropertyInSetOperation(state, params, operand)) {
+                    return null;
+                }
             } else if (parseCharacterClassEscapeOperand(state)) {
                 operand.escapeNodes.add(state.result);
             } else {
@@ -543,7 +550,7 @@ class CharacterClassCompiler {
 
                             if (inRange) {
                                 if (!params.isUnicodeMode()) {
-                                    contents.codepoints.add((int) '-');
+                                    contents.codePoints.add((int) '-');
                                     inRange = false;
                                 } else {
                                     NativeRegExp.reportError("msg.invalid.class", "");
@@ -607,7 +614,7 @@ class CharacterClassCompiler {
                 contents.ranges.add(thisCodePoint);
             } else {
                 // Unified Unicode storage - no BMP vs non-BMP split
-                contents.codepoints.add(thisCodePoint);
+                contents.codePoints.add(thisCodePoint);
                 if (state.cp + 1 < state.cpend && src[state.cp + 1] != ']') {
                     char currentChar = src[state.cp];
 
@@ -662,5 +669,70 @@ class CharacterClassCompiler {
             // Recursively build for nested set operations
             buildOperandCharSets(op.getOperand(), bmsize);
         }
+    }
+
+    /**
+     * Checks if a parsed Unicode property is a Property of Strings and handles expansion.
+     *
+     * <p>ES2024: Property of Strings (like \p{Emoji_Keycap_Sequence}) must be expanded to
+     * StringMatcher objects when used in set operations. Regular properties are added to
+     * escapeNodes.
+     *
+     * @param state Compiler state containing the parsed property result
+     * @param params Compilation parameters
+     * @param operand Target operand to add matchers to
+     * @return true if successfully handled (either as Property of Strings or regular property)
+     */
+    private static boolean handleUnicodePropertyInSetOperation(
+            CompilerState state,
+            ParserParameters params,
+            ClassContents operand) {
+
+        RENode result = state.result;
+
+        // Check if this is a Property of Strings
+        boolean isPropertyOfStrings =
+                (result.op == NativeRegExp.REOP_UPROP
+                                || result.op == NativeRegExp.REOP_UPROP_NOT)
+                        && result.unicodeProperty == -2
+                        && result.propertyName != null;
+
+        if (isPropertyOfStrings) {
+            // Property of Strings - must be expanded to string matchers
+            List<String> sequences = getPropertyOfStringsSequences(result.propertyName);
+            if (sequences == null) {
+                NativeRegExp.reportError(
+                        "msg.invalid.property",
+                        "Property of Strings not found: " + result.propertyName);
+                return false;
+            }
+
+            // Validate: Property of Strings requires v-flag
+            if (!isVMode(state, params)) {
+                NativeRegExp.reportError(
+                        "msg.property.requires.vflag",
+                        "Property " + result.propertyName + " requires v flag");
+                return false;
+            }
+
+            // Validate: Property of Strings cannot be negated
+            if (result.op == NativeRegExp.REOP_UPROP_NOT) {
+                NativeRegExp.reportError(
+                        "msg.property.not.negatable",
+                        "Property " + result.propertyName + " cannot be negated");
+                return false;
+            }
+
+            // Expand to string matchers
+            boolean caseInsensitive = (state.flags & NativeRegExp.JSREG_FOLD) != 0;
+            for (String sequence : sequences) {
+                operand.stringMatchers.add(new StringMatcher(sequence, caseInsensitive));
+            }
+        } else {
+            // Regular Unicode property - add to escapeNodes
+            operand.escapeNodes.add(result);
+        }
+
+        return true;
     }
 }

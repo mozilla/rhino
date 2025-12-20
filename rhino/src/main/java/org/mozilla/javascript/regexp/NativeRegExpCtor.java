@@ -148,8 +148,23 @@ class NativeRegExpCtor {
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
 
-            // ES2025: Escape syntax characters
+            // ES2025: Escape syntax characters and control characters
             switch (c) {
+                case '\t':
+                    result.append("\\t");
+                    break;
+                case '\n':
+                    result.append("\\n");
+                    break;
+                case '\u000B': // Vertical tab
+                    result.append("\\v");
+                    break;
+                case '\f':
+                    result.append("\\f");
+                    break;
+                case '\r':
+                    result.append("\\r");
+                    break;
                 case '^':
                 case '$':
                 case '\\':
@@ -164,11 +179,20 @@ class NativeRegExpCtor {
                 case '{':
                 case '}':
                 case '|':
+                case '/':
                     result.append('\\');
                     result.append(c);
                     break;
                 default:
-                    result.append(c);
+                    // Handle other whitespace characters
+                    if (c == ' ') {
+                        result.append(c);
+                    } else if (Character.isWhitespace(c) || Character.isISOControl(c)) {
+                        // Escape other control/whitespace characters as hex
+                        result.append(String.format("\\x%02x", (int) c));
+                    } else {
+                        result.append(c);
+                    }
                     break;
             }
         }

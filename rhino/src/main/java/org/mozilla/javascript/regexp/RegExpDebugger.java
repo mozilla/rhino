@@ -199,6 +199,20 @@ public final class RegExpDebugger {
                     }
                     break;
 
+                case NativeRegExp.REOP_UCSPFLAT1:
+                    {
+                        char ch1 = (char) readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        char ch2 = (char) readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("UCSPFLAT1 surrogate pair U+")
+                                .append(Integer.toHexString(ch1))
+                                .append(" U+")
+                                .append(Integer.toHexString(ch2))
+                                .append("\n");
+                    }
+                    break;
+
                 case NativeRegExp.REOP_CLASS:
                     {
                         int index = readIndex(program, pc);
@@ -388,6 +402,17 @@ public final class RegExpDebugger {
                         int offset = readIndex(program, pc);
                         pc += NativeRegExp.INDEX_LEN;
                         sb.append("ALTPREREQ '").append(printableChar(ch));
+                        sb.append("' next=").append(pc + offset).append("\n");
+                    }
+                    break;
+
+                case NativeRegExp.REOP_ALTPREREQi:
+                    {
+                        char ch = (char) readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        int offset = readIndex(program, pc);
+                        pc += NativeRegExp.INDEX_LEN;
+                        sb.append("ALTPREREQi '").append(printableChar(ch));
                         sb.append("' next=").append(pc + offset).append("\n");
                     }
                     break;

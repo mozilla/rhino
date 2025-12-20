@@ -101,8 +101,6 @@ public class Test262SuiteTest {
                             "default-arg",
                             "new.target",
                             "object-rest",
-                            "regexp-dotall",
-                            "regexp-unicode-property-escapes",
                             "resizable-arraybuffer",
                             "SharedArrayBuffer",
                             "tail-call-optimization",
