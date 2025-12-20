@@ -236,6 +236,9 @@ public class ScriptRuntime {
         NativeStringIterator.init(scope, sealed);
         registerRegExp(cx, scope, sealed);
 
+        NativeJavaObject.init(scope, sealed);
+        NativeJavaMap.init(scope, sealed);
+
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
         // to property initialize the prototype.
@@ -298,9 +301,6 @@ public class ScriptRuntime {
     public static ScriptableObject initStandardObjects(
             Context cx, ScriptableObject scope, boolean sealed) {
         ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
-
-        NativeJavaObject.init(s, sealed);
-        NativeJavaMap.init(s, sealed);
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
