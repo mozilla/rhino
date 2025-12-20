@@ -751,7 +751,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             return null;
         }
         if (activation.isStrict && cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            throw ScriptRuntime.typeErrorById("msg.op.not.allowed");
+            ScriptRuntime.ThrowTypeError.throwNotAllowed();
         }
         Object arguments = activation.get("arguments", activation);
         if (arguments instanceof Arguments && cx.getLanguageVersion() >= Context.VERSION_ES6) {

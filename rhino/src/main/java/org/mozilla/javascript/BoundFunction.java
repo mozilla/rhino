@@ -48,13 +48,13 @@ public class BoundFunction extends BaseFunction {
 
     @Override
     Object getArguments() {
-        throw ScriptRuntime.typeErrorById("msg.op.not.allowed");
+        ScriptRuntime.ThrowTypeError.throwNotAllowed();
+        return null;
     }
 
     @Override
     void setArguments(Object caller) {
-        // todo
-        throw ScriptRuntime.typeErrorById("msg.op.not.allowed");
+        ScriptRuntime.ThrowTypeError.throwNotAllowed();
     }
 
     @Override

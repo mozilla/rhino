@@ -74,7 +74,7 @@ public class ScriptRuntime {
         return cx.typeErrorThrower;
     }
 
-    private static final class ThrowTypeError extends BaseFunction {
+    static final class ThrowTypeError extends BaseFunction {
         private static final long serialVersionUID = -5891740962154902286L;
 
         ThrowTypeError(Scriptable scope) {
@@ -101,6 +101,11 @@ public class ScriptRuntime {
 
         @Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            throwNotAllowed();
+            return null;
+        }
+
+        public static void throwNotAllowed() {
             throw typeErrorById("msg.op.not.allowed");
         }
     }
