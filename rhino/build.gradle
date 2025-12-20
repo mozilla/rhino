@@ -102,7 +102,5 @@ decycle {
     // currently accepted cycles (may be resolved, when it is clear, how to separate the liveconnect stuff)
     ignoring from: "org.mozilla.javascript.lc.type.*", to: "org.mozilla.javascript.(Scriptable|ScriptableObject)"
     ignoring from: "org.mozilla.javascript.lc.type.TypeInfoFactory", to: "org.mozilla.javascript.lc.type.impl.factory.*"
-    ignoring from: "org.mozilla.javascript.lc.type.TypeInfo", to: "org.mozilla.javascript.lc.type.impl.*"
-    ignoring from: "org.mozilla.javascript.lc.type.TypeFormatContext", to: "org.mozilla.javascript.lc.type.impl.ClassSignatureFormatContext"
-
+    ignoring from: "org.mozilla.javascript.lc.type.*", to: "org.mozilla.javascript.lc.type.impl.*"
 }

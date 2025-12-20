@@ -27,7 +27,8 @@ public interface FactoryBase extends TypeInfoFactory {
 
     @Override
     default TypeInfo create(ParameterizedType parameterizedType) {
-        return attachParam(
+        return new ParameterizedTypeInfoImpl(
+                create(parameterizedType.getOwnerType()),
                 create(parameterizedType.getRawType()),
                 createList(parameterizedType.getActualTypeArguments()));
     }
@@ -54,9 +55,11 @@ public interface FactoryBase extends TypeInfoFactory {
     @Override
     default TypeInfo attachParam(TypeInfo base, List<TypeInfo> params) {
         if (base instanceof ParameterizedTypeInfo) {
-            base = ((ParameterizedTypeInfo) base).rawType();
+            var parameterized = (ParameterizedTypeInfo) base;
+            return new ParameterizedTypeInfoImpl(
+                    parameterized.ownerType(), parameterized.rawType(), params);
         }
-        return new ParameterizedTypeInfoImpl(base, params);
+        return new ParameterizedTypeInfoImpl(TypeInfo.NONE, base, params);
     }
 
     /** Used by {@link #getConsolidationMapping(java.lang.Class)} */

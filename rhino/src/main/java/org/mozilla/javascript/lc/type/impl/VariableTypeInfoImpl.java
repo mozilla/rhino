@@ -3,8 +3,6 @@ package org.mozilla.javascript.lc.type.impl;
 import java.lang.reflect.TypeVariable;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
-import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
@@ -42,18 +40,6 @@ public final class VariableTypeInfoImpl extends TypeInfoBase implements Variable
             }
         }
         return (TypeInfo) mainBound;
-    }
-
-    @Override
-    public void append(TypeFormatContext ctx, StringBuilder builder) {
-        builder.append(raw.getName());
-    }
-
-    @Override
-    public void collectComponentClass(Consumer<Class<?>> collector) {
-        for (var bound : this.bounds(TypeInfoFactory.NO_CACHE)) {
-            bound.collectComponentClass(collector);
-        }
     }
 
     @Override

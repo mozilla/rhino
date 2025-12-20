@@ -1,6 +1,5 @@
 package org.mozilla.javascript.lc.type.impl;
 
-import java.util.function.Consumer;
 import org.mozilla.javascript.lc.type.TypeFormatContext;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
@@ -28,12 +27,9 @@ public enum NoTypeInfo implements TypeInfo {
     }
 
     @Override
-    public void append(TypeFormatContext ctx, StringBuilder builder) {
-        builder.append(ctx.getFormattedNone());
+    public String toString(TypeFormatContext ctx) {
+        return ctx.getFormattedNone();
     }
-
-    @Override
-    public void collectComponentClass(Consumer<Class<?>> collector) {}
 
     /** {@link Object} class is assignable from any class */
     @Override

@@ -1,0 +1,46 @@
+package org.mozilla.javascript.lc.type.impl;
+
+import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
+import org.mozilla.javascript.lc.type.TypeFormatContext;
+import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.VariableTypeInfo;
+
+/**
+ * @author ZZZank
+ */
+public class ClassNameFormatContext implements TypeFormatContext {
+    @Override
+    public String getClassName(Class<?> c) {
+        return c.getName();
+    }
+
+    @Override
+    public void append(StringBuilder builder, TypeInfo type) {
+        builder.append(type.asClass().getName());
+    }
+
+    @Override
+    public void append(StringBuilder builder, TypeInfo type, boolean declaring) {
+        builder.append(type.asClass().getName());
+    }
+
+    @Override
+    public void appendParameterized(StringBuilder builder, ParameterizedTypeInfo type) {
+        append(builder, type.rawType());
+    }
+
+    @Override
+    public void appendVariable(StringBuilder builder, VariableTypeInfo type, boolean declaring) {
+        append(builder, type.mainBound());
+    }
+
+    @Override
+    public void appendArray(StringBuilder builder, TypeInfo type) {
+        builder.append(type.asClass().getName());
+    }
+
+    @Override
+    public String getFormattedNone() {
+        return Object.class.getName();
+    }
+}
