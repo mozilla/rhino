@@ -106,7 +106,7 @@ public class NestedContextPrototypeTest {
                                     scope = context.newObject(global);
                                     break;
                                 case SEALED:
-                                    scope = global.createIsolate();
+                                    scope = TopLevel.createIsolate(global);
                                     break;
                                 case SEALED_OWN_OBJECTS:
                                     scope = context.initStandardObjects(new TopLevel());

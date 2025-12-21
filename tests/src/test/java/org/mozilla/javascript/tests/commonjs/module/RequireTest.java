@@ -81,7 +81,8 @@ public class RequireTest {
 
             var obj = cx.newObject(scope, "CustomGlobal", null);
             obj.getPrototype().setPrototype(scope.getGlobalThis());
-            final TopLevel global = scope.createIsolateCustomPrototypeChain((ScriptableObject) obj);
+            final TopLevel global =
+                    TopLevel.createIsolateCustomPrototypeChain(scope, (ScriptableObject) obj);
 
             final Require require =
                     new Require(

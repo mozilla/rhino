@@ -23,6 +23,7 @@ import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Wrapper;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -42,8 +43,8 @@ public class SealedSharedScopeTest {
 
         ctx = Context.enter();
         ctx.setLanguageVersion(Context.VERSION_DEFAULT);
-        scope1 = sharedScope.createIsolate();
-        scope2 = sharedScope.createIsolate();
+        scope1 = TopLevel.createIsolate(sharedScope);
+        scope2 = TopLevel.createIsolate(sharedScope);
     }
 
     @After

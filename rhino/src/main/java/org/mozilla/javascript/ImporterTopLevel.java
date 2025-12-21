@@ -116,6 +116,11 @@ public class ImporterTopLevel extends TopLevel {
         initStandardObjects(cx, sealed);
     }
 
+    private ImporterTopLevel(ScriptableObject scope) {
+        super(scope);
+        topScopeFlag = true;
+    }
+
     @Override
     public String getClassName() {
         return topScopeFlag ? "global" : "JavaImporter";
@@ -273,6 +278,19 @@ public class ImporterTopLevel extends TopLevel {
     @Override
     public ImporterGlobalThis getGlobalThis() {
         return (ImporterGlobalThis) super.getGlobalThis();
+    }
+
+    public static TopLevel createIsolate(Context cx, TopLevel parent) {
+        var newGlobal = new ImporterGlobalThis(true);
+        newGlobal.setPrototype(parent.getGlobalThis());
+        newGlobal.setParentScope(null);
+        newGlobal.put("globalThis", newGlobal, newGlobal);
+        newGlobal.setAttributes("globalThis", ScriptableObject.DONTENUM);
+        var isolate = new ImporterTopLevel(newGlobal);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
+        ImporterTopLevel.init(cx, isolate, false, true);
+        return isolate;
     }
 
     private static final String AKEY = "importedPackages";
