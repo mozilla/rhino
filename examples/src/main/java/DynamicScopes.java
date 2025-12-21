@@ -8,7 +8,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /** Example of controlling the JavaScript with multiple scopes and threads. */
 public class DynamicScopes {
@@ -85,7 +85,7 @@ public class DynamicScopes {
         // Initialize the standard objects (Object, Function, etc.)
         // This must be done before scripts can be executed. The call
         // returns a new scope that we will share.
-        ScriptableObject sharedScope = cx.initStandardObjects(null, true);
+        TopLevel sharedScope = cx.initStandardObjects(null, true);
 
         // Now we can execute the precompiled script against the scope
         // to define x variable and f function in the shared scope.

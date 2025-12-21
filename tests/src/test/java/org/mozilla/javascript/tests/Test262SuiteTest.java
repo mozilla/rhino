@@ -261,7 +261,7 @@ public class Test262SuiteTest {
 
         public static $262 createRealm(
                 Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            ScriptableObject realm = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
+            TopLevel realm = cx.initSafeStandardObjects(new TopLevel());
             return install(realm, thisObj.getPrototype());
         }
 

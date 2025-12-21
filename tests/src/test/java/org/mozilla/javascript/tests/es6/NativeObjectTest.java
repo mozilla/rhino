@@ -13,8 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Test for NativeObject. */
@@ -376,9 +375,9 @@ public class NativeObjectTest {
             Utils.runWithAllModes(
                     cx -> {
                         cx.setLanguageVersion(Context.VERSION_ES6);
-                        ScriptableObject scope = cx.initStandardObjects();
+                        TopLevel scope = cx.initStandardObjects();
 
-                        Scriptable realm = cx.initStandardObjects();
+                        TopLevel realm = cx.initStandardObjects();
                         scope.put("realm", scope, realm);
 
                         Object result = cx.evaluateString(scope, prefix + script, "test", 1, null);
@@ -416,9 +415,9 @@ public class NativeObjectTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
-                    Scriptable realm = cx.initStandardObjects();
+                    TopLevel realm = cx.initStandardObjects();
                     scope.put("realm", scope, realm);
 
                     Object result = cx.evaluateString(scope, script, "test", 1, null);

@@ -1160,7 +1160,7 @@ class SuperTest {
 
             try (Context cx = Context.enter()) {
                 cx.setLanguageVersion(Context.VERSION_ES6);
-                ScriptableObject scope = cx.initStandardObjects();
+                TopLevel scope = cx.initStandardObjects();
 
                 cx.setInterpretedMode(true);
                 cx.evaluateString(scope, script, "test", 1, null);
