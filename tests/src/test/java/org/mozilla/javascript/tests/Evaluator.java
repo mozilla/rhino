@@ -9,6 +9,7 @@ import java.util.Map;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 public class Evaluator {
 
@@ -35,7 +36,7 @@ public class Evaluator {
     }
 
     public static Object eval(Context cx, String source, Map<String, Scriptable> bindings) {
-        Scriptable scope = cx.initStandardObjects();
+        TopLevel scope = cx.initStandardObjects();
         if (bindings != null) {
             for (Map.Entry<String, Scriptable> entry : bindings.entrySet()) {
                 final Scriptable object = entry.getValue();

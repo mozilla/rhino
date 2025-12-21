@@ -16,6 +16,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -25,7 +26,7 @@ import org.mozilla.javascript.tools.shell.Global;
 public class NativeWrappedArrayTest {
 
     private Context cx;
-    private Scriptable global;
+    private TopLevel global;
 
     @Before
     public void init() {
@@ -84,7 +85,7 @@ public class NativeWrappedArrayTest {
 
     @Test
     public void customArray() throws IOException {
-        ((ScriptableObject) global)
+        global.getGlobalThis()
                 .defineFunctionProperties(
                         global, new String[] {"makeCustomArray"}, NativeWrappedArrayTest.class, 0);
 

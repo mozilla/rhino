@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -53,7 +54,7 @@ public class GeneratorsYieldStarReturnTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.evaluateString(scope, script, "test", 1, null);
 
                     Object result = scope.get("result", scope);
@@ -111,7 +112,7 @@ public class GeneratorsYieldStarReturnTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.evaluateString(scope, script, "test", 1, null);
 
                     Object result = scope.get("result", scope);
@@ -161,7 +162,7 @@ public class GeneratorsYieldStarReturnTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.evaluateString(scope, script, "test", 1, null);
 
                     Object result = scope.get("result", scope);
@@ -215,7 +216,7 @@ public class GeneratorsYieldStarReturnTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.evaluateString(scope, script, "test", 1, null);
 
                     Object result = scope.get("result", scope);

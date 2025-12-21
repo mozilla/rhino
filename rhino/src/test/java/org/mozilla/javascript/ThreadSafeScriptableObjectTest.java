@@ -13,7 +13,7 @@ public class ThreadSafeScriptableObjectTest {
                         Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS));
 
         try (Context cx = Context.enter()) {
-            ScriptableObject global = cx.initStandardObjects();
+            TopLevel global = cx.initStandardObjects();
             global.sealObject();
 
             // Registered by NativeJavaTopPackage

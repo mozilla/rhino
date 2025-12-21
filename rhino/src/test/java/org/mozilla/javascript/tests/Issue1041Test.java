@@ -7,13 +7,13 @@ package org.mozilla.javascript.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 public class Issue1041Test {
     @Test
     public void quantifierWithMax0() {
         try (Context cx = Context.enter()) {
-            ScriptableObject scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             Boolean result =
                     (Boolean) cx.evaluateString(scope, "/ab{0}c/.test('abc')", "<eval>", 1, null);
             Assert.assertFalse(result);
