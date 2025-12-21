@@ -59,7 +59,7 @@ public class TestCase {
         try (InputStream in = assetManager.open("tests/" + name);
                 Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
 
-            Scriptable scope = global.createIsolate();
+            Scriptable scope = TopLevel.createIsolate(global);
             Object result = cx.evaluateReader(scope, rdr, name, 1, null);
             return ScriptRuntime.toString(result);
         } catch (IOException e) {
