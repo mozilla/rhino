@@ -6,6 +6,7 @@ package org.mozilla.javascript.testutils;
 
 import static org.junit.Assert.*;
 
+import java.util.Locale;
 import java.util.stream.IntStream;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
@@ -155,6 +156,56 @@ public class Utils {
      */
     public static void assertWithAllModes(final Object expected, final String script) {
         assertWithAllModes(-1, null, expected, script);
+    }
+
+    /**
+     * Execute the provided script and assert the result. The language version is not changed. The
+     * {@link Context} feature Context.FEATURE_INTL_402 is enabled.
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     */
+    public static void assertWithAllModes402(final Object expected, final String script) {
+        Utils.runWithAllModes(
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+
+                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+                    assertEquals(expected, res);
+                    return null;
+                });
+    }
+
+    /**
+     * Execute the provided script and assert the result. The language version is not changed. The
+     * {@link Context} feature Context.FEATURE_INTL_402 is enabled and the locale set to the
+     * provided one
+     *
+     * @param expected the expected result
+     * @param script the javascript script to execute
+     * @param locale the locale to be used for the context
+     */
+    public static void assertWithAllModes402(
+            final Object expected, final String script, Locale locale) {
+        Utils.runWithAllModes(
+                Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLocale(locale);
+
+                    final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
+
+                    final StringBuilder hex = new StringBuilder();
+                    for (final char c : res.toString().toCharArray()) {
+                        hex.append("\\u")
+                                .append(String.format("%04X", (int) c).toLowerCase(Locale.ROOT));
+                    }
+                    System.out.println(hex.toString());
+
+                    assertEquals(expected, res);
+                    return null;
+                });
     }
 
     /**
