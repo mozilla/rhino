@@ -17,8 +17,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.NativeJavaClass;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.UniqueTag;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.testutils.Utils;
@@ -80,7 +79,7 @@ public class ImportClassTest {
     public void importMultipleTimes() {
         Utils.runWithAllModes(
                 cx -> {
-                    ScriptableObject sharedScope = cx.initStandardObjects();
+                    TopLevel sharedScope = cx.initStandardObjects();
                     // sharedScope.sealObject(); // code below will try to modify sealed object
 
                     Script script =
@@ -88,10 +87,8 @@ public class ImportClassTest {
                                     "importClass(java.util.UUID);true", "TestScript", 1, null);
 
                     for (int i = 0; i < 3; i++) {
-                        Scriptable scope = new ImporterTopLevel(cx);
-                        scope.setPrototype(sharedScope);
-                        scope.setParentScope(null);
-                        script.exec(cx, scope, scope);
+                        var scope = ImporterTopLevel.createIsolate(cx, sharedScope);
+                        script.exec(cx, scope, scope.getGlobalThis());
                         assertEquals(UniqueTag.NOT_FOUND, sharedScope.get("UUID", sharedScope));
                         assertTrue(scope.get("UUID", scope) instanceof NativeJavaClass);
                     }
