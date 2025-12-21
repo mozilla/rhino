@@ -3588,15 +3588,16 @@ public class NativeRegExp extends IdScriptableObject {
         }
 
         String string = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
-        long previousLastIndex = getLastIndex(cx, thisObj);
-        if (previousLastIndex != 0) {
+        // Use SameValue comparison per spec (distinguishes +0 from -0)
+        Object previousLastIndex = ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx);
+        if (!ScriptRuntime.same(previousLastIndex, ScriptRuntime.zeroObj)) {
             setLastIndex(thisObj, ScriptRuntime.zeroObj);
         }
 
         Object result = regExpExec(thisObj, string, cx, scope);
 
-        long currentLastIndex = getLastIndex(cx, thisObj);
-        if (previousLastIndex != currentLastIndex) {
+        Object currentLastIndex = ScriptRuntime.getObjectProp(thisObj, "lastIndex", cx);
+        if (!ScriptRuntime.same(previousLastIndex, currentLastIndex)) {
             setLastIndex(thisObj, previousLastIndex);
         }
 
