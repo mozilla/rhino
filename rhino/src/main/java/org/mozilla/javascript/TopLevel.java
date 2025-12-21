@@ -132,22 +132,22 @@ public class TopLevel extends ScriptableObject {
         globalThis = customGlobal;
     }
 
-    public TopLevel createIsolate() {
+    public static TopLevel createIsolate(TopLevel parent) {
         var newGlobal = new NativeObject();
-        newGlobal.setPrototype(getGlobalThis());
+        newGlobal.setPrototype(parent.getGlobalThis());
         newGlobal.setParentScope(null);
         var isolate = new TopLevel(newGlobal);
-        isolate.copyAssociatedValue(this);
-        isolate.copyBuiltins(this, false);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
         return isolate;
     }
 
-    public TopLevel createIsolate(ScriptableObject customGlobal) {
+    public static TopLevel createIsolate(TopLevel parent, ScriptableObject customGlobal) {
         customGlobal.setParentScope(null);
-        customGlobal.setPrototype(getGlobalThis());
+        customGlobal.setPrototype(parent.getGlobalThis());
         var isolate = new TopLevel(customGlobal);
-        isolate.copyAssociatedValue(this);
-        isolate.copyBuiltins(this, false);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
         return isolate;
     }
 
@@ -156,11 +156,12 @@ public class TopLevel extends ScriptableObject {
      * this top level's global object. This should only be done if you know for certain that no
      * other use will be made of this prototype chain.
      */
-    public TopLevel createIsolateCustomPrototypeChain(ScriptableObject customGlobal) {
+    public static TopLevel createIsolateCustomPrototypeChain(
+            TopLevel parent, ScriptableObject customGlobal) {
         customGlobal.setParentScope(null);
         var isolate = new TopLevel(customGlobal);
-        isolate.copyAssociatedValue(this);
-        isolate.copyBuiltins(this, false);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
         return isolate;
     }
 
