@@ -113,7 +113,7 @@ public class DynamicScopeTest {
                                     "source2",
                                     1,
                                     null);
-            var newTopLevel = someScope.createIsolate((ScriptableObject) subScope);
+            var newTopLevel = TopLevel.createIsolate(someScope, (ScriptableObject) subScope);
 
             Scriptable subObj =
                     (Scriptable)
