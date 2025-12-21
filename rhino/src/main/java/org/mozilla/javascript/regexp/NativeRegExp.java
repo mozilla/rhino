@@ -3542,7 +3542,15 @@ public class NativeRegExp extends IdScriptableObject {
         // See ECMAScript spec 22.2.7.1
         Object execMethod = ScriptRuntime.getObjectProp(regexp, "exec", cx, scope);
         if (execMethod instanceof Callable) {
-            return ((Callable) execMethod).call(cx, scope, regexp, new Object[] {string});
+            Object result = ((Callable) execMethod).call(cx, scope, regexp, new Object[] {string});
+            // Per spec, exec must return Object or null
+            if (result != null && !ScriptRuntime.isObject(result)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.invalid.return.value",
+                        "RegExp exec method",
+                        ScriptRuntime.typeof(result));
+            }
+            return result;
         }
         return NativeRegExp.js_exec(cx, scope, regexp, new Object[] {string});
     }
