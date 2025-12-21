@@ -80,7 +80,7 @@ public class DebuggerTest {
         MockDebugger debugger = new MockDebugger();
         MockDebugFrame frame = MockDebugger.getFrame();
         Context cx = Context.enter();
-        Scriptable scope = cx.initSafeStandardObjects();
+        TopLevel scope = cx.initSafeStandardObjects();
         try {
             cx.setDebugger(debugger, cx);
             cx.setGeneratingSource(true);

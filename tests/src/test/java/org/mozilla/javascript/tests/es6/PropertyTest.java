@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class PropertyTest {
@@ -16,7 +17,7 @@ public class PropertyTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final String expected = "undefined - true - true | function - function";
 
@@ -52,7 +53,7 @@ public class PropertyTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final String expected = "undefined - true - true | function - function";
 
@@ -89,7 +90,7 @@ public class PropertyTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final String expected = "undefined - true - true | function - function";
 
@@ -129,7 +130,7 @@ public class PropertyTest {
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
-            ScriptableObject scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             final String expected = "undefined - true - true | function - function";
 

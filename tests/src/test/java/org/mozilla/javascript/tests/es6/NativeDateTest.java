@@ -15,7 +15,7 @@ import java.util.TimeZone;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Test for NativeDate. */
@@ -420,7 +420,7 @@ public class NativeDateTest {
     private static void ctorDateTimeString(final String expected, final String js) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -434,7 +434,7 @@ public class NativeDateTest {
             final Class<T> expectedThrowable, final String expectedMessage, final String js) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -480,7 +480,7 @@ public class NativeDateTest {
 
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
 
@@ -509,7 +509,7 @@ public class NativeDateTest {
         final String js = "new Date('2021-12-18T22:23').toISOString()";
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone(tz));
 
@@ -558,7 +558,7 @@ public class NativeDateTest {
         final String js = "new Date('2021-12-18').toISOString()";
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone(tz));
 
@@ -656,7 +656,7 @@ public class NativeDateTest {
     private static void toLocale(final String expected, final String js) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -705,7 +705,7 @@ public class NativeDateTest {
         final String js = "new Date('Sat, 18 Dec 2021 22:23:00 UTC').toDateString()";
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone(tz));
 
@@ -759,7 +759,7 @@ public class NativeDateTest {
         final String js = "new Date('Sat, 18 Dec 2021 22:23:00 UTC').toTimeString()";
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone(tz));
 
@@ -808,7 +808,7 @@ public class NativeDateTest {
         final String js = "new Date('Sat, 18 Dec 2021 22:23:00 UTC').toUTCString()";
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone(tz));
 
@@ -857,7 +857,7 @@ public class NativeDateTest {
         final String js = "new Date(0).getTimezoneOffset()";
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone(tz));
 

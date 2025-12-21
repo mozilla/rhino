@@ -18,9 +18,9 @@ import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 /** Test NativeConsole */
@@ -227,7 +227,7 @@ public class NativeConsoleTest {
     @Test
     public void formatObject() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             Scriptable emptyObject = cx.newObject(scope);
             assertFormat(new Object[] {"%o", emptyObject}, "{}");
@@ -270,7 +270,7 @@ public class NativeConsoleTest {
     @Test
     public void formatValueOnly() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             assertFormat(new Object[] {"param1", "param2"}, "param1 param2");
             assertFormat(new Object[] {1, 2, 7}, "1 2 7");
@@ -304,7 +304,7 @@ public class NativeConsoleTest {
     @Test
     public void formatMissingPlaceholder() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             assertFormat(
                     new Object[] {"string: %s;", "param1", "param2"}, "string: param1; param2");
@@ -563,7 +563,7 @@ public class NativeConsoleTest {
 
     private static void assertFormat(Object[] args, String expected) {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             assertEquals(expected, NativeConsole.format(cx, scope, args));
         }
     }
@@ -572,7 +572,7 @@ public class NativeConsoleTest {
         DummyConsolePrinter printer = new DummyConsolePrinter();
 
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             NativeConsole.init(scope, false, printer);
             cx.evaluateString(scope, source, "source", 1, null);
             printer.assertCalls(expectedCalls);
@@ -584,7 +584,7 @@ public class NativeConsoleTest {
 
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             NativeConsole.init(scope, false, printer);
             cx.evaluateString(scope, source, "source", 1, null);
             printer.assertMsf(expectedMsg);
@@ -596,7 +596,7 @@ public class NativeConsoleTest {
 
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
-            ScriptableObject scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             NativeConsole.init(scope, false, printer);
             return cx.evaluateString(scope, js, "source", 1, null);
         }

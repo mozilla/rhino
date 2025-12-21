@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -30,7 +30,7 @@ public class FunctionNullSetTest {
                     @Override
                     public Object run(final Context cx) {
                         try {
-                            final Scriptable scope = cx.initSafeStandardObjects();
+                            final TopLevel scope = cx.initSafeStandardObjects();
                             final MyHostObject prototype = new MyHostObject();
                             ScriptableObject.defineClass(scope, MyHostObject.class);
                             final Method getterMethod =
