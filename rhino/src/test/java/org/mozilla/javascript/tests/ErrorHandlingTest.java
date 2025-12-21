@@ -13,7 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.JavaScriptException;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.WrappedException;
 import org.mozilla.javascript.testutils.Utils;
@@ -149,7 +149,7 @@ public class ErrorHandlingTest {
         Utils.runWithAllModes(
                 cx -> {
                     try {
-                        final ScriptableObject scope = cx.initStandardObjects();
+                        TopLevel scope = cx.initStandardObjects();
                         cx.evaluateString(scope, script, "myScript.js", 1, null);
                         Assert.fail("No error was thrown");
                     } catch (final Throwable t) {

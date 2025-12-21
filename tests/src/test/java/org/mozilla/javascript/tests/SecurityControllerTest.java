@@ -19,8 +19,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.JavaPolicySecurity;
@@ -132,7 +132,7 @@ public class SecurityControllerTest {
         Utils.runWithAllModes(
                 context -> {
                     context.setClassShutter(new PolicyClassShutter());
-                    Scriptable scope = context.initStandardObjects(global);
+                    TopLevel scope = context.initStandardObjects(global);
 
                     return context.evaluateString(scope, scriptSourceText, "", 1, pd);
                 });

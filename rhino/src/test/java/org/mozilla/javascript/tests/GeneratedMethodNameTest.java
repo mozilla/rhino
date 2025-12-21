@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Takes care that the name of the method generated for a function "looks like" the original
@@ -96,7 +96,7 @@ public class GeneratedMethodNameTest {
         // these tests in that case.
         Assume.assumeThat("Skipping test for Java 21", isJava21(), CoreMatchers.is(false));
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
-            Scriptable topScope = cx.initStandardObjects();
+            TopLevel topScope = cx.initStandardObjects();
             topScope.put("javaNameGetter", topScope, new JavaNameGetter());
             Script script = cx.compileString(scriptCode, "myScript", 1, null);
             script.exec(cx, topScope, topScope);

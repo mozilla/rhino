@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
@@ -50,7 +51,7 @@ public class RequireJarTest extends RequireTest {
     @Override
     public void nonSandboxed() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
             ScriptableObject.putProperty(scope, "moduleUri", jsFile);
@@ -68,7 +69,7 @@ public class RequireJarTest extends RequireTest {
     @Override
     public void relativeId() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             require.install(scope);
             cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
@@ -79,7 +80,7 @@ public class RequireJarTest extends RequireTest {
     @Override
     public void setMainForAlreadyLoadedModule() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             require.install(scope);
             cx.evaluateReader(

@@ -16,6 +16,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * @author André Bargull
@@ -23,7 +24,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class Bug685403Test {
 
     private Context cx;
-    private ScriptableObject scope;
+    private TopLevel scope;
 
     @Before
     public void setUp() {

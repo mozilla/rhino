@@ -54,7 +54,7 @@ public class RequireTest {
     @Test
     public void nonSandboxed() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
             ScriptableObject.putProperty(scope, "moduleUri", jsFile);
@@ -76,7 +76,7 @@ public class RequireTest {
     @Test
     public void customGlobal() throws Exception {
         try (Context cx = createContext()) {
-            final TopLevel scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, CustomGlobal.class);
 
             var obj = cx.newObject(scope, "CustomGlobal", null);
@@ -115,7 +115,7 @@ public class RequireTest {
     @Test
     public void relativeId() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             require.install(scope);
             cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
@@ -125,7 +125,7 @@ public class RequireTest {
     @Test
     public void setMainForAlreadyLoadedModule() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             require.install(scope);
             cx.evaluateReader(
@@ -148,7 +148,7 @@ public class RequireTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setGeneratingDebug(false);
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         final Require require = getSandboxedRequire(cx, scope, false);
                         require.install(scope);
@@ -172,7 +172,7 @@ public class RequireTest {
     @Test
     public void thisScopeGlobalThis() throws Exception {
         try (Context cx = createContext()) {
-            final Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
             require.requireMain(cx, "thisScopeGlobalThisMain");
         }

@@ -21,6 +21,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 public class JavaIterableTest {
 
@@ -144,7 +145,7 @@ public class JavaIterableTest {
                 .call(
                         context -> {
                             context.setLanguageVersion(Context.VERSION_ES6);
-                            Scriptable global = context.initStandardObjects();
+                            TopLevel global = context.initStandardObjects();
                             Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return context.evaluateString(scope, scriptSourceText, "", 1, null);

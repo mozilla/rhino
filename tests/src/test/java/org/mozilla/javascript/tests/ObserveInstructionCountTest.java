@@ -14,6 +14,7 @@ import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -82,7 +83,7 @@ public class ObserveInstructionCountTest {
                 cx -> {
                     assertTrue(cx instanceof MyContext);
                     try {
-                        Scriptable globalScope = cx.initStandardObjects();
+                        TopLevel globalScope = cx.initStandardObjects();
                         cx.evaluateString(globalScope, source, "test source", 1, null);
                         fail();
                     } catch (QuotaExceededException e) {
@@ -140,7 +141,7 @@ public class ObserveInstructionCountTest {
                     assertTrue(cx instanceof MyContext);
                     cx.setInstructionObserverThreshold(0);
                     try {
-                        Scriptable globalScope = cx.initStandardObjects();
+                        TopLevel globalScope = cx.initStandardObjects();
                         cx.evaluateString(
                                 globalScope, "/(.*)ab/.test(\"1234\");", "test source", 1, null);
                         assertFalse(((MyContext) cx).wasObserved());

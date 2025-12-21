@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Test cases for a legacy ToNumber conversion applied to a String type.
@@ -121,7 +122,7 @@ public class ToNumberLegacyConversionsTest {
     }
 
     public Context cx;
-    public Scriptable scope;
+    public TopLevel scope;
 
     @Before
     public void setup() {

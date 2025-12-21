@@ -44,7 +44,7 @@ public class StrictModeApiTest {
                 Utils.contextFactoryWithFeatures(Context.FEATURE_STRICT_MODE),
                 cx -> {
                     try {
-                        Scriptable scope = cx.initSafeStandardObjects();
+                        TopLevel scope = cx.initSafeStandardObjects();
                         final MyHostObject prototype = new MyHostObject();
                         ScriptableObject.defineClass(scope, MyHostObject.class);
                         final Method readMethod = MyHostObject.class.getMethod("jsxGet_x");

@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 @SuppressWarnings("serial")
 public class DefineClassMapInheritance {
@@ -29,7 +30,7 @@ public class DefineClassMapInheritance {
     public void test()
             throws IllegalAccessException, InstantiationException, InvocationTargetException {
         try (Context cx = Context.enter()) {
-            ScriptableObject scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             // define two classes that share a parent prototype
             ScriptableObject.defineClass(scope, Fruit.class, false, true);

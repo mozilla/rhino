@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /** There is some special handling for document.all */
 public class AvoidObjectDetectionTest {
@@ -50,7 +51,7 @@ public class AvoidObjectDetectionTest {
         final ContextFactory factory = new ContextFactory();
 
         try (Context cx = factory.enterContext()) {
-            final ScriptableObject topScope = cx.initStandardObjects();
+            TopLevel topScope = cx.initStandardObjects();
             ScriptableObject.defineClass(topScope, Foo.class);
             ScriptableObject.defineClass(topScope, Avoid.class);
 

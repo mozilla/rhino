@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class NumericSeparatorTest {
@@ -25,7 +25,7 @@ public class NumericSeparatorTest {
         Utils.runWithMode(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Object result = cx.evaluateString(scope, "1234", "test", 1, null);
                     assertEquals(1234.0, result);
@@ -38,7 +38,7 @@ public class NumericSeparatorTest {
         Utils.runWithMode(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Object result = cx.evaluateString(scope, "1234", "test", 1, null);
                     assertEquals(1234, result);

@@ -9,7 +9,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -26,7 +26,7 @@ public class ApplyOnPrimitiveNumberTest {
 
         Utils.runWithAllModes(
                 _cx -> {
-                    final ScriptableObject scope = _cx.initStandardObjects();
+                    TopLevel scope = _cx.initStandardObjects();
                     final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
                     assertEquals("object", ScriptRuntime.typeof(result));
                     assertEquals("1", Context.toString(result));

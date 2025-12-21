@@ -82,7 +82,7 @@ public class EqualObjectGraphsTest {
     public void heterogenousScriptables() {
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
-            ScriptableObject top = cx.initStandardObjects();
+            TopLevel top = cx.initStandardObjects();
             ScriptRuntime.doTopCall(
                     (Callable)
                             (c, scope, thisObj, args) -> {
@@ -105,7 +105,7 @@ public class EqualObjectGraphsTest {
     }
 
     private static Object makeHeterogenousScriptable(Context cx, String discriminator) {
-        ScriptableObject global = cx.initStandardObjects();
+        TopLevel global = cx.initStandardObjects();
         ScriptableObject s = (ScriptableObject) cx.newObject(global);
         s.put(0, s, "i0");
         s.put(1, s, "i1");

@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.annotations.JSFunction;
 
 public class ConsStringTest {
@@ -57,7 +58,7 @@ public class ConsStringTest {
     @Test
     public void doNotLeakConsStringIntoSetter() throws Exception {
         try (Context cx = Context.enter()) {
-            final ScriptableObject topScope = cx.initStandardObjects();
+            TopLevel topScope = cx.initStandardObjects();
             final MyHostObject myHostObject = new MyHostObject();
 
             // define custom getter method
@@ -79,7 +80,7 @@ public class ConsStringTest {
     @Test
     public void doNotLeakConsStringIntoFunction() throws Exception {
         try (Context cx = Context.enter()) {
-            final ScriptableObject topScope = cx.initStandardObjects();
+            TopLevel topScope = cx.initStandardObjects();
             ScriptableObject.defineClass(topScope, MyHostObject.class);
 
             final String script = "var a = 'Rhino'; new MyHostObject().test('#' + a);";
