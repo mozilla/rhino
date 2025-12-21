@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.Scanner;
+
 /**
  * This class reflects Java packages into the JavaScript environment. We lazily reflect classes and
  * subpackages, and use a caching/sharing system to ensure that members reflected into one
@@ -83,20 +85,19 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function 
         if (args.length > 0 && args[0] instanceof Wrapper) {
             Scriptable result = this;
             Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();
+
             // Evaluate the class name by getting successive properties of
             // the string to find the appropriate NativeJavaClass object
-            String name = cl.getName();
-            int offset = 0;
-            for (; ; ) {
-                int index = name.indexOf('.', offset);
-                String propName =
-                        index == -1 ? name.substring(offset) : name.substring(offset, index);
-                Object prop = result.get(propName, result);
-                if (!(prop instanceof Scriptable)) break; // fall through to error
+            var scanner = new Scanner(cl.getName()).useDelimiter("\\.");
+            while (scanner.hasNext()) {
+                var prop = result.get(scanner.next(), result);
+                if (!(prop instanceof Scriptable)) {
+                    throw Context.reportRuntimeErrorById("msg.not.java.obj");
+                }
                 result = (Scriptable) prop;
-                if (index == -1) return result;
-                offset = index + 1;
             }
+
+            return result;
         }
         throw Context.reportRuntimeErrorById("msg.not.java.obj");
     }
