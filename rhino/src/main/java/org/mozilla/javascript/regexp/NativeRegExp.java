@@ -1159,26 +1159,14 @@ public class NativeRegExp extends IdScriptableObject {
         // ES2024: Check if this is a Property of Strings (emoji sequences)
         List<String> sequences = CharacterClassCompiler.getPropertyOfStringsSequences(content);
         if (sequences != null) {
-            // This is a Property of Strings - special handling required
-
-            // ES2024 Spec: Property of Strings requires v-flag (not u-flag)
-            if (!CharacterClassCompiler.isVMode(state, params)) {
-                reportError(
-                        "msg.property.requires.vflag", "Property " + content + " requires v flag");
-            }
-
-            // ES2024 Spec: Property of Strings cannot be negated (\P{...} is invalid)
-            if (!sense) {
-                reportError(
-                        "msg.property.not.negatable", "Property " + content + " cannot be negated");
-            }
-
-            // Store property name for later expansion in character classes
-            state.result = new RENode(REOP_UPROP);
-            state.result.unicodeProperty = -2; // Special marker for Property of Strings
-            state.result.propertyName = content; // Store name for later expansion
-            state.progLength += 3;
-            return true;
+            // This is a Property of Strings
+            // ES2024 Spec: Property of Strings are only allowed inside character classes with v-flag
+            // Outside character classes, they would need to be expanded to alternations,
+            // which is not currently supported
+            reportError(
+                    "msg.property.strings.not.supported",
+                    "Property of Strings \\p{" + content + "} can only be used inside character classes with the v flag");
+            return false;
         }
 
         // Binary property - use existing lookup
@@ -3419,6 +3407,9 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_multiline:
             case Id_dotAll:
             case Id_sticky:
+            case Id_unicode:
+            case Id_hasIndices:
+            case Id_unicodeSets:
                 return;
         }
         super.setInstanceIdValue(id, value);
