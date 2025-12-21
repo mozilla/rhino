@@ -180,29 +180,29 @@ public class ByteIo {
             if (mantissa == 0) {
 
                 // Zero
-                return Float.valueOf(sign == 0 ? 0.0f : -0.0f);
+                return sign == 0 ? 0.0f : -0.0f;
             }
 
             // Denormalized number
             float value = (float) ((double) mantissa / (1 << 10) * FLOAT16_MIN_NORMAL);
-            return Float.valueOf(sign == 0 ? value : -value);
+            return sign == 0 ? value : -value;
 
         } else if (exponent == 31) {
             if (mantissa == 0) {
 
                 // Infinity
-                return Float.valueOf(sign == 0 ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY);
+                return sign == 0 ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
             }
 
             // NaN
-            return Float.valueOf(Float.NaN);
+            return Float.NaN;
 
         } else {
 
             // Normalized number
             float value =
                     (float) ((1.0 + (double) mantissa / (1 << 10)) * Math.pow(2, exponent - 15));
-            return Float.valueOf(sign == 0 ? value : -value);
+            return sign == 0 ? value : -value;
         }
     }
 
