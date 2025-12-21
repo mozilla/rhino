@@ -86,6 +86,7 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.definePrototypeMethod(scope, "getBigInt64", 1, NativeDataView::js_getBigInt64);
         constructor.definePrototypeMethod(
                 scope, "getBigUint64", 1, NativeDataView::js_getBigUint64);
+        constructor.definePrototypeMethod(scope, "setFloat16", 2, NativeDataView::js_setFloat16);
         constructor.definePrototypeMethod(scope, "setFloat32", 2, NativeDataView::js_setFloat32);
         constructor.definePrototypeMethod(scope, "setFloat64", 2, NativeDataView::js_setFloat64);
         constructor.definePrototypeMethod(scope, "setInt8", 2, NativeDataView::js_setInt8);
