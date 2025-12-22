@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.math.BigInteger;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
@@ -443,15 +444,15 @@ public class NativeDataView extends NativeArrayBufferView {
 
         if (signed) {
             // Interpret as signed 64-bit integer
-            return java.math.BigInteger.valueOf(base);
+            return BigInteger.valueOf(base);
         } else {
             // Interpret as unsigned 64-bit integer
-            if ((base & 0x8000000000000000L) == 0) {
-                return java.math.BigInteger.valueOf(base);
+            if (base >= 0L) {
+                return BigInteger.valueOf(base);
             } else {
                 // Split into two 32-bit parts for proper unsigned conversion
-                var lsw = java.math.BigInteger.valueOf(base & 0xffffffffL);
-                var msw = java.math.BigInteger.valueOf((base >>> 32) & 0xffffffffL).shiftLeft(32);
+                var lsw = BigInteger.valueOf(base & 0xffffffffL);
+                var msw = BigInteger.valueOf((base >>> 32)).shiftLeft(32);
                 return msw.add(lsw);
             }
         }
@@ -474,8 +475,7 @@ public class NativeDataView extends NativeArrayBufferView {
     private void js_setBigInt(boolean signed, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
-        java.math.BigInteger val =
-                ScriptRuntime.toBigInt(isArg(args, 1) ? args[1] : Undefined.instance);
+        BigInteger val = ScriptRuntime.toBigInt(isArg(args, 1) ? args[1] : Undefined.instance);
 
         boolean littleEndian = isArg(args, 2) && ScriptRuntime.toBoolean(args[2]);
 
@@ -488,7 +488,13 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
-        long base = val.longValue();
+        // base will be the 64 LSB of the unsigned big integer.
+        long base = val.abs().longValue();
+        // If we're outputting a signed big int we'll turn into two's
+        // complement here.
+        if (signed) {
+            base = (base & 0x7fffffffffffffffL) * val.signum();
+        }
         ByteIo.writeUint64(arrayBuffer.buffer, offset + pos, base, littleEndian);
     }
 
