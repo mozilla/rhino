@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.math.BigInteger;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
@@ -81,6 +82,9 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.definePrototypeMethod(scope, "getUint8", 1, NativeDataView::js_getUint8);
         constructor.definePrototypeMethod(scope, "getUint16", 1, NativeDataView::js_getUint16);
         constructor.definePrototypeMethod(scope, "getUint32", 1, NativeDataView::js_getUint32);
+        constructor.definePrototypeMethod(scope, "getBigInt64", 1, NativeDataView::js_getBigInt64);
+        constructor.definePrototypeMethod(
+                scope, "getBigUint64", 1, NativeDataView::js_getBigUint64);
         constructor.definePrototypeMethod(scope, "setFloat32", 2, NativeDataView::js_setFloat32);
         constructor.definePrototypeMethod(scope, "setFloat64", 2, NativeDataView::js_setFloat64);
         constructor.definePrototypeMethod(scope, "setInt8", 2, NativeDataView::js_setInt8);
@@ -89,6 +93,9 @@ public class NativeDataView extends NativeArrayBufferView {
         constructor.definePrototypeMethod(scope, "setUint8", 2, NativeDataView::js_setUint8);
         constructor.definePrototypeMethod(scope, "setUint16", 2, NativeDataView::js_setUint16);
         constructor.definePrototypeMethod(scope, "setUint32", 2, NativeDataView::js_setUint32);
+        constructor.definePrototypeMethod(scope, "setBigInt64", 2, NativeDataView::js_setBigInt64);
+        constructor.definePrototypeMethod(
+                scope, "setBigUint64", 2, NativeDataView::js_setBigUint64);
 
         if (sealed) {
             constructor.sealObject();
@@ -405,6 +412,87 @@ public class NativeDataView extends NativeArrayBufferView {
             default:
                 throw new AssertionError();
         }
+    }
+
+    private static Object js_getBigInt64(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getBigInt(true, args);
+    }
+
+    private static Object js_getBigUint64(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        return realThis.js_getBigInt(false, args);
+    }
+
+    private Object js_getBigInt(boolean signed, Object[] args) {
+        int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
+
+        boolean littleEndian = isArg(args, 1) && ScriptRuntime.toBoolean(args[1]);
+
+        if (isDataViewOutOfBounds()) {
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
+        }
+
+        int viewSize = byteLength;
+        if ((long) pos + 8 > viewSize) {
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
+        }
+
+        long base = ByteIo.readUint64Primitive(arrayBuffer.buffer, offset + pos, littleEndian);
+
+        if (signed) {
+            // Interpret as signed 64-bit integer
+            return BigInteger.valueOf(base);
+        } else {
+            // Interpret as unsigned 64-bit integer
+            if (base >= 0L) {
+                return BigInteger.valueOf(base);
+            } else {
+                // Split into two 32-bit parts for proper unsigned conversion
+                var lsw = BigInteger.valueOf(base & 0xffffffffL);
+                var msw = BigInteger.valueOf((base >>> 32)).shiftLeft(32);
+                return msw.add(lsw);
+            }
+        }
+    }
+
+    // These two functions are specified separately, and sound like they should behave differently,
+    // but end up having precisely the same effect, with only the interpretation of the 64 bits in
+    // an intermediate state differing.
+    private static Object js_setBigInt64(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setBigInt(args);
+        return Undefined.instance;
+    }
+
+    private static Object js_setBigUint64(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        NativeDataView realThis = realThis(thisObj);
+        realThis.js_setBigInt(args);
+        return Undefined.instance;
+    }
+
+    private void js_setBigInt(Object[] args) {
+        int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
+
+        BigInteger val = ScriptRuntime.toBigInt(isArg(args, 1) ? args[1] : Undefined.instance);
+
+        boolean littleEndian = isArg(args, 2) && ScriptRuntime.toBoolean(args[2]);
+
+        if (isDataViewOutOfBounds()) {
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
+        }
+
+        int viewSize = byteLength;
+        if ((long) pos + 8 > viewSize) {
+            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
+        }
+
+        long base = val.longValue();
+        ByteIo.writeUint64(arrayBuffer.buffer, offset + pos, base, littleEndian);
     }
 
     public boolean isDataViewOutOfBounds() {
