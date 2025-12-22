@@ -18,10 +18,11 @@ publishing {
     publications {
         rhinokotlin(MavenPublication) {
             from components.java
-            artifacts = [jar, sourceJar]
+            artifacts = [jar, sourceJar, javadocJar]
             pom.withXml {
                 def root = asNode()
 
+                root.appendNode('name', 'rhino-kotlin')
                 root.appendNode('description', "Rhino reflection interfaces implementations for Kotlin")
                 root.appendNode("url", "https://mozilla.github.io/rhino/")
 
@@ -42,6 +43,11 @@ publishing {
                 def o = root.appendNode("organization")
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
+
+                def d = root.appendNode("developers")
+                def dd = d.appendNode("developer")
+                dd.appendNode("name", "Greg Brail")
+                dd.appendNode("email", "gbrail@users.noreply.github.com")
             }
         }
     }

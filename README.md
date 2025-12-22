@@ -10,10 +10,13 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 ## Releases
 
-The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_15_Release">Rhino 1.7.15</a>. Please see the [Release Notes](./RELEASE-NOTES.md).
+The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_9_0_Release">Rhino 1.9.0</a>. Please see the [Release Notes](./RELEASE-NOTES.md).
 
 <details><summary>Releases</summary>
 <table>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_9_0_Release">Rhino 1.9.0</a></td><td>December 22, 2025</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_8_1_Release">Rhino 1.8.1</a></td><td>December 2, 2025</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_8_0_Release">Rhino 1.8.0</a></td><td>January 2, 2025</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_15_Release">Rhino 1.7.15</a></td><td>May 3, 2024</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_14_Release">Rhino 1.7.14</a></td><td>January 6, 2022</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_13_Release">Rhino 1.7.13</a></td><td>September 2, 2020</td></tr>
