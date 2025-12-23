@@ -20,8 +20,6 @@ tasks.compileJava {
     options.errorprone.enabled = false;
 }
 tasks.compileTestJava {
-    // Not ready for Kotlin to run with version 21+ yet, and ErrorProne
-    // doesn't work with older versions either.
     options.errorprone.enabled = false;
 }
 

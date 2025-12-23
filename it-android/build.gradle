@@ -19,6 +19,16 @@ repositories {
     mavenCentral()
 }
 
+tasks.compileJava {
+    // These tests run on older JDKs and ErrorProne now doesn't support those
+    // old versions.
+    options.errorprone.enabled = false;
+}
+tasks.compileTestJava {
+    options.errorprone.enabled = false;
+}
+
+
 spotless {
     java {
         target "src/*/java/**/*.java"
