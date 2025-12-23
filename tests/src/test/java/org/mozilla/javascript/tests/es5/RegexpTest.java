@@ -73,4 +73,59 @@ public class RegexpTest {
                     e.getMessage());
         }
     }
+
+    /** ES2025: Test RegExp.escape() static method */
+    @Test
+    public void testRegExpEscape() {
+        // Test basic escaping
+        Object result1 = cx.evaluateString(scope, "RegExp.escape('Hello.World');", "test", 1, null);
+        assertEquals("Hello\\.World", result1);
+
+        // Test escaping parentheses and pipe
+        Object result2 = cx.evaluateString(scope, "RegExp.escape('(foo|bar)');", "test", 1, null);
+        assertEquals("\\(foo\\|bar\\)", result2);
+
+        // Test escaping dollar sign
+        Object result3 = cx.evaluateString(scope, "RegExp.escape('$100');", "test", 1, null);
+        assertEquals("\\$100", result3);
+
+        // Test all special characters
+        Object result4 =
+                cx.evaluateString(scope, "RegExp.escape('^$\\\\.*+?()[]{}|');", "test", 1, null);
+        assertEquals("\\^\\$\\\\\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|", result4);
+
+        // Test empty string
+        Object result5 = cx.evaluateString(scope, "RegExp.escape('');", "test", 1, null);
+        assertEquals("", result5);
+
+        // Test no arguments (converts to "undefined")
+        Object result6 = cx.evaluateString(scope, "RegExp.escape();", "test", 1, null);
+        assertEquals("undefined", result6);
+
+        // Test usage in actual RegExp
+        Object result7 =
+                cx.evaluateString(
+                        scope,
+                        "var str = 'Hello.World';"
+                                + "var escaped = RegExp.escape(str);"
+                                + "var re = new RegExp(escaped);"
+                                + "re.test('Hello.World');",
+                        "test",
+                        1,
+                        null);
+        assertEquals(Boolean.TRUE, result7);
+
+        // Test that escaped pattern doesn't match with '.' as any char
+        Object result8 =
+                cx.evaluateString(
+                        scope,
+                        "var str = 'Hello.World';"
+                                + "var escaped = RegExp.escape(str);"
+                                + "var re = new RegExp(escaped);"
+                                + "re.test('HelloXWorld');",
+                        "test",
+                        1,
+                        null);
+        assertEquals(Boolean.FALSE, result8);
+    }
 }

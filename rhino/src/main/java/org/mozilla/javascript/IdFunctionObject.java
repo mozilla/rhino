@@ -60,6 +60,10 @@ public class IdFunctionObject extends BaseFunction {
         setImmunePrototypeProperty(prototypeProperty);
     }
 
+    public final boolean isConstructor() {
+        return useCallAsConstructor;
+    }
+
     public final void addAsProperty(Scriptable target) {
         ScriptableObject.defineProperty(target, functionName, this, ScriptableObject.DONTENUM);
     }
