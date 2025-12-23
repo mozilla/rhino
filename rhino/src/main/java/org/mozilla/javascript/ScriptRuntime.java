@@ -5054,12 +5054,7 @@ public class ScriptRuntime {
             if (t instanceof EcmaError) {
                 EcmaError ee = (EcmaError) t;
                 re = ee;
-                try {
-                    type = TopLevel.NativeErrors.valueOf(ee.getName());
-                } catch (IllegalArgumentException e) {
-                    throw new AssertionError("Invalid top-level error \"" + ee.getName() +
-                                "\" " + ee.getErrorMessage());
-                }
+                type = TopLevel.NativeErrors.valueOf(ee.getName());
                 errorMsg = ee.getErrorMessage();
             } else if (t instanceof WrappedException) {
                 WrappedException we = (WrappedException) t;
