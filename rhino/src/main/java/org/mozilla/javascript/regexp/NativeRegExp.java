@@ -3301,7 +3301,9 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_unicode:
             case Id_hasIndices:
             case Id_unicodeSets:
-                attr = PERMANENT | READONLY | DONTENUM;
+                // ES spec requires these accessors to be configurable
+                // enumerable: false, configurable: true, get: function, set: undefined
+                attr = READONLY | DONTENUM;
                 break;
             default:
                 throw new IllegalStateException();
