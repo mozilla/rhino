@@ -19,15 +19,23 @@ repositories {
     mavenCentral()
 }
 
-tasks.compileJava {
+tasks.compileDebugSources {
     // These tests run on older JDKs and ErrorProne now doesn't support those
     // old versions.
     options.errorprone.enabled = false;
 }
-tasks.compileTestJava {
+tasks.compileDebugAndroidTestSources {
     options.errorprone.enabled = false;
 }
-
+tasks.compileDebugUnitTestSources {
+    options.errorprone.enabled = false;
+}
+tasks.compilReleaseSources {
+    options.errorprone.enabled = false;
+}
+tasks.compileReleaseUnitTestSources {
+    options.errorprone.enabled = false;
+}
 
 spotless {
     java {
