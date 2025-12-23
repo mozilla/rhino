@@ -12,7 +12,7 @@ spotless {
     // requires at least Java 17.
     if (JavaVersion.current() >= JavaVersion.VERSION_17) {
         java {
-            googleJavaFormat('1.23.0').aosp()
+            googleJavaFormat('1.33.0').aosp()
         }
     } else {
         System.out.println("Not running Spotless: Java language version is " + JavaVersion.current())
