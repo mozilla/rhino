@@ -727,7 +727,7 @@ public class NativeDateTest {
 
     @Test
     public void toTimeStringEST() {
-        toTimeString("17:23:00 GMT-0500 (-05:00)", "EST");
+        toTimeString("17:23:00 GMT-0500 (EST)", "EST");
     }
 
     @Test

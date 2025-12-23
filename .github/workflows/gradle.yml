@@ -24,8 +24,11 @@ jobs:
           - java-version: "21"
             name: "Java 21"
             multithread: false
-          - java-version: "21"
-            name: "Java 21 Multithreaded"
+          - java-version: "25"
+            name: "Java 25"
+            multithread: false
+          - java-version: "25"
+            name: "Java 25 Multithreaded"
             multithread: true
     name: ${{ matrix.name }}
     steps:
@@ -39,7 +42,7 @@ jobs:
       with:
         java-version: |
           ${{ matrix.java-version }}
-          21
+          25
         distribution: 'adopt'
     - name: Build and test ${{ matrix.name }}
       env:
@@ -65,7 +68,7 @@ jobs:
       with:
         java-version: |
           11
-          21
+          25
         distribution: 'adopt'
     - name: Check current state of test262.properties
       id: hashBefore
