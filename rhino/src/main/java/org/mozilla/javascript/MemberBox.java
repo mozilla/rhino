@@ -453,49 +453,6 @@ final class MemberBox implements Serializable {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        Member member = readMember(in);
-        if (member instanceof Method) {
-            init((Method) member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
-        } else {
-            init((Constructor<?>) member, TypeInfoFactory.GLOBAL);
-        }
-    }
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-        writeMember(out, memberObject);
-    }
-
-    /**
-     * Writes a Constructor or Method object.
-     *
-     * <p>Methods and Constructors are not serializable, so we must serialize information about the
-     * class, the name, and the parameters and recreate upon deserialization.
-     */
-    private static void writeMember(ObjectOutputStream out, Member member) throws IOException {
-        if (member == null) {
-            out.writeBoolean(false);
-            return;
-        }
-        out.writeBoolean(true);
-        if (!(member instanceof Method || member instanceof Constructor))
-            throw new IllegalArgumentException("not Method or Constructor");
-        out.writeBoolean(member instanceof Method);
-        out.writeObject(member.getName());
-        out.writeObject(member.getDeclaringClass());
-
-        var paramTypes =
-                member instanceof Method
-                        ? ((Method) member).getParameterTypes()
-                        : ((Constructor<?>) member).getParameterTypes();
-        // we only care about parameter types, so return type is always void
-        out.writeObject(MethodType.methodType(void.class, paramTypes).toMethodDescriptorString());
-    }
-
-    /** Reads a Method or a Constructor from the stream. */
-    private static Member readMember(ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
-        if (!in.readBoolean()) return null;
         boolean isMethod = in.readBoolean();
         String name = (String) in.readObject();
         Class<?> declaring = (Class<?>) in.readObject();
@@ -503,13 +460,31 @@ final class MemberBox implements Serializable {
                 MethodType.fromMethodDescriptorString(
                                 (String) in.readObject(), MemberBox.class.getClassLoader())
                         .parameterArray();
+
         try {
             if (isMethod) {
-                return declaring.getMethod(name, parms);
+                var member = declaring.getMethod(name, parms);
+                init(member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
+            } else {
+                var member = declaring.getConstructor(parms);
+                init(member, TypeInfoFactory.GLOBAL);
             }
-            return declaring.getConstructor(parms);
         } catch (NoSuchMethodException e) {
             throw new IOException("Cannot find member: " + e);
         }
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeBoolean(memberObject instanceof Method);
+        out.writeObject(memberObject.getName());
+        out.writeObject(memberObject.getDeclaringClass());
+
+        var paramTypes =
+                memberObject instanceof Method
+                        ? ((Method) memberObject).getParameterTypes()
+                        : ((Constructor<?>) memberObject).getParameterTypes();
+        // we only care about parameter types, so return type is always void
+        out.writeObject(MethodType.methodType(void.class, paramTypes).toMethodDescriptorString());
     }
 }
