@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -482,11 +483,13 @@ final class MemberBox implements Serializable {
         out.writeBoolean(member instanceof Method);
         out.writeObject(member.getName());
         out.writeObject(member.getDeclaringClass());
-        if (member instanceof Method) {
-            writeParameters(out, ((Method) member).getParameterTypes());
-        } else {
-            writeParameters(out, ((Constructor<?>) member).getParameterTypes());
-        }
+
+        var paramTypes =
+                member instanceof Method
+                        ? ((Method) member).getParameterTypes()
+                        : ((Constructor<?>) member).getParameterTypes();
+        // we only care about parameter types, so return type is always void
+        out.writeObject(MethodType.methodType(void.class, paramTypes).toMethodDescriptorString());
     }
 
     /** Reads a Method or a Constructor from the stream. */
@@ -496,7 +499,10 @@ final class MemberBox implements Serializable {
         boolean isMethod = in.readBoolean();
         String name = (String) in.readObject();
         Class<?> declaring = (Class<?>) in.readObject();
-        Class<?>[] parms = readParameters(in);
+        Class<?>[] parms =
+                MethodType.fromMethodDescriptorString(
+                                (String) in.readObject(), MemberBox.class.getClassLoader())
+                        .parameterArray();
         try {
             if (isMethod) {
                 return declaring.getMethod(name, parms);
@@ -505,58 +511,5 @@ final class MemberBox implements Serializable {
         } catch (NoSuchMethodException e) {
             throw new IOException("Cannot find member: " + e);
         }
-    }
-
-    private static final Class<?>[] primitives = {
-        Boolean.TYPE,
-        Byte.TYPE,
-        Character.TYPE,
-        Double.TYPE,
-        Float.TYPE,
-        Integer.TYPE,
-        Long.TYPE,
-        Short.TYPE,
-        Void.TYPE
-    };
-
-    /**
-     * Writes an array of parameter types to the stream.
-     *
-     * <p>Requires special handling because primitive types cannot be found upon deserialization by
-     * the default Java implementation.
-     */
-    private static void writeParameters(ObjectOutputStream out, Class<?>[] parms)
-            throws IOException {
-        out.writeShort(parms.length);
-        outer:
-        for (Class<?> parm : parms) {
-            boolean primitive = parm.isPrimitive();
-            out.writeBoolean(primitive);
-            if (!primitive) {
-                out.writeObject(parm);
-                continue;
-            }
-            for (int j = 0; j < primitives.length; j++) {
-                if (parm.equals(primitives[j])) {
-                    out.writeByte(j);
-                    continue outer;
-                }
-            }
-            throw new IllegalArgumentException("Primitive " + parm + " not found");
-        }
-    }
-
-    /** Reads an array of parameter types from the stream. */
-    private static Class<?>[] readParameters(ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
-        Class<?>[] result = new Class[in.readShort()];
-        for (int i = 0; i < result.length; i++) {
-            if (!in.readBoolean()) {
-                result[i] = (Class<?>) in.readObject();
-                continue;
-            }
-            result[i] = primitives[in.readByte()];
-        }
-        return result;
     }
 }
