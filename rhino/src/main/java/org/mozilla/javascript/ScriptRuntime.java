@@ -190,6 +190,8 @@ public class ScriptRuntime {
             ((TopLevel) scope).clearCache();
         }
 
+        scope.put("global", scope, scope);
+
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         new ClassCache().associate(scope);
         new ConcurrentFactory().associate(scope);
