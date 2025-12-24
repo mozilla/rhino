@@ -31,7 +31,7 @@ import org.mozilla.javascript.lc.type.VariableTypeInfo;
  * @author Igor Bukanov
  */
 final class MemberBox implements Serializable {
-    private static final long serialVersionUID = 6358550398665688245L;
+    private static final long serialVersionUID = 8260700214130563887L;
 
     private transient Member memberObject;
     private transient List<TypeInfo> argTypeInfos;
