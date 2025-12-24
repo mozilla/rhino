@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CodeGenUtils;
@@ -860,6 +861,12 @@ public class Codegen implements Evaluator {
         return "_c_" + cleanName(n) + "_" + index;
     }
 
+    /**
+     * List of illegal characters in unqualified names as specified in
+     * https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.2.2
+     */
+    private static Pattern illegalChars = Pattern.compile("[.;\\[/<>]");
+
     /** Gets a Java-compatible "informative" name for the ScriptOrFnNode */
     String cleanName(final ScriptNode n) {
         String result = "";
@@ -873,7 +880,7 @@ public class Codegen implements Evaluator {
         } else {
             result = "script";
         }
-        return result;
+        return illegalChars.matcher(result).replaceAll("_");
     }
 
     String getNonDirectBodyMethodSIgnature(ScriptNode n) {
