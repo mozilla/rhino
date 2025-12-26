@@ -126,8 +126,7 @@ public class JavaPolicySecurity extends SecurityProxy {
     }
 
     @Override
-    protected void callProcessFileSecure(
-            final Context cx, final Scriptable scope, final String filename) {
+    protected void callProcessFileSecure(Context cx, VarScope scope, String filename) {
         AccessController.doPrivileged(
                 new PrivilegedAction<Object>() {
                     @Override
@@ -203,23 +202,23 @@ public class JavaPolicySecurity extends SecurityProxy {
     @Override
     public Object callWithDomain(
             Object securityDomain,
-            final Context cx,
-            final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
-        return doAction(securityDomain, () -> callable.call(cx, (VarScope) scope, thisObj, args));
+            Context cx,
+            Callable callable,
+            VarScope scope,
+            Scriptable thisObj,
+            Object[] args) {
+        return doAction(securityDomain, () -> callable.call(cx, scope, thisObj, args));
     }
 
     @Override
     public Object callWithDomain(
             Object securityDomain,
-            final Context cx,
-            final Script script,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
-        return doAction(securityDomain, () -> script.exec(cx, (VarScope) scope, thisObj));
+            Context cx,
+            Script script,
+            VarScope scope,
+            Scriptable thisObj,
+            Object[] args) {
+        return doAction(securityDomain, () -> script.exec(cx, scope, thisObj));
     }
 
     private Object doAction(Object securityDomain, PrivilegedAction<Object> action) {

@@ -12,6 +12,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This class converts a stream of JSON tokens into a JSON value.
@@ -24,13 +25,13 @@ import org.mozilla.javascript.Scriptable;
 public class JsonParser {
 
     private Context cx;
-    private Scriptable scope;
+    private VarScope scope;
 
     private int pos;
     private int length;
     private String src;
 
-    public JsonParser(Context cx, Scriptable scope) {
+    public JsonParser(Context cx, VarScope scope) {
         this.cx = cx;
         this.scope = scope;
     }

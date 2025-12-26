@@ -176,6 +176,7 @@ public class ScriptRuntime {
             ScriptableObjectClass = Kit.classOrNull("org.mozilla.javascript.ScriptableObject");
 
     public static final Class<Scriptable> ScriptableClass = Scriptable.class;
+    public static final Class<VarScope> VarScopeClass = VarScope.class;
 
     private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
 
@@ -1286,7 +1287,7 @@ public class ScriptRuntime {
                         }
                     }
                     result.append(':');
-                    result.append(ScriptRuntime.uneval(cx, (VarScope) s, value));
+                    result.append(ScriptRuntime.uneval(cx, s, value));
                 }
             }
         } finally {
@@ -1420,37 +1421,37 @@ public class ScriptRuntime {
         if (thisObj == null) {
             throw undefCallError(null, "function");
         }
-        return function.call(cx, (VarScope) scope, thisObj, args);
+        return function.call(cx, scope, thisObj, args);
     }
 
     public static Scriptable newObject(
-            Context cx, Scriptable scope, String constructorName, Object[] args) {
+            Context cx, VarScope scope, String constructorName, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
         Constructable ctor = getExistingCtor(cx, scope, constructorName);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, (VarScope) scope, args);
+        return ctor.construct(cx, scope, args);
     }
 
     public static Scriptable newBuiltinObject(
-            Context cx, Scriptable scope, TopLevel.Builtins type, Object[] args) {
+            Context cx, VarScope scope, TopLevel.Builtins type, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
         Constructable ctor = TopLevel.getBuiltinCtor(cx, scope, type);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, (VarScope) scope, args);
+        return ctor.construct(cx, scope, args);
     }
 
     static Scriptable newNativeError(
-            Context cx, Scriptable scope, TopLevel.NativeErrors type, Object[] args) {
+            Context cx, VarScope scope, TopLevel.NativeErrors type, Object[] args) {
         scope = ScriptableObject.getTopLevelScope(scope);
         Constructable ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
         if (args == null) {
             args = ScriptRuntime.emptyArgs;
         }
-        return ctor.construct(cx, (VarScope) scope, args);
+        return ctor.construct(cx, scope, args);
     }
 
     /** See ECMA 9.4. */
@@ -2732,13 +2733,13 @@ public class ScriptRuntime {
         }
         Callable f = (Callable) iterator;
         Object[] args = new Object[] {};
-        Scriptable scope;
+        VarScope scope;
         if (f instanceof Function) {
             scope = ((Function) f).getDeclarationScope();
         } else {
             scope = cx.topCallScope;
         }
-        Object v = f.call(cx, (VarScope) scope, x.obj, args);
+        Object v = f.call(cx, scope, x.obj, args);
         if (!(v instanceof Scriptable)) {
             throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
@@ -2767,14 +2768,14 @@ public class ScriptRuntime {
             Object v = ScriptableObject.getProperty(x.iterator, "next");
             if (!(v instanceof Callable)) return Boolean.FALSE;
             Callable f = (Callable) v;
-            Scriptable scope;
+            VarScope scope;
             if (f instanceof Function) {
                 scope = ((Function) f).getDeclarationScope();
             } else {
                 scope = cx.topCallScope;
             }
             try {
-                x.currentId = f.call(cx, (VarScope) scope, x.iterator, emptyArgs);
+                x.currentId = f.call(cx, scope, x.iterator, emptyArgs);
                 return Boolean.TRUE;
             } catch (JavaScriptException e) {
                 if (e.getValue() instanceof NativeIterator.StopIteration) {
@@ -3429,11 +3430,11 @@ public class ScriptRuntime {
      *
      * <p>See ECMA 11.2.2
      */
-    public static Scriptable newObject(Object ctor, Context cx, Scriptable scope, Object[] args) {
+    public static Scriptable newObject(Object ctor, Context cx, VarScope scope, Object[] args) {
         if (!(ctor instanceof Constructable)) {
             throw notFunctionError(ctor);
         }
-        return ((Constructable) ctor).construct(cx, (VarScope) scope, args);
+        return ((Constructable) ctor).construct(cx, scope, args);
     }
 
     public static Object callSpecial(
@@ -3441,7 +3442,7 @@ public class ScriptRuntime {
             Callable fun,
             Scriptable thisObj,
             Object[] args,
-            Scriptable scope,
+            VarScope scope,
             Scriptable callerThis,
             int callType,
             String filename,
@@ -3463,7 +3464,7 @@ public class ScriptRuntime {
             throw Kit.codeBug();
         }
 
-        return fun.call(cx, (VarScope) scope, thisObj, args);
+        return fun.call(cx, scope, thisObj, args);
     }
 
     public static Object newSpecial(
@@ -3510,7 +3511,7 @@ public class ScriptRuntime {
             }
         }
 
-        return function.call(cx, (VarScope) scope, callThis, callArgs);
+        return function.call(cx, scope, callThis, callArgs);
     }
 
     public static Scriptable getApplyOrCallThis(
@@ -4290,9 +4291,9 @@ public class ScriptRuntime {
         }
         if (exoticToPrim instanceof Function) {
             final Function func = (Function) exoticToPrim;
-            final Context cx = Context.getCurrentContext();
-            final Scriptable scope = func.getDeclarationScope();
-            final String hint;
+            Context cx = Context.getCurrentContext();
+            VarScope scope = func.getDeclarationScope();
+            String hint;
             if (preferredType == null) {
                 hint = "default";
             } else if (StringClass == preferredType) {
@@ -4300,7 +4301,7 @@ public class ScriptRuntime {
             } else {
                 hint = "number";
             }
-            final Object result = func.call(cx, (VarScope) scope, s, new Object[] {hint});
+            Object result = func.call(cx, scope, s, new Object[] {hint});
             if (isObject(result)) {
                 throw typeErrorById("msg.cant.convert.to.primitive");
             }
@@ -5009,9 +5010,9 @@ public class ScriptRuntime {
      */
     @Deprecated
     public static VarScope createFunctionActivation(
-            JSFunction funObj, Scriptable scope, Object[] args) {
+            JSFunction funObj, VarScope scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), (VarScope) scope, args, false, false);
+                funObj, Context.getCurrentContext(), scope, args, false, false);
     }
 
     public static VarScope createFunctionActivation(
@@ -5287,7 +5288,7 @@ public class ScriptRuntime {
             XMLObject xmlObject = (XMLObject) sobj;
             return xmlObject.enterWith(scope);
         }
-        return new WithScope((VarScope) scope, sobj);
+        return new WithScope(scope, sobj);
     }
 
     public static VarScope leaveWith(VarScope scope) {
@@ -6089,7 +6090,7 @@ public class ScriptRuntime {
      * @param message the message
      * @return a JavaScriptException you should throw
      */
-    public static JavaScriptException throwError(Context cx, Scriptable scope, String message) {
+    public static JavaScriptException throwError(Context cx, VarScope scope, String message) {
         int[] linep = {0};
         String filename = Context.getSourcePositionFromStack(linep);
         final Scriptable error =
@@ -6111,7 +6112,7 @@ public class ScriptRuntime {
      * @return a JavaScriptException you should throw
      */
     public static JavaScriptException throwCustomError(
-            Context cx, Scriptable scope, String constructorName, String message) {
+            Context cx, VarScope scope, String constructorName, String message) {
         int[] linep = {0};
         String filename = Context.getSourcePositionFromStack(linep);
         final Scriptable error =
@@ -6214,8 +6215,8 @@ public class ScriptRuntime {
          * A convenience method to coerce the result to a Callable as in "getCallable()", then call
          * the result with ths stored "this".
          */
-        public Object call(Context cx, Scriptable scope, Object[] args) {
-            return getCallable().call(cx, (VarScope) scope, thisObj, args);
+        public Object call(Context cx, VarScope scope, Object[] args) {
+            return getCallable().call(cx, scope, thisObj, args);
         }
     }
 

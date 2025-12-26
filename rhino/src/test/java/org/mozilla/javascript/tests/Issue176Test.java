@@ -9,12 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.TopLevel;
 
 public class Issue176Test {
 
     Context cx;
-    VarScope scope;
+    TopLevel scope;
 
     @Test
     public void throwing() throws Exception {

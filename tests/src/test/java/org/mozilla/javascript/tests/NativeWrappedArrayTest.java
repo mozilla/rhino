@@ -17,6 +17,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -117,7 +118,7 @@ public class NativeWrappedArrayTest {
         private final ArrayList<String> list;
         private int length;
 
-        WrappedArray(Scriptable scope, ArrayList<String> l) {
+        WrappedArray(VarScope scope, ArrayList<String> l) {
             super(scope, ScriptableObject.getArrayPrototype(scope));
             this.list = l;
             this.length = l.size();

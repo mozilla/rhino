@@ -18,7 +18,7 @@ final class NativeMath extends ScriptableObject {
     private static final double LOG2E = 1.4426950408889634;
     private static final Double Double32 = Double.valueOf(32d);
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
         NativeMath math = new NativeMath();
         math.setPrototype(getObjectPrototype(scope));
         math.setParentScope(scope);

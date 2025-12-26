@@ -27,7 +27,7 @@ public class NativePromise extends ScriptableObject {
     private ArrayList<Reaction> fulfillReactions = new ArrayList<>();
     private ArrayList<Reaction> rejectReactions = new ArrayList<>();
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,

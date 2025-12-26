@@ -17,7 +17,8 @@ public class NativeSet extends ScriptableObject {
 
     private boolean instanceOfSet = false;
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope s, boolean sealed) {
+        TopLevel scope = (TopLevel) s;
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -193,7 +194,7 @@ public class NativeSet extends ScriptableObject {
         for (Hashtable.Entry entry : entries) {
             Scriptable thisObj = ScriptRuntime.getThisForScope(f.getDeclarationScope(), arg2);
             final Hashtable.Entry e = entry;
-            f.call(cx, (VarScope) scope, thisObj, new Object[] {e.value, e.value, this});
+            f.call(cx, scope, thisObj, new Object[] {e.value, e.value, this});
         }
         return Undefined.instance;
     }
@@ -225,7 +226,7 @@ public class NativeSet extends ScriptableObject {
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
             for (Object val : it) {
                 final Object finalVal = val == Scriptable.NOT_FOUND ? Undefined.instance : val;
-                add.call(cx, (VarScope) scope, set, new Object[] {finalVal});
+                add.call(cx, scope, set, new Object[] {finalVal});
             }
         }
     }
@@ -451,7 +452,7 @@ public class NativeSet extends ScriptableObject {
                     ScriptRuntime.callIterator(
                             keysMethod.call(
                                     cx,
-                                    (VarScope) scope,
+                                    scope,
                                     ScriptableObject.ensureScriptable(otherObj),
                                     ScriptRuntime.emptyArgs),
                             cx,
@@ -550,7 +551,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "isSubsetOf").js_isSubsetOf(cx, scope, args);
     }
 
-    private Object js_isSubsetOf(Context cx, Scriptable scope, Object[] args) {
+    private Object js_isSubsetOf(Context cx, VarScope scope, Object[] args) {
         Object otherObj = args.length > 0 ? args[0] : Undefined.instance;
 
         // ES2025: GetSetRecord requires size, has, and keys properties
@@ -706,8 +707,7 @@ public class NativeSet extends ScriptableObject {
             // Iterate through other
             Object iterator =
                     ScriptRuntime.callIterator(
-                            keysMethod.call(
-                                    cx, (VarScope) scope, scriptable, ScriptRuntime.emptyArgs),
+                            keysMethod.call(cx, scope, scriptable, ScriptRuntime.emptyArgs),
                             cx,
                             scope);
             try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
@@ -725,13 +725,9 @@ public class NativeSet extends ScriptableObject {
     // Helper methods for Set operations
 
     private static Object callHas(
-            Context cx, Scriptable scope, Object obj, Object hasMethod, Object key) {
+            Context cx, VarScope scope, Object obj, Object hasMethod, Object key) {
         return ((Callable) hasMethod)
-                .call(
-                        cx,
-                        (VarScope) scope,
-                        ScriptableObject.ensureScriptable(obj),
-                        new Object[] {key});
+                .call(cx, scope, ScriptableObject.ensureScriptable(obj), new Object[] {key});
     }
 
     private static void validateSetLike(Object sizeVal, Object hasVal, Object keysVal) {

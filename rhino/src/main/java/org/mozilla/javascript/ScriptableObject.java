@@ -148,11 +148,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         super(0);
     }
 
-    public ScriptableObject(Scriptable scope, Scriptable prototype) {
+    public ScriptableObject(VarScope scope, Scriptable prototype) {
         super(0);
         if (scope == null) throw new IllegalArgumentException();
 
-        parentScopeObject = (VarScope) scope;
+        parentScopeObject = scope;
         prototypeObject = prototype;
     }
 
@@ -266,7 +266,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 throw new JavaScriptException(
                         ScriptRuntime.newNativeError(
                                 Context.getCurrentContext(),
-                                this,
+                                getParentScope(),
                                 TopLevel.NativeErrors.RangeError,
                                 new Object[] {"External array index out of bounds "}),
                         null,
@@ -759,7 +759,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * <p>If the given class has a method
      *
      * <pre>
-     * static void init(Context cx, Scriptable scope, boolean sealed);
+     * static void init(Context cx, VarScope scope, boolean sealed);
      * </pre>
      *
      * or its compatibility form
@@ -908,7 +908,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3
                     && parmTypes[0] == ScriptRuntime.ContextClass
-                    && parmTypes[1] == ScriptRuntime.ScriptableClass
+                    && parmTypes[1] == ScriptRuntime.VarScopeClass
                     && parmTypes[2] == Boolean.TYPE
                     && Modifier.isStatic(method.getModifiers())) {
                 Object[] args = {

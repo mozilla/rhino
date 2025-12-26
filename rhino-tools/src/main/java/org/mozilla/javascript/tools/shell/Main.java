@@ -526,7 +526,7 @@ public class Main {
         }
     }
 
-    public static void processFileNoThrow(Context cx, Scriptable scope, String filename) {
+    public static void processFileNoThrow(Context cx, VarScope scope, String filename) {
         try {
             processFile(cx, scope, filename);
         } catch (IOException ioex) {
@@ -546,8 +546,7 @@ public class Main {
         }
     }
 
-    public static void processFile(Context cx, Scriptable scope, String filename)
-            throws IOException {
+    public static void processFile(Context cx, VarScope scope, String filename) throws IOException {
         if (securityImpl == null) {
             processFileSecure(cx, (VarScope) scope, filename, null);
         } else {

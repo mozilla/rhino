@@ -20,7 +20,7 @@ final class NativeReflect extends ScriptableObject {
 
     private static final String REFLECT_TAG = "Reflect";
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, VarScope scope, boolean sealed) {
         NativeReflect reflect = new NativeReflect();
         reflect.setPrototype(getObjectPrototype(scope));
         reflect.setParentScope(scope);
@@ -309,8 +309,7 @@ final class NativeReflect extends ScriptableObject {
             if (descriptor != null) {
                 Object setter = descriptor.setter;
                 if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter)
-                            .call(cx, (VarScope) scope, receiver, new Object[] {args[2]});
+                    ((Function) setter).call(cx, scope, receiver, new Object[] {args[2]});
                     return true;
                 }
 

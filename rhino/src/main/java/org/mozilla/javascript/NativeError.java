@@ -255,12 +255,13 @@ final class NativeError extends ScriptableObject {
 
         // The "prepareStackTrace" function takes an array of CallSite objects.
         for (int i = 0; i < stack.length; i++) {
-            NativeCallSite site = (NativeCallSite) cx.newObject(this, "CallSite");
+            NativeCallSite site =
+                    (NativeCallSite) cx.newObject(prepare.getDeclarationScope(), "CallSite");
             site.setElement(stack[i]);
             elts[i] = site;
         }
 
-        Scriptable eltArray = cx.newArray(this, elts);
+        Scriptable eltArray = cx.newArray(prepare.getDeclarationScope(), elts);
         return prepare.call(cx, prepare.getDeclarationScope(), this, new Object[] {this, eltArray});
     }
 
@@ -314,13 +315,13 @@ final class NativeError extends ScriptableObject {
             if (message == NOT_FOUND) {
                 message = "";
             }
-            sb.append(ScriptRuntime.uneval(cx, (VarScope) scope, message));
+            sb.append(ScriptRuntime.uneval(cx, scope, message));
             if (fileName != NOT_FOUND || lineNumber != NOT_FOUND) {
                 sb.append(", ");
                 if (fileName == NOT_FOUND) {
                     fileName = "";
                 }
-                sb.append(ScriptRuntime.uneval(cx, (VarScope) scope, fileName));
+                sb.append(ScriptRuntime.uneval(cx, scope, fileName));
                 if (lineNumber != NOT_FOUND) {
                     int line = ScriptRuntime.toInt32(lineNumber);
                     if (line != 0) {

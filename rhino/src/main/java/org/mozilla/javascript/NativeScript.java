@@ -25,7 +25,7 @@ class NativeScript extends BaseFunction {
 
     private static final Object SCRIPT_TAG = "Script";
 
-    static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
+    static LambdaConstructor init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor obj =
                 new LambdaConstructor(
                         scope,
@@ -66,10 +66,10 @@ class NativeScript extends BaseFunction {
     }
 
     /**
-     * @deprecated Use {@link #init(Context, Scriptable, boolean)} instead
+     * @deprecated Use {@link #init(Context, VarScope, boolean)} instead
      */
     @Deprecated
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         init(Context.getContext(), scope, sealed);
     }
 

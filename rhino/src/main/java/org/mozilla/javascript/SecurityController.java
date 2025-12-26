@@ -133,17 +133,17 @@ public abstract class SecurityController {
     public Object callWithDomain(
             Object securityDomain,
             Context cx,
-            final Callable callable,
-            Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            Callable callable,
+            VarScope scope,
+            Scriptable thisObj,
+            Object[] args) {
         return execWithDomain(
                 cx,
                 scope,
                 new Script() {
                     @Override
                     public Object exec(Context cx, VarScope scope, Scriptable thisObjIgnored) {
-                        return callable.call(cx, (VarScope) scope, thisObj, args);
+                        return callable.call(cx, scope, thisObj, args);
                     }
                 },
                 securityDomain);
@@ -152,21 +152,20 @@ public abstract class SecurityController {
     public Object callWithDomain(
             Object securityDomain,
             Context cx,
-            final Script script,
-            Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            Script script,
+            VarScope scope,
+            Scriptable thisObj,
+            Object[] args) {
         return execWithDomain(cx, scope, script, securityDomain);
     }
 
     /**
      * @deprecated The application should not override this method and instead override {@link
-     *     #callWithDomain(Object securityDomain, Context cx, Callable callable, Scriptable scope,
+     *     #callWithDomain(Object securityDomain, Context cx, Callable callable, VarScope scope,
      *     Scriptable thisObj, Object[] args)}.
      */
     @Deprecated
-    public Object execWithDomain(
-            Context cx, Scriptable scope, Script script, Object securityDomain) {
+    public Object execWithDomain(Context cx, VarScope scope, Script script, Object securityDomain) {
         throw new IllegalStateException("callWithDomain should be overridden");
     }
 }

@@ -354,7 +354,7 @@ public class RegExpImpl implements RegExpProxy {
     private static void replace_glob(
             GlobData rdata,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             RegExpImpl reImpl,
             int leftIndex,
             int leftlen) {
@@ -387,9 +387,7 @@ public class RegExpImpl implements RegExpProxy {
             re2.input = reImpl.input;
             ScriptRuntime.setRegExpProxy(cx, re2);
             try {
-                Object result =
-                        rdata.lambda.call(
-                                cx, (VarScope) scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                Object result = rdata.lambda.call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
                 lambdaStr = ScriptRuntime.toString(result);
             } finally {
                 ScriptRuntime.setRegExpProxy(cx, reImpl);

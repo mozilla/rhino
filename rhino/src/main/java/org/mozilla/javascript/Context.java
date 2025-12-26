@@ -1600,7 +1600,7 @@ public class Context implements Closeable {
      * @param scope the scope to search for the constructor and to evaluate against
      * @return the new object
      */
-    public Scriptable newObject(Scriptable scope) {
+    public Scriptable newObject(VarScope scope) {
         NativeObject result = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Object);
         return result;
@@ -1619,7 +1619,7 @@ public class Context implements Closeable {
      * @param constructorName the name of the constructor to call
      * @return the new object
      */
-    public Scriptable newObject(Scriptable scope, String constructorName) {
+    public Scriptable newObject(VarScope scope, String constructorName) {
         return newObject(scope, constructorName, ScriptRuntime.emptyArgs);
     }
 
@@ -1643,7 +1643,7 @@ public class Context implements Closeable {
      * @param args the array of arguments for the constructor
      * @return the new object
      */
-    public Scriptable newObject(Scriptable scope, String constructorName, Object[] args) {
+    public Scriptable newObject(VarScope scope, String constructorName, Object[] args) {
         return ScriptRuntime.newObject(this, scope, constructorName, args);
     }
 

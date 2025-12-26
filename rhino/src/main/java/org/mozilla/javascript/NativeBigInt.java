@@ -16,7 +16,7 @@ final class NativeBigInt extends ScriptableObject {
 
     private final BigInteger bigIntValue;
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
