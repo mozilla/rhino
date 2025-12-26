@@ -129,7 +129,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
         return super.getValue(owner);
     }
 
-    public void setGetter(Scriptable scope, ScriptableObject.LambdaGetterFunction getter) {
+    public void setGetter(VarScope scope, ScriptableObject.LambdaGetterFunction getter) {
         this.getter = getter;
         if (getter != null) {
             this.getterFunction =
@@ -142,7 +142,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
         }
     }
 
-    public void setSetter(Scriptable scope, ScriptableObject.LambdaSetterFunction setter) {
+    public void setSetter(VarScope scope, ScriptableObject.LambdaSetterFunction setter) {
         this.setter = setter;
         if (setter != null) {
             this.setterFunction =

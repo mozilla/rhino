@@ -21,7 +21,7 @@ public abstract class NativeFunction extends BaseFunction {
     private boolean isShorthand;
 
     public final void initScriptFunction(
-            Context cx, Scriptable scope, boolean es6GeneratorFunction, boolean isShorthand) {
+            Context cx, VarScope scope, boolean es6GeneratorFunction, boolean isShorthand) {
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, es6GeneratorFunction);
         if (!isShorthand) { // Methods don't have the prototype property!
             setupDefaultPrototype(scope);

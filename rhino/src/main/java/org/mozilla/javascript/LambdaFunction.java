@@ -33,7 +33,7 @@ public class LambdaFunction extends BaseFunction {
      * @param defaultPrototype set up a prototype on the new function
      */
     public LambdaFunction(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -57,7 +57,7 @@ public class LambdaFunction extends BaseFunction {
      * @param target an object that implements the function in Java. Since Callable is a
      *     single-function interface this will typically be implemented as a lambda.
      */
-    public LambdaFunction(Scriptable scope, String name, int length, SerializableCallable target) {
+    public LambdaFunction(VarScope scope, String name, int length, SerializableCallable target) {
         this(scope, name, length, target, true);
     }
 
@@ -73,7 +73,7 @@ public class LambdaFunction extends BaseFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaFunction(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             Object prototype,
@@ -86,7 +86,7 @@ public class LambdaFunction extends BaseFunction {
     }
 
     /** Create a new built-in function, with no name, and no default prototype. */
-    public LambdaFunction(Scriptable scope, int length, SerializableCallable target) {
+    public LambdaFunction(VarScope scope, int length, SerializableCallable target) {
         this.target = target;
         this.length = length;
         this.name = "";

@@ -22,7 +22,7 @@ public class BoundFunction extends BaseFunction {
 
     public BoundFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Callable targetFunction,
             Scriptable boundThis,
             Object[] boundArgs) {

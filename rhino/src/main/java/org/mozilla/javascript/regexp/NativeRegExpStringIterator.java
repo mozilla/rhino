@@ -36,11 +36,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     }
 
     public NativeRegExpStringIterator(
-            Scriptable scope,
-            Scriptable regexp,
-            String string,
-            boolean global,
-            boolean fullUnicode) {
+            VarScope scope, Scriptable regexp, String string, boolean global, boolean fullUnicode) {
         super(scope, ITERATOR_TAG);
 
         this.regexp = regexp;

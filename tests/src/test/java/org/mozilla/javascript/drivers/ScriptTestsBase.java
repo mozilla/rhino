@@ -99,7 +99,7 @@ public abstract class ScriptTestsBase {
      * <p>PerformMicrotaskCheckpoint ensures that all the pending microtasks are executed
      * immediately.
      */
-    private void loadNatives(Scriptable scope) {
+    private void loadNatives(VarScope scope) {
         ScriptableObject.putProperty(
                 scope,
                 "AbortJS",

@@ -80,8 +80,8 @@ final class NativeError extends ScriptableObject {
         return js_isError(args);
     }
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
-        var ctor = DESCRIPTOR.buildConstructor(cx, (VarScope) scope, new NativeObject(), sealed);
+    static void init(Context cx, VarScope scope, boolean sealed) {
+        var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
         NativeCallSite.init(scope, sealed);
 
         ProtoProps protoProps = new ProtoProps();

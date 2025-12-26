@@ -585,7 +585,7 @@ public class NativePromise extends ScriptableObject {
         LambdaFunction resolve;
         LambdaFunction reject;
 
-        ResolvingFunctions(Scriptable topScope, NativePromise promise) {
+        ResolvingFunctions(VarScope topScope, NativePromise promise) {
             resolve =
                     new LambdaFunction(
                             topScope,

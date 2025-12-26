@@ -151,7 +151,7 @@ class BodyCodegen {
         addOptRuntimeInvoke(
                 "createNativeGenerator",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "Lorg/mozilla/javascript/JSFunction;II"
                         + ")Lorg/mozilla/javascript/Scriptable;");
@@ -335,7 +335,7 @@ class BodyCodegen {
                             "padAndRestArguments",
                             "("
                                     + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "[Ljava/lang/Object;"
                                     + "I"
                                     + ")[Ljava/lang/Object;");
@@ -1199,7 +1199,7 @@ class BodyCodegen {
                             "org/mozilla/javascript/ScriptRuntime",
                             "wrapRegExp",
                             "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "Ljava/lang/Object;"
                                     + ")Lorg/mozilla/javascript/Scriptable;");
                 }
@@ -1996,7 +1996,7 @@ class BodyCodegen {
                 "org/mozilla/javascript/ScriptRuntime",
                 "getTemplateLiteralCallSite",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + "[Ljava/lang/Object;I"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
@@ -2269,7 +2269,7 @@ class BodyCodegen {
                         + "Ljava/lang/String;"
                         + "I"
                         + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
@@ -2389,7 +2389,7 @@ class BodyCodegen {
                 "([Ljava/lang/Object;"
                         + "[I"
                         + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 

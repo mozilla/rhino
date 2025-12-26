@@ -149,7 +149,7 @@ interface Signatures {
      * they can always assume that the "receiver" of an operation is the first argument.
      */
     String NAME_GET =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/VarScope;"
                     + "Lorg/mozilla/javascript/Context;"
                     + ")Ljava/lang/Object;";
 
@@ -170,7 +170,7 @@ interface Signatures {
             "(Lorg/mozilla/javascript/Scriptable;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/VarScope;"
                     + ")Ljava/lang/Object;";
 
     /**

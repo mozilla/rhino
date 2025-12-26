@@ -14,6 +14,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
 
 /**
@@ -54,7 +55,7 @@ class ExecUtil {
             out = parseOutput(params, "output");
             err = parseOutput(params, "err");
             timeout = parseTimeout(params);
-            addArgs = parseAddArgs(params, thisObj);
+            addArgs = parseAddArgs(params, global);
             commandExecutor = parseCommandLauncher(params);
         }
 
@@ -188,7 +189,7 @@ class ExecUtil {
         return ScriptRuntime.toInt32(obj);
     }
 
-    private static Object[] parseAddArgs(Scriptable params, Scriptable scope) {
+    private static Object[] parseAddArgs(Scriptable params, VarScope scope) {
         Object obj = ScriptableObject.getProperty(params, "args");
         if (obj == Scriptable.NOT_FOUND) {
             return emptyArray;

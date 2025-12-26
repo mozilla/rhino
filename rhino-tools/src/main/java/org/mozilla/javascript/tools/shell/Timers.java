@@ -26,7 +26,7 @@ public class Timers {
      *
      * @param scope the scope where the functions should be defined
      */
-    public void install(Scriptable scope) {
+    public void install(VarScope scope) {
         LambdaFunction setTimeout =
                 new LambdaFunction(
                         scope,

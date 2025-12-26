@@ -1245,7 +1245,7 @@ public class Context implements Closeable {
     /**
      * Execute script that may pause execution by capturing a continuation. Caller must be prepared
      * to catch a ContinuationPending exception and resume execution by calling {@link
-     * #resumeContinuation(Object, Scriptable, Object)}.
+     * #resumeContinuation(Object, VarScope, Object)}.
      *
      * @param script The script to execute. Script must have been compiled with interpreted mode
      *     (optimization level -1)
@@ -1266,7 +1266,7 @@ public class Context implements Closeable {
         return callFunctionWithContinuations((JSScript) script, scope);
     }
 
-    public Object executeScriptWithContinuations(Callable callable, Scriptable scope)
+    public Object executeScriptWithContinuations(Callable callable, VarScope scope)
             throws ContinuationPending {
         if (!(callable instanceof JSFunction)
                 || !(((JSFunction) callable).getCode() instanceof InterpreterData)) {
@@ -1281,7 +1281,7 @@ public class Context implements Closeable {
     /**
      * Call function that may pause execution by capturing a continuation. Caller must be prepared
      * to catch a ContinuationPending exception and resume execution by calling {@link
-     * #resumeContinuation(Object, Scriptable, Object)}.
+     * #resumeContinuation(Object, VarScope, Object)}.
      *
      * @param script The script to call. The script must have been compiled with interpreted mode
      *     (optimization level -1)
@@ -1309,7 +1309,7 @@ public class Context implements Closeable {
         return ScriptRuntime.doTopCall(script, this, scope, scope, isStrict);
     }
 
-    public Object callFunctionWithContinuations(Callable callable, Scriptable scope, Object[] args)
+    public Object callFunctionWithContinuations(Callable callable, VarScope scope, Object[] args)
             throws ContinuationPending {
         if (!(callable instanceof JSFunction)
                 || !(((JSFunction) callable).getDescriptor().getCode()
@@ -1326,13 +1326,14 @@ public class Context implements Closeable {
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall((JSFunction) callable, this, scope, scope, args, isStrict);
+        return ScriptRuntime.doTopCall(
+                (JSFunction) callable, this, scope, Undefined.SCRIPTABLE_UNDEFINED, args, isStrict);
     }
 
     /**
      * Capture a continuation from the current execution. The execution must have been started via a
      * call to {@link #executeScriptWithContinuations(Script, VarScope)} or {@link
-     * #callFunctionWithContinuations(Callable, Scriptable, Object[])}. This implies that the code
+     * #callFunctionWithContinuations(Callable, VarScope, Object[])}. This implies that the code
      * calling this method must have been called as a function from the JavaScript script. Also,
      * there cannot be any non-JavaScript code between the JavaScript frames (e.g., a call to
      * eval()). The ContinuationPending exception returned must be thrown.
@@ -1357,7 +1358,7 @@ public class Context implements Closeable {
      * @throws ContinuationPending if another continuation is captured before the code terminates
      * @since 1.7 Release 2
      */
-    public Object resumeContinuation(Object continuation, Scriptable scope, Object functionResult)
+    public Object resumeContinuation(Object continuation, VarScope scope, Object functionResult)
             throws ContinuationPending {
         Object[] args = {functionResult};
         return Interpreter.restartContinuation(
@@ -1515,12 +1516,12 @@ public class Context implements Closeable {
      * @see org.mozilla.javascript.Function
      */
     public final Function compileFunction(
-            Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
+            VarScope scope, String source, String sourceName, int lineno, Object securityDomain) {
         return compileFunction(scope, source, null, null, sourceName, lineno, securityDomain);
     }
 
     final Function compileFunction(
-            Scriptable scope,
+            VarScope scope,
             String source,
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
@@ -1655,7 +1656,7 @@ public class Context implements Closeable {
      *     dynamically).
      * @return the new array object
      */
-    public Scriptable newArray(Scriptable scope, int length) {
+    public Scriptable newArray(VarScope scope, int length) {
         NativeArray result = new NativeArray(length);
         ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Array);
         return result;
@@ -1669,7 +1670,7 @@ public class Context implements Closeable {
      *     JavaScript type and type of array should be exactly Object[], not SomeObjectSubclass[].
      * @return the new array object.
      */
-    public Scriptable newArray(Scriptable scope, Object[] elements) {
+    public Scriptable newArray(VarScope scope, Object[] elements) {
         if (elements.getClass().getComponentType() != ScriptRuntime.ObjectClass)
             throw new IllegalArgumentException();
         NativeArray result = new NativeArray(elements);
@@ -2540,7 +2541,7 @@ public class Context implements Closeable {
     }
 
     protected Object compileImpl(
-            Scriptable scope,
+            VarScope scope,
             String sourceString,
             String sourceName,
             int lineno,

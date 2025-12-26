@@ -12,6 +12,7 @@ import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 
 public abstract class XMLLib {
     private static final Object XML_LIB_KEY = new Object();
@@ -38,7 +39,7 @@ public abstract class XMLLib {
         public abstract String getImplementationClassName();
     }
 
-    public static XMLLib extractFromScopeOrNull(Scriptable scope) {
+    public static XMLLib extractFromScopeOrNull(VarScope scope) {
         ScopeObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // If library is not yet initialized, return null
@@ -52,7 +53,7 @@ public abstract class XMLLib {
         return (XMLLib) so.getAssociatedValue(XML_LIB_KEY);
     }
 
-    public static XMLLib extractFromScope(Scriptable scope) {
+    public static XMLLib extractFromScope(VarScope scope) {
         XMLLib lib = extractFromScopeOrNull(scope);
         if (lib != null) {
             return lib;
@@ -61,7 +62,7 @@ public abstract class XMLLib {
         throw Context.reportRuntimeError(msg);
     }
 
-    protected final XMLLib bindToScope(Scriptable scope) {
+    protected final XMLLib bindToScope(VarScope scope) {
         ScopeObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // standard library should be initialized at this point

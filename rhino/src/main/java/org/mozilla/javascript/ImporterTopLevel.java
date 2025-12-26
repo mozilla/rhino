@@ -225,7 +225,7 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     private static Object js_importClass(
-            Context cx, Function f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, Function f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (Undefined.isUndefined(thisObj)) {
             thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
         }
@@ -240,7 +240,7 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     private static Object js_importPackage(
-            Context cx, Function f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, Function f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (Undefined.isUndefined(thisObj)) {
             thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
         }

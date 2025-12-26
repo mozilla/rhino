@@ -46,13 +46,13 @@ public final class NativeGenerator extends IdScriptableObject {
     /** Only for constructing the prototype object. */
     private NativeGenerator() {}
 
-    public NativeGenerator(Scriptable scope, JSFunction function, Object savedState) {
+    public NativeGenerator(VarScope scope, JSFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties. Since we don't have a
         // "Generator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         NativeGenerator prototype =
                 (NativeGenerator) ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);

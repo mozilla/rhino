@@ -60,11 +60,11 @@ public final class ES6Generator extends ScriptableObject {
     /** Only for constructing the prototype object. */
     private ES6Generator() {}
 
-    public ES6Generator(Scriptable scope, JSFunction function, Object savedState) {
+    public ES6Generator(VarScope scope, JSFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties.
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         // Per ES6 spec, generator instance's [[Prototype]] should be
         // the generator function's .prototype property.

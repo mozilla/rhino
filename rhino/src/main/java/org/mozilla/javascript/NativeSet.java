@@ -172,7 +172,7 @@ public class NativeSet extends ScriptableObject {
         return realThis(thisObj, "values").js_iterator(scope, NativeCollectionIterator.Type.BOTH);
     }
 
-    private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
+    private Object js_iterator(VarScope scope, NativeCollectionIterator.Type type) {
         return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
     }
 

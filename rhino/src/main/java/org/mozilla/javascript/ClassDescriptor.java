@@ -40,7 +40,7 @@ import org.mozilla.javascript.ScriptableObject.LambdaSetterFunction;
  *                       .withMethod(PROTO, "valueOf", 0, NativeBoolean::js_valueOf)
  *                       .build();
  *
- *   static void init(Scriptable scope, boolean sealed) {
+ *   static void init(VarScope scope, boolean sealed) {
  *       // Boolean is an unusual object in that the prototype is itself a Boolean
  *       var constructor = DESCRIPTOR.buildConstructor(scope, new NativeBoolean(false), sealed);
  *   }

@@ -72,7 +72,7 @@ public class ClassCache implements Serializable {
      *     ClassCache, and cannot have ClassCache associated due to the top scope not being a {@link
      *     ScriptableObject}
      */
-    public static ClassCache get(Scriptable scope) {
+    public static ClassCache get(VarScope scope) {
         ClassCache cache = (ClassCache) ScriptableObject.getTopScopeValue(scope, AKEY);
         if (cache == null) {
             // we expect this to not happen frequently, so computing top scope twice is acceptable

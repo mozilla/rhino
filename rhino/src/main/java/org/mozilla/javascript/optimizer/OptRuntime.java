@@ -231,7 +231,7 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static Scriptable newArrayLiteral(
-            Object[] objects, String encodedInts, int skipCount, Context cx, Scriptable scope) {
+            Object[] objects, String encodedInts, int skipCount, Context cx, VarScope scope) {
         int[] skipIndexes = decodeIntArray(encodedInts, skipCount);
         return newArrayLiteral(objects, skipIndexes, cx, scope);
     }
@@ -264,14 +264,14 @@ public final class OptRuntime extends ScriptRuntime {
         Object value = getGeneratorReturnValue(genState);
         Object si =
                 (value == Undefined.instance)
-                        ? NativeIterator.getStopIterationObject((Scriptable) scope)
+                        ? NativeIterator.getStopIterationObject((VarScope) scope)
                         : new NativeIterator.StopIteration(value);
         throw new JavaScriptException(si, "", 0);
     }
 
     public static Scriptable createNativeGenerator(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             JSFunction funObj,
             int maxLocals,

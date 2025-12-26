@@ -755,7 +755,7 @@ public final class Interpreter extends Icode implements Evaluator {
     @Override
     @SuppressWarnings("unchecked")
     public Function createFunctionObject(
-            Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain) {
+            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain) {
         var compilerResult = (CompilationResult<JSFunction>) bytecode;
         return JSFunction.createFunction(
                 cx,
@@ -1164,7 +1164,7 @@ public final class Interpreter extends Icode implements Evaluator {
         return desc.getRawSource();
     }
 
-    private static void initFunction(Context cx, Scriptable scope, JSDescriptor parent, int index) {
+    private static void initFunction(Context cx, VarScope scope, JSDescriptor parent, int index) {
         JSFunction fn;
         fn = JSFunction.createFunction(cx, scope, parent, index, null);
         var desc = fn.getDescriptor();
@@ -1270,7 +1270,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     public static Object restartContinuation(
-            NativeContinuation c, Context cx, Scriptable scope, Object[] args) {
+            NativeContinuation c, Context cx, VarScope scope, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isStrictMode());
         }

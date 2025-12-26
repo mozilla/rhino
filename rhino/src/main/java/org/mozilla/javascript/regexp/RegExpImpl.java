@@ -38,7 +38,7 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     @Override
-    public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
+    public Scriptable wrapRegExp(Context cx, VarScope scope, Object compiled) {
         return NativeRegExpInstantiator.withLanguageVersionScopeCompiled(
                 cx.getLanguageVersion(), scope, (RECompiled) compiled);
     }
@@ -175,9 +175,9 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     private static NativeRegExp createRegExp(
-            Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
+            Context cx, VarScope scope, Object[] args, int optarg, boolean forceFlat) {
         NativeRegExp re;
-        Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
+        VarScope topScope = ScriptableObject.getTopLevelScope(scope);
         if (args.length == 0 || args[0] == Undefined.instance) {
             RECompiled compiled = NativeRegExp.compileRE(cx, "", "", false);
             re =
@@ -256,7 +256,7 @@ public class RegExpImpl implements RegExpProxy {
     @Override
     public int find_split(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String target,
             String separator,
             Scriptable reObj,
@@ -339,7 +339,7 @@ public class RegExpImpl implements RegExpProxy {
      * Analog of match_glob() in jsstr.c
      */
     private static void match_glob(
-            GlobData mdata, Context cx, Scriptable scope, int count, RegExpImpl reImpl) {
+            GlobData mdata, Context cx, VarScope scope, int count, RegExpImpl reImpl) {
         if (mdata.arrayobj == null) {
             mdata.arrayobj = cx.newArray(scope, 0);
         }
@@ -521,7 +521,7 @@ public class RegExpImpl implements RegExpProxy {
      * argument.
      */
     @Override
-    public Object js_split(Context cx, Scriptable scope, String target, Object[] args) {
+    public Object js_split(Context cx, VarScope scope, String target, Object[] args) {
         // create an empty Array to return;
         Scriptable result = cx.newArray(scope, 0);
 
@@ -616,7 +616,7 @@ public class RegExpImpl implements RegExpProxy {
      */
     private static int find_split(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String target,
             String separator,
             int version,
