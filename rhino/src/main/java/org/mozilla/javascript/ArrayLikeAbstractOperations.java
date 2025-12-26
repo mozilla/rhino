@@ -239,7 +239,7 @@ public class ArrayLikeAbstractOperations {
             if (!Undefined.isUndefined(c)) {
                 if (c instanceof Constructable) {
                     return ((Constructable) c)
-                            .construct(cx, (VarScope) scope, new Object[] {Double.valueOf(length)});
+                            .construct(cx, scope, new Object[] {Double.valueOf(length)});
                 } else {
                     throw ScriptRuntime.typeErrorById("msg.ctor.not.found", o);
                 }
@@ -361,7 +361,7 @@ public class ArrayLikeAbstractOperations {
     }
 
     public static Comparator<Object> getSortComparator(
-            final Context cx, final Scriptable scope, final Object[] args) {
+            final Context cx, VarScope scope, final Object[] args) {
         if (args.length > 0 && Undefined.instance != args[0]) {
             return getSortComparatorFromArguments(cx, scope, args);
         } else {
@@ -370,7 +370,7 @@ public class ArrayLikeAbstractOperations {
     }
 
     public static ElementComparator getSortComparatorFromArguments(
-            Context cx, Scriptable scope, Object[] args) {
+            Context cx, VarScope scope, Object[] args) {
         var compareFunc = ScriptRuntime.getValueAndThis(args[0], cx);
         Callable compare = compareFunc.getCallable();
         Scriptable compareThis = compareFunc.getThis();
@@ -380,7 +380,7 @@ public class ArrayLikeAbstractOperations {
                     // This comparator is invoked only for non-undefined objects
                     cmpBuf[0] = x;
                     cmpBuf[1] = y;
-                    Object ret = compare.call(cx, (VarScope) scope, compareThis, cmpBuf);
+                    Object ret = compare.call(cx, scope, compareThis, cmpBuf);
                     double d = ScriptRuntime.toNumber(ret);
                     int cmp = Double.compare(d, 0);
                     if (cmp < 0) {

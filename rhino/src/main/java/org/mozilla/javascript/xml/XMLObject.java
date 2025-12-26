@@ -20,7 +20,7 @@ public abstract class XMLObject extends ScriptableObject {
 
     public XMLObject() {}
 
-    public XMLObject(Scriptable scope, Scriptable prototype) {
+    public XMLObject(VarScope scope, Scriptable prototype) {
         super(scope, prototype);
     }
 

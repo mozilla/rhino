@@ -63,7 +63,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         return pkg;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         ClassLoader loader = cx.getApplicationClassLoader();
         final NativeJavaTopPackage top = new NativeJavaTopPackage(loader);
         top.setPrototype(getObjectPrototype(scope));

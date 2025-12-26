@@ -1235,7 +1235,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         Constructable constructable =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, this, defaultConstructor);
 
-        Scriptable newArray = constructable.construct(cx, (VarScope) scope, args);
+        Scriptable newArray = constructable.construct(cx, scope, args);
         if (newArray instanceof NativeTypedArrayView) {
             long len = ((NativeTypedArrayView<?>) newArray).validateAndGetLength();
             if (args.length == 1 && args[0] instanceof Number) {

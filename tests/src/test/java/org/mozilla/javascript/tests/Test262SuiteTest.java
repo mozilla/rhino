@@ -215,7 +215,7 @@ public class Test262SuiteTest {
             super(scope, prototype);
         }
 
-        static $262 init(Context cx, Scriptable scope) {
+        static $262 init(Context cx, VarScope scope) {
             $262 proto = new $262();
             proto.setPrototype(getObjectPrototype(scope));
             proto.setParentScope(scope);

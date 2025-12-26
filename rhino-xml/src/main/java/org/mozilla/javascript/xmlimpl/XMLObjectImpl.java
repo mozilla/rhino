@@ -128,7 +128,7 @@ abstract class XMLObjectImpl extends XMLObject {
         initialize(lib, scope, prototype);
     }
 
-    final void initialize(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    final void initialize(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         setParentScope(scope);
         setPrototype(prototype);
         prototypeFlag = (prototype == null);
@@ -965,7 +965,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_defaultSettings(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         getLib(thisObj).getProcessor().setDefault();
         var res = cx.newObject(s);
         writeSetting(thisObj, res);
@@ -973,14 +973,14 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_settings(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var res = cx.newObject(s);
         writeSetting(thisObj, res);
         return res;
     }
 
     private static Object js_setSettings(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             getLib(thisObj).getProcessor().setDefault();
         } else if (args[0] instanceof Scriptable) {

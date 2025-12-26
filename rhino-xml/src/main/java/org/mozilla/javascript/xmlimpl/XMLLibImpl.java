@@ -39,8 +39,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
     }
 
-    public static void init(Context cx, Scriptable s, boolean sealed) {
-        VarScope scope = (VarScope) s;
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         XMLLibImpl lib = new XMLLibImpl(scope);
         XMLLib bound = lib.bindToScope(scope);
         if (bound == lib) {

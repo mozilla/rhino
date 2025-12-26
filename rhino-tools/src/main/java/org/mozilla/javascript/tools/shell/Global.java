@@ -548,8 +548,7 @@ public class Global extends ImporterTopLevel {
         return cx.getWrapFactory().wrap(cx, scope, thread, Thread.class);
     }
 
-    private static ContextAction<Object> getAsyncAction(
-            Context cx, Object[] args, Scriptable scope) {
+    private static ContextAction<Object> getAsyncAction(Context cx, Object[] args, VarScope scope) {
         ContextAction<Object> action;
         if (args.length != 0 && args[0] instanceof Function) {
             Function f = (Function) args[0];
@@ -557,10 +556,10 @@ public class Global extends ImporterTopLevel {
                     args.length > 1 && args[1] instanceof Scriptable
                             ? cx.getElements((Scriptable) args[1])
                             : ScriptRuntime.emptyArgs;
-            action = cx2 -> f.call(cx2, (VarScope) scope, scope, newArgs);
+            action = cx2 -> f.call(cx2, scope, scope, newArgs);
         } else if (args.length != 0 && args[0] instanceof Script) {
             Script s = (Script) args[0];
-            action = cx2 -> s.exec(cx2, (VarScope) scope, scope);
+            action = cx2 -> s.exec(cx2, scope, scope);
         } else {
             throw reportRuntimeError("msg.spawn.args");
         }

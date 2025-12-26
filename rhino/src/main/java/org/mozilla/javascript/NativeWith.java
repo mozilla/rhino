@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
     private static final long serialVersionUID = 1L;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(TopLevel scope, boolean sealed) {
         NativeWith obj = new NativeWith();
 
         obj.setParentScope(scope);
@@ -31,8 +31,8 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     private NativeWith() {}
 
-    protected NativeWith(Scriptable parent, Scriptable prototype) {
-        this.parent = (VarScope) parent;
+    protected NativeWith(VarScope parent, Scriptable prototype) {
+        this.parent = parent;
         this.prototype = prototype;
     }
 
