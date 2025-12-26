@@ -15,7 +15,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
 
     public JSFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,
             Scriptable homeObject) {
@@ -29,7 +29,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     JSFunction(
-            Scriptable scope,
+            VarScope scope,
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,
             Scriptable homeObject) {
@@ -232,7 +232,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     /** Create function compiled from Function(...) constructor. */
     public static JSFunction createFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             JSDescriptor<JSFunction> desc,
             Scriptable homeObject,
             Object staticSecurityDomain) {
@@ -243,11 +243,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
 
     /** Create function embedded in script or another function. */
     static JSFunction createFunction(
-            Context cx,
-            Scriptable scope,
-            JSDescriptor<?> parent,
-            int index,
-            Scriptable homeObject) {
+            Context cx, VarScope scope, JSDescriptor<?> parent, int index, Scriptable homeObject) {
         JSDescriptor<JSFunction> desc = parent.getFunction(index);
         JSFunction f = new JSFunction(cx, scope, desc, null, homeObject);
         return f;

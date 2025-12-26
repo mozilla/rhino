@@ -146,7 +146,7 @@ class DefaultLinker implements GuardingDynamicLinker {
             mh = MethodHandles.insertArguments(mh, 2, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
         } else if (op.isOperation(StandardOperation.GET)) {
-            tt = MethodType.methodType(Object.class, Context.class, Scriptable.class, String.class);
+            tt = MethodType.methodType(Object.class, Context.class, VarScope.class, String.class);
             mh = lookup.findStatic(ScriptRuntime.class, "name", tt);
             mh = MethodHandles.insertArguments(mh, 2, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);

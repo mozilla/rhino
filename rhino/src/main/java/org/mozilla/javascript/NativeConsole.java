@@ -42,7 +42,7 @@ public class NativeConsole extends ScriptableObject {
                 Context cx, VarScope scope, Level level, Object[] args, ScriptStackElement[] stack);
     }
 
-    public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
+    public static void init(VarScope scope, boolean sealed, ConsolePrinter printer) {
         NativeConsole obj = new NativeConsole(printer);
         obj.setPrototype(getObjectPrototype(scope));
         obj.setParentScope(scope);

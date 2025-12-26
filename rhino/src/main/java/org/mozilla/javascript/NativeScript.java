@@ -57,7 +57,7 @@ class NativeScript extends BaseFunction {
 
     private static void defineMethod(
             LambdaConstructor typedArray,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -139,7 +139,7 @@ class NativeScript extends BaseFunction {
         return js_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
         String source = (args.length == 0) ? "" : ScriptRuntime.toString(args[0]);
         Script script = compile(cx, source);
         NativeScript nscript = new NativeScript(script);

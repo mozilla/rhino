@@ -10,7 +10,7 @@ import org.mozilla.javascript.VarScope;
  */
 class NativeRegExpCallable extends NativeRegExp implements Function {
 
-    NativeRegExpCallable(Scriptable scope, RECompiled compiled) {
+    NativeRegExpCallable(VarScope scope, RECompiled compiled) {
         super(scope, compiled);
     }
 

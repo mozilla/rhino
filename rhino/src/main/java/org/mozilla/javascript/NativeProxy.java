@@ -1224,7 +1224,7 @@ class NativeProxy extends ScriptableObject {
         target.setPrototype(prototype);
     }
 
-    private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeProxy constructor(Context cx, VarScope scope, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",

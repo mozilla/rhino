@@ -123,7 +123,7 @@ class NativeRegExpCtor {
     }
 
     private static Scriptable js_construct(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         re.compile(cx, s, args);
         ScriptRuntime.setBuiltinProtoAndParent(re, s, TopLevel.Builtins.RegExp);

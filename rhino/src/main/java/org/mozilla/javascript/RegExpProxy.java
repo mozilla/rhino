@@ -24,13 +24,13 @@ public interface RegExpProxy {
 
     public Object compileRegExp(Context cx, String source, String flags);
 
-    public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled);
+    public Scriptable wrapRegExp(Context cx, VarScope scope, Object compiled);
 
     public Object action(Context cx, VarScope scope, Object thisObj, Object[] args, int actionType);
 
     public int find_split(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String target,
             String separator,
             Scriptable re,
@@ -39,5 +39,5 @@ public interface RegExpProxy {
             boolean[] matched,
             String[][] parensp);
 
-    public Object js_split(Context _cx, Scriptable _scope, String thisString, Object[] _args);
+    public Object js_split(Context _cx, VarScope _scope, String thisString, Object[] _args);
 }

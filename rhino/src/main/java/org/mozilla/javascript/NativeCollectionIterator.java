@@ -29,7 +29,7 @@ public class NativeCollectionIterator extends ES6Iterator {
     }
 
     public NativeCollectionIterator(
-            Scriptable scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
+            VarScope scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
         super(scope, className);
         this.className = className;
         this.iterator = iterator;
