@@ -397,8 +397,7 @@ public final class ES6Generator extends ScriptableObject {
                         ES6Iterator.RETURN_METHOD,
                         ScriptRuntime.typeof(retFnObj));
             }
-            return ((Callable) retFnObj)
-                    .call(cx, (VarScope) scope, ensureScriptable(delegee), retArgs);
+            return ((Callable) retFnObj).call(cx, scope, ensureScriptable(delegee), retArgs);
         }
         return null;
     }

@@ -18,6 +18,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
@@ -134,7 +135,7 @@ public class File extends ScriptableObject {
             list.add(s);
         }
         String[] lines = list.toArray(new String[list.size()]);
-        Scriptable scope = ScriptableObject.getTopLevelScope(this);
+        TopLevel scope = ScriptableObject.getTopLevelScope(this);
         Context cx = Context.getCurrentContext();
         return cx.newObject(scope, "Array", lines);
     }

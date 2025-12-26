@@ -147,8 +147,8 @@ public class LambdaConstructor extends LambdaFunction {
         return fireConstructor(cx, getDeclarationScope(), args);
     }
 
-    private Scriptable fireConstructor(Context cx, Scriptable scope, Object[] args) {
-        Scriptable obj = targetConstructor.construct(cx, (VarScope) scope, args);
+    private Scriptable fireConstructor(Context cx, VarScope scope, Object[] args) {
+        Scriptable obj = targetConstructor.construct(cx, scope, args);
         obj.setPrototype(getClassPrototype());
         obj.setParentScope(scope);
         return obj;

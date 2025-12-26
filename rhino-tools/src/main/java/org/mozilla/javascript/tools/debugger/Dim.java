@@ -1006,9 +1006,9 @@ public class Dim {
 
         /** Called when the stack frame is entered. */
         @Override
-        public void onEnter(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public void onEnter(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             contextData.pushFrame(this);
-            this.scope = (VarScope) scope;
+            this.scope = scope;
             this.thisObj = thisObj;
             if (dim.breakOnEnter) {
                 dim.handleBreakpointHit(this, cx);

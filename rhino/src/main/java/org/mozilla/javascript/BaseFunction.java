@@ -29,7 +29,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String CALL_TAG = "CALL_TAG";
     private static final String PROTOTYPE_PROPERTY_NAME = "prototype";
 
-    static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
+    static LambdaConstructor init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
                         scope,
@@ -120,10 +120,10 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     /**
-     * @deprecated Use {@link #init(Context, Scriptable, boolean)} instead
+     * @deprecated Use {@link #init(Context, VarScope, boolean)} instead
      */
     @Deprecated
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         init(Context.getContext(), scope, sealed);
     }
 
@@ -173,7 +173,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         this.isGeneratorFunction = isGenerator;
     }
 
-    public BaseFunction(Scriptable scope, Scriptable prototype) {
+    public BaseFunction(VarScope scope, Scriptable prototype) {
         super(scope, prototype);
         createProperties();
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.Function);

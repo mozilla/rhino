@@ -27,12 +27,12 @@ public final class OptRuntime extends ScriptRuntime {
     public static final Integer minusOneObj = Integer.valueOf(-1);
 
     /** Implement ....() call shrinking optimizer code. */
-    public static Object call0(Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
-        return fun.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
+    public static Object call0(Callable fun, Scriptable thisObj, Context cx, VarScope scope) {
+        return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     public static Object call0Optional(
-            Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
+            Callable fun, Scriptable thisObj, Context cx, VarScope scope) {
         if (fun == null) {
             return Undefined.instance;
         }
@@ -41,8 +41,8 @@ public final class OptRuntime extends ScriptRuntime {
 
     /** Implement ....(arg) call shrinking optimizer code. */
     public static Object call1(
-            Callable fun, Scriptable thisObj, Object arg0, Context cx, Scriptable scope) {
-        return fun.call(cx, (VarScope) scope, thisObj, new Object[] {arg0});
+            Callable fun, Scriptable thisObj, Object arg0, Context cx, VarScope scope) {
+        return fun.call(cx, scope, thisObj, new Object[] {arg0});
     }
 
     /** Implement ....(arg0, arg1) call shrinking optimizer code. */
@@ -52,8 +52,8 @@ public final class OptRuntime extends ScriptRuntime {
             Object arg0,
             Object arg1,
             Context cx,
-            Scriptable scope) {
-        return fun.call(cx, (VarScope) scope, thisObj, new Object[] {arg0, arg1});
+            VarScope scope) {
+        return fun.call(cx, scope, thisObj, new Object[] {arg0, arg1});
     }
 
     /** Implement ....(arg0, arg1, ...) call shrinking optimizer code. */
@@ -68,7 +68,7 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object callName(Object[] args, String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, (VarScope) scope, thisObj, args);
+        return f.call(cx, scope, thisObj, args);
     }
 
     /** Implement name() call shrinking optimizer code. */
@@ -77,7 +77,7 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object callName0(String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
@@ -88,7 +88,7 @@ public final class OptRuntime extends ScriptRuntime {
             return Undefined.instance;
         }
         Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
@@ -97,7 +97,7 @@ public final class OptRuntime extends ScriptRuntime {
     public static Object callProp0(Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
@@ -109,7 +109,7 @@ public final class OptRuntime extends ScriptRuntime {
             return Undefined.instance;
         }
         Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, (VarScope) scope, thisObj, ScriptRuntime.emptyArgs);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     public static Object add(Object val1, double val2, Context cx) {
@@ -160,7 +160,7 @@ public final class OptRuntime extends ScriptRuntime {
             Callable fun,
             Scriptable thisObj,
             Object[] args,
-            Scriptable scope,
+            VarScope scope,
             Scriptable callerThis,
             int callType,
             String fileName,

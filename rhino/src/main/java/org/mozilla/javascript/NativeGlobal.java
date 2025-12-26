@@ -167,7 +167,7 @@ public class NativeGlobal implements Serializable {
 
     private static String js_uneval(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object value = (args.length != 0) ? args[0] : Undefined.instance;
-        return ScriptRuntime.uneval(cx, (VarScope) scope, value);
+        return ScriptRuntime.uneval(cx, scope, value);
     }
 
     private static Boolean js_isXMLName(Context cx, VarScope scope, Object thisObj, Object[] args) {

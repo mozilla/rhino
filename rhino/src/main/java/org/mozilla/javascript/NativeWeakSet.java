@@ -25,7 +25,7 @@ public class NativeWeakSet extends ScriptableObject {
 
     private transient WeakHashMap<Object, Boolean> map = new WeakHashMap<>();
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,

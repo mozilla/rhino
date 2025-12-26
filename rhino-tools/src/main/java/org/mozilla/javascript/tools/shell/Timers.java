@@ -83,7 +83,7 @@ public class Timers {
         }
         timerQueue.remove();
         timers.remove(t.id);
-        cx.enqueueMicrotask(() -> t.func.call(cx, (VarScope) scope, scope, t.funcArgs));
+        cx.enqueueMicrotask(() -> t.func.call(cx, scope, scope, t.funcArgs));
         return true;
     }
 

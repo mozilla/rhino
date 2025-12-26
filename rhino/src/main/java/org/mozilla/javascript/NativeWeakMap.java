@@ -29,7 +29,7 @@ public class NativeWeakMap extends ScriptableObject {
 
     private static final Object NULL_VALUE = new Object();
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
