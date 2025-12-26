@@ -52,12 +52,12 @@ public abstract class ES6Iterator extends ScriptableObject {
 
     protected ES6Iterator() {}
 
-    protected ES6Iterator(Scriptable scope, String tag) {
+    protected ES6Iterator(VarScope scope, String tag) {
         // Set parent and prototype properties. Since we don't have a
         // "Iterator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
         this.tag = tag;
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         ScriptableObject prototype = (ScriptableObject) ScriptableObject.getTopScopeValue(top, tag);
         setPrototype(prototype);

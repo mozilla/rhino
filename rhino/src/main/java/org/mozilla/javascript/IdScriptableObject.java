@@ -132,7 +132,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                                 + "initialize id="
                                 + constructorId);
             }
-            constructor.initFunction(obj.getClassName(), ScriptableObject.getTopLevelScope(obj));
+            constructor.initFunction(
+                    obj.getClassName(), ScriptableObject.getTopLevelScope(obj.getParentScope()));
             constructor.markAsConstructor(obj);
             return constructor;
         }
@@ -719,7 +720,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     public final IdFunctionObject exportAsJSClass(
-            int maxPrototypeId, Scriptable scope, boolean sealed) {
+            int maxPrototypeId, VarScope scope, boolean sealed) {
         // Set scope and prototype unless this is top level scope itself
         if (scope != this && scope != null) {
             setParentScope(scope);
@@ -757,7 +758,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     public final IdFunctionObject initPrototypeMethod(
             Object tag, int id, String propertyName, String functionName, int arity) {
-        VarScope scope = ScriptableObject.getTopLevelScope(this);
+        VarScope scope = ScriptableObject.getTopLevelScope(this.getParentScope());
         IdFunctionObject function =
                 newIdFunction(
                         tag, id, functionName != null ? functionName : propertyName, arity, scope);
@@ -767,7 +768,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     public final IdFunctionObject initPrototypeMethod(
             Object tag, int id, Symbol key, String functionName, int arity) {
-        VarScope scope = ScriptableObject.getTopLevelScope(this);
+        VarScope scope = ScriptableObject.getTopLevelScope(this.getParentScope());
         IdFunctionObject function = newIdFunction(tag, id, functionName, arity, scope);
         prototypeValues.initValue(id, key, function, DONTENUM);
         return function;
@@ -775,7 +776,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     public final IdFunctionObject initPrototypeMethod(
             Object tag, int id, Symbol key, String functionName, int arity, int attributes) {
-        VarScope scope = ScriptableObject.getTopLevelScope(this);
+        VarScope scope = ScriptableObject.getTopLevelScope(this.getParentScope());
         IdFunctionObject function = newIdFunction(tag, id, functionName, arity, scope);
         prototypeValues.initValue(id, key, function, attributes);
         return function;
@@ -815,7 +816,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     protected void addIdFunctionProperty(
             Scriptable obj, Object tag, int id, String name, int arity) {
-        VarScope scope = ScriptableObject.getTopLevelScope(obj);
+        VarScope scope = ScriptableObject.getTopLevelScope(obj.getParentScope());
         IdFunctionObject f = newIdFunction(tag, id, name, arity, scope);
         f.addAsProperty(obj);
     }

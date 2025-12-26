@@ -71,7 +71,7 @@ public class Shell extends ScriptableObject {
                 array = new Object[length];
                 System.arraycopy(args, 1, array, 0, length);
             }
-            Scriptable argsObj = cx.newArray(shell, array);
+            Scriptable argsObj = cx.newArray(topLevel, array);
             shell.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
 
             shell.processSource(cx, args.length == 0 ? null : args[0]);
@@ -205,7 +205,7 @@ public class Shell extends ScriptableObject {
      * @param funObj the function object of the invoked JavaScript function
      */
     public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Shell shell = (Shell) getTopLevelScope(thisObj).getGlobalThis();
+        Shell shell = (Shell) getTopLevelScope(funObj.getDeclarationScope()).getGlobalThis();
         for (int i = 0; i < args.length; i++) {
             shell.processSource(cx, Context.toString(args[i]));
         }

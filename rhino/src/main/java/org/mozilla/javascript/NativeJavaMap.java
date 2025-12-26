@@ -35,7 +35,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @SuppressWarnings("unchecked")
-    public NativeJavaMap(Scriptable scope, Object map, TypeInfo staticType) {
+    public NativeJavaMap(VarScope scope, Object map, TypeInfo staticType) {
         super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
@@ -180,7 +180,7 @@ public class NativeJavaMap extends NativeJavaObject {
             super();
         }
 
-        NativeJavaMapIterator(Scriptable scope, NativeJavaMap map) {
+        NativeJavaMapIterator(VarScope scope, NativeJavaMap map) {
             super(scope, ITERATOR_TAG);
             this.iterator = map.map.entrySet().iterator();
             this.keyType = map.keyType;

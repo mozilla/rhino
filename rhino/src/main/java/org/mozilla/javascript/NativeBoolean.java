@@ -35,7 +35,7 @@ final class NativeBoolean extends ScriptableObject {
 
     private final boolean booleanValue;
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static void init(Context cx, VarScope scope, boolean sealed) {
         // Boolean is an unusual object in that the prototype is itself a Boolean
         DESCRIPTOR.buildConstructor(cx, (VarScope) scope, new NativeBoolean(false), sealed);
     }

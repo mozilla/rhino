@@ -9,6 +9,7 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
 
 /**
@@ -136,7 +137,7 @@ public class Matrix implements Scriptable {
             result = m;
         } else {
             Context cx = Context.getCurrentContext();
-            Scriptable scope = ScriptableObject.getTopLevelScope(start);
+            TopLevel scope = ScriptableObject.getTopLevelScope(parent);
             result = cx.newArray(scope, 0);
         }
         list.set(index, result);

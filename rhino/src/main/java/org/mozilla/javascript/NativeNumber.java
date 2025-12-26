@@ -36,7 +36,7 @@ final class NativeNumber extends ScriptableObject {
 
     private final double doubleValue;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -91,11 +91,11 @@ final class NativeNumber extends ScriptableObject {
                 DONTENUM,
                 DONTENUM | READONLY);
 
-        Object parseFloat = ScriptRuntime.getTopLevelProp(constructor, "parseFloat");
+        Object parseFloat = ScriptRuntime.getTopLevelProp(scope, "parseFloat");
         if (parseFloat instanceof Function) {
             constructor.defineProperty("parseFloat", parseFloat, DONTENUM);
         }
-        Object parseInt = ScriptRuntime.getTopLevelProp(constructor, "parseInt");
+        Object parseInt = ScriptRuntime.getTopLevelProp(scope, "parseInt");
         if (parseInt instanceof Function) {
             constructor.defineProperty("parseInt", parseInt, DONTENUM);
         }

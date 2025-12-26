@@ -35,7 +35,7 @@ class Arguments extends ScriptableObject {
     public Arguments(NativeCall activation, Context cx) {
         this.activation = activation;
 
-        Scriptable parent = activation.getParentScope();
+        VarScope parent = activation.getParentScope();
         setParentScope(parent);
         setPrototype(ScriptableObject.getObjectPrototype(parent));
 
