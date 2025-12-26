@@ -1,8 +1,8 @@
 package org.mozilla.javascript.android;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 
@@ -15,7 +15,7 @@ public class TypeInfoFactoryTestCase extends TestCase {
     }
 
     @Override
-    protected Object runTest(Context cx, Scriptable scope) {
+    protected Object runTest(Context cx, VarScope scope) {
         TypeInfoFactory typeInfoFactory = TypeInfoFactory.get(scope);
         int apiLevel = android.os.Build.VERSION.SDK_INT;
         if (apiLevel >= 34 != typeInfoFactory instanceof ClassValueCacheFactory) {

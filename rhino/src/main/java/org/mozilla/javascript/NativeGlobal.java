@@ -70,7 +70,7 @@ public class NativeGlobal implements Serializable {
                 continue;
             }
             String name = error.name();
-            Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+            TopLevel topLevelScope = ScriptableObject.getTopLevelScope(scope);
             Function builtinErrorCtor =
                     TopLevel.getBuiltinCtor(cx, topLevelScope, TopLevel.Builtins.Error);
             ScriptableObject errorProto = NativeError.makeProto(topLevelScope, builtinErrorCtor);
@@ -138,7 +138,7 @@ public class NativeGlobal implements Serializable {
     }
 
     private static void defineGlobalFunction(
-            Scriptable scope,
+            VarScope scope,
             boolean sealed,
             String name,
             int length,
@@ -156,7 +156,7 @@ public class NativeGlobal implements Serializable {
     }
 
     // Eval is special because we need to "recognize" it in isEvalFunction
-    private static void defineGlobalFunctionEval(Scriptable scope, boolean sealed) {
+    private static void defineGlobalFunctionEval(VarScope scope, boolean sealed) {
         LambdaFunction evalFun = new EvalLambdaFunction(scope);
         registerGlobalFunction(scope, sealed, "eval", evalFun);
     }
@@ -746,7 +746,7 @@ public class NativeGlobal implements Serializable {
      * in {@link NativeGlobal#isEvalFunction}
      */
     private static class EvalLambdaFunction extends LambdaFunction {
-        public EvalLambdaFunction(Scriptable scope) {
+        public EvalLambdaFunction(VarScope scope) {
             super(
                     scope,
                     "eval",

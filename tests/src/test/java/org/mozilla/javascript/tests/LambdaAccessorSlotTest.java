@@ -12,6 +12,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 
 public class LambdaAccessorSlotTest {
@@ -550,7 +551,7 @@ public class LambdaAccessorSlotTest {
         private String status;
         private final String hiddenStatus;
 
-        static LambdaConstructor init(Scriptable scope) {
+        static LambdaConstructor init(VarScope scope) {
             LambdaConstructor constructor =
                     new LambdaConstructor(
                             scope,

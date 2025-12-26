@@ -1229,7 +1229,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *     of the internal LambdaFunction, which differ for many * native objects.
      */
     public void defineProperty(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -1241,17 +1241,17 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     public void defineProperty(
-            Scriptable scope, String name, int length, SerializableCallable target) {
+            VarScope scope, String name, int length, SerializableCallable target) {
         defineProperty(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     public void defineBuiltinProperty(
-            Scriptable scope, String name, int length, SerializableCallable target) {
+            VarScope scope, String name, int length, SerializableCallable target) {
         defineBuiltinProperty(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     public void defineBuiltinProperty(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -1611,7 +1611,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             configurable = (attributes & PERMANENT) == 0;
         }
 
-        Scriptable toObject(Scriptable scope) {
+        Scriptable toObject(VarScope scope) {
             ScriptableObject desc = new NativeObject();
             ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
             if (hasValue()) desc.defineProperty("value", value, EMPTY);
@@ -1852,7 +1852,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public void defineProperty(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String name,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter,
@@ -1866,17 +1866,13 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     public void defineProperty(
-            Context cx,
-            Scriptable scope,
-            String name,
-            LambdaGetterFunction getter,
-            int attributes) {
+            Context cx, VarScope scope, String name, LambdaGetterFunction getter, int attributes) {
         defineProperty(cx, scope, name, getter, null, attributes);
     }
 
     public void defineProperty(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Symbol key,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter,
@@ -1930,7 +1926,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             LambdaGetterFunction getter,
             LambdaSetterFunction setter,
             int attributes,
-            Scriptable scope) {
+            VarScope scope) {
         LambdaAccessorSlot slot = new LambdaAccessorSlot(name, index);
         slot.setGetter(scope, getter);
         slot.setSetter(scope, setter);
@@ -2162,7 +2158,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @see org.mozilla.javascript.FunctionObject
      */
     public void defineFunctionProperties(
-            Scriptable scope, String[] names, Class<?> clazz, int attributes) {
+            VarScope scope, String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (String name : names) {
             Method m = FunctionObject.findSingleMethod(methods, name);
@@ -2179,7 +2175,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *
      * @param scope an object in the scope chain
      */
-    public static Scriptable getObjectPrototype(Scriptable scope) {
+    public static Scriptable getObjectPrototype(VarScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Object);
     }
 
@@ -2188,16 +2184,16 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *
      * @param scope an object in the scope chain
      */
-    public static Scriptable getFunctionPrototype(Scriptable scope) {
+    public static Scriptable getFunctionPrototype(VarScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Function);
     }
 
-    public static Scriptable getGeneratorFunctionPrototype(Scriptable scope) {
+    public static Scriptable getGeneratorFunctionPrototype(VarScope scope) {
         return TopLevel.getBuiltinPrototype(
                 getTopLevelScope(scope), TopLevel.Builtins.GeneratorFunction);
     }
 
-    public static Scriptable getArrayPrototype(Scriptable scope) {
+    public static Scriptable getArrayPrototype(VarScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Array);
     }
 
@@ -2213,7 +2209,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param className the name of the constructor
      * @return the prototype for the named class, or null if it cannot be found.
      */
-    public static Scriptable getClassPrototype(Scriptable scope, String className) {
+    public static Scriptable getClassPrototype(VarScope scope, String className) {
         scope = getTopLevelScope(scope);
         Object ctor = getProperty(scope, className);
         Object proto;
@@ -2240,9 +2236,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param obj a JavaScript object
      * @return the corresponding global scope
      */
-    public static TopLevel getTopLevelScope(Scriptable obj) {
+    public static TopLevel getTopLevelScope(VarScope obj) {
         for (; ; ) {
-            Scriptable parent = obj.getParentScope();
+            VarScope parent = obj.getParentScope();
             if (parent == null) {
                 if (obj instanceof TopLevel) {
                     return (TopLevel) obj;
@@ -2725,7 +2721,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         // and use ScriptableObject.getTopLevelScope(fun) if the flag is not
         // set. But that require access to Context and messy code
         // so for now it is not checked.
-        VarScope scope = ScriptableObject.getTopLevelScope(obj);
+        VarScope scope = fun.getDeclarationScope();
         if (cx != null) {
             return fun.call(cx, scope, obj, args);
         }
@@ -2765,7 +2761,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /**
      * Get arbitrary application-specific value associated with the top scope of the given scope.
-     * The method first calls {@link #getTopLevelScope(Scriptable scope)} and then searches the
+     * The method first calls {@link #getTopLevelScope(VarScope scope)} and then searches the
      * prototype chain of the top scope for the first object containing the associated value with
      * the given key.
      *
@@ -2773,7 +2769,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param key key object to select particular value.
      * @see #getAssociatedValue(Object key)
      */
-    public static Object getTopScopeValue(Scriptable scope, Object key) {
+    public static Object getTopScopeValue(VarScope scope, Object key) {
         var topScope = ScriptableObject.getTopLevelScope(scope);
         return topScope.getAssociatedValue(key);
     }

@@ -90,7 +90,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static void defOnProto(
             LambdaConstructor constructor,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -100,7 +100,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static void defKnownBuiltInOnProto(
             LambdaConstructor constructor,
             Object tag,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -110,7 +110,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static void defOnProto(
             LambdaConstructor constructor,
-            Scriptable scope,
+            VarScope scope,
             SymbolKey name,
             int length,
             SerializableCallable target,
@@ -127,9 +127,9 @@ public class BaseFunction extends ScriptableObject implements Function {
         init(Context.getContext(), scope, sealed);
     }
 
-    static Object initAsGeneratorFunction(Scriptable scope, boolean sealed) {
+    static Object initAsGeneratorFunction(VarScope scope, boolean sealed) {
         var proto = new NativeObject();
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        VarScope top = ScriptableObject.getTopLevelScope(scope);
 
         var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
         var functionProto =
@@ -487,7 +487,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         return js_gen_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -510,7 +510,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         return js_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_gen_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_gen_constructor(Context cx, VarScope scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -554,7 +554,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (protoVal instanceof Scriptable) {
             return (Scriptable) protoVal;
         }
-        return ScriptableObject.getObjectPrototype(this);
+        return ScriptableObject.getObjectPrototype(getDeclarationScope());
     }
 
     /** Should be overridden. */
@@ -706,7 +706,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    protected synchronized Object setupDefaultPrototype(Scriptable scope) {
+    protected synchronized Object setupDefaultPrototype(VarScope scope) {
         if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
             createPrototypeProperty();
         }
@@ -721,16 +721,16 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (isGeneratorFunction()) {
             // For generator functions, the .prototype property's [[Prototype]]
             // should be %GeneratorPrototype%, not Object.prototype
-            Scriptable top = ScriptableObject.getTopLevelScope(scope);
+            VarScope top = ScriptableObject.getTopLevelScope(scope);
             Object generatorProto =
                     ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG);
             if (generatorProto instanceof Scriptable) {
                 proto = (Scriptable) generatorProto;
             } else {
-                proto = getObjectPrototype(this); // fallback
+                proto = getObjectPrototype(getDeclarationScope()); // fallback
             }
         } else {
-            proto = getObjectPrototype(this);
+            proto = getObjectPrototype(getDeclarationScope());
         }
         if (proto != obj) {
             // not the one we just made, it must remain grounded
@@ -772,7 +772,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     void setArguments(Object caller) {}
 
     private static Scriptable jsConstructor(
-            Context cx, Scriptable scope, Object[] args, boolean isGeneratorFunction) {
+            Context cx, VarScope scope, Object[] args, boolean isGeneratorFunction) {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
@@ -807,7 +807,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         String sourceURI = ScriptRuntime.makeUrlForGeneratedScript(false, filename, linep[0]);
 
-        Scriptable global = ScriptableObject.getTopLevelScope(scope);
+        TopLevel global = ScriptableObject.getTopLevelScope(scope);
 
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());

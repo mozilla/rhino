@@ -38,6 +38,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SerializableCallable;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
@@ -1127,7 +1128,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private NativeTypedArrayView<?> typedArraySpeciesCreate(
             Context cx, VarScope scope, Object[] args, String methodName) {
-        Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+        TopLevel topLevelScope = ScriptableObject.getTopLevelScope(scope);
         Function defaultConstructor =
                 ScriptRuntime.getExistingCtor(cx, topLevelScope, getClassName());
         Constructable constructable =

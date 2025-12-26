@@ -83,7 +83,7 @@ public class ComplianceTest {
     }
 
     private static class Print extends ScriptableObject implements Function {
-        Print(Scriptable scope) {
+        Print(VarScope scope) {
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
 

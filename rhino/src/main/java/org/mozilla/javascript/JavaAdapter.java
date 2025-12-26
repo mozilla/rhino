@@ -79,7 +79,7 @@ public final class JavaAdapter {
     }
 
     public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
-        Scriptable scope = ScriptableObject.getTopLevelScope(obj);
+        Scriptable scope = ScriptableObject.getTopLevelScope(obj.getParentScope());
         NativeJavaObject res = new NativeJavaObject(scope, adapter, TypeInfo.NONE, true);
         res.setPrototype(obj);
         return res;
@@ -91,7 +91,7 @@ public final class JavaAdapter {
         return self.get(adapter);
     }
 
-    static Scriptable js_createAdapter(Context cx, Scriptable scope, Object[] args) {
+    static Scriptable js_createAdapter(Context cx, VarScope scope, Object[] args) {
         int N = args.length;
         if (N == 0) {
             throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");
@@ -261,7 +261,7 @@ public final class JavaAdapter {
         Scriptable delegee = (Scriptable) in.readObject();
         sig.names = getObjectFunctionNames(delegee);
 
-        Class<?> adapterClass = getAdapterClass(self, sig);
+        Class<?> adapterClass = getAdapterClass(self.getParentScope(), sig);
 
         Class<?>[] ctorParms = {
             ScriptRuntime.ContextFactoryClass,
@@ -299,7 +299,7 @@ public final class JavaAdapter {
         return map;
     }
 
-    private static Class<?> getAdapterClass(Scriptable scope, JavaAdapterSignature sig) {
+    private static Class<?> getAdapterClass(VarScope scope, JavaAdapterSignature sig) {
         ClassCache cache = ClassCache.get(scope);
         Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 

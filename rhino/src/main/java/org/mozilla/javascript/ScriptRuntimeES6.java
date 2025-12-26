@@ -30,9 +30,8 @@ public class ScriptRuntimeES6 {
     }
 
     /** Registers the symbol {@code [Symbol.species]} on the given constructor function. */
-    public static void addSymbolSpecies(
-            Context cx, Scriptable scope, ScriptableObject constructor) {
-        DescriptorInfo desc = symbolSpecies(cx, (VarScope) scope, constructor);
+    public static void addSymbolSpecies(Context cx, VarScope scope, ScriptableObject constructor) {
+        DescriptorInfo desc = symbolSpecies(cx, scope, constructor);
         constructor.defineOwnProperty(cx, SymbolKey.SPECIES, desc, false);
     }
 

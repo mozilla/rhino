@@ -39,7 +39,7 @@ final class NativeString extends ScriptableObject {
 
     private final CharSequence string;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         LambdaConstructor c =
                 new LambdaConstructor(
                         scope,
@@ -155,7 +155,7 @@ final class NativeString extends ScriptableObject {
 
     private static void defConsMethod(
             LambdaConstructor c,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -164,7 +164,7 @@ final class NativeString extends ScriptableObject {
 
     private static void defProtoMethod(
             LambdaConstructor c,
-            Scriptable scope,
+            VarScope scope,
             SymbolKey key,
             int length,
             SerializableCallable target) {
@@ -173,7 +173,7 @@ final class NativeString extends ScriptableObject {
 
     private static void defProtoMethod(
             LambdaConstructor c,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {

@@ -250,7 +250,7 @@ public class NativeRegExp extends ScriptableObject {
         return DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
     }
 
-    NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {
+    NativeRegExp(VarScope scope, RECompiled regexpCompiled) {
         this.re = regexpCompiled;
         // This needs to be built in.
         createLastIndexProp();
@@ -400,7 +400,7 @@ public class NativeRegExp extends ScriptableObject {
         return s;
     }
 
-    Object execSub(Context cx, Scriptable scopeObj, Object[] args, int matchType) {
+    Object execSub(Context cx, VarScope scopeObj, Object[] args, int matchType) {
         RegExpImpl reImpl = getImpl(cx);
         String str;
         if (args.length == 0) {
@@ -3671,7 +3671,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     Object executeRegExp(
-            Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
+            Context cx, VarScope scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         var result = executeRegExpInternal(cx, scope, res, str, indexp, matchType);
 
         if (result == null) {
@@ -3714,7 +3714,7 @@ public class NativeRegExp extends ScriptableObject {
      * indexp is assumed to be an array of length 1
      */
     ExecResult executeRegExpInternal(
-            Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
+            Context cx, VarScope scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
 
         int start = indexp[0];
@@ -3985,7 +3985,7 @@ public class NativeRegExp extends ScriptableObject {
         }
     }
 
-    static Object js_exec(Context cx, Scriptable scope, Object thisObj, Object[] args) {
+    static Object js_exec(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj, "exec").execSub(cx, scope, args, MATCH);
     }
 
@@ -4000,7 +4000,7 @@ public class NativeRegExp extends ScriptableObject {
 
         String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
 
-        Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+        TopLevel topLevelScope = ScriptableObject.getTopLevelScope(scope);
         Function defaultConstructor = ScriptRuntime.getExistingCtor(cx, topLevelScope, "RegExp");
         Constructable c =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, realThis, defaultConstructor);
@@ -4321,7 +4321,7 @@ public class NativeRegExp extends ScriptableObject {
 
         String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
 
-        Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+        TopLevel topLevelScope = ScriptableObject.getTopLevelScope(scope);
         Function defaultConstructor = ScriptRuntime.getExistingCtor(cx, topLevelScope, "RegExp");
         Constructable c =
                 AbstractEcmaObjectOperations.speciesConstructor(cx, rx, defaultConstructor);
@@ -4422,7 +4422,7 @@ public class NativeRegExp extends ScriptableObject {
 
     private static Object js_SymbolSplitFast(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             NativeRegExp splitter,
             String s,
             long lim,

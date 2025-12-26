@@ -81,8 +81,8 @@ public final class NativeIterator extends ScriptableObject {
      * @param scope a scope whose parent chain reaches a top-level scope
      * @return the StopIteration object
      */
-    public static Object getStopIterationObject(Scriptable scope) {
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+    public static Object getStopIterationObject(VarScope scope) {
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         return ScriptableObject.getTopScopeValue(top, ITERATOR_TAG);
     }
 
@@ -197,7 +197,7 @@ public final class NativeIterator extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeIterator.class);
     }
 
-    private Object next(Context cx, Scriptable scope) {
+    private Object next(Context cx, VarScope scope) {
         Boolean b = ScriptRuntime.enumNext(this.objectIterator, cx);
         if (!b) {
             // Out of values. Throw StopIteration.
@@ -223,9 +223,9 @@ public final class NativeIterator extends ScriptableObject {
 
     public static class WrappedJavaIterator {
         private final Iterator<?> iterator;
-        private final Scriptable scope;
+        private final VarScope scope;
 
-        WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
+        WrappedJavaIterator(Iterator<?> iterator, VarScope scope) {
             this.iterator = iterator;
             this.scope = scope;
         }

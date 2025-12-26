@@ -112,7 +112,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         if (prototype == null || members.has(name, false))
-            members.put(this, name, javaObject, value, false);
+            members.put(this, parent, name, javaObject, value, false);
         else prototype.put(name, prototype, value);
     }
 
@@ -123,7 +123,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
         if (prototype == null || members.has(name, false)) {
-            members.put(this, name, javaObject, value, false);
+            members.put(this, parent, name, javaObject, value, false);
         } else if (prototype instanceof SymbolScriptable) {
             ((SymbolScriptable) prototype).put(symbol, prototype, value);
         }

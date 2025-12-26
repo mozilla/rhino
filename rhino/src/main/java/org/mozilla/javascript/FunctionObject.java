@@ -76,7 +76,7 @@ public class FunctionObject extends BaseFunction {
      * @param scope enclosing scope of function
      * @see org.mozilla.javascript.Scriptable
      */
-    public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
+    public FunctionObject(String name, Member methodOrConstructor, VarScope scope) {
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox(getDeclarationScope(), (Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
@@ -293,7 +293,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable#setPrototype
      * @see org.mozilla.javascript.Scriptable#getClassName
      */
-    public void addAsConstructor(Scriptable scope, Scriptable prototype) {
+    public void addAsConstructor(VarScope scope, Scriptable prototype) {
         initAsConstructor(
                 scope,
                 prototype,
@@ -315,12 +315,12 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable#setPrototype
      * @see org.mozilla.javascript.Scriptable#getClassName
      */
-    public void addAsConstructor(Scriptable scope, Scriptable prototype, int attributes) {
+    public void addAsConstructor(VarScope scope, Scriptable prototype, int attributes) {
         initAsConstructor(scope, prototype, attributes);
         defineProperty(scope, prototype.getClassName(), this, ScriptableObject.DONTENUM);
     }
 
-    void initAsConstructor(Scriptable scope, Scriptable prototype, int attributes) {
+    void initAsConstructor(VarScope scope, Scriptable prototype, int attributes) {
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         setImmunePrototypeProperty(prototype);
 
