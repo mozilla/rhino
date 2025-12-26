@@ -26,7 +26,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private final SymbolKey key;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(scope, CLASS_NAME, 0, NativeSymbol::js_constructorCall, null);
 

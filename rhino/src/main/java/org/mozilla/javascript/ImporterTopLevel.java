@@ -143,12 +143,12 @@ public class ImporterTopLevel extends TopLevel {
         return topScopeFlag ? "global" : "JavaImporter";
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         init(cx, scope, sealed, false);
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
-        var ctor = DESCRIPTOR.buildConstructor(cx, (VarScope) scope, new NativeObject(), sealed);
+    public static void init(Context cx, VarScope scope, boolean sealed, boolean isTopScope) {
+        var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
         var proto = (Scriptable) ctor.getPrototypeProperty();
 
         if (isTopScope) {

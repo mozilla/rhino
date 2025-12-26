@@ -23,7 +23,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     public IdFunctionObject(
-            IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
+            IdFunctionCall idcall, Object tag, int id, String name, int arity, VarScope scope) {
         super(scope, null);
 
         if (arity < 0) throw new IllegalArgumentException();

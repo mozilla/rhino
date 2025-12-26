@@ -242,7 +242,7 @@ public class NativeRegExp extends ScriptableObject {
         EXEC_DESCRIPTOR = DESCRIPTOR.findProtoDesc("exec");
     }
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
 
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
@@ -3918,10 +3918,9 @@ public class NativeRegExp extends ScriptableObject {
         // See ECMAScript spec 22.2.7.1
         Object execMethod = ScriptRuntime.getObjectProp(regexp, "exec", cx, scope);
         if (execMethod instanceof Callable) {
-            return ((Callable) execMethod)
-                    .call(cx, (VarScope) scope, regexp, new Object[] {string});
+            return ((Callable) execMethod).call(cx, scope, regexp, new Object[] {string});
         }
-        return NativeRegExp.js_exec(cx, (VarScope) scope, regexp, new Object[] {string});
+        return NativeRegExp.js_exec(cx, scope, regexp, new Object[] {string});
     }
 
     private static Object js_SymbolMatch(
@@ -4008,7 +4007,7 @@ public class NativeRegExp extends ScriptableObject {
 
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(realThis, "flags", cx));
 
-        Scriptable matcher = c.construct(cx, (VarScope) scope, new Object[] {thisObj, flags});
+        Scriptable matcher = c.construct(cx, scope, new Object[] {thisObj, flags});
 
         long lastIndex = getLastIndex(cx, realThis);
         setLastIndex(matcher, lastIndex);
@@ -4331,7 +4330,7 @@ public class NativeRegExp extends ScriptableObject {
         boolean unicodeMatching = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
         NativeArray a = (NativeArray) cx.newArray(scope, 0);
         String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
-        Scriptable splitter = c.construct(cx, (VarScope) scope, new Object[] {rx, newFlags});
+        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
 
         Object limit = args.length > 1 ? args[1] : Undefined.instance;
         long lim;

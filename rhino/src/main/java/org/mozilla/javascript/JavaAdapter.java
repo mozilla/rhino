@@ -59,7 +59,7 @@ public final class JavaAdapter {
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         var ctor = new LambdaConstructor(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
 
         if (sealed) {
@@ -569,7 +569,7 @@ public final class JavaAdapter {
                 }
             }
         }
-        return f.call(cx, (VarScope) scope, thisObj, args);
+        return f.call(cx, scope, thisObj, args);
     }
 
     public static Scriptable runScript(final Script script) {
