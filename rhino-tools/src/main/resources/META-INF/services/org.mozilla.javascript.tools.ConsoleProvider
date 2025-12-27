@@ -1,0 +1,2 @@
+org.mozilla.javascript.tools.shell.BasicConsoleProvider
+org.mozilla.javascript.tools.shell.JLineConsoleProvider

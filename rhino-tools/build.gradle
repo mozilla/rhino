@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     implementation project(':rhino')
+    compileOnly 'org.jline:jline-terminal:3.30.0'
+    compileOnly 'org.jline:jline-reader:3.30.0'
     testImplementation project(':testutils')
 }
 
