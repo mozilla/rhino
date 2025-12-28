@@ -536,6 +536,11 @@ public class AbstractEcmaObjectOperations {
             return isConstructor(cx, f);
         }
 
+        // Check IdFunctionObject explicitly to respect useCallAsConstructor flag
+        if (argument instanceof IdFunctionObject) {
+            return ((IdFunctionObject) argument).isConstructor();
+        }
+
         return argument instanceof Constructable;
     }
 
