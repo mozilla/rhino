@@ -1,5 +1,12 @@
 // Script to generate Float16 test data using Node.js
-// Run with: node generate-float16-test-data.js
+//
+// REQUIREMENTS: Node.js v21.0.0 or later (Float16 support added in v21)
+//
+// Run with: node generate-float16-test-data.js > TestData.java
+//
+// Note: This script is provided for reference and future validation.
+// The actual tests use hardcoded IEEE 754 reference values in
+// NodeJsFloat16ReferenceTest.java
 
 const testValues = [
     // Basic values
