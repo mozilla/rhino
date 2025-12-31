@@ -92,7 +92,7 @@ abstract class XMLObjectImpl extends XMLObject {
         initialize(lib, scope, prototype);
     }
 
-    final void initialize(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    final void initialize(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         setParentScope(scope);
         setPrototype(prototype);
         prototypeFlag = (prototype == null);

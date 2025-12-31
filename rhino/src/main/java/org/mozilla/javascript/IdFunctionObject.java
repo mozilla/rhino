@@ -36,7 +36,7 @@ public class IdFunctionObject extends BaseFunction {
         this.functionName = name;
     }
 
-    public void initFunction(String name, Scriptable scope) {
+    public void initFunction(String name, VarScope scope) {
         if (name == null) throw new IllegalArgumentException();
         if (scope == null) throw new IllegalArgumentException();
         this.functionName = name;
@@ -122,7 +122,7 @@ public class IdFunctionObject extends BaseFunction {
                 }
             }
             if (result.getParentScope() == null) {
-                Scriptable parent = getParentScope();
+                VarScope parent = getParentScope();
                 if (result != parent) {
                     result.setParentScope(parent);
                 }
