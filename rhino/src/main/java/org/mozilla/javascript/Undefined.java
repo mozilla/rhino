@@ -113,7 +113,7 @@ public class Undefined implements Serializable {
         }
 
         @Override
-        public void setParentScope(Scriptable parent) {}
+        public void setParentScope(VarScope parent) {}
 
         @Override
         public Object[] getIds() {
