@@ -12,38 +12,16 @@ package org.mozilla.javascript;
  * Interface that represents an the bindings of an ECMAScript environment record. Unlike {@link
  * Scriptable} scopes do not have prototypes.
  */
-public interface VarScope extends Scriptable, ConstProperties<Scriptable> {
+public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope> {
+    /**
+     * Get the parent scope of this scope.
+     *
+     * @return the parent scope
+     */
+    public VarScope getParentScope();
 
     @Override
-    default String getClassName() {
-        Kit.codeBug("Attempt to get classname of scope.");
-        return null;
-    }
-
-    @Override
-    default Object getDefaultValue(Class<?> hint) {
-        Kit.codeBug("Attempt to get default value of scope.");
-        return null;
-    }
-
-    @Override
-    default boolean hasInstance(Scriptable instance) {
-        Kit.codeBug("Attempt to do hasInstance of scope.");
-        return false;
-    }
-
-    @Override
-    default void setParentScope(VarScope parent) {
-        Kit.codeBug("Attempt to change parent of scope.");
-    }
-
-    @Override
-    default void setPrototype(Scriptable prototype) {
-        Kit.codeBug("Attempt to set prototype of scope.");
-    }
-
-    @Override
-    default Scriptable getPrototype() {
-        return null;
+    default VarScope getAncestor() {
+        return getParentScope();
     }
 }

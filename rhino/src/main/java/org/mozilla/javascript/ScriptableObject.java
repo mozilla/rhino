@@ -606,22 +606,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     /**
-     * Returns an array of ids for the properties of the object.
-     *
-     * <p>Any properties with the attribute DONTENUM are not listed.
-     *
-     * @return an array of java.lang.Objects with an entry for every listed property. Properties
-     *     accessed via an integer index will have a corresponding Integer entry in the returned
-     *     array. Properties accessed by a String will have a String entry in the returned array.
-     */
-    @Override
-    public Object[] getIds() {
-        try (var map = startCompoundOp(false)) {
-            return getIds(map, false, false);
-        }
-    }
-
-    /**
      * Returns an array of ids of all non-Symbol properties of the object.
      *
      * <p>All non-Symbol properties, even those with attribute DONTENUM, are listed.
@@ -1206,13 +1190,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         so.defineProperty(propertyName, value, attributes);
     }
 
-    public static void defineProperty(
-            Scriptable destination, SymbolKey propertyName, Object value, int attributes) {
-        if (!(destination instanceof ScriptableObject)) {
-            ((SymbolScriptable) destination).put(propertyName, destination, value);
+    public static <T extends PropHolder<T>> void defineProperty(
+            T destination, SymbolKey propertyName, Object value, int attributes) {
+        if (!(destination instanceof SlotMapOwner)) {
+            destination.put(propertyName, destination, value);
             return;
         }
-        ScriptableObject so = (ScriptableObject) destination;
+        @SuppressWarnings("unchecked")
+        SlotMapOwner<T> so = (SlotMapOwner<T>) destination;
         so.defineProperty(propertyName, value, attributes);
     }
 
@@ -1270,10 +1255,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param destination ScriptableObject to define the property on
      * @param propertyName the name of the property to define.
      */
-    public static void defineConstProperty(Scriptable destination, String propertyName) {
+    public static <T extends PropHolder<T>> void defineConstProperty(
+            T destination, String propertyName) {
         if (destination instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
-            var cp = (ConstProperties<Scriptable>) destination;
+            var cp = (ConstProperties<T>) destination;
             cp.defineConst(propertyName, destination);
         } else defineProperty(destination, propertyName, Undefined.instance, CONST);
     }
@@ -2322,7 +2308,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @since 1.5R2
      */
     public static Object getProperty(Scriptable obj, String name) {
-        return getPropWalkingPrototypeChain(obj, name, obj);
+        return getPropWalkingPrototypeChain((Scriptable) obj, name, (Scriptable) obj);
+    }
+
+    public static Object getProperty(VarScope obj, String name) {
+        return obj.get(name, obj);
     }
 
     /**
@@ -2462,6 +2452,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return null != getBase(obj, name);
     }
 
+    public static boolean hasProperty(VarScope obj, String name) {
+        return null != getBase(obj, name);
+    }
+
     /**
      * If hasProperty(obj, name) would return true, then if the property that was found is
      * compatible with the new property, this method just returns. If the property is not
@@ -2473,11 +2467,19 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static void redefineProperty(Scriptable obj, String name, boolean isConst) {
         Scriptable base = getBase(obj, name);
         if (base == null) return;
-        if (base instanceof ConstProperties) {
-            ConstProperties cp = (ConstProperties) base;
+        if (base instanceof ConstProperties<?>) {
+            @SuppressWarnings("unchecked")
+            var cp = (ConstProperties<Scriptable>) base;
 
             if (cp.isConst(name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
         }
+        if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
+    }
+
+    public static void redefineProperty(VarScope obj, String name, boolean isConst) {
+        VarScope base = getBase(obj, name);
+        if (base == null) return;
+        if (base.isConst(name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
         if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
     }
 
@@ -2519,6 +2521,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         Scriptable base = getBase(obj, name);
         if (base == null) base = obj;
         base.put(name, obj, value);
+    }
+
+    public static void putProperty(VarScope obj, String name, Object value) {
+        obj.put(name, obj, value);
     }
 
     /** Variant of putProperty to handle super.name = value */
@@ -2568,6 +2574,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             var cbase = ((ConstProperties<Scriptable>) base);
             cbase.putConst(name, obj, value);
         }
+    }
+
+    public static void putConstProperty(VarScope obj, String name, Object value) {
+        obj.putConst(name, obj, value);
     }
 
     /**
@@ -2729,16 +2739,19 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static Scriptable getBase(Scriptable start, String name) {
-        Scriptable obj = start;
+        Scriptable obj = (Scriptable) start;
+        Scriptable startObj = obj;
         do {
-            if (obj.has(name, start)) break;
-            if (obj instanceof VarScope) {
-                obj = null;
-            } else {
-                obj = obj.getPrototype();
+            if (obj.has(name, startObj)) {
+                break;
             }
+            obj = obj.getPrototype();
         } while (obj != null);
         return obj;
+    }
+
+    static VarScope getBase(VarScope start, String name) {
+        return start.has(name, start) ? start : null;
     }
 
     static Scriptable getBase(Scriptable start, int index) {
@@ -2868,6 +2881,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return slot.setValue(value, this, start);
     }
 
+    @Override
     Object[] getIds(
             CompoundOperationMap<Scriptable> map, boolean getNonEnumerable, boolean getSymbols) {
         Object[] a;
@@ -3022,7 +3036,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    private static final Comparator<Object> KEY_COMPARATOR = new KeyComparator();
+    static final Comparator<Object> KEY_COMPARATOR = new KeyComparator();
 
     /**
      * This comparator sorts property fields in spec-compliant order. Numeric ids first, in numeric
