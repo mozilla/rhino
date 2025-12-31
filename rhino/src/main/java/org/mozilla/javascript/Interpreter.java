@@ -605,7 +605,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public void setParentScope(Scriptable parent) {
+        public void setParentScope(VarScope parent) {
             // Do nothing.
         }
 

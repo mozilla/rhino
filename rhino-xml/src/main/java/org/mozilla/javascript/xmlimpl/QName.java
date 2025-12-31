@@ -68,7 +68,7 @@ final class QName extends ScriptableObject {
 
     private QName() {}
 
-    static QName create(XMLLibImpl lib, Scriptable scope, QName prototype, XmlNode.QName delegate) {
+    static QName create(XMLLibImpl lib, VarScope scope, QName prototype, XmlNode.QName delegate) {
         QName rv = new QName();
         rv.lib = lib;
         rv.setParentScope(scope);

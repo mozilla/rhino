@@ -196,7 +196,7 @@ public class Matrix implements Scriptable {
 
     /** Set parent. */
     @Override
-    public void setParentScope(Scriptable parent) {
+    public void setParentScope(VarScope parent) {
         this.parent = (VarScope) parent;
     }
 

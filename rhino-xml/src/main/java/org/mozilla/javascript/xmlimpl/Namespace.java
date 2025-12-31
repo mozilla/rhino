@@ -46,7 +46,7 @@ class Namespace extends ScriptableObject {
 
     private Namespace() {}
 
-    static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace) {
+    static Namespace create(VarScope scope, Namespace prototype, XmlNode.Namespace namespace) {
         Namespace rv = new Namespace();
         rv.setParentScope(scope);
         rv.prototype = prototype;

@@ -99,7 +99,7 @@ final class NativeError extends ScriptableObject {
                 0);
     }
 
-    static NativeError makeProto(Scriptable scope, Function ctorObj) {
+    static NativeError makeProto(VarScope scope, Function ctorObj) {
         Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
 
         NativeError obj = new NativeError();
@@ -108,7 +108,7 @@ final class NativeError extends ScriptableObject {
         return obj;
     }
 
-    static NativeError make(Context cx, Scriptable scope, Function ctorObj, Object[] args) {
+    static NativeError make(Context cx, VarScope scope, Function ctorObj, Object[] args) {
         NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;

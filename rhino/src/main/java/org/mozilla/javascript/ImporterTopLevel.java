@@ -201,7 +201,7 @@ public class ImporterTopLevel extends TopLevel {
     // than a scope, and then we need to work out to how make the
     // import work on the correct thing.
     private static Scriptable js_construct(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ImporterGlobalThis result = new ImporterGlobalThis(false);
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];

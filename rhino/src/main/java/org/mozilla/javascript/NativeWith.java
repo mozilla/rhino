@@ -141,8 +141,8 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public void setParentScope(Scriptable parent) {
-        this.parent = (VarScope) parent;
+    public void setParentScope(VarScope parent) {
+        this.parent = parent;
     }
 
     @Override

@@ -172,8 +172,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
-    public void setParentScope(Scriptable m) {
-        parent = (VarScope) m;
+    public void setParentScope(VarScope m) {
+        parent = m;
     }
 
     @Override

@@ -562,7 +562,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                 }
             }
             if (result.getParentScope() == null) {
-                Scriptable parent = getParentScope();
+                VarScope parent = getParentScope();
                 if (result != parent) {
                     result.setParentScope(parent);
                 }

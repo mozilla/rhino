@@ -601,8 +601,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
-    public void setParentScope(Scriptable m) {
-        parentScopeObject = (VarScope) m;
+    public void setParentScope(VarScope m) {
+        parentScopeObject = m;
     }
 
     /**
