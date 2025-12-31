@@ -9,6 +9,7 @@
 package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.util.ArrayList;
 

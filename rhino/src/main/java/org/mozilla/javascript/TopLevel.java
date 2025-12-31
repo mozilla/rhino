@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -168,11 +170,6 @@ public class TopLevel extends ScopeObject {
         isolate.copyAssociatedValue(parent);
         isolate.copyBuiltins(parent, false);
         return isolate;
-    }
-
-    @Override
-    public String getClassName() {
-        return "topLevel";
     }
 
     /**
@@ -347,7 +344,7 @@ public class TopLevel extends ScopeObject {
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, VarScope start) {
         var res = super.get(name, start);
         if (res != NOT_FOUND) {
             return res;
@@ -356,12 +353,12 @@ public class TopLevel extends ScopeObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, VarScope start, Object value) {
         ScriptableObject.putProperty(globalThis, name, value);
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, VarScope start) {
         return super.has(name, start) || ScriptableObject.hasProperty(globalThis, name);
     }
 
@@ -382,7 +379,8 @@ public class TopLevel extends ScopeObject {
     }
 
     @Override
-    void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
+    void addLazilyInitializedValue(
+            String name, int index, LazilyLoadedCtor<VarScope> init, int attributes) {
         globalThis.addLazilyInitializedValue(name, index, init, attributes);
     }
 
@@ -420,12 +418,12 @@ public class TopLevel extends ScopeObject {
     }
 
     @Override
-    public void putConst(String name, Scriptable start, Object value) {
+    public void putConst(String name, VarScope start, Object value) {
         globalThis.putConst(name, globalThis, value);
     }
 
     @Override
-    public void defineConst(String name, Scriptable start) {
+    public void defineConst(String name, VarScope start) {
         globalThis.defineConst(name, globalThis);
     }
 
