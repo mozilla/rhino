@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -541,24 +542,22 @@ public final class Interpreter extends Icode implements Evaluator {
         public void delete(int index) {}
 
         @Override
-        public Object get(String name, Scriptable start) {
+        public void delete(Symbol key) {}
+
+        @Override
+        public Object get(String name, VarScope start) {
             int offset = getOffsets().getOrDefault(name, -1);
             return offset >= 0 ? frame.getFromVars(offset) : NOT_FOUND;
         }
 
         @Override
-        public Object get(int index, Scriptable start) {
+        public Object get(int index, VarScope start) {
             return NOT_FOUND;
         }
 
         @Override
-        public String getClassName() {
-            return "debugscope";
-        }
-
-        @Override
-        public Object getDefaultValue(Class<?> hint) {
-            return null;
+        public Object get(Symbol key, VarScope start) {
+            return NOT_FOUND;
         }
 
         @Override
@@ -572,27 +571,22 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public Scriptable getPrototype() {
-            return null;
-        }
-
-        @Override
-        public boolean has(String name, Scriptable start) {
+        public boolean has(String name, VarScope start) {
             return getOffsets().containsKey(name);
         }
 
         @Override
-        public boolean has(int index, Scriptable start) {
+        public boolean has(int index, VarScope start) {
             return false;
         }
 
         @Override
-        public boolean hasInstance(Scriptable instance) {
+        public boolean has(Symbol key, VarScope start) {
             return false;
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public void put(String name, VarScope start, Object value) {
             int offset = getOffsets().getOrDefault(name, -1);
             if (offset >= 0) {
                 frame.setInVars(offset, value);
@@ -600,22 +594,17 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public void put(int index, VarScope start, Object value) {
             // Do nothing.
         }
 
         @Override
-        public void setParentScope(VarScope parent) {
+        public void put(Symbol key, VarScope start, Object value) {
             // Do nothing.
         }
 
         @Override
-        public void setPrototype(Scriptable prototype) {
-            // Do nothing.
-        }
-
-        @Override
-        public void defineConst(String name, Scriptable start) {
+        public void defineConst(String name, VarScope start) {
             // TODO Auto-generated method stub
 
         }
@@ -632,7 +621,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public void putConst(String name, Scriptable start, Object value) {
+        public void putConst(String name, VarScope start, Object value) {
             // TODO Auto-generated method stub
 
         }
@@ -1249,7 +1238,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     public static Object resumeGenerator(
-            Context cx, Scriptable scope, int operation, Object savedState, Object value) {
+            Context cx, VarScope scope, int operation, Object savedState, Object value) {
         CallFrame frame = (CallFrame) savedState;
         CallFrame activeFrame = frame.shallowCloneFrozen((CallFrame) cx.lastInterpreterFrame);
         try {
@@ -2903,6 +2892,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static class DoSetConst extends InstructionClass {
         @Override
+        @SuppressWarnings("unchecked")
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
