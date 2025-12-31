@@ -62,13 +62,13 @@ final class NativeBoolean extends ScriptableObject {
     }
 
     private static Object js_constructorFunc(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
         return ScriptRuntime.wrapBoolean(b);
     }
 
     private static NativeBoolean js_constructor(
-            Context cx, JSFunction fun, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction fun, Object nt, VarScope s, Object thisObj, Object[] args) {
         boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
         var res = new NativeBoolean(b);
         res.setPrototype((Scriptable) fun.getPrototypeProperty());
@@ -77,17 +77,17 @@ final class NativeBoolean extends ScriptableObject {
     }
 
     private static String js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return toValue(thisObj) ? "true" : "false";
     }
 
     private static Object js_valueOf(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return toValue(thisObj);
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return "(new Boolean(" + ScriptRuntime.toString(toValue(thisObj)) + "))";
     }
 }

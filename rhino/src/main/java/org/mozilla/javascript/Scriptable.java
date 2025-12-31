@@ -277,7 +277,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      *
      * @param parent the parent scope to set
      */
-    public void setParentScope(Scriptable parent);
+    public void setParentScope(VarScope parent);
 
     /**
      * Get an array of property ids.

@@ -267,7 +267,7 @@ public class IterableTest {
         }
 
         @Override
-        public void setParentScope(Scriptable parent) {
+        public void setParentScope(VarScope parent) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
