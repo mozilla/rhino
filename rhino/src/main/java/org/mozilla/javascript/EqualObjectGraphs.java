@@ -150,6 +150,8 @@ final class EqualObjectGraphs {
                     && equalJSFunctions((ScriptOrFn<?>) o1, (ScriptOrFn<?>) o2);
         } else if (o1 instanceof Scriptable) {
             return o2 instanceof Scriptable && equalScriptables((Scriptable) o1, (Scriptable) o2);
+        } else if (o1 instanceof VarScope) {
+            return o2 instanceof VarScope && equalScopes((VarScope) o1, (VarScope) o2);
         } else if (o1 instanceof SymbolKey) {
             return o2 instanceof SymbolKey
                     && equalGraphs(((SymbolKey) o1).getName(), ((SymbolKey) o2).getName());
@@ -171,6 +173,25 @@ final class EqualObjectGraphs {
 
         // Fallback case for everything else.
         return o1.equals(o2);
+    }
+
+    private boolean equalScopes(final VarScope s1, final VarScope s2) {
+        final Object[] ids1 = getSortedIds(s1);
+        final Object[] ids2 = getSortedIds(s2);
+        if (!equalObjectArrays(ids1, ids2)) {
+            return false;
+        }
+        final int l = ids1.length;
+        for (int i = 0; i < l; ++i) {
+            if (!equalGraphs(getValue(s1, ids1[i]), getValue(s2, ids2[i]))) {
+                return false;
+            }
+        }
+        if (!equalGraphs(s1.getParentScope(), s2.getParentScope())) {
+            return false;
+        }
+
+        return true;
     }
 
     private boolean equalScriptables(final Scriptable s1, final Scriptable s2) {
@@ -285,7 +306,7 @@ final class EqualObjectGraphs {
     }
 
     // Sort IDs deterministically
-    private static Object[] getSortedIds(final Scriptable s) {
+    private static <T extends PropHolder<T>> Object[] getSortedIds(final PropHolder<T> s) {
         final Object[] ids = getIds(s);
         Arrays.sort(
                 ids,
@@ -320,11 +341,11 @@ final class EqualObjectGraphs {
         return ids;
     }
 
-    private static Object[] getIds(final Scriptable s) {
-        if (s instanceof ScriptableObject) {
+    private static <T extends PropHolder<T>> Object[] getIds(final PropHolder<T> s) {
+        if (s instanceof SlotMapOwner) {
             // Grabs symbols too
-            try (var map = ((ScriptableObject) s).startCompoundOp(false)) {
-                return ((ScriptableObject) s).getIds(map, true, true);
+            try (var map = ((SlotMapOwner<T>) s).startCompoundOp(false)) {
+                return ((SlotMapOwner<T>) s).getIds(map, true, true);
             }
         } else if (s instanceof DebuggableObject) {
             return ((DebuggableObject) s).getAllIds();
@@ -340,6 +361,18 @@ final class EqualObjectGraphs {
             return ScriptableObject.getProperty(s, (Integer) id);
         } else if (id instanceof String) {
             return ScriptableObject.getProperty(s, (String) id);
+        } else {
+            throw new ClassCastException();
+        }
+    }
+
+    private static Object getValue(final VarScope s, final Object id) {
+        if (id instanceof Symbol) {
+            return s.get((Symbol) id, s);
+        } else if (id instanceof Integer) {
+            return s.get((int) id, s);
+        } else if (id instanceof String) {
+            return s.get((String) id, s);
         } else {
             throw new ClassCastException();
         }
