@@ -13,7 +13,7 @@ plugins {
 }
 
 dependencies {
-    errorprone "com.google.errorprone:error_prone_core:2.28.0"
+    errorprone "com.google.errorprone:error_prone_core:2.45.0"
 }
 
 version = project.version
@@ -34,40 +34,50 @@ tasks.withType(Jar).configureEach {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.errorprone.disable(
-        // JavaDoc stuff
-        "AlmostJavadoc",
-        "EmptyBlockTag",
-        "EscapedEntity",
-        "MissingSummary",
-        "InvalidBlockTag",
-        "NotJavadoc",
-        "UnicodeEscape",
-        // Great ideas for when minimum version is more than Java 11
-        "PatternMatchingInstanceof",
-        // Stuff that we just love to do but should do less of eventually
-        "EmptyCatch",
-        "LabelledBreakTarget",
-        "JavaUtilDate",
-        // Less important for now, more stylistic than bug
-        "InlineMeSuggester",
-        // This one either alerts for parameters that we don't use,
-        // or spuriously for local variables in my opinion.
-        "UnusedVariable",
-        // This requires annotations that are difficult to incorporate
-        // without adding a dependency for everyon who uses Rhino.
-        "AnnotateFormatMethod"
+    if (JavaVersion.current() < JavaVersion.VERSION_17) {
+        // Latest versions of ErrorProne are only compatible with Java 17
+        // and up.
+        System.out.println("Compiling with Java " + JavaVersion.current() +
+          " ErrorProne checks disabled");
+        options.errorprone.enabled = false;
+    } else {
+        // Disable tests that we aren't ready for in ErrorProne.
+        options.errorprone.disable(
+                // Things we should fix as we increase Java versions
+                "ClassInitializationDeadlock",
+                "EffectivelyPrivate",
+                "BooleanLiteral",
+                "AssignmentExpression",
+                "DuplicateBranches",
+                "PatternMatchingInstanceof",
+                "RedundantControlFlow",
+                // JavaDoc stuff -- not going to fix unless we do a big JavaDoc update
+                "AlmostJavadoc",
+                "EmptyBlockTag",
+                "EscapedEntity",
+                "MissingSummary",
+                "InvalidBlockTag",
+                "NotJavadoc",
+                "UnicodeEscape",
+                // Stuff that we just love to do but should do less of eventually
+                "EmptyCatch",
+                "LabelledBreakTarget",
+                "JavaUtilDate",
+                // Less important for now, more stylistic than bug
+                "InlineMeSuggester",
+                // This one either alerts for parameters that we don't use,
+                // or spuriously for local variables in my opinion.
+                "UnusedVariable",
+                // This requires annotations that are difficult to incorporate
+                // without adding a dependency for everyon who uses Rhino.
+                "AnnotateFormatMethod"
         )
-    options.errorprone.enable(
-        // These two do the last thing that Checkstyle used to do for us
-        "RemoveUnusedImports",
-        "WildcardImport",
-        // Warn us proactively that we are using things that might not work on Android.
-        // We will aggressively used "SuppressWarnings" for these, but these can be
-        // a reminder to check with an Android user since we don't have automated
-        // Android unit tests.
-        "AndroidJdkLibsChecker")
-    options.errorprone.excludedPaths = '.+/src/test/java/.+'
+        options.errorprone.enable(
+                // These two do the last thing that Checkstyle used to do for us
+                "RemoveUnusedImports",
+                "WildcardImport")
+        options.errorprone.excludedPaths = '.+/src/test/java/.+'
+    }
 }
 
 tasks.withType(Javadoc) {
