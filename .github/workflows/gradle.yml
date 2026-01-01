@@ -8,6 +8,9 @@ on:
 
 permissions: read-all
 
+env:
+  GRADLE_OPTS: "--enable-native-access=ALL-UNNAMED"
+
 jobs:
   test:
     runs-on: ubuntu-latest
