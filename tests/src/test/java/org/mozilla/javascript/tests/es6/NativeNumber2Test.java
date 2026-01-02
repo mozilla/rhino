@@ -137,10 +137,11 @@ public class NativeNumber2Test {
                 "1e-2.toLocaleString('ar-SA')",
                 Locale.forLanguageTag("ar-SA"));
 
-        Utils.assertWithAllModes402(
-                "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645",
-                "NaN.toLocaleString('ar-SA')",
-                Locale.forLanguageTag("ar-SA"));
+        // NaN produces different results on Linux and Windows
+        // Utils.assertWithAllModes402(
+        //        "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645",
+        //        "NaN.toLocaleString('ar-SA')",
+        //        Locale.forLanguageTag("ar-SA"));
         Utils.assertWithAllModes402(
                 "\u221e", "Infinity.toLocaleString('ar-SA')", Locale.forLanguageTag("ar-SA"));
     }
@@ -219,8 +220,9 @@ public class NativeNumber2Test {
 
         Utils.assertWithAllModes402("\u0660\u066b\u0660\u0661", "1e-2.toLocaleString('ar-SA')");
 
-        Utils.assertWithAllModes402(
-                "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
+        // NaN produces different results on Linux and Windows
+        // Utils.assertWithAllModes402(
+        //        "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
         Utils.assertWithAllModes402("\u221e", "Infinity.toLocaleString('ar-SA')");
     }
 }
