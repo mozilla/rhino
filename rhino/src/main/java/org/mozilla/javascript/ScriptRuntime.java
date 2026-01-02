@@ -193,7 +193,7 @@ public class ScriptRuntime {
             scope = new TopLevel();
         }
 
-        scope.put("global", scope, scope);
+        scope.put("global", scope, scope.getGlobalThis());
 
         scope.clearCache();
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
