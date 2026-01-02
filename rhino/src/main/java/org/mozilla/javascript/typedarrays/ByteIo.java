@@ -7,6 +7,11 @@
 package org.mozilla.javascript.typedarrays;
 
 public class ByteIo {
+
+    // Float16 constants
+    private static final double FLOAT16_MIN_NORMAL = 6.103515625e-5; // 2^-14
+    private static final double FLOAT16_MIN_SUBNORMAL = 5.9604644775390625E-8; // 2^-24
+
     public static Byte readInt8(byte[] buf, int offset) {
         return Byte.valueOf(buf[offset]);
     }
@@ -160,6 +165,135 @@ public class ByteIo {
             buf[offset + 6] = (byte) ((val >>> 8L) & 0xffL);
             buf[offset + 7] = (byte) (val & 0xffL);
         }
+    }
+
+    public static Float readFloat16(byte[] buf, int offset, boolean littleEndian) {
+        int bits = doReadInt16(buf, offset, littleEndian) & 0xffff;
+
+        // Extract sign, exponent, and mantissa
+        int sign = (bits >>> 15) & 0x1;
+        int exponent = (bits >>> 10) & 0x1f;
+        int mantissa = bits & 0x3ff;
+
+        // Handle special cases
+        if (exponent == 0) {
+            if (mantissa == 0) {
+
+                // Zero
+                return sign == 0 ? 0.0f : -0.0f;
+            }
+
+            // Denormalized number
+            float value = (float) ((double) mantissa / (1 << 10) * FLOAT16_MIN_NORMAL);
+            return sign == 0 ? value : -value;
+
+        } else if (exponent == 31) {
+            if (mantissa == 0) {
+
+                // Infinity
+                return sign == 0 ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
+            }
+
+            // NaN
+            return Float.NaN;
+
+        } else {
+
+            // Normalized number
+            float value =
+                    (float) ((1.0 + (double) mantissa / (1 << 10)) * Math.pow(2, exponent - 15));
+            return sign == 0 ? value : -value;
+        }
+    }
+
+    public static void writeFloat16(byte[] buf, int offset, double val, boolean littleEndian) {
+        float fval = (float) val;
+
+        // Handle special cases
+        if (Float.isNaN(fval)) {
+            doWriteInt16(buf, offset, 0x7e00, littleEndian);
+            return;
+        }
+
+        int sign = (Float.floatToIntBits(fval) >>> 31) & 0x1;
+        float absVal = Math.abs(fval);
+
+        if (Float.isInfinite(fval)) {
+
+            // Infinity
+            doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
+            return;
+        }
+
+        if (absVal == 0.0f) {
+
+            // Zero
+            doWriteInt16(buf, offset, sign << 15, littleEndian);
+            return;
+        }
+
+        // Convert to float16
+        int exponent;
+        int mantissa;
+
+        if (absVal > 65504.0f) {
+
+            // Overflow to infinity
+            doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
+            return;
+        }
+        if (absVal < (float) FLOAT16_MIN_NORMAL) {
+
+            // Denormalized or underflow to zero
+            if (absVal < (float) FLOAT16_MIN_SUBNORMAL) {
+
+                // Underflow to zero
+                doWriteInt16(buf, offset, sign << 15, littleEndian);
+                return;
+            }
+
+            // Denormalized
+            exponent = 0;
+            mantissa = (int) Math.round(absVal / FLOAT16_MIN_SUBNORMAL);
+        } else {
+
+            // Normalized
+            int exp32 = ((Float.floatToIntBits(fval) >>> 23) & 0xff) - 127;
+            exponent = exp32 + 15;
+
+            if (exponent >= 31) {
+
+                // Overflow to infinity
+                doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
+                return;
+            }
+            if (exponent <= 0) {
+
+                // Denormalized
+                exponent = 0;
+                mantissa = (int) Math.round((absVal / FLOAT16_MIN_NORMAL) * (1 << 10)) & 0x3ff;
+            } else {
+
+                // Normalized
+                int mant32 = Float.floatToIntBits(fval) & 0x7fffff;
+                mantissa = (mant32 + 0x1000) >>> 13;
+
+                // Handle rounding overflow
+                if (mantissa >= 0x400) {
+                    exponent++;
+                    mantissa = 0;
+                    if (exponent >= 31) {
+
+                        // Overflow to infinity
+                        doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
+                        return;
+                    }
+                }
+            }
+        }
+
+        int bits = (sign << 15) | (exponent << 10) | mantissa;
+        doWriteInt16(buf, offset, bits, littleEndian);
     }
 
     public static Float readFloat32(byte[] buf, int offset, boolean littleEndian) {
