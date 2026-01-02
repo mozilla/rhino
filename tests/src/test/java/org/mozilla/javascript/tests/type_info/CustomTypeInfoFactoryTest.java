@@ -23,7 +23,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
 
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             AlwaysFailFactory.INSTANCE.associate(scope);
             cx.initStandardObjects(scope);
 
@@ -68,7 +68,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
 
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             new NoGenericNoCacheFactory().associate(scope);
             cx.initStandardObjects(scope);
 
@@ -96,7 +96,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             new NoGenericNoCacheFactory().associate(scope);
             cx.initStandardObjects(scope);
 
@@ -116,7 +116,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             TypeInfoFactory.GLOBAL.associate(scope);
             cx.initStandardObjects(scope);
 
