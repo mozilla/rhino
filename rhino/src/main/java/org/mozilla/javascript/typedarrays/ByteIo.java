@@ -236,25 +236,51 @@ public class ByteIo {
         int exponent;
         int mantissa;
 
-        if (absVal > 65504.0f) {
+        // Check overflow using original double precision
+        // Max representable float16 is 65504 (exp=30, mantissa=0x3ff)
+        // Values >= 65520 definitely overflow to infinity
+        // Values in [65504, 65520) might round to 65504 or infinity
+        double absValDouble = Math.abs(val);
+        if (absValDouble >= 65520.0) {
 
-            // Overflow to infinity
+            // Definite overflow to infinity
             doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
+            return;
+        } else if (absValDouble > 65504.0) {
+
+            // Near overflow: value is between max finite and definite overflow
+            // These values might round to 65504 or infinity depending on exact value
+            // 65504 = 0x7BFF: exp=30, mantissa=0x3ff (all 1s)
+            // Halfway point to next value would cause overflow
+            // Values < 65520 should round to 65504
+            doWriteInt16(buf, offset, (sign << 15) | 0x7BFF, littleEndian);
             return;
         }
         if (absVal < (float) FLOAT16_MIN_NORMAL) {
 
-            // Denormalized or underflow to zero
-            if (absVal < (float) FLOAT16_MIN_SUBNORMAL) {
-
-                // Underflow to zero
-                doWriteInt16(buf, offset, sign << 15, littleEndian);
-                return;
-            }
-
-            // Denormalized
+            // Denormalized number - IEEE 754 round-to-nearest-even
+            // Use original double precision for accuracy in denormalized range
             exponent = 0;
-            mantissa = (int) Math.round(absVal / FLOAT16_MIN_SUBNORMAL);
+
+            double ratio = Math.abs(val) / FLOAT16_MIN_SUBNORMAL;
+            int mantissaBase = (int) ratio;
+            double fractional = ratio - mantissaBase;
+
+            // IEEE 754 round-to-nearest-even
+            if (fractional > 0.5) {
+                // More than halfway: round up
+                mantissa = mantissaBase + 1;
+            } else if (fractional == 0.5) {
+                // Tie: round to even
+                if ((mantissaBase & 1) != 0) {
+                    mantissa = mantissaBase + 1; // Round up if odd
+                } else {
+                    mantissa = mantissaBase; // Keep if even
+                }
+            } else {
+                // Less than halfway: round down
+                mantissa = mantissaBase;
+            }
         } else {
 
             // Normalized
@@ -269,14 +295,48 @@ public class ByteIo {
             }
             if (exponent <= 0) {
 
-                // Denormalized
+                // Denormalized - IEEE 754 round-to-nearest-even
                 exponent = 0;
-                mantissa = (int) Math.round((absVal / FLOAT16_MIN_NORMAL) * (1 << 10)) & 0x3ff;
+
+                double ratio = (absVal / FLOAT16_MIN_NORMAL) * (1 << 10);
+                int mantissaBase = (int) ratio;
+                double fractional = ratio - mantissaBase;
+
+                // IEEE 754 round-to-nearest-even
+                if (fractional > 0.5) {
+                    // More than halfway: round up
+                    mantissa = mantissaBase + 1;
+                } else if (fractional == 0.5) {
+                    // Tie: round to even
+                    if ((mantissaBase & 1) != 0) {
+                        mantissa = mantissaBase + 1; // Round up if odd
+                    } else {
+                        mantissa = mantissaBase; // Keep if even
+                    }
+                } else {
+                    // Less than halfway: round down
+                    mantissa = mantissaBase;
+                }
+                mantissa &= 0x3ff;
             } else {
 
                 // Normalized
                 int mant32 = Float.floatToIntBits(fval) & 0x7fffff;
-                mantissa = (mant32 + 0x1000) >>> 13;
+
+                // Implement IEEE 754 round-to-nearest-even
+                int bitsToShift = mant32 & 0x1fff; // Bits [12:0] that will be lost
+                mantissa = mant32 >>> 13; // Bits [22:13] become the new mantissa
+
+                if (bitsToShift > 0x1000) {
+                    // More than halfway: round up
+                    mantissa++;
+                } else if (bitsToShift == 0x1000) {
+                    // Exactly halfway: round to even (check LSB)
+                    if ((mantissa & 1) != 0) {
+                        mantissa++; // Round up if odd
+                    }
+                }
+                // else: Less than halfway, round down (mantissa already truncated)
 
                 // Handle rounding overflow
                 if (mantissa >= 0x400) {
