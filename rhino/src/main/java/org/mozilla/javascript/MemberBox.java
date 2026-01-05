@@ -103,7 +103,7 @@ final class MemberBox implements Serializable {
         var got = this.argNullability;
         if (got == null) {
             // synchronization is optional, because `getParameterNullability(...)` will always
-            // give `NullabilityAccessor` with same behavior
+            // give `NullabilityAccessor` with same behavior for the same method/constructor
             if (nullDetector == null) {
                 got = NullabilityDetector.NullabilityAccessor.FALSE;
             } else if (this.isMethod()) {
@@ -170,16 +170,12 @@ final class MemberBox implements Serializable {
                                 Scriptable thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
-                            Object getterThis;
-                            Object[] args;
                             if (nativeGetter.delegateTo == null) {
-                                getterThis = thisObj;
-                                args = ScriptRuntime.emptyArgs;
+                                return nativeGetter.invoke(thisObj, ScriptRuntime.emptyArgs);
                             } else {
-                                getterThis = nativeGetter.delegateTo;
-                                args = new Object[] {thisObj};
+                                return nativeGetter.invoke(
+                                        nativeGetter.delegateTo, new Object[] {thisObj});
                             }
-                            return nativeGetter.invoke(getterThis, args);
                         }
 
                         @Override
@@ -207,8 +203,6 @@ final class MemberBox implements Serializable {
                                 Scriptable thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
-                            Object setterThis;
-                            Object[] args;
                             Object value =
                                     originalArgs.length > 0
                                             ? FunctionObject.convertArg(
@@ -219,13 +213,11 @@ final class MemberBox implements Serializable {
                                                     nativeSetter.getArgNullability().isNullable(0))
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
-                                setterThis = thisObj;
-                                args = new Object[] {value};
+                                return nativeSetter.invoke(thisObj, new Object[] {value});
                             } else {
-                                setterThis = nativeSetter.delegateTo;
-                                args = new Object[] {thisObj, value};
+                                return nativeSetter.invoke(
+                                        nativeSetter.delegateTo, new Object[] {thisObj, value});
                             }
-                            return nativeSetter.invoke(setterThis, args);
                         }
 
                         @Override
@@ -290,8 +282,9 @@ final class MemberBox implements Serializable {
                 if (!tryToMakeAccessible(ctor)) {
                     throw Context.throwAsScriptRuntimeEx(ex);
                 }
+                // Retry after recovery
+                return ctor.newInstance(args);
             }
-            return ctor.newInstance(args);
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
@@ -308,33 +301,43 @@ final class MemberBox implements Serializable {
     private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
         int modifiers = method.getModifiers();
         if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
+            // public instance method being inaccessible
+            // If the declaring is also not accessible (for example, not public), we can try to look
+            // for an accessible method in superclass/interfaces, that the method overrides, and is
+            // declared by an accessible class
+
             Class<?> c = method.getDeclaringClass();
-            if (!Modifier.isPublic(c.getModifiers())) {
-                String name = method.getName();
-                Class<?>[] intfs = c.getInterfaces();
-                for (int i = 0, N = intfs.length; i != N; ++i) {
-                    Class<?> intf = intfs[i];
-                    if (Modifier.isPublic(intf.getModifiers())) {
-                        try {
-                            return intf.getMethod(name, params);
-                        } catch (NoSuchMethodException | SecurityException ex) {
-                        }
+            if (Modifier.isPublic(c.getModifiers())) {
+                // declaring class is accessible, nothing we can do for now
+                return null;
+            }
+
+            String name = method.getName();
+
+            // search in interfaces
+            for (Class<?> intf : c.getInterfaces()) {
+                if (Modifier.isPublic(intf.getModifiers())) {
+                    try {
+                        return intf.getMethod(name, params);
+                    } catch (NoSuchMethodException | SecurityException ignored) {
                     }
                 }
-                for (; ; ) {
-                    c = c.getSuperclass();
-                    if (c == null) {
-                        break;
-                    }
-                    if (Modifier.isPublic(c.getModifiers())) {
-                        try {
-                            Method m = c.getMethod(name, params);
-                            int mModifiers = m.getModifiers();
-                            if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
-                                return m;
-                            }
-                        } catch (NoSuchMethodException | SecurityException ex) {
+            }
+
+            // search in superclasses
+            for (; ; ) {
+                c = c.getSuperclass();
+                if (c == null) {
+                    break;
+                }
+                if (Modifier.isPublic(c.getModifiers())) {
+                    try {
+                        Method m = c.getMethod(name, params);
+                        int mModifiers = m.getModifiers();
+                        if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
+                            return m;
                         }
+                    } catch (NoSuchMethodException | SecurityException ignored) {
                     }
                 }
             }
@@ -371,11 +374,7 @@ final class MemberBox implements Serializable {
         out.writeObject(memberObject.getName());
         out.writeObject(memberObject.getDeclaringClass());
 
-        var paramTypes =
-                memberObject instanceof Method
-                        ? ((Method) memberObject).getParameterTypes()
-                        : ((Constructor<?>) memberObject).getParameterTypes();
         // we only care about parameter types, so return type is always void
-        out.writeObject(MethodType.methodType(void.class, paramTypes).toMethodDescriptorString());
+        out.writeObject(MethodType.methodType(void.class, argTypes).toMethodDescriptorString());
     }
 }

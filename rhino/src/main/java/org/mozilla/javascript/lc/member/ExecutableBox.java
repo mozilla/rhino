@@ -162,6 +162,9 @@ public final class ExecutableBox {
             try {
                 return method.invoke(target, args);
             } catch (IllegalAccessException ex) {
+                // Unlike MemberBox, ExecutableBox will NOT try to search an accessible method after
+                // failure. Instead, JavaMembers should be responsible for ensuring methods visible
+                // to JS are accessible.
                 if (!tryToMakeAccessible(method)) {
                     throw Context.throwAsScriptRuntimeEx(ex);
                 }
