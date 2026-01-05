@@ -61,8 +61,19 @@ public class NodeJsFloat16ReferenceTest {
         new TestCase(65504.0, 65504.0f, 0x7BFF, false, false),
         new TestCase(-65504.0, -65504.0f, 0xFBFF, false, false),
 
+        // Values between max finite and overflow threshold
+        // ULP at exp=30 is 32, so halfway to next representable is 65504+16=65520
+        // Values < 65520 round to 65504, values >= 65520 overflow to infinity
+        new TestCase(65505.0, 65504.0f, 0x7BFF, false, false), // rounds to max finite
+
         // Overflow to infinity
-        new TestCase(65505.0, Float.POSITIVE_INFINITY, 0x7C00, false, true),
+        new TestCase(
+                65520.0,
+                Float.POSITIVE_INFINITY,
+                0x7C00,
+                false,
+                true), // exactly halfway, rounds to even (infinity has even mantissa 0)
+        new TestCase(65521.0, Float.POSITIVE_INFINITY, 0x7C00, false, true), // > halfway
         new TestCase(100000.0, Float.POSITIVE_INFINITY, 0x7C00, false, true),
         new TestCase(-100000.0, Float.NEGATIVE_INFINITY, 0xFC00, false, true),
 
@@ -236,8 +247,9 @@ public class NodeJsFloat16ReferenceTest {
         // 1.0009765625 = 1 + 2^-10, exactly representable (smallest step from 1.0)
         assertRoundsTo(1.0009765625, 1.0009765625f);
 
-        // 1.00048828125 = 1 + 2^-11, rounds to 1 + 2^-10 (not enough mantissa bits)
-        assertRoundsTo(1.00048828125, 1.0009765625f);
+        // 1.00048828125 = 1 + 2^-11, exactly halfway between 1.0 and 1 + 2^-10
+        // IEEE 754 round-to-nearest-even: round to 1.0 (mantissa 0 is even)
+        assertRoundsTo(1.00048828125, 1.0f);
 
         // Values between representable numbers should round to nearest
         // Test value very close to 1.0
