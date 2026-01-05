@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.mozilla.javascript.lc.ReflectUtils;
+import org.mozilla.javascript.lc.member.ExecutableBox;
 import org.mozilla.javascript.lc.type.ParameterizedTypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -29,24 +31,30 @@ public class NativeJavaMethod extends BaseFunction {
 
     private static final long serialVersionUID = -3440381785576412928L;
 
-    NativeJavaMethod(MemberBox[] methods) {
+    // TODO: serialization support by read/write class and method name
+    final ExecutableBox[] methods;
+    private final String functionName;
+    private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
+            new CopyOnWriteArrayList<>();
+
+    NativeJavaMethod(ExecutableBox[] methods) {
         this.functionName = methods[0].getName();
         this.methods = methods;
     }
 
-    NativeJavaMethod(MemberBox[] methods, String name) {
+    NativeJavaMethod(ExecutableBox[] methods, String name) {
         this.functionName = name;
         this.methods = methods;
     }
 
-    NativeJavaMethod(MemberBox method, String name) {
+    NativeJavaMethod(ExecutableBox method, String name) {
         this.functionName = name;
-        this.methods = new MemberBox[] {method};
+        this.methods = new ExecutableBox[] {method};
     }
 
     @Deprecated
     public NativeJavaMethod(Method method, String name) {
-        this(new MemberBox(method, TypeInfoFactory.GLOBAL), name);
+        this(new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()), name);
     }
 
     @Override
@@ -112,14 +120,14 @@ public class NativeJavaMethod extends BaseFunction {
         for (int i = 0, N = methods.length; i != N; ++i) {
             // Check member type, we also use this for overloaded constructors
             if (methods[i].isMethod()) {
-                Method method = methods[i].method();
+                Method method = methods[i].asMethod();
                 sb.append(JavaMembers.javaSignature(method.getReturnType()));
                 sb.append(' ');
                 sb.append(method.getName());
             } else {
                 sb.append(methods[i].getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(methods[i].getArgTypes()));
+            sb.append(ReflectUtils.liveConnectSignature(methods[i].getArgTypes()));
             sb.append('\n');
         }
         return sb.toString();
@@ -134,12 +142,12 @@ public class NativeJavaMethod extends BaseFunction {
 
         int index = findCachedFunction(cx, args);
         if (index < 0) {
-            Class<?> c = methods[0].method().getDeclaringClass();
+            Class<?> c = methods[0].asMethod().getDeclaringClass();
             String sig = c.getName() + '.' + getFunctionName() + '(' + scriptSignature(args) + ')';
             throw Context.reportRuntimeErrorById("msg.java.no_such_method", sig);
         }
 
-        MemberBox meth = methods[index];
+        var meth = methods[index];
 
         Map<VariableTypeInfo, TypeInfo> mapping = Map.of();
         if (thisObj instanceof NativeJavaObject) {
@@ -234,7 +242,7 @@ public class NativeJavaMethod extends BaseFunction {
      * Find the index of the correct function to call given the set of methods or constructors and
      * the arguments. If no function can be found to call, return -1.
      */
-    static int findFunction(Context cx, MemberBox[] methodsOrCtors, Object[] args) {
+    static int findFunction(Context cx, ExecutableBox[] methodsOrCtors, Object[] args) {
         if (methodsOrCtors.length == 0) {
             return -1;
         }
@@ -255,7 +263,7 @@ public class NativeJavaMethod extends BaseFunction {
 
         search:
         for (int i = 0; i < methodsOrCtors.length; i++) {
-            MemberBox member = methodsOrCtors[i];
+            ExecutableBox member = methodsOrCtors[i];
 
             final var weights = failFastConversionWeights(args, member);
             if (weights == null) {
@@ -279,7 +287,7 @@ public class NativeJavaMethod extends BaseFunction {
             // over member
             for (int j = -1; j != extraBestFitsCount; ++j) {
                 int bestFitIndex = j < 0 ? firstBestFit : extraBestFits[j];
-                MemberBox bestFit = methodsOrCtors[bestFitIndex];
+                ExecutableBox bestFit = methodsOrCtors[bestFitIndex];
                 int[] bestFitWeights = j < 0 ? firstBestFitWeights : extraBestFitWeights[j];
                 if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
                         && bestFit.isPublic() != member.isPublic()) {
@@ -370,11 +378,11 @@ public class NativeJavaMethod extends BaseFunction {
             buf.append(methodsOrCtors[bestFitIndex].toJavaDeclaration());
         }
 
-        MemberBox firstFitMember = methodsOrCtors[firstBestFit];
+        ExecutableBox firstFitMember = methodsOrCtors[firstBestFit];
         String memberName = firstFitMember.getName();
         String memberClass = firstFitMember.getDeclaringClass().getName();
 
-        if (methodsOrCtors[0].isCtor()) {
+        if (methodsOrCtors[0].isConstructor()) {
             throw Context.reportRuntimeErrorById(
                     "msg.constructor.ambiguous", memberName, scriptSignature(args), buf.toString());
         }
@@ -402,9 +410,9 @@ public class NativeJavaMethod extends BaseFunction {
      */
     private static int preferSignature(
             Object[] args,
-            MemberBox member1,
+            ExecutableBox member1,
             int[] computedWeights1,
-            MemberBox member2,
+            ExecutableBox member2,
             int[] computedWeights2) {
         final var types1 = member1.getArgTypes();
         final var types2 = member2.getArgTypes();
@@ -412,11 +420,11 @@ public class NativeJavaMethod extends BaseFunction {
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
             final var type1 =
-                    member1.vararg && j >= types1.size()
+                    member1.isVarArgs() && j >= types1.size()
                             ? types1.get(types1.size() - 1)
                             : types1.get(j);
             final var type2 =
-                    member2.vararg && j >= types2.size()
+                    member2.isVarArgs() && j >= types2.size()
                             ? types2.get(types2.size() - 1)
                             : types2.get(j);
             if (type1.asClass() == type2.asClass()) {
@@ -475,10 +483,10 @@ public class NativeJavaMethod extends BaseFunction {
      * @see NativeJavaObject#getConversionWeight(Object, org.mozilla.javascript.lc.type.TypeInfo)
      * @see NativeJavaObject#canConvert(Object, org.mozilla.javascript.lc.type.TypeInfo)
      */
-    static int[] failFastConversionWeights(Object[] args, MemberBox member) {
+    static int[] failFastConversionWeights(Object[] args, ExecutableBox member) {
         final var argTypes = member.getArgTypes();
         var typeLen = argTypes.size();
-        if (member.vararg) {
+        if (member.isVarArgs()) {
             typeLen--;
             if (typeLen > args.length) {
                 return null;
@@ -504,7 +512,7 @@ public class NativeJavaMethod extends BaseFunction {
 
     private static final boolean debug = false;
 
-    private static void printDebug(String msg, MemberBox member, Object[] args) {
+    private static void printDebug(String msg, ExecutableBox member, Object[] args) {
         if (debug) {
             StringBuilder sb = new StringBuilder();
             sb.append(" ----- ");
@@ -514,18 +522,13 @@ public class NativeJavaMethod extends BaseFunction {
             if (member.isMethod()) {
                 sb.append(member.getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(member.getArgTypes()));
+            sb.append(ReflectUtils.liveConnectSignature(member.getArgTypes()));
             sb.append(" for arguments (");
             sb.append(scriptSignature(args));
             sb.append(')');
             System.out.println(sb);
         }
     }
-
-    MemberBox[] methods;
-    private String functionName;
-    private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
-            new CopyOnWriteArrayList<>();
 }
 
 class ResolvedOverload {

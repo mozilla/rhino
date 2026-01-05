@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
+import org.mozilla.javascript.lc.member.ExecutableBox;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
@@ -180,7 +181,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     static Scriptable constructSpecific(
-            Context cx, Scriptable scope, Object[] args, MemberBox ctor) {
+            Context cx, Scriptable scope, Object[] args, ExecutableBox ctor) {
         Object instance = constructInternal(args, ctor);
         // we need to force this to be wrapped, because construct _has_
         // to return a scriptable
@@ -188,7 +189,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
     }
 
-    static Object constructInternal(Object[] args, MemberBox ctor) {
+    static Object constructInternal(Object[] args, ExecutableBox ctor) {
         args = ctor.wrapArgsInternal(args, Map.of());
 
         return ctor.newInstance(args);
