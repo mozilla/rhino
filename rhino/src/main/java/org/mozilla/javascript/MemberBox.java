@@ -12,17 +12,11 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.List;
-import java.util.Map;
-import org.mozilla.javascript.lc.type.TypeInfo;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
-import org.mozilla.javascript.lc.type.VariableTypeInfo;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -34,10 +28,9 @@ final class MemberBox implements Serializable {
     private static final long serialVersionUID = 8260700214130563887L;
 
     private transient Member memberObject;
-    private transient List<TypeInfo> argTypeInfos;
-    private transient TypeInfo returnTypeInfo;
+    private transient Class<?>[] argTypes;
+    private transient Class<?> returnType;
     private transient NullabilityDetector.NullabilityAccessor argNullability;
-    transient boolean vararg;
 
     transient Function asGetterFunction;
     transient Function asSetterFunction;
@@ -46,52 +39,24 @@ final class MemberBox implements Serializable {
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Method method, TypeInfoFactory factory) {
-        init(method, factory, method.getDeclaringClass());
+    MemberBox(Method method) {
+        init(method);
     }
 
-    MemberBox(Constructor<?> constructor, TypeInfoFactory factory) {
-        init(constructor, factory);
+    MemberBox(Constructor<?> constructor) {
+        init(constructor);
     }
 
-    MemberBox(Method method, TypeInfoFactory factory, Class<?> parent) {
-        init(method, factory, parent);
-    }
-
-    private void init(Method method, TypeInfoFactory factory, Class<?> parent) {
+    private void init(Method method) {
         this.memberObject = method;
-        if (nullDetector == null) {
-            this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
-        }
-        this.vararg = method.isVarArgs();
-        this.argTypeInfos = factory.createList(method.getGenericParameterTypes());
-        this.returnTypeInfo = factory.create(method.getGenericReturnType());
-
-        var mapping = factory.getConsolidationMapping(parent);
-        this.argTypeInfos = TypeInfoFactory.consolidateAll(this.argTypeInfos, mapping);
-        this.returnTypeInfo = returnTypeInfo.consolidate(mapping);
+        this.argTypes = method.getParameterTypes();
+        this.returnType = method.getReturnType();
     }
 
-    private void init(Constructor<?> constructor, TypeInfoFactory factory) {
+    private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
-        if (nullDetector == null) {
-            this.argNullability = NullabilityDetector.NullabilityAccessor.FALSE;
-        }
-        this.vararg = constructor.isVarArgs();
-        this.argTypeInfos = factory.createList(constructor.getGenericParameterTypes());
-        this.returnTypeInfo = TypeInfo.NONE;
-
-        // Type consolidation not required for constructor.
-        //
-        // consider this example:
-        // class A<T> {
-        //     A(T value) { ... }
-        // }
-        // class B extends A<String> {
-        //     B(String value) { super(value); }
-        // }
-        // for class B, the constructor must have "String" instead of "T" as parameter type,
-        // otherwise it won't compile. So param types are already concrete types.
+        this.argTypes = constructor.getParameterTypes();
+        this.returnType = null;
     }
 
     Method method() {
@@ -130,27 +95,29 @@ final class MemberBox implements Serializable {
         return memberObject.getDeclaringClass();
     }
 
-    List<TypeInfo> getArgTypes() {
-        return argTypeInfos;
+    Class<?>[] getArgTypes() {
+        return argTypes;
     }
 
     public NullabilityDetector.NullabilityAccessor getArgNullability() {
         var got = this.argNullability;
         if (got == null) {
             // synchronization is optional, because `getParameterNullability(...)` will always
-            // give `NullabilityAccessor` with same behaviour, which is because arg nullability
-            // for a certain method/constructor will not change at runtime
-            got =
-                    this.isMethod()
-                            ? nullDetector.getParameterNullability(this.method())
-                            : nullDetector.getParameterNullability(this.ctor());
+            // give `NullabilityAccessor` with same behavior
+            if (nullDetector == null) {
+                got = NullabilityDetector.NullabilityAccessor.FALSE;
+            } else if (this.isMethod()) {
+                got = nullDetector.getParameterNullability(this.method());
+            } else {
+                got = nullDetector.getParameterNullability(this.ctor());
+            }
             this.argNullability = got;
         }
         return got;
     }
 
-    TypeInfo getReturnType() {
-        return returnTypeInfo;
+    Class<?> getReturnType() {
+        return returnType;
     }
 
     String toJavaDeclaration() {
@@ -230,6 +197,7 @@ final class MemberBox implements Serializable {
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
         if (asSetterFunction == null) {
+            var setterTypeTag = FunctionObject.getTypeTag(this.argTypes[0]);
             asSetterFunction =
                     new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
                         @Override
@@ -247,7 +215,7 @@ final class MemberBox implements Serializable {
                                                     cx,
                                                     thisObj,
                                                     originalArgs[0],
-                                                    nativeSetter.getArgTypes().get(0).getTypeTag(),
+                                                    setterTypeTag,
                                                     nativeSetter.getArgNullability().isNullable(0))
                                             : Undefined.instance;
                             if (nativeSetter.delegateTo == null) {
@@ -288,12 +256,7 @@ final class MemberBox implements Serializable {
             try {
                 return method.invoke(target, args);
             } catch (IllegalAccessException ex) {
-                Method accessible =
-                        searchAccessibleMethod(
-                                method,
-                                getArgTypes().stream()
-                                        .map(TypeInfo::asClass)
-                                        .toArray(Class[]::new));
+                Method accessible = searchAccessibleMethod(method, getArgTypes());
                 if (accessible != null) {
                     memberObject = accessible;
                     method = accessible;
@@ -332,78 +295,6 @@ final class MemberBox implements Serializable {
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
-    }
-
-    Object[] wrapArgsInternal(Object[] args, Map<VariableTypeInfo, TypeInfo> mapping) {
-        var argTypes = getArgTypes();
-        var argTypesLen = argTypes.size();
-        var argLen = args.length;
-        final var shouldConsolidate = !mapping.isEmpty();
-
-        if (!this.vararg) {
-            // fast path for getter
-            if (argLen == 0) {
-                return args;
-            }
-
-            var wrappedArgs = args;
-            for (int i = 0; i < argLen; i++) {
-                var arg = args[i];
-                var argType = argTypes.get(i);
-                if (shouldConsolidate) {
-                    argType = argType.consolidate(mapping);
-                }
-
-                var coerced = Context.jsToJava(arg, argType);
-                if (coerced != arg) {
-                    if (wrappedArgs == args) {
-                        wrappedArgs = args.clone();
-                    }
-                    wrappedArgs[i] = coerced;
-                }
-            }
-            return wrappedArgs;
-        }
-
-        // marshall the explicit parameters
-        var wrappedArgs = new Object[argTypesLen];
-        for (int i = 0; i < argTypesLen - 1; i++) {
-            var argType = argTypes.get(i);
-            if (shouldConsolidate) {
-                argType = argType.consolidate(mapping);
-            }
-            wrappedArgs[i] = Context.jsToJava(args[i], argType);
-        }
-
-        // Handle special situation where a single variable parameter
-        // is given, and it is a Java or ECMA array or is null.
-        if (argLen == argTypesLen) {
-            var lastArg = args[argLen - 1];
-            var lastArgType = argTypes.get(argTypesLen - 1);
-            if (shouldConsolidate) {
-                lastArgType = lastArgType.consolidate(mapping);
-            }
-            if (lastArg == null
-                    || lastArg instanceof NativeArray
-                    || lastArg instanceof NativeJavaArray) {
-                // convert the ECMA array into a native array
-                wrappedArgs[argLen - 1] = Context.jsToJava(lastArg, lastArgType);
-                return wrappedArgs;
-            }
-        }
-
-        // marshall the variable parameters
-        var lastArgType = argTypes.get(argTypesLen - 1).getComponentType();
-        if (shouldConsolidate) {
-            lastArgType = lastArgType.consolidate(mapping);
-        }
-        var varArgs = lastArgType.newArray(argLen - argTypesLen + 1);
-        for (int i = 0, arrayLen = Array.getLength(varArgs); i < arrayLen; i++) {
-            Array.set(varArgs, i, Context.jsToJava(args[argTypesLen - 1 + i], lastArgType));
-        }
-        wrappedArgs[argTypesLen - 1] = varArgs;
-
-        return wrappedArgs;
     }
 
     @SuppressWarnings("deprecation")
@@ -464,10 +355,10 @@ final class MemberBox implements Serializable {
         try {
             if (isMethod) {
                 var member = declaring.getMethod(name, parms);
-                init(member, TypeInfoFactory.GLOBAL, member.getDeclaringClass());
+                init(member);
             } else {
                 var member = declaring.getConstructor(parms);
-                init(member, TypeInfoFactory.GLOBAL);
+                init(member);
             }
         } catch (NoSuchMethodException e) {
             throw new IOException("Cannot find member: " + e);

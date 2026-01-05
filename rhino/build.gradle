@@ -93,21 +93,13 @@ decycle {
     // LiveConnect classes in root package
     // TODO: Move them to LiveConnect module
     ignoring(
-        from: "org.mozilla.javascript.(Native*|JavaMembers|MemberBox|AccessorSlot\$MemberBoxSetter|FieldAndMethods|InterfaceAdapter|WrapFactory)",
+        from: "org.mozilla.javascript.(Native*|JavaMembers|FieldAndMethods|InterfaceAdapter|WrapFactory)",
         to: "org.mozilla.javascript.lc.**"
     )
 
     // In theory, this is also LiveConnect classes in root package, but Rhino is using one of
     // its methods to create instance from compiled script
     ignoring from: "org.mozilla.javascript.JavaAdapter", to: "org.mozilla.javascript.lc.**"
-
-    // `ScriptableObject#defineProperty(...)` allows using methods to build getter/setter
-    // Given that its reflection usage is rather simple, we should be able to replace it with a small helper class
-    ignoring from: "org.mozilla.javascript.ScriptableObject", to: "org.mozilla.javascript.lc.type.TypeInfoFactory"
-
-    // `new FunctionObject(String, Member, Scriptable)` allows using method/constructor to build function
-    // similar to ScriptableObject, its reflection usage is rather basic
-    ignoring from: "org.mozilla.javascript.FunctionObject", to: "org.mozilla.javascript.lc.type.TypeInfo*"
 
     // `Context#jsToJava(...)` used TypeInfo and TypeInfoFactory
     // removing this is absolutely a breaking change, wait until 2.0.0
