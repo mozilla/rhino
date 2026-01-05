@@ -1,25 +1,16 @@
 plugins {
     id 'rhino.library-conventions'
     id 'com.gradleup.shadow' version '9.3.1'
-    id 'application'
-}
-
-application {
-    mainClass = 'org.mozilla.javascript.tools.shell.Main'
-}
-
-run {
-    standardInput = System.in
 }
 
 dependencies {
     implementation project(':rhino')
     implementation project(':rhino-tools')
     implementation project(':rhino-xml')
-    runtimeOnly 'org.jline:jline-terminal:3.30.0'
-    runtimeOnly 'org.jline:jline-reader:3.30.0'
-    runtimeOnly 'org.jline:jline-terminal-ffm:3.30.0'
-    runtimeOnly 'org.jline:jline-terminal-jni:3.30.0'
+    // Include JLine so that the stand-alone JAR gets a nice terminal
+    runtimeOnly libs.jline.terminal
+    runtimeOnly libs.jline.reader
+    runtimeOnly libs.bundles.jline.runtime
 }
 
 shadowJar {
@@ -32,14 +23,9 @@ shadowJar {
     filesNotMatching('META-INF/services/**') {
         duplicatesStrategy = DuplicatesStrategy.FAIL // Or FAIL.
     }
-}
-
-startScripts {
-    dependsOn 'shadowJar'
-}
-
-startShadowScripts {
-    dependsOn 'jar'
+    manifest {
+        attributes 'Main-Class': 'org.mozilla.javascript.tools.shell.Main'
+    }
 }
 
 publishing {

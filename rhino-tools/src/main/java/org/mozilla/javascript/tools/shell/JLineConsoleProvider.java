@@ -29,10 +29,7 @@ public class JLineConsoleProvider implements ConsoleProvider {
 
     @Override
     public boolean isSupported() {
-        // Only allow JLine to be used if we have full functionality.
-        return (terminal != null
-                && !Terminal.TYPE_DUMB.equals(terminal.getType())
-                && !Terminal.TYPE_DUMB_COLOR.equals(terminal.getType()));
+        return (terminal != null);
     }
 
     @Override

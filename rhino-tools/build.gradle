@@ -1,12 +1,56 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'application'
+}
+
+application {
+    mainClass = 'org.mozilla.javascript.tools.shell.Main'
+}
+
+configurations {
+    shellOnly
 }
 
 dependencies {
     implementation project(':rhino')
-    compileOnly 'org.jline:jline-terminal:3.30.0'
-    compileOnly 'org.jline:jline-reader:3.30.0'
+    // Dependencies that ensure that we can compile with the JLine library
+    compileOnly libs.jline.terminal
+    compileOnly libs.jline.reader
+    // Dependencies that add JLine only for the "run" task
+    shellOnly libs.jline.terminal
+    shellOnly libs.jline.reader
+    shellOnly libs.bundles.jline.runtime
     testImplementation project(':testutils')
+}
+
+run {
+    standardInput = System.in
+    classpath = sourceSets.main.runtimeClasspath +
+            configurations.shellOnly
+}
+
+// This task makes it easier to write other command-line apps
+tasks.register('printClassPath') {
+    def cp = sourceSets.main.runtimeClasspath + configurations.shellOnly
+    inputs.files(cp)
+    doLast {
+        println cp.asPath
+    }
+}
+
+// Easy way to launch the debugger
+tasks.register('runDebugger', JavaExec) {
+    mainClass = 'org.mozilla.javascript.tools.debugger.Main'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// This does the same thing as "gradle run" but adds a bit of usability
+// since we also have a "runDebugger" task
+tasks.register('runCli', JavaExec) {
+    mainClass = 'org.mozilla.javascript.tools.shell.Main'
+    classpath = sourceSets.main.runtimeClasspath +
+            configurations.shellOnly
+    standardInput = System.in
 }
 
 publishing {

@@ -8,6 +8,21 @@ Rhino is an implementation of JavaScript in Java.
 
 Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
+## Summary
+
+Rhino requires Java 11 or higher to run, and 17 or higher to build. Java 21
+or 25 is highly recommended.
+
+To build and run a Rhino shell:
+
+    ./gradlew run -q --console=plain
+
+To run the tests:
+
+    git submodule init
+    git submodule update
+    ./gradlew check
+
 ## Releases
 
 The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_9_0_Release">Rhino 1.9.0</a>. Please see the [Release Notes](./RELEASE-NOTES.md).
@@ -43,11 +58,9 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 Information for script builders and embedders:
 
-[Archived](http://web.archive.org/web/20210304081342/https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
+[Documentation](https://rhino.github.io)
 
-JavaDoc for all the APIs:
-
-[https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
+[JavaDoc](https://javadoc.io/doc/org.mozilla/rhino)
 
 [List of projects using Rhino](USAGE.md)
 
@@ -73,17 +86,31 @@ testing but which are not published to Maven Central:
 * **benchmarks**: Runs benchmarks using JMH.
 * **examples**: Surprisingly, this contains example code.
 
+### Recommendations
+
+All applications that embed rhino need the main "rhino" module. Many applications don't
+need anything else -- consider doing the same, for a few reasons:
+
+* While "rhino-engine" implements the Java ScriptEngine interface, this is a strange
+abstraction that does not necessarily map well to Rhino.
+* "rhino-tools" includes the Global module, which many tools use because it includes
+handy built-in functions like "print" and "load". However, these are not part of any
+formal standard, and it includes functionality to launch programs and load
+files that you may not necessarily want in your environment. (Note that "rhino" includes
+an implementation of the "console" object that you may want to use instead.)
+
 ## Building
 
 ### Requirements
 
-Rhino requires Java 17 or higher to build. The "spotless" tool, which enforces code formatting, will not
-run on older Java versions and you will receive a warning. If in doubt, Java 21 works great.
+It's recommended to build Rhino using Java 25. However, it will build with Java 17
+and up. The "spotless" tool, which enforces code formatting, will not
+run on older Java versions -- it will emit a warning.
 
 Rhino runs on Java 11 and higher. The build tools use the "--release" flag to ensure that only
 features from Java 11 are used in the product.
 
-The CI tools run the Rhino tests on Java 11, 17, and 21. Regardless of what version of Java you are
+The CI tools run the Rhino tests on Java 11, 17, 21, and 25. Regardless of what version of Java you are
 building with, you can test on another Java version using the RHINO_TEST_JAVA_VERSION environment variable.
 
 ### How to Build
@@ -100,8 +127,22 @@ To just run the Rhino shell, you can do this from the top-level directory:
 
 Alternately, you can build an all-in-one JAR and run that:
 
-    ./gradlew :rhino-all:build
-    java -jar rhino-all/build/libs/rhino-all-1.7.16-SNAPSHOT.jar
+    ./gradlew shadowJar
+    java -jar rhino-all/build/libs/rhino-all-2.0.0-SNAPSHOT.jar
+
+And finally, you can extract the classpath and use it in a variety of ways:
+
+    export CLASSPATH=$(./gradlew -q printClasspath)
+    java org.mozilla.javascript.tools.shell.Main
+
+### JLine-Based Console
+
+If the JLine library is present, the Rhino shell will use it for command-line
+editing. The commands above will all include JLine. However, the Gradle wrapper
+interferes with JLine's ability to manipulate the terminal. For the best CLI
+experience, use either of the last two options, instead of ./gradlew run.
+
+### Benchmarking
 
 You can also run the benchmarks:
 
@@ -151,6 +192,7 @@ To see an aggregated coverage report for everything, which is probably what you 
     ./gradlew testCodeCoverageReport
 
 The result is in:
+
     ./tests/build/reports/jacoco/testCodeCoverageReport/html
 
 ## Releasing and publishing new version

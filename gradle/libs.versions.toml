@@ -1,0 +1,13 @@
+[versions]
+jline = '3.30.0'
+junit4 = '4.13.2'
+
+[libraries]
+junit4 = { group = 'junit', name = 'junit', version.ref = 'junit4' }
+jline-terminal = { group = 'org.jline', name = 'jline-terminal', version.ref = 'jline' }
+jline-reader = { group = 'org.jline', name = 'jline-reader', version.ref = 'jline' }
+jline-ffm = { group = 'org.jline', name = 'jline-terminal-ffm', version.ref = 'jline' }
+jline-jni = { group = 'org.jline', name = 'jline-terminal-jni', version.ref = 'jline' }
+
+[bundles]
+jline-runtime = [ 'jline-ffm', 'jline-jni' ]
