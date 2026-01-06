@@ -197,7 +197,7 @@ public class ScriptRuntime {
         new ConcurrentFactory().associate(scope);
 
         LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
-        LambdaConstructor obj = NativeObject.init(cx, scope, sealed);
+        JSFunction obj = NativeObject.init(cx, scope, sealed);
 
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
         ScriptableObject functionPrototype = (ScriptableObject) function.getPrototypeProperty();
@@ -1135,7 +1135,7 @@ public class ScriptRuntime {
     }
 
     static String defaultObjectToSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
         boolean toplevel, iterating;
         if (cx.iterating == null) {
             toplevel = true;
@@ -1157,19 +1157,20 @@ public class ScriptRuntime {
         try {
             if (!iterating) {
                 cx.iterating.add(thisObj); // stop recursion.
-                Object[] ids = thisObj.getIds();
+                Scriptable so = ScriptRuntime.toObject(s, thisObj);
+                Object[] ids = so.getIds();
                 for (int i = 0; i < ids.length; i++) {
                     Object id = ids[i];
                     Object value;
                     if (id instanceof Integer) {
                         int intId = ((Integer) id).intValue();
-                        value = thisObj.get(intId, thisObj);
+                        value = so.get(intId, so);
                         if (value == Scriptable.NOT_FOUND) continue; // a property has been removed
                         if (i > 0) result.append(", ");
                         result.append(intId);
                     } else {
                         String strId = (String) id;
-                        value = thisObj.get(strId, thisObj);
+                        value = so.get(strId, so);
                         if (value == Scriptable.NOT_FOUND) continue; // a property has been removed
                         if (i > 0) result.append(", ");
                         if (ScriptRuntime.isValidIdentifierName(strId, cx, cx.isStrictMode())) {
@@ -1181,7 +1182,7 @@ public class ScriptRuntime {
                         }
                     }
                     result.append(':');
-                    result.append(ScriptRuntime.uneval(cx, scope, value));
+                    result.append(ScriptRuntime.uneval(cx, s, value));
                 }
             }
         } finally {
