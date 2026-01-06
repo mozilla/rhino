@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
+import org.mozilla.javascript.AbstractEcmaStringOperations.ReplacementOperation;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
@@ -4070,8 +4071,14 @@ public class NativeRegExp extends IdScriptableObject {
         int lengthS = s.length();
         Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
         boolean functionalReplace = replaceValue instanceof Callable;
+        List<ReplacementOperation> replaceOps;
+
         if (!functionalReplace) {
-            replaceValue = ScriptRuntime.toString(replaceValue);
+            replaceOps =
+                    AbstractEcmaStringOperations.buildReplacementList(
+                            ScriptRuntime.toString(replaceValue));
+        } else {
+            replaceOps = List.of();
         }
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
         boolean global = flags.indexOf('g') != -1;
@@ -4154,7 +4161,6 @@ public class NativeRegExp extends IdScriptableObject {
                     namedCaptures = ScriptRuntime.toObject(scope, namedCaptures);
                 }
 
-                NativeArray capturesArray = (NativeArray) cx.newArray(scope, captures.toArray());
                 replacementString =
                         AbstractEcmaStringOperations.getSubstitution(
                                 cx,
@@ -4162,9 +4168,9 @@ public class NativeRegExp extends IdScriptableObject {
                                 matched,
                                 s,
                                 position,
-                                capturesArray,
+                                captures,
                                 namedCaptures,
-                                (String) replaceValue);
+                                replaceOps);
             }
 
             if (position >= nextSourcePosition) {
