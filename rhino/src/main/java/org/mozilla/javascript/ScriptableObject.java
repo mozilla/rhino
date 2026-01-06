@@ -865,7 +865,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (hasInstance instanceof Function) {
             var scope = ((Function) hasInstance).getDeclarationScope();
             return ScriptRuntime.toBoolean(
-                    ((Function) hasInstance).call(cx, scope, this, new Object[] {this}));
+                    ((Function) hasInstance).call(cx, scope, this, new Object[] {instance}));
         }
         if (!(this instanceof Callable)) {
             throw ScriptRuntime.typeErrorById("msg.instanceof.bad.target");
