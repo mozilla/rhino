@@ -222,7 +222,7 @@ public class ScriptRuntime {
             NativeArray.setMaximumInitialCapacity(200000);
         }
         NativeString.init(scope, sealed);
-        NativeBoolean.init(scope, sealed);
+        NativeBoolean.init(cx, scope, sealed);
         NativeNumber.init(scope, sealed);
         NativeDate.init(scope, sealed);
         new LazilyLoadedCtor(scope, "Math", sealed, true, NativeMath::init);

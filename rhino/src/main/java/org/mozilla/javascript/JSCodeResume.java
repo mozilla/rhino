@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import java.io.Serializable;
+
 /**
  * This interface represent a thing which can be executed in JavaScript, which could be a generator,
  * or potentially in future an async function.
@@ -28,9 +30,23 @@ public interface JSCodeResume<T extends ScriptOrFn<T>> {
             int operation,
             Object value);
 
-    public static JSCodeResume NULL_RESUMABLE =
-            (cx, eo, state, scope, op, value) -> {
-                Kit.codeBug("Attempt to resume a non-generator function");
-                return null;
-            };
+    public static JSCodeResume<?> NULL_RESUMABLE = new NullResume<>();
+
+    public final class NullResume<T extends ScriptOrFn<T>>
+            implements JSCodeResume<T>, Serializable {
+
+        private NullResume() {}
+
+        @Override
+        public Object resume(
+                Context cx,
+                T executableObject,
+                Object state,
+                Scriptable scope,
+                int operation,
+                Object value) {
+            Kit.codeBug("Attempt to resume a non-generator function");
+            return null;
+        }
+    }
 }
