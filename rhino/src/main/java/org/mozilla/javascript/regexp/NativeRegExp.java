@@ -3843,7 +3843,7 @@ public class NativeRegExp extends IdScriptableObject {
         setLastIndex((Scriptable) thisObj, value);
     }
 
-    private void setLastIndex(Scriptable thisObj, Object value) {
+    private static void setLastIndex(Scriptable thisObj, Object value) {
         ScriptableObject.putProperty(thisObj, "lastIndex", value);
     }
 
@@ -4404,12 +4404,9 @@ public class NativeRegExp extends IdScriptableObject {
 
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(rx, "flags", cx));
         boolean unicodeMatching = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
-        String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
-
-        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
-
         NativeArray a = (NativeArray) cx.newArray(scope, 0);
-        int lengthA = 0;
+        String newFlags = flags.indexOf('y') != -1 ? flags : (flags + "y");
+        Scriptable splitter = c.construct(cx, scope, new Object[] {rx, newFlags});
 
         Object limit = args.length > 1 ? args[1] : Undefined.instance;
         long lim;
@@ -4421,6 +4418,30 @@ public class NativeRegExp extends IdScriptableObject {
         if (lim == 0) {
             return a;
         }
+
+        if (splitter instanceof NativeRegExp) {
+            var regexp = (NativeRegExp) splitter;
+            var exec = ScriptableObject.getProperty(regexp, "exec");
+            if ((regexp.lastIndexAttr & READONLY) == 0
+                    && exec instanceof IdFunctionObject
+                    && ((IdFunctionObject) exec).methodId() == Id_exec
+                    && ((IdFunctionObject) exec).getTag() == REGEXP_TAG)
+                return js_SymbolSplitFast(
+                        cx, scope, (NativeRegExp) splitter, s, lim, unicodeMatching, a);
+        }
+
+        return js_SymbolSplitSlow(cx, scope, splitter, s, lim, unicodeMatching, a);
+    }
+
+    private static Object js_SymbolSplitSlow(
+            Context cx,
+            Scriptable scope,
+            Scriptable splitter,
+            String s,
+            long lim,
+            boolean unicodeMatching,
+            NativeArray a) {
+        int lengthA = 0;
 
         if (s.isEmpty()) {
             Object z = regExpExec(splitter, s, cx, scope);
@@ -4461,6 +4482,72 @@ public class NativeRegExp extends IdScriptableObject {
                     while (i <= numberOfCaptures) {
                         Object nextCapture = ScriptRuntime.getObjectIndex(z, i, cx, scope);
                         a.put((int) a.getLength(), a, nextCapture);
+                        i = i + 1;
+                        lengthA++;
+                        if (lengthA == lim) {
+                            return a;
+                        }
+                    }
+                    q = p;
+                }
+            }
+        }
+        String t = s.substring((int) p, size);
+        a.put((int) a.getLength(), a, t);
+        return a;
+    }
+
+    private static Object js_SymbolSplitFast(
+            Context cx,
+            Scriptable scope,
+            NativeRegExp splitter,
+            String s,
+            long lim,
+            boolean unicodeMatching,
+            NativeArray a) {
+        int lengthA = 0;
+
+        int[] indexp = {0};
+        RegExpImpl reImpl = getImpl(cx);
+        if (s.isEmpty()) {
+            ExecResult result = splitter.executeRegExpInternal(cx, scope, reImpl, s, indexp, MATCH);
+            if (result != null) {
+                return a;
+            }
+            a.put(0, a, s);
+            return a;
+        }
+
+        int size = s.length();
+        long p = 0;
+        long q = p;
+        while (q < size) {
+            indexp[0] = (int) q;
+            ExecResult result = splitter.executeRegExpInternal(cx, scope, reImpl, s, indexp, MATCH);
+
+            if (result == null) {
+                q = ScriptRuntime.advanceStringIndex(s, q, unicodeMatching);
+            } else {
+                long e = indexp[0];
+                e = Math.min(e, size);
+                if (e == p) {
+                    q = ScriptRuntime.advanceStringIndex(s, q, unicodeMatching);
+                } else {
+                    String t = s.substring((int) p, (int) q);
+                    a.put((int) a.getLength(), a, t);
+                    lengthA++;
+                    if (a.getLength() == lim) {
+                        return a;
+                    }
+
+                    p = e;
+                    int i = 0;
+                    while (i < result.captures.size()) {
+                        Object nextCapture = result.captures.get(i);
+                        a.put(
+                                (int) a.getLength(),
+                                a,
+                                nextCapture == null ? Undefined.instance : nextCapture);
                         i = i + 1;
                         lengthA++;
                         if (lengthA == lim) {
