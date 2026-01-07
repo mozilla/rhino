@@ -9,6 +9,7 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
@@ -3505,10 +3506,70 @@ public class NativeRegExp extends IdScriptableObject {
         return false;
     }
 
+    private static class ExecResult {
+        final String match;
+        final ArrayList<String> captures = new ArrayList<>();
+        final LinkedHashMap<String, String> groups = new LinkedHashMap<>();
+        final int index;
+        final String input;
+
+        ExecResult(int index, String input) {
+            this.match = null;
+            this.index = index;
+            this.input = input;
+        }
+
+        ExecResult(int index, String input, String match) {
+            this.match = match;
+            this.index = index;
+            this.input = input;
+        }
+    }
+
+    Object executeRegExp(
+            Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
+        var result = executeRegExpInternal(cx, scope, res, str, indexp, matchType);
+
+        if (result == null) {
+            if (matchType != PREFIX) return null;
+            return Undefined.instance;
+        } else if (matchType == TEST) {
+            /*
+             * Testing for a match and updating cx.regExpImpl: don't allocate
+             * an array object, do return true.
+             */
+            return Boolean.TRUE;
+        } else {
+            Object[] captures = result.captures.toArray();
+            Scriptable obj = cx.newArray(scope, captures.length + 1);
+
+            obj.put(0, obj, result.match);
+            for (int i = 0; i < captures.length; i++) {
+                obj.put(i + 1, obj, (captures[i] == null) ? Undefined.instance : captures[i]);
+            }
+
+            obj.put("index", obj, Integer.valueOf(result.index));
+            obj.put("input", obj, str);
+            if (!result.groups.isEmpty()) {
+                var groups = new NativeObject();
+                for (var g : result.groups.entrySet()) {
+                    groups.put(
+                            g.getKey(),
+                            groups,
+                            g.getValue() == null ? Undefined.instance : g.getValue());
+                }
+                obj.put("groups", obj, groups);
+            } else {
+                obj.put("groups", obj, Undefined.instance);
+            }
+            return obj;
+        }
+    }
+
     /*
      * indexp is assumed to be an array of length 1
      */
-    Object executeRegExp(
+    ExecResult executeRegExpInternal(
             Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
         REGlobalData gData = new REGlobalData();
 
@@ -3519,25 +3580,16 @@ public class NativeRegExp extends IdScriptableObject {
         // Call the recursive matcher to do the real work.
         //
         boolean matches = matchRegExp(cx, gData, re, str, start, end, res.multiline);
-        if (!matches) {
-            if (matchType != PREFIX) return null;
-            return Undefined.instance;
-        }
+        if (!matches) return null;
+
         int index = gData.cp;
         int ep = indexp[0] = index;
         int matchlen = ep - (start + gData.skipped);
         index -= matchlen;
-        Object result;
-        Scriptable obj;
-        Scriptable groups = Undefined.SCRIPTABLE_UNDEFINED;
+        ExecResult result;
 
         if (matchType == TEST) {
-            /*
-             * Testing for a match and updating cx.regExpImpl: don't allocate
-             * an array object, do return true.
-             */
-            result = Boolean.TRUE;
-            obj = null;
+            result = new ExecResult(index, str);
         } else {
             /*
              * The array returned on match has element 0 bound to the matched
@@ -3545,11 +3597,9 @@ public class NativeRegExp extends IdScriptableObject {
              * matches, an index property telling the length of the left context,
              * and an input property referring to the input string.
              */
-            result = cx.newArray(scope, 0);
-            obj = (Scriptable) result;
 
             String matchstr = str.substring(index, index + matchlen);
-            obj.put(0, obj, matchstr);
+            result = new ExecResult(index, str, matchstr);
         }
 
         if (re.parenCount == 0) {
@@ -3563,11 +3613,6 @@ public class NativeRegExp extends IdScriptableObject {
             if (matchType != TEST) {
                 namedCaptureGroups = new String[re.parenCount];
 
-                if (!re.namedCaptureGroups.isEmpty()) {
-                    // We do a new NativeObject() and not cx.newObject(scope)
-                    // since we want the groups to have null as prototype
-                    groups = new NativeObject();
-                }
                 for (Map.Entry<String, List<Integer>> entry : re.namedCaptureGroups.entrySet()) {
                     String key = entry.getKey();
                     List<Integer> indices = entry.getValue();
@@ -3585,32 +3630,22 @@ public class NativeRegExp extends IdScriptableObject {
                     parsub = new SubString(str, cap_index, cap_length);
                     res.parens[num] = parsub;
                     if (matchType != TEST) {
-                        obj.put(num + 1, obj, parsub.toString());
+                        result.captures.add(parsub.toString());
                         if (namedCaptureGroups[num] != null) {
-                            groups.put(namedCaptureGroups[num], groups, parsub.toString());
+                            result.groups.put(namedCaptureGroups[num], parsub.toString());
                         }
                     }
                 } else {
+                    result.captures.add(null);
                     if (matchType != TEST) {
-                        obj.put(num + 1, obj, Undefined.instance);
                         if (namedCaptureGroups[num] != null
-                                && !groups.has(namedCaptureGroups[num], groups)) {
-                            groups.put(namedCaptureGroups[num], groups, Undefined.instance);
+                                && !result.groups.containsKey(namedCaptureGroups[num])) {
+                            result.groups.put(namedCaptureGroups[num], null);
                         }
                     }
                 }
             }
             res.lastParen = parsub;
-        }
-
-        if (!(matchType == TEST)) {
-            /*
-             * Define the index and input properties last for better for/in loop
-             * order (so they come after the elements).
-             */
-            obj.put("index", obj, Integer.valueOf(start + gData.skipped));
-            obj.put("input", obj, str);
-            obj.put("groups", obj, groups);
         }
 
         if (res.lastMatch == null) {
@@ -4061,6 +4096,137 @@ public class NativeRegExp extends IdScriptableObject {
     }
 
     private Object js_SymbolReplace(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        if (thisObj instanceof NativeRegExp) {
+            var regexp = (NativeRegExp) thisObj;
+            var exec = ScriptableObject.getProperty(regexp, "exec");
+            if ((regexp.lastIndexAttr & READONLY) == 0
+                    && exec instanceof IdFunctionObject
+                    && ((IdFunctionObject) exec).methodId() == Id_exec
+                    && ((IdFunctionObject) exec).getTag() == REGEXP_TAG)
+                return regexp.js_SymbolReplaceFast(cx, scope, (NativeRegExp) thisObj, args);
+        }
+        return js_SymbolReplaceSlow(cx, scope, thisObj, args);
+    }
+
+    private Object js_SymbolReplaceFast(
+            Context cx, Scriptable scope, NativeRegExp thisObj, Object[] args) {
+        String s = ScriptRuntime.toString(args.length > 0 ? args[0] : Undefined.instance);
+        int lengthS = s.length();
+        Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
+        boolean functionalReplace = replaceValue instanceof Callable;
+        List<ReplacementOperation> replaceOps;
+        Callable replaceFn;
+        if (!functionalReplace) {
+            replaceFn = null;
+            replaceOps =
+                    AbstractEcmaStringOperations.buildReplacementList(
+                            ScriptRuntime.toString(replaceValue));
+        } else {
+            replaceFn = (Callable) replaceValue;
+            replaceOps = List.of();
+        }
+        String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
+        boolean fullUnicode = flags.indexOf('u') != -1 || flags.indexOf('v') != -1;
+
+        List<ExecResult> results = new ArrayList<>();
+        boolean done = false;
+
+        RegExpImpl reImpl = getImpl(cx);
+        boolean sticky = (re.flags & JSREG_STICKY) != 0;
+        boolean global = (re.flags & JSREG_GLOB) != 0;
+
+        int[] indexp = {0};
+        if (sticky) {
+            indexp[0] = (int) getLastIndex(cx, thisObj);
+        }
+        while (!done) {
+            ExecResult result;
+            if (indexp[0] < 0 || indexp[0] > s.length()) {
+                result = null;
+            } else {
+                result = executeRegExpInternal(cx, scope, reImpl, s, indexp, MATCH);
+            }
+            if (result == null) {
+                if (global || sticky) {
+                    indexp[0] = 0;
+                }
+                done = true;
+            } else {
+                results.add(result);
+                if (!global) {
+                    done = true;
+                } else {
+                    String matchStr = result.match;
+                    if (matchStr.isEmpty()) {
+                        indexp[0] =
+                                (int) ScriptRuntime.advanceStringIndex(s, indexp[0], fullUnicode);
+                    }
+                }
+            }
+        }
+        setLastIndex(thisObj, indexp[0]);
+
+        StringBuilder accumulatedResult = new StringBuilder();
+        int nextSourcePosition = 0;
+        for (ExecResult result : results) {
+            String matched = result.match;
+            int matchLength = matched.length();
+            double positionDbl = result.index;
+            int position = ScriptRuntime.clamp((int) positionDbl, 0, lengthS);
+
+            List<String> captures = result.captures;
+            Object namedCaptures;
+            if (!result.groups.isEmpty()) {
+                var groups = new NativeObject();
+                for (var g : result.groups.entrySet()) {
+                    groups.put(
+                            g.getKey(),
+                            groups,
+                            g.getValue() == null ? Undefined.instance : g.getValue());
+                }
+                namedCaptures = groups;
+            } else {
+                namedCaptures = Undefined.instance;
+            }
+
+            String replacementString =
+                    functionalReplace
+                            ? makeComplexReplacement(
+                                    cx,
+                                    scope,
+                                    matched,
+                                    captures,
+                                    position,
+                                    s,
+                                    namedCaptures,
+                                    replaceFn)
+                            : makeSimpleReplacement(
+                                    cx,
+                                    scope,
+                                    matched,
+                                    captures,
+                                    position,
+                                    s,
+                                    namedCaptures,
+                                    replaceOps);
+
+            if (position >= nextSourcePosition) {
+                accumulatedResult.append(s, nextSourcePosition, position);
+                accumulatedResult.append(replacementString);
+                nextSourcePosition = position + matchLength;
+            }
+        }
+
+        if (nextSourcePosition >= lengthS) {
+            return accumulatedResult.toString();
+        } else {
+            accumulatedResult.append(s.substring(nextSourcePosition));
+            return accumulatedResult.toString();
+        }
+    }
+
+    private Object js_SymbolReplaceSlow(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         // See ECMAScript spec 22.2.6.11
         if (!ScriptRuntime.isObject(thisObj)) {
