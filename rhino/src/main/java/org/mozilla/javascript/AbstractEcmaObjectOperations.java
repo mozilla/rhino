@@ -522,20 +522,9 @@ public class AbstractEcmaObjectOperations {
            3. Return false.
         */
 
-        // Found no good way to implement this based on the spec.
-        // Therefor I did this as first step - this only supports Lambda based method declarations.
-        // see #1376 for more
-        if (argument instanceof LambdaConstructor) {
-            return true;
+        if (argument instanceof Function) {
+            return ((Function) argument).isConstructor();
         }
-        if (argument instanceof LambdaFunction) {
-            return false;
-        }
-        if (argument instanceof NativeProxy.NativeProxyFunction) {
-            var f = ((NativeProxy) argument).getTargetThrowIfRevoked();
-            return isConstructor(cx, f);
-        }
-
         return argument instanceof Constructable;
     }
 

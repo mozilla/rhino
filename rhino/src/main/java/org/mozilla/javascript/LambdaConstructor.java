@@ -470,4 +470,9 @@ public class LambdaConstructor extends LambdaFunction {
         }
         return (ScriptableObject) prop;
     }
+
+    @Override
+    public boolean isConstructor() {
+        return true;
+    }
 }

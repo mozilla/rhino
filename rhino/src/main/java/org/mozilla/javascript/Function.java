@@ -56,4 +56,9 @@ public interface Function extends Scriptable, Callable, Constructable {
     default Scriptable getDeclarationScope() {
         return this.getParentScope();
     }
+
+    /** Return whether this function can be called as a constructor. */
+    default boolean isConstructor() {
+        return true;
+    }
 }

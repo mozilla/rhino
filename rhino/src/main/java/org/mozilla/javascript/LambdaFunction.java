@@ -121,4 +121,9 @@ public class LambdaFunction extends BaseFunction {
     Callable getTarget() {
         return target;
     }
+
+    @Override
+    public boolean isConstructor() {
+        return false;
+    }
 }

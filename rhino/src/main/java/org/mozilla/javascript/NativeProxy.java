@@ -1369,5 +1369,14 @@ class NativeProxy extends ScriptableObject {
             Kit.codeBug();
             return null;
         }
+
+        @Override
+        public boolean isConstructor() {
+            var f = getTargetThrowIfRevoked();
+            if (f instanceof Function) {
+                return ((Function) f).isConstructor();
+            }
+            return false;
+        }
     }
 }
