@@ -371,10 +371,11 @@ public class BaseFunction extends ScriptableObject implements Function {
     @Override
     public boolean hasInstance(Scriptable instance) {
         Context cx = Context.getCurrentContext();
+
         // Attempt to call custom Symbol.hasInstance implementation if present
+        // Skip for XMLObject instances since E4X has special instanceof semantics.
+        // See ECMA-357 13.4.3.10: https://www-archive.mozilla.org/js/language/ECMA-357.pdf
         Object hasInstanceMethod = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
-        // E4X has special [[HasInstance]] semantics: See ECMA-357, section 13.3.3.10
-        // https://www-archive.mozilla.org/js/language/ECMA-357.pdf
         if (hasInstanceMethod instanceof Callable && !(instance instanceof XMLObject)) {
             return ScriptRuntime.toBoolean(
                     ((Callable) hasInstanceMethod)
@@ -425,6 +426,15 @@ public class BaseFunction extends ScriptableObject implements Function {
                 return ScriptRuntime.jsDelegatesTo(obj, (Scriptable) protoProp);
             }
             return false; // NOT_FOUND, null etc.
+        }
+
+        // E4X XML constructors have invalid prototype properties.
+        // Return false instead of throwing for E4X compatibility (ECMA-357 13.4.3.10).
+        if (thisObj instanceof IdFunctionObject) {
+            Object tag = ((IdFunctionObject) thisObj).getTag();
+            if ("XMLObject".equals(tag)) {
+                return false;
+            }
         }
 
         throw ScriptRuntime.typeErrorById(
