@@ -914,103 +914,94 @@ public class ScriptRuntime {
      * @param excludeKeys array of property names to exclude
      * @return a new object with all properties except the excluded ones
      */
-    // TODO - simplify:
-    // 1. Integer IDs are converted to strings for exclusion checking (line ~935), which may not
-    //    correctly distinguish between numeric and string properties
-    // 2. The enumerable check uses double-negative logic that could be clearer
-    // 3. Two separate loops are needed (regular properties vs symbols) because getIds() doesn't
-    //    return symbols - could we unify this?
-    // 4. Integer vs String ID handling is scattered across attribute checking and value copying
     public static Scriptable doObjectRest(
             Context cx, Scriptable scope, Object source, Object[] excludeKeys) {
         Scriptable sourceObj = toObject(cx, scope, source);
         Scriptable result = cx.newObject(scope);
 
-        // Collect keys to exclude
-        java.util.Set<String> exclude = new java.util.HashSet<>();
-        java.util.Set<Object> excludeSymbols = new java.util.HashSet<>();
+        java.util.Set<String> excludeStrings = new java.util.HashSet<>();
+        java.util.Set<Integer> excludeIntegers = new java.util.HashSet<>();
+        java.util.Set<Symbol> excludeSymbols = new java.util.HashSet<>();
+
         for (Object key : excludeKeys) {
-            if (key != null) {
-                if (key instanceof org.mozilla.javascript.Symbol) {
-                    excludeSymbols.add(key);
-                } else {
-                    exclude.add(toString(key));
-                }
-            }
-        }
-
-        // Copy all enumerable properties except excluded ones
-        Object[] ids = sourceObj.getIds();
-        for (Object id : ids) {
-            String propName;
-            if (id instanceof String) {
-                propName = (String) id;
-            } else {
-                propName = toString(id);
-            }
-
-            // Skip excluded keys
-            if (exclude.contains(propName)) {
+            if (key == null) {
                 continue;
             }
-
-            // Now check if property is enumerable
-            int attributes = 0;
-            if (sourceObj instanceof ScriptableObject) {
-                if (id instanceof String) {
-                    attributes = ((ScriptableObject) sourceObj).getAttributes(propName);
-                } else if (id instanceof Integer) {
-                    attributes = ((ScriptableObject) sourceObj).getAttributes((Integer) id);
-                }
-            }
-
-            // Skip non-enumerable properties
-            if (!(sourceObj instanceof ScriptableObject)
-                    || (attributes & ScriptableObject.DONTENUM) == 0) {
-                // Get the property values
-                Object value;
-                if (id instanceof Integer) {
-                    int index = ((Integer) id).intValue();
-                    value = getObjectIndex(sourceObj, index, cx);
-                    if (value != Scriptable.NOT_FOUND) {
-                        // Use integer-based put for integer properties
-                        result.put(index, result, value);
-                    }
-                } else {
-                    value = getObjectProp(sourceObj, propName, cx, scope);
-                    if (value != Scriptable.NOT_FOUND) {
-                        result.put(propName, result, value);
-                    }
-                }
+            if (key instanceof Symbol) {
+                excludeSymbols.add((Symbol) key);
+            } else if (key instanceof Integer) {
+                excludeIntegers.add((Integer) key);
+            } else {
+                excludeStrings.add(toString(key));
             }
         }
 
-        // Handle Symbol properties if sourceObj is a ScriptableObject
         if (sourceObj instanceof ScriptableObject) {
             ScriptableObject so = (ScriptableObject) sourceObj;
             try (var map = so.startCompoundOp(false)) {
-                Object[] allIds =
-                        so.getIds(map, false, true); // Get only enumerable, including symbols
+                // Get all enumerable properties (regular + symbols) in one call
+                Object[] allIds = so.getIds(map, false, true);
+
                 for (Object id : allIds) {
-                    if (id instanceof org.mozilla.javascript.Symbol) {
-                        org.mozilla.javascript.Symbol sym = (org.mozilla.javascript.Symbol) id;
-
-                        // Skip if this symbol is excluded
-                        if (excludeSymbols.contains(sym)) {
-                            continue;
-                        }
-
-                        // Set symbol property values
-                        Object value = so.get(sym, so);
-                        if (value != Scriptable.NOT_FOUND && result instanceof ScriptableObject) {
-                            ((ScriptableObject) result).put(sym, result, value);
-                        }
+                    // Check exclusion and copy property
+                    if (!shouldExcludeProperty(
+                            id, excludeStrings, excludeIntegers, excludeSymbols)) {
+                        copyProperty(sourceObj, result, id, cx, scope);
                     }
+                }
+            }
+        } else {
+            Object[] ids = sourceObj.getIds();
+            for (Object id : ids) {
+                if (!shouldExcludeProperty(id, excludeStrings, excludeIntegers, excludeSymbols)) {
+                    copyProperty(sourceObj, result, id, cx, scope);
                 }
             }
         }
 
         return result;
+    }
+
+    /** Check if a property should be excluded based on its ID */
+    private static boolean shouldExcludeProperty(
+            Object id,
+            java.util.Set<String> excludeStrings,
+            java.util.Set<Integer> excludeIntegers,
+            java.util.Set<Symbol> excludeSymbols) {
+        if (id instanceof String) {
+            return excludeStrings.contains((String) id);
+        } else if (id instanceof Integer) {
+            return excludeIntegers.contains((Integer) id) || excludeStrings.contains(id.toString());
+        } else if (id instanceof Symbol) {
+            return excludeSymbols.contains((Symbol) id);
+        }
+        return false;
+    }
+
+    /** Copy a single property from source to result */
+    private static void copyProperty(
+            Scriptable source, Scriptable result, Object id, Context cx, Scriptable scope) {
+        Object value;
+
+        if (id instanceof Integer) {
+            int index = (Integer) id;
+            value = getObjectIndex(source, index, cx);
+            if (value != Scriptable.NOT_FOUND) {
+                result.put(index, result, value);
+            }
+        } else if (id instanceof String) {
+            String propName = (String) id;
+            value = getObjectProp(source, propName, cx, scope);
+            if (value != Scriptable.NOT_FOUND) {
+                result.put(propName, result, value);
+            }
+        } else if (id instanceof Symbol && source instanceof ScriptableObject) {
+            Symbol sym = (Symbol) id;
+            value = ((ScriptableObject) source).get(sym, source);
+            if (value != Scriptable.NOT_FOUND && result instanceof ScriptableObject) {
+                ((ScriptableObject) result).put(sym, result, value);
+            }
+        }
     }
 
     public static String escapeString(String s) {
