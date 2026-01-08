@@ -323,7 +323,7 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.must.implement.Script");
         }
         Script script = (Script) clazz.getDeclaredConstructor().newInstance();
-        script.exec(cx, thisObj, thisObj);
+        script.exec(cx, funObj.getDeclarationScope(), thisObj);
     }
 
     private static Class<?> getClass(Object[] args) {
@@ -411,7 +411,7 @@ public class Global extends ImporterTopLevel {
 
     @SuppressWarnings("AndroidJdkLibsChecker")
     public int runDoctest(
-            Context cx, Scriptable scope, String session, String sourceName, int lineNumber) {
+            Context cx, VarScope scope, String session, String sourceName, int lineNumber) {
         doctestCanonicalizations = new HashMap<String, String>();
         String[] lines = session.split("\r\n?|\n", -1);
         String prompt0 = prompts[0].trim();

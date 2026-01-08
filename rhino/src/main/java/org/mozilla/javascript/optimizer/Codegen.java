@@ -893,9 +893,7 @@ public class Codegen implements Evaluator {
             sb.append("Lorg/mozilla/javascript/JSScript;");
         }
         sb.append(
-                "Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Ljava/lang/Object;");
+                "Ljava/lang/Object;" + "Lorg/mozilla/javascript/VarScope;" + "Ljava/lang/Object;");
         sb.append("[Ljava/lang/Object;)Ljava/lang/Object;");
         return sb.toString();
     }
@@ -910,9 +908,7 @@ public class Codegen implements Evaluator {
             sb.append("Lorg/mozilla/javascript/JSScript;");
         }
         sb.append(
-                "Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Ljava/lang/Object;");
+                "Ljava/lang/Object;" + "Lorg/mozilla/javascript/VarScope;" + "Ljava/lang/Object;");
         if (n.getType() == Token.FUNCTION) {
             OptFunctionNode ofn = OptFunctionNode.get(n);
             if (ofn.isTargetOfDirectCall()) {
@@ -982,7 +978,7 @@ public class Codegen implements Evaluator {
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/JSFunction;"
                     + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/VarScope;"
                     + "I"
                     + "Ljava/lang/Object;)Ljava/lang/Object;";
 

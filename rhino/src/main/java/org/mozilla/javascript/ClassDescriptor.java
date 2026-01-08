@@ -734,7 +734,7 @@ public class ClassDescriptor {
                 Context cx,
                 JSFunction executableObject,
                 Object newTarget,
-                Scriptable scope,
+                VarScope scope,
                 Object thisObj,
                 Object[] args) {
             return exec.execute(cx, executableObject, newTarget, scope, thisObj, args);
@@ -745,7 +745,7 @@ public class ClassDescriptor {
                 Context cx,
                 JSFunction executableObject,
                 Object state,
-                Scriptable scope,
+                VarScope scope,
                 int operation,
                 Object value) {
             return resume.resume(cx, executableObject, state, scope, operation, value);

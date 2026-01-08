@@ -17,6 +17,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -77,7 +78,7 @@ public class Main {
     }
 
     /** Sets the scope to be used for script evaluation. */
-    public void setScope(Scriptable scope) {
+    public void setScope(VarScope scope) {
         setScopeProvider(IProxy.newScopeProvider(scope));
     }
 
@@ -238,7 +239,7 @@ public class Main {
         if (scopeProvider instanceof ScopeProvider) {
             main.setScopeProvider((ScopeProvider) scopeProvider);
         } else {
-            Scriptable scope = (Scriptable) scopeProvider;
+            VarScope scope = (VarScope) scopeProvider;
             if (scope instanceof Global) {
                 Global global = (Global) scope;
                 global.setIn(main.getIn());
@@ -316,7 +317,7 @@ public class Main {
         private final int type;
 
         /** The scope object to expose when {@link #type} = {@link #SCOPE_PROVIDER}. */
-        private Scriptable scope;
+        private VarScope scope;
 
         /** Creates a new IProxy. */
         public IProxy(int type) {
@@ -324,7 +325,7 @@ public class Main {
         }
 
         /** Creates a new IProxy that acts as a {@link ScopeProvider}. */
-        public static ScopeProvider newScopeProvider(Scriptable scope) {
+        public static ScopeProvider newScopeProvider(VarScope scope) {
             IProxy scopeProvider = new IProxy(SCOPE_PROVIDER);
             scopeProvider.scope = scope;
             return scopeProvider;
@@ -343,7 +344,7 @@ public class Main {
 
         /** Returns the scope for script evaluations. */
         @Override
-        public Scriptable getScope() {
+        public VarScope getScope() {
             if (type != SCOPE_PROVIDER) Kit.codeBug();
             if (scope == null) Kit.codeBug();
             return scope;

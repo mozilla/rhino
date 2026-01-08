@@ -826,7 +826,7 @@ public class Dim {
 
                 case IPROXY_EVAL_SCRIPT:
                     {
-                        Scriptable scope = null;
+                        VarScope scope = null;
                         if (dim.scopeProvider != null) {
                             scope = dim.scopeProvider.getScope();
                         }

@@ -20,8 +20,8 @@ import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -62,7 +62,7 @@ public class ShellTest {
         return bytes.toString();
     }
 
-    private static void runFileIfExists(Context cx, Scriptable global, File f) {
+    private static void runFileIfExists(Context cx, VarScope global, File f) {
         if (frameworkFile.equals(f)) {
             try {
                 frameworkScript.exec(cx, global, global);

@@ -7,11 +7,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeJavaObject;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 public class JavaAdapterTest {
     Context cx = null;
-    Scriptable topScope = null;
+    VarScope topScope = null;
 
     @Before
     public void enterContext() {

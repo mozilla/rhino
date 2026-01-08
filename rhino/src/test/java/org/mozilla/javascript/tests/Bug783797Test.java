@@ -12,8 +12,8 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ScopeWrapper;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * @author André Bargull
@@ -37,7 +37,7 @@ public class Bug783797Test {
         };
     }
 
-    private static Object eval(Context cx, Scriptable scope, String source) {
+    private static Object eval(Context cx, VarScope scope, String source) {
         return cx.evaluateString(scope, source, "<eval>", 1, null);
     }
 
