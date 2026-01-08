@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.util.EnumSet;
+import org.mozilla.javascript.xml.XMLObject;
 
 /**
  * The base class for Function objects. That is one of two purposes. It is also the prototype for
@@ -371,13 +372,13 @@ public class BaseFunction extends ScriptableObject implements Function {
     public boolean hasInstance(Scriptable instance) {
         Context cx = Context.getCurrentContext();
         // Attempt to call custom Symbol.hasInstance implementation if present
-        if (has(SymbolKey.HAS_INSTANCE, this)) {
-            Object hasInstanceMethod = get(SymbolKey.HAS_INSTANCE, this);
-            if (hasInstanceMethod instanceof Callable) {
-                return ScriptRuntime.toBoolean(
-                        ((Callable) hasInstanceMethod)
-                                .call(cx, getParentScope(), this, new Object[] {instance}));
-            }
+        Object hasInstanceMethod = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
+        // E4X has special [[HasInstance]] semantics: See ECMA-357, section 13.3.3.10
+        // https://www-archive.mozilla.org/js/language/ECMA-357.pdf
+        if (hasInstanceMethod instanceof Callable && !(instance instanceof XMLObject)) {
+            return ScriptRuntime.toBoolean(
+                    ((Callable) hasInstanceMethod)
+                            .call(cx, getParentScope(), this, new Object[] {instance}));
         }
 
         Object protoProp = ScriptableObject.getProperty(this, PROTOTYPE_PROPERTY_NAME);
