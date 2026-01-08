@@ -52,6 +52,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -211,7 +212,7 @@ public class Test262SuiteTest {
             super();
         }
 
-        $262(Scriptable scope, Scriptable prototype) {
+        $262(VarScope scope, Scriptable prototype) {
             super(scope, prototype);
         }
 
@@ -249,7 +250,7 @@ public class Test262SuiteTest {
         }
 
         public static Object evalScript(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             if (args.length == 0) {
                 throw ScriptRuntime.throwError(cx, scope, "not enough args");
             }

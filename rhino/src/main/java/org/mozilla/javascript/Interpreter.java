@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
 import java.io.PrintStream;
@@ -395,13 +397,14 @@ public final class Interpreter extends Icode implements Evaluator {
                     if (ScriptRuntime.hasTopCall(cx)) {
                         return equalsInTopScope(other).booleanValue();
                     }
-                    final Scriptable top = ScriptableObject.getTopLevelScope(scope);
+                    TopLevel top = ScriptableObject.getTopLevelScope(scope);
+                    Scriptable global = top.getGlobalThis();
                     return ((Boolean)
                                     ScriptRuntime.doTopCall(
                                             (c, scope, thisObj) -> equalsInTopScope(other),
                                             cx,
                                             top,
-                                            top,
+                                            global,
                                             isStrictTopFrame()))
                             .booleanValue();
                 }
@@ -499,7 +502,7 @@ public final class Interpreter extends Icode implements Evaluator {
      * common than inspection by the debugger) and it reduces the chance that programs might
      * evexcute differently in debug mode.
      */
-    private static class DebugScope implements Scriptable {
+    private static class DebugScope implements VarScope {
         private final CallFrame frame;
         private volatile Map<String, Integer> offsets;
 
@@ -609,6 +612,29 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         public void setPrototype(Scriptable prototype) {
             // Do nothing.
+        }
+
+        @Override
+        public void defineConst(String name, Scriptable start) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public boolean isConst(String name) {
+            int offset = getOffsets().getOrDefault(name, -1);
+            if (offset >= 0) {
+                return (frame.stackAttributes[offset] & (PERMANENT | READONLY))
+                        == (PERMANENT | READONLY);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void putConst(String name, Scriptable start, Object value) {
+            // TODO Auto-generated method stub
+
         }
     }
 
@@ -5038,7 +5064,7 @@ public final class Interpreter extends Icode implements Evaluator {
         boolean usesActivation = frame.fnOrScript.getDescriptor().requiresActivationFrame();
         boolean isDebugged = frame.debuggerFrame != null;
         if (usesActivation) {
-            Scriptable scope = frame.scope;
+            VarScope scope = frame.scope;
             if (scope == null) {
                 Kit.codeBug();
             } else if (continuationRestart) {

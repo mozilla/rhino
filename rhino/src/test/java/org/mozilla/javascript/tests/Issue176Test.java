@@ -9,12 +9,12 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 public class Issue176Test {
 
     Context cx;
-    Scriptable scope;
+    VarScope scope;
 
     @Test
     public void throwing() throws Exception {

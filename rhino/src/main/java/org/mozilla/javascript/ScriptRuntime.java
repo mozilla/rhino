@@ -3454,7 +3454,7 @@ public class ScriptRuntime {
 
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
-                return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
+                return evalSpecial(cx, (VarScope) scope, callerThis, args, filename, lineNumber);
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
             if (NativeWith.isWithFunction(fun)) {
@@ -3589,7 +3589,7 @@ public class ScriptRuntime {
      */
     public static Object evalSpecial(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object thisArg,
             Object[] args,
             String filename,
@@ -4866,8 +4866,7 @@ public class ScriptRuntime {
     }
 
     @Deprecated
-    public static Object doTopCall(
-            Script script, Context cx, Scriptable scope, Scriptable thisObj) {
+    public static Object doTopCall(Script script, Context cx, VarScope scope, Scriptable thisObj) {
         return doTopCall(script, cx, scope, thisObj, cx.isTopLevelStrict);
     }
 
@@ -4904,7 +4903,7 @@ public class ScriptRuntime {
     public static Object doTopCall(
             Script script,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
