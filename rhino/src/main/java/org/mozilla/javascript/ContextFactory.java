@@ -333,7 +333,7 @@ public class ContextFactory {
      * will create the first stack frame with scriptable code, it calls this method to perform the
      * real call. In this way execution of any script happens inside this function.
      */
-    protected Object doTopCall(Script script, Context cx, Scriptable scope, Scriptable thisObj) {
+    protected Object doTopCall(Script script, Context cx, VarScope scope, Scriptable thisObj) {
         Object result = script.exec(cx, scope, thisObj);
         return result instanceof ConsString ? result.toString() : result;
     }

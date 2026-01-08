@@ -199,7 +199,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     public Object resumeGenerator(
-            Context cx, Scriptable scope, int operation, Object state, Object value) {
+            Context cx, VarScope scope, int operation, Object state, Object value) {
         return descriptor.getCode().resume(cx, this, state, scope, operation, value);
     }
 

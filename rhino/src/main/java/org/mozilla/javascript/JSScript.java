@@ -29,7 +29,7 @@ public class JSScript implements Script, ScriptOrFn<JSScript> {
     }
 
     @Override
-    public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {
+    public Object exec(Context cx, VarScope scope, Scriptable thisObj) {
         Object ret;
         if (thisObj instanceof TopLevel) {
             thisObj = ((TopLevel) thisObj).getGlobalThis();

@@ -18,8 +18,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -97,7 +97,7 @@ public class NestedContextPrototypeTest {
         return ContextFactory.getGlobal()
                 .call(
                         context -> {
-                            Scriptable scope;
+                            VarScope scope;
                             switch (mode) {
                                 case GLOBAL:
                                     scope = global;

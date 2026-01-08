@@ -85,7 +85,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         this.builtins = new Builtins();
     }
 
-    private VarScope initScope(Context cx, ScriptContext sc) throws ScriptException {
+    private TopLevel initScope(Context cx, ScriptContext sc) throws ScriptException {
         configureContext(cx);
 
         if (topLevelScope == null) {
@@ -115,7 +115,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     @Override
     public Object eval(String script, ScriptContext context) throws ScriptException {
         try (Context cx = ctxFactory.enterContext()) {
-            Scriptable scope = initScope(cx, context);
+            TopLevel scope = initScope(cx, context);
             Object ret = cx.evaluateString(scope, script, getFilename(), 0, null);
             return Context.jsToJava(ret, Object.class);
         } catch (RhinoException re) {
@@ -127,7 +127,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
         try (Context cx = ctxFactory.enterContext()) {
-            Scriptable scope = initScope(cx, context);
+            TopLevel scope = initScope(cx, context);
             Object ret = cx.evaluateReader(scope, reader, getFilename(), 0, null);
             return Context.jsToJava(ret, Object.class);
         } catch (RhinoException re) {
@@ -166,7 +166,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
 
     Object eval(Script script, ScriptContext sc) throws ScriptException {
         try (Context cx = ctxFactory.enterContext()) {
-            Scriptable scope = initScope(cx, sc);
+            TopLevel scope = initScope(cx, sc);
             Object ret = script.exec(cx, scope, scope);
             return Context.jsToJava(ret, Object.class);
         } catch (RhinoException re) {

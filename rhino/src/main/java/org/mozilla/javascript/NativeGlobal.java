@@ -494,8 +494,8 @@ public class NativeGlobal implements Serializable {
      * This is an indirect call to eval, and thus uses the global environment. Direct calls are
      * executed via ScriptRuntime.callSpecial().
      */
-    private static Object js_eval(Context cx, Scriptable scope, Object[] args) {
-        Scriptable global = ScriptableObject.getTopLevelScope(scope);
+    private static Object js_eval(Context cx, VarScope scope, Object[] args) {
+        VarScope global = ScriptableObject.getTopLevelScope(scope);
         return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
     }
 
