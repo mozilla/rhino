@@ -45,8 +45,8 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Deprecated
-    public NativeJavaMethod(Method method, String name) {
-        this(new MemberBox(method, TypeInfoFactory.GLOBAL), name);
+    public NativeJavaMethod(Scriptable scope, Method method, String name) {
+        this(new MemberBox(scope, method, TypeInfoFactory.GLOBAL), name);
     }
 
     @Override
