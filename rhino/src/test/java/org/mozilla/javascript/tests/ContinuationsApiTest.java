@@ -70,6 +70,8 @@ public class ContinuationsApiTest {
                 throw cx.captureContinuation();
             }
         }
+
+        public Double publcField = 0.0;
     }
 
     @Before
