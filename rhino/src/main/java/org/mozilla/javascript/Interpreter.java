@@ -991,22 +991,27 @@ public final class Interpreter extends Icode implements Evaluator {
                     }
                 case Icode_OBJECT_REST:
                     {
-                        // read key counts (static & computed)
-                        int staticKeyCount = getIndex(iCode, pc);
-                        pc += 2;
-                        int computedKeyCount = getIndex(iCode, pc);
-                        pc += 2;
+                        // read count of computed keys from bytecode
+                        int computedKeyCount = iCode[pc++] & 0xFF;
 
-                        StringBuilder keys = new StringBuilder();
-                        keys.append("[static: ");
-                        for (int i = 0; i < staticKeyCount; i++) {
-                            if (i > 0) keys.append(", ");
-                            int keyIndex = getIndex(iCode, pc);
-                            pc += 2;
-                            keys.append("\"").append(strings[keyIndex]).append("\"");
+                        if (indexReg >= 0) {
+                            int[] staticKeyIndices = (int[]) idata.literalIds[indexReg];
+                            StringBuilder keys = new StringBuilder();
+                            keys.append("[static: ");
+                            for (int i = 0; i < staticKeyIndices.length; i++) {
+                                if (i > 0) keys.append(", ");
+                                keys.append("\"").append(strings[staticKeyIndices[i]]).append("\"");
+                            }
+                            keys.append("; computed: ").append(computedKeyCount).append("]");
+                            out.println(tname + " excluding " + keys);
+                        } else {
+                            out.println(
+                                    tname
+                                            + " literalId: "
+                                            + (-indexReg - 1)
+                                            + ", computed: "
+                                            + computedKeyCount);
                         }
-                        keys.append("; computed: ").append(computedKeyCount).append("]");
-                        out.println(tname + " excluding " + keys);
                         icodeLength = pc - old_pc;
                         break;
                     }
