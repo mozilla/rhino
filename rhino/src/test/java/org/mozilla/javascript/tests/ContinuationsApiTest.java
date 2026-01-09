@@ -263,6 +263,12 @@ public class ContinuationsApiTest {
                 cx.setInterpretedMode(true); // must use interpreter mode
                 globalScope.put(
                         "myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));
+                var func = (Scriptable) globalScope.get("Function", globalScope);
+                var fp = func.get("prototype", func);
+                var myObj = (Scriptable) globalScope.get("myObject", globalScope);
+                var myFunc = (Scriptable) myObj.get("f", myObj);
+                var myProto = myFunc.getPrototype();
+                assertEquals("Thing should be equal", fp, myProto);
             }
 
             try (Context cx = Context.enter()) {
@@ -304,6 +310,13 @@ public class ContinuationsApiTest {
 
                     Object result = cx.resumeContinuation(continuation, globalScope, 8);
                     assertEquals("foo", result);
+
+                    var func = (Scriptable) globalScope.get("Function", globalScope);
+                    var fp = func.get("prototype", func);
+                    var myObj = (Scriptable) globalScope.get("myObject", globalScope);
+                    var myFunc = (Scriptable) myObj.get("f", myObj);
+                    var myProto = myFunc.getPrototype();
+                    assertEquals("Thing should be equal", fp, myProto);
                 } catch (ContinuationPending e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
