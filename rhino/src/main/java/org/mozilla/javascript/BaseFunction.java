@@ -806,6 +806,12 @@ public class BaseFunction extends ScriptableObject implements Function {
         return homeObject;
     }
 
+    @Override
+    public boolean isConstructor() {
+        return !(Context.getCurrentContext().getLanguageVersion() >= Context.VERSION_ES6
+                && this.getHomeObject() != null);
+    }
+
     private static final int Id_constructor = 1,
             Id_toString = 2,
             Id_toSource = 3,

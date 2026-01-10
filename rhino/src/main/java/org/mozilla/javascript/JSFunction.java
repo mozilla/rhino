@@ -223,4 +223,9 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         JSFunction f = new JSFunction(cx, scope, desc, null, homeObject);
         return f;
     }
+
+    @Override
+    public boolean isConstructor() {
+        return descriptor.getConstructor() != null;
+    }
 }
