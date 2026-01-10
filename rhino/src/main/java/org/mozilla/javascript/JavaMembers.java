@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.mozilla.javascript.lc.ReflectUtils;
+import org.mozilla.javascript.lc.member.ExecutableBox;
 import org.mozilla.javascript.lc.member.NativeJavaField;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -201,19 +203,19 @@ class JavaMembers {
         return sb.toString();
     }
 
-    static String liveConnectSignature(List<TypeInfo> argTypes) {
-        if (argTypes.isEmpty()) {
+    static String liveConnectSignature(Class<?>[] argTypes) {
+        if (argTypes.length == 0) {
             return "()";
         }
 
         var builder = new StringBuilder();
 
         builder.append('(');
-        var iter = argTypes.iterator();
+        var iter = Arrays.asList(argTypes).iterator();
         if (iter.hasNext()) {
-            builder.append(javaSignature(iter.next().asClass()));
+            builder.append(javaSignature(iter.next()));
             while (iter.hasNext()) {
-                builder.append(',').append(javaSignature(iter.next().asClass()));
+                builder.append(',').append(javaSignature(iter.next()));
             }
         }
         builder.append(')');
@@ -221,14 +223,14 @@ class JavaMembers {
         return builder.toString();
     }
 
-    private MemberBox findExplicitFunction(String name, boolean isStatic) {
+    private ExecutableBox findExplicitFunction(String name, boolean isStatic) {
         int sigStart = name.indexOf('(');
         if (sigStart < 0) {
             return null;
         }
 
         Map<String, Object> ht = isStatic ? staticMembers : members;
-        MemberBox[] methodsOrCtors = null;
+        ExecutableBox[] methodsOrCtors = null;
         boolean isCtor = (isStatic && sigStart == 0);
 
         if (isCtor) {
@@ -249,8 +251,8 @@ class JavaMembers {
         }
 
         if (methodsOrCtors != null) {
-            for (MemberBox methodsOrCtor : methodsOrCtors) {
-                String sig = liveConnectSignature(methodsOrCtor.getArgTypes());
+            for (var methodsOrCtor : methodsOrCtors) {
+                String sig = ReflectUtils.liveConnectSignature(methodsOrCtor.getArgTypes());
                 if (sigStart + sig.length() == name.length()
                         && name.regionMatches(sigStart, sig, 0, sig.length())) {
                     return methodsOrCtor;
@@ -265,12 +267,12 @@ class JavaMembers {
             Scriptable scope, String name, Object javaObject, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = null;
-        MemberBox methodOrCtor = findExplicitFunction(name, isStatic);
+        var methodOrCtor = findExplicitFunction(name, isStatic);
 
         if (methodOrCtor != null) {
             Scriptable prototype = ScriptableObject.getFunctionPrototype(scope);
 
-            if (methodOrCtor.isCtor()) {
+            if (methodOrCtor.isConstructor()) {
                 NativeJavaConstructor fun = new NativeJavaConstructor(methodOrCtor);
                 fun.setPrototype(prototype);
                 member = fun;
@@ -460,19 +462,19 @@ class JavaMembers {
             boolean isStatic = (tableCursor == 0);
             Map<String, Object> ht = isStatic ? staticMembers : members;
             for (Map.Entry<String, Object> entry : ht.entrySet()) {
-                MemberBox[] methodBoxes;
+                ExecutableBox[] methodBoxes;
                 Object value = entry.getValue();
                 if (value instanceof Method) {
-                    methodBoxes = new MemberBox[1];
-                    methodBoxes[0] = new MemberBox((Method) value, typeFactory, this.cl);
+                    methodBoxes = new ExecutableBox[1];
+                    methodBoxes[0] = new ExecutableBox((Method) value, typeFactory, this.cl);
                 } else {
                     ArrayList<Object> overloadedMethods = (ArrayList<Object>) value;
                     int N = overloadedMethods.size();
                     if (N < 2) Kit.codeBug();
-                    methodBoxes = new MemberBox[N];
+                    methodBoxes = new ExecutableBox[N];
                     for (int i = 0; i != N; ++i) {
                         Method method = (Method) overloadedMethods.get(i);
-                        methodBoxes[i] = new MemberBox(method, typeFactory, this.cl);
+                        methodBoxes[i] = new ExecutableBox(method, typeFactory, this.cl);
                     }
                 }
                 NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
@@ -549,9 +551,9 @@ class JavaMembers {
 
         // Reflect constructors
         Constructor<?>[] constructors = getAccessibleConstructors(includePrivate);
-        MemberBox[] ctorMembers = new MemberBox[constructors.length];
+        ExecutableBox[] ctorMembers = new ExecutableBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
-            ctorMembers[i] = new MemberBox(constructors[i], typeFactory);
+            ctorMembers[i] = new ExecutableBox(constructors[i], typeFactory);
         }
         ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
     }
@@ -626,7 +628,7 @@ class JavaMembers {
                         if (method.methods.length == 1) {
                             bean.getter = method;
                         } else {
-                            bean.getter = new NativeJavaMethod(new MemberBox[] {candidate});
+                            bean.getter = new NativeJavaMethod(new ExecutableBox[] {candidate});
                         }
                     }
                 }
@@ -644,7 +646,7 @@ class JavaMembers {
                 continue;
             }
 
-            MemberBox match;
+            ExecutableBox match;
             var getter = bean.getter;
             if (getter != null) {
                 var type = getter.methods[0].getReturnType();
@@ -719,10 +721,10 @@ class JavaMembers {
         return cl.getFields();
     }
 
-    private static MemberBox extractGetMethod(MemberBox[] methods, boolean isStatic) {
-        // Inspect the list of all MemberBox for the only one having no
+    private static ExecutableBox extractGetMethod(ExecutableBox[] methods, boolean isStatic) {
+        // Inspect the list of all ExecutableBox for the only one having no
         // parameters
-        for (MemberBox method : methods) {
+        for (var method : methods) {
             // Does getter method have an empty parameter list with a return
             // value (eg. a getSomething() or isSomething())?
             if (method.getArgTypes().isEmpty() && (!isStatic || method.isStatic())) {
@@ -736,16 +738,16 @@ class JavaMembers {
         return null;
     }
 
-    private static MemberBox extractSetMethod(
-            TypeInfo type, MemberBox[] methods, boolean isStatic) {
+    private static ExecutableBox extractSetMethod(
+            TypeInfo type, ExecutableBox[] methods, boolean isStatic) {
         //
         // Note: it may be preferable to allow NativeJavaMethod.findFunction()
         //       to find the appropriate setter; unfortunately, it requires an
         //       instance of the target arg to determine that.
         //
 
-        MemberBox acceptableMatch = null;
-        for (MemberBox method : methods) {
+        ExecutableBox acceptableMatch = null;
+        for (var method : methods) {
             if (!isStatic || method.isStatic()) {
                 var argTypes = method.getArgTypes();
                 if (argTypes.size() == 1) {
@@ -764,9 +766,9 @@ class JavaMembers {
         return acceptableMatch;
     }
 
-    private static MemberBox extractSetMethod(MemberBox[] methods, boolean isStatic) {
+    private static ExecutableBox extractSetMethod(ExecutableBox[] methods, boolean isStatic) {
 
-        for (MemberBox method : methods) {
+        for (var method : methods) {
             if (!isStatic || method.isStatic()) {
                 if (method.getReturnType().isVoid()) {
                     if (method.getArgTypes().size() == 1) {
@@ -900,7 +902,7 @@ final class BeanProperty {
 class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
-    FieldAndMethods(Scriptable scope, MemberBox[] methods, NativeJavaField field) {
+    FieldAndMethods(Scriptable scope, ExecutableBox[] methods, NativeJavaField field) {
         super(methods);
         this.field = field;
         setParentScope(scope);

@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.lc.ReflectUtils;
+import org.mozilla.javascript.lc.member.ExecutableBox;
+
 /**
  * This class reflects a single Java constructor into the JavaScript environment. It satisfies a
  * request for an overloaded constructor, as introduced in LiveConnect 3. All NativeJavaConstructors
@@ -20,9 +23,9 @@ package org.mozilla.javascript;
 public class NativeJavaConstructor extends BaseFunction {
     private static final long serialVersionUID = -8149253217482668463L;
 
-    MemberBox ctor;
+    ExecutableBox ctor;
 
-    public NativeJavaConstructor(MemberBox ctor) {
+    public NativeJavaConstructor(ExecutableBox ctor) {
         this.ctor = ctor;
     }
 
@@ -33,7 +36,7 @@ public class NativeJavaConstructor extends BaseFunction {
 
     @Override
     public String getFunctionName() {
-        String sig = JavaMembers.liveConnectSignature(ctor.getArgTypes());
+        String sig = ReflectUtils.liveConnectSignature(ctor.getArgTypes());
         return "<init>".concat(sig);
     }
 

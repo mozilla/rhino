@@ -37,7 +37,6 @@ import org.mozilla.javascript.annotations.JSGetter;
 import org.mozilla.javascript.annotations.JSSetter;
 import org.mozilla.javascript.annotations.JSStaticFunction;
 import org.mozilla.javascript.debug.DebuggableObject;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * This is the default implementation of the Scriptable interface. This class provides convenient
@@ -1529,11 +1528,9 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public void defineProperty(
             String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
-        var typeFactory = TypeInfoFactory.getOrElse(this, TypeInfoFactory.GLOBAL);
-
         MemberBox getterBox = null;
         if (getter != null) {
-            getterBox = new MemberBox(getter, typeFactory);
+            getterBox = new MemberBox(getter);
 
             boolean delegatedForm;
             if (!Modifier.isStatic(getter.getModifiers())) {
@@ -1574,7 +1571,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (setter.getReturnType() != Void.TYPE)
                 throw Context.reportRuntimeErrorById("msg.setter.return", setter.toString());
 
-            setterBox = new MemberBox(setter, typeFactory);
+            setterBox = new MemberBox(setter);
 
             boolean delegatedForm;
             if (!Modifier.isStatic(setter.getModifiers())) {

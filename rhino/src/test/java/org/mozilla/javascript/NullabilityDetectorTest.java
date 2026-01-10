@@ -7,45 +7,41 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mozilla.javascript.NullabilityDetector.NullabilityAccessor;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 public class NullabilityDetectorTest {
     @Test
     public void testNullableDetectorForMethodWithoutArgs() {
-        MemberBox memberBox =
-                new MemberBox(getTestClassMethod("function1"), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox = new MemberBox(getTestClassMethod("function1"));
         assertNullabilityMatch(memberBox.getArgNullability());
     }
 
     @Test
     public void testNullableDetectorForMethodWithOneArg() {
-        MemberBox memberBox =
-                new MemberBox(getTestClassMethod("function2"), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox = new MemberBox(getTestClassMethod("function2"));
         assertNullabilityMatch(memberBox.getArgNullability(), true);
     }
 
     @Test
     public void testNullableDetectorForMethodWithSeveralArgs() {
-        MemberBox memberBox =
-                new MemberBox(getTestClassMethod("function3"), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox = new MemberBox(getTestClassMethod("function3"));
         assertNullabilityMatch(memberBox.getArgNullability(), true, true, true, true);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithoutArgs() {
-        MemberBox memberBox = new MemberBox(getTestClassConstructor(0), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox = new MemberBox(getTestClassConstructor(0));
         assertNullabilityMatch(memberBox.getArgNullability());
     }
 
     @Test
     public void testNullableDetectorForConstructorWithOneArg() {
-        MemberBox memberBox = new MemberBox(getTestClassConstructor(1), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox = new MemberBox(getTestClassConstructor(1));
         assertNullabilityMatch(memberBox.getArgNullability(), true);
     }
 
     @Test
     public void testNullableDetectorForConstructorWithSeveralArgs() {
-        MemberBox memberBox = new MemberBox(getTestClassConstructor(4), TypeInfoFactory.GLOBAL);
+        MemberBox memberBox = new MemberBox(getTestClassConstructor(4));
         assertNullabilityMatch(memberBox.getArgNullability(), true, false, true, false);
     }
 

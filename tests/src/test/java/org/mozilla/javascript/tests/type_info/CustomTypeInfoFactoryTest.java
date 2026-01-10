@@ -1,8 +1,6 @@
 package org.mozilla.javascript.tests.type_info;
 
 import java.io.*;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.*;
@@ -13,41 +11,6 @@ import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
  * @author ZZZank
  */
 public class CustomTypeInfoFactoryTest {
-
-    /**
-     * @see #exampleFunctionObjectMethod(Context, Scriptable, Object[], Function)
-     * @see AlwaysFailFactory
-     */
-    @Test
-    public void functionObject() {
-        var contextFactory = new ContextFactory();
-
-        try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
-            AlwaysFailFactory.INSTANCE.associate(scope);
-            cx.initStandardObjects(scope);
-
-            var method =
-                    Arrays.stream(CustomTypeInfoFactoryTest.class.getDeclaredMethods())
-                            .filter(
-                                    m -> {
-                                        var mod = m.getModifiers();
-                                        return Modifier.isPublic(mod) && Modifier.isStatic(mod);
-                                    })
-                            .filter(m -> m.getName().equals("exampleFunctionObjectMethod"))
-                            .findFirst()
-                            .orElseThrow();
-            Assertions.assertThrowsExactly(
-                    AssertionError.class,
-                    () -> new FunctionObject("test", method, scope),
-                    AlwaysFailFactory.MESSAGE);
-        }
-    }
-
-    public static void exampleFunctionObjectMethod(
-            Context cx, Scriptable scope, Object[] args, Function fn) {
-        throw new AssertionError("method for test purpose only, do not invoke");
-    }
 
     @Test
     public void associateAfterInit() throws Exception {
