@@ -4770,13 +4770,13 @@ public class ScriptRuntime {
     @Deprecated
     public static Object doTopCall(
             Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
+        return doTopCall(callable, cx, scope, thisObj, args, cx.isStrictMode());
     }
 
     @Deprecated
     public static Object doTopCall(
             Script script, Context cx, Scriptable scope, Scriptable thisObj) {
-        return doTopCall(script, cx, scope, thisObj, cx.isTopLevelStrict);
+        return doTopCall(script, cx, scope, thisObj, cx.isStrictMode());
     }
 
     public static Object doTopCall(
@@ -4792,8 +4792,8 @@ public class ScriptRuntime {
         Object result;
         cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
         cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
-        boolean previousTopLevelStrict = cx.isTopLevelStrict;
-        cx.isTopLevelStrict = isTopLevelStrict;
+        boolean previousStrictness = cx.isStrictMode();
+        cx.setIsStrictMode(isTopLevelStrict);
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(callable, cx, scope, thisObj, args);
@@ -4801,7 +4801,7 @@ public class ScriptRuntime {
             cx.topCallScope = null;
             // Cleanup cached references
             cx.cachedXMLLib = null;
-            cx.isTopLevelStrict = previousTopLevelStrict;
+            cx.setIsStrictMode(previousStrictness);
             // Function should always call exitActivationFunction
             // if it creates activation record
             assert (cx.currentActivationCall == null);
@@ -4821,8 +4821,8 @@ public class ScriptRuntime {
         Object result;
         cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
         cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
-        boolean previousTopLevelStrict = cx.isTopLevelStrict;
-        cx.isTopLevelStrict = isTopLevelStrict;
+        boolean previousStrictness = cx.isStrictMode();
+        cx.setIsStrictMode(isTopLevelStrict);
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(script, cx, scope, thisObj);
@@ -4830,7 +4830,7 @@ public class ScriptRuntime {
             cx.topCallScope = null;
             // Cleanup cached references
             cx.cachedXMLLib = null;
-            cx.isTopLevelStrict = previousTopLevelStrict;
+            cx.setIsStrictMode(previousStrictness);
             // Function should always call exitActivationFunction
             // if it creates activation record
             assert (cx.currentActivationCall == null);
@@ -4915,7 +4915,7 @@ public class ScriptRuntime {
 
     /**
      * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean)} instead
+     *     boolean, boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
@@ -5011,6 +5011,16 @@ public class ScriptRuntime {
         NativeCall call = cx.currentActivationCall;
         cx.currentActivationCall = call.parentActivationCall;
         call.parentActivationCall = null;
+    }
+
+    public static boolean enterFunctionStrictness(Context cx, boolean functionIsStrict) {
+        boolean parent = cx.isStrictMode();
+        cx.setIsStrictMode(functionIsStrict);
+        return parent;
+    }
+
+    public static void exitFunctionStrictness(Context cx, boolean parentWasStrict) {
+        cx.setIsStrictMode(parentWasStrict);
     }
 
     static NativeCall findFunctionActivation(Context cx, Function f) {
