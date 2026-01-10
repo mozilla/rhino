@@ -71,4 +71,13 @@ public class SymbolHasInstanceTest {
         // Rhino wraps JavaScript TypeErrors as EvaluatorException with "syntax error" message
         Utils.assertEvaluatorExceptionES6("syntax error", script);
     }
+
+    /** non-callable Symbol.hasInstance should throw TypeError */
+    @Test
+    public void testNonCallableSymbolHasInstanceThrows() {
+        String script = "o = { [Symbol.hasInstance]: 42 };\n" + "o instanceof o;";
+        Utils.assertEcmaErrorES6(
+                "TypeError: Target of ``instanceof`` must be callable or have ``[Symbol.hasInstance]`` method.",
+                script);
+    }
 }
