@@ -25,9 +25,9 @@ import org.mozilla.javascript.WrappedException;
  * <p>Currently used by both the shell and the compiler.
  */
 public class ToolErrorReporter implements ErrorReporter {
-
     public ToolErrorReporter(boolean reportWarnings) {
-        this(reportWarnings, System.err);
+        this.reportWarnings = reportWarnings;
+        this.err = System.err;
     }
 
     public ToolErrorReporter(boolean reportWarnings, PrintStream err) {
@@ -190,5 +190,5 @@ public class ToolErrorReporter implements ErrorReporter {
     private static final String messagePrefix = "js: ";
     private boolean hasReportedErrorFlag;
     private boolean reportWarnings;
-    private PrintStream err;
+    private final PrintStream err;
 }

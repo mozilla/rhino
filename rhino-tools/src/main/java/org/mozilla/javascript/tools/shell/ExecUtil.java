@@ -59,10 +59,10 @@ class ExecUtil {
         }
 
         if (out == null) {
-            out = global.getOut();
+            out = global.getConsole().getOut();
         }
         if (err == null) {
-            err = global.getErr();
+            err = global.getConsole().getErr();
         }
         if (commandExecutor == null) {
             commandExecutor = Runtime.getRuntime()::exec;

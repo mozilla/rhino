@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mozilla.javascript.Context;
@@ -52,6 +53,8 @@ import org.mozilla.javascript.commonjs.module.provider.SoftCachingModuleScriptPr
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
+import org.mozilla.javascript.tools.Console;
+import org.mozilla.javascript.tools.ConsoleProvider;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
 /**
@@ -61,18 +64,37 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
  * @author Norris Boyd
  */
 public class Global extends ImporterTopLevel {
-    static final long serialVersionUID = 4029130780977538005L;
+    private static final long serialVersionUID = 4029130780977538005L;
+
+    private static final String[] TOP_COMMANDS = {
+        "defineClass",
+        "deserialize",
+        "doctest",
+        "gc",
+        "help",
+        "load",
+        "loadClass",
+        "print",
+        "quit",
+        "readline",
+        "readFile",
+        "readUrl",
+        "runCommand",
+        "seal",
+        "serialize",
+        "spawn",
+        "sync",
+        "toint32",
+        "version",
+        "write"
+    };
 
     NativeArray history;
-    boolean attemptedJLineLoad;
-    private ShellConsole console;
-    private InputStream inStream;
-    private PrintStream outStream;
-    private PrintStream errStream;
+    private Console console;
     private boolean sealedStdLib = false;
     boolean initialized;
     private QuitAction quitAction;
-    private String[] prompts = {"js> ", "  > "};
+    private static final String[] prompts = {"js> ", "  > "};
     private HashMap<String, String> doctestCanonicalizations;
 
     public Global() {}
@@ -106,29 +128,7 @@ public class Global extends ImporterTopLevel {
         // that these functions are not part of ECMA.
         initStandardObjects(cx, sealedStdLib);
         NativeConsole.init(this, sealedStdLib, new ShellConsolePrinter());
-        String[] names = {
-            "defineClass",
-            "deserialize",
-            "doctest",
-            "gc",
-            "help",
-            "load",
-            "loadClass",
-            "print",
-            "quit",
-            "readline",
-            "readFile",
-            "readUrl",
-            "runCommand",
-            "seal",
-            "serialize",
-            "spawn",
-            "sync",
-            "toint32",
-            "version",
-            "write"
-        };
-        defineFunctionProperties(names, Global.class, ScriptableObject.DONTENUM);
+        defineFunctionProperties(TOP_COMMANDS, Global.class, ScriptableObject.DONTENUM);
 
         // Set up "environment" in the global scope to provide access to the
         // System environment variables.
@@ -140,6 +140,15 @@ public class Global extends ImporterTopLevel {
         defineProperty("history", history, ScriptableObject.DONTENUM);
 
         initialized = true;
+    }
+
+    public void cleanup() {
+        if (console != null) {
+            try {
+                console.close();
+            } catch (IOException ignore) {
+            }
+        }
     }
 
     public Require installRequire(Context cx, List<String> modulePath, boolean sandboxed) {
@@ -178,8 +187,7 @@ public class Global extends ImporterTopLevel {
      * <p>This method is defined as a JavaScript function.
      */
     public static void help(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        PrintStream out = getInstance(funObj).getOut();
-        out.println(ToolErrorReporter.getMessage("msg.help"));
+        getInstance(funObj).getConsole().println(ToolErrorReporter.getMessage("msg.help"));
     }
 
     public static void gc(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
@@ -203,17 +211,17 @@ public class Global extends ImporterTopLevel {
     }
 
     private static Object doPrint(Object[] args, Function funObj, boolean newline) {
-        PrintStream out = getInstance(funObj).getOut();
+        Console c = getInstance(funObj).getConsole();
         for (int i = 0; i < args.length; i++) {
-            if (i > 0) out.print(" ");
+            if (i > 0) c.print(" ");
 
             // Convert the arbitrary JavaScript value into a string form.
             String s = Context.toString(args[i]);
 
-            out.print(s);
+            c.print(s);
         }
         if (newline) {
-            out.println();
+            c.println();
         }
         return Context.getUndefinedValue();
     }
@@ -401,8 +409,8 @@ public class Global extends ImporterTopLevel {
             Context cx, Scriptable scope, String session, String sourceName, int lineNumber) {
         doctestCanonicalizations = new HashMap<String, String>();
         String[] lines = session.split("\r\n?|\n", -1);
-        String prompt0 = this.prompts[0].trim();
-        String prompt1 = this.prompts[1].trim();
+        String prompt0 = prompts[0].trim();
+        String prompt1 = prompts[1].trim();
         int testCount = 0;
         int i = 0;
         while (i < lines.length && !lines[i].trim().startsWith(prompt0)) {
@@ -423,15 +431,15 @@ public class Global extends ImporterTopLevel {
                 expectedString.append(lines[i]).append('\n');
                 i++;
             }
-            PrintStream savedOut = this.getOut();
-            PrintStream savedErr = this.getErr();
+            PrintStream savedOut = getBasicConsole().getOut();
+            PrintStream savedErr = getBasicConsole().getErr();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ByteArrayOutputStream err = new ByteArrayOutputStream();
             this.setOut(new PrintStream(out));
             this.setErr(new PrintStream(err));
             String resultString = "";
             ErrorReporter savedErrorReporter = cx.getErrorReporter();
-            cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
+            cx.setErrorReporter(new ToolErrorReporter(false, getConsole().getErr()));
             try {
                 testCount++;
                 String finalInputString = inputString.toString();
@@ -705,49 +713,68 @@ public class Global extends ImporterTopLevel {
         return ScriptRuntime.wrapInt(ScriptRuntime.toInt32(arg));
     }
 
-    private boolean loadJLine(Charset cs) {
-        if (!attemptedJLineLoad) {
-            // Check if we can use JLine for better command line handling
-            attemptedJLineLoad = true;
-            console = ShellConsole.getConsole(this, cs);
-        }
-        return console != null;
-    }
-
-    public ShellConsole getConsole(Charset cs) {
-        if (!loadJLine(cs)) {
-            console = ShellConsole.getConsole(getIn(), getErr(), cs);
+    /** Return the best console that we have for interactive work. */
+    public Console getConsole(Charset cs) {
+        if (console == null) {
+            console = loadNewConsole();
         }
         return console;
     }
 
-    public InputStream getIn() {
-        if (inStream == null && !attemptedJLineLoad) {
-            if (loadJLine(Charset.defaultCharset())) {
-                inStream = console.getIn();
+    public Console getConsole() {
+        return getConsole(StandardCharsets.UTF_8);
+    }
+
+    private Console loadNewConsole() {
+        var loader = ServiceLoader.load(ConsoleProvider.class);
+        // Find the first interactive, command-line editing console
+        for (var p : loader) {
+            if (p.isSupported() && p.supportsEditing()) {
+                return p.newConsole();
             }
         }
-        return inStream == null ? System.in : inStream;
+        // Find the first one that at least works
+        for (var p : loader) {
+            if (p.isSupported()) {
+                return p.newConsole();
+            }
+        }
+        // Fall back
+        throw new AssertionError("Configuration error: no consoles available");
     }
 
+    /**
+     * Some tools, like the graphical console and debugger, want to override input and output. If we
+     * are using a fancy console. then switch to one that supports that.
+     */
+    private BasicConsole getBasicConsole() {
+        if (!(console instanceof BasicConsole)) {
+            if (console != null) {
+                try {
+                    console.close();
+                } catch (IOException ignore) {
+                }
+            }
+            console = new BasicConsole();
+        }
+        return (BasicConsole) console;
+    }
+
+    /*
+     * Methods to replace console input and output. Fall back to the basic stdio-based console
+     * because fancy consoles like JLine won't do this cleanly. These are used by tools like
+     * the graphical console and debugger.
+     */
     public void setIn(InputStream in) {
-        inStream = in;
-    }
-
-    public PrintStream getOut() {
-        return outStream == null ? System.out : outStream;
+        getBasicConsole().setIn(in);
     }
 
     public void setOut(PrintStream out) {
-        outStream = out;
-    }
-
-    public PrintStream getErr() {
-        return errStream == null ? System.err : errStream;
+        getBasicConsole().setOut(out);
     }
 
     public void setErr(PrintStream err) {
-        errStream = err;
+        getBasicConsole().setErr(err);
     }
 
     public void setSealedStdLib(boolean value) {
