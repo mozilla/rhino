@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.util.EnumSet;
+import org.mozilla.javascript.xml.XMLObject;
 
 /**
  * The base class for Function objects. That is one of two purposes. It is also the prototype for
@@ -358,6 +359,18 @@ public class BaseFunction extends ScriptableObject implements Function {
      */
     @Override
     public boolean hasInstance(Scriptable instance) {
+        Context cx = Context.getCurrentContext();
+
+        // Attempt to call custom Symbol.hasInstance implementation if present
+        // Skip for XMLObject instances since E4X has special instanceof semantics.
+        // See ECMA-357 13.4.3.10: https://www-archive.mozilla.org/js/language/ECMA-357.pdf
+        Object hasInstanceMethod = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
+        if (hasInstanceMethod instanceof Callable && !(instance instanceof XMLObject)) {
+            return ScriptRuntime.toBoolean(
+                    ((Callable) hasInstanceMethod)
+                            .call(cx, getParentScope(), this, new Object[] {instance}));
+        }
+
         Object protoProp = ScriptableObject.getProperty(this, PROTOTYPE_PROPERTY_NAME);
         if (protoProp instanceof Scriptable) {
             return ScriptRuntime.jsDelegatesTo(instance, (Scriptable) protoProp);
@@ -402,6 +415,15 @@ public class BaseFunction extends ScriptableObject implements Function {
                 return ScriptRuntime.jsDelegatesTo(obj, (Scriptable) protoProp);
             }
             return false; // NOT_FOUND, null etc.
+        }
+
+        // E4X XML constructors have invalid prototype properties.
+        // Return false instead of throwing for E4X compatibility (ECMA-357 13.4.3.10).
+        if (thisObj instanceof IdFunctionObject) {
+            Object tag = ((IdFunctionObject) thisObj).getTag();
+            if ("XMLObject".equals(tag)) {
+                return false;
+            }
         }
 
         throw ScriptRuntime.typeErrorById(
