@@ -137,7 +137,8 @@ public class LambdaAccessorSlot extends Slot {
                             scope,
                             "get " + super.name,
                             0,
-                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj));
+                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj),
+                            false);
         }
     }
 
@@ -153,7 +154,8 @@ public class LambdaAccessorSlot extends Slot {
                                 setter.accept(
                                         thisObj, args.length > 0 ? args[0] : Undefined.instance);
                                 return Undefined.instance;
-                            });
+                            },
+                            false);
         }
     }
 

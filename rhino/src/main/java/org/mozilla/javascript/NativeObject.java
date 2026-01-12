@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -44,44 +47,46 @@ public class NativeObject extends ScriptableObject implements Map {
                         NativeObject::js_constructorCall,
                         NativeObject::js_constructor);
 
-        builder.withCtorMethod("getPrototypeOf", 1, NativeObject::js_getPrototypeOf);
-        builder.withCtorMethod("keys", 1, NativeObject::js_keys);
-        builder.withCtorMethod("getOwnPropertyNames", 1, NativeObject::js_getOwnPropertyNames);
-        builder.withCtorMethod("getOwnPropertySymbols", 1, NativeObject::js_getOwnPropertySymbols);
-        builder.withCtorMethod("getOwnPropertyDescriptor", 2, NativeObject::js_getOwnPropDesc);
-        builder.withCtorMethod("getOwnPropertyDescriptors", 1, NativeObject::js_getOwnPropDescs);
-        builder.withCtorMethod("defineProperty", 3, NativeObject::js_defineProperty);
-        builder.withCtorMethod("isExtensible", 1, NativeObject::js_isExtensible);
-        builder.withCtorMethod("preventExtensions", 1, NativeObject::js_preventExtensions);
-        builder.withCtorMethod("defineProperties", 2, NativeObject::js_defineProperties);
-        builder.withCtorMethod("create", 2, NativeObject::js_create);
-        builder.withCtorMethod("isSealed", 1, NativeObject::js_isSealed);
-        builder.withCtorMethod("isFrozen", 1, NativeObject::js_isFrozen);
-        builder.withCtorMethod("seal", 1, NativeObject::js_seal);
-        builder.withCtorMethod("freeze", 1, NativeObject::js_freeze);
-        builder.withCtorMethod("assign", 2, NativeObject::js_assign);
-        builder.withCtorMethod("is", 2, NativeObject::js_is);
-        builder.withCtorMethod("groupBy", 2, NativeObject::js_groupBy);
-        builder.withProtoMethod("toString", 0, NativeObject::js_toString);
-        builder.withProtoMethod("toLocaleString", 0, NativeObject::js_toLocaleString);
-        builder.withProtoMethod("__lookupGetter__", 1, NativeObject::js_lookupGetter);
-        builder.withProtoMethod("__lookupSetter__", 1, NativeObject::js_lookupSetter);
-        builder.withProtoMethod("__defineGetter__", 2, NativeObject::js_defineGetter);
-        builder.withProtoMethod("__defineSetter__", 2, NativeObject::js_defineSetter);
-        builder.withProtoMethod("hasOwnProperty", 1, NativeObject::js_hasOwnProperty);
-        builder.withProtoMethod("propertyIsEnumerable", 1, NativeObject::js_propertyIsEnumerable);
-        builder.withProtoMethod("valueOf", 0, NativeObject::js_valueOf);
-        builder.withProtoMethod("isPrototypeOf", 1, NativeObject::js_isPrototypeOf);
-        builder.withProtoMethod("toSource", 0, ScriptRuntime::defaultObjectToSource);
+        builder.withMethod(CTOR, "getPrototypeOf", 1, NativeObject::js_getPrototypeOf);
+        builder.withMethod(CTOR, "keys", 1, NativeObject::js_keys);
+        builder.withMethod(CTOR, "getOwnPropertyNames", 1, NativeObject::js_getOwnPropertyNames);
+        builder.withMethod(
+                CTOR, "getOwnPropertySymbols", 1, NativeObject::js_getOwnPropertySymbols);
+        builder.withMethod(CTOR, "getOwnPropertyDescriptor", 2, NativeObject::js_getOwnPropDesc);
+        builder.withMethod(CTOR, "getOwnPropertyDescriptors", 1, NativeObject::js_getOwnPropDescs);
+        builder.withMethod(CTOR, "defineProperty", 3, NativeObject::js_defineProperty);
+        builder.withMethod(CTOR, "isExtensible", 1, NativeObject::js_isExtensible);
+        builder.withMethod(CTOR, "preventExtensions", 1, NativeObject::js_preventExtensions);
+        builder.withMethod(CTOR, "defineProperties", 2, NativeObject::js_defineProperties);
+        builder.withMethod(CTOR, "create", 2, NativeObject::js_create);
+        builder.withMethod(CTOR, "isSealed", 1, NativeObject::js_isSealed);
+        builder.withMethod(CTOR, "isFrozen", 1, NativeObject::js_isFrozen);
+        builder.withMethod(CTOR, "seal", 1, NativeObject::js_seal);
+        builder.withMethod(CTOR, "freeze", 1, NativeObject::js_freeze);
+        builder.withMethod(CTOR, "assign", 2, NativeObject::js_assign);
+        builder.withMethod(CTOR, "is", 2, NativeObject::js_is);
+        builder.withMethod(CTOR, "groupBy", 2, NativeObject::js_groupBy);
+        builder.withMethod(PROTO, "toString", 0, NativeObject::js_toString);
+        builder.withMethod(PROTO, "toLocaleString", 0, NativeObject::js_toLocaleString);
+        builder.withMethod(PROTO, "__lookupGetter__", 1, NativeObject::js_lookupGetter);
+        builder.withMethod(PROTO, "__lookupSetter__", 1, NativeObject::js_lookupSetter);
+        builder.withMethod(PROTO, "__defineGetter__", 2, NativeObject::js_defineGetter);
+        builder.withMethod(PROTO, "__defineSetter__", 2, NativeObject::js_defineSetter);
+        builder.withMethod(PROTO, "hasOwnProperty", 1, NativeObject::js_hasOwnProperty);
+        builder.withMethod(PROTO, "propertyIsEnumerable", 1, NativeObject::js_propertyIsEnumerable);
+        builder.withMethod(PROTO, "valueOf", 0, NativeObject::js_valueOf);
+        builder.withMethod(PROTO, "isPrototypeOf", 1, NativeObject::js_isPrototypeOf);
+        builder.withMethod(PROTO, "toSource", 0, ScriptRuntime::defaultObjectToSource);
 
         LEGACY_DESCRIPTOR = builder.build();
         ES6_DESCRIPTOR =
-                builder.withCtorMethod("setPrototypeOf", 2, NativeObject::js_setPrototypeOf)
-                        .withCtorMethod("entries", 1, NativeObject::js_entries)
-                        .withCtorMethod("fromEntries", 1, NativeObject::js_fromEntries)
-                        .withCtorMethod("values", 1, NativeObject::js_values)
-                        .withCtorMethod("hasOwn", 1, NativeObject::js_hasOwn)
-                        .withPrototypeProperty(
+                builder.withMethod(CTOR, "setPrototypeOf", 2, NativeObject::js_setPrototypeOf)
+                        .withMethod(CTOR, "entries", 1, NativeObject::js_entries)
+                        .withMethod(CTOR, "fromEntries", 1, NativeObject::js_fromEntries)
+                        .withMethod(CTOR, "values", 1, NativeObject::js_values)
+                        .withMethod(CTOR, "hasOwn", 1, NativeObject::js_hasOwn)
+                        .withProp(
+                                PROTO,
                                 PROTO_PROPERTY,
                                 NativeObject::js_protoGetter,
                                 NativeObject::js_protoSetter,

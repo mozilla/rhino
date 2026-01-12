@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import java.io.Serializable;
+
 /**
  * Represents code that is executable, and potentially resumable. Those concepts are separated out
  * as {@link JSCodeExec} and {@link JSCodeResume} to allow for the use of functional interfaces.
@@ -25,6 +27,25 @@ public abstract class JSCode<T extends ScriptOrFn<T>> implements JSCodeExec<T>, 
 
         @Override
         public JSCode<V> build() {
+            return null;
+        }
+    }
+
+    public static final JSCode<JSFunction> NOT_CALLABLE = new NotCallable();
+
+    private static class NotCallable extends JSCode<JSFunction> implements Serializable {
+
+        private static final long serialVersionUID = 2691205302914111400L;
+
+        @Override
+        public Object execute(
+                Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            throw ScriptRuntime.typeError("Not callable as function");
+        }
+
+        @Override
+        public Object resume(
+                Context cx, JSFunction f, Object state, Scriptable s, int op, Object v) {
             return null;
         }
     }

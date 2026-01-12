@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 /**
  * This class implements the Boolean native object. See ECMA 15.6.
  *
@@ -25,9 +27,9 @@ final class NativeBoolean extends ScriptableObject {
                                 1,
                                 NativeBoolean::js_constructorFunc,
                                 NativeBoolean::js_constructor)
-                        .withProtoMethod("toString", 0, NativeBoolean::js_toString)
-                        .withProtoMethod("toSource", 0, NativeBoolean::js_toSource)
-                        .withProtoMethod("valueOf", 0, NativeBoolean::js_valueOf)
+                        .withMethod(PROTO, "toString", 0, NativeBoolean::js_toString)
+                        .withMethod(PROTO, "toSource", 0, NativeBoolean::js_toSource)
+                        .withMethod(PROTO, "valueOf", 0, NativeBoolean::js_valueOf)
                         .build();
     }
 

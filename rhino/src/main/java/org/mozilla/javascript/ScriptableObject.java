@@ -1383,6 +1383,16 @@ public abstract class ScriptableObject extends SlotMapOwner
         so.defineProperty(propertyName, value, attributes);
     }
 
+    public static void defineProperty(
+            Scriptable destination, SymbolKey propertyName, Object value, int attributes) {
+        if (!(destination instanceof ScriptableObject)) {
+            ((SymbolScriptable) destination).put(propertyName, destination, value);
+            return;
+        }
+        ScriptableObject so = (ScriptableObject) destination;
+        so.defineProperty(propertyName, value, attributes);
+    }
+
     /**
      * Utility method to add lambda properties to arbitrary Scriptable object.
      *
