@@ -10,7 +10,7 @@ public class ByteIo {
 
     // Float16 constants
     private static final double FLOAT16_MIN_NORMAL = 6.103515625e-5; // 2^-14
-    private static final double FLOAT16_MIN_SUBNORMAL = 5.9604644775390625E-8; // 2^-24
+    private static final double FLOAT16_MIN_SUBNORMAL = 5.960464477539063E-8; // 2^-24
 
     public static Byte readInt8(byte[] buf, int offset) {
         return Byte.valueOf(buf[offset]);
@@ -178,7 +178,6 @@ public class ByteIo {
         // Handle special cases
         if (exponent == 0) {
             if (mantissa == 0) {
-
                 // Zero
                 return sign == 0 ? 0.0f : -0.0f;
             }
@@ -189,7 +188,6 @@ public class ByteIo {
 
         } else if (exponent == 31) {
             if (mantissa == 0) {
-
                 // Infinity
                 return sign == 0 ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
             }
@@ -198,7 +196,6 @@ public class ByteIo {
             return Float.NaN;
 
         } else {
-
             // Normalized number
             float value =
                     (float) ((1.0 + (double) mantissa / (1 << 10)) * Math.pow(2, exponent - 15));
@@ -219,14 +216,12 @@ public class ByteIo {
         float absVal = Math.abs(fval);
 
         if (Float.isInfinite(fval)) {
-
             // Infinity
             doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
             return;
         }
 
         if (absVal == 0.0f) {
-
             // Zero
             doWriteInt16(buf, offset, sign << 15, littleEndian);
             return;
@@ -242,12 +237,10 @@ public class ByteIo {
         // Values in [65504, 65520) might round to 65504 or infinity
         double absValDouble = Math.abs(val);
         if (absValDouble >= 65520.0) {
-
             // Definite overflow to infinity
             doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
             return;
         } else if (absValDouble > 65504.0) {
-
             // Near overflow: value is between max finite and definite overflow
             // These values might round to 65504 or infinity depending on exact value
             // 65504 = 0x7BFF: exp=30, mantissa=0x3ff (all 1s)
@@ -257,7 +250,6 @@ public class ByteIo {
             return;
         }
         if (absVal < (float) FLOAT16_MIN_NORMAL) {
-
             // Denormalized number - IEEE 754 round-to-nearest-even
             // Use original double precision for accuracy in denormalized range
             exponent = 0;
@@ -282,19 +274,16 @@ public class ByteIo {
                 mantissa = mantissaBase;
             }
         } else {
-
             // Normalized
             int exp32 = ((Float.floatToIntBits(fval) >>> 23) & 0xff) - 127;
             exponent = exp32 + 15;
 
             if (exponent >= 31) {
-
                 // Overflow to infinity
                 doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
                 return;
             }
             if (exponent <= 0) {
-
                 // Denormalized - IEEE 754 round-to-nearest-even
                 exponent = 0;
 
@@ -319,7 +308,6 @@ public class ByteIo {
                 }
                 mantissa &= 0x3ff;
             } else {
-
                 // Normalized
                 int mant32 = Float.floatToIntBits(fval) & 0x7fffff;
 
