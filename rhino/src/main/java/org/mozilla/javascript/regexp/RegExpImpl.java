@@ -611,14 +611,6 @@ public class RegExpImpl implements RegExpProxy {
                 matched[0] = false;
             }
             ip[0] = match + matchlen[0];
-
-            if (version < Context.VERSION_1_3 && version != Context.VERSION_DEFAULT) {
-                /*
-                 * Deviate from ECMA to imitate Perl, which omits a final
-                 * split unless a limit argument is given and big enough.
-                 */
-                if (!limited && ip[0] == target.length()) break;
-            }
         }
         return result;
     }
@@ -671,14 +663,6 @@ public class RegExpImpl implements RegExpProxy {
             return reProxy.find_split(
                     cx, scope, target, separator, re, ip, matchlen, matched, parensp);
         }
-
-        /*
-         * Deviate from ECMA by never splitting an empty string by any separator
-         * string into a non-empty array (an array of length 1 that contains the
-         * empty string).
-         */
-        if (version != Context.VERSION_DEFAULT && version < Context.VERSION_1_3 && length == 0)
-            return -1;
 
         /*
          * Special case: if sep is the empty string, split str into

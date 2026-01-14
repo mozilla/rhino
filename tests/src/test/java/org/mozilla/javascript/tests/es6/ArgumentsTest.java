@@ -308,7 +308,6 @@ public class ArgumentsTest {
 
         Utils.assertWithAllModes_ES6("callee,length", code);
         Utils.assertWithAllModes_1_8("callee,caller,length", code);
-        Utils.assertWithAllModes(Context.VERSION_1_3, null, "callee,caller,length", code);
     }
 
     @Test
@@ -799,11 +798,6 @@ public class ArgumentsTest {
         Utils.assertWithAllModes_ES6("undefined", code);
         Utils.assertException(
                 Context.VERSION_1_8,
-                EcmaError.class,
-                "TypeError: This operation is not allowed.",
-                code);
-        Utils.assertException(
-                Context.VERSION_1_3,
                 EcmaError.class,
                 "TypeError: This operation is not allowed.",
                 code);
