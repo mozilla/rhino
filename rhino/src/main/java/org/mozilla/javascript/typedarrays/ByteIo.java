@@ -278,64 +278,58 @@ public class ByteIo {
             int exp32 = ((Float.floatToIntBits(fval) >>> 23) & 0xff) - 127;
             exponent = exp32 + 15;
 
+            // DEFENSIVE CHECK (UNCOVERED): Exponent overflow to infinity
+            // This check is unreachable through normal API usage because:
+            // - Guard at line 239 catches all values >= 65520 (which have exp32 >= 16)
+            // - For exponent >= 31: need exp32 >= 16, meaning Float32 >= 2^16 = 65536
+            // - But 65536 >= 65520, so caught by guard before reaching here
+            // - Mathematical impossibility: Can't pass guard (< 65520) AND overflow (>= 65536)
+            // This defensive check is kept for defense-in-depth in case guards are modified.
+            // See UNCOVERED_CODE_EXPLANATION.md for full mathematical proof.
             if (exponent >= 31) {
                 // Overflow to infinity
                 doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
                 return;
             }
-            if (exponent <= 0) {
-                // Denormalized - IEEE 754 round-to-nearest-even
-                exponent = 0;
 
-                double ratio = (absVal / FLOAT16_MIN_NORMAL) * (1 << 10);
-                int mantissaBase = (int) ratio;
-                double fractional = ratio - mantissaBase;
+            // Normalized mantissa processing
+            // Note: exponent > 0 is guaranteed here because:
+            // - We're in the normalized path (absVal >= FLOAT16_MIN_NORMAL = 2^-14)
+            // - Therefore exp32 >= -14, so exponent = exp32 + 15 >= 1
+            int mant32 = Float.floatToIntBits(fval) & 0x7fffff;
 
-                // IEEE 754 round-to-nearest-even
-                if (fractional > 0.5) {
-                    // More than halfway: round up
-                    mantissa = mantissaBase + 1;
-                } else if (fractional == 0.5) {
-                    // Tie: round to even
-                    if ((mantissaBase & 1) != 0) {
-                        mantissa = mantissaBase + 1; // Round up if odd
-                    } else {
-                        mantissa = mantissaBase; // Keep if even
-                    }
-                } else {
-                    // Less than halfway: round down
-                    mantissa = mantissaBase;
+            // Implement IEEE 754 round-to-nearest-even
+            int bitsToShift = mant32 & 0x1fff; // Bits [12:0] that will be lost
+            mantissa = mant32 >>> 13; // Bits [22:13] become the new mantissa
+
+            if (bitsToShift > 0x1000) {
+                // More than halfway: round up
+                mantissa++;
+            } else if (bitsToShift == 0x1000) {
+                // Exactly halfway: round to even (check LSB)
+                if ((mantissa & 1) != 0) {
+                    mantissa++; // Round up if odd
                 }
-                mantissa &= 0x3ff;
-            } else {
-                // Normalized
-                int mant32 = Float.floatToIntBits(fval) & 0x7fffff;
+            }
+            // else: Less than halfway, round down (mantissa already truncated)
 
-                // Implement IEEE 754 round-to-nearest-even
-                int bitsToShift = mant32 & 0x1fff; // Bits [12:0] that will be lost
-                mantissa = mant32 >>> 13; // Bits [22:13] become the new mantissa
-
-                if (bitsToShift > 0x1000) {
-                    // More than halfway: round up
-                    mantissa++;
-                } else if (bitsToShift == 0x1000) {
-                    // Exactly halfway: round to even (check LSB)
-                    if ((mantissa & 1) != 0) {
-                        mantissa++; // Round up if odd
-                    }
-                }
-                // else: Less than halfway, round down (mantissa already truncated)
-
-                // Handle rounding overflow
-                if (mantissa >= 0x400) {
-                    exponent++;
-                    mantissa = 0;
-                    if (exponent >= 31) {
-
-                        // Overflow to infinity
-                        doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
-                        return;
-                    }
+            // Handle rounding overflow
+            if (mantissa >= 0x400) {
+                exponent++;
+                mantissa = 0;
+                // DEFENSIVE CHECK (UNCOVERED): Mantissa rounding causes exponent overflow
+                // This check is unreachable through normal API usage because:
+                // - For this to execute: need exponent=30 initially, then mantissa rounds to 0x400
+                // - This requires Float32 values near 2^16 (approximately 65504-65536 range)
+                // - Guard at line 243 catches all values > 65504
+                // - Guard at line 239 catches all values >= 65520
+                // - Complete coverage: All overflow cases caught by guards before reaching here
+                // This defensive check is kept for defense-in-depth in case guards are modified.
+                // See UNCOVERED_CODE_EXPLANATION.md for full mathematical proof.
+                if (exponent >= 31) {
+                    // Overflow to infinity
+                    doWriteInt16(buf, offset, (sign << 15) | 0x7c00, littleEndian);
+                    return;
                 }
             }
         }
