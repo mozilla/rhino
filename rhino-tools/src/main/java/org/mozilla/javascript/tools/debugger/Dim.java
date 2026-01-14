@@ -745,8 +745,15 @@ public class Dim {
         cx.setInterpretedMode(false);
         cx.setGeneratingDebug(false);
         try {
+            Scriptable scope = frame.scope;
+            if (!frame.isFunction && scope != null) {
+                Scriptable parentScope = scope.getParentScope();
+                if (parentScope != null) {
+                    scope = parentScope;
+                }
+            }
             Script script = cx.compileString(expr, "", 0, null);
-            Object result = script.exec(cx, frame.scope, frame.thisObj);
+            Object result = script.exec(cx, scope, frame.thisObj);
             if (result == Undefined.instance) {
                 resultString = "";
             } else {
@@ -896,7 +903,7 @@ public class Dim {
                 // Can not debug if source is not available
                 return null;
             }
-            return new StackFrame(cx, dim, item);
+            return new StackFrame(cx, dim, item, fnOrScript.isFunction());
         }
 
         /** Called when compilation is finished. */
@@ -974,6 +981,9 @@ public class Dim {
         /** The 'this' object. */
         private Scriptable thisObj;
 
+        /** Whether this frame represents a function (vs a top-level script). */
+        private boolean isFunction;
+
         /** Information about the function. */
         private FunctionSource fsource;
 
@@ -984,10 +994,11 @@ public class Dim {
         private int lineNumber;
 
         /** Creates a new StackFrame. */
-        private StackFrame(Context cx, Dim dim, FunctionSource fsource) {
+        private StackFrame(Context cx, Dim dim, FunctionSource fsource, boolean isFunction) {
             this.dim = dim;
             this.contextData = ContextData.get(cx);
             this.fsource = fsource;
+            this.isFunction = isFunction;
             this.breakpoints = fsource.sourceInfo().breakpoints;
             this.lineNumber = fsource.firstLine();
         }
