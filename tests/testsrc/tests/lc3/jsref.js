@@ -72,12 +72,6 @@ function startTest() {
     if ( VERSION == "JS1_3" ) {
         version ( "130" );
     }
-    if ( VERSION == "JS1_2" ) {
-        version ( "120" );
-    }
-    if ( VERSION  == "JS1_1" ) {
-        version ( "110" );
-    }
 
     writeHeaderToLog( SECTION + " "+ TITLE);
 

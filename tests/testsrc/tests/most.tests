@@ -1,8 +1,6 @@
 # Created Wed Nov 17 00:42:42 GMT-0500 (EST) 1999
 # ecma: 591/592 (99%) selected
 # ecma_2: 173/173 (100%) selected
-# js1_1: 2/2 (100%) selected
-# js1_2: 83/83 (100%) selected
 # js1_3: 27/27 (100%) selected
 # js1_4: 11/11 (100%) selected
 # lc2: 0/59 (0%) selected
@@ -770,91 +768,6 @@ ecma_2/instanceof/instanceof-001.js
 ecma_2/instanceof/instanceof-002.js
 ecma_2/instanceof/instanceof-003.js
 ecma_2/instanceof/regress-7635.js
-js1_1/Boolean/boolean-001.js
-js1_1/regress/function-001.js
-js1_2/Array/array_split_1.js
-js1_2/Array/general1.js
-js1_2/Array/general2.js
-js1_2/Array/slice.js
-js1_2/Array/splice1.js
-js1_2/Array/splice2.js
-js1_2/Array/tostring_1.js
-js1_2/Array/tostring_2.js
-js1_2/Objects/toString-001.js
-js1_2/String/charCodeAt.js
-js1_2/String/concat.js
-js1_2/String/match.js
-js1_2/String/slice.js
-js1_2/function/Function_object.js
-js1_2/function/Number.js
-js1_2/function/String.js
-js1_2/function/definition-1.js
-js1_2/function/function-001-n.js
-js1_2/function/length.js
-js1_2/function/nesting-1.js
-js1_2/function/nesting.js
-js1_2/function/regexparg-1.js
-js1_2/function/regexparg-2-n.js
-js1_2/function/tostring-1.js
-js1_2/function/tostring-2.js
-js1_2/operator/equality.js
-js1_2/operator/strictEquality.js
-js1_2/regexp/RegExp_dollar_number.js
-js1_2/regexp/RegExp_input.js
-js1_2/regexp/RegExp_input_as_array.js
-js1_2/regexp/RegExp_lastIndex.js
-js1_2/regexp/RegExp_lastMatch.js
-js1_2/regexp/RegExp_lastMatch_as_array.js
-js1_2/regexp/RegExp_lastParen.js
-js1_2/regexp/RegExp_lastParen_as_array.js
-js1_2/regexp/RegExp_leftContext.js
-js1_2/regexp/RegExp_leftContext_as_array.js
-js1_2/regexp/RegExp_multiline.js
-js1_2/regexp/RegExp_multiline_as_array.js
-js1_2/regexp/RegExp_object.js
-js1_2/regexp/RegExp_rightContext.js
-js1_2/regexp/RegExp_rightContext_as_array.js
-js1_2/regexp/alphanumeric.js
-js1_2/regexp/asterisk.js
-js1_2/regexp/backslash.js
-js1_2/regexp/backspace.js
-js1_2/regexp/beginLine.js
-js1_2/regexp/character_class.js
-js1_2/regexp/compile.js
-js1_2/regexp/control_characters.js
-js1_2/regexp/digit.js
-js1_2/regexp/dot.js
-js1_2/regexp/endLine.js
-js1_2/regexp/everything.js
-js1_2/regexp/exec.js
-js1_2/regexp/flags.js
-js1_2/regexp/global.js
-js1_2/regexp/hexadecimal.js
-js1_2/regexp/ignoreCase.js
-js1_2/regexp/interval.js
-js1_2/regexp/octal.js
-js1_2/regexp/parentheses.js
-js1_2/regexp/plus.js
-js1_2/regexp/question_mark.js
-js1_2/regexp/regress-6359.js
-js1_2/regexp/regress-9141.js
-js1_2/regexp/simple_form.js
-js1_2/regexp/source.js
-js1_2/regexp/special_characters.js
-js1_2/regexp/string_replace.js
-js1_2/regexp/string_search.js
-js1_2/regexp/string_split.js
-js1_2/regexp/test.js
-js1_2/regexp/toString.js
-js1_2/regexp/vertical_bar.js
-js1_2/regexp/whitespace.js
-js1_2/regexp/word_boundary.js
-js1_2/regress/regress-7703.js
-js1_2/statements/break.js
-js1_2/statements/continue.js
-js1_2/statements/do_while.js
-js1_2/statements/switch.js
-js1_2/statements/switch2.js
 js1_3/Boolean/boolean-001.js
 js1_3/Script/delete-001.js
 js1_3/Script/function-001-n.js

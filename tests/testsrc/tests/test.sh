@@ -276,7 +276,7 @@ touch $includetestsfile
 
 if [[ -z "$includetests" ]]; then
     # by default include tests appropriate for the branch
-    includetests="e4x ecma ecma_2 ecma_3 js1_1 js1_2 js1_3 js1_4 js1_5 js1_6"
+    includetests="e4x ecma ecma_2 ecma_3 js1_3 js1_4 js1_5 js1_6"
 
     case "$branch" in
         1.8.0)

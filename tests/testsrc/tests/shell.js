@@ -94,12 +94,6 @@ function startTest() {
   else if ( VERSION == "JS_1.3"  || gTestsuite == 'js1_3') {
     version ( "130" );
   }
-  else if ( VERSION == "JS_1.2"  || gTestsuite == 'js1_2') {
-    version ( "120" );
-  }
-  else if ( VERSION  == "JS_1.1" || gTestsuite == 'js1_1') {
-    version ( "110" );
-  }
 }
 
 function TestCase(n, d, e, a)
