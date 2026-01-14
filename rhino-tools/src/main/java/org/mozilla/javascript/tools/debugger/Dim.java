@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
@@ -25,6 +24,7 @@ import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeCall;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -745,8 +745,8 @@ public class Dim {
         cx.setInterpretedMode(false);
         cx.setGeneratingDebug(false);
         try {
-            Callable script = (Callable) cx.compileString(expr, "", 0, null);
-            Object result = script.call(cx, frame.scope, frame.thisObj, ScriptRuntime.emptyArgs);
+            Script script = cx.compileString(expr, "", 0, null);
+            Object result = script.exec(cx, frame.scope, frame.thisObj);
             if (result == Undefined.instance) {
                 resultString = "";
             } else {
