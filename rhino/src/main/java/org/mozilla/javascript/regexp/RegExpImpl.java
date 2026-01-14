@@ -302,10 +302,7 @@ public class RegExpImpl implements RegExpProxy {
                      * sep->length to our return value.
                      */
                     if (i == length) {
-                        if (version == Context.VERSION_1_2) {
-                            matchlen[0] = 1;
-                            result = i;
-                        } else result = -1;
+                        result = -1;
                         break;
                     }
                     i++;
@@ -492,17 +489,6 @@ public class RegExpImpl implements RegExpProxy {
             case '+':
                 return res.lastParen;
             case '`':
-                if (version == Context.VERSION_1_2) {
-                    /*
-                     * JS1.2 imitated the Perl4 bug where left context at each step
-                     * in an iterative use of a global regexp started from last match,
-                     * not from the start of the target string.  But Perl4 does start
-                     * $` at the beginning of the target string when it is used in a
-                     * substitution, so we emulate that special case here.
-                     */
-                    res.leftContext.index = 0;
-                    res.leftContext.length = res.lastMatch.index;
-                }
                 return res.leftContext;
             case '\'':
                 return res.rightContext;
@@ -665,36 +651,6 @@ public class RegExpImpl implements RegExpProxy {
         int length = target.length();
 
         /*
-         * Perl4 special case for str.split(' '), only if the user has selected
-         * JavaScript1.2 explicitly.  Split on whitespace, and skip leading w/s.
-         * Strange but true, apparently modeled after awk.
-         */
-        if (version == Context.VERSION_1_2
-                && re == null
-                && separator.length() == 1
-                && separator.charAt(0) == ' ') {
-            /* Skip leading whitespace if at front of str. */
-            if (i == 0) {
-                while (i < length && Character.isWhitespace(target.charAt(i))) i++;
-                ip[0] = i;
-            }
-
-            /* Don't delimit whitespace at end of string. */
-            if (i == length) return -1;
-
-            /* Skip over the non-whitespace chars. */
-            while (i < length && !Character.isWhitespace(target.charAt(i))) i++;
-
-            /* Now skip the next run of whitespace. */
-            int j = i;
-            while (j < length && Character.isWhitespace(target.charAt(j))) j++;
-
-            /* Update matchlen to count delimiter chars. */
-            matchlen[0] = j - i;
-            return i;
-        }
-
-        /*
          * Stop if past end of string.  If at end of string, we will
          * return target length, so that
          *
@@ -735,13 +691,6 @@ public class RegExpImpl implements RegExpProxy {
          * to include an additional null string at the end of the substring list.
          */
         if (separator.length() == 0) {
-            if (version == Context.VERSION_1_2) {
-                if (i == length) {
-                    matchlen[0] = 1;
-                    return i;
-                }
-                return i + 1;
-            }
             return (i == length) ? -1 : i + 1;
         }
 

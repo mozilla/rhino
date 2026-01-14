@@ -136,15 +136,6 @@ public class NativeObject extends ScriptableObject implements Map {
 
     private static Object js_toString(
             Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
-        if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE)) {
-            String str = ScriptRuntime.defaultObjectToSource(cx, f, nt, s, thisObj, args);
-            int L = str.length();
-            if (L != 0 && str.charAt(0) == '(' && str.charAt(L - 1) == ')') {
-                // Strip () that surrounds toSource
-                str = str.substring(1, L - 1);
-            }
-            return str;
-        }
         return ScriptRuntime.defaultObjectToString((Scriptable) thisObj);
     }
 

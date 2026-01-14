@@ -747,16 +747,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (isGeneratorFunction) {
             sourceBuf.append("* ");
         }
-        /* version != 1.2 Function constructor behavior -
-         * print 'anonymous' as the function name if the
-         * version (under which the function was compiled) is
-         * less than 1.2... or if it's greater than 1.2, because
-         * we need to be closer to ECMA.
-         */
-        if (cx.getLanguageVersion() != Context.VERSION_1_2) {
-            sourceBuf.append("anonymous");
-        }
-        sourceBuf.append('(');
+        sourceBuf.append("anonymous(");
 
         // Append arguments as coma separated strings
         for (int i = 0; i < arglen - 1; i++) {
