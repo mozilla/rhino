@@ -66,12 +66,6 @@ function startTest() {
     if ( VERSION == "JS1_4" ) {
         version( 140 );
     }
-    if ( VERSION == "ECMA_1" ) {
-        version ( "130" );
-    }
-    if ( VERSION == "JS1_3" ) {
-        version ( "130" );
-    }
 
     writeHeaderToLog( SECTION + " "+ TITLE);
 

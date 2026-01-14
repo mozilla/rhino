@@ -72,10 +72,6 @@ function startTest() {
     return;
   }
 
-  // JavaScript 1.3 is supposed to be compliant ecma version 1.0
-  if ( VERSION == "ECMA_1" ) {
-    version ( "130" );
-  }
   else if ( VERSION == "JS_1.8"  || gTestsuite == 'js1_8') {
     version ( "180" );
   }
@@ -90,9 +86,6 @@ function startTest() {
   }
   else if ( VERSION == "JS_1.4"  || gTestsuite == 'js1_4') {
     version ( "140" );
-  }
-  else if ( VERSION == "JS_1.3"  || gTestsuite == 'js1_3') {
-    version ( "130" );
   }
 }
 
