@@ -228,7 +228,7 @@ public class ScriptRuntime {
             // representation
             NativeArray.setMaximumInitialCapacity(200000);
         }
-        NativeString.init(scope, sealed);
+        NativeString.init(cx, scope, sealed);
         NativeBoolean.init(cx, scope, sealed);
         NativeNumber.init(scope, sealed);
         NativeDate.init(cx, scope, sealed);
