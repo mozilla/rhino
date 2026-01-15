@@ -231,7 +231,7 @@ public class ScriptRuntime {
         }
         NativeString.init(cx, scope, sealed);
         NativeBoolean.init(cx, scope, sealed);
-        NativeNumber.init(scope, sealed);
+        NativeNumber.init(cx, scope, sealed);
         NativeDate.init(cx, scope, sealed);
         new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
