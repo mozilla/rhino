@@ -6,6 +6,11 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+import static org.mozilla.javascript.ScriptRuntime.wrapNumber;
+
 import java.text.NumberFormat;
 import java.util.IllformedLocaleException;
 import java.util.Locale;
@@ -34,87 +39,57 @@ final class NativeNumber extends ScriptableObject {
     private static final double MIN_SAFE_INTEGER = -MAX_SAFE_INTEGER;
     private static final double EPSILON = 2.220446049250313e-16;
 
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                1,
+                                NativeNumber::js_constructorFunc,
+                                NativeNumber::js_constructor)
+                        .withProp(CTOR, "NaN", value(ScriptRuntime.NaNobj))
+                        .withProp(
+                                CTOR,
+                                "POSITIVE_INFINITY",
+                                value(wrapNumber(Double.POSITIVE_INFINITY)))
+                        .withProp(
+                                CTOR,
+                                "NEGATIVE_INFINITY",
+                                value(wrapNumber(Double.NEGATIVE_INFINITY)))
+                        .withProp(CTOR, "MAX_VALUE", value(wrapNumber(Double.MAX_VALUE)))
+                        .withProp(CTOR, "MIN_VALUE", value(wrapNumber(Double.MIN_VALUE)))
+                        .withProp(CTOR, "MAX_SAFE_INTEGER", value(wrapNumber(MAX_SAFE_INTEGER)))
+                        .withProp(CTOR, "MIN_SAFE_INTEGER", value(wrapNumber(MIN_SAFE_INTEGER)))
+                        .withProp(CTOR, "EPSILON", value(wrapNumber(EPSILON)))
+                        .withMethod(CTOR, "isFinite", 1, NativeNumber::js_isFinite)
+                        .withMethod(CTOR, "isNaN", 1, NativeNumber::js_isNaN)
+                        .withMethod(CTOR, "isInteger", 1, NativeNumber::js_isInteger)
+                        .withMethod(CTOR, "isSafeInteger", 1, NativeNumber::js_isSafeInteger)
+                        .withProp(
+                                CTOR,
+                                "parseFloat",
+                                (c, s, o) ->
+                                        new DescriptorInfo(s.get("parseFloat", s), DONTENUM, true))
+                        .withProp(
+                                CTOR,
+                                "parseInt",
+                                (c, s, o) ->
+                                        new DescriptorInfo(s.get("parseInt", s), DONTENUM, true))
+                        .withMethod(PROTO, "toString", 1, NativeNumber::js_toString)
+                        .withMethod(PROTO, "toLocaleString", 0, NativeNumber::js_toLocaleString)
+                        .withMethod(PROTO, "toSource", 0, NativeNumber::js_toSource)
+                        .withMethod(PROTO, "valueOf", 0, NativeNumber::js_valueOf)
+                        .withMethod(PROTO, "toFixed", 1, NativeNumber::js_toFixed)
+                        .withMethod(PROTO, "toExponential", 1, NativeNumber::js_toExponential)
+                        .withMethod(PROTO, "toPrecision", 1, NativeNumber::js_toPrecision)
+                        .build();
+    }
+
     private final double doubleValue;
 
-    static void init(VarScope scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        1,
-                        NativeNumber::js_constructorFunc,
-                        NativeNumber::js_constructor);
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-        constructor.setPrototypeScriptable(new NativeNumber(0.0));
-
-        final int propAttr = DONTENUM | PERMANENT | READONLY;
-
-        constructor.defineProperty("NaN", ScriptRuntime.NaNobj, propAttr);
-        constructor.defineProperty(
-                "POSITIVE_INFINITY", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), propAttr);
-        constructor.defineProperty(
-                "NEGATIVE_INFINITY", ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY), propAttr);
-        constructor.defineProperty(
-                "MAX_VALUE", ScriptRuntime.wrapNumber(Double.MAX_VALUE), propAttr);
-        constructor.defineProperty(
-                "MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), propAttr);
-        constructor.defineProperty(
-                "MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), propAttr);
-        constructor.defineProperty(
-                "MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), propAttr);
-        constructor.defineProperty("EPSILON", ScriptRuntime.wrapNumber(EPSILON), propAttr);
-
-        constructor.defineConstructorMethod(
-                scope,
-                "isFinite",
-                1,
-                null,
-                NativeNumber::js_isFinite,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope, "isNaN", 1, null, NativeNumber::js_isNaN, DONTENUM, DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "isInteger",
-                1,
-                null,
-                NativeNumber::js_isInteger,
-                DONTENUM,
-                DONTENUM | READONLY);
-        constructor.defineConstructorMethod(
-                scope,
-                "isSafeInteger",
-                1,
-                null,
-                NativeNumber::js_isSafeInteger,
-                DONTENUM,
-                DONTENUM | READONLY);
-
-        Object parseFloat = ScriptRuntime.getTopLevelProp(scope, "parseFloat");
-        if (parseFloat instanceof Function) {
-            constructor.defineProperty("parseFloat", parseFloat, DONTENUM);
-        }
-        Object parseInt = ScriptRuntime.getTopLevelProp(scope, "parseInt");
-        if (parseInt instanceof Function) {
-            constructor.defineProperty("parseInt", parseInt, DONTENUM);
-        }
-
-        constructor.definePrototypeMethod(scope, "toString", 1, NativeNumber::js_toString);
-        constructor.definePrototypeMethod(
-                scope, "toLocaleString", 0, NativeNumber::js_toLocaleString);
-        constructor.definePrototypeMethod(scope, "toSource", 0, NativeNumber::js_toSource);
-        constructor.definePrototypeMethod(scope, "valueOf", 0, NativeNumber::js_valueOf);
-        constructor.definePrototypeMethod(scope, "toFixed", 1, NativeNumber::js_toFixed);
-        constructor.definePrototypeMethod(
-                scope, "toExponential", 1, NativeNumber::js_toExponential);
-        constructor.definePrototypeMethod(scope, "toPrecision", 1, NativeNumber::js_toPrecision);
-
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
-        }
+    static void init(Context cx, VarScope scope, boolean sealed) {
+        DESCRIPTOR.buildConstructor(cx, scope, new NativeNumber(0.0), sealed);
     }
 
     NativeNumber(double number) {
@@ -126,21 +101,27 @@ final class NativeNumber extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double val = (args.length > 0) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
-        return new NativeNumber(val);
+        var res = new NativeNumber(val);
+        res.setPrototype((Scriptable) f.getPrototypeProperty());
+        res.setParentScope(f.getDeclarationScope());
+        return res;
     }
 
     private static Object js_constructorFunc(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return (args.length > 0) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
     }
 
-    private static Object js_valueOf(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_valueOf(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return toSelf(thisObj).doubleValue;
     }
 
-    private static Object js_toFixed(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_toFixed(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double value = toSelf(thisObj).doubleValue;
 
         int fractionDigits;
@@ -162,7 +143,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toExponential(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double value = toSelf(thisObj).doubleValue;
 
         double p;
@@ -188,7 +169,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toPrecision(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double value = toSelf(thisObj).doubleValue;
         // Undefined precision, fall back to ToString()
         if (args.length == 0 || Undefined.isUndefined(args[0])) {
@@ -217,7 +198,8 @@ final class NativeNumber extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeNumber.class);
     }
 
-    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_toString(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         int base =
                 (args.length == 0 || Undefined.isUndefined(args[0]))
                         ? 10
@@ -226,9 +208,9 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toLocaleString(
-            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (!cx.hasFeature(Context.FEATURE_INTL_402)) {
-            return js_toString(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+            return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
         }
 
         if (args.length != 0 && args[0] instanceof String) {
@@ -245,7 +227,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_toSource(
-            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return "(new Number(" + ScriptRuntime.toString(toSelf(thisObj).doubleValue) + "))";
     }
 
@@ -263,7 +245,8 @@ final class NativeNumber extends ScriptableObject {
         return ScriptRuntime.numberToString(doubleValue, 10);
     }
 
-    private static Object js_isFinite(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_isFinite(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Number n = argToNumber(args);
         return n == null ? Boolean.FALSE : isFinite(n);
     }
@@ -273,7 +256,8 @@ final class NativeNumber extends ScriptableObject {
         return Double.isFinite(nd);
     }
 
-    private static Object js_isNaN(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_isNaN(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Number val = argToNumber(args);
         if (val == null) {
             return false;
@@ -285,7 +269,8 @@ final class NativeNumber extends ScriptableObject {
         return Double.isNaN(d);
     }
 
-    private static Object js_isInteger(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_isInteger(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Number val = argToNumber(args);
         if (val == null) {
             return false;
@@ -297,7 +282,7 @@ final class NativeNumber extends ScriptableObject {
     }
 
     private static Object js_isSafeInteger(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Number val = argToNumber(args);
         if (val == null) {
             return false;
