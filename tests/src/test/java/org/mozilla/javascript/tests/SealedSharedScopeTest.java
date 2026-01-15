@@ -19,8 +19,8 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Wrapper;
 
@@ -80,7 +80,7 @@ public class SealedSharedScopeTest {
         assertEquals(java.sql.Date.class, o);
 
         o = evaluateString(scope1, "Date"); // JavaScript "Statement" function
-        assertTrue(o instanceof IdFunctionObject);
+        assertTrue(o instanceof JSFunction);
 
         o = evaluateString(scope2, "typeof imp1"); // scope 2 has
         // no imp1
@@ -105,7 +105,7 @@ public class SealedSharedScopeTest {
         assertEquals(java.sql.Date.class, o);
 
         o = evaluateString(scope1, "Date"); // JavaScript "Statement" function
-        assertTrue(o instanceof IdFunctionObject);
+        assertTrue(o instanceof JSFunction);
 
         o = evaluateString(scope2, "typeof imp1 == 'undefined'"); // scope 2 has
         // no imp1
