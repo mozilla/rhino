@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+
 import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -30,21 +33,21 @@ public final class NativeJSON extends ScriptableObject {
 
     private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
+    private static final ClassDescriptor DESCRIPTION;
+
+    static {
+        DESCRIPTION =
+                new ClassDescriptor.Builder(JSON_TAG)
+                        .withMethod(CTOR, "parse", 2, NativeJSON::parse)
+                        .withMethod(CTOR, "stringify", 3, NativeJSON::stringify)
+                        .withProp(CTOR, "toSource", value("JSON"))
+                        .withProp(
+                                CTOR, SymbolKey.TO_STRING_TAG, value(JSON_TAG, DONTENUM | READONLY))
+                        .build();
+    }
+
     static Object init(Context cx, VarScope scope, boolean sealed) {
-        NativeJSON json = new NativeJSON();
-        json.setPrototype(getObjectPrototype(scope));
-        json.setParentScope(scope);
-
-        json.defineBuiltinProperty(scope, "parse", 2, NativeJSON::parse);
-        json.defineBuiltinProperty(scope, "stringify", 3, NativeJSON::stringify);
-
-        json.defineProperty("toSource", "JSON", DONTENUM | READONLY | PERMANENT);
-
-        json.defineProperty(SymbolKey.TO_STRING_TAG, JSON_TAG, DONTENUM | READONLY);
-        if (sealed) {
-            json.sealObject();
-        }
-        return json;
+        return DESCRIPTION.populateGlobal(cx, scope, new NativeJSON(), sealed);
     }
 
     private NativeJSON() {}
@@ -54,19 +57,21 @@ public final class NativeJSON extends ScriptableObject {
         return "JSON";
     }
 
-    private static Object parse(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object parse(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String jtext = ScriptRuntime.toString(args, 0);
         Object reviver = null;
         if (args.length > 1) {
             reviver = args[1];
         }
         if (reviver instanceof Callable) {
-            return parse(cx, scope, jtext, (Callable) reviver);
+            return parse(cx, f.getDeclarationScope(), jtext, (Callable) reviver);
         }
-        return parse(cx, scope, jtext);
+        return parse(cx, f.getDeclarationScope(), jtext);
     }
 
-    private static Object stringify(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object stringify(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object value = Undefined.instance, replacer = null, space = null;
 
         if (args.length > 0) {
@@ -78,7 +83,7 @@ public final class NativeJSON extends ScriptableObject {
                 }
             }
         }
-        return stringify(cx, scope, value, replacer, space);
+        return stringify(cx, s, value, replacer, space);
     }
 
     private static Object parse(Context cx, VarScope scope, String jtext) {
