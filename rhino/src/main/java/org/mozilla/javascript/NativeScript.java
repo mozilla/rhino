@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.util.EnumSet;
 
 /**
@@ -23,46 +25,26 @@ import java.util.EnumSet;
 class NativeScript extends BaseFunction {
     private static final long serialVersionUID = -6795101161980121700L;
 
-    private static final Object SCRIPT_TAG = "Script";
+    private static final String SCRIPT_TAG = "Script";
 
-    static LambdaConstructor init2(Context cx, VarScope scope, boolean sealed) {
-        LambdaConstructor obj =
-                new LambdaConstructor(
-                        scope,
-                        "Script",
-                        1,
-                        NativeScript::js_constructorCall,
-                        NativeScript::js_constructor);
+    private static final ClassDescriptor DESCRIPTOR;
 
-        var proto = new NativeScript(null);
-        proto.setPrototypeProperty(null);
-        obj.setPrototypeProperty(proto);
-
-        var function = (Scriptable) ScriptableObject.getProperty(scope, "Function");
-        var functionProto = (Scriptable) ScriptableObject.getProperty(function, "prototype");
-        proto.setPrototype(functionProto);
-
-        defineMethod(obj, scope, "toString", 0, NativeScript::js_toString);
-        defineMethod(obj, scope, "exec", 0, NativeScript::js_exec);
-        defineMethod(obj, scope, "compile", 0, NativeScript::js_compile);
-
-        ScriptableObject.defineProperty(scope, "Script", obj, DONTENUM);
-        if (sealed) {
-            obj.sealObject();
-            ((ScriptableObject) obj.getPrototypeProperty()).sealObject();
-        }
-
-        return obj;
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                SCRIPT_TAG,
+                                1,
+                                NativeScript::js_constructorCall,
+                                NativeScript::js_constructor)
+                        .withMethod(PROTO, "toString", 0, NativeScript::js_toString)
+                        .withMethod(PROTO, "exec", 0, NativeScript::js_exec)
+                        .withMethod(PROTO, "compile", 0, NativeScript::js_compile)
+                        .build();
     }
 
-    private static void defineMethod(
-            LambdaConstructor typedArray,
-            VarScope scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        typedArray.definePrototypeMethod(
-                scope, name, length, target, DONTENUM, DONTENUM | READONLY);
+    static JSFunction init2(Context cx, VarScope scope, boolean sealed) {
+        var proto = new NativeScript(null);
+        return DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
     }
 
     /**
@@ -114,18 +96,21 @@ class NativeScript extends BaseFunction {
         return super.decompile(indent, flags);
     }
 
-    private static Object js_compile(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_compile(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeScript real = realThis(thisObj, "compile");
         String source = ScriptRuntime.toString(args, 0);
         real.script = compile(cx, source);
         return real;
     }
 
-    private static Object js_exec(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_exec(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         throw Context.reportRuntimeErrorById("msg.cant.call.indirect", "exec");
     }
 
-    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_toString(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeScript real = realThis(thisObj, "toString");
         Script realScript = real.script;
         if (realScript == null) {
@@ -135,15 +120,16 @@ class NativeScript extends BaseFunction {
     }
 
     private static Scriptable js_constructorCall(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return js_constructor(cx, scope, args);
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return js_constructor(cx, f, nt, s, thisObj, args);
     }
 
-    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String source = (args.length == 0) ? "" : ScriptRuntime.toString(args[0]);
         Script script = compile(cx, source);
         NativeScript nscript = new NativeScript(script);
-        ScriptRuntime.setObjectProtoAndParent(nscript, scope);
+        ScriptRuntime.setObjectProtoAndParent(nscript, f.getDeclarationScope());
         return nscript;
     }
 
