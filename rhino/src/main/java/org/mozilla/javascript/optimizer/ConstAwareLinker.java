@@ -10,7 +10,6 @@ import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
-import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -25,8 +24,7 @@ import org.mozilla.javascript.ScriptableObject;
 class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
     @Override
     public boolean canLinkType(Class<?> type) {
-        return ScriptableObject.class.isAssignableFrom(type)
-                || NativeWith.class.isAssignableFrom(type);
+        return ScriptableObject.class.isAssignableFrom(type);
     }
 
     @Override
@@ -70,10 +68,6 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
      * constants with a value of "null," which should not be a big loss.
      */
     private Object getConstValue(Object t, String name) {
-        if (t instanceof NativeWith) {
-            // Support constants referenced from inside functions
-            return getConstValue(((NativeWith) t).getPrototype(), name);
-        }
         assert t instanceof ScriptableObject;
         try {
             ScriptableObject target = (ScriptableObject) t;
