@@ -78,8 +78,7 @@ public class Node implements Iterable<Node> {
     public static final int BOTH = 0, LEFT = 1, RIGHT = 2;
     public static final int // values for SPECIALCALL_PROP
             NON_SPECIALCALL = 0,
-            SPECIALCALL_EVAL = 1,
-            SPECIALCALL_WITH = 2;
+            SPECIALCALL_EVAL = 1;
     public static final int // flags for INCRDECR_PROP
             DECR_FLAG = 0x1,
             POST_FLAG = 0x2;
@@ -1185,9 +1184,6 @@ public class Node implements Iterable<Node> {
                         switch (x.intValue) {
                             case SPECIALCALL_EVAL:
                                 sb.append("eval");
-                                break;
-                            case SPECIALCALL_WITH:
-                                sb.append("with");
                                 break;
                             default:
                                 // NON_SPECIALCALL should not be stored
