@@ -66,6 +66,9 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 - **[Servoy Developer](https://docs.servoy.com/)** - Application development platform for professional developers
   [Source](https://docs.servoy.com/release-notes/release-notes/2024.06#lib-upgrades)
 
+- **[OpenSCDP](https://www.openscdp.org/index.html)** - The Open Smart Card Development Platform (OpenSCDP) is a collection of tools for the development, test and deployment of smart card and public key infrastructure applications.
+  [Source](https://github.com/mozilla/rhino/issues/2258#issuecomment-3763695331)
+
 ## Data & Analytics
 
 - **[Apache Druid 31.0.1](https://druid.apache.org/)** - Real-time analytics database designed for fast slice-and-dice analytics on large datasets
