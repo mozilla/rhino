@@ -477,7 +477,7 @@ class JavaMembers {
                         methodBoxes[i] = new ExecutableBox(method, typeFactory, this.cl);
                     }
                 }
-                NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
+                NativeJavaMethod fun = new NativeJavaMethod(methodBoxes, entry.getKey());
                 if (scope != null) {
                     ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
                 }
@@ -499,7 +499,7 @@ class JavaMembers {
                     NativeJavaMethod method = (NativeJavaMethod) member;
                     FieldAndMethods fam =
                             new FieldAndMethods(
-                                    scope, method.methods, new NativeJavaField(field, typeFactory));
+                                    scope, method, new NativeJavaField(field, typeFactory));
                     Map<String, FieldAndMethods> fmht =
                             isStatic ? staticFieldAndMethods : fieldAndMethods;
                     if (fmht == null) {
@@ -628,7 +628,7 @@ class JavaMembers {
                         if (method.methods.length == 1) {
                             bean.getter = method;
                         } else {
-                            bean.getter = new NativeJavaMethod(new ExecutableBox[] {candidate});
+                            bean.getter = new NativeJavaMethod(candidate, name);
                         }
                     }
                 }
@@ -787,7 +787,7 @@ class JavaMembers {
         int len = ht.size();
         Map<String, FieldAndMethods> result = new HashMap<>(len);
         for (FieldAndMethods fam : ht.values()) {
-            FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
+            FieldAndMethods famNew = new FieldAndMethods(scope, fam, fam.field);
             famNew.javaObject = javaObject;
             result.put(fam.field.raw().getName(), famNew);
         }
@@ -902,8 +902,8 @@ final class BeanProperty {
 class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
-    FieldAndMethods(Scriptable scope, ExecutableBox[] methods, NativeJavaField field) {
-        super(methods);
+    FieldAndMethods(Scriptable scope, NativeJavaMethod methods, NativeJavaField field) {
+        super(methods.methods, methods.getFunctionName());
         this.field = field;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
