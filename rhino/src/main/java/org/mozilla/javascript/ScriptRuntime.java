@@ -216,7 +216,7 @@ public class ScriptRuntime {
         if (scope.getPrototype() == null) scope.setPrototype(objectPrototype);
 
         // must precede NativeGlobal since it's needed therein
-        NativeError.init(scope, sealed);
+        NativeError.init(cx, scope, sealed);
         NativeGlobal.init(cx, scope, sealed);
 
         NativeArray.init(cx, scope, sealed);
