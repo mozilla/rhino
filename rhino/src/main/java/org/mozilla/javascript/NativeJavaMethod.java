@@ -31,25 +31,31 @@ public class NativeJavaMethod extends BaseFunction {
 
     private static final long serialVersionUID = -3440381785576412928L;
 
+    final Class<?> parent;
     // TODO: serialization support by read/write class and method name
     final ExecutableBox[] methods;
     private final String functionName;
     private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
             new CopyOnWriteArrayList<>();
 
-    NativeJavaMethod(ExecutableBox[] methods, String name) {
+    NativeJavaMethod(Class<?> parent, ExecutableBox[] methods, String name) {
+        this.parent = parent;
         this.functionName = name;
         this.methods = methods;
     }
 
-    NativeJavaMethod(ExecutableBox method, String name) {
+    NativeJavaMethod(Class<?> parent, ExecutableBox method, String name) {
+        this.parent = parent;
         this.functionName = name;
         this.methods = new ExecutableBox[] {method};
     }
 
     @Deprecated
     public NativeJavaMethod(Method method, String name) {
-        this(new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()), name);
+        this(
+                method.getDeclaringClass(),
+                new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()),
+                name);
     }
 
     @Override

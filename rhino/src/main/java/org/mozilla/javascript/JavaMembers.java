@@ -283,7 +283,7 @@ class JavaMembers {
 
                 if (member instanceof NativeJavaMethod
                         && ((NativeJavaMethod) member).methods.length > 1) {
-                    NativeJavaMethod fun = new NativeJavaMethod(methodOrCtor, name);
+                    NativeJavaMethod fun = new NativeJavaMethod(cl, methodOrCtor, name);
                     fun.setPrototype(prototype);
                     ht.put(name, fun);
                     member = fun;
@@ -477,7 +477,7 @@ class JavaMembers {
                         methodBoxes[i] = new ExecutableBox(method, typeFactory, this.cl);
                     }
                 }
-                NativeJavaMethod fun = new NativeJavaMethod(methodBoxes, entry.getKey());
+                NativeJavaMethod fun = new NativeJavaMethod(cl, methodBoxes, entry.getKey());
                 if (scope != null) {
                     ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
                 }
@@ -555,7 +555,7 @@ class JavaMembers {
         for (int i = 0; i != constructors.length; ++i) {
             ctorMembers[i] = new ExecutableBox(constructors[i], typeFactory);
         }
-        ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
+        ctors = new NativeJavaMethod(cl, ctorMembers, cl.getSimpleName());
     }
 
     private static boolean maskingExistedMember(
@@ -628,7 +628,7 @@ class JavaMembers {
                         if (method.methods.length == 1) {
                             bean.getter = method;
                         } else {
-                            bean.getter = new NativeJavaMethod(candidate, name);
+                            bean.getter = new NativeJavaMethod(method.parent, candidate, name);
                         }
                     }
                 }
@@ -653,7 +653,7 @@ class JavaMembers {
                 // We have a getter. Now, do we have a setter with matching type?
                 match = extractSetMethod(type, setterCandidates.methods, isStatic);
                 if (match != null) {
-                    bean.setter = new NativeJavaMethod(match, match.getName());
+                    bean.setter = new NativeJavaMethod(getter.parent, match, match.getName());
                     continue;
                 }
             }
@@ -903,7 +903,7 @@ class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
     FieldAndMethods(Scriptable scope, NativeJavaMethod methods, NativeJavaField field) {
-        super(methods.methods, methods.getFunctionName());
+        super(methods.parent, methods.methods, methods.getFunctionName());
         this.field = field;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
