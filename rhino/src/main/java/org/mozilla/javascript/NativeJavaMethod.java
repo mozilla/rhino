@@ -43,7 +43,7 @@ public class NativeJavaMethod extends BaseFunction {
      */
     transient ExecutableBox[] methods;
 
-    private final String functionName;
+    protected final String functionName;
     private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
             new CopyOnWriteArrayList<>();
 
@@ -79,17 +79,21 @@ public class NativeJavaMethod extends BaseFunction {
             var members = JavaMembers.lookupClass(scope, parent, parent, false);
             // TODO: more accurate member lookup
             var got = members.get(scope, functionName, null, false);
-            if (got instanceof NativeJavaMethod) {
-                methods = ((NativeJavaMethod) got).methods;
-        } else {
-            throw new IllegalStateException(
-                    String.format(
-                            "Cannot find NativeJavaMethod with name '%s' in '%s'",
-                            functionName, parent));
-        }
-            this.methods = methods;
+            initMembers(got);
+            methods = this.methods;
         }
         return methods;
+    }
+
+    protected void initMembers(Object found) {
+        if (found instanceof NativeJavaMethod) {
+            this.methods = ((NativeJavaMethod) found).methods;
+        } else {
+            throw new IllegalStateException(
+                String.format(
+                    "Cannot find NativeJavaMethod with name '%s' in '%s'",
+                    functionName, parent));
+        }
     }
 
     static String scriptSignature(Object[] values) {

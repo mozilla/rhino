@@ -927,6 +927,19 @@ class FieldAndMethods extends NativeJavaMethod {
         return rval;
     }
 
+    @Override
+    protected void initMembers(Object found) {
+        super.initMembers(found);
+        if (found instanceof FieldAndMethods) {
+            this.field = ((FieldAndMethods) found).field;
+        } else {
+            throw new IllegalStateException(
+                    String.format(
+                            "Cannot find NativeJavaMethod with name '%s' in '%s'",
+                            functionName, parent));
+        }
+    }
+
     NativeJavaField field;
     Object javaObject;
 }
