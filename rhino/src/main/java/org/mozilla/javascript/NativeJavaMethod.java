@@ -77,8 +77,7 @@ public class NativeJavaMethod extends BaseFunction {
         if (methods == null) {
             var scope = this.getParentScope();
             var members = JavaMembers.lookupClass(scope, parent, parent, false);
-            // TODO: more accurate member lookup
-            var got = members.get(scope, functionName, null, false);
+            var got = members.getMember(functionName, false);
             initMembers(got);
             methods = this.methods;
         }

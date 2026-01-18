@@ -81,13 +81,24 @@ class JavaMembers {
         return findExplicitFunction(name, isStatic) != null;
     }
 
-    Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
-        Map<String, Object> ht = isStatic ? staticMembers : members;
-        Object member = ht.get(name);
+    /**
+     * Get a member from a table of all reflected members
+     *
+     * <p>Unlike {@link #get(Scriptable, String, Object, boolean)}, this method will NOT 'use' the
+     * found member and return its result
+     */
+    Object getMember(String name, boolean isStatic) {
+        var ht = isStatic ? staticMembers : members;
+        var member = ht.get(name);
         if (!isStatic && member == null) {
             // Try to get static member from instance (LC3)
             member = staticMembers.get(name);
         }
+        return member;
+    }
+
+    Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+        var member = getMember(name, isStatic);
         if (member == null) {
             member =
                     this.getExplicitFunction(
