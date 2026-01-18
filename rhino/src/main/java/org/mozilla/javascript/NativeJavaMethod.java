@@ -31,9 +31,18 @@ public class NativeJavaMethod extends BaseFunction {
 
     private static final long serialVersionUID = -3440381785576412928L;
 
+    /** Class object representing the {@link JavaMembers} that holds this NativeJavaMethod */
     final Class<?> parent;
-    // TODO: serialization support by read/write class and method name
-    final ExecutableBox[] methods;
+
+    /**
+     * Will be initialized lazily when (and only when) this object is created via deserialization.
+     * This also means that directly accessing this field can be safe, if they are usages within
+     * {@link JavaMembers}, or the object itself is directly from {@link JavaMembers}
+     *
+     * @see #getMethods()
+     */
+    transient ExecutableBox[] methods;
+
     private final String functionName;
     private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
             new CopyOnWriteArrayList<>();
@@ -61,6 +70,26 @@ public class NativeJavaMethod extends BaseFunction {
     @Override
     public String getFunctionName() {
         return functionName;
+    }
+
+    ExecutableBox[] getMethods() {
+        var methods = this.methods;
+        if (methods == null) {
+            var scope = this.getParentScope();
+            var members = JavaMembers.lookupClass(scope, parent, parent, false);
+            // TODO: more accurate member lookup
+            var got = members.get(scope, functionName, null, false);
+            if (got instanceof NativeJavaMethod) {
+                methods = ((NativeJavaMethod) got).methods;
+        } else {
+            throw new IllegalStateException(
+                    String.format(
+                            "Cannot find NativeJavaMethod with name '%s' in '%s'",
+                            functionName, parent));
+        }
+            this.methods = methods;
+        }
+        return methods;
     }
 
     static String scriptSignature(Object[] values) {
@@ -118,17 +147,18 @@ public class NativeJavaMethod extends BaseFunction {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0, N = methods.length; i != N; ++i) {
+        var methods = this.getMethods();
+        for (var box : methods) {
             // Check member type, we also use this for overloaded constructors
-            if (methods[i].isMethod()) {
-                Method method = methods[i].asMethod();
+            if (box.isMethod()) {
+                Method method = box.asMethod();
                 sb.append(JavaMembers.javaSignature(method.getReturnType()));
                 sb.append(' ');
                 sb.append(method.getName());
             } else {
-                sb.append(methods[i].getName());
+                sb.append(box.getName());
             }
-            sb.append(ReflectUtils.liveConnectSignature(methods[i].getArgTypes()));
+            sb.append(ReflectUtils.liveConnectSignature(box.getArgTypes()));
             sb.append('\n');
         }
         return sb.toString();
@@ -137,6 +167,7 @@ public class NativeJavaMethod extends BaseFunction {
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         // Find a method that matches the types given.
+        var methods = this.getMethods();
         if (methods.length == 0) {
             throw new RuntimeException("No methods defined for call");
         }
@@ -221,6 +252,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     int findCachedFunction(Context cx, Object[] args) {
+        var methods = this.getMethods();
         if (methods.length > 1) {
             for (ResolvedOverload ovl : overloadCache) {
                 if (ovl.matches(args)) {
