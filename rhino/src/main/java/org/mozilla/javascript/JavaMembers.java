@@ -922,6 +922,9 @@ class FieldAndMethods extends NativeJavaMethod {
 
     @Override
     public Object getDefaultValue(Class<?> hint) {
+        getMethods(); // trigger lazy initialization of 'field'
+        var field = this.field;
+
         if (hint == ScriptRuntime.FunctionClass) return this;
         Object rval;
         try {
@@ -946,7 +949,7 @@ class FieldAndMethods extends NativeJavaMethod {
         } else {
             throw new IllegalStateException(
                     String.format(
-                            "Cannot find NativeJavaMethod with name '%s' in '%s'",
+                            "Cannot find FieldAndMethods with name '%s' in '%s'",
                             functionName, parent));
         }
     }
