@@ -89,9 +89,9 @@ public class NativeJavaMethod extends BaseFunction {
             this.methods = ((NativeJavaMethod) found).methods;
         } else {
             throw new IllegalStateException(
-                String.format(
-                    "Cannot find NativeJavaMethod with name '%s' in '%s'",
-                    functionName, parent));
+                    String.format(
+                            "Cannot find NativeJavaMethod with name '%s' in '%s'",
+                            functionName, parent));
         }
     }
 
