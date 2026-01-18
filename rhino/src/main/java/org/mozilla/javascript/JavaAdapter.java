@@ -130,7 +130,7 @@ public final class JavaAdapter {
                 System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
                 // TODO: cache class wrapper?
                 NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass, true);
-                NativeJavaMethod ctors = classWrapper.members.ctors;
+                NativeJavaMethod ctors = classWrapper.getMembers().ctors;
                 int index = ctors.findCachedFunction(cx, ctorArgs);
                 if (index < 0) {
                     throw Context.reportRuntimeErrorById(
