@@ -49,10 +49,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static final long serialVersionUID = -4963053773152251274L;
 
     /**
-     * The length in elements of the array. For auto-length views (ES2025), this is recomputed
-     * dynamically when the backing resizable buffer changes size.
+     * The length in elements of the array. For auto-length views (ES2025), this is not used but is
+     * recalculated when the buffer changes size.
      */
-    protected int length;
+    private final int length;
 
     /**
      * True if this is an auto-length view (ES2025). Auto-length views are created when a TypedArray
@@ -73,38 +73,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     protected NativeTypedArrayView(NativeArrayBuffer ab, int off, int len, int byteLen) {
         super(ab, off, byteLen);
         this.isAutoLength = (len < 0);
-
-        if (isAutoLength) {
-            updateLength();
-        } else {
-            this.length = len;
-        }
-    }
-
-    /**
-     * Recomputes the length for auto-length views (ES2025). For fixed-length views, this is a
-     * no-op. For auto-length views, calculates the element count based on the current buffer size
-     * and offset.
-     */
-    protected void updateLength() {
-        if (!isAutoLength) {
-            return;
-        }
-
-        if (arrayBuffer == null || arrayBuffer.isDetached()) {
-            length = 0;
-            return;
-        }
-
-        int bufferByteLength = arrayBuffer.getLength();
-        int availableBytes = bufferByteLength - offset;
-
-        if (availableBytes < 0) {
-            length = 0;
-            return;
-        }
-
-        length = availableBytes / getBytesPerElement();
+        this.length = len;
     }
 
     // Array properties implementation.
@@ -180,25 +149,38 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     @Override
     public Object[] getIds() {
-        Object[] ret = new Object[length];
-        for (int i = 0; i < length; i++) {
+        int len = getLength();
+        Object[] ret = new Object[len];
+        for (int i = 0; i < len; i++) {
             ret[i] = Integer.valueOf(i);
         }
         return ret;
+    }
+
+    private boolean isFixedLength() {
+        return !isAutoLength && !arrayBuffer.isResizable();
+    }
+
+    @Override
+    public boolean preventExtensions() {
+        if (!isFixedLength()) {
+            return false;
+        }
+        return super.preventExtensions();
     }
 
     @Override
     protected boolean defineOwnProperty(
             Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
         if (id instanceof CharSequence) {
-            String name = id.toString();
-            Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
+            // Definition of [[DefineOwnProperty]] for typed array from the spec
+            Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(id.toString());
             if (num.isPresent()) {
                 int idx = num.get().intValue();
                 if (checkIndex(idx)) {
-                    return false;
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.typed.array.index.out.of.bounds", idx, 0, getLength());
                 }
-
                 if (desc.isConfigurable(false)) {
                     return false;
                 }
@@ -217,6 +199,24 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 return true;
             }
         }
+
+        // Default implementation assumes we have a slot map -- we need to override
+        // in this case.
+        if (!ScriptRuntime.isSymbol(id)) {
+            var s = ScriptRuntime.toStringIdOrIndex(id);
+            if (s.getStringId() == null) {
+                int idx = s.getIndex();
+                if (checkIndex(idx)) {
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.typed.array.index.out.of.bounds", idx, 0, getLength());
+                }
+                if (desc.hasValue()) {
+                    js_set(idx, desc.value);
+                    return true;
+                }
+            }
+        }
+
         return super.defineOwnProperty(cx, id, desc, checkValid);
     }
 
@@ -341,9 +341,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         typedArray.definePrototypeMethod(scope, key, length, target);
     }
 
+    // Detect incompatibility between BigInt and non-BigInt classes
+    private static boolean isContentCompatible(
+            NativeTypedArrayView<?> o1, NativeTypedArrayView<?> o2) {
+        if (o1 instanceof NativeBigIntArrayView) {
+            return o2 instanceof NativeBigIntArrayView;
+        }
+        return !(o2 instanceof NativeBigIntArrayView);
+    }
+
     /** Returns {@code true}, if the index is wrong. */
     protected boolean checkIndex(int index) {
-        return isTypedArrayOutOfBounds() || ((index < 0) || (index >= length));
+        return isTypedArrayOutOfBounds() || ((index < 0) || (index >= getLength()));
     }
 
     /**
@@ -353,7 +362,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
      */
     protected void ensureIndex(int index) {
         if (checkIndex(index)) {
-            throw new IndexOutOfBoundsException("Index: " + index + ", length: " + length);
+            throw new IndexOutOfBoundsException("Index: " + index + ", length: " + getLength());
         }
     }
 
@@ -372,12 +381,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     private static NativeArrayBuffer makeArrayBuffer(
-            Context cx, Scriptable scope, int length, int bytesPerElement) {
+            Context cx, Scriptable scope, int len, int bytesPerElement) {
         return (NativeArrayBuffer)
                 cx.newObject(
                         scope,
                         NativeArrayBuffer.CLASS_NAME,
-                        new Object[] {Double.valueOf((double) length * bytesPerElement)});
+                        new Object[] {(double) len * bytesPerElement});
     }
 
     protected interface TypedArrayConstructable {
@@ -386,28 +395,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     protected interface RealThis {
         NativeTypedArrayView<?> realThis(Scriptable thisObj);
-    }
-
-    /**
-     * Determines the view length for TypedArray construction. Returns -1 for auto-length views
-     * (ES2025), which only applies to resizable buffers when length is omitted.
-     */
-    private static int determineViewLength(
-            NativeArrayBuffer buffer,
-            int explicitLength,
-            int calculatedByteLength,
-            int bytesPerElement,
-            Object[] args) {
-
-        if (isArg(args, 2)) {
-            return explicitLength;
-        }
-
-        if (buffer.isResizable()) {
-            return -1; // Auto-length view
-        } else {
-            return calculatedByteLength / bytesPerElement;
-        }
     }
 
     protected static NativeTypedArrayView<?> js_constructor(
@@ -435,10 +422,17 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (arg0 instanceof NativeTypedArrayView) {
             // Copy elements from the old array and convert them into our own
             NativeTypedArrayView<?> src = (NativeTypedArrayView<?>) arg0;
-            NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length, bytesPerElement);
-            NativeTypedArrayView<?> v = constructable.construct(na, 0, src.length);
+            if (src.isTypedArrayOutOfBounds()) {
+                throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
+            }
+            int srcLen = src.getLength();
+            NativeArrayBuffer na = makeArrayBuffer(cx, scope, srcLen, bytesPerElement);
+            NativeTypedArrayView<?> v = constructable.construct(na, 0, srcLen);
+            if (!isContentCompatible(src, v)) {
+                throw ScriptRuntime.typeErrorById("msg.typed.array.content.mismatch");
+            }
 
-            for (int i = 0; i < src.length; i++) {
+            for (int i = 0; i < srcLen; i++) {
                 v.js_set(i, src.js_get(i));
             }
             return v;
@@ -454,44 +448,40 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                         "msg.typed.array.bad.offset.byte.size", byteOff, bytesPerElement);
             }
 
-            int newLength = 0;
-            if (isArg(args, 2)) {
-                newLength = ScriptRuntime.toIndex(args[2]);
-            }
-
+            int newLength = isArg(args, 2) ? ScriptRuntime.toIndex(args[2]) : -1;
             if (na.isDetached()) {
                 throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
             }
             int bufferByteLength = na.getLength();
 
-            int newByteLength;
-            if (!isArg(args, 2)) {
-                newByteLength = bufferByteLength - byteOff;
-                if ((bufferByteLength % bytesPerElement) != 0) {
-                    throw ScriptRuntime.rangeErrorById(
-                            "msg.typed.array.bad.buffer.length.byte.size",
-                            newByteLength,
-                            bytesPerElement);
-                }
-                if (newByteLength < 0) {
+            if (newLength < 0 && na.isResizable()) {
+                if (byteOff > bufferByteLength) {
                     throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", byteOff);
                 }
+                // Keep -1 as length to denote a resizable array
             } else {
-                newByteLength = newLength * bytesPerElement;
-
-                if (byteOff + newByteLength > bufferByteLength) {
-                    throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.length", newByteLength);
+                int newByteLength;
+                if (newLength < 0) {
+                    newByteLength = bufferByteLength - byteOff;
+                    if ((bufferByteLength % bytesPerElement) != 0) {
+                        throw ScriptRuntime.rangeErrorById(
+                                "msg.typed.array.bad.buffer.length.byte.size",
+                                newByteLength,
+                                bytesPerElement);
+                    }
+                    if (newByteLength < 0) {
+                        throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", byteOff);
+                    }
+                } else {
+                    newByteLength = newLength * bytesPerElement;
+                    if (byteOff + newByteLength > bufferByteLength) {
+                        throw ScriptRuntime.rangeErrorById(
+                                "msg.typed.array.bad.length", newByteLength);
+                    }
                 }
+                newLength = newByteLength / bytesPerElement;
             }
-
-            if ((byteOff < 0) || (byteOff > na.getLength())) {
-                throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", byteOff);
-            }
-
-            // Determine view length: -1 for auto-length (resizable buffers only)
-            int viewLength =
-                    determineViewLength(na, newLength, newByteLength, bytesPerElement, args);
-            return constructable.construct(na, byteOff, viewLength);
+            return constructable.construct(na, byteOff, newLength);
         }
 
         if (arg0 instanceof NativeArray) {
@@ -534,13 +524,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (isTypedArrayOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
-        int targetLength = length;
+        int targetLength = getLength();
 
         if (source.isTypedArrayOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
 
-        int srcLength = source.length;
+        int srcLength = source.getLength();
 
         if (dbloff > targetLength) {
             throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.offset", dbloff);
@@ -575,7 +565,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (isTypedArrayOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
-        int targetLength = length;
+        int targetLength = getLength();
         Scriptable src = ScriptRuntime.toObject(scope, source);
         long srcLength = AbstractEcmaObjectOperations.lengthOfArrayLike(cx, src);
 
@@ -600,20 +590,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
      * length before checking. Returns true if the buffer is detached or the offset is out of range.
      */
     public boolean isTypedArrayOutOfBounds() {
-        updateLength();
         if (arrayBuffer.isDetached() || outOfRange) {
             return true;
         }
-
-        // For fixed-length views on resizable buffers, check if the buffer
-        // has been resized such that the view is now out of bounds
-        if (!isAutoLength && arrayBuffer.isResizable()) {
-            int bufferByteLength = arrayBuffer.getLength();
-            int requiredByteLength = offset + (length * getBytesPerElement());
-            return offset > bufferByteLength || requiredByteLength > bufferByteLength;
-        }
-
-        return false;
+        int bufferByteLength = arrayBuffer.getLength();
+        int offsetEnd =
+                isAutoLength ? bufferByteLength : offset + (getLength() * getBytesPerElement());
+        return offset > bufferByteLength || offsetEnd > bufferByteLength;
     }
 
     /**
@@ -631,7 +614,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         // buffer is detached, but should always result in this
         // operation throwing so we don't need to represent it as a
         // numerical value.
-        return length;
+        return getLength();
     }
 
     private static NativeTypedArrayView realThis(Scriptable thisObj) {
@@ -654,7 +637,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
         }
-        return o.byteLength;
+        if (!o.isAutoLength) {
+            return o.byteLength;
+        }
+        return o.getLength() * o.getBytesPerElement();
     }
 
     private static Object js_byteOffset(Scriptable thisObj) {
@@ -662,16 +648,26 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
         }
-        return o.offset;
+        return o.getOffset();
+    }
+
+    private int getOffset() {
+        return offset;
     }
 
     private static Object js_length(Scriptable thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
-        // updateLength() is called by isTypedArrayOutOfBounds()
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
         }
-        return o.length;
+        return o.getLength();
+    }
+
+    int getLength() {
+        if (!isAutoLength) {
+            return length;
+        }
+        return (arrayBuffer.getLength() - offset) / getBytesPerElement();
     }
 
     private static String js_toString(
@@ -692,11 +688,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
 
         StringBuilder builder = new StringBuilder();
-        if (self.length > 0) {
+        int len = self.getLength();
+        if (len > 0) {
             Object elem = self.getElemForToString(cx, scope, 0, useLocale);
             builder.append(ScriptRuntime.toString(elem));
         }
-        for (int i = 1; i < self.length; i++) {
+        for (int i = 1; i < len; i++) {
             builder.append(',');
             Object elem = self.getElemForToString(cx, scope, i, useLocale);
             builder.append(ScriptRuntime.toString(elem));
@@ -733,15 +730,22 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static Object js_filter(
             Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
-        Object array =
-                ArrayLikeAbstractOperations.coercibleIterativeMethod(
-                        lcx,
-                        IterativeOperation.FILTER,
-                        lscope,
-                        self,
-                        args,
-                        self.validateAndGetLength());
-        return self.typedArraySpeciesCreate(lcx, lscope, new Object[] {array}, "filter");
+        Scriptable array =
+                (Scriptable)
+                        ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                                lcx,
+                                IterativeOperation.FILTER,
+                                lscope,
+                                self,
+                                args,
+                                self.validateAndGetLength());
+        long newLen = NativeArray.getLengthProperty(lcx, array);
+        NativeTypedArrayView<?> newArray =
+                self.typedArraySpeciesCreate(lcx, lscope, new Object[] {newLen}, "filter");
+        for (int i = 0; i < newLen; i++) {
+            newArray.js_set(i, array.get(i, array));
+        }
+        return newArray;
     }
 
     private static Object js_find(
@@ -897,16 +901,17 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static Object js_map(
             Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
-        Object array =
-                ArrayLikeAbstractOperations.coercibleIterativeMethod(
-                        lcx,
-                        IterativeOperation.MAP,
-                        lscope,
-                        thisObj,
-                        args,
-                        self.validateAndGetLength());
-        // todo: fix this impl
-        return self.typedArraySpeciesCreate(lcx, lscope, new Object[] {array}, "map");
+        long len = self.validateAndGetLength();
+        NativeTypedArrayView<?> newArray =
+                self.typedArraySpeciesCreate(lcx, lscope, new Object[] {len}, "map");
+        Scriptable array =
+                (Scriptable)
+                        ArrayLikeAbstractOperations.coercibleIterativeMethod(
+                                lcx, IterativeOperation.MAP, lscope, thisObj, args, len);
+        for (int i = 0; i < len; i++) {
+            newArray.js_set(i, array.get(i, array));
+        }
+        return newArray;
     }
 
     private static Object js_reduce(
@@ -959,7 +964,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
             }
 
-            end = Math.min(end, self.length);
+            end = Math.min(end, self.getLength());
 
             int n = 0;
             for (int i = (int) begin; i < end; i++) {
@@ -1149,6 +1154,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
             }
 
+            // Re-calculate length as it may have changed due to side effects above
+            len = self.getLength();
+            count = Math.min(Math.min(count, len - from), len - to);
+
             int direction = 1;
             if (from < to && to < from + count) {
                 direction = -1;
@@ -1195,23 +1204,25 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (self.isTypedArrayOutOfBounds()) {
             srcLength = 0;
         } else {
-            srcLength = self.length;
+            srcLength = self.getLength();
         }
 
         int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
-        int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : srcLength;
-        start = (start < 0 ? srcLength + start : start);
-        end = (end < 0 ? srcLength + end : end);
+        start = start < 0 ? Math.max(srcLength + start, 0) : Math.min(start, srcLength);
+        int beginOffset = self.getByteOffset() + (start * self.getBytesPerElement());
 
-        // Clamping behavior as described by the spec.
-        start = Math.max(0, start);
-        start = Math.min(start, srcLength);
-        end = Math.min(srcLength, end);
-        int len = Math.max(0, (end - start));
-        int byteOff = self.getByteOffset() + start * self.getBytesPerElement();
+        Object[] constructorArgs;
+        boolean hasEnd = isArg(args, 1);
+        if (!hasEnd && self.isAutoLength) {
+            constructorArgs = new Object[] {self.arrayBuffer, beginOffset};
+        } else {
+            int end = hasEnd ? ScriptRuntime.toInt32(args[1]) : srcLength;
+            end = end < 0 ? Math.max(srcLength + end, 0) : Math.min(end, srcLength);
+            int newLen = Math.max(end - start, 0);
+            constructorArgs = new Object[] {self.arrayBuffer, beginOffset, newLen};
+        }
 
-        return self.typedArraySpeciesCreate(
-                cx, scope, new Object[] {self.arrayBuffer, byteOff, len}, "subarray");
+        return self.typedArraySpeciesCreate(cx, scope, constructorArgs, "subarray");
     }
 
     private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -1245,7 +1256,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             long len = ((NativeTypedArrayView<?>) newArray).validateAndGetLength();
             if (args.length == 1 && args[0] instanceof Number) {
                 if (len < ((Number) args[0]).longValue()) {
-                    throw ScriptRuntime.rangeErrorById("msg.typed.array.bad.length", len);
+                    throw ScriptRuntime.typeErrorById("msg.typed.array.bad.length", len);
                 }
             }
         } else {
@@ -1259,17 +1270,17 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static Object js_toReversed(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
+        int len = self.getLength();
 
-        NativeArrayBuffer newBuffer =
-                new NativeArrayBuffer(self.length * self.getBytesPerElement());
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(len * self.getBytesPerElement());
         Scriptable result =
                 cx.newObject(
                         scope,
                         self.getClassName(),
-                        new Object[] {newBuffer, 0, self.length, self.getBytesPerElement()});
+                        new Object[] {newBuffer, 0, len, self.getBytesPerElement()});
 
-        for (int k = 0; k < self.length; ++k) {
-            int from = self.length - k - 1;
+        for (int k = 0; k < len; ++k) {
+            int from = len - k - 1;
             Object fromValue = self.js_get(from);
             result.put(k, result, fromValue);
         }
@@ -1280,18 +1291,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static Object js_toSorted(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
+        int len = self.getLength();
 
         Object[] working = self.sortTemporaryArray(cx, scope, args);
 
         // Move value in a new typed array of the same type
-        NativeArrayBuffer newBuffer =
-                new NativeArrayBuffer(self.length * self.getBytesPerElement());
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(len * self.getBytesPerElement());
         Scriptable result =
                 cx.newObject(
                         scope,
                         self.getClassName(),
-                        new Object[] {newBuffer, 0, self.length, self.getBytesPerElement()});
-        for (int k = 0; k < self.length; ++k) {
+                        new Object[] {newBuffer, 0, len, self.getBytesPerElement()});
+        for (int k = 0; k < len; ++k) {
             result.put(k, result, working[k]);
         }
 
@@ -1305,26 +1316,26 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         long actualIndex = relativeIndex >= 0 ? relativeIndex : self.length + relativeIndex;
 
         Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0;
+        int len = self.getLength();
 
-        if (actualIndex < 0 || actualIndex >= self.length) {
+        if (actualIndex < 0 || actualIndex >= len) {
             String msg =
                     ScriptRuntime.getMessageById(
                             "msg.typed.array.index.out.of.bounds",
                             relativeIndex,
-                            self.length * -1,
-                            self.length - 1);
+                            len * -1,
+                            len - 1);
             throw ScriptRuntime.rangeError(msg);
         }
 
-        NativeArrayBuffer newBuffer =
-                new NativeArrayBuffer(self.length * self.getBytesPerElement());
+        NativeArrayBuffer newBuffer = new NativeArrayBuffer(len * self.getBytesPerElement());
         Scriptable result =
                 cx.newObject(
                         scope,
                         self.getClassName(),
-                        new Object[] {newBuffer, 0, self.length, self.getBytesPerElement()});
+                        new Object[] {newBuffer, 0, len, self.getBytesPerElement()});
 
-        for (int k = 0; k < self.length; ++k) {
+        for (int k = 0; k < len; ++k) {
             Object fromValue = (k == actualIndex) ? argsValue : self.js_get(k);
             result.put(k, result, fromValue);
         }
@@ -1341,6 +1352,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             throw ScriptRuntime.typeErrorById("msg.constructor.expected");
         }
         Constructable constructable = (Constructable) thisObj;
+
+        if (items instanceof NativeTypedArrayView) {
+            NativeTypedArrayView<?> ta = (NativeTypedArrayView<?>) items;
+            if (ta.isTypedArrayOutOfBounds()) {
+                // The specs do not explicitly call out this check but the tests test it
+                throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
+            }
+        }
 
         Function mapFn = null;
         Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
@@ -1394,8 +1413,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
 
         NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
-        if (typedArray.length < size) {
+        if (typedArray.getLength() < size) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
+        }
+        if (items instanceof NativeTypedArrayView
+                && !isContentCompatible((NativeTypedArrayView<?>) items, typedArray)) {
+            throw ScriptRuntime.typeErrorById("msg.typed.array.content.mismatch");
         }
 
         for (int k = 0; k < size; k++) {
@@ -1435,7 +1458,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
 
         NativeTypedArrayView<?> typedArray = (NativeTypedArrayView<?>) result;
-        if (typedArray.length < args.length) {
+        if (typedArray.getLength() < args.length) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.length.too.small");
         }
 
@@ -1460,7 +1483,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     @Override
     public int getArrayLength() {
-        return length;
+        return getLength();
     }
 
     // Abstract List implementation
@@ -1479,7 +1502,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @SuppressWarnings("unused")
     @Override
     public int indexOf(Object o) {
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < getLength(); i++) {
             if (o.equals(js_get(i))) {
                 return i;
             }
@@ -1490,7 +1513,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @SuppressWarnings("unused")
     @Override
     public int lastIndexOf(Object o) {
-        for (int i = length - 1; i >= 0; i--) {
+        for (int i = getLength() - 1; i >= 0; i--) {
             if (o.equals(js_get(i))) {
                 return i;
             }
@@ -1501,8 +1524,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @SuppressWarnings("unused")
     @Override
     public Object[] toArray() {
-        Object[] a = new Object[length];
-        for (int i = 0; i < length; i++) {
+        Object[] a = new Object[getLength()];
+        for (int i = 0; i < a.length; i++) {
             a[i] = js_get(i);
         }
         return a;
@@ -1513,13 +1536,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     public <U> U[] toArray(U[] ts) {
         U[] a;
 
-        if (ts.length >= length) {
+        if (ts.length >= getLength()) {
             a = ts;
         } else {
-            a = (U[]) Array.newInstance(ts.getClass().getComponentType(), length);
+            a = (U[]) Array.newInstance(ts.getClass().getComponentType(), getLength());
         }
 
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < getLength(); i++) {
             try {
                 a[i] = (U) js_get(i);
             } catch (ClassCastException cce) {
@@ -1532,13 +1555,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @SuppressWarnings("unused")
     @Override
     public int size() {
-        return length;
+        return getLength();
     }
 
     @SuppressWarnings("unused")
     @Override
     public boolean isEmpty() {
-        return (length == 0);
+        return (getLength() == 0);
     }
 
     @SuppressWarnings("unused")
@@ -1557,10 +1580,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             return false;
         }
         NativeTypedArrayView<T> v = (NativeTypedArrayView<T>) o;
-        if (length != v.length) {
+        if (getLength() != v.getLength()) {
             return false;
         }
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < getLength(); i++) {
             if (!js_get(i).equals(v.js_get(i))) {
                 return false;
             }
@@ -1571,7 +1594,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     @Override
     public int hashCode() {
         int hc = 0;
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < getLength(); i++) {
             hc += js_get(i).hashCode();
         }
         return hc;
