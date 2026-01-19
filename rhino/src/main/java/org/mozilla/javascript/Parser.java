@@ -3269,7 +3269,10 @@ public class Parser {
             // handles: @name, @ns::name, @ns::*, @ns::[expr]
             case Token.NAME:
                 return propertyName(atPos, 0);
-
+            case Token.RESERVED:
+                String name = ts.getString();
+                saveNameTokenData(ts.tokenBeg, name, lineNumber(), columnNumber());
+                return propertyName(atPos, 0);
             // handles: @*, @*::name, @*::*, @*::[expr]
             case Token.MUL:
                 saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
@@ -3280,6 +3283,16 @@ public class Parser {
                 return xmlElemRef(atPos, null, -1);
 
             default:
+                {
+                    if (compilerEnv.isReservedKeywordAsIdentifier()) {
+                        // allow keywords as property names, e.g. ({if: 1})
+                        name = Token.keywordToName(tt);
+                        if (name != null) {
+                            saveNameTokenData(ts.tokenBeg, name, lineNumber(), columnNumber());
+                            return propertyName(atPos, 0);
+                        }
+                    }
+                }
                 reportError("msg.no.name.after.xmlAttr");
                 return makeErrorNode();
         }
@@ -3304,13 +3317,19 @@ public class Parser {
             ns = name;
             colonPos = ts.tokenBeg;
 
-            switch (nextToken()) {
+            int nt = nextToken();
+            switch (nt) {
                 // handles name::name
                 case Token.NAME:
                     name = createNameNode();
                     break;
-
-                // handles name::*
+                case Token.RESERVED:
+                    {
+                        String realName = ts.getString();
+                        saveNameTokenData(ts.tokenBeg, realName, lineNumber(), columnNumber());
+                        name = createNameNode(false, -1);
+                        break;
+                    }
                 case Token.MUL:
                     saveNameTokenData(ts.tokenBeg, "*", lineNumber(), columnNumber());
                     name = createNameNode(false, -1);
@@ -3321,6 +3340,18 @@ public class Parser {
                     return xmlElemRef(atPos, ns, colonPos);
 
                 default:
+                    {
+                        if (compilerEnv.isReservedKeywordAsIdentifier()) {
+                            // allow keywords as property names, e.g. ({if: 1})
+                            String realName = Token.keywordToName(nt);
+                            if (name != null) {
+                                saveNameTokenData(
+                                        ts.tokenBeg, realName, lineNumber(), columnNumber());
+                                name = createNameNode(false, -1);
+                                break;
+                            }
+                        }
+                    }
                     reportError("msg.no.name.after.coloncolon");
                     return makeErrorNode();
             }
