@@ -26,12 +26,16 @@ public class NativeDataView extends NativeArrayBufferView {
 
     public static final String CLASS_NAME = "DataView";
 
+    private final boolean autoLength;
+
     public NativeDataView() {
         super();
+        this.autoLength = false;
     }
 
-    public NativeDataView(NativeArrayBuffer ab, int offset, int length) {
+    private NativeDataView(NativeArrayBuffer ab, int offset, int length, boolean autoLength) {
         super(ab, offset, length);
+        this.autoLength = autoLength;
     }
 
     @Override
@@ -51,26 +55,8 @@ public class NativeDataView extends NativeArrayBufferView {
 
         constructor.definePrototypeProperty(
                 cx, "buffer", (Scriptable thisObj) -> realThis(thisObj).arrayBuffer);
-        constructor.definePrototypeProperty(
-                cx,
-                "byteLength",
-                (Scriptable thisObj) -> {
-                    NativeDataView self = realThis(thisObj);
-                    if (self.isDataViewOutOfBounds()) {
-                        throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
-                    }
-                    return self.byteLength;
-                });
-        constructor.definePrototypeProperty(
-                cx,
-                "byteOffset",
-                (Scriptable thisObj) -> {
-                    NativeDataView self = realThis(thisObj);
-                    if (self.isDataViewOutOfBounds()) {
-                        throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
-                    }
-                    return self.offset;
-                });
+        constructor.definePrototypeProperty(cx, "byteLength", NativeDataView::js_getByteLength);
+        constructor.definePrototypeProperty(cx, "byteOffset", NativeDataView::js_getByteOffset);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
@@ -128,32 +114,46 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
-        int len;
+        int len = 0;
+        boolean autoLength = false;
         if (isArg(args, 2)) {
             len = ScriptRuntime.toIndex(args[2]);
             if ((long) pos + len > bufferByteLength) {
                 throw ScriptRuntime.rangeErrorById("msg.dataview.length.range");
             }
         } else {
-            len = bufferByteLength - pos;
-        }
-
-        if (ab.isDetached()) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
-        }
-
-        bufferByteLength = ab.getLength();
-        if (pos > bufferByteLength) {
-            throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-        }
-
-        if (isArg(args, 2)) {
-            if ((long) pos + len > bufferByteLength) {
-                throw ScriptRuntime.rangeErrorById("msg.dataview.length.range");
+            if (ab.isResizable()) {
+                autoLength = true;
+            } else {
+                len = bufferByteLength - pos;
             }
         }
 
-        return new NativeDataView(ab, pos, len);
+        return new NativeDataView(ab, pos, len, autoLength);
+    }
+
+    @Override
+    public int getByteLength() {
+        if (!autoLength) {
+            return byteLength;
+        }
+        return arrayBuffer.getLength() - offset;
+    }
+
+    private static Object js_getByteOffset(Scriptable thisObj) {
+        NativeDataView self = realThis(thisObj);
+        if (self.isDataViewOutOfBounds()) {
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
+        }
+        return self.offset;
+    }
+
+    private static Object js_getByteLength(Scriptable thisObj) {
+        NativeDataView self = realThis(thisObj);
+        if (self.isDataViewOutOfBounds()) {
+            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
+        }
+        return self.getByteLength();
     }
 
     private static Object js_getInt8(
@@ -202,7 +202,7 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
-        int viewSize = byteLength;
+        int viewSize = getByteLength();
         if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
@@ -256,7 +256,7 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
-        int viewSize = byteLength;
+        int viewSize = getByteLength();
         if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
@@ -326,7 +326,7 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
-        int viewSize = byteLength;
+        int viewSize = getByteLength();
         if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
@@ -335,13 +335,13 @@ public class NativeDataView extends NativeArrayBufferView {
             case 1:
                 if (signed) {
                     int value = Conversions.toInt8(val);
-                    if (pos + bytes > byteLength) {
+                    if (pos + bytes > viewSize) {
                         throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeInt8(arrayBuffer.buffer, offset + pos, value);
                 } else {
                     int value = Conversions.toUint8(val);
-                    if (pos + bytes > byteLength) {
+                    if (pos + bytes > viewSize) {
                         throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeUint8(arrayBuffer.buffer, offset + pos, value);
@@ -350,13 +350,13 @@ public class NativeDataView extends NativeArrayBufferView {
             case 2:
                 if (signed) {
                     int value = Conversions.toInt16(val);
-                    if (pos + bytes > byteLength) {
+                    if (pos + bytes > viewSize) {
                         throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeInt16(arrayBuffer.buffer, offset + pos, value, littleEndian);
                 } else {
                     int value = Conversions.toUint16(val);
-                    if (pos + bytes > byteLength) {
+                    if (pos + bytes > viewSize) {
                         throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeUint16(arrayBuffer.buffer, offset + pos, value, littleEndian);
@@ -365,13 +365,13 @@ public class NativeDataView extends NativeArrayBufferView {
             case 4:
                 if (signed) {
                     int value = Conversions.toInt32(val);
-                    if (pos + bytes > byteLength) {
+                    if (pos + bytes > viewSize) {
                         throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeInt32(arrayBuffer.buffer, offset + pos, value, littleEndian);
                 } else {
                     long value = Conversions.toUint32(val);
-                    if (pos + bytes > byteLength) {
+                    if (pos + bytes > viewSize) {
                         throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                     }
                     ByteIo.writeUint32(arrayBuffer.buffer, offset + pos, value, littleEndian);
@@ -414,7 +414,7 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
-        int viewSize = byteLength;
+        int viewSize = getByteLength();
         if ((long) pos + bytes > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
@@ -455,7 +455,7 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
-        int viewSize = byteLength;
+        int viewSize = getByteLength();
         if ((long) pos + 8 > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
@@ -506,7 +506,7 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
 
-        int viewSize = byteLength;
+        int viewSize = getByteLength();
         if ((long) pos + 8 > viewSize) {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
@@ -521,10 +521,13 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         int bufferByteLength = arrayBuffer.getLength();
+        int byteOffsetEnd;
+        if (autoLength) {
+            byteOffsetEnd = bufferByteLength;
+        } else {
+            byteOffsetEnd = offset + byteLength;
+        }
 
-        int byteOffsetStart = offset;
-        int byteOffsetEnd = offset + byteLength;
-
-        return byteOffsetStart > bufferByteLength || byteOffsetEnd > bufferByteLength;
+        return offset > bufferByteLength || byteOffsetEnd > bufferByteLength;
     }
 }
