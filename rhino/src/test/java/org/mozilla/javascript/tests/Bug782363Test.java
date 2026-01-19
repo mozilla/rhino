@@ -127,6 +127,9 @@ public class Bug782363Test {
 
     @Test
     public void maxLocals() throws IOException {
+        // 338: Maximum user-defined local variables that can be compiled before hitting
+        // BodyCodegen.MAX_LOCALS (1024). This number must be adjusted downward if BodyCodegen
+        // adds internal fields that consume local slots, or upward if fields are removed.
         test(338);
         try {
             test(339);
