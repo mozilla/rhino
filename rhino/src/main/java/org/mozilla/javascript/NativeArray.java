@@ -822,7 +822,7 @@ public class NativeArray extends ScriptableObject implements List {
      * getLengthProperty returns 0 if obj does not have the length property
      * or its value is not convertible to a number.
      */
-    static long getLengthProperty(Context cx, Scriptable obj) {
+    public static long getLengthProperty(Context cx, Scriptable obj) {
         // These will give numeric lengths within Uint32 range.
         if (obj instanceof NativeString) {
             return ((NativeString) obj).getLength();

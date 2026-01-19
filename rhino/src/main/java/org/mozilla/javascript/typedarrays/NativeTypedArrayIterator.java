@@ -24,7 +24,7 @@ public class NativeTypedArrayIterator<T> implements ListIterator<T> {
 
     @Override
     public boolean hasNext() {
-        return (position < view.length);
+        return (position < view.getLength());
     }
 
     @Override
