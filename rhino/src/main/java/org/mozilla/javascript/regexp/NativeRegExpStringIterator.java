@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.regexp;
 
+import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ES6Iterator;
 import org.mozilla.javascript.ScriptRuntime;
@@ -19,6 +20,9 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     private static final long serialVersionUID = 1L;
     private static final String ITERATOR_TAG = "RegExpStringIterator";
 
+    private static final ClassDescriptor DESCRIPTOR =
+            ES6Iterator.makeDescriptor(ITERATOR_TAG, "RegExp String Iterator");
+
     private Scriptable regexp;
     private String string;
     private boolean global;
@@ -26,8 +30,14 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     private boolean nextDone;
     private Object next = null;
 
-    public static void init(TopLevel scope, boolean sealed) {
-        ES6Iterator.init(scope, sealed, new NativeRegExpStringIterator(), ITERATOR_TAG);
+    public static void init(Context cx, VarScope scope, boolean sealed) {
+        ES6Iterator.initialize(
+                DESCRIPTOR,
+                cx,
+                (TopLevel) scope,
+                new NativeRegExpStringIterator(),
+                sealed,
+                ITERATOR_TAG);
     }
 
     /** Only for constructing the prototype object. */

@@ -18,10 +18,6 @@ public class NativeCollectionIterator extends ES6Iterator {
         BOTH
     }
 
-    static void init(TopLevel scope, String tag, boolean sealed) {
-        ES6Iterator.init(scope, sealed, new NativeCollectionIterator(tag), tag);
-    }
-
     public NativeCollectionIterator(String tag) {
         this.className = tag;
         this.iterator = Collections.emptyIterator();

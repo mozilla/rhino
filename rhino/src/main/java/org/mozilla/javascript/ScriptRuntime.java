@@ -239,12 +239,12 @@ public class ScriptRuntime {
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
-        NativeArrayIterator.init(scope, sealed);
-        NativeStringIterator.init(scope, sealed);
+        NativeArrayIterator.init(cx, scope, sealed);
+        NativeStringIterator.init(cx, scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        NativeJavaObject.init(cx, scope, sealed);
+        NativeJavaMap.init(cx, scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -280,8 +280,6 @@ public class ScriptRuntime {
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
-            NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
-            NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
             new LazilyLoadedCtor<>(scope, "Map", sealed, true, NativeMap::init);
             new LazilyLoadedCtor<>(scope, "Promise", sealed, true, NativePromise::init);
             new LazilyLoadedCtor<>(scope, "Set", sealed, true, NativeSet::init);
@@ -300,7 +298,7 @@ public class ScriptRuntime {
     private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
-            regExpProxy.register(scope, sealed);
+            regExpProxy.register(cx, scope, sealed);
         }
     }
 
@@ -2814,6 +2812,7 @@ public class ScriptRuntime {
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
+            new Error(String.format("%s", v)).printStackTrace();
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
