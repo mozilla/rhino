@@ -148,7 +148,7 @@ public final class NativeCall extends IdScriptableObject {
 
     final JSFunction function;
     final Object[] originalArgs;
-    final boolean isStrict;
+    @Deprecated final boolean isStrict;
 
     transient NativeCall parentActivationCall;
 }
