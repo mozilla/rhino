@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.util.Iterator;
 
 /**
@@ -21,28 +23,30 @@ public final class NativeIterator extends ScriptableObject {
 
     private Object objectIterator;
 
+    private static final String STOP_ITERATION = "StopIteration";
+    public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
+
+    private static final ClassDescriptor DESCRIPTOR;
+
+    private static final ClassDescriptor STOP_ITER_DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                2,
+                                NativeIterator::jsConstructorCall,
+                                NativeIterator::jsConstructor)
+                        .withMethod(PROTO, "next", 0, NativeIterator::js_next)
+                        .withMethod(
+                                PROTO, ITERATOR_PROPERTY_NAME, 1, NativeIterator::js_iteratorMethod)
+                        .build();
+        STOP_ITER_DESCRIPTOR = new ClassDescriptor.Builder(STOP_ITERATION, 0, null, null).build();
+    }
+
     static void init(Context cx, TopLevel scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        2,
-                        NativeIterator::jsConstructorCall,
-                        NativeIterator::jsConstructor);
-        constructor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
-
         NativeIterator proto = new NativeIterator();
-        constructor.setPrototypeScriptable(proto);
-
-        constructor.definePrototypeMethod(scope, "next", 0, NativeIterator::js_next);
-        constructor.definePrototypeMethod(
-                scope, ITERATOR_PROPERTY_NAME, 1, NativeIterator::js_iteratorMethod);
-
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, ScriptableObject.DONTENUM);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
-        }
+        var ctor = DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
 
         // Generator
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
@@ -52,17 +56,11 @@ public final class NativeIterator extends ScriptableObject {
         }
 
         // StopIteration
-        NativeObject obj = new StopIteration();
-        obj.setPrototype(getObjectPrototype(scope));
-        obj.setParentScope(scope);
-        if (sealed) {
-            obj.sealObject();
-        }
-        ScriptableObject.defineProperty(scope, STOP_ITERATION, obj, ScriptableObject.DONTENUM);
+        var stopCtor = STOP_ITER_DESCRIPTOR.populateGlobal(cx, scope, new StopIteration(), sealed);
         // Use "associateValue" so that generators can continue to
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
-        scope.associateValue(ITERATOR_TAG, obj);
+        scope.associateValue(ITERATOR_TAG, stopCtor);
     }
 
     /** Only for constructing the prototype object. */
@@ -84,9 +82,6 @@ public final class NativeIterator extends ScriptableObject {
         TopLevel top = ScriptableObject.getTopLevelScope(scope);
         return ScriptableObject.getTopScopeValue(top, ITERATOR_TAG);
     }
-
-    private static final String STOP_ITERATION = "StopIteration";
-    public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
 
     public static class StopIteration extends NativeObject {
         private static final long serialVersionUID = 2485151085722377663L;
@@ -123,13 +118,13 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static Object jsConstructorCall(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
-        Scriptable target = requireIteratorTarget(cx, scope, args);
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        Scriptable target = requireIteratorTarget(cx, s, args);
         boolean keyOnly = isKeyOnly(args);
 
         Iterator<?> iterator = getJavaIterator(target);
         if (iterator != null) {
-            VarScope topScope = ScriptableObject.getTopLevelScope(scope);
+            VarScope topScope = ScriptableObject.getTopLevelScope(s);
             return cx.getWrapFactory()
                     .wrap(
                             cx,
@@ -143,13 +138,14 @@ public final class NativeIterator extends ScriptableObject {
             return jsIterator;
         }
 
-        return createNativeIterator(cx, scope, target, keyOnly);
+        return createNativeIterator(cx, s, target, keyOnly);
     }
 
-    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
-        Scriptable target = requireIteratorTarget(cx, scope, args);
+    private static Scriptable jsConstructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        Scriptable target = requireIteratorTarget(cx, s, args);
         boolean keyOnly = isKeyOnly(args);
-        return createNativeIterator(cx, scope, target, keyOnly);
+        return createNativeIterator(cx, s, target, keyOnly);
     }
 
     private static Scriptable requireIteratorTarget(Context cx, VarScope scope, Object[] args) {
@@ -165,9 +161,10 @@ public final class NativeIterator extends ScriptableObject {
         return args.length > 1 && ScriptRuntime.toBoolean(args[1]);
     }
 
-    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_next(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeIterator iterator = realThis(thisObj);
-        return iterator.next(cx, scope);
+        return iterator.next(cx, s);
     }
 
     private static NativeIterator createNativeIterator(
@@ -188,7 +185,7 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static Object js_iteratorMethod(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj);
     }
 
