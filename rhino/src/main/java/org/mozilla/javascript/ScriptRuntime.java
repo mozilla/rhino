@@ -31,6 +31,7 @@ import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
 import org.mozilla.javascript.typedarrays.NativeDataView;
+import org.mozilla.javascript.typedarrays.NativeFloat16Array;
 import org.mozilla.javascript.typedarrays.NativeFloat32Array;
 import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeInt16Array;
@@ -277,6 +278,7 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "Uint32Array", sealed, true, NativeUint32Array::init);
             new LazilyLoadedCtor(scope, "BigInt64Array", sealed, true, NativeBigInt64Array::init);
             new LazilyLoadedCtor(scope, "BigUint64Array", sealed, true, NativeBigUint64Array::init);
+            new LazilyLoadedCtor(scope, "Float16Array", sealed, true, NativeFloat16Array::init);
             new LazilyLoadedCtor(scope, "Float32Array", sealed, true, NativeFloat32Array::init);
             new LazilyLoadedCtor(scope, "Float64Array", sealed, true, NativeFloat64Array::init);
             new LazilyLoadedCtor(scope, "DataView", sealed, true, NativeDataView::init);
@@ -6124,7 +6126,7 @@ public class ScriptRuntime {
      * Not all "NativeSymbol" instances are actually symbols. So account for that here rather than
      * just by using an "instanceof" check.
      */
-    static boolean isSymbol(Object obj) {
+    public static boolean isSymbol(Object obj) {
         return ((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol())
                 || (obj instanceof SymbolKey);
     }
