@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+
 public abstract class ES6Iterator extends ScriptableObject {
 
     private static final long serialVersionUID = 2438373029140003950L;
@@ -16,35 +19,26 @@ public abstract class ES6Iterator extends ScriptableObject {
     public static final String VALUE_PROPERTY = "value";
     public static final String RETURN_METHOD = "return";
 
-    protected static void init(
-            TopLevel scope, boolean sealed, ScriptableObject prototype, String tag) {
-        if (scope != null) {
-            prototype.setParentScope(scope);
-            prototype.setPrototype(getObjectPrototype(scope));
-        }
+    public static ClassDescriptor makeDescriptor(String name, String tag) {
+        // Need a way to associate the built object with the tag. We
+        // kind of need this in general, and at the top level, but we
+        // can bodge it for now.
+        return new ClassDescriptor.Builder(name)
+                .withMethod(CTOR, "next", 0, ES6Iterator::js_next)
+                .withMethod(CTOR, SymbolKey.ITERATOR, 1, ES6Iterator::js_iterator)
+                .withProp(CTOR, SymbolKey.TO_STRING_TAG, value(tag, DONTENUM | READONLY))
+                .build();
+    }
 
-        // Define prototype methods using LambdaFunction
-        LambdaFunction next = new LambdaFunction(scope, NEXT_METHOD, 0, ES6Iterator::js_next);
-        ScriptableObject.defineProperty(prototype, NEXT_METHOD, next, DONTENUM);
-
-        LambdaFunction iterator =
-                new LambdaFunction(scope, "[Symbol.iterator]", 1, ES6Iterator::js_iterator);
-        prototype.defineProperty(SymbolKey.ITERATOR, iterator, DONTENUM);
-
-        prototype.defineProperty(
-                SymbolKey.TO_STRING_TAG, prototype.getClassName(), DONTENUM | READONLY);
-
-        if (sealed) {
-            prototype.sealObject();
-        }
-
-        // Need to access Iterator prototype when constructing
-        // Iterator instances, but don't have a iterator constructor
-        // to use to find the prototype. Use the "associateValue"
-        // approach instead.
-        if (scope != null) {
-            scope.associateValue(tag, prototype);
-        }
+    public static void initialize(
+            ClassDescriptor desc,
+            Context cx,
+            TopLevel scope,
+            ScriptableObject obj,
+            boolean sealed,
+            String name) {
+        var global = desc.populateGlobal(cx, scope, obj, sealed);
+        scope.associateValue(name, global);
     }
 
     protected boolean exhausted = false;
@@ -67,12 +61,14 @@ public abstract class ES6Iterator extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, ES6Iterator.class);
     }
 
-    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_next(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ES6Iterator iterator = realThis(thisObj);
-        return iterator.next(cx, scope);
+        return iterator.next(cx, s);
     }
 
-    private static Object js_iterator(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_iterator(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return thisObj;
     }
 

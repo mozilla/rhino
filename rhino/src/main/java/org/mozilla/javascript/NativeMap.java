@@ -14,11 +14,20 @@ public class NativeMap extends ScriptableObject {
     private static final String CLASS_NAME = "Map";
     static final String ITERATOR_TAG = "Map Iterator";
 
+    private static final ClassDescriptor ITER_DESCRIPTOR =
+            ES6Iterator.makeDescriptor(ITERATOR_TAG, ITERATOR_TAG);
     private final Hashtable entries = new Hashtable();
 
     private boolean instanceOfMap = false;
 
     static Object init(Context cx, VarScope scope, boolean sealed) {
+        ES6Iterator.initialize(
+                ITER_DESCRIPTOR,
+                cx,
+                (TopLevel) scope,
+                new NativeCollectionIterator(ITERATOR_TAG),
+                sealed,
+                ITERATOR_TAG);
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
