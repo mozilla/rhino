@@ -5396,6 +5396,12 @@ public class ScriptRuntime {
         obj.setParentScope(s);
     }
 
+    public static void setBuiltinProtoAndParent(
+            ScriptableObject obj, JSFunction f, Object nt, VarScope s, TopLevel.NativeErrors type) {
+        obj.setPrototype((Scriptable) f.getPrototypeProperty());
+        obj.setParentScope(s);
+    }
+
     public static void initFunction(
             Context cx, VarScope scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
