@@ -6,8 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
-import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 
 import java.io.Serializable;
@@ -23,36 +24,41 @@ import org.mozilla.javascript.xml.XMLLib;
 public class NativeGlobal implements Serializable {
     static final long serialVersionUID = 6080442165748707530L;
 
-    public static void init(Context cx, TopLevel scope, boolean sealed) {
-        defineGlobalFunction(scope, sealed, "decodeURI", 1, NativeGlobal::js_decodeURI);
-        defineGlobalFunction(
-                scope, sealed, "decodeURIComponent", 1, NativeGlobal::js_decodeURIComponent);
-        defineGlobalFunction(scope, sealed, "encodeURI", 1, NativeGlobal::js_encodeURI);
-        defineGlobalFunction(
-                scope, sealed, "encodeURIComponent", 1, NativeGlobal::js_encodeURIComponent);
-        defineGlobalFunction(scope, sealed, "escape", 1, NativeGlobal::js_escape);
-        defineGlobalFunction(scope, sealed, "isFinite", 1, NativeGlobal::js_isFinite);
-        defineGlobalFunction(scope, sealed, "isNaN", 1, NativeGlobal::js_isNaN);
-        defineGlobalFunction(scope, sealed, "isXMLName", 1, NativeGlobal::js_isXMLName);
-        defineGlobalFunction(scope, sealed, "parseFloat", 1, NativeGlobal::js_parseFloat);
-        defineGlobalFunction(scope, sealed, "parseInt", 2, NativeGlobal::js_parseInt);
-        defineGlobalFunction(scope, sealed, "unescape", 1, NativeGlobal::js_unescape);
-        defineGlobalFunction(scope, sealed, "uneval", 1, NativeGlobal::js_uneval);
-        defineGlobalFunctionEval(scope, sealed);
+    private static final ClassDescriptor DESCRIPTOR;
+    private static final JSDescriptor<JSFunction> EVAL_DESCRIPTOR;
 
-        ScriptableObject.defineProperty(
-                scope, "NaN", ScriptRuntime.NaNobj, READONLY | DONTENUM | PERMANENT);
-        ScriptableObject.defineProperty(
-                scope, "Infinity", Double.POSITIVE_INFINITY, READONLY | DONTENUM | PERMANENT);
-        ScriptableObject.defineProperty(
-                scope, "undefined", Undefined.instance, READONLY | DONTENUM | PERMANENT);
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder("globalThis")
+                        .withMethod(CTOR, "decodeURI", 1, NativeGlobal::js_decodeURI)
+                        .withMethod(
+                                CTOR, "decodeURIComponent", 1, NativeGlobal::js_decodeURIComponent)
+                        .withMethod(CTOR, "encodeURI", 1, NativeGlobal::js_encodeURI)
+                        .withMethod(
+                                CTOR, "encodeURIComponent", 1, NativeGlobal::js_encodeURIComponent)
+                        .withMethod(CTOR, "escape", 1, NativeGlobal::js_escape)
+                        .withMethod(CTOR, "isFinite", 1, NativeGlobal::js_isFinite)
+                        .withMethod(CTOR, "isNaN", 1, NativeGlobal::js_isNaN)
+                        .withMethod(CTOR, "isXMLName", 1, NativeGlobal::js_isXMLName)
+                        .withMethod(CTOR, "parseFloat", 1, NativeGlobal::js_parseFloat)
+                        .withMethod(CTOR, "parseInt", 2, NativeGlobal::js_parseInt)
+                        .withMethod(CTOR, "unescape", 1, NativeGlobal::js_unescape)
+                        .withMethod(CTOR, "uneval", 1, NativeGlobal::js_uneval)
+                        .withMethod(CTOR, "eval", 1, NativeGlobal::js_eval)
+                        .withProp(CTOR, "NaN", value(ScriptRuntime.NaNobj))
+                        .withProp(CTOR, "Infinity", value(Double.POSITIVE_INFINITY))
+                        .withProp(CTOR, "undefined", value(Undefined.instance))
+                        .build();
+        EVAL_DESCRIPTOR = DESCRIPTOR.findCtorDesc("eval");
+    }
+
+    public static void init(Context cx, TopLevel scope, boolean sealed) {
         var globalThis = scope.getGlobalThis();
+        DESCRIPTOR.populateGlobal(cx, scope, globalThis, false);
 
         var obj = (Scriptable) scope.get("Object", scope);
         var objProto = (Scriptable) obj.get("prototype", obj);
         globalThis.setPrototype(objProto);
-
-        ScriptableObject.defineProperty(scope, "globalThis", globalThis, DONTENUM);
 
         /*
             Each error constructor gets its own Error object as a prototype,
@@ -124,7 +130,7 @@ public class NativeGlobal implements Serializable {
             ctor.setImmunePrototypeProperty(errorProto);
             ctor.setPrototype(nativeError);
             errorProto.put("constructor", errorProto, ctor);
-            errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
+            errorProto.setAttributes("constructor", DONTENUM);
             errorProto.setPrototype(nativeErrorProto);
             ctor.setAttributes("name", DONTENUM | READONLY);
             ctor.setAttributes("length", DONTENUM | READONLY);
@@ -137,46 +143,26 @@ public class NativeGlobal implements Serializable {
         }
     }
 
-    private static void defineGlobalFunction(
-            VarScope scope,
-            boolean sealed,
-            String name,
-            int length,
-            SerializableCallable callable) {
-        LambdaFunction fun = new LambdaFunction(scope, name, length, null, callable);
-        registerGlobalFunction(scope, sealed, name, fun);
-    }
-
-    private static void registerGlobalFunction(
-            VarScope scope, boolean sealed, String name, LambdaFunction fun) {
-        ScriptableObject.defineProperty(scope, name, fun, DONTENUM);
-        if (sealed) {
-            fun.sealObject();
-        }
-    }
-
-    // Eval is special because we need to "recognize" it in isEvalFunction
-    private static void defineGlobalFunctionEval(VarScope scope, boolean sealed) {
-        LambdaFunction evalFun = new EvalLambdaFunction(scope);
-        registerGlobalFunction(scope, sealed, "eval", evalFun);
-    }
-
     static boolean isEvalFunction(Object functionObj) {
-        return functionObj instanceof EvalLambdaFunction;
+        return functionObj instanceof JSFunction
+                && ((JSFunction) functionObj).getDescriptor() == EVAL_DESCRIPTOR;
     }
 
-    private static String js_uneval(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static String js_uneval(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object value = (args.length != 0) ? args[0] : Undefined.instance;
-        return ScriptRuntime.uneval(cx, scope, value);
+        return ScriptRuntime.uneval(cx, s, value);
     }
 
-    private static Boolean js_isXMLName(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Boolean js_isXMLName(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object name = (args.length == 0) ? Undefined.instance : args[0];
-        XMLLib xmlLib = XMLLib.extractFromScope(scope);
+        XMLLib xmlLib = XMLLib.extractFromScope(s);
         return xmlLib.isXMLName(cx, name);
     }
 
-    private static Boolean js_isNaN(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Boolean js_isNaN(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // The global method isNaN, as per ECMA-262 15.1.2.6.
         if (args.length < 1) {
             return true;
@@ -186,48 +172,52 @@ public class NativeGlobal implements Serializable {
         }
     }
 
-    private static Object js_isFinite(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_isFinite(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length < 1) {
             return Boolean.FALSE;
         }
         return NativeNumber.isFinite(args[0]);
     }
 
-    private static String js_decodeURI(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static String js_decodeURI(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return decode(str, true);
     }
 
     private static String js_decodeURIComponent(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return decode(str, false);
     }
 
-    private static String js_encodeURI(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static String js_encodeURI(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return encode(str, true);
     }
 
     private static String js_encodeURIComponent(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return encode(str, false);
     }
 
     /** The global method parseInt, as per ECMA-262 15.1.2.2. */
-    static Object js_parseInt(Context cx, VarScope scope, Object thisObj, Object[] args) {
-        String s = ScriptRuntime.toString(args, 0);
+    static Object js_parseInt(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        String str = ScriptRuntime.toString(args, 0);
         int radix = ScriptRuntime.toInt32(args, 1);
 
-        int len = s.length();
+        int len = str.length();
         if (len == 0) return ScriptRuntime.NaNobj;
 
         boolean negative = false;
         int start = 0;
         char c;
         do {
-            c = s.charAt(start);
+            c = str.charAt(start);
             if (!ScriptRuntime.isStrWhiteSpaceChar(c)) break;
             start++;
         } while (start < len);
@@ -239,15 +229,15 @@ public class NativeGlobal implements Serializable {
             radix = NO_RADIX;
         } else if (radix < 2 || radix > 36) {
             return ScriptRuntime.NaNobj;
-        } else if (radix == 16 && len - start > 1 && s.charAt(start) == '0') {
-            c = s.charAt(start + 1);
+        } else if (radix == 16 && len - start > 1 && str.charAt(start) == '0') {
+            c = str.charAt(start + 1);
             if (c == 'x' || c == 'X') start += 2;
         }
 
         if (radix == NO_RADIX) {
             radix = 10;
-            if (len - start > 1 && s.charAt(start) == '0') {
-                c = s.charAt(start + 1);
+            if (len - start > 1 && str.charAt(start) == '0') {
+                c = str.charAt(start + 1);
                 if (c == 'x' || c == 'X') {
                     radix = 16;
                     start += 2;
@@ -260,7 +250,7 @@ public class NativeGlobal implements Serializable {
             }
         }
 
-        double d = ScriptRuntime.stringPrefixToNumber(s, start, radix);
+        double d = ScriptRuntime.stringPrefixToNumber(str, start, radix);
         return negative ? -d : d;
     }
 
@@ -269,11 +259,12 @@ public class NativeGlobal implements Serializable {
      *
      * @param args the arguments to parseFloat, ignoring args[>=1]
      */
-    static Object js_parseFloat(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    static Object js_parseFloat(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length < 1) return ScriptRuntime.NaNobj;
 
-        String s = ScriptRuntime.toString(args[0]);
-        int len = s.length();
+        String str = ScriptRuntime.toString(args[0]);
+        int len = str.length();
         int start = 0;
         // Scan forward to skip whitespace
         char c;
@@ -281,7 +272,7 @@ public class NativeGlobal implements Serializable {
             if (start == len) {
                 return ScriptRuntime.NaNobj;
             }
-            c = s.charAt(start);
+            c = str.charAt(start);
             if (!ScriptRuntime.isStrWhiteSpaceChar(c)) {
                 break;
             }
@@ -294,13 +285,13 @@ public class NativeGlobal implements Serializable {
             if (i == len) {
                 return ScriptRuntime.NaNobj;
             }
-            c = s.charAt(i);
+            c = str.charAt(i);
         }
 
         if (c == 'I') {
             // check for "Infinity"
-            if (i + 8 <= len && s.regionMatches(i, "Infinity", 0, 8)) {
-                if (s.charAt(start) == '-') {
+            if (i + 8 <= len && str.regionMatches(i, "Infinity", 0, 8)) {
+                if (str.charAt(start) == '-') {
                     return Double.NEGATIVE_INFINITY;
                 } else {
                     return Double.POSITIVE_INFINITY;
@@ -314,7 +305,7 @@ public class NativeGlobal implements Serializable {
         int exponent = -1;
         boolean exponentValid = false;
         for (; i < len; i++) {
-            switch (s.charAt(i)) {
+            switch (str.charAt(i)) {
                 case '.':
                     if (decimal != -1) // Only allow a single decimal point.
                     break;
@@ -365,9 +356,9 @@ public class NativeGlobal implements Serializable {
         if (exponent != -1 && !exponentValid) {
             i = exponent;
         }
-        s = s.substring(start, i);
+        str = str.substring(start, i);
         try {
-            return Double.valueOf(s);
+            return Double.valueOf(str);
         } catch (NumberFormatException ex) {
             return ScriptRuntime.NaNobj;
         }
@@ -379,10 +370,11 @@ public class NativeGlobal implements Serializable {
      * <p>Includes code for the 'mask' argument supported by the C escape method, which used to be
      * part of the browser embedding. Blame for the strange constant names should be directed there.
      */
-    private static Object js_escape(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_escape(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         final int URL_XALPHAS = 1, URL_XPALPHAS = 2, URL_PATH = 4;
 
-        String s = ScriptRuntime.toString(args, 0);
+        String str = ScriptRuntime.toString(args, 0);
 
         int mask = URL_XALPHAS | URL_XPALPHAS | URL_PATH;
         if (args.length > 1) { // the 'mask' argument.  Non-ECMA.
@@ -395,8 +387,8 @@ public class NativeGlobal implements Serializable {
         }
 
         StringBuilder sb = null;
-        for (int k = 0, L = s.length(); k != L; ++k) {
-            int c = s.charAt(k);
+        for (int k = 0, L = str.length(); k != L; ++k) {
+            int c = str.charAt(k);
             if (mask != 0
                     && ((c >= '0' && c <= '9')
                             || (c >= 'A' && c <= 'Z')
@@ -440,16 +432,17 @@ public class NativeGlobal implements Serializable {
             }
         }
 
-        return (sb == null) ? s : sb.toString();
+        return (sb == null) ? str : sb.toString();
     }
 
     /** The global unescape method, as per ECMA-262 15.1.2.5. */
-    private static Object js_unescape(Context cx, VarScope scope, Object thisObj, Object[] args) {
-        String s = ScriptRuntime.toString(args, 0);
-        int firstEscapePos = s.indexOf('%');
+    private static Object js_unescape(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        String str = ScriptRuntime.toString(args, 0);
+        int firstEscapePos = str.indexOf('%');
         if (firstEscapePos >= 0) {
-            int L = s.length();
-            char[] buf = s.toCharArray();
+            int L = str.length();
+            char[] buf = str.toCharArray();
             int destination = firstEscapePos;
             for (int k = firstEscapePos; k != L; ) {
                 char c = buf[k];
@@ -477,18 +470,20 @@ public class NativeGlobal implements Serializable {
                 buf[destination] = c;
                 ++destination;
             }
-            s = new String(buf, 0, destination);
+            str = new String(buf, 0, destination);
         }
-        return s;
+        return str;
     }
 
     /**
      * This is an indirect call to eval, and thus uses the global environment. Direct calls are
      * executed via ScriptRuntime.callSpecial().
      */
-    private static Object js_eval(Context cx, VarScope scope, Object[] args) {
-        TopLevel global = ScriptableObject.getTopLevelScope(scope);
-        return ScriptRuntime.evalSpecial(cx, global, global.getGlobalThis(), args, "eval code", 1);
+    private static Object js_eval(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        TopLevel topLevel = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
+        return ScriptRuntime.evalSpecial(
+                cx, topLevel, topLevel.getGlobalThis(), args, "eval code", 1);
     }
 
     /**
@@ -739,21 +734,5 @@ public class NativeGlobal implements Serializable {
             utf8Buffer[0] = (byte) (0x100 - (1 << (8 - utf8Length)) + ucs4Char);
         }
         return utf8Length;
-    }
-
-    /**
-     * A simple subclass of {@link LambdaFunction} used to "tag" eval, so that we can recognize it
-     * in {@link NativeGlobal#isEvalFunction}
-     */
-    private static class EvalLambdaFunction extends LambdaFunction {
-        public EvalLambdaFunction(VarScope scope) {
-            super(
-                    scope,
-                    "eval",
-                    1,
-                    null,
-                    (callCx, callScope, thisObj, args) ->
-                            NativeGlobal.js_eval(callCx, callScope, args));
-        }
     }
 }
