@@ -12,6 +12,8 @@ import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 
 import java.io.Serializable;
+import java.util.EnumMap;
+import java.util.Map;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -26,6 +28,7 @@ public class NativeGlobal implements Serializable {
 
     private static final ClassDescriptor DESCRIPTOR;
     private static final JSDescriptor<JSFunction> EVAL_DESCRIPTOR;
+    private static final Map<TopLevel.NativeErrors, ClassDescriptor> ERROR_DESCRIPTORS;
 
     static {
         DESCRIPTOR =
@@ -50,6 +53,36 @@ public class NativeGlobal implements Serializable {
                         .withProp(CTOR, "undefined", value(Undefined.instance))
                         .build();
         EVAL_DESCRIPTOR = DESCRIPTOR.findCtorDesc("eval");
+
+        var errorDescs =
+                new EnumMap<TopLevel.NativeErrors, ClassDescriptor>(TopLevel.NativeErrors.class);
+        for (var e : TopLevel.NativeErrors.values()) {
+            if (e == TopLevel.NativeErrors.Error) continue;
+            ClassDescriptor.Builder builder;
+            if (e != TopLevel.NativeErrors.AggregateError) {
+                builder =
+                        new ClassDescriptor.Builder(
+                                e.name(),
+                                1,
+                                (c, f, nt, s, thisObj, args) -> NativeError.make(c, s, f, args),
+                                (c, f, nt, s, thisObj, args) -> NativeError.make(c, s, f, args));
+            } else {
+                builder =
+                        new ClassDescriptor.Builder(
+                                e.name(),
+                                2,
+                                (c, f, nt, s, thisObj, args) ->
+                                        NativeError.makeAggregate(c, s, f, args),
+                                (c, f, nt, s, thisObj, args) ->
+                                        NativeError.makeAggregate(c, s, f, args));
+            }
+            errorDescs.put(
+                    e,
+                    builder.withProtoValue("name", e.name(), DONTENUM)
+                            .withProtoValue("message", "", DONTENUM)
+                            .build());
+        }
+        ERROR_DESCRIPTORS = Map.copyOf(errorDescs);
     }
 
     public static void init(Context cx, TopLevel scope, boolean sealed) {
@@ -70,76 +103,20 @@ public class NativeGlobal implements Serializable {
                 ScriptableObject.ensureScriptable(
                         ScriptableObject.getProperty(nativeError, "prototype"));
 
-        for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
-            if (error == TopLevel.NativeErrors.Error) {
-                // Error is initialized elsewhere and we should not overwrite it.
-                continue;
-            }
-            String name = error.name();
-            TopLevel topLevelScope = ScriptableObject.getTopLevelScope(scope);
-            Function builtinErrorCtor =
-                    TopLevel.getBuiltinCtor(cx, topLevelScope, TopLevel.Builtins.Error);
-            ScriptableObject errorProto = NativeError.makeProto(topLevelScope, builtinErrorCtor);
-            errorProto.defineProperty("name", name, DONTENUM);
-            errorProto.defineProperty("message", "", DONTENUM);
-
-            BaseFunction ctor;
-
-            // Building errors is complex because of the prototype chain requirements. This is a bit
-            // arcane, but it's a combination that makes test262 happy.
-            if (error == TopLevel.NativeErrors.AggregateError) {
-                var target =
-                        new SerializableConstructable() {
-                            // We need a reference to the LambdaFunction, so we use this "lateBound"
-                            // trick. It ain't great, but it's the only idea I have.
-                            private Function lateBoundCtor;
-
-                            @Override
-                            public Scriptable construct(
-                                    Context callCx, VarScope callScope, Object[] args) {
-                                return NativeError.makeAggregate(
-                                        callCx, callScope, lateBoundCtor, args);
-                            }
-                        };
-                ctor =
-                        new LambdaConstructor(scope, name, 2, target) {
-                            // Necessary to make the test262 case
-                            // built-ins/NativeErrors/AggregateError/newtarget-proto-custom.js work
-                            // correctly
-                            @Override
-                            public Scriptable createObject(Context cx, VarScope scope) {
-                                return null;
-                            }
-                        };
-                target.lateBoundCtor = ctor;
-            } else {
-                var target =
-                        new SerializableConstructable() {
-                            private Function lateBoundCtor;
-
-                            @Override
-                            public Scriptable construct(
-                                    Context callCx, VarScope callScope, Object[] args) {
-                                return NativeError.make(callCx, callScope, lateBoundCtor, args);
-                            }
-                        };
-                ctor = new LambdaConstructor(scope, name, 1, target);
-                target.lateBoundCtor = ctor;
-            }
-
-            ctor.setImmunePrototypeProperty(errorProto);
-            ctor.setPrototype(nativeError);
-            errorProto.put("constructor", errorProto, ctor);
-            errorProto.setAttributes("constructor", DONTENUM);
-            errorProto.setPrototype(nativeErrorProto);
-            ctor.setAttributes("name", DONTENUM | READONLY);
-            ctor.setAttributes("length", DONTENUM | READONLY);
-            if (sealed) {
-                errorProto.sealObject();
-                ctor.sealObject();
-            }
-
-            ScriptableObject.defineProperty(scope, name, ctor, DONTENUM);
+        Function builtinErrorCtor = TopLevel.getBuiltinCtor(cx, scope, TopLevel.Builtins.Error);
+        for (var e : ERROR_DESCRIPTORS.entrySet()) {
+            var name = e.getKey().name();
+            var desc = e.getValue();
+            var errorProto = NativeError.makeProto(scope, builtinErrorCtor);
+            desc.buildConstructor(
+                    cx,
+                    scope,
+                    errorProto,
+                    sealed,
+                    (c, ctor) -> {
+                        ctor.setPrototype(nativeError);
+                        errorProto.setPrototype(nativeErrorProto);
+                    });
         }
     }
 
