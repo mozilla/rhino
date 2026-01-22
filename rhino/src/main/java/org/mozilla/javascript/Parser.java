@@ -4647,7 +4647,8 @@ public class Parser {
             Transformer transformer,
             boolean isFunctionParameter) {
         Scope result = createScopeNode(Token.LETEXPR, left.getLineno(), left.getColumn());
-        result.addChildToFront(new Node(Token.LET, createName(Token.NAME, tempName, right)));
+        Node letNode = new Node(Token.LET, createName(Token.NAME, tempName, right));
+        result.addChildToFront(letNode);
         try {
             pushScope(result);
             defineSymbol(Token.LET, tempName, true);
@@ -4684,7 +4685,9 @@ public class Parser {
                             destructuringNames,
                             defaultValue,
                             transformer,
-                            isFunctionParameter);
+                            isFunctionParameter,
+                            letNode,
+                            result);
         } else if (left.getType() == Token.GETPROP || left.getType() == Token.GETELEM) {
             switch (variableType) {
                 case Token.CONST:
@@ -5076,7 +5079,9 @@ public class Parser {
             List<String> destructuringNames,
             AstNode defaultValue, /* defaultValue to use in function param decls */
             Transformer transformer,
-            boolean isFunctionParameter) {
+            boolean isFunctionParameter,
+            Node letNode,
+            Scope letExprScope) {
         boolean empty = true;
         int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
         boolean defaultValuesSetup = false;
@@ -5168,15 +5173,32 @@ public class Parser {
                 rightElem = new Node(Token.GETELEM, createName(tempName), s);
             } else if (id instanceof ComputedPropertyKey) {
                 // handle computed property key: [...key]
-                if (transformer == null) {
-                    reportError("msg.bad.computed.property.in.destruct");
-                    return false;
-                }
-                // store computed expressions (will be evaluated at runtime)
+                // Create a temp variable for the computed key within the LETEXPR scope
+                // to ensure the expression is only evaluated once
                 AstNode computedExpr = ((ComputedPropertyKey) id).getExpression();
-                Node transformedExpr = transformer.transform(computedExpr);
-                extractedKeys.add(transformedExpr);
-                rightElem = new Node(Token.GETELEM, createName(tempName), transformedExpr);
+                String keyTempName = currentScriptOrFn.getNextTempName();
+
+                Node tempVar;
+                if (transformer != null) {
+                    Node keyExpr = transformer.transform(computedExpr);
+                    tempVar = createName(Token.NAME, keyTempName, keyExpr);
+                } else {
+                    tempVar = createName(Token.NAME, keyTempName, computedExpr);
+                    currentScriptOrFn.putDestructuringRvalues(tempVar, computedExpr);
+                }
+                letNode.addChildToBack(tempVar);
+
+                // define the computed property temp
+                pushScope(letExprScope);
+                try {
+                    defineSymbol(Token.LET, keyTempName, true);
+                } finally {
+                    popScope();
+                }
+
+                Node keyRef = createName(keyTempName);
+                extractedKeys.add(keyRef);
+                rightElem = new Node(Token.GETELEM, createName(tempName), keyRef);
             } else {
                 throw codeBug();
             }

@@ -411,6 +411,44 @@ class RestParametersDestructuringTest {
         }
 
         @Test
+        void objectRestComputedPropertyEvaluatedOnce() {
+            // Verify that computed properties are evaluated exactly once
+            String code =
+                    "var log = [];\n"
+                            + "function getKey(val) { log.push(val); return val; }\n"
+                            + "var obj = {a: 1, b: 2, c: 3};\n"
+                            + "var {[getKey('a')]: x, [getKey('b')]: y, ...rest} = obj;\n"
+                            + "log.join(',') + '|' + x + '|' + y + '|' + rest.c;";
+
+            Utils.assertWithAllModes_ES6("a,b|1|2|3", code);
+        }
+
+        @Test
+        void objectRestComputedPropertySideEffects() {
+            // Verify that computed property expressions with side effects work correctly
+            String code =
+                    "var counter = 0;\n"
+                            + "var obj = {x: 10, y: 20, z: 30};\n"
+                            + "var {[(() => { counter++; return 'x'; })()]: val, ...rest} = obj;\n"
+                            + "counter + '|' + val + '|' + rest.y + '|' + rest.z;";
+
+            Utils.assertWithAllModes_ES6("1|10|20|30", code);
+        }
+
+        @Test
+        void objectRestComputedPropertyEvaluationOrder() {
+            // Verify that computed properties are evaluated in declaration order
+            String code =
+                    "var log = [];\n"
+                            + "function getKey(val) { log.push(val); return val; }\n"
+                            + "var {[getKey('first')]: a, [getKey('second')]: b, [getKey('third')]: c, ...rest} = \n"
+                            + "    {first: 1, second: 2, third: 3, fourth: 4};\n"
+                            + "log.join(',') + '|' + a + '|' + b + '|' + c;";
+
+            Utils.assertWithAllModes_ES6("first,second,third|1|2|3", code);
+        }
+
+        @Test
         void restWithStringValue() {
             String code =
                     "var {...rest} = 'foo';\n"
@@ -582,6 +620,80 @@ class RestParametersDestructuringTest {
         void restInLastPositionIsValid() {
             String code = "var {a, ...rest} = {a: 1, b: 2, c: 3}; a + '|' + rest.b + '|' + rest.c;";
             Utils.assertWithAllModes_ES6("1|2|3", code);
+        }
+    }
+
+    @Nested
+    class ComputedPropertyErrors {
+        @Test
+        void computedPropertyInForLoopBasic() {
+            String code =
+                    "var results = [];\n"
+                            + "for (let { ['x']: x } = {x: 42}; x > 40; x--) {\n"
+                            + "  results.push(x);\n"
+                            + "}\n"
+                            + "results.join(',');";
+
+            Utils.assertWithAllModes_ES6("42,41", code);
+        }
+
+        @Test
+        void computedPropertyThrowsInForLoop() {
+            String code =
+                    "function thrower() { throw new Error('test error'); }\n"
+                            + "try {\n"
+                            + "  for (let { [thrower()]: x } = {}; ; ) {\n"
+                            + "    break;\n"
+                            + "  }\n"
+                            + "  'no error';\n"
+                            + "} catch (e) {\n"
+                            + "  e.message;\n"
+                            + "}";
+
+            Utils.assertWithAllModes_ES6("test error", code);
+        }
+
+        @Test
+        void computedPropertyThrowsInVariableDeclaration() {
+            String code =
+                    "function thrower() { throw new Error('test error'); }\n"
+                            + "try {\n"
+                            + "  let { [thrower()]: x } = {};\n"
+                            + "  'no error';\n"
+                            + "} catch (e) {\n"
+                            + "  e.message;\n"
+                            + "}";
+
+            Utils.assertWithAllModes_ES6("test error", code);
+        }
+
+        @Test
+        void computedPropertyThrowsInFunctionParameter() {
+            String code =
+                    "function thrower() { throw new Error('test error'); }\n"
+                            + "try {\n"
+                            + "  (function({ [thrower()]: x }) {})({});\n"
+                            + "  'no error';\n"
+                            + "} catch (e) {\n"
+                            + "  e.message;\n"
+                            + "}";
+
+            Utils.assertWithAllModes_ES6("test error", code);
+        }
+
+        @Test
+        void computedPropertyThrowsInAssignment() {
+            String code =
+                    "function thrower() { throw new Error('test error'); }\n"
+                            + "try {\n"
+                            + "  var x;\n"
+                            + "  ({ [thrower()]: x } = {});\n"
+                            + "  'no error';\n"
+                            + "} catch (e) {\n"
+                            + "  e.message;\n"
+                            + "}";
+
+            Utils.assertWithAllModes_ES6("test error", code);
         }
     }
 }
