@@ -390,7 +390,8 @@ public interface TypeInfoFactory extends Serializable {
     }
 
     /**
-     * the {@code androidApi} field from {@link org.mozilla.javascript.ScriptRuntime} is not accessible here, so we detect Android version manually
+     * the {@code androidApi} field from {@link org.mozilla.javascript.ScriptRuntime} is not
+     * accessible here, so we detect Android version manually
      */
     private static TypeInfoFactory createGlobalFactory() {
         int androidAPI;

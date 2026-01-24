@@ -18,7 +18,7 @@ import org.mozilla.javascript.lc.type.impl.VariableTypeInfoImpl;
  *
  * @author ZZZank
  */
-public abstract class AbstractCacheFactory implements FactoryBase, CacheProvider {
+public abstract class AbstractCacheFactory implements FactoryBase, CachedFactory {
     private static final long serialVersionUID = 4533445095188189419L;
 
     private transient Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache;

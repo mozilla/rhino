@@ -44,8 +44,8 @@ public abstract class LegacyCacheFactory extends AbstractCacheFactory {
         return basicClassCache.computeIfAbsent(clazz, BasicClassTypeInfo::new);
     }
 
-    public static class Concurrent extends LegacyCacheFactory implements CacheProvider.Concurrent {}
+    public static class Concurrent extends LegacyCacheFactory implements CachedFactory.Concurrent {}
 
     public static class WeakReference extends LegacyCacheFactory
-            implements CacheProvider.WeakReference {}
+            implements CachedFactory.WeakReference {}
 }

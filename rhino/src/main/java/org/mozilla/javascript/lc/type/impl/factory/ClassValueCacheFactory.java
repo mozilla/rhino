@@ -7,6 +7,10 @@ import org.mozilla.javascript.lc.type.impl.EnumTypeInfo;
 import org.mozilla.javascript.lc.type.impl.InterfaceTypeInfo;
 
 /**
+ * {@link ClassValue} is really performant for caching per-class data. However, it's not always
+ * available on Android. When {@link ClassValue} is not available, {@link LegacyCacheFactory} should
+ * be used instead.
+ *
  * @see LegacyCacheFactory
  * @author ZZZank
  */
@@ -36,8 +40,8 @@ public abstract class ClassValueCacheFactory extends AbstractCacheFactory {
     }
 
     public static class Concurrent extends ClassValueCacheFactory
-            implements CacheProvider.Concurrent {}
+            implements CachedFactory.Concurrent {}
 
     public static class WeakReference extends ClassValueCacheFactory
-            implements CacheProvider.WeakReference {}
+            implements CachedFactory.WeakReference {}
 }
