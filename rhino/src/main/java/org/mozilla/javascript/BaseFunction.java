@@ -468,21 +468,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
-        if (cx.isStrictMode()) {
-            // Disable strict mode forcefully, and restore it after the call
-            NativeCall activation = cx.currentActivationCall;
-            boolean strictMode = cx.isTopLevelStrict;
-            try {
-                cx.currentActivationCall = null;
-                cx.isTopLevelStrict = false;
-                return jsConstructor(cx, scope, args, false);
-            } finally {
-                cx.isTopLevelStrict = strictMode;
-                cx.currentActivationCall = activation;
-            }
-        } else {
-            return jsConstructor(cx, scope, args, false);
-        }
+        return jsConstructor(cx, scope, args, false);
     }
 
     private static Scriptable js_constructorCall(
@@ -491,21 +477,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Scriptable js_gen_constructor(Context cx, Scriptable scope, Object[] args) {
-        if (cx.isStrictMode()) {
-            // Disable strict mode forcefully, and restore it after the call
-            NativeCall activation = cx.currentActivationCall;
-            boolean strictMode = cx.isTopLevelStrict;
-            try {
-                cx.currentActivationCall = null;
-                cx.isTopLevelStrict = false;
-                return jsConstructor(cx, scope, args, true);
-            } finally {
-                cx.isTopLevelStrict = strictMode;
-                cx.currentActivationCall = activation;
-            }
-        } else {
-            return jsConstructor(cx, scope, args, true);
-        }
+        return jsConstructor(cx, scope, args, true);
     }
 
     private static BaseFunction realFunction(Scriptable thisObj, String functionName) {
