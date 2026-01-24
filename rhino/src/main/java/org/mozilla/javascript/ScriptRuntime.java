@@ -196,7 +196,7 @@ public class ScriptRuntime {
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         new ClassCache().associate(scope);
         var typeFactory =
-                ScriptRuntime.androidApi >= 34
+                (androidApi >= 34 || androidApi < 0)
                         ? new ClassValueCacheFactory.Concurrent()
                         : new LegacyCacheFactory.Concurrent();
         typeFactory.associate(scope);

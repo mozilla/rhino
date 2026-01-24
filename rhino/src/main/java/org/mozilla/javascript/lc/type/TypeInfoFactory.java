@@ -398,10 +398,15 @@ public interface TypeInfoFactory extends Serializable {
         try {
             androidAPI = Class.forName("android.os.Build$VERSION").getField("SDK_INT").getInt(null);
         } catch (Exception e) {
-            androidAPI = -1;
+            if ("Dalvik".equals(System.getProperty("java.vm.name"))) {
+                androidAPI = 1;
+            } else {
+                androidAPI = -1;
+            }
         }
 
-        if (androidAPI >= 34) {
+        if (androidAPI >= 34 || androidAPI < 0) {
+            // modern Android or not Android
             return new ClassValueCacheFactory.WeakReference() {
                 private Object readResolve() {
                     return GLOBAL;
