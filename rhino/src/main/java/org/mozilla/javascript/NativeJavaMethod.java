@@ -168,6 +168,21 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof NativeJavaMethod) {
+            var other = (NativeJavaMethod) obj;
+            // Given a class, the list of methods with the given name is determined
+            return this.parent == other.parent && this.functionName.equals(other.functionName);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return parent.hashCode() * 31 + functionName.hashCode();
+    }
+
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         // Find a method that matches the types given.
         var methods = this.getMethods();
