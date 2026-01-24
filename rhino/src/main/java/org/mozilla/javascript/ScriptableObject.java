@@ -700,14 +700,14 @@ public abstract class ScriptableObject extends SlotMapOwner
      *     to regular property access.
      * @since 1.7.6
      */
-    public void setExternalArrayData(ExternalArrayData array) {
+    public void setExternalArrayData(Scriptable scope, ExternalArrayData array) {
         externalData = array;
 
         if (array == null) {
             delete("length");
         } else {
             // Define "length" to return whatever length the List gives us.
-            defineProperty("length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
+            defineProperty(scope, "length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
         }
     }
 
@@ -1229,7 +1229,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                         ScriptableObject.PERMANENT
                                 | ScriptableObject.DONTENUM
                                 | (setter != null ? 0 : ScriptableObject.READONLY);
-                ((ScriptableObject) proto).defineProperty(name, null, method, setter, attr);
+                ((ScriptableObject) proto).defineProperty(scope, name, null, method, setter, attr);
                 continue;
             }
 
@@ -1459,7 +1459,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
-    public void defineProperty(String propertyName, Class<?> clazz, int attributes) {
+    public void defineProperty(
+            Scriptable scope, String propertyName, Class<?> clazz, int attributes) {
         int length = propertyName.length();
         if (length == 0) throw new IllegalArgumentException();
         char[] buf = new char[3 + length];
@@ -1476,7 +1477,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         Method getter = FunctionObject.findSingleMethod(methods, getterName);
         Method setter = FunctionObject.findSingleMethod(methods, setterName);
         if (setter == null) attributes |= ScriptableObject.READONLY;
-        defineProperty(propertyName, null, getter, setter == null ? null : setter, attributes);
+        defineProperty(
+                scope, propertyName, null, getter, setter == null ? null : setter, attributes);
     }
 
     /**
@@ -1527,10 +1529,15 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param attributes the attributes of the JavaScript property
      */
     public void defineProperty(
-            String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
+            Scriptable scope,
+            String propertyName,
+            Object delegateTo,
+            Method getter,
+            Method setter,
+            int attributes) {
         MemberBox getterBox = null;
         if (getter != null) {
-            getterBox = new MemberBox(getter);
+            getterBox = new MemberBox(scope, getter);
 
             boolean delegatedForm;
             if (!Modifier.isStatic(getter.getModifiers())) {
@@ -1571,7 +1578,7 @@ public abstract class ScriptableObject extends SlotMapOwner
             if (setter.getReturnType() != Void.TYPE)
                 throw Context.reportRuntimeErrorById("msg.setter.return", setter.toString());
 
-            setterBox = new MemberBox(setter);
+            setterBox = new MemberBox(scope, setter);
 
             boolean delegatedForm;
             if (!Modifier.isStatic(setter.getModifiers())) {
@@ -2011,6 +2018,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     public void defineProperty(
             Context cx,
+            Scriptable scope,
             String name,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter,
@@ -2018,17 +2026,23 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
-        LambdaAccessorSlot newSlot = createLambdaAccessorSlot(name, 0, getter, setter, attributes);
+        LambdaAccessorSlot newSlot =
+                createLambdaAccessorSlot(name, 0, getter, setter, attributes, scope);
         replaceLambdaAccessorSlot(cx, name, newSlot);
     }
 
     public void defineProperty(
-            Context cx, String name, LambdaGetterFunction getter, int attributes) {
-        defineProperty(cx, name, getter, null, attributes);
+            Context cx,
+            Scriptable scope,
+            String name,
+            LambdaGetterFunction getter,
+            int attributes) {
+        defineProperty(cx, scope, name, getter, null, attributes);
     }
 
     public void defineProperty(
             Context cx,
+            Scriptable scope,
             Symbol key,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter,
@@ -2036,7 +2050,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         if (getter == null && setter == null)
             throw ScriptRuntime.typeError("at least one of {getter, setter} is required");
 
-        LambdaAccessorSlot newSlot = createLambdaAccessorSlot(key, 0, getter, setter, attributes);
+        LambdaAccessorSlot newSlot =
+                createLambdaAccessorSlot(key, 0, getter, setter, attributes, scope);
         replaceLambdaAccessorSlot(cx, key, newSlot);
     }
 
@@ -2080,10 +2095,11 @@ public abstract class ScriptableObject extends SlotMapOwner
             int index,
             LambdaGetterFunction getter,
             LambdaSetterFunction setter,
-            int attributes) {
+            int attributes,
+            Scriptable scope) {
         LambdaAccessorSlot slot = new LambdaAccessorSlot(name, index);
-        slot.setGetter(this, getter);
-        slot.setSetter(this, setter);
+        slot.setGetter(scope, getter);
+        slot.setSetter(scope, setter);
         slot.setAttributes(attributes);
         return slot;
     }
@@ -2311,14 +2327,15 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param attributes the attributes of the new properties
      * @see org.mozilla.javascript.FunctionObject
      */
-    public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
+    public void defineFunctionProperties(
+            Scriptable scope, String[] names, Class<?> clazz, int attributes) {
         Method[] methods = FunctionObject.getMethodList(clazz);
         for (String name : names) {
             Method m = FunctionObject.findSingleMethod(methods, name);
             if (m == null) {
                 throw Context.reportRuntimeErrorById("msg.method.not.found", name, clazz.getName());
             }
-            FunctionObject f = new FunctionObject(name, m, this);
+            FunctionObject f = new FunctionObject(name, m, scope);
             defineProperty(name, f, attributes);
         }
     }
@@ -2389,11 +2406,17 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @param obj a JavaScript object
      * @return the corresponding global scope
      */
-    public static Scriptable getTopLevelScope(Scriptable obj) {
+    public static TopLevel getTopLevelScope(Scriptable obj) {
         for (; ; ) {
             Scriptable parent = obj.getParentScope();
             if (parent == null) {
-                return obj;
+                if (obj instanceof TopLevel) {
+                    return (TopLevel) obj;
+                } else {
+                    var err = new Error(obj.getClass().getName());
+                    err.printStackTrace();
+                    throw err;
+                }
             }
             obj = parent;
         }
@@ -2930,6 +2953,12 @@ public abstract class ScriptableObject extends SlotMapOwner
         return h.get(key);
     }
 
+    protected void copyAssociatedValue(ScriptableObject other) {
+        for (var e : other.associatedValues.entrySet()) {
+            associateValue(e.getKey(), e.getValue());
+        }
+    }
+
     /**
      * Get arbitrary application-specific value associated with the top scope of the given scope.
      * The method first calls {@link #getTopLevelScope(Scriptable scope)} and then searches the
@@ -2941,20 +2970,8 @@ public abstract class ScriptableObject extends SlotMapOwner
      * @see #getAssociatedValue(Object key)
      */
     public static Object getTopScopeValue(Scriptable scope, Object key) {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        for (; ; ) {
-            if (scope instanceof ScriptableObject) {
-                ScriptableObject so = (ScriptableObject) scope;
-                Object value = so.getAssociatedValue(key);
-                if (value != null) {
-                    return value;
-                }
-            }
-            scope = scope.getPrototype();
-            if (scope == null) {
-                return null;
-            }
-        }
+        var topScope = ScriptableObject.getTopLevelScope(scope);
+        return topScope.getAssociatedValue(key);
     }
 
     /**

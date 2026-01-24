@@ -36,14 +36,18 @@ final class MemberBox implements Serializable {
     transient Function asSetterFunction;
     transient Object delegateTo;
 
+    private final Scriptable scope;
+
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Method method) {
+    MemberBox(Scriptable scope, Method method) {
+        this.scope = scope;
         init(method);
     }
 
-    MemberBox(Constructor<?> constructor) {
+    MemberBox(Scriptable scope, Constructor<?> constructor) {
+        this.scope = scope;
         init(constructor);
     }
 
@@ -156,7 +160,7 @@ final class MemberBox implements Serializable {
     }
 
     /** Function returned by calls to __lookupGetter__ */
-    Function asGetterFunction(final String name, final Scriptable scope) {
+    Function asGetterFunction(final String name) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
@@ -188,7 +192,7 @@ final class MemberBox implements Serializable {
     }
 
     /** Function returned by calls to __lookupSetter__ */
-    Function asSetterFunction(final String name, final Scriptable scope) {
+    Function asSetterFunction(final String name) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute

@@ -25,6 +25,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * This is the implementation of the standard ScriptEngine interface for Rhino.
@@ -76,7 +77,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
 
     private final RhinoScriptEngineFactory factory;
     private final Builtins builtins;
-    private ScriptableObject topLevelScope = null;
+    private TopLevel topLevelScope = null;
 
     RhinoScriptEngine(RhinoScriptEngineFactory factory) {
         this.factory = factory;
@@ -94,18 +95,17 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             builtins.register(cx, topLevelScope, sc);
         }
 
-        Scriptable engineScope = new BindingsObject(sc.getBindings(ScriptContext.ENGINE_SCOPE));
-        engineScope.setParentScope(null);
-        engineScope.setPrototype(topLevelScope);
-
         if (sc.getBindings(ScriptContext.GLOBAL_SCOPE) != null) {
-            Scriptable globalScope = new BindingsObject(sc.getBindings(ScriptContext.GLOBAL_SCOPE));
-            globalScope.setParentScope(null);
-            globalScope.setPrototype(topLevelScope);
-            engineScope.setPrototype(globalScope);
+            var globalScope =
+                    TopLevel.createIsolate(
+                            topLevelScope,
+                            new BindingsObject(sc.getBindings(ScriptContext.GLOBAL_SCOPE)));
+            return TopLevel.createIsolate(
+                    globalScope, new BindingsObject(sc.getBindings(ScriptContext.ENGINE_SCOPE)));
+        } else {
+            return TopLevel.createIsolate(
+                    topLevelScope, new BindingsObject(sc.getBindings(ScriptContext.ENGINE_SCOPE)));
         }
-
-        return engineScope;
     }
 
     @Override

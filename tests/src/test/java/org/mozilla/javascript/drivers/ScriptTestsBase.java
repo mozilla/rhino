@@ -24,6 +24,7 @@ import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -71,9 +72,7 @@ public abstract class ScriptTestsBase {
             Global global = new Global(cx);
             loadNatives(global);
 
-            Scriptable scope = cx.newObject(global);
-            scope.setPrototype(global);
-            scope.setParentScope(null);
+            var scope = TopLevel.createIsolate(global);
 
             return cx.evaluateReader(scope, script, suiteName, 1, null);
         } catch (JavaScriptException ex) {
