@@ -6,13 +6,18 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import static org.mozilla.javascript.Symbol.Kind.REGULAR;
+
 import java.util.ArrayList;
 import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -22,6 +27,57 @@ class XMLList extends XMLObjectImpl implements Function {
     private XmlNode.InternalList _annos;
     private XMLObjectImpl targetObject = null;
     private XmlNode.QName targetProperty = null;
+
+    private static final ClassDescriptor DESCRIPTOR;
+    private static final SymbolKey LIB_KEY = new SymbolKey("__xml_lib__", REGULAR);
+
+    static {
+        DESCRIPTOR =
+                XMLObjectImpl.populatePrototypeDescriptor(
+                                new ClassDescriptor.Builder(
+                                        "XMLList",
+                                        1,
+                                        XMLList::js_constructorCall,
+                                        XMLList::js_constructor))
+                        .build();
+    }
+
+    public static void init(
+            Context cx, Scriptable scope, XMLObjectImpl proto, boolean sealdd, XMLLibImpl lib) {
+        DESCRIPTOR.buildConstructor(
+                cx,
+                scope,
+                proto,
+                sealdd,
+                (ctx, ctor) -> {
+                    ctor.put(LIB_KEY, ctor, lib);
+                });
+    }
+
+    private static Object js_constructor(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
+        if (args.length == 0) {
+            return lib.newXMLList();
+        } else {
+            return lib.newXMLListFrom(args[0]);
+        }
+    }
+
+    private static Object js_constructorCall(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
+        if (args.length == 0) {
+            return lib.newXMLList();
+        } else {
+            Object arg0 = args[0];
+            if (arg0 instanceof XMLList) {
+                // XMLList(XMLList) returns the same object.
+                return arg0;
+            }
+            return lib.newXMLListFrom(arg0);
+        }
+    }
 
     XMLList(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
         super(lib, scope, prototype);
@@ -476,12 +532,7 @@ class XMLList extends XMLObjectImpl implements Function {
 
     @Override
     boolean hasOwnProperty(XMLName xmlName) {
-        if (isPrototype()) {
-            String property = xmlName.localName();
-            return (findPrototypeId(property) != 0);
-        } else {
-            return (getPropertyList(xmlName).length() > 0);
-        }
+        return (getPropertyList(xmlName).length() > 0);
     }
 
     @Override

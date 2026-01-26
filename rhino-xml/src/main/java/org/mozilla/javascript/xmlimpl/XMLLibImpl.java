@@ -13,6 +13,7 @@ import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.xml.XMLLib;
@@ -42,7 +43,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         XMLLibImpl lib = new XMLLibImpl(scope);
         XMLLib bound = lib.bindToScope(scope);
         if (bound == lib) {
-            lib.exportToScope(sealed);
+            lib.exportToScope(cx, (ScriptableObject) scope, sealed);
         }
     }
 
@@ -129,7 +130,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         return options;
     }
 
-    private void exportToScope(boolean sealed) {
+    private void exportToScope(Context cx, ScriptableObject scope, boolean sealed) {
         xmlPrototype = newXML(XmlNode.createText(options, ""));
         xmlListPrototype = newXMLList();
         namespacePrototype = Namespace.create(this.globalScope, null, XmlNode.Namespace.GLOBAL);
@@ -140,8 +141,11 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
                         null,
                         XmlNode.QName.create(XmlNode.Namespace.create(""), ""));
 
-        xmlPrototype.exportAsJSClass(sealed);
-        xmlListPrototype.exportAsJSClass(sealed);
+        XML.init(cx, scope, xmlPrototype, sealed, this);
+        var parent = xmlPrototype.getParentScope();
+        parent.put("__xml_lib__", parent, xmlPrototype.getLib());
+        XMLList.init(cx, scope, xmlListPrototype, sealed, this);
+
         namespacePrototype.exportAsJSClass(sealed);
         qnamePrototype.exportAsJSClass(sealed);
     }
