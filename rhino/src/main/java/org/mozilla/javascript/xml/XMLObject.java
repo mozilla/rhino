@@ -7,13 +7,13 @@
 package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 /** This Interface describes what all XML objects (XML, XMLList) should have in common. */
-public abstract class XMLObject extends IdScriptableObject {
+public abstract class XMLObject extends ScriptableObject {
 
     private static final long serialVersionUID = 8455156490438576500L;
 
