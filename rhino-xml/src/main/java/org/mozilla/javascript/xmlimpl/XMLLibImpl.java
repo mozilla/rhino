@@ -147,7 +147,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         XMLList.init(cx, scope, xmlListPrototype, sealed, this);
 
         Namespace.init(cx, scope, namespacePrototype, sealed);
-        qnamePrototype.exportAsJSClass(sealed);
+        QName.init(cx, scope, qnamePrototype, sealed);
     }
 
     /**
