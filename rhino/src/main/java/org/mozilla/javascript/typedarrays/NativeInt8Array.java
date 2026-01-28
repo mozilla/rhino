@@ -6,11 +6,15 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
+import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.LambdaConstructor;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntimeES6;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 
@@ -22,6 +26,21 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
     private static final long serialVersionUID = -3349419704390398895L;
 
     private static final String CLASS_NAME = "Int8Array";
+
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                3,
+                                NativeTypedArrayView::typeError,
+                                NativeInt8Array::js_constructor)
+                        .withProp(CTOR, "BYTES_PER_ELEMENT", value(1))
+                        .withProp(PROTO, "BYTES_PER_ELEMENT", value(1))
+                        .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
+                        .build();
+    }
 
     public NativeInt8Array() {}
 
@@ -38,28 +57,8 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         return CLASS_NAME;
     }
 
-    public static Object init(Context cx, VarScope scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        3,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, VarScope lscope, Object[] args) ->
-                                NativeTypedArrayView.js_constructor(
-                                        lcx, lscope, args, NativeInt8Array::new, 1));
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-        NativeTypedArrayView.init(cx, scope, constructor, NativeInt8Array::realThis);
-        constructor.defineProperty("BYTES_PER_ELEMENT", 1, DONTENUM | READONLY | PERMANENT);
-        constructor.definePrototypeProperty(
-                "BYTES_PER_ELEMENT", 1, DONTENUM | READONLY | PERMANENT);
-
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
-        }
-        return constructor;
+    public static JSFunction init(Context cx, VarScope scope, boolean sealed) {
+        return NativeTypedArrayView.initSubClass(cx, scope, DESCRIPTOR, sealed);
     }
 
     @Override
@@ -67,8 +66,10 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         return 1;
     }
 
-    private static NativeInt8Array realThis(Scriptable thisObj) {
-        return LambdaConstructor.convertThisObject(thisObj, NativeInt8Array.class);
+    private static Object js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return NativeTypedArrayView.js_constructor(
+                cx, f, nt, s, thisObj, args, NativeInt8Array::new, 1);
     }
 
     @Override
