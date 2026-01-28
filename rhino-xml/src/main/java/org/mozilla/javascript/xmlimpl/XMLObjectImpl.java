@@ -666,12 +666,13 @@ abstract class XMLObjectImpl extends XMLObject {
             case Id_constructor:
                 {
                     IdFunctionObject ctor;
-                    if (this instanceof XML) {
+                    // Use XMLCtor for both XML and XMLList to handle E4X instanceof semantics
+                    if (this instanceof XML || this instanceof XMLList) {
                         ctor =
                                 new XMLCtor(
                                         Context.getCurrentContext(),
                                         (ScriptableObject) getParentScope(),
-                                        (XML) this,
+                                        this,
                                         XMLOBJECT_TAG,
                                         id,
                                         1);
