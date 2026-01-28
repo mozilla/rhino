@@ -74,6 +74,7 @@ public class NativeArray extends ScriptableObject implements List {
     };
 
     private static final ClassDescriptor DESCRIPTOR;
+    public static final JSDescriptor<JSFunction> ITERATOR_DESCRIPTOR;
 
     static {
         DESCRIPTOR =
@@ -160,6 +161,7 @@ public class NativeArray extends ScriptableObject implements List {
                         .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
                         .withProp(PROTO, SymbolKey.UNSCOPABLES, NativeArray::makeUnscopables)
                         .build();
+        ITERATOR_DESCRIPTOR = DESCRIPTOR.findProtoDesc(SymbolKey.ITERATOR);
     }
 
     private static BuiltInJSCodeExec<JSFunction> forCtor(BuiltInJSCodeExec<JSFunction> code) {
