@@ -15,7 +15,7 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 - **[ThingWorx](https://www.ptc.com/de/products/thingworx) 9.7** - Industrial IoT platform for connecting and managing industrial assets
   [Source](https://support.ptc.com/help/thingworx/platform/r9.7/en/index.html#page/ThingWorx/Help/Composer/Things/ThingServices/RhinoJavaScriptEngine.html)
 
-- **[Apigee](https://cloud.google.com/apigee)** - Google Cloud's native API management platform for building, managing, and securing APIs
+- **[Apigee](https://cloud.google.com/apigee)** - Google Cloud's native API management platform for building, managing, and securing APIs. Uses Trireme (see Development Tools & Platforms section below) for running Node.js scripts inside the JVM with Rhino.
   [Source](https://cloud.google.com/apigee/docs/api-platform/reference/policies/javascript-policy)
 
 - **[ServiceNow](https://www.servicenow.com/)** - Intelligent platform for digital transformation and enterprise workflow automation
@@ -47,6 +47,9 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 
 - **[RingoJS](https://ringojs.org/) 4.0.0** - JavaScript platform built on the JVM and optimized for server-side applications
   [Source](https://ringojs.org/)
+
+- **[Trireme](https://github.com/apigee/trireme)** - Library for running Node.js scripts inside the Java Virtual Machine, enabling Node.js applications to be embedded within existing Java applications. Used by Apigee (see Enterprise & Cloud Platforms section above).
+  [Source](https://github.com/apigee/trireme)
 
 - **[ClojureScript](https://clojurescript.org/)** - Robust functional programming language that compiles to JavaScript
   [Source](https://lambdaisland.com/guides/clojure-repls/clojurescript-repls)
