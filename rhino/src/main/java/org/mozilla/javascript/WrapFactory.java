@@ -8,6 +8,7 @@
 
 package org.mozilla.javascript;
 
+import java.lang.reflect.AccessibleObject;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +120,11 @@ public class WrapFactory {
 
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
+        if (javaObject instanceof AccessibleObject) {
+            // Field, Method, Constructor
+            return Undefined.SCRIPTABLE_UNDEFINED;
+        }
+
         if (staticType.shouldReplace() && javaObject != null) {
             staticType =
                     TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL)
