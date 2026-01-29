@@ -666,14 +666,9 @@ final class NativeString extends ScriptableObject {
 
             // swap if end < start
             if (end < start) {
-                if (cx.getLanguageVersion() != Context.VERSION_1_2) {
-                    double temp = start;
-                    start = end;
-                    end = temp;
-                } else {
-                    // Emulate old JDK1.0 java.lang.String.substring()
-                    end = start;
-                }
+                double temp = start;
+                start = end;
+                end = temp;
             }
         }
         return target.subSequence((int) start, (int) end);

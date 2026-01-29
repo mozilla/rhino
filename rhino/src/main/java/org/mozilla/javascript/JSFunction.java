@@ -93,16 +93,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
 
     @Override
     public int getLength() {
-        int arity = descriptor.getArity();
-        if (getLanguageVersion() != Context.VERSION_1_2) {
-            return arity;
-        }
-        Context cx = Context.getContext();
-        NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
-        if (activation == null) {
-            return arity;
-        }
-        return activation.originalArgs.length;
+        return descriptor.getArity();
     }
 
     protected int getParamAndVarCount() {
