@@ -14,7 +14,7 @@
 *.sh text
 *.xml text
 *.md text
-*.bat text
+*.bat text eol=crlf
 *.gradle text
 *.pl text
 *.mk text
