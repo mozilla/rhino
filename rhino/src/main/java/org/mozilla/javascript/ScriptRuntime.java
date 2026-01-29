@@ -5056,6 +5056,11 @@ public class ScriptRuntime {
         return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
     }
 
+    /**
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     *     boolean, boolean)} instead. Strictness is now obtained from the function descriptor.
+     */
+    @Deprecated
     public static Scriptable createFunctionActivation(
             JSFunction funObj,
             Context cx,
@@ -5066,6 +5071,16 @@ public class ScriptRuntime {
             boolean requiresArgumentObject) {
         return new NativeCall(
                 funObj, cx, scope, args, false, isStrict, argsHasRest, requiresArgumentObject);
+    }
+
+    public static Scriptable createFunctionActivation(
+            JSFunction funObj,
+            Context cx,
+            Scriptable scope,
+            boolean argsHasRest,
+            Object[] args,
+            boolean requiresArgumentObject) {
+        return new NativeCall(funObj, cx, scope, args, false, argsHasRest, requiresArgumentObject);
     }
 
     /**
@@ -5094,6 +5109,12 @@ public class ScriptRuntime {
         return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
     }
 
+    /**
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     *     Object[], boolean, boolean)} instead. Strictness is now obtained from the function
+     *     descriptor.
+     */
+    @Deprecated
     public static Scriptable createArrowFunctionActivation(
             JSFunction funObj,
             Context cx,
@@ -5104,6 +5125,16 @@ public class ScriptRuntime {
             boolean requiresArgumentObject) {
         return new NativeCall(
                 funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
+    }
+
+    public static Scriptable createArrowFunctionActivation(
+            JSFunction funObj,
+            Context cx,
+            Scriptable scope,
+            boolean argsHasRest,
+            Object[] args,
+            boolean requiresArgumentObject) {
+        return new NativeCall(funObj, cx, scope, args, true, argsHasRest, requiresArgumentObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {

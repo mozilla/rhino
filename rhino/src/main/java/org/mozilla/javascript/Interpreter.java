@@ -278,9 +278,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                         (JSFunction) fnOrScript,
                                         cx,
                                         scope,
-                                        args,
-                                        desc.isStrict(),
                                         desc.hasRestArg(),
+                                        args,
                                         desc.requiresArgumentObject());
                     } else {
                         scope =
@@ -288,9 +287,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                         (JSFunction) fnOrScript,
                                         cx,
                                         scope,
-                                        args,
-                                        desc.isStrict(),
                                         desc.hasRestArg(),
+                                        args,
                                         desc.requiresArgumentObject());
                     }
                 }
