@@ -879,6 +879,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         } else {
             out.writeObject(null);
         }
+
+        out.writeObject(members);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -904,7 +906,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             staticType = TypeInfo.NONE;
         }
 
-        initMembers();
+        members = (JavaMembers) in.readObject();
     }
 
     private static Callable symbol_iterator =
