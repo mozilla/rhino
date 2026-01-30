@@ -136,7 +136,7 @@ public class ClassDescriptor {
             }
         }
         for (var p : protoProps) {
-            proto.defineProperty(cx, (String) p.name, p.getter, p.setter, p.attributes);
+            proto.defineProperty(cx, scope, (String) p.name, p.getter, p.setter, p.attributes);
         }
 
         ScriptableObject.defineProperty(scope, ctorDesc.name.toString(), ctor, ctorDesc.attributes);

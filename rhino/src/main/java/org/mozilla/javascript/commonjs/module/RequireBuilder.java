@@ -8,6 +8,7 @@ import java.io.Serializable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * A builder for {@link Require} instances. Useful when you're creating many instances of {@link
@@ -85,7 +86,7 @@ public class RequireBuilder implements Serializable {
      * @param globalScope the global scope containing the JS standard natives.
      * @return a new Require instance.
      */
-    public Require createRequire(Context cx, Scriptable globalScope) {
+    public Require createRequire(Context cx, TopLevel globalScope) {
         return new Require(cx, globalScope, moduleScriptProvider, preExec, postExec, sandboxed);
     }
 }

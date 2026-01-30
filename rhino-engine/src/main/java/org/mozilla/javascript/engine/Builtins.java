@@ -47,7 +47,7 @@ public class Builtins {
 
     private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         try {
-            Builtins self = getSelf(thisObj);
+            Builtins self = getSelf(scope);
             for (Object arg : args) {
                 self.stdout.write(ScriptRuntime.toString(arg));
             }

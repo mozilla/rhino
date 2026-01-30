@@ -13,7 +13,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Utility class, that search for testcases in "assets/tests".
@@ -25,7 +25,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class TestCase {
 
     private final String name;
-    private final Scriptable global;
+    private final TopLevel global;
     private final AssetManager assetManager;
 
     private static final ContextFactory factory =
@@ -48,7 +48,7 @@ public class TestCase {
                 }
             };
 
-    public TestCase(String name, Scriptable global, AssetManager assetManager) {
+    public TestCase(String name, TopLevel global, AssetManager assetManager) {
         this.name = name;
         this.global = global;
         this.assetManager = assetManager;
@@ -59,9 +59,7 @@ public class TestCase {
         try (InputStream in = assetManager.open("tests/" + name);
                 Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
 
-            Scriptable scope = cx.newObject(global);
-            scope.setPrototype(global);
-            scope.setParentScope(null);
+            Scriptable scope = TopLevel.createIsolate(global);
             Object result = cx.evaluateReader(scope, rdr, name, 1, null);
             return ScriptRuntime.toString(result);
         } catch (IOException e) {
@@ -80,7 +78,7 @@ public class TestCase {
 
         AssetManager assetManager = context.getAssets();
         // define assert object
-        ScriptableObject global;
+        TopLevel global;
         Context cx = factory.enterContext();
         try (InputStream in = assetManager.open("assert.js");
                 Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
