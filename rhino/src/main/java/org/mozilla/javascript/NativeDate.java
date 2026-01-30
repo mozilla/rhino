@@ -925,7 +925,7 @@ final class NativeDate extends IdScriptableObject {
                 if (Double.isNaN(d) || Double.isInfinite(d)) {
                     return ScriptRuntime.NaN;
                 }
-                array[loop] = ScriptRuntime.toInteger(args[loop]);
+                array[loop] = ScriptRuntime.toInteger(d);
             } else {
                 if (loop == 2) {
                     array[loop] = 1; /* Default the date argument to 1. */
