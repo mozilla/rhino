@@ -27,7 +27,6 @@ public final class NativeCall extends IdScriptableObject {
     NativeCall() {
         function = null;
         originalArgs = null;
-        isStrict = false;
     }
 
     NativeCall(
@@ -36,31 +35,6 @@ public final class NativeCall extends IdScriptableObject {
             Scriptable scope,
             Object[] args,
             boolean isArrow,
-            boolean argsHasRest,
-            boolean requiresArgumentObject) {
-        this(
-                function,
-                cx,
-                scope,
-                args,
-                isArrow,
-                function.isStrict(),
-                argsHasRest,
-                requiresArgumentObject);
-    }
-
-    /**
-     * @deprecated Use {@link #NativeCall(JSFunction, Context, Scriptable, Object[], boolean,
-     *     boolean, boolean)} instead. Strictness is now obtained from the function descriptor.
-     */
-    @Deprecated
-    NativeCall(
-            JSFunction function,
-            Context cx,
-            Scriptable scope,
-            Object[] args,
-            boolean isArrow,
-            boolean isStrict,
             boolean argsHasRest,
             boolean requiresArgumentObject) {
         this.function = function;
@@ -69,7 +43,6 @@ public final class NativeCall extends IdScriptableObject {
         // leave prototype null
 
         this.originalArgs = (args == null) ? ScriptRuntime.emptyArgs : args;
-        this.isStrict = isStrict;
 
         // initialize values of arguments
         int paramAndVarCount = function.getParamAndVarCount();
@@ -172,7 +145,6 @@ public final class NativeCall extends IdScriptableObject {
 
     final JSFunction function;
     final Object[] originalArgs;
-    final boolean isStrict;
 
     transient NativeCall parentActivationCall;
 }
