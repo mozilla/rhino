@@ -7,8 +7,7 @@ public class NativeProxyTest {
 
     @Test
     public void testToString() {
-        Utils.assertWithAllModes_ES6(
-                "function Proxy() {\n\t[native code]\n}\n", "Proxy.toString()");
+        Utils.assertWithAllModes_ES6("function Proxy() {\n\t[native code]\n}", "Proxy.toString()");
 
         Utils.assertWithAllModes_ES6(
                 "[object Object]", "Object.prototype.toString.call(new Proxy({}, {}))");
@@ -76,7 +75,7 @@ public class NativeProxyTest {
     @Test
     public void ctorAsFunction() {
         Utils.assertWithAllModes_ES6(
-                "TypeError: The constructor for Proxy may not be invoked as a function",
+                "TypeError: \"Constructor Proxy\" may only be invoked from a \"new\" expression.",
                 "try { Proxy() } catch(e) { '' + e }");
     }
 
