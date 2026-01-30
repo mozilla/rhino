@@ -5021,118 +5021,31 @@ public class ScriptRuntime {
 
     /**
      * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean, boolean)} instead
+     *     boolean, boolean)} instead
      */
     @Deprecated
     public static Scriptable createFunctionActivation(
             JSFunction funObj, Scriptable scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), scope, args, false, false);
+                funObj, Context.getCurrentContext(), scope, args, false, true);
     }
 
-    /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean, boolean)} instead
-     */
-    @Deprecated
-    public static Scriptable createFunctionActivation(
-            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
-        return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, true);
-    }
-
-    /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean, boolean)} instead
-     */
-    @Deprecated
     public static Scriptable createFunctionActivation(
             JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
-            boolean isStrict,
-            boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
-    }
-
-    /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean)} instead. Strictness is now obtained from the function descriptor.
-     */
-    @Deprecated
-    public static Scriptable createFunctionActivation(
-            JSFunction funObj,
-            Context cx,
-            Scriptable scope,
-            Object[] args,
-            boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, false, isStrict, argsHasRest, requiresArgumentObject);
-    }
-
-    public static Scriptable createFunctionActivation(
-            JSFunction funObj,
-            Context cx,
-            Scriptable scope,
-            boolean argsHasRest,
-            Object[] args,
             boolean requiresArgumentObject) {
         return new NativeCall(funObj, cx, scope, args, false, argsHasRest, requiresArgumentObject);
     }
 
-    /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean)} instead
-     */
-    @Deprecated
-    public static Scriptable createArrowFunctionActivation(
-            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
-        return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, true);
-    }
-
-    /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean)} instead
-     */
-    @Deprecated
     public static Scriptable createArrowFunctionActivation(
             JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
-            boolean isStrict,
-            boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
-    }
-
-    /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
-     *     Object[], boolean, boolean)} instead. Strictness is now obtained from the function
-     *     descriptor.
-     */
-    @Deprecated
-    public static Scriptable createArrowFunctionActivation(
-            JSFunction funObj,
-            Context cx,
-            Scriptable scope,
-            Object[] args,
-            boolean isStrict,
             boolean argsHasRest,
-            boolean requiresArgumentObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
-    }
-
-    public static Scriptable createArrowFunctionActivation(
-            JSFunction funObj,
-            Context cx,
-            Scriptable scope,
-            boolean argsHasRest,
-            Object[] args,
             boolean requiresArgumentObject) {
         return new NativeCall(funObj, cx, scope, args, true, argsHasRest, requiresArgumentObject);
     }

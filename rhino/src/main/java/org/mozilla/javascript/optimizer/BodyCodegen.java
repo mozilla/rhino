@@ -112,7 +112,6 @@ class BodyCodegen {
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(argsLocal);
-        cfw.addPush(scriptOrFn.isInStrictMode());
         cfw.addPush(scriptOrFn.hasRestParameter());
         cfw.addPush(
                 !(scriptOrFn instanceof FunctionNode)
@@ -123,7 +122,6 @@ class BodyCodegen {
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Scriptable;"
                         + "[Ljava/lang/Object;"
-                        + "Z"
                         + "Z"
                         + "Z"
                         + ")Lorg/mozilla/javascript/Scriptable;");
@@ -424,7 +422,6 @@ class BodyCodegen {
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(argsLocal);
-            cfw.addPush(scriptOrFn.isInStrictMode());
             cfw.addPush(scriptOrFn.hasRestParameter());
             cfw.addPush(
                     !(scriptOrFn instanceof FunctionNode)
@@ -438,7 +435,6 @@ class BodyCodegen {
                             + "Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "[Ljava/lang/Object;"
-                            + "Z"
                             + "Z"
                             + "Z"
                             + ")Lorg/mozilla/javascript/Scriptable;");
