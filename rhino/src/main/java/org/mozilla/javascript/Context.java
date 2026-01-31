@@ -87,9 +87,6 @@ public class Context implements Closeable {
      */
     public static final int VERSION_DEFAULT = 0;
 
-    /** JavaScript 1.0 */
-    public static final int VERSION_1_0 = 100;
-
     /** JavaScript 1.1 */
     public static final int VERSION_1_1 = 110;
 
@@ -744,7 +741,6 @@ public class Context implements Closeable {
     public static boolean isValidLanguageVersion(int version) {
         switch (version) {
             case VERSION_DEFAULT:
-            case VERSION_1_0:
             case VERSION_1_1:
             case VERSION_1_2:
             case VERSION_1_3:
