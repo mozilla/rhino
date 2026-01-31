@@ -24,7 +24,7 @@ var expectedvalues = [];
 
 
 // various versions of JavaScript -
-var JS_VER = [110, 120, 130, 140, 150];
+var JS_VER = [120, 130, 140, 150];
 
 // Note contrast with local variables i,j,k defined below -
 var i = 999;
