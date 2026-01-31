@@ -79,11 +79,6 @@ class Arguments extends ScriptableObject {
             calleeObj = null;
         } else {
             defineProperty("callee", calleeObj, ScriptableObject.DONTENUM);
-
-            int version = cx.getLanguageVersion();
-            if (version <= Context.VERSION_1_3 && version != Context.VERSION_DEFAULT) {
-                defineProperty("caller", (Object) null, ScriptableObject.DONTENUM);
-            }
         }
     }
 
