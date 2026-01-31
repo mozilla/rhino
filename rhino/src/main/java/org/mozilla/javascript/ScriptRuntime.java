@@ -4776,13 +4776,13 @@ public class ScriptRuntime {
     @Deprecated
     public static Object doTopCall(
             Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
+        return doTopCall(callable, cx, scope, thisObj, args, cx.isStrictMode());
     }
 
     @Deprecated
     public static Object doTopCall(
             Script script, Context cx, Scriptable scope, Scriptable thisObj) {
-        return doTopCall(script, cx, scope, thisObj, cx.isTopLevelStrict);
+        return doTopCall(script, cx, scope, thisObj, cx.isStrictMode());
     }
 
     public static Object doTopCall(
@@ -4798,8 +4798,8 @@ public class ScriptRuntime {
         Object result;
         cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
         cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
-        boolean previousTopLevelStrict = cx.isTopLevelStrict;
-        cx.isTopLevelStrict = isTopLevelStrict;
+        boolean previousStrictness = cx.isStrictMode();
+        cx.setIsStrictMode(isTopLevelStrict);
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(callable, cx, scope, thisObj, args);
@@ -4807,7 +4807,7 @@ public class ScriptRuntime {
             cx.topCallScope = null;
             // Cleanup cached references
             cx.cachedXMLLib = null;
-            cx.isTopLevelStrict = previousTopLevelStrict;
+            cx.setIsStrictMode(previousStrictness);
             // Function should always call exitActivationFunction
             // if it creates activation record
             assert (cx.currentActivationCall == null);
@@ -4827,8 +4827,8 @@ public class ScriptRuntime {
         Object result;
         cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
         cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
-        boolean previousTopLevelStrict = cx.isTopLevelStrict;
-        cx.isTopLevelStrict = isTopLevelStrict;
+        boolean previousStrictness = cx.isStrictMode();
+        cx.setIsStrictMode(isTopLevelStrict);
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(script, cx, scope, thisObj);
@@ -4836,7 +4836,7 @@ public class ScriptRuntime {
             cx.topCallScope = null;
             // Cleanup cached references
             cx.cachedXMLLib = null;
-            cx.isTopLevelStrict = previousTopLevelStrict;
+            cx.setIsStrictMode(previousStrictness);
             // Function should always call exitActivationFunction
             // if it creates activation record
             assert (cx.currentActivationCall == null);
@@ -4927,33 +4927,7 @@ public class ScriptRuntime {
     public static Scriptable createFunctionActivation(
             JSFunction funObj, Scriptable scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), scope, args, false, false);
-    }
-
-    /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean, boolean)} instead
-     */
-    @Deprecated
-    public static Scriptable createFunctionActivation(
-            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
-        return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, true);
-    }
-
-    /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
-     *     boolean, boolean, boolean)} instead
-     */
-    @Deprecated
-    public static Scriptable createFunctionActivation(
-            JSFunction funObj,
-            Context cx,
-            Scriptable scope,
-            Object[] args,
-            boolean isStrict,
-            boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
+                funObj, Context.getCurrentContext(), scope, args, false, true);
     }
 
     public static Scriptable createFunctionActivation(
@@ -4961,37 +4935,9 @@ public class ScriptRuntime {
             Context cx,
             Scriptable scope,
             Object[] args,
-            boolean isStrict,
             boolean argsHasRest,
             boolean requiresArgumentObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, false, isStrict, argsHasRest, requiresArgumentObject);
-    }
-
-    /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean)} instead
-     */
-    @Deprecated
-    public static Scriptable createArrowFunctionActivation(
-            JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
-        return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, true);
-    }
-
-    /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
-     *     Object[], boolean, boolean, boolean)} instead
-     */
-    @Deprecated
-    public static Scriptable createArrowFunctionActivation(
-            JSFunction funObj,
-            Context cx,
-            Scriptable scope,
-            Object[] args,
-            boolean isStrict,
-            boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
+        return new NativeCall(funObj, cx, scope, args, false, argsHasRest, requiresArgumentObject);
     }
 
     public static Scriptable createArrowFunctionActivation(
@@ -4999,11 +4945,9 @@ public class ScriptRuntime {
             Context cx,
             Scriptable scope,
             Object[] args,
-            boolean isStrict,
             boolean argsHasRest,
             boolean requiresArgumentObject) {
-        return new NativeCall(
-                funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
+        return new NativeCall(funObj, cx, scope, args, true, argsHasRest, requiresArgumentObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {
@@ -5017,6 +4961,16 @@ public class ScriptRuntime {
         NativeCall call = cx.currentActivationCall;
         cx.currentActivationCall = call.parentActivationCall;
         call.parentActivationCall = null;
+    }
+
+    public static boolean enterFunctionStrictness(Context cx, boolean functionIsStrict) {
+        boolean parent = cx.isStrictMode();
+        cx.setIsStrictMode(functionIsStrict);
+        return parent;
+    }
+
+    public static void exitFunctionStrictness(Context cx, boolean parentWasStrict) {
+        cx.setIsStrictMode(parentWasStrict);
     }
 
     static NativeCall findFunctionActivation(Context cx, Function f) {
