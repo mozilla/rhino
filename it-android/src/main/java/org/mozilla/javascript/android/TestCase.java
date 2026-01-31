@@ -22,11 +22,10 @@ import org.mozilla.javascript.ScriptableObject;
  *
  * @author Roland Praml
  */
-public class TestCase {
+public abstract class TestCase {
 
-    private final String name;
-    private final Scriptable global;
-    private final AssetManager assetManager;
+    protected final String name;
+    protected final Scriptable global;
 
     private static final ContextFactory factory =
             new ContextFactory() {
@@ -48,32 +47,47 @@ public class TestCase {
                 }
             };
 
-    public TestCase(String name, Scriptable global, AssetManager assetManager) {
+    public TestCase(String name, Scriptable global) {
         this.name = name;
         this.global = global;
-        this.assetManager = assetManager;
     }
 
     public String run() {
         Context cx = factory.enterContext();
-        try (InputStream in = assetManager.open("tests/" + name);
-                Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-
+        try {
             Scriptable scope = cx.newObject(global);
             scope.setPrototype(global);
             scope.setParentScope(null);
-            Object result = cx.evaluateReader(scope, rdr, name, 1, null);
-            return ScriptRuntime.toString(result);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            return ScriptRuntime.toString(runTest(cx, scope));
         } finally {
             Context.exit();
         }
     }
 
+    protected abstract Object runTest(Context cx, Scriptable scope);
+
     @Override
     public String toString() {
         return name;
+    }
+
+    public static class AssetScript extends TestCase {
+        protected final AssetManager assetManager;
+
+        public AssetScript(String name, Scriptable global, AssetManager assetManager) {
+            super(name, global);
+            this.assetManager = assetManager;
+        }
+
+        @Override
+        protected Object runTest(Context cx, Scriptable scope) {
+            try (InputStream in = assetManager.open("tests/" + name);
+                    Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                return cx.evaluateReader(scope, rdr, name, 1, null);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
     }
 
     public static List<TestCase> getTestCases(android.content.Context context) throws IOException {
@@ -95,9 +109,10 @@ public class TestCase {
         List<TestCase> tests = new ArrayList<>();
         if (files != null) {
             for (String file : files) {
-                tests.add(new TestCase(file, global, assetManager));
+                tests.add(new TestCase.AssetScript(file, global, assetManager));
             }
         }
+        tests.add(new TypeInfoFactoryTestCase("TypeInfoFactory", global));
         return tests;
     }
 }
