@@ -2512,11 +2512,9 @@ public class Context implements Closeable {
      * @see #suspendMicrotaskProcessing()
      */
     public void processMicrotasks() {
-        if (microtaskSuspendCount == 0) {
-            Runnable head;
-            while ((head = microtasks.poll()) != null) {
-                head.run();
-            }
+        Runnable head;
+        while (microtaskSuspendCount == 0 && (head = microtasks.poll()) != null) {
+            head.run();
         }
     }
 
