@@ -244,7 +244,7 @@ public class ScriptEngineTest {
 
         // The same with a string
         ScriptEngine olderEngine = manager.getEngineByName("rhino");
-        olderEngine.put(ScriptEngine.LANGUAGE_VERSION, "100");
+        olderEngine.put(ScriptEngine.LANGUAGE_VERSION, "120");
         assertThrows(
                 ScriptException.class,
                 () -> {

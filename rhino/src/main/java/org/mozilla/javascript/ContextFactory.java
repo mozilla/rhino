@@ -226,9 +226,7 @@ public class ContextFactory {
                  * version...
                  */
                 version = cx.getLanguageVersion();
-                return (version == Context.VERSION_1_0
-                        || version == Context.VERSION_1_1
-                        || version == Context.VERSION_1_2);
+                return version == Context.VERSION_1_1 || version == Context.VERSION_1_2;
 
             case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
                 return false;

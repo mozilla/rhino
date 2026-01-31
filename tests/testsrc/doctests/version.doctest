@@ -4,8 +4,6 @@
 
 js> version()
 0
-js> version(100)
-100
 js> version(110)
 110
 js> version(120)
