@@ -132,7 +132,7 @@ this using the command:
     ./gradlew -q javaToolchains
 
 Not all installers seem to put JDKs in the places where Gradle can find them. When in doubt,
-installatioons from [Adoptium](https://adoptium.net) seem to work on most platforms.
+installations from [Adoptium](https://adoptium.net) seem to work on most platforms.
 
 ### Testing on Android
 
