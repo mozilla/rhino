@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
-import org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory;
+import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 
 /**
  * @author ZZZank
@@ -50,7 +50,7 @@ public class CustomTypeInfoFactoryTest {
 
             var typeFactory = TypeInfoFactory.get(scope);
 
-            Assertions.assertInstanceOf(ConcurrentFactory.class, typeFactory);
+            Assertions.assertInstanceOf(ClassValueCacheFactory.Concurrent.class, typeFactory);
         }
     }
 
