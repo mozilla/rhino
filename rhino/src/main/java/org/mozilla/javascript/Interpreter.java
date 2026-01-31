@@ -989,6 +989,32 @@ public final class Interpreter extends Icode implements Evaluator {
                         out.println(tname + " \"" + str + '"');
                         break;
                     }
+                case Icode_OBJECT_REST:
+                    {
+                        // read count of computed keys from bytecode
+                        int computedKeyCount = iCode[pc++] & 0xFF;
+
+                        if (indexReg >= 0) {
+                            int[] staticKeyIndices = (int[]) idata.literalIds[indexReg];
+                            StringBuilder keys = new StringBuilder();
+                            keys.append("[static: ");
+                            for (int i = 0; i < staticKeyIndices.length; i++) {
+                                if (i > 0) keys.append(", ");
+                                keys.append("\"").append(strings[staticKeyIndices[i]]).append("\"");
+                            }
+                            keys.append("; computed: ").append(computedKeyCount).append("]");
+                            out.println(tname + " excluding " + keys);
+                        } else {
+                            out.println(
+                                    tname
+                                            + " literalId: "
+                                            + (-indexReg - 1)
+                                            + ", computed: "
+                                            + computedKeyCount);
+                        }
+                        icodeLength = pc - old_pc;
+                        break;
+                    }
                 case Icode_REG_IND_C0:
                     indexReg = 0;
                     out.println(tname);
@@ -1727,6 +1753,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
+        instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -4474,6 +4501,46 @@ public final class Interpreter extends Icode implements Evaluator {
             } else {
                 store.spread(cx, frame.scope, source, 0);
             }
+            return null;
+        }
+    }
+
+    private static class DoObjectRest extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // indexReg contains the literalId for static key indices array
+            int computedKeyCount = frame.idata.itsICode[frame.pc++] & 0xFF;
+
+            // Get static key indices from literalIds using indexReg
+            int[] staticKeyIndices = (int[]) frame.idata.literalIds[state.indexReg];
+            int staticKeyCount = staticKeyIndices.length;
+
+            Object[] excludeKeys = new Object[staticKeyCount + computedKeyCount];
+
+            // Fill static keys from the strings table using stored indices
+            for (int i = 0; i < staticKeyCount; i++) {
+                excludeKeys[i] = frame.idata.itsStringTable[staticKeyIndices[i]];
+            }
+
+            // Pop computed keys from stack: [source, computed_key_1, ..., computed_key_N]
+            for (int i = computedKeyCount - 1; i >= 0; i--) {
+                Object computedKey = frame.stack[state.stackTop];
+                if (computedKey == DOUBLE_MARK) {
+                    computedKey = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                }
+                excludeKeys[staticKeyCount + i] = ScriptRuntime.toString(computedKey);
+                state.stackTop--;
+            }
+
+            Object source = frame.stack[state.stackTop];
+            if (source == DOUBLE_MARK) {
+                source = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            }
+
+            // Create rest object
+            Scriptable result = ScriptRuntime.doObjectRest(cx, frame.scope, source, excludeKeys);
+
+            frame.stack[state.stackTop] = result;
             return null;
         }
     }
