@@ -87,9 +87,6 @@ public class Context implements Closeable {
      */
     public static final int VERSION_DEFAULT = 0;
 
-    /** JavaScript 1.3 */
-    public static final int VERSION_1_3 = 130;
-
     /** JavaScript 1.4 */
     public static final int VERSION_1_4 = 140;
 
@@ -714,7 +711,6 @@ public class Context implements Closeable {
     public static boolean isValidLanguageVersion(int version) {
         switch (version) {
             case VERSION_DEFAULT:
-            case VERSION_1_3:
             case VERSION_1_4:
             case VERSION_1_5:
             case VERSION_1_6:
@@ -2731,7 +2727,7 @@ public class Context implements Closeable {
     }
 
     final boolean isVersionECMA1() {
-        return version == VERSION_DEFAULT || version >= VERSION_1_3;
+        return true;
     }
 
     // The method must NOT be public or protected
