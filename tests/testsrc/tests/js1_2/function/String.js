@@ -30,11 +30,13 @@ new TestCase( SECTION, "String(-124)           ",
 new TestCase( SECTION, "String(1.23)          ",
 	      '1.23',  (String(1.23)));
 new TestCase( SECTION, "String({p:1})           ",
-	      '{p:1}',  (String({p:1})));
+	      ( VERSION == "120" ? '{p:1}' : '[object Object]' ),
+	      (String({p:1})));
 new TestCase( SECTION, "String(null)            ",
 	      'null',  (String(null)));
 new TestCase( SECTION, "String([1,2,3])            ",
-	      '[1, 2, 3]',  (String([1,2,3])));
+	      ( VERSION == "120" ? '[1, 2, 3]' : '1,2,3' ),
+	      (String([1,2,3])));
 
 test();
 

@@ -44,18 +44,22 @@ new TestCase ( SECTION, "'dfe23iu 34 =+65--'.split(new RegExp('\\d+'))",
 
 // 'abc'.split(/[a-z]/)
 new TestCase ( SECTION, "'abc'.split(/[a-z]/)",
-	       String(["","",""]), String('abc'.split(/[a-z]/)));
+	       ( VERSION == "120" ? String(["","",""]) : String(["","","",""]) ),
+	       String('abc'.split(/[a-z]/)));
 
 // 'abc'.split(/[a-z]/)
 new TestCase ( SECTION, "'abc'.split(/[a-z]/)",
-	       String(["","",""]), String('abc'.split(/[a-z]/)));
+	       ( VERSION == "120" ? String(["","",""]) : String(["","","",""]) ),
+	       String('abc'.split(/[a-z]/)));
 
 // 'abc'.split(new RegExp('[a-z]'))
 new TestCase ( SECTION, "'abc'.split(new RegExp('[a-z]'))",
-	       String(["","",""]), String('abc'.split(new RegExp('[a-z]'))));
+	       ( VERSION == "120" ? String(["","",""]) : String(["","","",""]) ),
+	       String('abc'.split(new RegExp('[a-z]'))));
 
 // 'abc'.split(new RegExp('[a-z]'))
 new TestCase ( SECTION, "'abc'.split(new RegExp('[a-z]'))",
-	       String(["","",""]), String('abc'.split(new RegExp('[a-z]'))));
+	       ( VERSION == "120" ? String(["","",""]) : String(["","","",""]) ),
+	       String('abc'.split(new RegExp('[a-z]'))));
 
 test();

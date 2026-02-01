@@ -22,9 +22,9 @@ var TITLE   = "new Boolean(false) should evaluate to false";
 writeHeaderToLog( SECTION + " "+ TITLE);
 
 BooleanTest( "new Boolean(true)",  new Boolean(true),  true );
-BooleanTest( "new Boolean(false)", new Boolean(false), false );
-BooleanTest( "true",               true,               true );
-BooleanTest( "false",              false,              false );
+BooleanTest( "new Boolean(false)", new Boolean(false), ( VERSION == "120" ? false : true ) );
+BooleanTest( "true",               true,              true );
+BooleanTest( "false",              false,             false );
 
 test();
 

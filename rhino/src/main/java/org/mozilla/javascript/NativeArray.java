@@ -453,15 +453,6 @@ public class NativeArray extends ScriptableObject implements List {
         return indices;
     }
 
-    @Override
-    public Object getDefaultValue(Class<?> hint) {
-        if (hint == ScriptRuntime.NumberClass) {
-            Context cx = Context.getContext();
-            if (cx.getLanguageVersion() == Context.VERSION_1_2) return Long.valueOf(length);
-        }
-        return super.getDefaultValue(hint);
-    }
-
     private DescriptorInfo defaultIndexPropertyDescriptor(Object value) {
         return new DescriptorInfo(true, true, true, NOT_FOUND, NOT_FOUND, value);
     }
@@ -525,27 +516,17 @@ public class NativeArray extends ScriptableObject implements List {
     static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length == 0) return new NativeArray(0);
 
-        // Only use 1 arg as first element for version 1.2; for
-        // any other version (including 1.3) follow ECMA and use it as
-        // a length.
-        NativeArray res;
-        if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-            res = new NativeArray(args);
-        } else {
-            Object arg0 = args[0];
-            if (args.length > 1 || !(arg0 instanceof Number)) {
-                res = new NativeArray(args);
-            } else {
-                long len = ScriptRuntime.toUint32(arg0);
-                if (len != ((Number) arg0).doubleValue()) {
-                    String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
-                    throw ScriptRuntime.rangeError(msg);
-                }
-                res = new NativeArray(len);
-            }
+        Object arg0 = args[0];
+        if (args.length > 1 || !(arg0 instanceof Number)) {
+            return new NativeArray(args);
         }
 
-        return res;
+        long len = ScriptRuntime.toUint32(arg0);
+        if (len != ((Number) arg0).doubleValue()) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        return new NativeArray(len);
     }
 
     private void createLengthProp() {
@@ -960,8 +941,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static String js_toString(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return toStringHelper(
-                cx, scope, thisObj, cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
+        return toStringHelper(cx, scope, thisObj, false, false);
     }
 
     private static String js_toLocaleString(
@@ -1218,17 +1198,7 @@ public class NativeArray extends ScriptableObject implements List {
         }
 
         length += args.length;
-        Object lengthObj = setLengthProperty(cx, o, length);
-
-        /*
-         * If JS1.2, follow Perl4 by returning the last thing pushed.
-         * Otherwise, return the new array length.
-         */
-        if (cx.getLanguageVersion() == Context.VERSION_1_2)
-            // if JS1.2 && no arguments, return undefined.
-            return args.length == 0 ? Undefined.instance : args[args.length - 1];
-
-        return lengthObj;
+        return setLengthProperty(cx, o, length);
     }
 
     private static Object js_pop(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -1408,44 +1378,24 @@ public class NativeArray extends ScriptableObject implements List {
 
         /* If there are elements to remove, put them into the return value. */
         if (actualDeleteCount != 0) {
-            if (actualDeleteCount == 1 && (cx.getLanguageVersion() == Context.VERSION_1_2)) {
-                /*
-                 * JS lacks "list context", whereby in Perl one turns the
-                 * single scalar that's spliced out into an array just by
-                 * assigning it to @single instead of $single, or by using it
-                 * as Perl push's first argument, for instance.
-                 *
-                 * JS1.2 emulated Perl too closely and returned a non-Array for
-                 * the single-splice-out case, requiring callers to test and
-                 * wrap in [] if necessary.  So JS1.3, default, and other
-                 * versions all return an array of length 1 for uniformity.
-                 */
-                result = getElem(cx, o, begin);
-            } else {
-                if (denseFrom && denseRes) {
-                    int intLen = (int) (end - begin);
-                    Object[] copy = new Object[intLen];
-                    System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
-                    nar.dense = copy;
-                    try (var map = nar.startCompoundOp(true)) {
-                        nar.setLength(map, intLen);
-                    }
-                } else {
-                    for (long last = begin; last != end; last++) {
-                        Object temp = getRawElem(o, last);
-                        if (temp != NOT_FOUND) {
-                            ArrayLikeAbstractOperations.defineElem(
-                                    cx, (ScriptableObject) result, last - begin, temp);
-                        }
-                    }
-                    // Need to set length for sparse result array
-                    setLengthProperty(cx, (ScriptableObject) result, end - begin);
+            if (denseFrom && denseRes) {
+                int intLen = (int) (end - begin);
+                Object[] copy = new Object[intLen];
+                System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
+                nar.dense = copy;
+                try (var map = nar.startCompoundOp(true)) {
+                    nar.setLength(map, intLen);
                 }
-            }
-        } else { // (actualDeleteCount == 0)
-            if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-                /* Emulate C JS1.2; if no elements are removed, return undefined. */
-                result = Undefined.instance;
+            } else {
+                for (long last = begin; last != end; last++) {
+                    Object temp = getRawElem(o, last);
+                    if (temp != NOT_FOUND) {
+                        ArrayLikeAbstractOperations.defineElem(
+                                cx, (ScriptableObject) result, last - begin, temp);
+                    }
+                }
+                // Need to set length for sparse result array
+                setLengthProperty(cx, (ScriptableObject) result, end - begin);
             }
         }
 

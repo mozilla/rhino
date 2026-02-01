@@ -28,9 +28,7 @@ public class Control {
     public static void main(String[] args) {
         Context cx = Context.enter();
         try {
-            // Set version to JavaScript1.2 so that we get object-literal style
-            // printing instead of "[object Object]"
-            cx.setLanguageVersion(Context.VERSION_1_2);
+            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
 
             // Initialize the standard objects (Object, Function, etc.)
             // This must be done before scripts can be executed.

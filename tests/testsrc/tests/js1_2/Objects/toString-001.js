@@ -29,21 +29,21 @@ var o = new Object();
 
 new TestCase( SECTION,
 	      "var o = new Object(); o.toString()",
-	      "{}",
+	      ( VERSION == "120" ? "{}" : "[object Object]" ),
 	      o.toString() );
 
 o = {};
 
 new TestCase( SECTION,
 	      "o = {}; o.toString()",
-	      "{}",
+	      ( VERSION == "120" ? "{}" : "[object Object]" ),
 	      o.toString() );
 
 o = { name:"object", length:0, value:"hello" }
 
   new TestCase( SECTION,
 		"o = { name:\"object\", length:0, value:\"hello\" }; o.toString()",
-		true,
+	    ( VERSION == "120" ? true : false ),
 		checkObjectToString(o.toString(), ['name:"object"', 'length:0',
 						   'value:"hello"']));
 

@@ -45,7 +45,8 @@ new TestCase( SECTION, "Number(-45)             ",
 // under js1.2, Number([1,2,3]) should return 3.
 
 new TestCase( SECTION, "Number([1,2,3])         ",
-	      3,  (Number([1,2,3])));
+	      ( VERSION == "120" ? 3 : NaN ),
+	      (Number([1,2,3])));
 
 
 test();

@@ -31,8 +31,12 @@ new TestCase( SECTION, "bString                ", " another ",            bStrin
 new TestCase( SECTION, "aString.concat(345)    ", "test string345",       aString.concat(345).toString());
 new TestCase( SECTION, "aString.concat(true)   ", "test stringtrue",      aString.concat(true).toString());
 new TestCase( SECTION, "aString.concat(null)   ", "test stringnull",      aString.concat(null).toString());
-new TestCase( SECTION, "aString.concat([])     ", "test string[]",          aString.concat([]).toString());
-new TestCase( SECTION, "aString.concat([1,2,3])", "test string[1, 2, 3]",     aString.concat([1,2,3]).toString());
+new TestCase( SECTION, "aString.concat([])     ",
+                        ( VERSION == "120" ? "test string[]" : "test string" ),
+                        aString.concat([]).toString());
+new TestCase( SECTION, "aString.concat([1,2,3])",
+                        ( VERSION == "120" ? "test string[1, 2, 3]" : "test string1,2,3" ),
+                        aString.concat([1,2,3]).toString());
 
 new TestCase( SECTION, "'abcde'.concat(' more')", "abcde more",     'abcde'.concat(' more').toString());
 new TestCase( SECTION, "'abcde'.concat(bString)", "abcde another ", 'abcde'.concat(bString).toString());
@@ -40,8 +44,12 @@ new TestCase( SECTION, "'abcde'                ", "abcde",          'abcde');
 new TestCase( SECTION, "'abcde'.concat(345)    ", "abcde345",       'abcde'.concat(345).toString());
 new TestCase( SECTION, "'abcde'.concat(true)   ", "abcdetrue",      'abcde'.concat(true).toString());
 new TestCase( SECTION, "'abcde'.concat(null)   ", "abcdenull",      'abcde'.concat(null).toString());
-new TestCase( SECTION, "'abcde'.concat([])     ", "abcde[]",          'abcde'.concat([]).toString());
-new TestCase( SECTION, "'abcde'.concat([1,2,3])", "abcde[1, 2, 3]",     'abcde'.concat([1,2,3]).toString());
+new TestCase( SECTION, "'abcde'.concat([])     ",
+                        ( VERSION == "120" ? "abcde[]" : "abcde" ),
+                        'abcde'.concat([]).toString());
+new TestCase( SECTION, "'abcde'.concat([1,2,3])",
+                        ( VERSION == "120" ? "abcde[1, 2, 3]" : "abcde1,2,3" ),
+                        'abcde'.concat([1,2,3]).toString());
 
 //what should this do:
 new TestCase( SECTION, "'abcde'.concat()       ", "abcde",          'abcde'.concat().toString());
