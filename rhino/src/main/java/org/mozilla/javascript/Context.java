@@ -87,9 +87,6 @@ public class Context implements Closeable {
      */
     public static final int VERSION_DEFAULT = 0;
 
-    /** JavaScript 1.2 */
-    public static final int VERSION_1_2 = 120;
-
     /** JavaScript 1.3 */
     public static final int VERSION_1_3 = 130;
 
@@ -131,14 +128,6 @@ public class Context implements Closeable {
     public static final int VERSION_ECMASCRIPT = 250;
 
     /**
-     * Controls behaviour of {@code Date.prototype.getYear()}. If {@code
-     * hasFeature(FEATURE_NON_ECMA_GET_YEAR)} returns true, Date.prototype.getYear subtructs 1900
-     * only if 1900 &lt;= date &lt; 2000. The default behavior of {@link #hasFeature(int)} is always
-     * to subtract 1900 as required by ECMAScript B.2.4.
-     */
-    public static final int FEATURE_NON_ECMA_GET_YEAR = 1;
-
-    /**
      * Control if member expression as function name extension is available. If {@code
      * hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)} returns true, allow {@code function
      * memberExpression(args) { body }} to be syntax sugar for {@code memberExpression =
@@ -156,19 +145,6 @@ public class Context implements Closeable {
      * <p>By default {@link #hasFeature(int)} returns false.
      */
     public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
-
-    /**
-     * Control if {@code toString()} should returns the same result as {@code toSource()} when
-     * applied to objects and arrays. If {@code hasFeature(FEATURE_TO_STRING_AS_SOURCE)} returns
-     * true, calling {@code toString()} on JS objects gives the same result as calling {@code
-     * toSource()}. That is it returns JS source with code to create an object with all enumerable
-     * fields of the original object instead of printing <code>[object <i>result of
-     * {@link Scriptable#getClassName()}</i>]</code>.
-     *
-     * <p>By default {@link #hasFeature(int)} returns true only if the current JS version is set to
-     * {@link #VERSION_1_2}.
-     */
-    public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
 
     /**
      * Control if properties {@code __proto__} and {@code __parent__} are treated specially. If
@@ -695,7 +671,7 @@ public class Context implements Closeable {
      * <p>The language version number affects JavaScript semantics as detailed in the overview
      * documentation.
      *
-     * @return an integer that is one of VERSION_1_0, VERSION_1_1, etc.
+     * @return an integer that is one of VERSION_1_5, VERSION_1_6, etc.
      */
     public final int getLanguageVersion() {
         return version;
@@ -719,7 +695,7 @@ public class Context implements Closeable {
      * Rhino are encouraged to migrate to the {@link #VERSION_ECMASCRIPT} version and stop relying
      * on older behaviors of Rhino that are no longer compatible with ECMAScript.
      *
-     * @param version the version as specified by VERSION_1_0, VERSION_1_1, etc.
+     * @param version the version as specified by VERSION_1_5, VERSION_1_6, etc.
      */
     public void setLanguageVersion(int version) {
         if (sealed) onSealedMutation();
@@ -738,7 +714,6 @@ public class Context implements Closeable {
     public static boolean isValidLanguageVersion(int version) {
         switch (version) {
             case VERSION_DEFAULT:
-            case VERSION_1_2:
             case VERSION_1_3:
             case VERSION_1_4:
             case VERSION_1_5:

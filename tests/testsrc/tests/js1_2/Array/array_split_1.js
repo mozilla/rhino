@@ -47,7 +47,7 @@ new TestCase( SECTION,
  */
 new TestCase( SECTION,
 	      "(''.split(',')).length",
-	      0,
+	      ( VERSION == "120" ? 0 : 1 ),
 	      (''.split(',')).length );
 
 test();

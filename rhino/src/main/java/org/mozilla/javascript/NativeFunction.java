@@ -44,16 +44,7 @@ public abstract class NativeFunction extends BaseFunction {
 
     @Override
     public int getLength() {
-        int paramCount = getParamCount();
-        if (getLanguageVersion() != Context.VERSION_1_2) {
-            return paramCount;
-        }
-        Context cx = Context.getContext();
-        NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
-        if (activation == null) {
-            return paramCount;
-        }
-        return activation.originalArgs.length;
+        return getParamCount();
     }
 
     @Override

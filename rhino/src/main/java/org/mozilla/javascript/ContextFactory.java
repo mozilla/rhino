@@ -213,30 +213,11 @@ public class ContextFactory {
     protected boolean hasFeature(Context cx, int featureIndex) {
         int version;
         switch (featureIndex) {
-            case Context.FEATURE_NON_ECMA_GET_YEAR:
-                /*
-                 * During the great date rewrite of 1.3, we tried to track the
-                 * evolving ECMA standard, which then had a definition of
-                 * getYear which always subtracted 1900.  Which we
-                 * implemented, not realizing that it was incompatible with
-                 * the old behavior...  now, rather than thrash the behavior
-                 * yet again, we've decided to leave it with the - 1900
-                 * behavior and point people to the getFullYear method.  But
-                 * we try to protect existing scripts that have specified a
-                 * version...
-                 */
-                version = cx.getLanguageVersion();
-                return version == Context.VERSION_1_2;
-
             case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
                 return false;
 
             case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
                 return true;
-
-            case Context.FEATURE_TO_STRING_AS_SOURCE:
-                version = cx.getLanguageVersion();
-                return version == Context.VERSION_1_2;
 
             case Context.FEATURE_PARENT_PROTO_PROPERTIES:
                 return true;

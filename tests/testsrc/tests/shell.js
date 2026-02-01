@@ -95,10 +95,14 @@ function startTest() {
     version ( "130" );
   }
   else if ( VERSION == "JS_1.2"  || gTestsuite == 'js1_2') {
-    version ( "120" );
+    // as of Rhino 2.0 we removed VERSION_1_2 support
+    // switching to 1.3 for this tests
+    version ( "130" );
   }
   else if ( VERSION  == "JS_1.1" || gTestsuite == 'js1_1') {
-    version ( "110" );
+    // as of Rhino 2.0 we removed VERSION_1_1 support
+    // switching to 1.3 for this tests
+    version ( "130" );
   }
 }
 

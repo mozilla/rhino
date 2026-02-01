@@ -26,7 +26,8 @@ writeHeaderToLog( SECTION + " "+ TITLE);
 re=/x./g;
 re.lastIndex=4;
 new TestCase ( SECTION, "re=/x./g; re.lastIndex=4; re.exec('xyabcdxa')",
-	       '["xa"]', String(re.exec('xyabcdxa')));
+	       ( VERSION == "120" ? '["xa"]' : 'xa' ),
+	       String(re.exec('xyabcdxa')));
 
 // re.lastIndex
 new TestCase ( SECTION, "re.lastIndex",
@@ -42,7 +43,8 @@ new TestCase ( SECTION, "re.lastIndex",
 
 // re.exec('xyabcdef');
 new TestCase ( SECTION, "re.exec('xyabcdef')",
-	       '["xy"]', String(re.exec('xyabcdef')));
+	       ( VERSION == "120" ? '["xy"]' : 'xy' ),
+	       String(re.exec('xyabcdef')));
 
 // re.lastIndex=30; re.exec('123xaxbxc456');
 re.lastIndex=30;

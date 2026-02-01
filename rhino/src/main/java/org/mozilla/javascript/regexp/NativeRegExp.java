@@ -3690,31 +3690,8 @@ public class NativeRegExp extends IdScriptableObject {
         res.lastMatch.length = matchlen;
 
         res.leftContext.str = str;
-        if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-            /*
-             * JS1.2 emulated Perl4.0.1.8 (patch level 36) for global regexps used
-             * in scalar contexts, and unintentionally for the string.match "list"
-             * psuedo-context.  On "hi there bye", the following would result:
-             *
-             * Language     while(/ /g){print("$`");}   s/ /$`/g
-             * perl4.036    "hi", "there"               "hihitherehi therebye"
-             * perl5        "hi", "hi there"            "hihitherehi therebye"
-             * js1.2        "hi", "there"               "hihitheretherebye"
-             *
-             * Insofar as JS1.2 always defined $` as "left context from the last
-             * match" for global regexps, it was more consistent than perl4.
-             */
-            res.leftContext.index = start;
-            res.leftContext.length = gData.skipped;
-        } else {
-            /*
-             * For JS1.3 and ECMAv2, emulate Perl5 exactly:
-             *
-             * js1.3        "hi", "hi there"            "hihitherehi therebye"
-             */
-            res.leftContext.index = 0;
-            res.leftContext.length = start + gData.skipped;
-        }
+        res.leftContext.index = 0;
+        res.leftContext.length = start + gData.skipped;
 
         res.rightContext.str = str;
         res.rightContext.index = ep;
