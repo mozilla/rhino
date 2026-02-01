@@ -99,7 +99,7 @@ function startTest() {
     version ( "140" );
   }
   else if ( VERSION == "JS_1.2"  || gTestsuite == 'js1_2') {
-    // as of Rhino 2.0 we removed VERSION_1_2 & VERSION_1_2 support
+    // as of Rhino 2.0 we removed VERSION_1_2 & VERSION_1_3 support
     // switching to 1.4 for these tests
     version ( "140" );
   }
