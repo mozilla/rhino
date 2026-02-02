@@ -235,7 +235,7 @@ public class ScriptEngineTest {
 
         // Older language versions
         ScriptEngine oldEngine = manager.getEngineByName("rhino");
-        oldEngine.put(ScriptEngine.LANGUAGE_VERSION, 140);
+        oldEngine.put(ScriptEngine.LANGUAGE_VERSION, 150);
         assertThrows(
                 ScriptException.class,
                 () -> {
@@ -244,7 +244,7 @@ public class ScriptEngineTest {
 
         // The same with a string
         ScriptEngine olderEngine = manager.getEngineByName("rhino");
-        olderEngine.put(ScriptEngine.LANGUAGE_VERSION, "140");
+        olderEngine.put(ScriptEngine.LANGUAGE_VERSION, "150");
         assertThrows(
                 ScriptException.class,
                 () -> {

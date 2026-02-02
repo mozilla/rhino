@@ -64,19 +64,29 @@ function startTest() {
 
     //  JavaScript 1.3 is supposed to be compliant ecma version 1.0
     if ( VERSION == "JS1_4" ) {
-        version( 140 );
+        // as of Rhino 2.0 we removed VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version( 150 );
     }
     if ( VERSION == "ECMA_1" ) {
-        version ( "130" );
+        // as of Rhino 2.0 we removed VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     if ( VERSION == "JS1_3" ) {
-        version ( "130" );
+        // as of Rhino 2.0 we removed VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     if ( VERSION == "JS1_2" ) {
-        version ( "120" );
+        // as of Rhino 2.0 we removed VERSION_1_2, VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     if ( VERSION  == "JS1_1" ) {
-        version ( "110" );
+        // as of Rhino 2.0 we removed VERSION_1_1, VERSION_1_2, VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
 
     writeHeaderToLog( SECTION + " "+ TITLE);

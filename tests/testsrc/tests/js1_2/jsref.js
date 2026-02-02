@@ -19,9 +19,9 @@ var FAILED = " FAILED! expected: ";
 
 var	DEBUG =	false;
 
-// as of Rhino 2.0 we removed VERSION_1_2 & VERSION_1_3 support
-// switching to 1.4 for these tests
-version("140");
+// as of Rhino 2.0 we removed VERSION_1_2 & VERSION_1_3 & VERSION_1_4 support
+// switching to 1.5 for these tests
+version("150");
 /*
  * change this for date tests if you're not in PST
  */

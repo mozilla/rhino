@@ -437,43 +437,29 @@ public class RegExpImpl implements RegExpProxy {
 
         /* Allow a real backslash (literal "\\") to escape "$1" etc. */
         int version = cx.getLanguageVersion();
-        if (version != Context.VERSION_DEFAULT && version <= Context.VERSION_1_4) {
-            if (dp > 0 && da.charAt(dp - 1) == '\\') return null;
-        }
         int daL = da.length();
         if (dp + 1 >= daL) return null;
         /* Interpret all Perl match-induced dollar variables. */
         dc = da.charAt(dp + 1);
         if (NativeRegExp.isDigit(dc)) {
             int cp;
-            if (version != Context.VERSION_DEFAULT && version <= Context.VERSION_1_4) {
-                if (dc == '0') return null;
-                /* Check for overflow to avoid gobbling arbitrary decimal digits. */
-                num = 0;
-                cp = dp;
-                while (++cp < daL && NativeRegExp.isDigit(dc = da.charAt(cp))) {
+            /* ECMA 3, 1-9 or 01-99 */
+            int parenCount = (res.parens == null) ? 0 : res.parens.length;
+            num = dc - '0';
+            if (num > parenCount) return null;
+            cp = dp + 2;
+            if ((dp + 2) < daL) {
+                dc = da.charAt(dp + 2);
+                if (NativeRegExp.isDigit(dc)) {
                     tmp = 10 * num + (dc - '0');
-                    if (tmp < num) break;
-                    num = tmp;
-                }
-            } else {
-                /* ECMA 3, 1-9 or 01-99 */
-                int parenCount = (res.parens == null) ? 0 : res.parens.length;
-                num = dc - '0';
-                if (num > parenCount) return null;
-                cp = dp + 2;
-                if ((dp + 2) < daL) {
-                    dc = da.charAt(dp + 2);
-                    if (NativeRegExp.isDigit(dc)) {
-                        tmp = 10 * num + (dc - '0');
-                        if (tmp <= parenCount) {
-                            cp++;
-                            num = tmp;
-                        }
+                    if (tmp <= parenCount) {
+                        cp++;
+                        num = tmp;
                     }
                 }
-                if (num == 0) return null; /* $0 or $00 is not valid */
             }
+            if (num == 0) return null; /* $0 or $00 is not valid */
+
             /* Adjust num from 1 $n-origin to 0 array-index-origin. */
             num--;
             skip[0] = cp - dp;

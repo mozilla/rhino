@@ -65,24 +65,24 @@ function TestCase( n, d, e, a ) {
 function startTest() {
     //  JavaScript 1.3 is supposed to be compliant ecma version 1.0
     if ( VERSION == "ECMA_1" ) {
-        // as of Rhino 2.0 we removed VERSION_1_3 support
-        // switching to 1.4 for these tests
-        version ( "140" );
+        // as of Rhino 2.0 we removed VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     if ( VERSION == "JS_13" ) {
-        // as of Rhino 2.0 we removed VERSION_1_3 support
-        // switching to 1.4 for these tests
-        version ( "140" );
+        // as of Rhino 2.0 we removed VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     if ( VERSION == "JS_12" ) {
-        // as of Rhino 2.0 we removed VERSION_1_2 & VERSION_1_3 support
-        // switching to 1.4 for these tests
-        version ( "140" );
+        // as of Rhino 2.0 we removed VERSION_1_2 & VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     if ( VERSION  == "JS_11" ) {
-        // as of Rhino 2.0 we removed VERSION_1_1, VERSION_1_2 & VERSION_1_3 support
-        // switching to 1.4 for these tests
-        version ( "140" );
+        // as of Rhino 2.0 we removed VERSION_1_1, VERSION_1_2, VERSION_1_3 & VERSION_1_4 support
+        // switching to 1.5 for these tests
+        version ( "150" );
     }
     // for ecma version 2.0, we will leave the javascript version to
     // the default ( for now ).

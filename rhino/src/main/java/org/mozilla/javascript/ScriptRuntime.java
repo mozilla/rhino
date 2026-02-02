@@ -5532,12 +5532,9 @@ public class ScriptRuntime {
     }
 
     static void checkDeprecated(Context cx, String name) {
-        int version = cx.getLanguageVersion();
-        if (version >= Context.VERSION_1_4 || version == Context.VERSION_DEFAULT) {
-            String msg = getMessageById("msg.deprec.ctor", name);
-            if (version == Context.VERSION_DEFAULT) Context.reportWarning(msg);
-            else throw Context.reportRuntimeError(msg);
-        }
+        String msg = getMessageById("msg.deprec.ctor", name);
+        if (cx.getLanguageVersion() == Context.VERSION_DEFAULT) Context.reportWarning(msg);
+        else throw Context.reportRuntimeError(msg);
     }
 
     /**

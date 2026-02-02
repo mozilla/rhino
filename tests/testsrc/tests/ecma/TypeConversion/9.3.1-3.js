@@ -470,7 +470,7 @@ new TestCase( SECTION,
 
 new TestCase( SECTION,
 	      "parseInt(\"0022\")",
-	      18,
+	      ( VERSION == "140" ? 18 : 22 ),
 	      parseInt("0022") );
 
 new TestCase( SECTION,
