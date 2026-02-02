@@ -210,17 +210,6 @@ public class Utils {
 
     /**
      * Execute the provided script and assert the result. Before the execution the language version
-     * is set to {@link Context#VERSION_1_4}.
-     *
-     * @param expected the expected result
-     * @param script the javascript script to execute
-     */
-    public static void assertWithAllModes_1_4(final Object expected, final String script) {
-        assertWithAllModes(Context.VERSION_1_4, null, expected, script);
-    }
-
-    /**
-     * Execute the provided script and assert the result. Before the execution the language version
      * is set to {@link Context#VERSION_1_5}.
      *
      * @param expected the expected result

@@ -26,9 +26,9 @@ var HR = "";
 var PASSED = " PASSED!"
 var FAILED = " FAILED! expected: ";
 
-// as of Rhino 2.0 we removed VERSION_1_1, VERSION_1_2 & VERSION_1_3 support
-// switching to 1.4 for these tests
-version( 140 );
+// as of Rhino 2.0 we removed VERSION_1_1, VERSION_1_2, VERSION_1_3 & VERSION_1_4 support
+// switching to 1.5 for these tests
+version( 150 );
 
 function test() {
     for ( tc=0; tc < testcases.length; tc++ ) {

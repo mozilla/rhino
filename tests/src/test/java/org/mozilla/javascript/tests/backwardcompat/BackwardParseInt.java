@@ -6,16 +6,6 @@ import org.mozilla.javascript.testutils.Utils;
 public class BackwardParseInt {
 
     @Test
-    public void parseIntOctal_1_4() {
-        Utils.assertWithAllModes_1_4(7, "parseInt('07');");
-        Utils.assertWithAllModes_1_4(7, "parseInt('007');");
-        Utils.assertWithAllModes_1_4(-56, "parseInt('-070');");
-        Utils.assertWithAllModes_1_4(Double.NaN, "parseInt('08');");
-        Utils.assertWithAllModes_1_4(0, "parseInt('008');");
-        Utils.assertWithAllModes_1_4(Double.NaN, "parseInt('-090');");
-    }
-
-    @Test
     public void parseIntOctal_1_5() {
         Utils.assertWithAllModes_1_5(7, "parseInt('07');");
         Utils.assertWithAllModes_1_5(7, "parseInt('007');");
