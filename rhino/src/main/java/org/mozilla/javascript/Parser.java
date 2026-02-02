@@ -744,9 +744,6 @@ public class Parser {
                                     }
                                     inUseStrictDirective = true;
                                     fnNode.setInStrictMode(true);
-                                    if (!savedStrictMode) {
-                                        setRequiresActivation();
-                                    }
                                 }
                             }
                             break;
