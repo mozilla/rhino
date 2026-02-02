@@ -1171,5 +1171,49 @@ public class NativeRegExpTest {
         // Non-greedy still matches all 'a's here because $ requires end of string.
         Utils.assertWithAllModes_ES6("non-greedy +?$", "aaa", "/a+?$/.exec('aaa')[0]");
         Utils.assertWithAllModes_ES6("non-greedy +?$ no match", null, "/a+?$/.exec('aaab')");
+
+        // Multiline mode: atomic optimization is disabled because $ matches at line boundaries
+        // and backtracking may be needed when the child can match \n
+
+        // Simple multiline case - a* can't match \n, but we conservatively disable atomic anyway
+        Utils.assertWithAllModes_ES6("multiline simple", "aa", "/a*$/m.exec('aa\\na')[0]");
+        Utils.assertWithAllModes_ES6(
+                "multiline simple index", "0", "'' + /a*$/m.exec('aa\\na').index");
+
+        // Character class that can match \n - backtracking IS needed here
+        // [a\n]* matches "a\n", $ fails at 'b', backtrack to "a", $ matches before \n
+        Utils.assertWithAllModes_ES6(
+                "multiline char class with newline", "a", "/[a\\n]*$/m.exec('a\\nb')[0]");
+        Utils.assertWithAllModes_ES6(
+                "multiline char class with newline index",
+                "0",
+                "'' + /[a\\n]*$/m.exec('a\\nb').index");
+
+        // dotAll + multiline: dot matches \n, matches entire string since $ matches at end
+        Utils.assertWithAllModes_ES6("multiline dotall", "a\nb", "/.*$/ms.exec('a\\nb')[0]");
+        Utils.assertWithAllModes_ES6(
+                "multiline dotall index", "0", "'' + /.*$/ms.exec('a\\nb').index");
+
+        // dotAll + multiline where backtracking IS needed: string doesn't end after match
+        // .*$ on "a\nb\nc" - .* matches "a\nb\nc", $ matches at end, result is full string
+        Utils.assertWithAllModes_ES6(
+                "multiline dotall full", "a\nb\nc", "/.*$/ms.exec('a\\nb\\nc')[0]");
+        // But with a char class that includes \n and string ending with non-newline char after
+        // newline
+        // [a\n]*$ on "a\nb" - needs to backtrack
+        Utils.assertWithAllModes_ES6(
+                "dotall char class needs backtrack", "a", "/[a\\n]*$/ms.exec('a\\nb')[0]");
+
+        // Regular dot (no dotAll) doesn't match \n, multiline still works
+        Utils.assertWithAllModes_ES6("multiline dot no dotall", "a", "/.*$/m.exec('a\\nb')[0]");
+
+        // dotAll WITHOUT multiline: $ only matches at end of string, atomic optimization is safe
+        // .* matches entire string including \n, $ matches at end
+        Utils.assertWithAllModes_ES6("dotall single-line", "a\nb", "/.*$/s.exec('a\\nb')[0]");
+        Utils.assertWithAllModes_ES6(
+                "dotall single-line index", "0", "'' + /.*$/s.exec('a\\nb').index");
+        // Even with char class that can match \n, atomic is safe in single-line mode
+        Utils.assertWithAllModes_ES6(
+                "single-line char class with newline", "a\nb", "/[a\\nb]*$/s.exec('a\\nb')[0]");
     }
 }

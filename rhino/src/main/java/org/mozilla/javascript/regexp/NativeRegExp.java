@@ -932,7 +932,7 @@ public class NativeRegExp extends IdScriptableObject {
             } else tailTerm.next = state.result;
             // Mark greedy quantifier as atomic if child can't overlap with next
             if (tailTerm.op == REOP_QUANT && tailTerm.greedy) {
-                if (!couldQuantifierChildOverlap(tailTerm.kid, tailTerm.next)) {
+                if (!couldQuantifierChildOverlap(tailTerm.kid, tailTerm.next, state.flags)) {
                     tailTerm.atomic = true;
                 }
             }
@@ -4675,10 +4675,17 @@ public class NativeRegExp extends IdScriptableObject {
      *
      * @param child the quantifier's child node
      * @param next the node following the quantifier
+     * @param flags the regex flags
      * @return true if they could overlap (conservative), false if definitely no overlap
      */
-    private static boolean couldQuantifierChildOverlap(RENode child, RENode next) {
+    private static boolean couldQuantifierChildOverlap(RENode child, RENode next, int flags) {
         if (child == null || next == null) return true;
+
+        // In multiline mode, $ matches at line boundaries, so backtracking may be needed
+        // if the child could match \n (we conservatively disable the optimization entirely)
+        if ((flags & JSREG_MULTILINE) != 0) {
+            return true;
+        }
 
         if (!reopIsSimple(child.op)) {
             return true;
