@@ -310,6 +310,9 @@ public class JsonParser {
         }
         String num = src.substring(numberStart, pos);
         final double dval = Double.parseDouble(num);
+        if (Double.compare(dval, -0.0) == 0) {
+            return Double.valueOf(dval);
+        }
         final int ival = (int) dval;
         if (ival == dval) {
             return Integer.valueOf(ival);
