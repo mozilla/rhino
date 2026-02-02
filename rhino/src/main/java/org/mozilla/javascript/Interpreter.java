@@ -3439,82 +3439,72 @@ public final class Interpreter extends Icode implements Evaluator {
             // if the function is already an interpreted function, which
             // should be the majority of cases.
             for (; ; ) {
-                if (fun instanceof KnownBuiltInFunction) {
-                    KnownBuiltInFunction kfun = (KnownBuiltInFunction) fun;
-                    // Bug 405654 -- make the best effort to keep
-                    // Function.apply and Function.call within this
-                    // interpreter loop invocation
-                    if (BaseFunction.isApplyOrCall(kfun)) {
-                        // funThisObj becomes fun
-                        fun = ScriptRuntime.getCallable(funThisObj);
-                        // first arg becomes thisObj
-                        funThisObj =
-                                getApplyThis(
-                                        cx,
-                                        stack,
-                                        sDbl,
-                                        boundArgs,
-                                        state.stackTop + 1,
-                                        state.indexReg,
-                                        (Function) fun,
-                                        frame);
-                        if (BaseFunction.isApply(kfun)) {
-                            // Apply: second argument after new "this"
-                            // should be array-like
-                            // and we'll spread its elements on the stack
-                            final Object[] callArgs;
-                            if (blen > 1) {
-                                callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
-                            } else if (state.indexReg < 2) {
-                                callArgs = ScriptRuntime.emptyArgs;
-                            } else {
-                                callArgs =
-                                        ScriptRuntime.getApplyArguments(
-                                                cx, stack[state.stackTop - blen + 2]);
-                            }
-
-                            int alen = callArgs.length;
-                            // We're coming from the outside, so this
-                            // is replacing any bound args we might
-                            // have had already.
-                            boundArgs = callArgs;
-                            blen = alen;
-                            state.indexReg = alen;
+                if (BaseFunction.isApplyOrCall(fun)) {
+                    // funThisObj becomes fun
+                    var target = ScriptRuntime.getCallable(funThisObj);
+                    // first arg becomes thisObj
+                    funThisObj =
+                            getApplyThis(
+                                    cx,
+                                    stack,
+                                    sDbl,
+                                    boundArgs,
+                                    state.stackTop + 1,
+                                    state.indexReg,
+                                    (Function) target,
+                                    frame);
+                    if (BaseFunction.isApply(fun)) {
+                        // Apply: second argument after new "this"
+                        // should be array-like
+                        // and we'll spread its elements on the stack
+                        final Object[] callArgs;
+                        if (blen > 1) {
+                            callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
+                        } else if (state.indexReg < 2) {
+                            callArgs = ScriptRuntime.emptyArgs;
                         } else {
-                            // Call: shift args left, starting from 2nd
-                            if (state.indexReg > 0) {
-                                if (state.indexReg > 1 && blen == 0) {
-                                    System.arraycopy(
-                                            stack,
-                                            state.stackTop + 2,
-                                            stack,
-                                            state.stackTop + 1,
-                                            state.indexReg - 1);
-                                    System.arraycopy(
-                                            sDbl,
-                                            state.stackTop + 2,
-                                            sDbl,
-                                            state.stackTop + 1,
-                                            state.indexReg - 1);
-                                } else if (state.indexReg > 1) {
-                                    Object[] newBArgs = new Object[boundArgs.length - 1];
-                                    System.arraycopy(
-                                            boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
-                                    boundArgs = newBArgs;
-                                    blen = newBArgs.length;
-                                } else {
-                                    // Bound args is 1 long.
-                                    boundArgs = new Object[0];
-                                    blen = 0;
-                                }
-                                state.indexReg--;
-                            }
+                            callArgs =
+                                    ScriptRuntime.getApplyArguments(
+                                            cx, stack[state.stackTop - blen + 2]);
                         }
+
+                        int alen = callArgs.length;
+                        // We're coming from the outside, so this
+                        // is replacing any bound args we might
+                        // have had already.
+                        boundArgs = callArgs;
+                        blen = alen;
+                        state.indexReg = alen;
                     } else {
-                        // Some other IdFunctionObject we don't know how to
-                        // reduce.
-                        break;
+                        // Call: shift args left, starting from 2nd
+                        if (state.indexReg > 0) {
+                            if (state.indexReg > 1 && blen == 0) {
+                                System.arraycopy(
+                                        stack,
+                                        state.stackTop + 2,
+                                        stack,
+                                        state.stackTop + 1,
+                                        state.indexReg - 1);
+                                System.arraycopy(
+                                        sDbl,
+                                        state.stackTop + 2,
+                                        sDbl,
+                                        state.stackTop + 1,
+                                        state.indexReg - 1);
+                            } else if (state.indexReg > 1) {
+                                Object[] newBArgs = new Object[boundArgs.length - 1];
+                                System.arraycopy(boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
+                                boundArgs = newBArgs;
+                                blen = newBArgs.length;
+                            } else {
+                                // Bound args is 1 long.
+                                boundArgs = new Object[0];
+                                blen = 0;
+                            }
+                            state.indexReg--;
+                        }
                     }
+                    fun = target;
                 } else if (fun instanceof LambdaConstructor) {
                     break;
                 } else if (fun instanceof LambdaFunction) {

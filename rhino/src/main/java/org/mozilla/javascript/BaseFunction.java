@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.util.EnumSet;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -29,94 +31,56 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String CALL_TAG = "CALL_TAG";
     private static final String PROTOTYPE_PROPERTY_NAME = "prototype";
 
-    static LambdaConstructor init(Context cx, VarScope scope, boolean sealed) {
-        LambdaConstructor ctor =
-                new LambdaConstructor(
-                        scope,
-                        FUNCTION_CLASS,
-                        1,
-                        BaseFunction::js_constructorCall,
-                        BaseFunction::js_constructor);
+    private static final ClassDescriptor DESCRIPTOR;
+    private static final ClassDescriptor ES6_DESCRIPTOR;
+    //    private static final ClassDescriptor GENERATOR_DESCRIPTOR;
+    private static final JSDescriptor<JSFunction> APPLY_DESCRIPTOR;
+    private static final JSDescriptor<JSFunction> CALL_DESCRIPTOR;
 
+    static {
+        var builder =
+                new ClassDescriptor.Builder(
+                                FUNCTION_CLASS,
+                                1,
+                                BaseFunction::js_constructor,
+                                BaseFunction::js_constructor)
+                        .withMethod(PROTO, "call", 1, BaseFunction::js_call)
+                        .withMethod(PROTO, "apply", 2, BaseFunction::js_apply)
+                        .withMethod(PROTO, "bind", 1, BaseFunction::js_bind)
+                        .withMethod(PROTO, "toSource", 1, BaseFunction::js_toSource)
+                        .withMethod(PROTO, "toString", 0, BaseFunction::js_toString)
+                        .withMethod(
+                                PROTO,
+                                SymbolKey.HAS_INSTANCE,
+                                1,
+                                BaseFunction::js_hasInstance,
+                                DONTENUM | READONLY | PERMANENT,
+                                DONTENUM | READONLY);
+
+        DESCRIPTOR = builder.build();
+        ES6_DESCRIPTOR =
+                builder.withProp(
+                                PROTO,
+                                "arguments",
+                                BaseFunction::js_protoArgumentsGetter,
+                                BaseFunction::js_protoArgumentsSetter,
+                                DONTENUM | READONLY)
+                        .build();
+
+        APPLY_DESCRIPTOR = DESCRIPTOR.findProtoDesc("apply");
+        CALL_DESCRIPTOR = DESCRIPTOR.findProtoDesc("call");
+    }
+
+    static JSFunction init(Context cx, VarScope scope, boolean sealed) {
         var proto =
                 new LambdaFunction(
                         scope, "", 0, null, (lcx, lscope, lthisObj, largs) -> Undefined.instance);
 
-        proto.defineProperty("constructor", ctor, DONTENUM);
-        // Set the constructor correctly here. i.e. ctor.prototype.constructor == ctor
-        // Redo the stuff about setupDefaultPrototype.
-
-        ctor.setPrototypeProperty(proto);
-        // Do this early, so that the functions on the prototype get
-        // the right prototype...
-        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, ctor, DONTENUM);
-        ctor.setPrototype((Scriptable) ctor.getPrototypeProperty());
-
-        defKnownBuiltInOnProto(ctor, APPLY_TAG, scope, "apply", 2, BaseFunction::js_apply);
-        defOnProto(ctor, scope, "bind", 1, BaseFunction::js_bind);
-        defKnownBuiltInOnProto(ctor, CALL_TAG, scope, "call", 1, BaseFunction::js_call);
-        defOnProto(ctor, scope, "toSource", 1, BaseFunction::js_toSource);
-        defOnProto(ctor, scope, "toString", 0, BaseFunction::js_toString);
-        defOnProto(
-                ctor,
-                scope,
-                SymbolKey.HAS_INSTANCE,
-                1,
-                BaseFunction::js_hasInstance,
-                DONTENUM | READONLY | PERMANENT);
-
-        // Function.prototype attributes: see ECMA 15.3.3.1
-        ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ctor.setStandardPropertyAttributes(READONLY | DONTENUM);
+        if (cx.getLanguageVersion() < Context.VERSION_ES6) {
+            return DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
+        } else {
+            return ES6_DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
         }
-
-        if (!cx.isStrictMode() && cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ctor.definePrototypeProperty(
-                    cx,
-                    "arguments",
-                    BaseFunction::js_protoArgumentsGetter,
-                    BaseFunction::js_protoArgumentsSetter,
-                    DONTENUM | READONLY);
-        }
-
-        ScriptableObject.defineProperty(scope, FUNCTION_CLASS, ctor, DONTENUM);
-        if (sealed) {
-            ctor.sealObject();
-            ((ScriptableObject) ctor.getPrototypeProperty()).sealObject();
-        }
-        return ctor;
-    }
-
-    private static void defOnProto(
-            LambdaConstructor constructor,
-            VarScope scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        constructor.definePrototypeMethod(scope, name, length, target);
-    }
-
-    private static void defKnownBuiltInOnProto(
-            LambdaConstructor constructor,
-            Object tag,
-            VarScope scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        constructor.defineKnownBuiltInPrototypeMethod(
-                tag, scope, name, length, null, target, DONTENUM, DONTENUM | READONLY);
-    }
-
-    private static void defOnProto(
-            LambdaConstructor constructor,
-            VarScope scope,
-            SymbolKey name,
-            int length,
-            SerializableCallable target,
-            int attributes) {
-        constructor.definePrototypeMethod(
-                scope, name, length, null, target, attributes, DONTENUM | READONLY);
     }
 
     /**
@@ -395,18 +359,34 @@ public class BaseFunction extends ScriptableObject implements Function {
             Id_arguments = 5,
             MAX_INSTANCE_ID = 5;
 
-    static boolean isApply(KnownBuiltInFunction f) {
-        return f.getTag() == APPLY_TAG;
+    static boolean isApply(Callable f) {
+        if (f instanceof KnownBuiltInFunction) {
+            var kf = (KnownBuiltInFunction) f;
+            var tag = kf.getTag();
+            return tag == APPLY_TAG;
+        }
+        if (f instanceof JSFunction) {
+            return ((JSFunction) f).getDescriptor() == APPLY_DESCRIPTOR;
+        }
+        return false;
     }
 
-    static boolean isApplyOrCall(KnownBuiltInFunction f) {
-        var tag = f.getTag();
-        return tag == APPLY_TAG || tag == CALL_TAG;
+    static boolean isApplyOrCall(Callable f) {
+        if (f instanceof KnownBuiltInFunction) {
+            var kf = (KnownBuiltInFunction) f;
+            var tag = kf.getTag();
+            return tag == APPLY_TAG || tag == CALL_TAG;
+        }
+        if (f instanceof JSFunction) {
+            var desc = ((JSFunction) f).getDescriptor();
+            return desc == APPLY_DESCRIPTOR || desc == CALL_DESCRIPTOR;
+        }
+        return false;
     }
 
     private static Object js_hasInstance(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
-        if (!(thisObj instanceof Callable)) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (!(thisObj instanceof Callable && thisObj instanceof Scriptable)) {
             return false;
         }
         Object protoProp = null;
@@ -434,7 +414,8 @@ public class BaseFunction extends ScriptableObject implements Function {
                         : "unknown");
     }
 
-    private static Object js_bind(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_bind(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(thisObj);
         }
@@ -443,25 +424,30 @@ public class BaseFunction extends ScriptableObject implements Function {
         final Scriptable boundThis;
         final Object[] boundArgs;
         if (argc > 0) {
-            boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], scope);
+            boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], s);
             boundArgs = new Object[argc - 1];
             System.arraycopy(args, 1, boundArgs, 0, argc - 1);
         } else {
             boundThis = null;
             boundArgs = ScriptRuntime.emptyArgs;
         }
-        return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
+        return new BoundFunction(cx, s, targetFunction, boundThis, boundArgs);
     }
 
-    private static Object js_apply(Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return ScriptRuntime.applyOrCall(true, cx, scope, (Scriptable) thisObj, args);
+    private static Object js_apply(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        var thisArg = ScriptRuntime.toObject(f.getDeclarationScope(), thisObj);
+        return ScriptRuntime.applyOrCall(true, cx, f.getDeclarationScope(), thisArg, args);
     }
 
-    private static Object js_call(Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return ScriptRuntime.applyOrCall(false, cx, scope, (Scriptable) thisObj, args);
+    private static Object js_call(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        var thisArg = ScriptRuntime.toObject(f.getDeclarationScope(), thisObj);
+        return ScriptRuntime.applyOrCall(false, cx, f.getDeclarationScope(), thisArg, args);
     }
 
-    private static Object js_toSource(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_toSource(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toSource");
         int indent = 0;
         EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
@@ -476,7 +462,8 @@ public class BaseFunction extends ScriptableObject implements Function {
         return realf.decompile(indent, flags);
     }
 
-    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_toString(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toString");
         int indent = ScriptRuntime.toInt32(args, 0);
         return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
@@ -487,7 +474,8 @@ public class BaseFunction extends ScriptableObject implements Function {
         return js_gen_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
+    private static Scriptable js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -495,19 +483,14 @@ public class BaseFunction extends ScriptableObject implements Function {
             try {
                 cx.currentActivationCall = null;
                 cx.isTopLevelStrict = false;
-                return jsConstructor(cx, scope, args, false);
+                return jsConstructor(cx, f.getDeclarationScope(), args, false);
             } finally {
                 cx.isTopLevelStrict = strictMode;
                 cx.currentActivationCall = activation;
             }
         } else {
-            return jsConstructor(cx, scope, args, false);
+            return jsConstructor(cx, f.getDeclarationScope(), args, false);
         }
-    }
-
-    private static Scriptable js_constructorCall(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return js_constructor(cx, scope, args);
     }
 
     private static Scriptable js_gen_constructor(Context cx, VarScope scope, Object[] args) {
@@ -532,11 +515,14 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (thisObj == null) {
             throw ScriptRuntime.notFunctionError(null);
         }
-        Object x = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
-        if (x instanceof Delegator) {
-            x = ((Delegator) x).getDelegee();
+        if (thisObj instanceof Scriptable) {
+            Object x = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
+            if (x instanceof Delegator) {
+                x = ((Delegator) x).getDelegee();
+            }
+            return ensureType(x, BaseFunction.class, functionName);
         }
-        return ensureType(x, BaseFunction.class, functionName);
+        return ensureType(thisObj, BaseFunction.class, functionName);
     }
 
     /** Make value as DontEnum, DontDelete, ReadOnly prototype property of this Function object */
