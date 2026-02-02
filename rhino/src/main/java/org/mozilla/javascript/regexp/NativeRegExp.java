@@ -930,6 +930,12 @@ public class NativeRegExp extends IdScriptableObject {
                 headTerm = state.result;
                 tailTerm = headTerm;
             } else tailTerm.next = state.result;
+            // Mark greedy quantifier as atomic if child can't overlap with next
+            if (tailTerm.op == REOP_QUANT && tailTerm.greedy) {
+                if (!couldQuantifierChildOverlap(tailTerm.kid, tailTerm.next)) {
+                    tailTerm.atomic = true;
+                }
+            }
             while (tailTerm.next != null) {
                 // concatenate FLATs if possible
                 RENode n = tailTerm.next;
@@ -1944,24 +1950,24 @@ public class NativeRegExp extends IdScriptableObject {
                 state.result = new RENode(REOP_QUANT);
                 state.result.min = 1;
                 state.result.max = -1;
-                /* <PLUS>, <parencount>, <parenindex>, <next> ... <ENDCHILD> */
-                state.progLength += 8;
+                /* <PLUS>, <parencount>, <parenindex>, <atomic>, <next> ... <ENDCHILD> */
+                state.progLength += 9;
                 hasQ = true;
                 break;
             case '*':
                 state.result = new RENode(REOP_QUANT);
                 state.result.min = 0;
                 state.result.max = -1;
-                /* <STAR>, <parencount>, <parenindex>, <next> ... <ENDCHILD> */
-                state.progLength += 8;
+                /* <STAR>, <parencount>, <parenindex>, <atomic>, <next> ... <ENDCHILD> */
+                state.progLength += 9;
                 hasQ = true;
                 break;
             case '?':
                 state.result = new RENode(REOP_QUANT);
                 state.result.min = 0;
                 state.result.max = 1;
-                /* <OPT>, <parencount>, <parenindex>, <next> ... <ENDCHILD> */
-                state.progLength += 8;
+                /* <OPT>, <parencount>, <parenindex>, <atomic>, <next> ... <ENDCHILD> */
+                state.progLength += 9;
                 hasQ = true;
                 break;
             case '{': /* balance '}' */
@@ -2004,8 +2010,8 @@ public class NativeRegExp extends IdScriptableObject {
                                 state.result.min = min;
                                 state.result.max = max;
                                 // QUANT, <min>, <max>, <parencount>,
-                                // <parenindex>, <next> ... <ENDCHILD>
-                                state.progLength += 12;
+                                // <parenindex>, <atomic>, <next> ... <ENDCHILD>
+                                state.progLength += 13;
                                 hasQ = true;
                             }
                         }
@@ -2196,6 +2202,7 @@ public class NativeRegExp extends IdScriptableObject {
                     }
                     pc = addIndex(program, pc, t.parenCount);
                     pc = addIndex(program, pc, t.parenIndex);
+                    program[pc++] = (byte) (t.atomic ? 1 : 0);
                     nextTermFixup = pc;
                     pc += INDEX_LEN;
                     pc = emitREBytecode(state, re, pc, t.kid);
@@ -2244,6 +2251,14 @@ public class NativeRegExp extends IdScriptableObject {
         REProgState state = gData.stateStackTop;
         gData.stateStackTop = state.previous;
         return state;
+    }
+
+    /** Update the top of the prog state stack in place (avoids allocation). */
+    private static void updateProgState(REGlobalData gData, int min, int max, int cp) {
+        REProgState state = gData.stateStackTop;
+        state.min = min;
+        state.max = max;
+        state.index = cp;
     }
 
     private static void pushBackTrackState(REGlobalData gData, byte op, int pc) {
@@ -3192,18 +3207,18 @@ public class NativeRegExp extends IdScriptableObject {
                                 pushBackTrackState(gData, REOP_REPEAT, pc);
                                 continuationOp = REOP_REPEAT;
                                 continuationPc = pc;
-                                /* Step over <parencount>, <parenindex> & <next> */
-                                pc += 3 * INDEX_LEN;
+                                /* Step over <parencount>, <parenindex>, <atomic> & <next> */
+                                pc += 3 * INDEX_LEN + 1;
                             } else {
                                 if (min != 0) {
                                     continuationOp = REOP_MINIMALREPEAT;
                                     continuationPc = pc;
-                                    /* <parencount> <parenindex> & <next> */
-                                    pc += 3 * INDEX_LEN;
+                                    /* <parencount> <parenindex> <atomic> & <next> */
+                                    pc += 3 * INDEX_LEN + 1;
                                 } else {
                                     pushBackTrackState(gData, REOP_MINIMALREPEAT, pc);
                                     popProgState(gData);
-                                    pc += 2 * INDEX_LEN; // <parencount> & <parenindex>
+                                    pc += 2 * INDEX_LEN + 1; // <parencount> <parenindex> <atomic>
                                     pc = pc + getOffset(program, pc);
                                 }
                             }
@@ -3223,14 +3238,21 @@ public class NativeRegExp extends IdScriptableObject {
                     case REOP_REPEAT:
                         {
                             int nextpc, nextop;
+                            boolean atomic = program[pc + 2 * INDEX_LEN] != 0;
                             do {
-                                REProgState state = popProgState(gData);
+                                // For atomic quantifiers, peek at state (update in place later)
+                                // For non-atomic, pop state (will push new one later)
+                                REProgState state =
+                                        atomic ? gData.stateStackTop : popProgState(gData);
                                 if (!result) {
                                     // Failed, see if we have enough children.
                                     if (state.min == 0) result = true;
                                     continuationPc = state.continuationPc;
                                     continuationOp = state.continuationOp;
-                                    pc += 2 * INDEX_LEN; /* <parencount> & <parenindex> */
+                                    if (atomic) popProgState(gData); // clean up
+                                    pc +=
+                                            2 * INDEX_LEN
+                                                    + 1; /* <parencount> <parenindex> <atomic> */
                                     pc += getOffset(program, pc);
                                     break switchStatement;
                                 }
@@ -3240,7 +3262,8 @@ public class NativeRegExp extends IdScriptableObject {
                                     result = false;
                                     continuationPc = state.continuationPc;
                                     continuationOp = state.continuationOp;
-                                    pc += 2 * INDEX_LEN;
+                                    if (atomic) popProgState(gData); // clean up
+                                    pc += 2 * INDEX_LEN + 1;
                                     pc += getOffset(program, pc);
                                     break switchStatement;
                                 }
@@ -3251,11 +3274,12 @@ public class NativeRegExp extends IdScriptableObject {
                                     result = true;
                                     continuationPc = state.continuationPc;
                                     continuationOp = state.continuationOp;
-                                    pc += 2 * INDEX_LEN;
+                                    if (atomic) popProgState(gData); // clean up
+                                    pc += 2 * INDEX_LEN + 1;
                                     pc += getOffset(program, pc);
                                     break switchStatement;
                                 }
-                                nextpc = pc + 3 * INDEX_LEN;
+                                nextpc = pc + 3 * INDEX_LEN + 1;
                                 nextop = program[nextpc];
                                 int startcp = gData.cp;
                                 if (reopIsSimple(nextop)) {
@@ -3274,7 +3298,10 @@ public class NativeRegExp extends IdScriptableObject {
                                         result = (new_min == 0);
                                         continuationPc = state.continuationPc;
                                         continuationOp = state.continuationOp;
-                                        pc += 2 * INDEX_LEN; /* <parencount> & <parenindex> */
+                                        if (atomic) popProgState(gData); // clean up
+                                        pc +=
+                                                2 * INDEX_LEN
+                                                        + 1; /* <parencount> <parenindex> <atomic> */
                                         pc += getOffset(program, pc);
                                         break switchStatement;
                                     }
@@ -3283,23 +3310,28 @@ public class NativeRegExp extends IdScriptableObject {
                                 }
                                 continuationOp = REOP_REPEAT;
                                 continuationPc = pc;
-                                pushProgState(
-                                        gData,
-                                        new_min,
-                                        new_max,
-                                        startcp,
-                                        matchBackward,
-                                        null,
-                                        state.continuationOp,
-                                        state.continuationPc);
-                                if (new_min == 0) {
-                                    pushBackTrackState(
+                                if (atomic) {
+                                    // Update state in place - no allocation
+                                    updateProgState(gData, new_min, new_max, startcp);
+                                } else {
+                                    pushProgState(
                                             gData,
-                                            REOP_REPEAT,
-                                            pc,
+                                            new_min,
+                                            new_max,
                                             startcp,
+                                            matchBackward,
+                                            null,
                                             state.continuationOp,
                                             state.continuationPc);
+                                    if (new_min == 0) {
+                                        pushBackTrackState(
+                                                gData,
+                                                REOP_REPEAT,
+                                                pc,
+                                                startcp,
+                                                state.continuationOp,
+                                                state.continuationPc);
+                                    }
                                 }
                                 int parenCount = getIndex(program, pc);
                                 int parenIndex = getIndex(program, pc + INDEX_LEN);
@@ -3335,7 +3367,7 @@ public class NativeRegExp extends IdScriptableObject {
                                     int parenCount = getIndex(program, pc);
                                     pc += INDEX_LEN;
                                     int parenIndex = getIndex(program, pc);
-                                    pc += 2 * INDEX_LEN;
+                                    pc += 2 * INDEX_LEN + 1; // <parenindex> <atomic>
                                     for (int k = 0; k < parenCount; k++) {
                                         gData.setParens(parenIndex + k, -1, 0);
                                     }
@@ -3372,7 +3404,7 @@ public class NativeRegExp extends IdScriptableObject {
                                 int parenCount = getIndex(program, pc);
                                 pc += INDEX_LEN;
                                 int parenIndex = getIndex(program, pc);
-                                pc += 2 * INDEX_LEN;
+                                pc += 2 * INDEX_LEN + 1; // <parenindex> <atomic>
                                 for (int k = 0; k < parenCount; k++) {
                                     gData.setParens(parenIndex + k, -1, 0);
                                 }
@@ -3381,7 +3413,7 @@ public class NativeRegExp extends IdScriptableObject {
                                 continuationOp = state.continuationOp;
                                 pushBackTrackState(gData, REOP_MINIMALREPEAT, pc);
                                 popProgState(gData);
-                                pc += 2 * INDEX_LEN;
+                                pc += 2 * INDEX_LEN + 1; // <parencount> <parenindex> <atomic>
                                 pc = pc + getOffset(program, pc);
                             }
                             op = program[pc++];
@@ -4637,6 +4669,28 @@ public class NativeRegExp extends IdScriptableObject {
             SymbolId_split = 11,
             MAX_PROTOTYPE_ID = SymbolId_split;
 
+    /**
+     * Check if a quantifier's child could overlap with what follows. If not, the quantifier can be
+     * made atomic (no backtracking needed).
+     *
+     * @param child the quantifier's child node
+     * @param next the node following the quantifier
+     * @return true if they could overlap (conservative), false if definitely no overlap
+     */
+    private static boolean couldQuantifierChildOverlap(RENode child, RENode next) {
+        if (child == null || next == null) return true;
+
+        if (!reopIsSimple(child.op)) {
+            return true;
+        }
+
+        if (next.op == REOP_EOL) {
+            return false;
+        }
+
+        return true;
+    }
+
     private RECompiled re;
     Object lastIndex = ScriptRuntime.zeroObj; /* index after last match, for //g iterator */
     private int lastIndexAttr = DONTENUM | PERMANENT;
@@ -4679,6 +4733,7 @@ class RENode {
     int max;
     int parenCount;
     boolean greedy;
+    boolean atomic; // true if backtracking won't help (child can't overlap with next)
 
     /* or a character class */
     int bmsize; /* bitmap size, based on max char code */
@@ -4758,9 +4813,9 @@ class REProgState {
 
     final REProgState previous; // previous state in stack
 
-    final int min; /* current quantifier min */
-    final int max; /* current quantifier max */
-    final int index; /* progress in text */
+    int min; /* current quantifier min */
+    int max; /* current quantifier max */
+    int index; /* progress in text */
     final int continuationOp;
     final int continuationPc;
     final REBackTrackData backTrack; // used by ASSERT_  to recover state

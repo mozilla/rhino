@@ -1129,4 +1129,47 @@ public class NativeRegExpTest {
                 "\uD806\uDE45",
                 "'\\u{11A45}'.match(/\\p{sc=Zanabazar_Square}/u)[0]");
     }
+
+    @Test
+    public void atomicQuantifierOptimization() {
+        // Sanity check: non-atomic patterns still work
+        Utils.assertWithAllModes_ES6("non-atomic *b", "b", "/a*b/.exec('b')[0]");
+
+        // Patterns ending with $ have greedy quantifiers marked as atomic.
+        // The optimization only applies to greedy quantifiers.
+
+        // a+ requires at least one 'a'
+        Utils.assertWithAllModes_ES6("match +$", "aaa", "/a+$/.exec('aaa')[0]");
+        Utils.assertWithAllModes_ES6("no match +$", null, "/a+$/.exec('aaab')");
+
+        // a* can match zero chars - matches empty string at end
+        Utils.assertWithAllModes_ES6("match *$", "aaa", "/a*$/.exec('aaa')[0]");
+        Utils.assertWithAllModes_ES6("*$ matches empty at end", "", "/a*$/.exec('b')[0]");
+        Utils.assertWithAllModes_ES6("*$ index", "1", "'' + /a*$/.exec('b').index");
+        Utils.assertWithAllModes_ES6("*$ with trailing non-a", "", "/a*$/.exec('aaab')[0]");
+        Utils.assertWithAllModes_ES6("*$ index trailing", "4", "'' + /a*$/.exec('aaab').index");
+
+        // a? can match zero or one - matches empty at end if no 'a'
+        Utils.assertWithAllModes_ES6("match ?$", "a", "/a?$/.exec('a')[0]");
+        Utils.assertWithAllModes_ES6("?$ matches empty at end", "", "/a?$/.exec('b')[0]");
+        Utils.assertWithAllModes_ES6("?$ with trailing non-a", "", "/a?$/.exec('ab')[0]");
+        Utils.assertWithAllModes_ES6("?$ index trailing", "2", "'' + /a?$/.exec('ab').index");
+
+        // a{2,} requires at least two 'a's
+        Utils.assertWithAllModes_ES6("match {2,}$", "aaa", "/a{2,}$/.exec('aaa')[0]");
+        Utils.assertWithAllModes_ES6("no match {2,}$", null, "/a{2,}$/.exec('aaab')");
+
+        // Unicode property escapes with atomic optimization
+        Utils.assertWithAllModes_ES6(
+                "unicode +$",
+                "\u03B1\u03B2\u03B3",
+                "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2\u03B3')[0]");
+        Utils.assertWithAllModes_ES6(
+                "unicode +$ no match", null, "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2X')");
+
+        // Non-greedy quantifiers are not optimized as atomic.
+        // Non-greedy still matches all 'a's here because $ requires end of string.
+        Utils.assertWithAllModes_ES6("non-greedy +?$", "aaa", "/a+?$/.exec('aaa')[0]");
+        Utils.assertWithAllModes_ES6("non-greedy +?$ no match", null, "/a+?$/.exec('aaab')");
+    }
 }
