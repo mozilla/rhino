@@ -25,7 +25,7 @@ class NativeScript extends BaseFunction {
 
     private static final Object SCRIPT_TAG = "Script";
 
-    static LambdaConstructor init(Context cx, VarScope scope, boolean sealed) {
+    static LambdaConstructor init2(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor obj =
                 new LambdaConstructor(
                         scope,
@@ -70,7 +70,7 @@ class NativeScript extends BaseFunction {
      */
     @Deprecated
     static void init(VarScope scope, boolean sealed) {
-        init(Context.getContext(), scope, sealed);
+        init2(Context.getContext(), scope, sealed);
     }
 
     private NativeScript(Script script) {

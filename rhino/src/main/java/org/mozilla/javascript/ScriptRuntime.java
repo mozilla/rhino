@@ -207,7 +207,7 @@ public class ScriptRuntime {
                         : new LegacyCacheFactory.Concurrent();
         typeFactory.associate(scope);
 
-        LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
+        JSFunction function = BaseFunction.init(cx, scope, sealed);
         JSFunction obj = NativeObject.init(cx, scope, sealed);
 
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
@@ -236,7 +236,7 @@ public class ScriptRuntime {
         new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
 
-        NativeScript.init(cx, scope, sealed);
+        NativeScript.init2(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
