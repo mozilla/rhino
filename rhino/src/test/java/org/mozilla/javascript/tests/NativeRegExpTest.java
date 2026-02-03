@@ -1131,89 +1131,114 @@ public class NativeRegExpTest {
     }
 
     @Test
-    public void atomicQuantifierOptimization() {
-        // Sanity check: non-atomic patterns still work
-        Utils.assertWithAllModes_ES6("non-atomic *b", "b", "/a*b/.exec('b')[0]");
-
-        // Patterns ending with $ have greedy quantifiers marked as atomic.
-        // The optimization only applies to greedy quantifiers.
-
-        // a+ requires at least one 'a'
-        Utils.assertWithAllModes_ES6("match +$", "aaa", "/a+$/.exec('aaa')[0]");
-        Utils.assertWithAllModes_ES6("no match +$", null, "/a+$/.exec('aaab')");
-
-        // a* can match zero chars - matches empty string at end
-        Utils.assertWithAllModes_ES6("match *$", "aaa", "/a*$/.exec('aaa')[0]");
-        Utils.assertWithAllModes_ES6("*$ matches empty at end", "", "/a*$/.exec('b')[0]");
-        Utils.assertWithAllModes_ES6("*$ index", "1", "'' + /a*$/.exec('b').index");
-        Utils.assertWithAllModes_ES6("*$ with trailing non-a", "", "/a*$/.exec('aaab')[0]");
-        Utils.assertWithAllModes_ES6("*$ index trailing", "4", "'' + /a*$/.exec('aaab').index");
-
-        // a? can match zero or one - matches empty at end if no 'a'
-        Utils.assertWithAllModes_ES6("match ?$", "a", "/a?$/.exec('a')[0]");
-        Utils.assertWithAllModes_ES6("?$ matches empty at end", "", "/a?$/.exec('b')[0]");
-        Utils.assertWithAllModes_ES6("?$ with trailing non-a", "", "/a?$/.exec('ab')[0]");
-        Utils.assertWithAllModes_ES6("?$ index trailing", "2", "'' + /a?$/.exec('ab').index");
-
-        // a{2,} requires at least two 'a's
-        Utils.assertWithAllModes_ES6("match {2,}$", "aaa", "/a{2,}$/.exec('aaa')[0]");
-        Utils.assertWithAllModes_ES6("no match {2,}$", null, "/a{2,}$/.exec('aaab')");
-
-        // Unicode property escapes with atomic optimization
+    public void atomicQuantifierOptimization_greedyQuantifiers() {
+        // Patterns ending with $ have greedy quantifiers marked as atomic
+        String expected =
+                String.join(
+                        "-",
+                        "b", // non-atomic sanity check: /a*b/.exec('b')[0]
+                        "aaa", // +$ match: /a+$/.exec('aaa')[0]
+                        "true", // +$ no match: /a+$/.exec('aaab') === null
+                        "aaa", // *$ match: /a*$/.exec('aaa')[0]
+                        "true", // *$ empty at end: /a*$/.exec('b')[0] === ""
+                        "1", // *$ index: /a*$/.exec('b').index
+                        "true", // *$ trailing non-a: /a*$/.exec('aaab')[0] === ""
+                        "4", // *$ index trailing: /a*$/.exec('aaab').index
+                        "a", // ?$ match: /a?$/.exec('a')[0]
+                        "true", // ?$ empty at end: /a?$/.exec('b')[0] === ""
+                        "true", // ?$ trailing non-a: /a?$/.exec('ab')[0] === ""
+                        "2", // ?$ index trailing: /a?$/.exec('ab').index
+                        "aaa", // {2,}$ match: /a{2,}$/.exec('aaa')[0]
+                        "true" // {2,}$ no match: /a{2,}$/.exec('aaab') === null
+                        );
         Utils.assertWithAllModes_ES6(
-                "unicode +$",
-                "\u03B1\u03B2\u03B3",
-                "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2\u03B3')[0]");
+                expected,
+                "["
+                        + "/a*b/.exec('b')[0],"
+                        + "/a+$/.exec('aaa')[0],"
+                        + "/a+$/.exec('aaab') === null,"
+                        + "/a*$/.exec('aaa')[0],"
+                        + "/a*$/.exec('b')[0] === '',"
+                        + "/a*$/.exec('b').index,"
+                        + "/a*$/.exec('aaab')[0] === '',"
+                        + "/a*$/.exec('aaab').index,"
+                        + "/a?$/.exec('a')[0],"
+                        + "/a?$/.exec('b')[0] === '',"
+                        + "/a?$/.exec('ab')[0] === '',"
+                        + "/a?$/.exec('ab').index,"
+                        + "/a{2,}$/.exec('aaa')[0],"
+                        + "/a{2,}$/.exec('aaab') === null"
+                        + "].join('-')");
+    }
+
+    @Test
+    public void atomicQuantifierOptimization_unicodeAndNonGreedy() {
+        // Unicode property escapes and non-greedy quantifiers
+        String expected =
+                String.join(
+                        "-",
+                        "\u03B1\u03B2\u03B3", // unicode +$: /\p{Script=Greek}+$/u.exec('αβγ')[0]
+                        "true", // unicode +$ no match: /\p{Script=Greek}+$/u.exec('αβX') === null
+                        "aaa", // non-greedy +?$: /a+?$/.exec('aaa')[0]
+                        "true" // non-greedy +?$ no match: /a+?$/.exec('aaab') === null
+                        );
         Utils.assertWithAllModes_ES6(
-                "unicode +$ no match", null, "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2X')");
+                expected,
+                "["
+                        + "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2\u03B3')[0],"
+                        + "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2X') === null,"
+                        + "/a+?$/.exec('aaa')[0],"
+                        + "/a+?$/.exec('aaab') === null"
+                        + "].join('-')");
+    }
 
-        // Non-greedy quantifiers are not optimized as atomic.
-        // Non-greedy still matches all 'a's here because $ requires end of string.
-        Utils.assertWithAllModes_ES6("non-greedy +?$", "aaa", "/a+?$/.exec('aaa')[0]");
-        Utils.assertWithAllModes_ES6("non-greedy +?$ no match", null, "/a+?$/.exec('aaab')");
-
+    @Test
+    public void atomicQuantifierOptimization_multilineMode() {
         // Multiline mode: atomic optimization is disabled because $ matches at line boundaries
-        // and backtracking may be needed when the child can match \n
+        String expected =
+                String.join(
+                        "-",
+                        "aa", // simple multiline: /a*$/m.exec('aa\na')[0]
+                        "0", // simple multiline index
+                        "a", // char class with newline: /[a\n]*$/m.exec('a\nb')[0]
+                        "0", // char class with newline index
+                        "a" // dot no dotall: /.*$/m.exec('a\nb')[0]
+                        );
+        Utils.assertWithAllModes_ES6(
+                expected,
+                "["
+                        + "/a*$/m.exec('aa\\na')[0],"
+                        + "/a*$/m.exec('aa\\na').index,"
+                        + "/[a\\n]*$/m.exec('a\\nb')[0],"
+                        + "/[a\\n]*$/m.exec('a\\nb').index,"
+                        + "/.*$/m.exec('a\\nb')[0]"
+                        + "].join('-')");
+    }
 
-        // Simple multiline case - a* can't match \n, but we conservatively disable atomic anyway
-        Utils.assertWithAllModes_ES6("multiline simple", "aa", "/a*$/m.exec('aa\\na')[0]");
+    @Test
+    public void atomicQuantifierOptimization_dotAllMode() {
+        // dotAll mode tests
+        String expected =
+                String.join(
+                        "-",
+                        "a\nb", // multiline dotall: /.*$/ms.exec('a\nb')[0]
+                        "0", // multiline dotall index
+                        "a\nb\nc", // multiline dotall full: /.*$/ms.exec('a\nb\nc')[0]
+                        "a", // dotall char class needs backtrack: /[a\n]*$/ms.exec('a\nb')[0]
+                        "a\nb", // dotall single-line: /.*$/s.exec('a\nb')[0]
+                        "0", // dotall single-line index
+                        "a\nb" // single-line char class: /[a\nb]*$/s.exec('a\nb')[0]
+                        );
         Utils.assertWithAllModes_ES6(
-                "multiline simple index", "0", "'' + /a*$/m.exec('aa\\na').index");
-
-        // Character class that can match \n - backtracking IS needed here
-        // [a\n]* matches "a\n", $ fails at 'b', backtrack to "a", $ matches before \n
-        Utils.assertWithAllModes_ES6(
-                "multiline char class with newline", "a", "/[a\\n]*$/m.exec('a\\nb')[0]");
-        Utils.assertWithAllModes_ES6(
-                "multiline char class with newline index",
-                "0",
-                "'' + /[a\\n]*$/m.exec('a\\nb').index");
-
-        // dotAll + multiline: dot matches \n, matches entire string since $ matches at end
-        Utils.assertWithAllModes_ES6("multiline dotall", "a\nb", "/.*$/ms.exec('a\\nb')[0]");
-        Utils.assertWithAllModes_ES6(
-                "multiline dotall index", "0", "'' + /.*$/ms.exec('a\\nb').index");
-
-        // dotAll + multiline where backtracking IS needed: string doesn't end after match
-        // .*$ on "a\nb\nc" - .* matches "a\nb\nc", $ matches at end, result is full string
-        Utils.assertWithAllModes_ES6(
-                "multiline dotall full", "a\nb\nc", "/.*$/ms.exec('a\\nb\\nc')[0]");
-        // But with a char class that includes \n and string ending with non-newline char after
-        // newline
-        // [a\n]*$ on "a\nb" - needs to backtrack
-        Utils.assertWithAllModes_ES6(
-                "dotall char class needs backtrack", "a", "/[a\\n]*$/ms.exec('a\\nb')[0]");
-
-        // Regular dot (no dotAll) doesn't match \n, multiline still works
-        Utils.assertWithAllModes_ES6("multiline dot no dotall", "a", "/.*$/m.exec('a\\nb')[0]");
-
-        // dotAll WITHOUT multiline: $ only matches at end of string, atomic optimization is safe
-        // .* matches entire string including \n, $ matches at end
-        Utils.assertWithAllModes_ES6("dotall single-line", "a\nb", "/.*$/s.exec('a\\nb')[0]");
-        Utils.assertWithAllModes_ES6(
-                "dotall single-line index", "0", "'' + /.*$/s.exec('a\\nb').index");
-        // Even with char class that can match \n, atomic is safe in single-line mode
-        Utils.assertWithAllModes_ES6(
-                "single-line char class with newline", "a\nb", "/[a\\nb]*$/s.exec('a\\nb')[0]");
+                expected,
+                "["
+                        + "/.*$/ms.exec('a\\nb')[0],"
+                        + "/.*$/ms.exec('a\\nb').index,"
+                        + "/.*$/ms.exec('a\\nb\\nc')[0],"
+                        + "/[a\\n]*$/ms.exec('a\\nb')[0],"
+                        + "/.*$/s.exec('a\\nb')[0],"
+                        + "/.*$/s.exec('a\\nb').index,"
+                        + "/[a\\nb]*$/s.exec('a\\nb')[0]"
+                        + "].join('-')");
     }
 }
