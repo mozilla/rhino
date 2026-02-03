@@ -7,7 +7,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.diffplug.spotless:spotless-plugin-gradle:8.2.1'
+    implementation 'com.diffplug.spotless:spotless-plugin-gradle:8.2.0'
     implementation 'net.ltgt.gradle:gradle-errorprone-plugin:4.3.0'
     implementation 'de.obqo.decycle:de.obqo.decycle.gradle.plugin:1.2.3'
 }
