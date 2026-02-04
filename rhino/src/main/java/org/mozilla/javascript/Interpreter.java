@@ -3545,8 +3545,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (fun instanceof JSFunction
                     && ((JSFunction) fun).getDescriptor().getCode() instanceof InterpreterData) {
                 JSFunction ifun = (JSFunction) fun;
-                JSDescriptor desc = ifun.getDescriptor();
-                InterpreterData idata = (InterpreterData) desc.getCode();
+
+                JSDescriptor<JSFunction> desc = ifun.getDescriptor();
+                var idata = (InterpreterData<JSFunction>) desc.getCode();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     CallFrame callParentFrame = frame;
@@ -3616,8 +3617,9 @@ public final class Interpreter extends Icode implements Evaluator {
                 return BREAK_WITHOUT_EXTENSION;
             }
 
-            if (fun instanceof IdFunctionObject) {
-                IdFunctionObject ifun = (IdFunctionObject) fun;
+            if (fun instanceof JSFunction) {
+                var ifun = (JSFunction) fun;
+
                 if (NativeContinuation.isContinuationConstructor(ifun)) {
                     frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
                     return null;
@@ -3662,8 +3664,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (lhs instanceof JSFunction
                     && ((JSFunction) lhs).getConstructor() instanceof InterpreterData) {
                 JSFunction f = (JSFunction) lhs;
-                JSDescriptor desc = f.getDescriptor();
-                InterpreterData idata = (InterpreterData) desc.getConstructor();
+
+                JSDescriptor<JSFunction> desc = f.getDescriptor();
+                var idata = (InterpreterData<JSFunction>) desc.getConstructor();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6
@@ -3696,19 +3699,20 @@ public final class Interpreter extends Icode implements Evaluator {
                     return new StateContinueResult(calleeFrame, state.indexReg);
                 }
             }
+            if (lhs instanceof JSFunction) {
+                var f = (JSFunction) lhs;
+
+                if (NativeContinuation.isContinuationConstructor(f)) {
+                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
+                    return null;
+                }
+            }
+
             if (!(lhs instanceof Constructable)) {
                 if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
                 throw ScriptRuntime.notFunctionError(lhs);
             }
             Constructable ctor = (Constructable) lhs;
-
-            if (ctor instanceof IdFunctionObject) {
-                IdFunctionObject ifun = (IdFunctionObject) ctor;
-                if (NativeContinuation.isContinuationConstructor(ifun)) {
-                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
-                    return null;
-                }
-            }
 
             Object[] outArgs =
                     getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
