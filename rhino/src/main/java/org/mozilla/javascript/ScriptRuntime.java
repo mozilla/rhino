@@ -6,6 +6,12 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.Symbol.Kind.REGULAR;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
+
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -68,11 +74,19 @@ public class ScriptRuntime {
 
     /** Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3 */
     public static BaseFunction typeErrorThrower(Context cx) {
-        if (cx.typeErrorThrower == null) {
-            BaseFunction thrower = new ThrowTypeError(cx.topCallScope);
-            cx.typeErrorThrower = thrower;
+        return typeErrorThrower(cx.topCallScope);
+    }
+
+    private static final SymbolKey TYPE_ERROR_THROWER = new SymbolKey("TypeErrorThrower", REGULAR);
+
+    public static BaseFunction typeErrorThrower(VarScope scope) {
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        var thrower = top.get(TYPE_ERROR_THROWER, top);
+        if (thrower == NOT_FOUND) {
+            thrower = new ThrowTypeError(top);
+            top.defineProperty(TYPE_ERROR_THROWER, thrower, DONTENUM | READONLY | PERMANENT);
         }
-        return cx.typeErrorThrower;
+        return (BaseFunction) thrower;
     }
 
     static final class ThrowTypeError extends BaseFunction {
@@ -1627,6 +1641,17 @@ public class ScriptRuntime {
     }
 
     public static Function getExistingCtor(Context cx, VarScope scope, String constructorName) {
+        Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
+        if (ctorVal instanceof Function) {
+            return (Function) ctorVal;
+        }
+        if (ctorVal == Scriptable.NOT_FOUND) {
+            throw Context.reportRuntimeErrorById("msg.ctor.not.found", constructorName);
+        }
+        throw Context.reportRuntimeErrorById("msg.not.ctor", constructorName);
+    }
+
+    public static Function getExistingCtor(Context cx, VarScope scope, SymbolKey constructorName) {
         Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
         if (ctorVal instanceof Function) {
             return (Function) ctorVal;

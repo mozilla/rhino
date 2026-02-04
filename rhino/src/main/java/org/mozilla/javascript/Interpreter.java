@@ -4181,7 +4181,9 @@ public final class Interpreter extends Icode implements Evaluator {
             state.indexReg += frame.idata.itsMaxVars;
             int enumType =
                     op == Token.ENUM_INIT_KEYS
-                            ? ScriptRuntime.ENUMERATE_KEYS
+                            ? cx.getLanguageVersion() <= Context.VERSION_1_8
+                                    ? ScriptRuntime.ENUMERATE_KEYS
+                                    : ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR
                             : op == Token.ENUM_INIT_VALUES
                                     ? ScriptRuntime.ENUMERATE_VALUES
                                     : op == Token.ENUM_INIT_VALUES_IN_ORDER

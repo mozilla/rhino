@@ -6,7 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+import static org.mozilla.javascript.Symbol.Kind.REGULAR;
 
 import java.util.EnumSet;
 import org.mozilla.javascript.xml.XMLObject;
@@ -25,7 +27,8 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static final Object FUNCTION_TAG = "Function";
     private static final String FUNCTION_CLASS = "Function";
-    static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
+    static final SymbolKey GENERATOR_FUNCTION_CLASS =
+            new SymbolKey("GeneratorFunctionPrototype", REGULAR);
 
     private static final String APPLY_TAG = "APPLY_TAG";
     private static final String CALL_TAG = "CALL_TAG";
@@ -33,6 +36,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static final ClassDescriptor DESCRIPTOR;
     private static final ClassDescriptor ES6_DESCRIPTOR;
+    private static final ClassDescriptor GENERATOR_DESCRIPTOR;
     //    private static final ClassDescriptor GENERATOR_DESCRIPTOR;
     private static final JSDescriptor<JSFunction> APPLY_DESCRIPTOR;
     private static final JSDescriptor<JSFunction> CALL_DESCRIPTOR;
@@ -69,6 +73,19 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         APPLY_DESCRIPTOR = DESCRIPTOR.findProtoDesc("apply");
         CALL_DESCRIPTOR = DESCRIPTOR.findProtoDesc("call");
+
+        GENERATOR_DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                GENERATOR_FUNCTION_CLASS,
+                                "GeneratorFunction",
+                                1,
+                                BaseFunction::js_gen_constructor,
+                                BaseFunction::js_gen_constructor)
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value("GeneratorFunction", READONLY | DONTENUM))
+                        .build();
     }
 
     static JSFunction init(Context cx, VarScope scope, boolean sealed) {
@@ -91,41 +108,29 @@ public class BaseFunction extends ScriptableObject implements Function {
         init(Context.getContext(), scope, sealed);
     }
 
-    static Object initAsGeneratorFunction(VarScope scope, boolean sealed) {
+    static Object initAsGeneratorFunction(Context cx, VarScope scope, boolean sealed) {
         var proto = new NativeObject();
-        VarScope top = ScriptableObject.getTopLevelScope(scope);
 
-        var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
-        var functionProto =
-                (Scriptable) ScriptableObject.getProperty(function, PROTOTYPE_PROPERTY_NAME);
-        proto.setPrototype(functionProto);
-
-        var iterator = (Scriptable) ScriptableObject.getProperty(scope, "Iterator");
-        ScriptableObject.putProperty(
+        return GENERATOR_DESCRIPTOR.buildConstructor(
+                cx,
+                scope,
                 proto,
-                PROTOTYPE_PROPERTY_NAME,
-                ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG));
+                sealed,
+                (c, ctor) -> {
+                    VarScope top = ScriptableObject.getTopLevelScope(scope);
 
-        LambdaConstructor ctor =
-                new LambdaConstructor(
-                        scope,
-                        GENERATOR_FUNCTION_CLASS,
-                        1,
-                        proto,
-                        BaseFunction::js_gen_constructorCall,
-                        BaseFunction::js_gen_constructor);
+                    var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
+                    var functionProto =
+                            (Scriptable)
+                                    ScriptableObject.getProperty(function, PROTOTYPE_PROPERTY_NAME);
+                    proto.setPrototype(functionProto);
 
-        proto.defineProperty("constructor", ctor, READONLY | DONTENUM);
+                    var generatorProto =
+                            ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG);
 
-        // Function.prototype attributes: see ECMA 15.3.3.1
-        ctor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-
-        proto.defineProperty(SymbolKey.TO_STRING_TAG, "GeneratorFunction", READONLY | DONTENUM);
-        ScriptableObject.putProperty(scope, GENERATOR_FUNCTION_CLASS, ctor);
-        // Function.prototype attributes: see ECMA 15.3.3.1
-        // The "GeneratorFunction" name actually never appears in the global scope.
-        // Return it here so it can be cached as a "builtin"
-        return ctor;
+                    proto.setAttributes("constructor", DONTENUM | READONLY);
+                    proto.defineProperty("prototype", generatorProto, READONLY | DONTENUM);
+                });
     }
 
     public BaseFunction() {
@@ -283,6 +288,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
+    static DescriptorInfo createThrowingProp(Context cx, VarScope scope, ScriptableObject obj) {
+        var thrower = ScriptRuntime.typeErrorThrower(scope);
+        return new DescriptorInfo(false, NOT_FOUND, true, thrower, thrower, null);
+    }
+
     protected final boolean defaultHas(String name) {
         return super.has(name, this);
     }
@@ -297,7 +307,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     @Override
     public String getClassName() {
-        return isGeneratorFunction() ? GENERATOR_FUNCTION_CLASS : FUNCTION_CLASS;
+        return isGeneratorFunction() ? "GeneratorFunction" : FUNCTION_CLASS;
     }
 
     // Generated code will override this
@@ -469,11 +479,6 @@ public class BaseFunction extends ScriptableObject implements Function {
         return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
     }
 
-    private static Scriptable js_gen_constructorCall(
-            Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return js_gen_constructor(cx, scope, args);
-    }
-
     private static Scriptable js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (cx.isStrictMode()) {
@@ -493,7 +498,8 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    private static Scriptable js_gen_constructor(Context cx, VarScope scope, Object[] args) {
+    private static Scriptable js_gen_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -501,13 +507,13 @@ public class BaseFunction extends ScriptableObject implements Function {
             try {
                 cx.currentActivationCall = null;
                 cx.isTopLevelStrict = false;
-                return jsConstructor(cx, scope, args, true);
+                return jsConstructor(cx, f.getDeclarationScope(), args, true);
             } finally {
                 cx.isTopLevelStrict = strictMode;
                 cx.currentActivationCall = activation;
             }
         } else {
-            return jsConstructor(cx, scope, args, true);
+            return jsConstructor(cx, f.getDeclarationScope(), args, true);
         }
     }
 
