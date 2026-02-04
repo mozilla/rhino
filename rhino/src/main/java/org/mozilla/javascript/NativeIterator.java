@@ -45,12 +45,12 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     static void init(Context cx, TopLevel scope, boolean sealed) {
-        NativeIterator proto = new NativeIterator();
+        NativeObject proto = new NativeObject();
         var ctor = DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
 
         // Generator
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ES6Generator.init(scope, sealed);
+            ES6Generator.init(cx, scope, sealed);
         } else {
             NativeGenerator.init(cx, scope, sealed);
         }
