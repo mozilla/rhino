@@ -52,7 +52,7 @@ public final class NativeIterator extends ScriptableObject {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             ES6Generator.init(scope, sealed);
         } else {
-            NativeGenerator.init(scope, sealed);
+            NativeGenerator.init(cx, scope, sealed);
         }
 
         // StopIteration
