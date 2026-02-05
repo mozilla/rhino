@@ -310,7 +310,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         try {
             self.buffer = Arrays.copyOf(self.buffer, newLength);
         } catch (OutOfMemoryError e) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.oom");
+            throw ScriptRuntime.rangeErrorById("msg.arraybuf.oom");
         }
 
         return Undefined.instance;
