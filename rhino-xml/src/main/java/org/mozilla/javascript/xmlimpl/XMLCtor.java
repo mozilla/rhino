@@ -13,6 +13,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SerializableCallable;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
 class XMLCtor extends IdFunctionObject {
@@ -24,10 +25,19 @@ class XMLCtor extends IdFunctionObject {
 
     private XMLLibImpl lib;
 
-    public XMLCtor(Context cx, ScriptableObject scope, XML xml, Object tag, int id, int arity) {
-        super(xml, tag, id, arity);
-        //       this.lib = xml.lib;
-        this.options = xml.getProcessor();
+    private final boolean isXMLType; // to distinguish between XML and XMLList
+
+    public XMLCtor(
+            Context cx,
+            ScriptableObject scope,
+            XMLObjectImpl xmlObj,
+            Object tag,
+            int id,
+            int arity) {
+        super(xmlObj, tag, id, arity);
+        //       this.lib = xmlObj.lib;
+        this.options = xmlObj.getProcessor();
+        this.isXMLType = xmlObj instanceof XML;
         createProperties(cx, scope, this);
     }
 
@@ -36,6 +46,21 @@ class XMLCtor extends IdFunctionObject {
     }
 
     private static void createProperties(Context cx, ScriptableObject scope, XMLCtor obj) {
+        // E4X instanceof semantics (ECMA-357 13.4.3.10)
+        obj.defineProperty(
+                SymbolKey.HAS_INSTANCE,
+                new LambdaFunction(
+                        scope,
+                        "[Symbol.hasInstance]",
+                        1,
+                        (lcx, lscope, lthisObj, largs) -> {
+                            if (largs.length > 0 && largs[0] instanceof Scriptable) {
+                                return obj.hasInstance((Scriptable) largs[0]);
+                            }
+                            return false;
+                        }),
+                DONTENUM | READONLY | PERMANENT);
+
         defineMethod(
                 obj,
                 scope,
@@ -189,6 +214,12 @@ class XMLCtor extends IdFunctionObject {
     /** hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10. */
     @Override
     public boolean hasInstance(Scriptable instance) {
-        return (instance instanceof XML || instance instanceof XMLList);
+        if (isXMLType) {
+            // XML ctor: true for both XML and XMLList
+            return (instance instanceof XML || instance instanceof XMLList);
+        } else {
+            // XMLList ctor: true only for XMLList
+            return instance instanceof XMLList;
+        }
     }
 }
