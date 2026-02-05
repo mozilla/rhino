@@ -373,10 +373,14 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         // Attempt to call custom Symbol.hasInstance implementation if present
         Object hasInstanceMethod = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
-        if (hasInstanceMethod instanceof Callable) {
+        if (hasInstanceMethod instanceof Function) {
             return ScriptRuntime.toBoolean(
-                    ((Callable) hasInstanceMethod)
-                            .call(cx, getParentScope(), this, new Object[] {instance}));
+                    ((Function) hasInstanceMethod)
+                            .call(
+                                    cx,
+                                    ((Function) hasInstanceMethod).getParentScope(),
+                                    this,
+                                    new Object[] {instance}));
         }
 
         Object protoProp = ScriptableObject.getProperty(this, PROTOTYPE_PROPERTY_NAME);
