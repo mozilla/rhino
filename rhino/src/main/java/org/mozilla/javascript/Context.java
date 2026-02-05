@@ -2506,15 +2506,44 @@ public class Context implements Closeable {
      * "evaluate" functions. Frameworks that call Function objects directly should call this
      * function to ensure that everything completes if they want all Promises to eventually resolve.
      * This function is idempotent, but the microtask queue is not thread-safe.
+     *
+     * <p>Nothing will happen if suspendMicrotaskProcessing was called.
+     *
+     * @see #suspendMicrotaskProcessing()
      */
     public void processMicrotasks() {
         Runnable head;
-        do {
-            head = microtasks.poll();
-            if (head != null) {
-                head.run();
-            }
-        } while (head != null);
+        while (microtaskSuspendCount == 0 && (head = microtasks.poll()) != null) {
+            head.run();
+        }
+    }
+
+    /**
+     * Temporarily suspend microtask processing. Tasks will be resumed again when
+     * resumeMicrotaskProcessing() is called. Suspensions are cumulative -- each call to this method
+     * increases the suspend count, and microtasks will resume when the count again reaches zero.
+     * This can be used in complex frameworks that wish to execute multiple individual scripts
+     * before promises are resolved to emulate the behavior of some web browsers and other
+     * frameworks. The suspend count is not thread safe.
+     *
+     * @see #resumeMicrotaskProcessing()
+     */
+    public void suspendMicrotaskProcessing() {
+        microtaskSuspendCount++;
+    }
+
+    /**
+     * Resume microtask processing after a suspend. Each call to suspendMicrotaskProcessing() must
+     * be matched with a call to this function in order for processing to resume.
+     *
+     * @see #suspendMicrotaskProcessing()
+     */
+    public void resumeMicrotaskProcessing() {
+        assert microtaskSuspendCount > 0;
+        microtaskSuspendCount--;
+        if (microtaskSuspendCount == 0) {
+            processMicrotasks();
+        }
     }
 
     /**
@@ -2839,6 +2868,7 @@ public class Context implements Closeable {
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
     private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
+    private int microtaskSuspendCount;
     private final UnhandledRejectionTracker unhandledPromises = new UnhandledRejectionTracker();
 
     /** This is the list of names of objects forcing the creation of function activation records. */
