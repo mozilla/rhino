@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.util.Arrays;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
@@ -150,13 +151,11 @@ public class NativeArrayBuffer extends ScriptableObject {
             Object maxByteLengthValue = ScriptableObject.getProperty(options, "maxByteLength");
             if (maxByteLengthValue != Scriptable.NOT_FOUND
                     && !Undefined.isUndefined(maxByteLengthValue)) {
+                // Fail if we try to set max larger than Integer.MAX_VALUE. ECMAScript allows
+                // for larger values. We need to use mapped ByteBuffers if we want to support that.
                 maxByteLength = ScriptRuntime.toIndex(maxByteLengthValue);
                 if (length > maxByteLength) {
                     throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.mismatch");
-                }
-                if (maxByteLength > Runtime.getRuntime().maxMemory()) {
-                    // Sanity check (in the 262 tests) to avoid an impossibly-large maximum
-                    throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.toobig");
                 }
             }
         }
@@ -308,15 +307,12 @@ public class NativeArrayBuffer extends ScriptableObject {
             return Undefined.instance;
         }
 
-        byte[] newBuffer = new byte[newLength];
-        int copyLength = Math.min(newLength, oldLength);
-
-        if (copyLength > 0) {
-            System.arraycopy(self.buffer, 0, newBuffer, 0, copyLength);
+        try {
+            self.buffer = Arrays.copyOf(self.buffer, newLength);
+        } catch (OutOfMemoryError e) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.oom");
         }
 
-        // New bytes are automatically initialized to 0 in Java
-        self.buffer = newBuffer;
         return Undefined.instance;
     }
 

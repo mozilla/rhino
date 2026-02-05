@@ -847,6 +847,12 @@ public class ScriptRuntime {
         return toNumber(val);
     }
 
+    /**
+     * Implement ToIndex from section 7.1 of ECMAScript, but return an "int". As a result, throw
+     * RangeError if the result is larger than the size of a Java int. This differs from ECMAScript
+     * which requires checking against 2^53. Use this in functions that will translate an index into
+     * a Java array offset.
+     */
     public static int toIndex(Object val) {
         if (Undefined.isUndefined(val)) {
             return 0;
@@ -856,7 +862,7 @@ public class ScriptRuntime {
             throw rangeErrorById("msg.out.of.range.index", integerIndex);
         }
         // ToLength
-        double index = Math.min(integerIndex, NativeNumber.MAX_SAFE_INTEGER);
+        double index = Math.min(integerIndex, Integer.MAX_VALUE);
         if (integerIndex != index) {
             throw rangeErrorById("msg.out.of.range.index", integerIndex);
         }
