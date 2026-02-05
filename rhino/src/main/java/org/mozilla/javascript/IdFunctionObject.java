@@ -108,6 +108,11 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
+    public boolean isConstructor() {
+        return useCallAsConstructor;
+    }
+
+    @Override
     public String getFunctionName() {
         return (functionName == null) ? "" : functionName;
     }
