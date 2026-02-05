@@ -2,14 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*
- * Tests for the Object.getOwnPropertyDescriptor(obj, prop) method
- */
 package org.mozilla.javascript.tests.es6;
 
 import org.junit.Test;
 import org.mozilla.javascript.testutils.Utils;
 
+/*
+ * Tests for BoundFunction
+ */
 public class BoundFunctionTest {
 
     @Test
@@ -20,7 +20,7 @@ public class BoundFunctionTest {
     }
 
     @Test
-    public void lenght() {
+    public void length() {
         Utils.assertWithAllModes_ES6(0, "function foo() {}; foo.bind({}).length;");
 
         Utils.assertWithAllModes_ES6(1, "function foo(a) {}; foo.bind({}).length;");
@@ -37,6 +37,30 @@ public class BoundFunctionTest {
 
         Utils.assertWithAllModes_ES6(2, "function foo(a, b, c) {}; foo.bind({}, 'x').length;");
         Utils.assertWithAllModes_ES6(1, "function foo(a, b, c) {}; foo.bind({}, 'x', 'y').length;");
+    }
+
+    @Test
+    public void arguments() {
+        String code =
+                "function foo() { return 'Hello!'; };\n"
+                        + "var boundFoo = foo.bind({});\n"
+                        + "'' + Object.getOwnPropertyDescriptor(boundFoo, 'arguments');";
+        Utils.assertWithAllModes_ES6("undefined", code);
+        Utils.assertWithAllModes_1_8("[object Object]", code);
+    }
+
+    @Test
+    public void argumentsAccess() {
+        String code =
+                "function foo() { return 'Hello!'; };\n"
+                        + "var boundFoo = foo.bind({});\n"
+                        + "let res = '';\n"
+                        + "try { boundFoo.arguments; res += 'no ex'; } catch (e) { res += e.message; };\n"
+                        + "try { boundFoo.arguments = 7; res += ' no ex'; } catch (e) { res += ' ' + e.message; };";
+        Utils.assertWithAllModes_ES6(
+                "This operation is not allowed. This operation is not allowed.", code);
+        Utils.assertWithAllModes_1_8(
+                "This operation is not allowed. This operation is not allowed.", code);
     }
 
     @Test

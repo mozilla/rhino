@@ -1129,4 +1129,116 @@ public class NativeRegExpTest {
                 "\uD806\uDE45",
                 "'\\u{11A45}'.match(/\\p{sc=Zanabazar_Square}/u)[0]");
     }
+
+    @Test
+    public void atomicQuantifierOptimization_greedyQuantifiers() {
+        // Patterns ending with $ have greedy quantifiers marked as atomic
+        String expected =
+                String.join(
+                        "-",
+                        "b", // non-atomic sanity check: /a*b/.exec('b')[0]
+                        "aaa", // +$ match: /a+$/.exec('aaa')[0]
+                        "true", // +$ no match: /a+$/.exec('aaab') === null
+                        "aaa", // *$ match: /a*$/.exec('aaa')[0]
+                        "true", // *$ empty at end: /a*$/.exec('b')[0] === ""
+                        "1", // *$ index: /a*$/.exec('b').index
+                        "true", // *$ trailing non-a: /a*$/.exec('aaab')[0] === ""
+                        "4", // *$ index trailing: /a*$/.exec('aaab').index
+                        "a", // ?$ match: /a?$/.exec('a')[0]
+                        "true", // ?$ empty at end: /a?$/.exec('b')[0] === ""
+                        "true", // ?$ trailing non-a: /a?$/.exec('ab')[0] === ""
+                        "2", // ?$ index trailing: /a?$/.exec('ab').index
+                        "aaa", // {2,}$ match: /a{2,}$/.exec('aaa')[0]
+                        "true" // {2,}$ no match: /a{2,}$/.exec('aaab') === null
+                        );
+        Utils.assertWithAllModes_ES6(
+                expected,
+                "["
+                        + "/a*b/.exec('b')[0],"
+                        + "/a+$/.exec('aaa')[0],"
+                        + "/a+$/.exec('aaab') === null,"
+                        + "/a*$/.exec('aaa')[0],"
+                        + "/a*$/.exec('b')[0] === '',"
+                        + "/a*$/.exec('b').index,"
+                        + "/a*$/.exec('aaab')[0] === '',"
+                        + "/a*$/.exec('aaab').index,"
+                        + "/a?$/.exec('a')[0],"
+                        + "/a?$/.exec('b')[0] === '',"
+                        + "/a?$/.exec('ab')[0] === '',"
+                        + "/a?$/.exec('ab').index,"
+                        + "/a{2,}$/.exec('aaa')[0],"
+                        + "/a{2,}$/.exec('aaab') === null"
+                        + "].join('-')");
+    }
+
+    @Test
+    public void atomicQuantifierOptimization_unicodeAndNonGreedy() {
+        // Unicode property escapes and non-greedy quantifiers
+        String expected =
+                String.join(
+                        "-",
+                        "\u03B1\u03B2\u03B3", // unicode +$: /\p{Script=Greek}+$/u.exec('αβγ')[0]
+                        "true", // unicode +$ no match: /\p{Script=Greek}+$/u.exec('αβX') === null
+                        "aaa", // non-greedy +?$: /a+?$/.exec('aaa')[0]
+                        "true" // non-greedy +?$ no match: /a+?$/.exec('aaab') === null
+                        );
+        Utils.assertWithAllModes_ES6(
+                expected,
+                "["
+                        + "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2\u03B3')[0],"
+                        + "/\\p{Script=Greek}+$/u.exec('\u03B1\u03B2X') === null,"
+                        + "/a+?$/.exec('aaa')[0],"
+                        + "/a+?$/.exec('aaab') === null"
+                        + "].join('-')");
+    }
+
+    @Test
+    public void atomicQuantifierOptimization_multilineMode() {
+        // Multiline mode: atomic optimization is disabled because $ matches at line boundaries
+        String expected =
+                String.join(
+                        "-",
+                        "aa", // simple multiline: /a*$/m.exec('aa\na')[0]
+                        "0", // simple multiline index
+                        "a", // char class with newline: /[a\n]*$/m.exec('a\nb')[0]
+                        "0", // char class with newline index
+                        "a" // dot no dotall: /.*$/m.exec('a\nb')[0]
+                        );
+        Utils.assertWithAllModes_ES6(
+                expected,
+                "["
+                        + "/a*$/m.exec('aa\\na')[0],"
+                        + "/a*$/m.exec('aa\\na').index,"
+                        + "/[a\\n]*$/m.exec('a\\nb')[0],"
+                        + "/[a\\n]*$/m.exec('a\\nb').index,"
+                        + "/.*$/m.exec('a\\nb')[0]"
+                        + "].join('-')");
+    }
+
+    @Test
+    public void atomicQuantifierOptimization_dotAllMode() {
+        // dotAll mode tests
+        String expected =
+                String.join(
+                        "-",
+                        "a\nb", // multiline dotall: /.*$/ms.exec('a\nb')[0]
+                        "0", // multiline dotall index
+                        "a\nb\nc", // multiline dotall full: /.*$/ms.exec('a\nb\nc')[0]
+                        "a", // dotall char class needs backtrack: /[a\n]*$/ms.exec('a\nb')[0]
+                        "a\nb", // dotall single-line: /.*$/s.exec('a\nb')[0]
+                        "0", // dotall single-line index
+                        "a\nb" // single-line char class: /[a\nb]*$/s.exec('a\nb')[0]
+                        );
+        Utils.assertWithAllModes_ES6(
+                expected,
+                "["
+                        + "/.*$/ms.exec('a\\nb')[0],"
+                        + "/.*$/ms.exec('a\\nb').index,"
+                        + "/.*$/ms.exec('a\\nb\\nc')[0],"
+                        + "/[a\\n]*$/ms.exec('a\\nb')[0],"
+                        + "/.*$/s.exec('a\\nb')[0],"
+                        + "/.*$/s.exec('a\\nb').index,"
+                        + "/[a\\nb]*$/s.exec('a\\nb')[0]"
+                        + "].join('-')");
+    }
 }
