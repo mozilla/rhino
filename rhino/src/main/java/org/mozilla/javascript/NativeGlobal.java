@@ -8,8 +8,8 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
-import static org.mozilla.javascript.ScriptableObject.READONLY;
 
 import java.io.Serializable;
 import java.util.EnumMap;
@@ -78,8 +78,8 @@ public class NativeGlobal implements Serializable {
             }
             errorDescs.put(
                     e,
-                    builder.withProtoValue("name", e.name(), DONTENUM)
-                            .withProtoValue("message", "", DONTENUM)
+                    builder.withProp(PROTO, "name", value(e.name(), DONTENUM))
+                            .withProp(PROTO, "message", value("", DONTENUM))
                             .build());
         }
         ERROR_DESCRIPTORS = Map.copyOf(errorDescs);
