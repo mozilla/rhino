@@ -16,6 +16,7 @@ jobs:
   # to see if tests are passing that are currently disabled.
   test:
     runs-on: ubuntu-latest
+    name: Test 262 Verification
     steps:
       - name: Check out Rhino
         uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
@@ -57,25 +58,29 @@ jobs:
             echo "The test262.properties file is up to date."
           fi
 
-  # Test building and testing on all supported versions
+  # Test various combinations of building and testing
   matrix-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - java-version: "17"
-            name: "Java 17"
-            multithread: false
           - java-version: "21"
-            name: "Java 21"
+            test-java-version: "21"
+            name: "Java 21 Build and Test"
             multithread: false
           - java-version: "25"
-            name: "Java 25"
+            test-java-version: "25"
+            name: "Java 25 Build and Test"
             multithread: false
           - java-version: "25"
+            test-java-version: "25"
             name: "Java 25 Multithreaded"
             multithread: true
+          - java-version: "25"
+            test-java-version: "17"
+            name: "Java 25 Build, Java 17 Test"
+            multithread: false
     name: ${{ matrix.name }}
     steps:
     - name: Check out Rhino
@@ -85,14 +90,18 @@ jobs:
     - name: Set up Java
       uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
       with:
-        java-version: ${{ matrix.java-version }}
+        java-version: |
+          ${{ matrix.test-java-version }}
+          ${{ matrix.java-version }}
         distribution: 'adopt'
     - name: Build and test ${{ matrix.name }}
+      env:
+        RHINO_TEST_JAVA_VERSION: ${{ matrix.test-java-version }}
       run: >-
         ./gradlew check ${{ matrix.multithread && '-Drhino.useThreadSafeObjectsByDefault=true' || '' }}
     - name: Upload results ${{ matrix.name }}
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: ${{ always() }}
       with:
-        name: reports-java-${{ matrix.java-version }}-${{ matrix.multithread }}
+        name: reports-java-${{ matrix.java-version }}-${{ matrix.test-java-version}}${{ matrix.multithread }}
         path: '*/build/reports'
