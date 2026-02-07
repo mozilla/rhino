@@ -14,7 +14,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [ 26, 28, 30, 33 ]
+        # oldest supported API level: API 26 (Android 8)
+        # current latest API level: API 34 (Android 14)
+        api-level: [ 26, 28, 30, 34 ]
     name: Rhino Android Tests
     steps:
     - name: Enable KVM
