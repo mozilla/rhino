@@ -110,7 +110,6 @@ public class Test262SuiteTest {
                             "new.target",
                             "object-rest",
                             "regexp-dotall",
-                            "resizable-arraybuffer",
                             "SharedArrayBuffer",
                             "tail-call-optimization",
                             "Temporal",

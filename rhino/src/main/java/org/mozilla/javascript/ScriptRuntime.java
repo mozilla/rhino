@@ -30,6 +30,7 @@ import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
 import org.mozilla.javascript.typedarrays.NativeDataView;
+import org.mozilla.javascript.typedarrays.NativeFloat16Array;
 import org.mozilla.javascript.typedarrays.NativeFloat32Array;
 import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeInt16Array;
@@ -272,6 +273,7 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "Uint32Array", sealed, true, NativeUint32Array::init);
             new LazilyLoadedCtor(scope, "BigInt64Array", sealed, true, NativeBigInt64Array::init);
             new LazilyLoadedCtor(scope, "BigUint64Array", sealed, true, NativeBigUint64Array::init);
+            new LazilyLoadedCtor(scope, "Float16Array", sealed, true, NativeFloat16Array::init);
             new LazilyLoadedCtor(scope, "Float32Array", sealed, true, NativeFloat32Array::init);
             new LazilyLoadedCtor(scope, "Float64Array", sealed, true, NativeFloat64Array::init);
             new LazilyLoadedCtor(scope, "DataView", sealed, true, NativeDataView::init);
@@ -845,6 +847,12 @@ public class ScriptRuntime {
         return toNumber(val);
     }
 
+    /**
+     * Implement ToIndex from section 7.1 of ECMAScript, but return an "int". As a result, throw
+     * RangeError if the result is larger than the size of a Java int. This differs from ECMAScript
+     * which requires checking against 2^53. Use this in functions that will translate an index into
+     * a Java array offset.
+     */
     public static int toIndex(Object val) {
         if (Undefined.isUndefined(val)) {
             return 0;
@@ -854,7 +862,7 @@ public class ScriptRuntime {
             throw rangeErrorById("msg.out.of.range.index", integerIndex);
         }
         // ToLength
-        double index = Math.min(integerIndex, NativeNumber.MAX_SAFE_INTEGER);
+        double index = Math.min(integerIndex, Integer.MAX_VALUE);
         if (integerIndex != index) {
             throw rangeErrorById("msg.out.of.range.index", integerIndex);
         }
@@ -6013,7 +6021,7 @@ public class ScriptRuntime {
      * Not all "NativeSymbol" instances are actually symbols. So account for that here rather than
      * just by using an "instanceof" check.
      */
-    static boolean isSymbol(Object obj) {
+    public static boolean isSymbol(Object obj) {
         return ((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol())
                 || (obj instanceof SymbolKey);
     }

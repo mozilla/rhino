@@ -12,11 +12,11 @@ load("testsrc/assert.js");
 
   var msg = null;
   try { new Int8Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.0", msg);
+  assertEquals("RangeError: Index -2 out of range", msg);
 
   msg = null;
   try { new Int8Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.68435457E8", msg);
+  assertEquals("RangeError: Index -268,435,457 out of range", msg);
 
   msg = null;
   try { new Int8Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -79,11 +79,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint8Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.0", msg);
+  assertEquals("RangeError: Index -2 out of range", msg);
 
   msg = null;
   try { new Uint8Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.68435457E8", msg);
+  assertEquals("RangeError: Index -268,435,457 out of range", msg);
 
   msg = null;
   try { new Uint8Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -147,11 +147,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int16Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -4.0", msg);
+  assertEquals("RangeError: Index -4 out of range", msg);
 
   msg = null;
   try { new Int16Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -5.36870914E8", msg);
+  assertEquals("RangeError: Index -536,870,914 out of range", msg);
 
   msg = null;
   try { new Int16Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -217,11 +217,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint16Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -4.0", msg);
+  assertEquals("RangeError: Index -4 out of range", msg);
 
   msg = null;
   try { new Uint16Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -5.36870914E8", msg);
+  assertEquals("RangeError: Index -536,870,914 out of range", msg);
 
   msg = null;
   try { new Uint16Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -287,11 +287,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Int32Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -8.0", msg);
+  assertEquals("RangeError: Index -8 out of range", msg);
 
   msg = null;
   try { new Int32Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -1.073741828E9", msg);
+  assertEquals("RangeError: Index -1,073,741,828 out of range", msg);
 
   msg = null;
   try { new Int32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -357,11 +357,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint32Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -8.0", msg);
+  assertEquals("RangeError: Index -8 out of range", msg);
 
   msg = null;
   try { new Uint32Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -1.073741828E9", msg);
+  assertEquals("RangeError: Index -1,073,741,828 out of range", msg);
 
   msg = null;
   try { new Uint32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -427,11 +427,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Uint8ClampedArray(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.0", msg);
+  assertEquals("RangeError: Index -2 out of range", msg);
 
   msg = null;
   try { new Uint8ClampedArray(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.68435457E8", msg);
+  assertEquals("RangeError: Index -268,435,457 out of range", msg);
 
   msg = null;
   try { new Uint8ClampedArray(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -495,11 +495,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Float32Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -8.0", msg);
+  assertEquals("RangeError: Index -8 out of range", msg);
 
   msg = null;
   try { new Float32Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -1.073741828E9", msg);
+  assertEquals("RangeError: Index -1,073,741,828 out of range", msg);
 
   msg = null;
   try { new Float32Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
@@ -565,11 +565,11 @@ load("testsrc/assert.js");
 
   msg = null;
   try { new Float64Array(-2); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -16.0", msg);
+  assertEquals("RangeError: Index -16 out of range", msg);
 
   msg = null;
   try { new Float64Array(-268435457); } catch (e) { msg = e.toString();}
-  assertEquals("RangeError: Negative array length -2.147483656E9", msg);
+  assertEquals("RangeError: Index -2,147,483,656 out of range", msg);
 
   msg = null;
   try { new Float64Array(new ArrayBuffer(), -1); } catch (e) { msg = e.toString();}
