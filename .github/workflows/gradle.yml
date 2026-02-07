@@ -12,15 +12,58 @@ env:
   GRADLE_OPTS: "--enable-native-access=ALL-UNNAMED"
 
 jobs:
+  # First, "official" test: Build on Java 25, test on Java 11, compare test262.properties
+  # to see if tests are passing that are currently disabled.
   test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Rhino
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
+      - name: Check out test262
+        run: git submodule update --init --single-branch
+      - name: Set up Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: |
+            11
+            25
+          distribution: 'adopt'
+      - name: Check current state of test262.properties
+        id: hashBefore
+        run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
+      - name: Run test262 tests
+        # Currently Java 11 is required to have a reproducible result
+        env:
+          RHINO_TEST_JAVA_VERSION: "11"
+        run: >-
+          ./gradlew check -DupdateTest262properties
+      - name: Upload results
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: ${{ always() }}
+        with:
+          name: reports-java
+          path: '*/build/reports'
+      - name: Check updated state of test262.properties
+        id: hashAfter
+        run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
+      - name: Compare test262 results
+        run: |
+          if [ "${{ steps.hashBefore.outputs.hash }}" != "${{ steps.hashAfter.outputs.hash }}" ]; then
+            echo "The test262.properties file was not updated properly."
+            echo "Please follow the instructions in tests/README.md to update it."
+            git --no-pager diff ./tests/testsrc/test262.properties
+            exit 1
+          else
+            echo "The test262.properties file is up to date."
+          fi
+
+  # Test building and testing on all supported versions
+  matrix-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - java-version: "11"
-            name: "Java 11"
-            multithread: false
           - java-version: "17"
             name: "Java 17"
             multithread: false
@@ -38,18 +81,13 @@ jobs:
     - name: Check out Rhino
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
     - name: Check out test262
-      # We don't actually want all the history for this part
       run: git submodule update --init --single-branch
     - name: Set up Java
       uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
       with:
-        java-version: |
-          ${{ matrix.java-version }}
-          25
+        java-version: ${{ matrix.java-version }}
         distribution: 'adopt'
     - name: Build and test ${{ matrix.name }}
-      env:
-        RHINO_TEST_JAVA_VERSION: ${{ matrix.java-version }}
       run: >-
         ./gradlew check ${{ matrix.multithread && '-Drhino.useThreadSafeObjectsByDefault=true' || '' }}
     - name: Upload results ${{ matrix.name }}
@@ -58,40 +96,3 @@ jobs:
       with:
         name: reports-java-${{ matrix.java-version }}-${{ matrix.multithread }}
         path: '*/build/reports'
-
-  test262:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check out Rhino
-      uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.2.2
-    - name: Check out test262
-      run: git submodule update --init --single-branch
-    - name: Set up Java
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-      with:
-        java-version: |
-          11
-          25
-        distribution: 'adopt'
-    - name: Check current state of test262.properties
-      id: hashBefore
-      run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
-    - name: Run test262 tests
-      # Currently Java 11 is required to have a reproducible result
-      env:
-        RHINO_TEST_JAVA_VERSION: "11"
-      run: >-
-        ./gradlew :tests:test --tests Test262SuiteTest -DupdateTest262properties
-    - name: Check updated state of test262.properties
-      id: hashAfter
-      run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
-    - name: Compare test262 results
-      run: |
-        if [ "${{ steps.hashBefore.outputs.hash }}" != "${{ steps.hashAfter.outputs.hash }}" ]; then
-          echo "The test262.properties file was not updated properly."
-          echo "Please follow the instructions in tests/README.md to update it."
-          git --no-pager diff ./tests/testsrc/test262.properties
-          exit 1
-        else
-          echo "The test262.properties file is up to date."
-        fi
