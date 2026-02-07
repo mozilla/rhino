@@ -10,8 +10,8 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 ## Summary
 
-Rhino requires Java 11 or higher to run, and 17 or higher to build. Java 21
-or 25 is highly recommended.
+Rhino requires Java 11 or higher to run, and 21 or higher to build. Java
+25 is highly recommended.
 
 To build and run a Rhino shell:
 
