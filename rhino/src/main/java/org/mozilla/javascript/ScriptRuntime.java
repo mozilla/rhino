@@ -216,7 +216,7 @@ public class ScriptRuntime {
         if (scope.getPrototype() == null) scope.setPrototype(objectPrototype);
 
         // must precede NativeGlobal since it's needed therein
-        NativeError.init(scope, sealed);
+        NativeError.init(cx, scope, sealed);
         NativeGlobal.init(cx, scope, sealed);
 
         NativeArray.init(cx, scope, sealed);
@@ -229,7 +229,7 @@ public class ScriptRuntime {
         NativeString.init(scope, sealed);
         NativeBoolean.init(cx, scope, sealed);
         NativeNumber.init(scope, sealed);
-        NativeDate.init(scope, sealed);
+        NativeDate.init(cx, scope, sealed);
         new LazilyLoadedCtor(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor(scope, "JSON", sealed, true, NativeJSON::init);
 
