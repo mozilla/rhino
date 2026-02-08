@@ -39,7 +39,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
         return iterativeMethod(cx, null, operation, scope, thisObj, args, lengthAccessor, true);
@@ -54,7 +54,7 @@ public class ArrayLikeAbstractOperations {
             IdFunctionObject fun,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
         return iterativeMethod(cx, fun, operation, scope, thisObj, args, lengthAccessor, false);
@@ -65,7 +65,7 @@ public class ArrayLikeAbstractOperations {
             IdFunctionObject fun,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
             boolean skipCoercibleCheck) {
@@ -90,7 +90,7 @@ public class ArrayLikeAbstractOperations {
             String name,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
         return iterativeMethod(
@@ -103,7 +103,7 @@ public class ArrayLikeAbstractOperations {
             String name,
             IterativeOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
             boolean skipCoercibleCheck) {
@@ -317,7 +317,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             ReduceOperation operation,
             Scriptable scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
@@ -329,10 +329,11 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             ReduceOperation operation,
             Scriptable scope,
-            Scriptable o,
+            Object thisObj,
             Object[] args,
             long length) {
 
+        Scriptable o = ScriptRuntime.toObject(scope, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
