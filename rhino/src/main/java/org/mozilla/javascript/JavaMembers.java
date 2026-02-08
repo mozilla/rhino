@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.mozilla.javascript.lc.ReflectUtils;
 import org.mozilla.javascript.lc.member.ExecutableBox;
+import org.mozilla.javascript.lc.member.ExecutableOverload;
 import org.mozilla.javascript.lc.member.NativeJavaField;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -95,6 +96,21 @@ class JavaMembers {
                             javaObject, isStatic);
             if (member == null) return Scriptable.NOT_FOUND;
         }
+
+        // TODO: cache instance in caller NativeJavaObject
+        if (member instanceof ExecutableOverload) {
+            if (member instanceof ExecutableOverload.WithField) {
+                var withField = (ExecutableOverload.WithField) member;
+                return new FieldAndMethods(scope, withField.methods, withField.field);
+            } else {
+                var method = (ExecutableOverload) member;
+                var built = new NativeJavaMethod(method.methods, method.name);
+                ScriptRuntime.setFunctionProtoAndParent(
+                        built, Context.getCurrentContext(), scope, false);
+                return built;
+            }
+        }
+
         if (member instanceof Scriptable) {
             return member;
         }
@@ -133,9 +149,9 @@ class JavaMembers {
             member = staticMembers.get(name);
         }
         if (member == null) throw reportMemberNotFound(name);
-        if (member instanceof FieldAndMethods) {
-            FieldAndMethods fam = (FieldAndMethods) ht.get(name);
-            member = fam.field;
+        if (member instanceof ExecutableOverload.WithField) {
+            var withField = (ExecutableOverload.WithField) member;
+            member = withField.field;
         }
 
         // Is this a bean property "set"?
@@ -244,9 +260,8 @@ class JavaMembers {
                 // Try to get static member from instance (LC3)
                 obj = staticMembers.get(trueName);
             }
-            if (obj instanceof NativeJavaMethod) {
-                NativeJavaMethod njm = (NativeJavaMethod) obj;
-                methodsOrCtors = njm.methods;
+            if (obj instanceof ExecutableOverload) {
+                methodsOrCtors = ((ExecutableOverload) obj).methods;
             }
         }
 
@@ -281,8 +296,8 @@ class JavaMembers {
                 String trueName = methodOrCtor.getName();
                 member = ht.get(trueName);
 
-                if (member instanceof NativeJavaMethod
-                        && ((NativeJavaMethod) member).methods.length > 1) {
+                if (member instanceof ExecutableOverload
+                        && ((ExecutableOverload) member).methods.length > 1) {
                     NativeJavaMethod fun = new NativeJavaMethod(methodOrCtor, name);
                     fun.setPrototype(prototype);
                     ht.put(name, fun);
@@ -431,8 +446,7 @@ class JavaMembers {
         // gets in the way.
         var typeFactory = TypeInfoFactory.get(scope);
 
-        Method[] methods = discoverAccessibleMethods(cl, includeProtected, includePrivate);
-        for (Method method : methods) {
+        for (Method method : discoverAccessibleMethods(cl, includeProtected, includePrivate)) {
             int mods = method.getModifiers();
             boolean isStatic = Modifier.isStatic(mods);
             Map<String, Object> ht = isStatic ? staticMembers : members;
@@ -477,11 +491,7 @@ class JavaMembers {
                         methodBoxes[i] = new ExecutableBox(method, typeFactory, this.cl);
                     }
                 }
-                NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
-                if (scope != null) {
-                    ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
-                }
-                entry.setValue(fun);
+                entry.setValue(new ExecutableOverload(entry.getKey(), methodBoxes));
             }
         }
 
@@ -495,13 +505,12 @@ class JavaMembers {
                 Object member = ht.get(name);
                 if (member == null) {
                     ht.put(name, new NativeJavaField(field, typeFactory));
-                } else if (member instanceof NativeJavaMethod) {
-                    NativeJavaMethod method = (NativeJavaMethod) member;
-                    FieldAndMethods fam =
-                            new FieldAndMethods(
-                                    scope, method.methods, new NativeJavaField(field, typeFactory));
-                    Map<String, FieldAndMethods> fmht =
-                            isStatic ? staticFieldAndMethods : fieldAndMethods;
+                } else if (member instanceof ExecutableOverload) {
+                    var withField =
+                            new ExecutableOverload.WithField(
+                                    (ExecutableOverload) member,
+                                    new NativeJavaField(field, typeFactory));
+                    var fmht = isStatic ? staticFieldAndMethods : fieldAndMethods;
                     if (fmht == null) {
                         fmht = new HashMap<>();
                         if (isStatic) {
@@ -510,8 +519,8 @@ class JavaMembers {
                             fieldAndMethods = fmht;
                         }
                     }
-                    fmht.put(name, fam);
-                    ht.put(name, fam);
+                    fmht.put(name, withField);
+                    ht.put(name, withField);
                 } else if (member instanceof NativeJavaField) {
                     var oldField = (NativeJavaField) member;
                     // If this newly reflected field shadows an inherited field,
@@ -607,7 +616,7 @@ class JavaMembers {
             }
 
             var nameComponent = name.substring(isIsBeaning ? 2 : 3);
-            if (nameComponent.isEmpty() || !(entry.getValue() instanceof NativeJavaMethod)) {
+            if (nameComponent.isEmpty() || !(entry.getValue() instanceof ExecutableOverload)) {
                 continue;
             }
 
@@ -616,8 +625,8 @@ class JavaMembers {
                 continue;
             }
 
+            var method = (ExecutableOverload) entry.getValue();
             if (isGetBeaning || isIsBeaning) { // getter
-                var method = (NativeJavaMethod) entry.getValue();
 
                 var candidate = extractGetMethod(method.methods, isStatic);
                 if (candidate != null) {
@@ -626,7 +635,7 @@ class JavaMembers {
                             // prefer 'get' over 'is'
                             || bean.getter.getFunctionName().startsWith("is")) {
                         if (method.methods.length == 1) {
-                            bean.getter = method;
+                            bean.getter = new NativeJavaMethod(method.methods, name);
                         } else {
                             bean.getter = new NativeJavaMethod(new ExecutableBox[] {candidate});
                         }
@@ -635,7 +644,7 @@ class JavaMembers {
             } else { // isSetBeaning
                 var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
                 // capture all possible setters for now, actual setter will be searched later
-                bean.setter = (NativeJavaMethod) entry.getValue();
+                bean.setter = new NativeJavaMethod(method.methods, name);
             }
         }
 
@@ -782,11 +791,11 @@ class JavaMembers {
 
     Map<String, FieldAndMethods> getFieldAndMethodsObjects(
             Scriptable scope, Object javaObject, boolean isStatic) {
-        Map<String, FieldAndMethods> ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
+        var ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
         if (ht == null) return null;
         int len = ht.size();
-        Map<String, FieldAndMethods> result = new HashMap<>(len);
-        for (FieldAndMethods fam : ht.values()) {
+        Map<String, FieldAndMethods> result = new HashMap<>((int) (len / 0.75 + 1));
+        for (var fam : ht.values()) {
             FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
             famNew.javaObject = javaObject;
             result.put(fam.field.raw().getName(), famNew);
@@ -882,10 +891,19 @@ class JavaMembers {
     }
 
     private Class<?> cl;
+
+    /**
+     * All possible types of values in this map: {@link ExecutableOverload}, {@link
+     * NativeJavaField}, {@link ExecutableOverload.WithField}, and {@link BeanProperty}
+     */
     private Map<String, Object> members;
-    private Map<String, FieldAndMethods> fieldAndMethods;
+
+    private Map<String, ExecutableOverload.WithField> fieldAndMethods;
+
+    /** All possible types of values in this map: same as {@link #members} */
     private Map<String, Object> staticMembers;
-    private Map<String, FieldAndMethods> staticFieldAndMethods;
+
+    private Map<String, ExecutableOverload.WithField> staticFieldAndMethods;
     NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
 }
 
