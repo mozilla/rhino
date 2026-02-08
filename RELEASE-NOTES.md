@@ -1,3 +1,15 @@
+# Rhino 1.9.1
+## February 10, 2026
+
+This release fixes a few small regressions introduced in Rhino 1.9.0.
+
+* Ensure that the "global" object is present, necessary for core-js to run
+* Prevent compiled methods from introducing illegal characters in their names
+* Support reserved words like "class" as names of XML attributes
+* Fix a performance regression in the RegExp engine.
+
+Thanks to all who contributed!
+
 # Rhino 1.9.0
 ## December 22, 2025
 
