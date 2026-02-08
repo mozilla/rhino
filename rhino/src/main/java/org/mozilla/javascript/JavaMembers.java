@@ -101,7 +101,7 @@ class JavaMembers {
         if (member instanceof ExecutableOverload) {
             if (member instanceof ExecutableOverload.WithField) {
                 var withField = (ExecutableOverload.WithField) member;
-                return new FieldAndMethods(scope, withField.methods, withField.field);
+                return new FieldAndMethods(scope, withField);
             } else {
                 var method = (ExecutableOverload) member;
                 var built = new NativeJavaMethod(method.methods, method.name);
@@ -637,7 +637,7 @@ class JavaMembers {
                         if (method.methods.length == 1) {
                             bean.getter = new NativeJavaMethod(method.methods, name);
                         } else {
-                            bean.getter = new NativeJavaMethod(new ExecutableBox[] {candidate});
+                            bean.getter = new NativeJavaMethod(candidate, name);
                         }
                     }
                 }
@@ -795,10 +795,10 @@ class JavaMembers {
         if (ht == null) return null;
         int len = ht.size();
         Map<String, FieldAndMethods> result = new HashMap<>((int) (len / 0.75 + 1));
-        for (var fam : ht.values()) {
-            FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
-            famNew.javaObject = javaObject;
-            result.put(fam.field.raw().getName(), famNew);
+        for (var withField : ht.values()) {
+            var fieldAndMethods = new FieldAndMethods(scope, withField);
+            fieldAndMethods.javaObject = javaObject;
+            result.put(withField.name, fieldAndMethods);
         }
         return result;
     }
@@ -920,9 +920,9 @@ final class BeanProperty {
 class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
-    FieldAndMethods(Scriptable scope, ExecutableBox[] methods, NativeJavaField field) {
-        super(methods);
-        this.field = field;
+    FieldAndMethods(Scriptable scope, ExecutableOverload.WithField withField) {
+        super(withField.methods, withField.name);
+        this.field = withField.field;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
     }
