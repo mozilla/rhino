@@ -786,13 +786,14 @@ class JavaMembers {
     Map<String, FieldAndMethods> getFieldAndMethodsObjects(
             Scriptable scope, Object javaObject, boolean isStatic) {
         var ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
-        if (ht == null) return null;
-        int len = ht.size();
-        Map<String, FieldAndMethods> result = new HashMap<>((int) (len / 0.75 + 1));
-        for (var withField : ht.values()) {
-            var fieldAndMethods = new FieldAndMethods(scope, withField);
+
+        var expectedCapacity = (int) Math.ceil(ht.size() / 0.75);
+        var result = new HashMap<String, FieldAndMethods>(expectedCapacity);
+        for (var entry : ht.entrySet()) {
+            var fieldAndMethods = new FieldAndMethods(scope, entry.getValue());
             fieldAndMethods.javaObject = javaObject;
-            result.put(withField.name, fieldAndMethods);
+
+            result.put(entry.getKey(), fieldAndMethods);
         }
         return result;
     }

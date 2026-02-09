@@ -85,11 +85,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(String name, Scriptable start) {
-        if (fieldAndMethods != null) {
-            Object result = fieldAndMethods.get(name);
-            if (result != null) {
-                return result;
-            }
+        var fieldAndMethod = fieldAndMethods.get(name);
+        if (fieldAndMethod != null) {
+            return fieldAndMethod;
         }
         // TODO: passing 'this' as the scope is bogus since it has
         //  no parent scope
