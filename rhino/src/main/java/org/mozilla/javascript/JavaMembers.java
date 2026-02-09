@@ -53,7 +53,9 @@ class JavaMembers {
                 throw Context.reportRuntimeErrorById("msg.access.prohibited", cl.getName());
             }
             this.members = new HashMap<>();
+            this.fieldAndMethods = new HashMap<>();
             this.staticMembers = new HashMap<>();
+            this.staticFieldAndMethods = new HashMap<>();
             this.cl = cl;
             boolean includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
             reflect(cx, scope, includeProtected, includePrivate);
@@ -511,14 +513,6 @@ class JavaMembers {
                                     (ExecutableOverload) member,
                                     new NativeJavaField(field, typeFactory));
                     var fmht = isStatic ? staticFieldAndMethods : fieldAndMethods;
-                    if (fmht == null) {
-                        fmht = new HashMap<>();
-                        if (isStatic) {
-                            staticFieldAndMethods = fmht;
-                        } else {
-                            fieldAndMethods = fmht;
-                        }
-                    }
                     fmht.put(name, withField);
                     ht.put(name, withField);
                 } else if (member instanceof NativeJavaField) {
@@ -890,20 +884,20 @@ class JavaMembers {
                 "msg.java.member.not.found", cl.getName(), memberName);
     }
 
-    private Class<?> cl;
+    private final Class<?> cl;
 
     /**
      * All possible types of values in this map: {@link ExecutableOverload}, {@link
      * NativeJavaField}, {@link ExecutableOverload.WithField}, and {@link BeanProperty}
      */
-    private Map<String, Object> members;
+    private final Map<String, Object> members;
 
-    private Map<String, ExecutableOverload.WithField> fieldAndMethods;
+    private final Map<String, ExecutableOverload.WithField> fieldAndMethods;
 
     /** All possible types of values in this map: same as {@link #members} */
-    private Map<String, Object> staticMembers;
+    private final Map<String, Object> staticMembers;
 
-    private Map<String, ExecutableOverload.WithField> staticFieldAndMethods;
+    private final Map<String, ExecutableOverload.WithField> staticFieldAndMethods;
     NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
 }
 
