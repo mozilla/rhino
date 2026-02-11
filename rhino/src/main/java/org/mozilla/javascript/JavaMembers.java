@@ -445,30 +445,23 @@ class JavaMembers {
 
     private void reflect(
             Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate) {
-        // We reflect methods first, because we want overloaded field/method
-        // names to be allocated to the NativeJavaMethod before the field
-        // gets in the way.
         var typeFactory = TypeInfoFactory.get(scope);
 
         var accessibleMethods = discoverAccessibleMethods(cl, includeProtected, includePrivate);
         var accessibleFields = getAccessibleFields(includeProtected, includePrivate);
 
+        // We reflect methods first, because we want overloaded field/method
+        // names to be allocated to the NativeJavaMethod before the field
+        // gets in the way.
         for (int cursor = 0; cursor < 2; cursor++) {
             var isStatic = (cursor == 0);
 
             collectMethods(accessibleMethods, isStatic, typeFactory);
 
             collectFields(accessibleFields, isStatic, typeFactory);
-        }
 
-        // Create bean properties from corresponding get/set methods first for
-        // static members and then for instance members
-        for (int tableCursor = 0; tableCursor != 2; ++tableCursor) {
-            boolean isStatic = (tableCursor == 0);
-            Map<String, Object> ht = isStatic ? staticMembers : members;
-
-            // Add the new bean properties.
-            ht.putAll(extractBeaning(ht, isStatic, includePrivate));
+            var table = isStatic ? staticMembers : members;
+            table.putAll(extractBeaning(table, isStatic, includePrivate));
         }
 
         // Reflect constructors
@@ -595,7 +588,12 @@ class JavaMembers {
         return nameComponent;
     }
 
-    /** at this stage, {@code members} includes {@link NativeJavaMethod} and {@link Field} */
+    /**
+     * Create bean properties from corresponding get/set methods
+     *
+     * <p>see {@link #collectFields(Collection, boolean, TypeInfoFactory)} for possible values in
+     * member table at this stage
+     */
     private static Map<String, BeanProperty> extractBeaning(
             Map<String, Object> members, boolean isStatic, boolean includePrivate) {
         var beans = new HashMap<String, BeanProperty>();
