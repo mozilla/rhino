@@ -28,7 +28,7 @@ public class WrapFactory {
     /**
      * @see #wrap(Context, Scriptable, Object, TypeInfo)
      */
-    public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+    public final Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
         return wrap(cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType));
     }
 
@@ -102,7 +102,7 @@ public class WrapFactory {
     /**
      * @see #wrapAsJavaObject(Context, Scriptable, Object, TypeInfo)
      */
-    public Scriptable wrapAsJavaObject(
+    public final Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
         return wrapAsJavaObject(cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
     }
