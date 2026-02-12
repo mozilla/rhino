@@ -191,8 +191,7 @@ final class NativeString extends ScriptableObject {
             str = ScriptRuntime.toCharSequence(args[0]);
         }
         var res = new NativeString(str);
-        res.setPrototype((Scriptable) f.getPrototypeProperty());
-        res.setParentScope(f.getDeclarationScope());
+        ScriptRuntime.setBuiltinProtoAndParent(res, f, nt, s, TopLevel.Builtins.String);
         return res;
     }
 

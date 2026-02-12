@@ -115,58 +115,23 @@ final class NativeReflect extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[0]));
         }
 
-        Constructable ctor = (Constructable) args[0];
+        Constructable target = (Constructable) args[0];
         if (args.length < 2) {
-            return ctor.construct(cx, s, ScriptRuntime.emptyArgs);
-        }
-
-        if (args.length > 2 && !AbstractEcmaObjectOperations.isConstructor(cx, args[2])) {
-            throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
+            return target.construct(cx, target, s, null, ScriptRuntime.emptyArgs);
         }
 
         Object[] callArgs = ScriptRuntime.getApplyArguments(cx, args[1]);
 
-        Object newTargetPrototype = null;
-        if (args.length > 2) {
-            Scriptable newTarget = ScriptableObject.ensureScriptable(args[2]);
-
-            if (newTarget instanceof BaseFunction) {
-                newTargetPrototype = ((BaseFunction) newTarget).getPrototypeProperty();
-            } else {
-                newTargetPrototype = newTarget.get("prototype", newTarget);
-            }
-
-            if (!(newTargetPrototype instanceof Scriptable)
-                    || ScriptRuntime.isSymbol(newTargetPrototype)
-                    || Undefined.isUndefined(newTargetPrototype)) {
-                newTargetPrototype = null;
-            }
+        Constructable newTarget;
+        if (args.length < 3) {
+            newTarget = target;
+        } else if (AbstractEcmaObjectOperations.isConstructor(cx, args[2])) {
+            newTarget = (Function) args[2];
+        } else {
+            throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
         }
 
-        // our Constructable interface does not support the newTarget;
-        // therefore we use a cloned implementation that fixes
-        // the prototype before executing call(..).
-        if (ctor instanceof BaseFunction && newTargetPrototype != null) {
-            BaseFunction ctorBaseFunction = (BaseFunction) ctor;
-            Scriptable result = ctorBaseFunction.createObject(cx, s);
-            if (result != null) {
-                result.setPrototype((Scriptable) newTargetPrototype);
-
-                Object val = ctorBaseFunction.call(cx, s, result, callArgs);
-                if (val instanceof Scriptable) {
-                    return (Scriptable) val;
-                }
-
-                return result;
-            }
-        }
-
-        Scriptable newScriptable = ctor.construct(cx, s, callArgs);
-        if (newTargetPrototype != null) {
-            newScriptable.setPrototype((Scriptable) newTargetPrototype);
-        }
-
-        return newScriptable;
+        return target.construct(cx, newTarget, s, null, callArgs);
     }
 
     private static Object defineProperty(

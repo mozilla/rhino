@@ -95,8 +95,7 @@ public class NativeSet extends ScriptableObject {
         if (args.length > 0) {
             loadFromIterable(cx, s, ns, NativeMap.key(args));
         }
-        ns.setParentScope(f.getDeclarationScope());
-        ns.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(ns, f, nt, s, TopLevel.Builtins.Set);
         return ns;
     }
 

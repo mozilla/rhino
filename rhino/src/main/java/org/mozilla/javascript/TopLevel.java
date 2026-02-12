@@ -65,6 +65,11 @@ public class TopLevel extends ScopeObject {
         /** The built-in Promise type. */
         Promise,
         Date,
+        Map,
+        Set,
+        WeakMap,
+        WeakSet,
+        Proxy,
         ArrayBuffer,
         Int8Array,
         Uint8Array,

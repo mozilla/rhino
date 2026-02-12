@@ -65,8 +65,7 @@ public class NativeWeakSet extends ScriptableObject {
         if (args.length > 0) {
             NativeSet.loadFromIterable(cx, f.getDeclarationScope(), ns, NativeMap.key(args));
         }
-        ns.setParentScope(f.getDeclarationScope());
-        ns.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(ns, f, nt, s, TopLevel.Builtins.WeakSet);
         return ns;
     }
 

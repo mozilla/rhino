@@ -839,4 +839,9 @@ class XMLList extends XMLObjectImpl implements Function {
     public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
     }
+
+    @Override
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
+    }
 }
