@@ -126,7 +126,7 @@ class NativeRegExpCtor {
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         re.compile(cx, s, args);
-        ScriptRuntime.setBuiltinProtoAndParent(re, s, TopLevel.Builtins.RegExp);
+        ScriptRuntime.setBuiltinProtoAndParent(re, f, nt, s, TopLevel.Builtins.RegExp);
         return re;
     }
 

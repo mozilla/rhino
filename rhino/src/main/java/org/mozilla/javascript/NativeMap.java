@@ -88,8 +88,7 @@ public class NativeMap extends ScriptableObject {
         if (args.length > 0) {
             loadFromIterable(cx, s, nm, key(args));
         }
-        nm.setParentScope(s);
-        nm.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(nm, f, nt, s, TopLevel.Builtins.Map);
         return nm;
     }
 
