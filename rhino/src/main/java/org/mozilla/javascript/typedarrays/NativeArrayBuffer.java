@@ -181,7 +181,18 @@ public class NativeArrayBuffer extends ScriptableObject {
 
         NativeArrayBuffer buffer = new NativeArrayBuffer(length);
         buffer.setParentScope(f.getDeclarationScope());
-        buffer.setPrototype((Scriptable) f.getPrototypeProperty());
+        Object proto;
+        if (nt instanceof JSFunction) {
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        } else {
+            proto = Undefined.instance;
+        }
+
+        if (proto instanceof Scriptable) {
+            buffer.setPrototype((Scriptable) proto);
+        } else {
+            buffer.setPrototype((Scriptable) f.getPrototypeProperty());
+        }
         buffer.maxByteLength = maxByteLength;
         return buffer;
     }

@@ -89,8 +89,7 @@ public class NativePromise extends ScriptableObject {
                     cx, s, thisArg, new Object[] {getErrorObject(cx, f.getDeclarationScope(), re)});
         }
 
-        promise.setParentScope(f.getDeclarationScope());
-        promise.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(promise, f, nt, s, TopLevel.Builtins.Promise);
         return promise;
     }
 

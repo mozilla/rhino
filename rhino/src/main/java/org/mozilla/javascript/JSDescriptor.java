@@ -30,6 +30,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private static final int REQUIRES_ACTIVATION_FRAME_FLAG = 1 << 10;
     private static final int REQUIRES_ARGUMENT_OBJECT_FLAG = 1 << 11;
     private static final int DECLARED_AS_FUNCTION_EXPRESSION_FLAG = 1 << 12;
+    private static final int DERIVED_CONSTRUCTOR_FLAG = 1 << 13;
 
     private final JSCode<T> code;
     private final JSCode<T> constructor;
@@ -79,6 +80,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             boolean requiresActivationFrame,
             boolean requiresArgumentObject,
             boolean declaredAsFunctionExpression,
+            boolean derivedConstructor,
             SecurityController securityController,
             Object securityDomain,
             int functionType) {
@@ -102,6 +104,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         flags = flags | (requiresActivationFrame ? REQUIRES_ACTIVATION_FRAME_FLAG : 0);
         flags = flags | (requiresArgumentObject ? REQUIRES_ARGUMENT_OBJECT_FLAG : 0);
         flags = flags | (declaredAsFunctionExpression ? DECLARED_AS_FUNCTION_EXPRESSION_FLAG : 0);
+        flags = flags | (derivedConstructor ? DERIVED_CONSTRUCTOR_FLAG : 0);
         this.flags = flags;
 
         this.sourceFile = sourceFile;
@@ -385,6 +388,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             requiresActivationFrame,
                             requiresArgumentObject,
                             declaredAsFunctionExpression,
+                            false,
                             securityController,
                             securityDomain,
                             functionType);

@@ -46,6 +46,9 @@ public interface Function extends Scriptable, Callable, Constructable {
     @Override
     Scriptable construct(Context cx, VarScope scope, Object[] args);
 
+    @Override
+    Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args);
+
     /**
      * Return the scope in which this function was declared or closed over. This is the
      * "[[Environment]]" defined in https://tc39.es/ecma262/#sec-ecmascript-function-objects.

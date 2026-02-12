@@ -14,6 +14,7 @@ public class IdFunctionObject extends BaseFunction {
     private static final long serialVersionUID = 4323463961654640261L;
 
     public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, int arity) {
+        super(null);
         if (arity < 0) throw new IllegalArgumentException();
 
         this.idcall = idcall;

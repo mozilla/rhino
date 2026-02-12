@@ -56,6 +56,7 @@ class NativeScript extends BaseFunction {
     }
 
     private NativeScript(Script script) {
+        super(null);
         this.script = script;
     }
 
