@@ -116,7 +116,7 @@ public class ScriptRuntime {
         }
 
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             throwNotAllowed();
             return null;
         }
@@ -152,7 +152,7 @@ public class ScriptRuntime {
          * @return the result of the call
          */
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             Object[] nestedArgs = new Object[2];
 
             nestedArgs[0] = methodName;
@@ -3421,7 +3421,7 @@ public class ScriptRuntime {
      * times. The args array reference should not be stored in any object that can be GC-reachable
      * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
-    public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
+    public static Ref callRef(Callable function, Object thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
             RefCallable rfunction = (RefCallable) function;
             Ref ref = rfunction.refCall(cx, thisObj, args);
@@ -3454,7 +3454,7 @@ public class ScriptRuntime {
             Scriptable thisObj,
             Object[] args,
             VarScope scope,
-            Scriptable callerThis,
+            Object callerThis,
             int callType,
             String filename,
             int lineNumber,
@@ -3493,7 +3493,7 @@ public class ScriptRuntime {
      * <p>See Ecma 15.3.4.[34]
      */
     public static Object applyOrCall(
-            boolean isApply, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, VarScope scope, Object thisObj, Object[] args) {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
@@ -3569,14 +3569,16 @@ public class ScriptRuntime {
         }
     }
 
-    static Callable getCallable(Scriptable thisObj) {
+    static Callable getCallable(Object thisObj) {
         Callable function;
         if (thisObj instanceof Callable) {
             function = (Callable) thisObj;
         } else if (thisObj == null) {
             throw ScriptRuntime.notFunctionError(null, null);
+        } else if (!(thisObj instanceof Scriptable)) {
+            throw ScriptRuntime.notFunctionError(thisObj, null);
         } else {
-            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+            Object value = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
             if (!(value instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(value, thisObj);
             }
@@ -4896,12 +4898,12 @@ public class ScriptRuntime {
      */
     @Deprecated
     public static Object doTopCall(
-            Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            Callable callable, Context cx, VarScope scope, Object thisObj, Object[] args) {
         return doTopCall(callable, cx, scope, thisObj, args, cx.isStrictMode());
     }
 
     @Deprecated
-    public static Object doTopCall(Script script, Context cx, VarScope scope, Scriptable thisObj) {
+    public static Object doTopCall(Script script, Context cx, VarScope scope, Object thisObj) {
         return doTopCall(script, cx, scope, thisObj, cx.isStrictMode());
     }
 
@@ -4909,7 +4911,7 @@ public class ScriptRuntime {
             Callable callable,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
@@ -4936,11 +4938,7 @@ public class ScriptRuntime {
     }
 
     public static Object doTopCall(
-            Script script,
-            Context cx,
-            VarScope scope,
-            Scriptable thisObj,
-            boolean isTopLevelStrict) {
+            Script script, Context cx, VarScope scope, Object thisObj, boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
         if (cx.topCallScope != null) throw new IllegalStateException();
 
@@ -5005,11 +5003,7 @@ public class ScriptRuntime {
     }
 
     public static void initScript(
-            ScriptOrFn execObj,
-            Scriptable thisObj,
-            Context cx,
-            VarScope scope,
-            boolean evalScript) {
+            ScriptOrFn execObj, Object thisObj, Context cx, VarScope scope, boolean evalScript) {
         if (cx.topCallScope == null) throw new IllegalStateException();
 
         var desc = execObj.getDescriptor();

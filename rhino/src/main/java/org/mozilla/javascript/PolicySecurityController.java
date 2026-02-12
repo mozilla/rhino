@@ -88,7 +88,7 @@ public class PolicySecurityController extends SecurityController {
             Context cx,
             Callable callable,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         // Run in doPrivileged as we might be checked for "getClassLoader"
         // runtime permission
@@ -145,7 +145,7 @@ public class PolicySecurityController extends SecurityController {
 
     public abstract static class SecureCaller {
         public abstract Object call(
-                Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args);
+                Callable callable, Context cx, VarScope scope, Object thisObj, Object[] args);
     }
 
     private static byte[] loadBytecode() {

@@ -645,7 +645,7 @@ public class NativeArray extends ScriptableObject implements List {
         final Scriptable items =
                 ScriptRuntime.toObject(s, (args.length >= 1) ? args[0] : Undefined.instance);
         Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
-        Scriptable thisArg = null;
+        Object thisArg = null;
         final boolean mapping = !Undefined.isUndefined(mapArg);
         Function mapFn = null;
 

@@ -243,13 +243,12 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        private static Object gc(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        private static Object gc(Context cx, VarScope scope, Object thisObj, Object[] args) {
             System.gc();
             return Undefined.instance;
         }
 
-        public static Object evalScript(
-                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public static Object evalScript(Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (args.length == 0) {
                 throw ScriptRuntime.throwError(cx, scope, "not enough args");
             }
@@ -261,14 +260,13 @@ public class Test262SuiteTest {
             return ((TopLevel) scriptable.getParentScope()).getGlobalThis();
         }
 
-        public static $262 createRealm(
-                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public static $262 createRealm(Context cx, VarScope scope, Object thisObj, Object[] args) {
             TopLevel realm = cx.initSafeStandardObjects(new TopLevel());
-            return install(realm, thisObj.getPrototype());
+            return install(realm, ScriptRuntime.toObject(realm, thisObj).getPrototype());
         }
 
         public static Object detachArrayBuffer(
-                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Object thisObj, Object[] args) {
             Scriptable buf = ScriptRuntime.toObject(scope, args[0]);
             if (buf instanceof NativeArrayBuffer) {
                 ((NativeArrayBuffer) buf).detach();

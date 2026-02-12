@@ -323,7 +323,7 @@ public class ContextFactory {
      * perform the real call. In this way execution of any script happens inside this function.
      */
     protected Object doTopCall(
-            Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            Callable callable, Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object result = callable.call(cx, (VarScope) scope, thisObj, args);
         return result instanceof ConsString ? result.toString() : result;
     }
@@ -333,7 +333,7 @@ public class ContextFactory {
      * will create the first stack frame with scriptable code, it calls this method to perform the
      * real call. In this way execution of any script happens inside this function.
      */
-    protected Object doTopCall(Script script, Context cx, VarScope scope, Scriptable thisObj) {
+    protected Object doTopCall(Script script, Context cx, VarScope scope, Object thisObj) {
         Object result = script.exec(cx, scope, thisObj);
         return result instanceof ConsString ? result.toString() : result;
     }

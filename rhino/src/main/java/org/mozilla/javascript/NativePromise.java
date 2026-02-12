@@ -459,13 +459,13 @@ public class NativePromise extends ScriptableObject {
         return new LambdaFunction(
                 scope,
                 1,
-                (Context cx, VarScope ls, Scriptable thisObj, Object[] args) -> {
+                (Context cx, VarScope ls, Object thisObj, Object[] args) -> {
                     Object value = args.length > 0 ? args[0] : Undefined.instance;
                     LambdaFunction valueThunk =
                             new LambdaFunction(
                                     scope,
                                     0,
-                                    (Context vc, VarScope vs, Scriptable vt, Object[] va) -> value);
+                                    (Context vc, VarScope vs, Object vt, Object[] va) -> value);
                     Object result =
                             onFinally.call(
                                     cx,
@@ -484,13 +484,13 @@ public class NativePromise extends ScriptableObject {
         return new LambdaFunction(
                 scope,
                 1,
-                (Context cx, VarScope ls, Scriptable thisObj, Object[] args) -> {
+                (Context cx, VarScope ls, Object thisObj, Object[] args) -> {
                     Object reason = args.length > 0 ? args[0] : Undefined.instance;
                     LambdaFunction reasonThrower =
                             new LambdaFunction(
                                     scope,
                                     0,
-                                    (Context vc, VarScope vs, Scriptable vt, Object[] va) -> {
+                                    (Context vc, VarScope vs, Object vt, Object[] va) -> {
                                         throw new JavaScriptException(reason, null, 0);
                                     });
                     Object result =
@@ -614,7 +614,7 @@ public class NativePromise extends ScriptableObject {
                     new LambdaFunction(
                             topScope,
                             1,
-                            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) ->
+                            (Context cx, VarScope scope, Object thisObj, Object[] args) ->
                                     resolve(
                                             cx,
                                             scope,
@@ -624,7 +624,7 @@ public class NativePromise extends ScriptableObject {
                     new LambdaFunction(
                             topScope,
                             1,
-                            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) ->
+                            (Context cx, VarScope scope, Object thisObj, Object[] args) ->
                                     reject(
                                             cx,
                                             scope,
@@ -738,7 +738,7 @@ public class NativePromise extends ScriptableObject {
                     new LambdaFunction(
                             topScope,
                             2,
-                            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) ->
+                            (Context cx, VarScope scope, Object thisObj, Object[] args) ->
                                     executor(args));
 
             promise = ((Constructable) pc).construct(topCx, topScope, new Object[] {executorFunc});
@@ -777,15 +777,12 @@ public class NativePromise extends ScriptableObject {
         int remainingElements = 1;
 
         IteratorLikeIterable.Itr iterator;
-        Scriptable thisObj;
+        Object thisObj;
         Capability capability;
         boolean failFast;
 
         PromiseAllResolver(
-                IteratorLikeIterable.Itr iter,
-                Scriptable thisObj,
-                Capability cap,
-                boolean failFast) {
+                IteratorLikeIterable.Itr iter, Object thisObj, Capability cap, boolean failFast) {
             this.iterator = iter;
             this.thisObj = thisObj;
             this.capability = cap;
@@ -836,7 +833,7 @@ public class NativePromise extends ScriptableObject {
                         new LambdaFunction(
                                 topScope,
                                 1,
-                                (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> {
+                                (cx, scope, thisObj, args) -> {
                                     Object value = (args.length > 0 ? args[0] : Undefined.instance);
                                     if (!failFast) {
                                         Scriptable elementResult = cx.newObject(scope);
@@ -853,10 +850,7 @@ public class NativePromise extends ScriptableObject {
                             new LambdaFunction(
                                     topScope,
                                     1,
-                                    (Context cx,
-                                            VarScope scope,
-                                            Scriptable thisObj,
-                                            Object[] args) -> {
+                                    (cx, scope, thisObj, args) -> {
                                         Scriptable result = cx.newObject(scope);
                                         result.put("status", result, " rejected");
                                         result.put(
@@ -953,7 +947,7 @@ public class NativePromise extends ScriptableObject {
                         new LambdaFunction(
                                 topScope,
                                 1,
-                                (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> {
+                                (cx, scope, thisObj, args) -> {
                                     Object value = (args.length > 0 ? args[0] : Undefined.instance);
                                     return eltResolver.reject(cx, scope, value, this);
                                 });
