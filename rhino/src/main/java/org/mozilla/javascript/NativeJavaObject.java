@@ -904,7 +904,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     private static Callable symbol_iterator =
-            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> {
+            (cx, scope, thisObj, args) -> {
                 if (!(thisObj instanceof NativeJavaObject)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }

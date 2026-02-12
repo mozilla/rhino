@@ -6,7 +6,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
@@ -29,19 +28,14 @@ public class Timers {
     public void install(VarScope scope) {
         LambdaFunction setTimeout =
                 new LambdaFunction(
-                        scope,
-                        "setTimeout",
-                        1,
-                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
-                                setTimeout(args));
+                        scope, "setTimeout", 1, (lcx, lscope, thisObj, args) -> setTimeout(args));
         ScriptableObject.defineProperty(scope, "setTimeout", setTimeout, ScriptableObject.DONTENUM);
         LambdaFunction clearTimeout =
                 new LambdaFunction(
                         scope,
                         "clearTimeout",
                         1,
-                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
-                                clearTimeout(args));
+                        (lcx, lscope, thisObj, args) -> clearTimeout(args));
         ScriptableObject.defineProperty(
                 scope, "clearTimeout", clearTimeout, ScriptableObject.DONTENUM);
     }

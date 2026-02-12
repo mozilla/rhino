@@ -193,9 +193,8 @@ public class NativeSet extends ScriptableObject {
         final Function f = (Function) arg1;
 
         for (Hashtable.Entry entry : entries) {
-            Scriptable thisObj = ScriptRuntime.getThisForScope(f.getDeclarationScope(), arg2);
             final Hashtable.Entry e = entry;
-            f.call(cx, scope, thisObj, new Object[] {e.value, e.value, this});
+            f.call(cx, scope, arg2, new Object[] {e.value, e.value, this});
         }
         return Undefined.instance;
     }

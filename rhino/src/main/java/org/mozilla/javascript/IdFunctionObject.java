@@ -81,17 +81,17 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // We need to do some sneakiness here for constructors...
         return idcall.execIdCall(this, cx, scope, getThisObj(thisObj), args);
     }
 
-    public final Scriptable getThisObj(Scriptable thisObj) {
+    public final Scriptable getThisObj(Object thisObj) {
         if (useCallAsConstructor && (thisObj == null || Undefined.isUndefined(thisObj))) {
             var res = ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
             return res;
         } else {
-            return thisObj;
+            return ScriptRuntime.toObject(getDeclarationScope(), thisObj);
         }
     }
 
