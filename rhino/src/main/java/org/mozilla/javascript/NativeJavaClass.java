@@ -116,7 +116,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // If it looks like a "cast" of an object to this class type,
         // walk the prototype chain to see if there's a wrapper of a
         // object that's an instanceof this class.

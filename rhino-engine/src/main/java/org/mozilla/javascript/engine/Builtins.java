@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import javax.script.ScriptContext;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
@@ -48,7 +47,7 @@ public class Builtins {
                         ScriptableObject.DONTENUM | ScriptableObject.READONLY);
     }
 
-    private static Object print(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    private static Object print(Context cx, VarScope scope, Object thisObj, Object[] args) {
         try {
             Builtins self = getSelf(scope);
             for (Object arg : args) {

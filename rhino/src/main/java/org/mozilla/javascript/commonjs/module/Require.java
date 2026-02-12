@@ -174,7 +174,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (args == null || args.length < 1) {
             throw ScriptRuntime.throwError(cx, scope, "require() needs one argument");
         }

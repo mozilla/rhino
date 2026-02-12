@@ -980,7 +980,7 @@ public class Dim {
         private VarScope scope;
 
         /** The 'this' object. */
-        private Scriptable thisObj;
+        private Object thisObj;
 
         /** Whether this frame represents a function (vs a top-level script). */
         private boolean isFunction;
@@ -1006,7 +1006,7 @@ public class Dim {
 
         /** Called when the stack frame is entered. */
         @Override
-        public void onEnter(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public void onEnter(Context cx, VarScope scope, Object thisObj, Object[] args) {
             contextData.pushFrame(this);
             this.scope = scope;
             this.thisObj = thisObj;

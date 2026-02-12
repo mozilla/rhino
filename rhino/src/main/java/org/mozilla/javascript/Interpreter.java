@@ -75,7 +75,7 @@ public final class Interpreter extends Icode implements Evaluator {
         final boolean useActivation;
         boolean isContinuationsTopFrame;
 
-        final Scriptable thisObj;
+        final Object thisObj;
 
         // The values that change during interpretation
 
@@ -92,7 +92,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         CallFrame(
                 Context cx,
-                Scriptable thisObj,
+                Object thisObj,
                 ScriptOrFn fnOrScript,
                 InterpreterData code,
                 CallFrame parentFrame,
@@ -1170,7 +1170,7 @@ public final class Interpreter extends Icode implements Evaluator {
             InterpreterData idata,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
@@ -3411,7 +3411,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
-            Scriptable funThisObj = result.getThis();
+            Object funThisObj = result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
             if (op == Icode_CALL_ON_SUPER) {
@@ -5019,7 +5019,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static CallFrame initFrame(
             Context cx,
             VarScope callerScope,
-            Scriptable thisObj,
+            Object thisObj,
             Scriptable homeObj,
             Object[] args,
             double[] argsDbl,

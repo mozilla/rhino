@@ -124,7 +124,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
