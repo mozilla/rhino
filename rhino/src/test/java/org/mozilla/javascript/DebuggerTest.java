@@ -66,7 +66,7 @@ public class DebuggerTest {
         }
 
         @Override
-        public void onEnter(Context cx, VarScope activation, Scriptable thisObj, Object[] args) {
+        public void onEnter(Context cx, VarScope activation, Object thisObj, Object[] args) {
             var names = new HashSet<String>();
             for (var id : activation.getIds()) {
                 names.add(id.toString());

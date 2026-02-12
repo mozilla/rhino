@@ -101,7 +101,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             VarScope scope,
             Object thisObj,
             Object[] args) {
-        return Interpreter.interpret(executableObject, this, cx, scope, (Scriptable) thisObj, args);
+        return Interpreter.interpret(executableObject, this, cx, scope, thisObj, args);
     }
 
     @Override

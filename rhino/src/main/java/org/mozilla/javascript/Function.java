@@ -29,7 +29,7 @@ public interface Function extends Scriptable, Callable, Constructable {
      * @return the result of the call
      */
     @Override
-    Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args);
+    Object call(Context cx, VarScope scope, Object thisObj, Object[] args);
 
     /**
      * Call the function as a constructor.

@@ -62,7 +62,7 @@ class NativeProxy extends ScriptableObject {
         }
 
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handlerObj = null;
                 revocableProxy.targetObj = null;
@@ -1327,7 +1327,7 @@ class NativeProxy extends ScriptableObject {
          * [[Call]] (thisArgument, argumentsList)</a>
          */
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             /*
              * 1. Let handler be O.[[ProxyHandler]].
              * 2. If handler is null, throw a TypeError exception.
