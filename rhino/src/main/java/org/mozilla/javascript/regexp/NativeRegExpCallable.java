@@ -27,4 +27,9 @@ class NativeRegExpCallable extends NativeRegExp implements Function {
     public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         return (Scriptable) execSub(cx, scope, args, MATCH);
     }
+
+    @Override
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return (Scriptable) execSub(cx, s, args, MATCH);
+    }
 }

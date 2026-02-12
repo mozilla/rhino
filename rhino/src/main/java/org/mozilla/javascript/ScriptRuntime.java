@@ -94,6 +94,7 @@ public class ScriptRuntime {
         private static final long serialVersionUID = -5891740962154902286L;
 
         ThrowTypeError(VarScope scope) {
+            super(scope);
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
 
             setAttributes("length", DONTENUM | PERMANENT | READONLY);
@@ -5406,8 +5407,31 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject obj, JSFunction f, Object nt, VarScope s, TopLevel.Builtins type) {
-        obj.setPrototype((Scriptable) f.getPrototypeProperty());
+        obj.setPrototype(findPrototype(f, nt, type));
+
         obj.setParentScope(s);
+    }
+
+    public static Scriptable findPrototype(JSFunction f, Object nt, TopLevel.Builtins type) {
+        Object proto;
+        if (nt instanceof JSFunction) {
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        } else if (nt instanceof Scriptable
+                && nt instanceof Function
+                && ((Function) nt).isConstructor()) {
+            var sobj = ((Scriptable) nt);
+            proto = sobj.get("prototype", sobj);
+        } else {
+            nt = f;
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        }
+
+        if (proto instanceof Scriptable) {
+            return (Scriptable) proto;
+        } else {
+            TopLevel top = ScriptableObject.getTopLevelScope(((Function) nt).getDeclarationScope());
+            return TopLevel.getBuiltinPrototype(top, type);
+        }
     }
 
     public static void initFunction(
