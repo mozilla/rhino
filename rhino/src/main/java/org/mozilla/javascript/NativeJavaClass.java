@@ -180,6 +180,10 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         throw Context.reportRuntimeErrorById("msg.cant.instantiate", msg, classObject.getName());
     }
 
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object args[]) {
+        return construct(cx, s, args);
+    }
+
     static Scriptable constructSpecific(
             Context cx, VarScope scope, Object[] args, ExecutableBox ctor) {
         Object instance = constructInternal(args, ctor);

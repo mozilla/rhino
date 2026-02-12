@@ -286,4 +286,22 @@ public class Delegator implements Function, SymbolScriptable {
         }
         return ((Constructable) myDelegee).construct(cx, scope, args);
     }
+
+    @Override
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        Scriptable myDelegee = getDelegee();
+        if (myDelegee == null) {
+            // this little trick allows us to declare prototype objects for Delegators
+            Delegator n = newInstance();
+            Scriptable delegee;
+            if (args.length == 0) {
+                delegee = cx.newObject(s);
+            } else {
+                delegee = ScriptRuntime.toObject(cx, s, args[0]);
+            }
+            n.setDelegee(delegee);
+            return n;
+        }
+        return ((Constructable) myDelegee).construct(cx, nt, s, thisObj, args);
+    }
 }

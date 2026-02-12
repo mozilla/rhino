@@ -63,6 +63,10 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         return pkg;
     }
 
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return construct(cx, s, args);
+    }
+
     public static void init(Context cx, VarScope scope, boolean sealed) {
         ClassLoader loader = cx.getApplicationClassLoader();
         final NativeJavaTopPackage top = new NativeJavaTopPackage(loader);

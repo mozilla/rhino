@@ -105,8 +105,7 @@ final class NativeNumber extends ScriptableObject {
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double val = (args.length > 0) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
         var res = new NativeNumber(val);
-        res.setPrototype((Scriptable) f.getPrototypeProperty());
-        res.setParentScope(f.getDeclarationScope());
+        ScriptRuntime.setBuiltinProtoAndParent(res, f, nt, s, TopLevel.Builtins.Number);
         return res;
     }
 

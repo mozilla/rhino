@@ -101,6 +101,12 @@ public class ComplianceTest {
         }
 
         @Override
+        public Scriptable construct(
+                Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+            throw new AssertionFailedError("Shouldn't be invoked as constructor");
+        }
+
+        @Override
         public String getClassName() {
             return "Function";
         }

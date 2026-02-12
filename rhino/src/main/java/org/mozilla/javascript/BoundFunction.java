@@ -26,6 +26,7 @@ public class BoundFunction extends BaseFunction {
             Callable targetFunction,
             Scriptable boundThis,
             Object[] boundArgs) {
+        super(scope);
         this.targetFunction = targetFunction;
         this.boundThis = boundThis;
         this.boundArgs = boundArgs;
