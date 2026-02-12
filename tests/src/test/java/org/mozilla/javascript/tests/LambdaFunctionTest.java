@@ -174,7 +174,8 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context ctx, VarScope scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, Object nt, VarScope scope, Object[] args) ->
+                                ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = new NewOnly();\n"
@@ -190,7 +191,8 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        (Context ctx, VarScope scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, Object nt, VarScope scope, Object[] args) ->
+                                ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = NewOnly();\n"
@@ -234,7 +236,7 @@ public class LambdaFunctionTest {
                             scope,
                             "TestClass",
                             1,
-                            (Context cx, VarScope s, Object[] args) -> {
+                            (Context cx, Object nt, VarScope s, Object[] args) -> {
                                 TestClass tc = new TestClass();
                                 if (args.length > 0) {
                                     tc.instanceVal = ScriptRuntime.toString(args[0]);
@@ -324,7 +326,7 @@ public class LambdaFunctionTest {
                                 }
                                 return "You passed " + arg;
                             },
-                            (lcx, s, args) -> {
+                            (lcx, nt, s, args) -> {
                                 SpecialConstructorClass tc = new SpecialConstructorClass();
                                 if (args.length > 0) {
                                     tc.value = ScriptRuntime.toString(args[0]);

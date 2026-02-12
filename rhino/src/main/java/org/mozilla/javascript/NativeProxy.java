@@ -1239,8 +1239,10 @@ class NativeProxy extends ScriptableObject {
             proxy = new NativeProxy(target, handler);
         }
 
-        proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(s, PROXY_TAG));
+        // Can't use the normal function here as we `setPrototype()` would call the trap.
+        proxy.setPrototypeDirect(ScriptRuntime.findPrototype(f, nt, TopLevel.Builtins.Proxy));
         proxy.setParentScope(s);
+
         return proxy;
     }
 
@@ -1297,7 +1299,7 @@ class NativeProxy extends ScriptableObject {
          * [[Construct]] (argumentsList, newTarget)</a>
          */
         @Override
-        public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+        public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] args) {
             /*
              * 1. Let handler be O.[[ProxyHandler]].
              * 2. If handler is null, throw a TypeError exception.
@@ -1324,7 +1326,7 @@ class NativeProxy extends ScriptableObject {
                 return (ScriptableObject) result;
             }
 
-            return ((Constructable) target).construct(cx, scope, args);
+            return ((Constructable) target).construct(cx, nt, scope, args);
         }
 
         /**

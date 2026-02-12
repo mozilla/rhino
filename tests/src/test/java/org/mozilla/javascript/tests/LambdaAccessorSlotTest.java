@@ -558,7 +558,7 @@ public class LambdaAccessorSlotTest {
                             "StatusHolder",
                             1,
                             LambdaConstructor.CONSTRUCTOR_NEW,
-                            (cx, scope1, args) -> new StatusHolder((String) args[0]));
+                            (cx, nt, scope1, args) -> new StatusHolder((String) args[0]));
 
             ScriptableObject.defineProperty(scope, "StatusHolder", constructor, DONTENUM);
             return constructor;

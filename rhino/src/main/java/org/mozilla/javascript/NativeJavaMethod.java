@@ -38,19 +38,24 @@ public class NativeJavaMethod extends BaseFunction {
     private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
             new CopyOnWriteArrayList<>();
 
-    NativeJavaMethod(ExecutableBox[] methods, String name) {
+    NativeJavaMethod(VarScope scope, ExecutableBox[] methods, String name) {
+        super(scope);
         this.functionName = name;
         this.methods = methods;
     }
 
-    NativeJavaMethod(ExecutableBox method, String name) {
+    NativeJavaMethod(VarScope scope, ExecutableBox method, String name) {
+        super(scope);
         this.functionName = name;
         this.methods = new ExecutableBox[] {method};
     }
 
     @Deprecated
     public NativeJavaMethod(VarScope scope, Method method, String name) {
-        this(new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()), name);
+        this(
+                scope,
+                new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()),
+                name);
     }
 
     @Override
@@ -130,7 +135,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    public Object call(Context cx, Object nt, VarScope scope, Object thisObj, Object[] args) {
         // Find a method that matches the types given.
         if (methods.length == 0) {
             throw new RuntimeException("No methods defined for call");

@@ -171,6 +171,7 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
+                                Object nt,
                                 VarScope callScope,
                                 Object thisObj,
                                 Object[] originalArgs) {
@@ -204,6 +205,7 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
+                                Object nt,
                                 VarScope callScope,
                                 Object thisObj,
                                 Object[] originalArgs) {

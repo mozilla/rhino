@@ -136,7 +136,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     @Override
-    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+    public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] args) {
         Class<?> classObject = getClassObject();
         int modifiers = classObject.getModifiers();
         if (!(Modifier.isInterface(modifiers) || Modifier.isAbstract(modifiers))) {

@@ -19,6 +19,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             JSDescriptor<JSFunction> descriptor,
             Object lexicalThis,
             Scriptable homeObject) {
+        super(scope);
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
         this.homeObject = homeObject;
@@ -33,6 +34,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,
             Scriptable homeObject) {
+        super(scope);
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
         this.homeObject = homeObject;
@@ -136,12 +138,12 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    public Object call(Context cx, Object nt, VarScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
         var realThis = getThisObj(thisObj);
-        return descriptor.getCode().execute(cx, this, Undefined.instance, scope, realThis, args);
+        return descriptor.getCode().execute(cx, this, nt, scope, realThis, args);
     }
 
     public final Object getThisObj(Object thisObj) {
@@ -159,13 +161,13 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return (Scriptable)
                     ScriptRuntime.doTopCall(
                             (lcx, lscope, lthisObj, largs) -> construct(lcx, lscope, largs),
                             cx,
-                            scope,
+                            s,
                             null,
                             args,
                             isStrict());
@@ -173,14 +175,17 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         if (descriptor.getConstructor() == null) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", getFunctionName());
         }
-        var thisObj = homeObject == null ? createObject(cx, scope) : null;
+        if (nt == null || Undefined.isUndefined(nt)) {
+            nt = this;
+        }
+        var thisObj = homeObject == null ? this.createObject(cx, s, nt) : null;
         // Pass `this` in as new.target for now. This can change when
         // the public `construct` signature changes.
-        var res = descriptor.getConstructor().execute(cx, this, this, scope, thisObj, args);
+        var res = descriptor.getConstructor().execute(cx, this, nt, s, thisObj, args);
         if (res instanceof Scriptable) {
             thisObj = (Scriptable) res;
         }
-        return thisObj;
+        return (Scriptable) thisObj;
     }
 
     public boolean isScript() {
