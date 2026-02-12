@@ -77,6 +77,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, VarScope scope) {
+        super(scope);
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox(getDeclarationScope(), (Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'

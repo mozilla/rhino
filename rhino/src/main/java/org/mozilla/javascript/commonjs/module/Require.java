@@ -87,6 +87,7 @@ public class Require extends BaseFunction {
             Script preExec,
             Script postExec,
             boolean sandboxed) {
+        super(nativeScope);
         this.moduleScriptProvider = moduleScriptProvider;
         this.nativeScope = nativeScope;
         this.sandboxed = sandboxed;

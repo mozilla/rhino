@@ -159,7 +159,18 @@ public class NativeArrayBuffer extends ScriptableObject {
         double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
         var res = new NativeArrayBuffer(length);
         res.setParentScope(f.getDeclarationScope());
-        res.setPrototype((Scriptable) f.getPrototypeProperty());
+        Object proto;
+        if (nt instanceof JSFunction) {
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        } else {
+            proto = Undefined.instance;
+        }
+
+        if (proto instanceof Scriptable) {
+            res.setPrototype((Scriptable) proto);
+        } else {
+            res.setPrototype((Scriptable) f.getPrototypeProperty());
+        }
         return res;
     }
 

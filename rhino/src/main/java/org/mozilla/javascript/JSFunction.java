@@ -19,6 +19,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             JSDescriptor<JSFunction> descriptor,
             Object lexicalThis,
             Scriptable homeObject) {
+        super(scope);
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
         this.homeObject = homeObject;
@@ -33,6 +34,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,
             Scriptable homeObject) {
+        super(scope);
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
         this.homeObject = homeObject;
@@ -159,18 +161,26 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (descriptor.getConstructor() == null) {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", getFunctionName());
         }
-        var thisObj = homeObject == null ? createObject(cx, scope) : null;
+        if (nt == null || Undefined.isUndefined(nt)) {
+            nt = this;
+        }
+        thisObj = homeObject == null ? this.createObject(cx, s, nt) : null;
         // Pass `this` in as new.target for now. This can change when
         // the public `construct` signature changes.
-        var res = descriptor.getConstructor().execute(cx, this, this, scope, thisObj, args);
+        var res = descriptor.getConstructor().execute(cx, this, nt, s, thisObj, args);
         if (res instanceof Scriptable) {
             thisObj = (Scriptable) res;
         }
-        return thisObj;
+        return (Scriptable) thisObj;
+    }
+
+    @Override
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+        return construct(cx, this, scope, null, args);
     }
 
     public boolean isScript() {

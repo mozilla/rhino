@@ -70,8 +70,7 @@ public class NativeWeakMap extends ScriptableObject {
         if (args.length > 0) {
             NativeMap.loadFromIterable(cx, f.getDeclarationScope(), nm, NativeMap.key(args));
         }
-        nm.setParentScope(f.getDeclarationScope());
-        nm.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(nm, f, nt, s, TopLevel.Builtins.WeakMap);
         return nm;
     }
 

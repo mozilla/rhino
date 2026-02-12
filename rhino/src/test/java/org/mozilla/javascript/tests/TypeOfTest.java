@@ -55,7 +55,7 @@ public class TypeOfTest {
     @Test
     public void test0() throws Exception {
         final Function f =
-                new BaseFunction() {
+                new BaseFunction(null) {
                     @Override
                     public Object call(
                             Context _cx, VarScope _scope, Object _thisObj, Object[] _args) {

@@ -133,17 +133,14 @@ public class BaseFunction extends ScriptableObject implements Function {
                 });
     }
 
-    public BaseFunction() {
+    public BaseFunction(VarScope scope) {
+        declarationScope = scope;
         createProperties();
-    }
-
-    public BaseFunction(boolean isGenerator) {
-        createProperties();
-        this.isGeneratorFunction = isGenerator;
     }
 
     public BaseFunction(VarScope scope, Scriptable prototype) {
         super(scope, prototype);
+        declarationScope = scope;
         createProperties();
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.Function);
     }
@@ -487,13 +484,13 @@ public class BaseFunction extends ScriptableObject implements Function {
             try {
                 cx.currentActivationCall = null;
                 cx.isTopLevelStrict = false;
-                return jsConstructor(cx, f.getDeclarationScope(), args, false);
+                return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false);
             } finally {
                 cx.isTopLevelStrict = strictMode;
                 cx.currentActivationCall = activation;
             }
         } else {
-            return jsConstructor(cx, f.getDeclarationScope(), args, false);
+            return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false);
         }
     }
 
@@ -506,13 +503,13 @@ public class BaseFunction extends ScriptableObject implements Function {
             try {
                 cx.currentActivationCall = null;
                 cx.isTopLevelStrict = false;
-                return jsConstructor(cx, f.getDeclarationScope(), args, true);
+                return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true);
             } finally {
                 cx.isTopLevelStrict = strictMode;
                 cx.currentActivationCall = activation;
             }
         } else {
-            return jsConstructor(cx, f.getDeclarationScope(), args, true);
+            return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true);
         }
     }
 
@@ -593,6 +590,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         return result;
     }
 
+    @Override
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return construct(cx, s, args);
+    }
+
     /**
      * Creates new script object. The default implementation of {@link #construct} uses this method
      * to to get the value for {@code thisObj} argument when invoking {@link #call}. The method is
@@ -603,6 +605,25 @@ public class BaseFunction extends ScriptableObject implements Function {
     public Scriptable createObject(Context cx, VarScope scope) {
         Scriptable newInstance = new NativeObject();
         newInstance.setPrototype(getClassPrototype());
+        newInstance.setParentScope(getParentScope());
+        return newInstance;
+    }
+
+    public Scriptable createObject(Context cx, VarScope scope, Object nt) {
+        Scriptable newInstance = new NativeObject();
+        Object proto;
+        if (nt instanceof JSFunction) {
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        } else {
+            proto = Undefined.instance;
+        }
+
+        if (proto instanceof Scriptable) {
+            newInstance.setPrototype((Scriptable) proto);
+        } else {
+            newInstance.setPrototype(getClassPrototype());
+        }
+
         newInstance.setParentScope(getParentScope());
         return newInstance;
     }
@@ -761,7 +782,12 @@ public class BaseFunction extends ScriptableObject implements Function {
     void setArguments(Object caller) {}
 
     private static Scriptable jsConstructor(
-            Context cx, VarScope scope, Object[] args, boolean isGeneratorFunction) {
+            Context cx,
+            JSFunction f,
+            Object nt,
+            VarScope scope,
+            Object[] args,
+            boolean isGeneratorFunction) {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
@@ -796,7 +822,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         String sourceURI = ScriptRuntime.makeUrlForGeneratedScript(false, filename, linep[0]);
 
-        TopLevel global = ScriptableObject.getTopLevelScope(scope);
+        TopLevel global = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
 
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
@@ -808,7 +834,18 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        return cx.compileFunction(global, source, evaluator, reporter, sourceURI, 1, null);
+        var res =
+                (JSFunction)
+                        cx.compileFunction(global, source, evaluator, reporter, sourceURI, 1, null);
+
+        if (res.getDescriptor().isES6Generator()) {
+            ScriptRuntime.setBuiltinProtoAndParent(
+                    (ScriptableObject) res, f, nt, scope, TopLevel.Builtins.GeneratorFunction);
+        } else {
+            ScriptRuntime.setBuiltinProtoAndParent(
+                    (ScriptableObject) res, f, nt, scope, TopLevel.Builtins.Function);
+        }
+        return res;
     }
 
     public void setHomeObject(Scriptable homeObject) {
@@ -825,15 +862,12 @@ public class BaseFunction extends ScriptableObject implements Function {
                 && this.getHomeObject() != null);
     }
 
-    private static final int Id_constructor = 1,
-            Id_toString = 2,
-            Id_toSource = 3,
-            Id_apply = 4,
-            Id_call = 5,
-            Id_bind = 6,
-            SymbolId_hasInstance = 7,
-            MAX_PROTOTYPE_ID = SymbolId_hasInstance;
+    @Override
+    public VarScope getDeclarationScope() {
+        return declarationScope;
+    }
 
+    private final VarScope declarationScope;
     private Object prototypeProperty;
     private Object argumentsObj = NOT_FOUND;
     private Object nameValue = null;

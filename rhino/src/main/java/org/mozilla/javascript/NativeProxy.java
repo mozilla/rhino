@@ -1234,8 +1234,10 @@ class NativeProxy extends ScriptableObject {
             proxy = new NativeProxy(target, handler);
         }
 
-        proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(s, PROXY_TAG));
+        // Can't use the normal function here as we `setPrototype()` would call the trap.
+        proxy.setPrototypeDirect(ScriptRuntime.findPrototype(f, nt, TopLevel.Builtins.Proxy));
         proxy.setParentScope(s);
+
         return proxy;
     }
 
@@ -1319,6 +1321,37 @@ class NativeProxy extends ScriptableObject {
             }
 
             return ((Constructable) target).construct(cx, scope, args);
+        }
+
+        @Override
+        public Scriptable construct(
+                Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+            /*
+             * 1. Let handler be O.[[ProxyHandler]].
+             * 2. If handler is null, throw a TypeError exception.
+             * 3. Assert: Type(handler) is Object.
+             * 4. Let target be O.[[ProxyTarget]].
+             * 5. Assert: IsConstructor(target) is true.
+             * 6. Let trap be ? GetMethod(handler, "construct").
+             * 7. If trap is undefined, then
+             * a. Return ? Construct(target, argumentsList, newTarget).
+             * 8. Let argArray be ! CreateArrayFromList(argumentsList).
+             * 9. Let newObj be ? Call(trap, handler, « target, argArray, newTarget »).
+             * 10. If Type(newObj) is not Object, throw a TypeError exception.
+             * 11. Return newObj.
+             */
+            ScriptableObject target = getTargetThrowIfRevoked();
+
+            Function trap = getTrap(TRAP_CONSTRUCT);
+            if (trap != null) {
+                Object result = callTrap(trap, new Object[] {target, args, this});
+                if (!(result instanceof Scriptable) || ScriptRuntime.isSymbol(result)) {
+                    throw ScriptRuntime.typeError("Constructor trap has to return a scriptable.");
+                }
+                return (ScriptableObject) result;
+            }
+
+            return ((Constructable) target).construct(cx, nt, s, thisObj, args);
         }
 
         /**
