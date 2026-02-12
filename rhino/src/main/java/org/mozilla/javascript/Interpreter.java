@@ -30,7 +30,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     //            exception local and scope local
     static final int EXCEPTION_SLOT_SIZE = 6;
 
-    static boolean compareDescs(JSDescriptor i1, JSDescriptor i2) {
+    static boolean compareDescs(JSDescriptor<?> i1, JSDescriptor<?> i2) {
         return i1 == i2 || Objects.equals(getSource(i1), getSource(i2));
     }
 
@@ -392,7 +392,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             InterpreterData<T> compilerData,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
@@ -2631,7 +2631,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
-            Scriptable funThisObj = result.getThis();
+            Object funThisObj = result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
             if (op == Icode.CALL_ON_SUPER) {
@@ -4275,7 +4275,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static CallFrame initFrame(
             Context cx,
             VarScope callerScope,
-            Scriptable thisObj,
+            Object thisObj,
             Scriptable homeObj,
             Object[] args,
             double[] argsDbl,

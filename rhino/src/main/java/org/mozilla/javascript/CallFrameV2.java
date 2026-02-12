@@ -19,7 +19,7 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
     public CallFrameV2(
             Context cx,
             VarScope callerScope,
-            Scriptable thisObj,
+            Object thisObj,
             Scriptable homeObj,
             Object[] args,
             double[] doubleArgs,

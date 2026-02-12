@@ -41,7 +41,7 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
 
     // `this' might seem like it should be final, but is actually set
     // by a call to a super constructor and so must be mutable.
-    public Scriptable thisObj;
+    public Object thisObj;
 
     public final DebugFrame debuggerFrame;
     public final boolean useActivation;
@@ -54,7 +54,7 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
 
     ACallFrame(
             Context cx,
-            Scriptable thisObj,
+            Object thisObj,
             ScriptOrFn<?> fnOrScript,
             U code,
             T parentFrame,

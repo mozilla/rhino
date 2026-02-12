@@ -408,7 +408,7 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             CompilerData<T> data,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             Kit.codeBug();

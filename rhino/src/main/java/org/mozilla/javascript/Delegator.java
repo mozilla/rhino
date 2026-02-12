@@ -253,7 +253,7 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Function#call
      */
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return ((Function) getDelegee()).call(cx, scope, thisObj, args);
     }
 

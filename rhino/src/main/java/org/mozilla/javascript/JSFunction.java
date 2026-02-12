@@ -10,14 +10,14 @@ import org.mozilla.javascript.debug.DebuggableScript;
  */
 public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     private final JSDescriptor<JSFunction> descriptor;
-    private final Scriptable lexicalThis;
+    private final Object lexicalThis;
     private final Scriptable homeObject;
 
     public JSFunction(
             Context cx,
             VarScope scope,
             JSDescriptor<JSFunction> descriptor,
-            Scriptable lexicalThis,
+            Object lexicalThis,
             Scriptable homeObject) {
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
@@ -136,7 +136,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
@@ -144,12 +144,15 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         return descriptor.getCode().execute(cx, this, Undefined.instance, scope, realThis, args);
     }
 
-    public final Scriptable getThisObj(Scriptable thisObj) {
+    public final Object getThisObj(Object thisObj) {
         if (descriptor.hasLexicalThis()) {
             return lexicalThis;
-        } else if (!descriptor.isStrict() && (thisObj == null || Undefined.isUndefined(thisObj))) {
-            var res = ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
-            return res;
+        } else if (!descriptor.isStrict()) {
+            if (thisObj == null || Undefined.isUndefined(thisObj)) {
+                return ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
+            } else {
+                return ScriptRuntime.toObject(getDeclarationScope(), thisObj);
+            }
         } else {
             return thisObj;
         }
@@ -213,7 +216,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         throw new UnsupportedOperationException("Cannot set home object on JS function.");
     }
 
-    public Scriptable getFunctionThis(Scriptable functionThis) {
+    public Object getFunctionThis(Scriptable functionThis) {
         if (descriptor.hasLexicalThis()) {
             return this.lexicalThis;
         } else {

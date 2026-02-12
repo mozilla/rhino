@@ -19,7 +19,7 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
 
     CallFrame(
             Context cx,
-            Scriptable thisObj,
+            Object thisObj,
             ScriptOrFn<?> fnOrScript,
             InterpreterData<?> code,
             CallFrame parentFrame,

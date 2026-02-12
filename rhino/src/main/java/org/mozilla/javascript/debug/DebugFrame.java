@@ -9,7 +9,6 @@
 package org.mozilla.javascript.debug;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.VarScope;
 
 /**
@@ -27,7 +26,7 @@ public interface DebugFrame {
      * @param thisObj value of the JavaScript {@code this} object
      * @param args the array of arguments
      */
-    default void onEnter(Context cx, VarScope activation, Scriptable thisObj, Object[] args) {}
+    default void onEnter(Context cx, VarScope activation, Object thisObj, Object[] args) {}
 
     /**
      * Called when executed code reaches new line in the source.
