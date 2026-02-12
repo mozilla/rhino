@@ -446,8 +446,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static Object js_apply(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        var thisArg = ScriptRuntime.toObject(f.getDeclarationScope(), thisObj);
-        return ScriptRuntime.applyOrCall(true, cx, f.getDeclarationScope(), thisArg, args);
+        return ScriptRuntime.applyOrCall(true, cx, f.getDeclarationScope(), thisObj, args);
     }
 
     private static Object js_call(
@@ -523,7 +522,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     /** Should be overridden. */
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return Undefined.instance;
     }
 
