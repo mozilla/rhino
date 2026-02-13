@@ -251,7 +251,7 @@ public class Main {
                     uri = new File(path).toURI();
                 }
             }
-            return new ModuleScope(global, uri, null);
+            return ModuleScope.createModuleScope(global, uri, null);
         }
         return global;
     }

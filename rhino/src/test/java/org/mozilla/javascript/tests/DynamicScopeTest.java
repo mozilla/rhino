@@ -99,7 +99,7 @@ public class DynamicScopeTest {
 
             // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property
             // of a sealed object: iterator.
-            final ScriptableObject someScope = cx.initStandardObjects();
+            final TopLevel someScope = cx.initStandardObjects();
 
             Scriptable someObj =
                     (Scriptable)
@@ -113,12 +113,12 @@ public class DynamicScopeTest {
                                     "source2",
                                     1,
                                     null);
-            subScope.setParentScope(null);
+            var newTopLevel = TopLevel.createIsolate(someScope, (ScriptableObject) subScope);
 
             Scriptable subObj =
                     (Scriptable)
                             cx.evaluateString(
-                                    subScope,
+                                    newTopLevel,
                                     "var subObj = Object.create(obj); subObj;",
                                     "source3",
                                     1,
