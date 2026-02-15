@@ -14,6 +14,7 @@ The current release is <a href="https://github.com/mozilla/rhino/releases/tag/Rh
 
 <details><summary>Releases</summary>
 <table>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_9_1_Release">Rhino 1.9.1</a></td><td>February 15, 2026</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_9_0_Release">Rhino 1.9.0</a></td><td>December 22, 2025</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_8_1_Release">Rhino 1.8.1</a></td><td>December 2, 2025</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_8_0_Release">Rhino 1.8.0</a></td><td>January 2, 2025</td></tr>

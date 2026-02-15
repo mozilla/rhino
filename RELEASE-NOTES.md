@@ -1,5 +1,5 @@
 # Rhino 1.9.1
-## February 10, 2026
+## February 15, 2026
 
 This release fixes a few small regressions introduced in Rhino 1.9.0.
 
