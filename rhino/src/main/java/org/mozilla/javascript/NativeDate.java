@@ -151,7 +151,8 @@ final class NativeDate extends ScriptableObject {
     private static Object js_constructor(
             Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
         var res = jsConstructor(cx, args);
-        res.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(res, f, nt, s, TopLevel.Builtins.Date);
+
         return res;
     }
 

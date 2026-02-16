@@ -507,7 +507,7 @@ public class NativeArray extends ScriptableObject implements List {
             }
         }
 
-        res.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(res, f, nt, s, TopLevel.Builtins.Array);
 
         return res;
     }
