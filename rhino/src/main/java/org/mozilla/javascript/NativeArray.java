@@ -2055,19 +2055,22 @@ public class NativeArray extends ScriptableObject implements List {
     private static Object js_keys(
             Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
-        return new NativeArrayIterator(s, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
+        return new NativeArrayIterator(
+                f.getDeclarationScope(), o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
     }
 
     private static Object js_entries(
             Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
-        return new NativeArrayIterator(s, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
+        return new NativeArrayIterator(
+                f.getDeclarationScope(), o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
     }
 
     private static Object js_values(
             Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
-        return new NativeArrayIterator(s, o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
+        return new NativeArrayIterator(
+                f.getDeclarationScope(), o, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
     }
 
     private static Object js_isArrayMethod(
