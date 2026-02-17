@@ -60,6 +60,21 @@ to the new tag. Include the following:
 With the new changes at Sonatype, publishing is a process that currently
 involves the web interface at https://central.sonatype.com.
 
+Notes on this process:
+
+* Set ORG_GRADLE_PROJECT_SIGNINGKEY and ORG_GRADLE_PROJECT_SIGNINGPASSWORD to the GPT key to use.
+* Run ./gradlew publishToMavenLocal to generate the artifacts
+* If .md5, .sha1, and .sha256 checksums are not generated, generate them using "shasum".
+
+To create a file to upload to Sonatype:
+
+* Clean out ~/.m2/repository/org/mozilla
+* ./gradlew publishToMavenLocal
+* Remove all ".xml" files from org/mozilla (or the publishing portal will choke)
+* Generate the checksums
+* Use "zip" to make a ZIP file rooted at ~/.m2/repository containing the org/mozilla
+* The resulting ZIP file, with multiple modules, should successfully import and be publishable
+
 ## Update Homebrew
 
 The Homebrew team for Mac does not necessarily pick up Rhino releases 
