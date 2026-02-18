@@ -46,7 +46,10 @@ public class NativeDataView extends NativeArrayBufferView {
                                 PROTO, "byteLength", NativeDataView::js_byteLength, null, DONTENUM)
                         .withProp(
                                 PROTO, "byteOffset", NativeDataView::js_byteOffset, null, DONTENUM)
-                        .withProp(PROTO, SymbolKey.TO_STRING_TAG, value(CLASS_NAME, DONTENUM | READONLY))
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value(CLASS_NAME, DONTENUM | READONLY))
                         .withMethod(PROTO, "getFloat16", 1, NativeDataView::js_getFloat16)
                         .withMethod(PROTO, "getFloat32", 1, NativeDataView::js_getFloat32)
                         .withMethod(PROTO, "getFloat64", 1, NativeDataView::js_getFloat64)
