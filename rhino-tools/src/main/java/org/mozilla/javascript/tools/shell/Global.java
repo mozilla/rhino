@@ -144,6 +144,10 @@ public class Global extends ImporterTopLevel {
         history = (NativeArray) cx.newArray(this, 0);
         defineProperty("history", history, ScriptableObject.DONTENUM);
 
+        // Initialize Test262 support
+        Test262 proto262 = Test262.init(cx, this, Test262.RealmMode.STANDARD);
+        Test262.install(this, proto262, Test262.RealmMode.STANDARD);
+
         initialized = true;
     }
 
