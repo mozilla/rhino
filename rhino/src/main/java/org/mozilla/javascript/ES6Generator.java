@@ -321,6 +321,7 @@ public final class ES6Generator extends ScriptableObject {
             if (op == NativeGenerator.GENERATOR_THROW) {
                 throw new JavaScriptException(value, lineSource, lineNumber);
             }
+            ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, value);
             ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
             return result;
         }
