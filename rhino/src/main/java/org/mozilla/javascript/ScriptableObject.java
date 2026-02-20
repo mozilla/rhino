@@ -857,15 +857,14 @@ public abstract class ScriptableObject extends SlotMapOwner
     @Override
     public boolean hasInstance(Scriptable instance) {
         // Default for JS objects (other than Function) is to do prototype
-        // chasing. This will be overridden in NativeFunction and non-JS
-        // objects.
+        // chasing. Overridden in BaseFunction, E4X, and Java interop classes.
 
         Context cx = Context.getCurrentContext();
         Object hasInstance = ScriptRuntime.getObjectElem(this, SymbolKey.HAS_INSTANCE, cx);
         if (hasInstance instanceof Function) {
             var scope = ((Function) hasInstance).getDeclarationScope();
             return ScriptRuntime.toBoolean(
-                    ((Function) hasInstance).call(cx, scope, this, new Object[] {this}));
+                    ((Function) hasInstance).call(cx, scope, this, new Object[] {instance}));
         }
         if (!(this instanceof Callable)) {
             throw ScriptRuntime.typeErrorById("msg.instanceof.bad.target");
