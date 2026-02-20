@@ -60,9 +60,6 @@ import org.mozilla.javascript.config.RhinoConfig;
  *     {
  *         // Turn on maximum compatibility with MSIE scripts
  *         switch (featureIndex) {
- *             case {@link Context#FEATURE_NON_ECMA_GET_YEAR}:
- *                 return true;
- *
  *             case {@link Context#FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME}:
  *                 return true;
  *
