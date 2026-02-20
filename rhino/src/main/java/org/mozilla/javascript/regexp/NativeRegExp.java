@@ -173,7 +173,7 @@ public class NativeRegExp extends ScriptableObject {
                                 "source",
                                 (c) -> new String(realThis(c, "get source").re.source),
                                 null,
-                                DONTENUM | READONLY | PERMANENT)
+                                DONTENUM | READONLY)
                         .withProp(
                                 PROTO,
                                 "flags",
