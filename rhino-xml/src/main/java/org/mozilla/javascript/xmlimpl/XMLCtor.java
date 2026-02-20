@@ -6,68 +6,27 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
+
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SerializableCallable;
-import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
-class XMLCtor extends IdFunctionObject {
-    static final long serialVersionUID = -8708195078359817341L;
-
-    private static final Object XMLCTOR_TAG = "XMLCtor";
-
-    private XmlProcessor options;
-
-    private XMLLibImpl lib;
-
-    private final boolean isXMLType; // to distinguish between XML and XMLList
-
-    public XMLCtor(
-            Context cx,
-            ScriptableObject scope,
-            XMLObjectImpl xmlObj,
-            Object tag,
-            int id,
-            int arity) {
-        super(xmlObj, tag, id, arity);
-        //       this.lib = xmlObj.lib;
-        this.options = xmlObj.getProcessor();
-        this.isXMLType = xmlObj instanceof XML;
-        createProperties(cx, scope, this);
-    }
-
-    public static IdFunctionObject init() {
-        return null;
-    }
-
-    private static void createProperties(Context cx, ScriptableObject scope, XMLCtor obj) {
-        // E4X instanceof semantics (ECMA-357 13.4.3.10)
-        obj.defineProperty(
-                SymbolKey.HAS_INSTANCE,
-                new LambdaFunction(
-                        scope,
-                        "[Symbol.hasInstance]",
-                        1,
-                        (lcx, lscope, lthisObj, largs) -> {
-                            if (largs.length > 0 && largs[0] instanceof Scriptable) {
-                                return obj.hasInstance((Scriptable) largs[0]);
-                            }
-                            return false;
-                        }),
-                DONTENUM | READONLY | PERMANENT);
-
+class XMLCtor {
+    public static void createProperties(
+            Context cx, ScriptableObject scope, ScriptableObject obj, XMLLibImpl lib) {
         defineMethod(
                 obj,
                 scope,
                 "defaultSettings",
                 0,
                 (lcx, lscope, lthisObj, largs) -> {
-                    obj.options.setDefault();
+                    lib.getProcessor().setDefault();
                     var res = lcx.newObject(lscope);
                     writeSetting(obj, res);
                     return res;
@@ -89,7 +48,7 @@ class XMLCtor extends IdFunctionObject {
                 1,
                 (lcx, lscope, lthisObj, largs) -> {
                     if (largs.length == 0 || largs[0] == null || largs[0] == Undefined.instance) {
-                        obj.options.setDefault();
+                        lib.getProcessor().setDefault();
                     } else if (largs[0] instanceof Scriptable) {
                         readSettings(obj, (Scriptable) largs[0]);
                     }
@@ -100,45 +59,47 @@ class XMLCtor extends IdFunctionObject {
                 obj,
                 "prettyPrinting",
                 0,
-                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isPrettyPrinting()),
+                (b, s) -> ScriptRuntime.wrapBoolean(lib.getProcessor().isPrettyPrinting()),
                 (b, v, o, s, t) -> {
-                    b.options.setPrettyPrinting(ScriptRuntime.toBoolean(v));
+                    lib.getProcessor().setPrettyPrinting(ScriptRuntime.toBoolean(v));
                     return true;
                 });
         ScriptableObject.defineBuiltInProperty(
                 obj,
                 "prettyIndent",
                 0,
-                (b, s) -> ScriptRuntime.wrapInt(b.options.getPrettyIndent()),
+                (b, s) -> ScriptRuntime.wrapInt(lib.getProcessor().getPrettyIndent()),
                 (b, v, o, s, t) -> {
-                    b.options.setPrettyIndent(ScriptRuntime.toInt32(v));
+                    lib.getProcessor().setPrettyIndent(ScriptRuntime.toInt32(v));
                     return true;
                 });
         ScriptableObject.defineBuiltInProperty(
                 obj,
                 "ignoreWhitespace",
                 0,
-                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreWhitespace()),
+                (b, s) -> ScriptRuntime.wrapBoolean(lib.getProcessor().isIgnoreWhitespace()),
                 (b, v, o, s, t) -> {
-                    b.options.setIgnoreWhitespace(ScriptRuntime.toBoolean(v));
+                    lib.getProcessor().setIgnoreWhitespace(ScriptRuntime.toBoolean(v));
                     return true;
                 });
         ScriptableObject.defineBuiltInProperty(
                 obj,
                 "ignoreProcessingInstructions",
                 0,
-                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreProcessingInstructions()),
+                (b, s) ->
+                        ScriptRuntime.wrapBoolean(
+                                lib.getProcessor().isIgnoreProcessingInstructions()),
                 (b, v, o, s, t) -> {
-                    b.options.setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(v));
+                    lib.getProcessor().setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(v));
                     return true;
                 });
         ScriptableObject.defineBuiltInProperty(
                 obj,
                 "ignoreComments",
                 0,
-                (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreComments()),
+                (b, s) -> ScriptRuntime.wrapBoolean(lib.getProcessor().isIgnoreComments()),
                 (b, v, o, s, t) -> {
-                    b.options.setIgnoreComments(ScriptRuntime.toBoolean(v));
+                    lib.getProcessor().setIgnoreComments(ScriptRuntime.toBoolean(v));
                     return true;
                 });
     }
@@ -166,14 +127,14 @@ class XMLCtor extends IdFunctionObject {
         obj.defineProperty(name, f, attributes);
     }
 
-    private static void writeSetting(XMLCtor thisObj, Scriptable target) {
+    private static void writeSetting(ScriptableObject thisObj, Scriptable target) {
         for (var p : propNames) {
             Object value = thisObj.get(p, thisObj);
             ScriptableObject.putProperty(target, p, value);
         }
     }
 
-    private static void readSettings(XMLCtor thisObj, Scriptable source) {
+    private static void readSettings(ScriptableObject thisObj, Scriptable source) {
         for (var p : propNames) {
             Object value = ScriptableObject.getProperty(source, p);
             if (value == Scriptable.NOT_FOUND) {
@@ -210,16 +171,4 @@ class XMLCtor extends IdFunctionObject {
                 "prettyIndent",
                 "prettyPrinting"
             };
-
-    /** hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10. */
-    @Override
-    public boolean hasInstance(Scriptable instance) {
-        if (isXMLType) {
-            // XML ctor: true for both XML and XMLList
-            return (instance instanceof XML || instance instanceof XMLList);
-        } else {
-            // XMLList ctor: true only for XMLList
-            return instance instanceof XMLList;
-        }
-    }
 }
