@@ -5327,6 +5327,12 @@ public class ScriptRuntime {
         object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
     }
 
+    public static void setBuiltinProtoAndParent(
+            ScriptableObject obj, JSFunction f, Object nt, Scriptable s, TopLevel.Builtins type) {
+        obj.setPrototype((Scriptable) f.getPrototypeProperty());
+        obj.setParentScope(s);
+    }
+
     public static void initFunction(
             Context cx, Scriptable scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {

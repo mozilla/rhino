@@ -59,6 +59,7 @@ public class TopLevel extends ScriptableObject {
         BigInt,
         /** The built-in Promise type. */
         Promise,
+        Date,
         ArrayBuffer,
         Int8Array,
         Uint8Array,
