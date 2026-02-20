@@ -593,8 +593,6 @@ public class ClassDescriptor {
          * @param dest destination for this property
          * @param name the property's name.
          * @param getter should usually be a static method reference that can be cast as a {@link
-         *     LambdaGetterFunction}. This is what will be executed when the property is got..
-         * @param getter should usually be a static method reference that can be cast as a {@link
          *     LambdaSetterFunction}. This is what will be executed when the property is set..
          * @param attributes the attributes for the property on the prototype
          * @return this {@link Builder}

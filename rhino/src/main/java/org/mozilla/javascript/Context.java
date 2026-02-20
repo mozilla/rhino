@@ -2291,10 +2291,8 @@ public class Context implements Closeable {
      *
      * @param featureIndex feature index to check
      * @return true if the {@code featureIndex} feature is turned on
-     * @see #FEATURE_NON_ECMA_GET_YEAR
      * @see #FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME
      * @see #FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER
-     * @see #FEATURE_TO_STRING_AS_SOURCE
      * @see #FEATURE_PARENT_PROTO_PROPRTIES
      * @see #FEATURE_E4X
      * @see #FEATURE_DYNAMIC_SCOPE
