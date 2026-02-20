@@ -51,7 +51,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         this.javaObject = javaObject;
         this.staticType = staticType;
         this.isAdapter = isAdapter;
-        initMembers();
     }
 
     protected void initMembers() {
@@ -61,13 +60,28 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         } else {
             dynamicType = staticType.asClass();
         }
-        members = JavaMembers.lookupClass(parent, dynamicType, staticType.asClass(), isAdapter);
+        var members = JavaMembers.lookupClass(parent, dynamicType, staticType.asClass(), isAdapter);
+        setMembers(members);
         fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
+    }
+
+    /** Will call {@link #initMembers()} to initialize {@link #members} lazilly */
+    protected final JavaMembers getMembers() {
+        var members = this.members;
+        if (members == null) {
+            initMembers();
+            members = this.members;
+        }
+        return members;
+    }
+
+    protected final void setMembers(JavaMembers members) {
+        this.members = members;
     }
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return members.has(name, false);
+        return getMembers().has(name, false);
     }
 
     @Override
@@ -85,6 +99,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(String name, Scriptable start) {
+        // trigger initialization of `fieldAndMethods`
+        var members = getMembers();
+
         if (fieldAndMethods != null) {
             Object result = fieldAndMethods.get(name);
             if (result != null) {
@@ -107,7 +124,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(int index, Scriptable start) {
-        throw members.reportMemberNotFound(Integer.toString(index));
+        throw getMembers().reportMemberNotFound(Integer.toString(index));
     }
 
     @Override
@@ -115,6 +132,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
+        var members = getMembers();
+
         if (prototype == null || members.has(name, false))
             members.put(this, name, javaObject, value, false);
         else prototype.put(name, prototype, value);
@@ -126,6 +145,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
+        var members = getMembers();
+
         if (prototype == null || members.has(name, false)) {
             members.put(this, name, javaObject, value, false);
         } else if (prototype instanceof SymbolScriptable) {
@@ -135,7 +156,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        throw members.reportMemberNotFound(Integer.toString(index));
+        throw getMembers().reportMemberNotFound(Integer.toString(index));
     }
 
     @Override
@@ -182,7 +203,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object[] getIds() {
-        return members.getIds(false);
+        return getMembers().getIds(false);
     }
 
     /**
@@ -903,8 +924,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         } else {
             staticType = TypeInfo.NONE;
         }
-
-        initMembers();
     }
 
     private static Callable symbol_iterator =
@@ -973,7 +992,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected transient Object javaObject;
 
     protected transient TypeInfo staticType;
-    protected transient JavaMembers members;
+    private transient JavaMembers members;
     private transient Map<String, FieldAndMethods> fieldAndMethods;
     protected transient boolean isAdapter;
 

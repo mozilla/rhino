@@ -42,7 +42,8 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     @Override
     protected void initMembers() {
         Class<?> cl = (Class<?>) javaObject;
-        members = JavaMembers.lookupClass(parent, cl, cl, isAdapter);
+        var members = JavaMembers.lookupClass(parent, cl, cl, isAdapter);
+        setMembers(members);
         staticFieldAndMethods = members.getFieldAndMethodsObjects(this, cl, true);
     }
 
@@ -53,7 +54,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return members.has(name, true) || javaClassPropertyName.equals(name);
+        return getMembers().has(name, true) || javaClassPropertyName.equals(name);
     }
 
     @Override
@@ -63,6 +64,9 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         // We don't really care what the object is, since we're returning
         // one constructed out of whole cloth, so we return null.
         if ("prototype".equals(name)) return null;
+
+        // trigger initialization of `staticFieldAndMethods`
+        var members = getMembers();
 
         if (staticFieldAndMethods != null) {
             Object result = staticFieldAndMethods.get(name);
@@ -95,12 +99,12 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        members.put(this, name, javaObject, value, true);
+        getMembers().put(this, name, javaObject, value, true);
     }
 
     @Override
     public Object[] getIds() {
-        return members.getIds(true);
+        return getMembers().getIds(true);
     }
 
     public Class<?> getClassObject() {
@@ -139,7 +143,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         Class<?> classObject = getClassObject();
         int modifiers = classObject.getModifiers();
         if (!(Modifier.isInterface(modifiers) || Modifier.isAbstract(modifiers))) {
-            NativeJavaMethod ctors = members.ctors;
+            NativeJavaMethod ctors = getMembers().ctors;
             int index = ctors.findCachedFunction(cx, args);
             if (index < 0) {
                 String sig = NativeJavaMethod.scriptSignature(args);
