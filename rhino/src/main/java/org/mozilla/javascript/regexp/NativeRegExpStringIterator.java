@@ -10,7 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ES6Iterator;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 // See ECMAScript spec 22.2.9.1
@@ -25,7 +25,7 @@ public final class NativeRegExpStringIterator extends ES6Iterator {
     private boolean nextDone;
     private Object next = null;
 
-    public static void init(ScriptableObject scope, boolean sealed) {
+    public static void init(TopLevel scope, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeRegExpStringIterator(), ITERATOR_TAG);
     }
 

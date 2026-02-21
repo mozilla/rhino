@@ -224,8 +224,8 @@ public class Test262SuiteTest {
             proto.defineProperty(scope, "evalScript", 1, $262::evalScript);
             proto.defineProperty(scope, "detachArrayBuffer", 0, $262::detachArrayBuffer);
 
-            proto.defineProperty(cx, "global", $262::getGlobal, null, DONTENUM | READONLY);
-            proto.defineProperty(cx, "agent", $262::getAgent, null, DONTENUM | READONLY);
+            proto.defineProperty(cx, scope, "global", $262::getGlobal, null, DONTENUM | READONLY);
+            proto.defineProperty(cx, scope, "agent", $262::getAgent, null, DONTENUM | READONLY);
 
             proto.defineProperty(SymbolKey.TO_STRING_TAG, "__262__", DONTENUM | READONLY);
 
@@ -257,7 +257,7 @@ public class Test262SuiteTest {
         }
 
         public static Object getGlobal(Scriptable scriptable) {
-            return scriptable.getParentScope();
+            return ((TopLevel) scriptable.getParentScope()).getGlobalThis();
         }
 
         public static $262 createRealm(
