@@ -6,6 +6,41 @@ dependencies {
     testImplementation project(':testutils')
 }
 
+jar {
+    manifest {
+        attributes(
+            "Bundle-ManifestVersion": "2",
+            "Bundle-SymbolicName": "org.mozilla.rhino",
+            "Bundle-Version": osgiVersion,
+            "Bundle-Vendor": "Mozilla Foundation",
+            "Bundle-License": "https://www.mozilla.org/MPL/2.0/",
+            "DynamicImport-Package": "*",
+            "Export-Package": [
+                "org.mozilla.classfile",
+                "org.mozilla.javascript",
+                "org.mozilla.javascript.annotations",
+                "org.mozilla.javascript.ast",
+                "org.mozilla.javascript.commonjs.module",
+                "org.mozilla.javascript.commonjs.module.provider",
+                "org.mozilla.javascript.config",
+                "org.mozilla.javascript.debug",
+                "org.mozilla.javascript.lc.type",
+                "org.mozilla.javascript.optimizer",
+                "org.mozilla.javascript.serialize",
+                "org.mozilla.javascript.typedarrays",
+                "org.mozilla.javascript.xml",
+            ].collect { "${it};version=\"${osgiVersion}\"" }.join(","),
+            "Provide-Capability": "osgi.serviceloader;osgi.serviceloader=\"org.mozilla.javascript.RegExpLoader\"",
+            "Require-Capability": [
+                "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=11))\"",
+                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.processor)\"",
+                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.registrar)\"",
+                "osgi.serviceloader;filter:=\"(osgi.serviceloader=org.mozilla.javascript.RegExpLoader)\";cardinality:=multiple",
+            ].join(",")
+        )
+    }
+}
+
 publishing {
     publications {
         rhino(MavenPublication) {
