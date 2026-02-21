@@ -7,6 +7,28 @@ dependencies {
     testImplementation project(':testutils')
 }
 
+jar {
+    manifest {
+        attributes(
+            "Bundle-ManifestVersion": "2",
+            "Bundle-SymbolicName": "org.mozilla.rhino.engine",
+            "Bundle-Version": osgiVersion,
+            "Bundle-Vendor": "Mozilla Foundation",
+            "Bundle-License": "https://www.mozilla.org/MPL/2.0/",
+            "Export-Package": "org.mozilla.javascript.engine;version=\"${osgiVersion}\"",
+            "Import-Package": [
+                "javax.script",
+                "org.mozilla.javascript;version=\"${osgiVersion}\"",
+            ].join(","),
+            "Provide-Capability": "osgi.serviceloader;osgi.serviceloader=\"javax.script.ScriptEngineFactory\"",
+            "Require-Capability": [
+                "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=11))\"",
+                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.registrar)\"",
+            ].join(","),
+        )
+    }
+}
+
 publishing {
     publications {
         rhinoengine(MavenPublication) {
