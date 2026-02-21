@@ -1,5 +1,6 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'biz.aQute.bnd.builder'
     id 'application'
 }
 
@@ -21,6 +22,39 @@ dependencies {
     shellOnly libs.jline.reader
     shellOnly libs.bundles.jline.runtime
     testImplementation project(':testutils')
+}
+
+jar {
+    bundle {
+        bnd(
+            'Bundle-SymbolicName': 'org.mozilla.rhino.tools',
+            'Bundle-Vendor': 'Mozilla Foundation',
+            'Bundle-License': 'https://www.mozilla.org/MPL/2.0/',
+            '-exportcontents': [
+                'org.mozilla.javascript.tools',
+                'org.mozilla.javascript.tools.debugger',
+                'org.mozilla.javascript.tools.jsc',
+                'org.mozilla.javascript.tools.shell',
+            ].join(','),
+            'Import-Package': [
+                'javax.swing*;resolution:=optional',
+                'java.awt*;resolution:=optional',
+                'org.jline.reader;resolution:=optional',
+                'org.jline.terminal;resolution:=optional',
+                '*',
+            ].join(','),
+            'Provide-Capability': [
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider;register:=org.mozilla.javascript.tools.shell.BasicConsoleProvider',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider;register:=org.mozilla.javascript.tools.shell.JLineConsoleProvider',
+            ].join(','),
+            'Require-Capability': [
+                'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider;cardinality:=multiple',
+            ].join(',')
+        )
+    }
 }
 
 run {

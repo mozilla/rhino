@@ -1,10 +1,27 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'biz.aQute.bnd.builder'
 }
 
 dependencies {
     implementation project(':rhino')
     testImplementation project(':testutils')
+}
+
+jar {
+    bundle {
+        bnd(
+            'Bundle-SymbolicName': 'org.mozilla.rhino.xml',
+            'Bundle-Vendor': 'Mozilla Foundation',
+            'Bundle-License': 'https://www.mozilla.org/MPL/2.0/',
+            '-exportcontents': 'org.mozilla.javascript.xmlimpl',
+            'Provide-Capability': 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.xml.XMLLoader;register:=org.mozilla.javascript.xmlimpl.XMLLoaderImpl',
+            'Require-Capability': [
+                'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
+            ].join(',')
+        )
+    }
 }
 
 publishing {

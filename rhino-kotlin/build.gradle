@@ -1,5 +1,6 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'biz.aQute.bnd.builder'
     id 'org.jetbrains.kotlin.jvm'
 }
 
@@ -8,6 +9,22 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.20"
 
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.20"
+}
+
+jar {
+    bundle {
+        bnd(
+            'Bundle-SymbolicName': 'org.mozilla.rhino.kotlin',
+            'Bundle-Vendor': 'Mozilla Foundation',
+            'Bundle-License': 'https://www.mozilla.org/MPL/2.0/',
+            '-exportcontents': 'org.mozilla.kotlin',
+            'Provide-Capability': 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.NullabilityDetector;register:=org.mozilla.kotlin.KotlinNullabilityDetector',
+            'Require-Capability': [
+                'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
+            ].join(',')
+        )
+    }
 }
 
 kotlin {
