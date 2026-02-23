@@ -1646,6 +1646,56 @@ public class NativeRegExpTest {
         // U+10402)
     }
 
+    @Test
+    public void testUnicodeCaseInsensitiveBackreference() {
+        // Test backreferences with K (U+212A KELVIN SIGN), İ (U+0130), and DESERET (U+10403)
+        // İ has no simple case fold, so İ does NOT match i
+        Utils.assertWithAllModes_ES6(
+                "true-true-false-false-true-false-false-false",
+                "/^(K)\\1$/ui.test('Kk') + '-' + "
+                        + "/^(k)\\1$/ui.test('kK') + '-' + "
+                        + "/^(İ)\\1$/ui.test('İi') + '-' + "
+                        + "/^(i)\\1$/ui.test('iİ') + '-' + "
+                        + "/^(\uD801\uDC03)\\1$/ui.test('\uD801\uDC03\uD801\uDC2B') + '-' + "
+                        + "/^(K)(İ)\\1\\2$/ui.test('Kİki') + '-' + "
+                        + "/^(K)\\1$/ui.test('Ka') + '-' + "
+                        + "/^(İ)\\1$/ui.test('İa')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveBackreferenceInLookbehind() {
+        // Test backreferences with captures inside lookbehind assertions
+        // İ has no simple case fold, so İ does NOT match i
+        Utils.assertWithAllModes_ES6(
+                "true-false-true",
+                "/(?<=(.))1\\1$/ui.test('K1k') + '-' + "
+                        + "/(?<=(.))1\\1$/ui.test('İ1i') + '-' + "
+                        + "/(?<=(.))1\\1$/ui.test('\uD801\uDC031\uD801\uDC2B')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveBackwardBackrefInLookbehind() {
+        // Backref INSIDE lookbehind — capture must be RIGHT of backref so it's
+        // evaluated first in the backward pass, then \1 matches backward
+        // İ has no simple case fold, so İ does NOT match i
+        Utils.assertWithAllModes_ES6(
+                "true-false-true",
+                "/(?<=\\1(K))x$/ui.test('kKx') + '-' + "
+                        + "/(?<=\\1(İ))x$/ui.test('iİx') + '-' + "
+                        + "/(?<=\\1(\uD801\uDC00))x$/ui.test('\uD801\uDC28\uD801\uDC00x')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNamedBackreference() {
+        // Named backreference with Unicode case folding
+        // İ has no simple case fold, so İ does NOT match i
+        Utils.assertWithAllModes_ES6(
+                "true-false-true",
+                "/^(?<ch>K)\\k<ch>$/ui.test('Kk') + '-' + "
+                        + "/^(?<ch>İ)\\k<ch>$/ui.test('İi') + '-' + "
+                        + "/^(?<ch>\\u{212A})\\k<ch>$/ui.test('\\u{212A}K')");
+    }
+
     // --- Case Folding Tests ---
 
     @Test

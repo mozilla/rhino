@@ -2651,10 +2651,22 @@ public class NativeRegExp extends ScriptableObject {
 
             if ((gData.regexp.flags & JSREG_FOLD) != 0) {
                 // start from (cp - len) on the left and go to cp - 1 on the right
-                for (i = 0; i < len; i++) {
-                    char c1 = input.charAt(parenContent + i);
-                    char c2 = input.charAt(gData.cp + i - len);
-                    if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+                if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                    int currentInputPointer = gData.cp - len;
+                    for (i = 0; i < len && currentInputPointer < input.length(); ) {
+                        int c1 = input.codePointAt(parenContent + i);
+                        int c2 = input.codePointAt(currentInputPointer);
+                        if (!unicodeCaseInsensitiveEquals(c1, c2)) return false;
+
+                        i += Character.charCount(c1);
+                        currentInputPointer += Character.charCount(c2);
+                    }
+                } else {
+                    for (i = 0; i < len; i++) {
+                        char c1 = input.charAt(parenContent + i);
+                        char c2 = input.charAt(gData.cp + i - len);
+                        if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+                    }
                 }
             } else if (!input.regionMatches(parenContent, input, gData.cp - len, len)) {
                 return false;
@@ -2664,10 +2676,22 @@ public class NativeRegExp extends ScriptableObject {
             if ((gData.cp + len) > end) return false;
 
             if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-                for (i = 0; i < len; i++) {
-                    char c1 = input.charAt(parenContent + i);
-                    char c2 = input.charAt(gData.cp + i);
-                    if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+                if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                    int currentInputPointer = gData.cp;
+                    for (i = 0; i < len && currentInputPointer < input.length(); ) {
+                        int c1 = input.codePointAt(parenContent + i);
+                        int c2 = input.codePointAt(currentInputPointer);
+                        if (!unicodeCaseInsensitiveEquals(c1, c2)) return false;
+
+                        i += Character.charCount(c1);
+                        currentInputPointer += Character.charCount(c2);
+                    }
+                } else {
+                    for (i = 0; i < len; i++) {
+                        char c1 = input.charAt(parenContent + i);
+                        char c2 = input.charAt(gData.cp + i);
+                        if (c1 != c2 && upcase(c1) != upcase(c2)) return false;
+                    }
                 }
             } else if (!input.regionMatches(parenContent, input, gData.cp, len)) {
                 return false;
