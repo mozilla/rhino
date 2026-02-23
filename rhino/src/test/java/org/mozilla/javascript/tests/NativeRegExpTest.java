@@ -1267,7 +1267,88 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6(false, "/(?<=Kİ)1/ui.test('ki1')");
     }
 
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassKAndI() {
+        // Test with K (U+212A KELVIN SIGN) and İ (U+0130)
+        // İ has no simple case fold, so [Kİ] does NOT match i (only matches İ itself)
+        Utils.assertWithAllModes_ES6(
+                "true-true-false-true",
+                "/^[Kİ]$/ui.test('k') + '-' + "
+                        + "/^[Kİ]$/ui.test('K') + '-' + "
+                        + "/^[Kİ]$/ui.test('i') + '-' + "
+                        + "/^[Kİ]$/ui.test('İ')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassBMPRange() {
+        // Test with BMP ranges around k (U+006B)
+        // Range [j-l] includes j (U+006A), k (U+006B), l (U+006C)
+        // K (U+212A KELVIN SIGN) should match when case-insensitive
+        Utils.assertWithAllModes_ES6(
+                "true-true-false",
+                "/^[j-l]$/ui.test('k') + '-' + "
+                        + "/^[j-l]$/ui.test('K') + '-' + "
+                        + "/^[j-l]$/ui.test('m')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassDeseret() {
+        // Test with non-BMP: DESERET CAPITAL LETTER LONG AH (U+10403) folds to U+1042B
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/^[\uD801\uDC03]$/ui.test('\uD801\uDC03') + '-' + "
+                        + "/^[\uD801\uDC03]$/ui.test('\uD801\uDC2B')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharacterClassDeseretRange() {
+        // Test with non-BMP range including DESERET letters
+        // U+10400-10402 (DESERET CAPITAL A, B, C) should match U+10428-1042A (small a, b, c)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC00') + '-' + "
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC28') + '-' + "
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC29')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNegatedCharacterClass() {
+        // Test negated character class with case folding
+        Utils.assertWithAllModes_ES6(
+                "false-false-true",
+                "/^[^Kİ]$/ui.test('k') + '-' + "
+                        + "/^[^Kİ]$/ui.test('İ') + '-' + "
+                        + "/^[^Kİ]$/ui.test('x')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharClassWordEscape() {
+        // [\w] in char class with /ui: Kelvin folds to K (word char), long s folds to s (word char)
+        // İ has no simple case fold and is not a word char itself
+        Utils.assertWithAllModes_ES6(
+                "true-false-false-true-true-false",
+                "/^[\\w]$/ui.test('\\u{212A}') + '-' + "
+                        + "/^[\\W]$/ui.test('\\u{212A}') + '-' + "
+                        + "/^[\\w]$/ui.test('\\u{0130}') + '-' + "
+                        + "/^[\\W]$/ui.test('\\u{0130}') + '-' + "
+                        + "/^[\\w]$/ui.test('\\u{017F}') + '-' + "
+                        + "/^[\\W]$/ui.test('\\u{017F}')");
+    }
+
     // --- Case Folding Tests ---
+
+    @Test
+    public void testUnicodeCaseFoldKelvinSignVariants() {
+        // K (U+212A) in pattern matches k and K in input
+        // Note: For pattern k/K to match input Kelvin, use character class (flat matching
+        // limitation)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\u{212A}$/ui.test('k') + '-' + "
+                        + "/^\\u{212A}$/ui.test('K') + '-' + "
+                        + "/^[k]$/ui.test('\\u{212A}') + '-' + "
+                        + "/^[K]$/ui.test('\\u{212A}')");
+    }
 
     @Test
     public void testUnicodeCaseFoldLongS() {
@@ -1440,5 +1521,39 @@ public class NativeRegExpTest {
         // Negative lookbehind with case folding
         Utils.assertWithAllModes_ES6(
                 "true-false", "/(?<!K)x$/ui.test('ax') + '-' + " + "/(?<!K)x$/ui.test('kx')");
+    }
+
+    // --- Character Class Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharClassMixedSpecialChars() {
+        // Character class with multiple special Unicode chars
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true-false",
+                "/^[\\u{212A}\\u{017F}]$/ui.test('k') + '-' + "
+                        + "/^[\\u{212A}\\u{017F}]$/ui.test('s') + '-' + "
+                        + "/^[\\u{212A}\\u{017F}]$/ui.test('K') + '-' + "
+                        + "/^[\\u{212A}\\u{017F}]$/ui.test('S') + '-' + "
+                        + "/^[\\u{212A}\\u{017F}]$/ui.test('a')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharClassRangeEdge() {
+        // Range [J-L] should match j-l and also Kelvin sign (folds to K)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^[J-L]$/ui.test('k') + '-' + "
+                        + "/^[J-L]$/ui.test('\\u{212A}') + '-' + "
+                        + "/^[j-l]$/ui.test('\\u{212A}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveCharClassWithPropertyAndLiteral() {
+        // Combine property escape with literal in character class
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^[\\p{N}K]$/ui.test('5') + '-' + "
+                        + "/^[\\p{N}K]$/ui.test('k') + '-' + "
+                        + "/^[\\p{N}K]$/ui.test('\\u{212A}')");
     }
 }
