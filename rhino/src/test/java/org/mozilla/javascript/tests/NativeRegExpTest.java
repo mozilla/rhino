@@ -1335,6 +1335,317 @@ public class NativeRegExpTest {
                         + "/^[\\W]$/ui.test('\\u{017F}')");
     }
 
+    @Test
+    public void testUnicodeCaseInsensitivePropertyEscapeLu() {
+        // \p{Lu}/iu should match both uppercase and lowercase letters
+        // because they are case-equivalent
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\p{Lu}$/ui.test('A') + '-' + "
+                        + "/^\\p{Lu}$/ui.test('a') + '-' + "
+                        + "/^\\p{Lu}$/ui.test('Z') + '-' + "
+                        + "/^\\p{Lu}$/ui.test('z')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyEscapeLl() {
+        // \p{Ll}/iu should match both uppercase and lowercase letters
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\p{Ll}$/ui.test('A') + '-' + "
+                        + "/^\\p{Ll}$/ui.test('a') + '-' + "
+                        + "/^\\p{Ll}$/ui.test('Z') + '-' + "
+                        + "/^\\p{Ll}$/ui.test('z')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNegatedPropertyEscapeLu() {
+        // \P{Lu}/iu matches almost everything because caseFold(complement(Lu))
+        // includes all characters that are case-equivalent to any non-uppercase char
+        // This includes lowercase letters (they case-fold to themselves or case variants)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\P{Lu}$/ui.test('a') + '-' + "
+                        + "/^\\P{Lu}$/ui.test('A') + '-' + "
+                        + "/^\\P{Lu}$/ui.test('1') + '-' + "
+                        + "/^\\P{Lu}$/ui.test('@')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNegatedPropertyEscapeLl() {
+        // Similar to above - \P{Ll}/iu matches almost everything
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\P{Ll}$/ui.test('a') + '-' + "
+                        + "/^\\P{Ll}$/ui.test('A') + '-' + "
+                        + "/^\\P{Ll}$/ui.test('1') + '-' + "
+                        + "/^\\P{Ll}$/ui.test('@')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyEscapeNonLetter() {
+        // \p{N}/iu (Number) should not match letters
+        // \P{N}/iu should match letters
+        Utils.assertWithAllModes_ES6(
+                "true-true-false-false",
+                "/^\\p{N}$/ui.test('5') + '-' + "
+                        + "/^\\P{N}$/ui.test('a') + '-' + "
+                        + "/^\\p{N}$/ui.test('a') + '-' + "
+                        + "/^\\P{N}$/ui.test('5')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyInCharClass() {
+        // Test \p and \P inside character classes with /iu
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^[\\p{Lu}]$/ui.test('a') + '-' + "
+                        + "/^[\\p{Lu}]$/ui.test('A') + '-' + "
+                        + "/^[\\p{Ll}]$/ui.test('a') + '-' + "
+                        + "/^[\\p{Ll}]$/ui.test('A')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNegatedPropertyInCharClass() {
+        // Test \P inside character classes with /iu
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^[\\P{Lu}]$/ui.test('a') + '-' + "
+                        + "/^[\\P{Lu}]$/ui.test('1') + '-' + "
+                        + "/^[\\P{N}]$/ui.test('a')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveComplementClassAndCaseFolding() {
+        // MDN: "Complement classes and case-insensitive matching"
+        // \p{Lowercase_Letter}/iu matches both cases (case-fold then check property)
+        // \P{Lowercase_Letter}/iu matches everything (every char has a non-Ll case variant)
+        // [^\P{Lowercase_Letter}]/iu matches nothing (complement of everything)
+        Utils.assertWithAllModes_ES6(
+                "true-true-false-true-true-true-true-false-false-false-false",
+                "/^\\p{Lowercase_Letter}$/iu.test('a') + '-' + "
+                        + "/^\\p{Lowercase_Letter}$/iu.test('A') + '-' + "
+                        + "/^\\p{Lowercase_Letter}$/iu.test('1') + '-' + "
+                        + "/^\\P{Lowercase_Letter}$/iu.test('a') + '-' + "
+                        + "/^\\P{Lowercase_Letter}$/iu.test('A') + '-' + "
+                        + "/^\\P{Lowercase_Letter}$/iu.test('1') + '-' + "
+                        + "/^\\P{Lowercase_Letter}$/iu.test('.') + '-' + "
+                        + "/^[^\\P{Lowercase_Letter}]$/iu.test('a') + '-' + "
+                        + "/^[^\\P{Lowercase_Letter}]$/iu.test('A') + '-' + "
+                        + "/^[^\\P{Lowercase_Letter}]$/iu.test('1') + '-' + "
+                        + "/^[^\\P{Lowercase_Letter}]$/iu.test('.')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyWithoutIFlag() {
+        // Without the /i flag, \p{Lu}/u should NOT match lowercase letters
+        Utils.assertWithAllModes_ES6(
+                "true-false-false-true",
+                "/^\\p{Lu}$/u.test('A') + '-' + "
+                        + "/^\\p{Lu}$/u.test('a') + '-' + "
+                        + "/^\\p{Ll}$/u.test('A') + '-' + "
+                        + "/^\\p{Ll}$/u.test('a')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveGreekLetters() {
+        // Test with Greek letters
+        // Α (U+0391) is uppercase, α (U+03B1) is lowercase
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\p{Lu}$/ui.test('\\u0391') + '-' + "
+                        + "/^\\p{Lu}$/ui.test('\\u03B1') + '-' + "
+                        + "/^\\p{Ll}$/ui.test('\\u0391') + '-' + "
+                        + "/^\\p{Ll}$/ui.test('\\u03B1')");
+    }
+
+    // ==================== Unicode Case-Insensitive Sanity Check Tests ====================
+    // These tests verify specific Unicode codepoints with interesting/surprising behavior
+    // in case-insensitive Unicode regex matching.
+
+    @Test
+    public void testUnicodeCaseInsensitiveLuLl() {
+        // A/a both match Lu and Ll in /iu mode
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/\\p{Lu}/iu.test('A') + '-' + /\\p{Lu}/iu.test('a') + '-' + "
+                        + "/\\p{Ll}/iu.test('A') + '-' + /\\p{Ll}/iu.test('a')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveGreek() {
+        // Α/α (U+0391/U+03B1) are case-equivalent
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/\\p{Lu}/iu.test('\\u0391') + '-' + /\\p{Lu}/iu.test('\\u03B1') + '-' + "
+                        + "/\\p{Ll}/iu.test('\\u0391') + '-' + /\\p{Ll}/iu.test('\\u03B1')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveGreekSigma() {
+        // Σ/σ/ς (U+03A3/U+03C3/U+03C2) all case-equivalent
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/\\p{Lu}/iu.test('\\u03A3') + '-' + /\\p{Lu}/iu.test('\\u03C3') + '-' + "
+                        + "/\\p{Lu}/iu.test('\\u03C2')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveTurkishI() {
+        // İ (U+0130) has no simple case fold — only matches itself
+        // ı (U+0131) has no simple case fold — only matches itself
+        Utils.assertWithAllModes_ES6(
+                "true-false-false-true",
+                "/\\p{Lu}/iu.test('\\u0130') + '-' + /\\p{Ll}/iu.test('\\u0130') + '-' + "
+                        + "/\\p{Lu}/iu.test('\\u0131') + '-' + /\\p{Ll}/iu.test('\\u0131')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveSharpS() {
+        // ß (U+00DF) is Ll, folds to S which is Lu
+        Utils.assertWithAllModes_ES6(
+                "true-true", "/\\p{Ll}/iu.test('\\u00DF') + '-' + /\\p{Lu}/iu.test('\\u00DF')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveLongS() {
+        // ſ (U+017F) folds to S, so matches Lu
+        Utils.assertWithAllModes_ES6(
+                "true-true", "/\\p{Ll}/iu.test('\\u017F') + '-' + /\\p{Lu}/iu.test('\\u017F')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveKelvin() {
+        // Kelvin sign (U+212A) folds to K/k, so matches Ll
+        Utils.assertWithAllModes_ES6(
+                "true-true", "/\\p{Lu}/iu.test('\\u212A') + '-' + /\\p{Ll}/iu.test('\\u212A')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveTitlecase() {
+        // Ǆ/ǅ/ǆ (U+01C4/U+01C5/U+01C6) - Lu/Lt/Ll all case-equivalent
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/\\p{Lt}/iu.test('\\u01C4') + '-' + /\\p{Lt}/iu.test('\\u01C5') + '-' + "
+                        + "/\\p{Lt}/iu.test('\\u01C6')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonCased() {
+        // Numbers and punctuation - case doesn't matter
+        Utils.assertWithAllModes_ES6(
+                "true-false-true-false",
+                "/\\p{N}/iu.test('5') + '-' + /\\p{N}/iu.test('a') + '-' + "
+                        + "/\\p{P}/iu.test('.') + '-' + /\\p{P}/iu.test('a')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveGreekIotaWithDiacritics() {
+        // U+0390 (ΐ GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS) and
+        // U+1FD3 (ΐ GREEK SMALL LETTER IOTA WITH DIALYTIKA AND OXIA) should match
+        // These are canonically equivalent characters with different encodings
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/[\\u0390]/ui.test('\\u1fd3') + '-' + " + "/[\\u1fd3]/ui.test('\\u0390')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveGreekUpsilonWithDiacritics() {
+        // U+03B0 (ΰ GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS) and
+        // U+1FE3 (ΰ GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND OXIA) should match
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/[\\u03b0]/ui.test('\\u1fe3') + '-' + " + "/[\\u1fe3]/ui.test('\\u03b0')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveLatinLigatures() {
+        // U+FB05 (ſt LATIN SMALL LIGATURE LONG S T) and
+        // U+FB06 (st LATIN SMALL LIGATURE ST) should match via case folding
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/[\\ufb05]/ui.test('\\ufb06') + '-' + " + "/[\\ufb06]/ui.test('\\ufb05')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveScriptProperty() {
+        // \p{Script=Greek}/iu - Script properties with case-insensitive flag
+        // Both uppercase and lowercase Greek letters should match
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true-true",
+                "/\\p{Script=Greek}/ui.test('\\u0391') + '-' + " // Α (Alpha uppercase)
+                        + "/\\p{Script=Greek}/ui.test('\\u03B1') + '-' + " // α (alpha lowercase)
+                        + "/\\p{Script=Greek}/ui.test('\\u03A3') + '-' + " // Σ (Sigma uppercase)
+                        + "/\\p{Script=Greek}/ui.test('\\u03C3') + '-' + " // σ (sigma lowercase)
+                        + "/\\p{Script=Greek}/ui.test('\\u03C2')"); // ς (final sigma)
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveScriptPropertyNegated() {
+        // \P{Script=Greek}/iu - Negated Script property
+        Utils.assertWithAllModes_ES6(
+                "true-true-false",
+                "/\\P{Script=Greek}/ui.test('A') + '-' + " // Latin A
+                        + "/\\P{Script=Greek}/ui.test('1') + '-' + " // Digit
+                        + "/\\P{Script=Greek}/ui.test('\\u0391')"); // Greek Alpha
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveScriptPropertyInCharClass() {
+        // Script property inside character class with /iu
+        Utils.assertWithAllModes_ES6(
+                "true-true-false",
+                "/[\\p{Script=Greek}]/ui.test('\\u0391') + '-' + "
+                        + "/[\\p{Script=Greek}]/ui.test('\\u03B1') + '-' + "
+                        + "/[\\p{Script=Greek}]/ui.test('A')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveAlphabeticProperty() {
+        // \p{Alphabetic}/iu - should match letters regardless of case
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-false",
+                "/\\p{Alphabetic}/ui.test('A') + '-' + "
+                        + "/\\p{Alphabetic}/ui.test('a') + '-' + "
+                        + "/\\p{Alphabetic}/ui.test('\\u0391') + '-' + " // Greek Alpha
+                        + "/\\p{Alphabetic}/ui.test('1')");
+    }
+
+    @Test
+    public void testNonBMPCharacterClassRange() {
+        // Test non-BMP character class ranges in /u mode (case-sensitive)
+        // DESERET CAPITAL LETTER LONG I (U+10400) to DESERET CAPITAL LETTER LONG A (U+10402)
+        // Should NOT match their lowercase equivalents U+10428-U+1042A without /i flag
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-false-false-false",
+                "/^[\uD801\uDC00-\uD801\uDC02]$/u.test('\uD801\uDC00') + '-' + " // U+10400 matches
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/u.test('\uD801\uDC01') + '-' + " // U+10401 matches
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/u.test('\uD801\uDC02') + '-' + " // U+10402 matches
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/u.test('\uD801\uDC28') + '-' + " // U+10428 no match
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/u.test('\uD801\uDC29') + '-' + " // U+10429 no match
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/u.test('\uD801\uDC2A')"); // U+1042A no
+        // match
+    }
+
+    @Test
+    public void testNonBMPCharacterClassRangeCaseInsensitive() {
+        // Test non-BMP character class ranges in /iu mode (case-insensitive)
+        // DESERET CAPITAL LETTER LONG I (U+10400) to DESERET CAPITAL LETTER LONG A (U+10402)
+        // Should match ALL characters in the range AND their case-folded equivalents
+        // This tests that every character in the range is processed (no skipping)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true-true-true",
+                "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC00') + '-' + " // U+10400 matches
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC01') + '-' + " // U+10401 matches
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC02') + '-' + " // U+10402 matches
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC28') + '-' + " // U+10428 matches (fold of U+10400)
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC29') + '-' + " // U+10429 matches (fold of U+10401)
+                        + "/^[\uD801\uDC00-\uD801\uDC02]$/ui.test('\uD801\uDC2A')"); // U+1042A
+        // matches
+        // (fold of
+        // U+10402)
+    }
+
     // --- Case Folding Tests ---
 
     @Test
@@ -1555,5 +1866,36 @@ public class NativeRegExpTest {
                 "/^[\\p{N}K]$/ui.test('5') + '-' + "
                         + "/^[\\p{N}K]$/ui.test('k') + '-' + "
                         + "/^[\\p{N}K]$/ui.test('\\u{212A}')");
+    }
+
+    // --- Property Escape Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyLm() {
+        // \p{Lm} (Modifier Letter) with /iu
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/^\\p{Lm}$/ui.test('\\u{02B0}') + '-' + " + "/^\\p{Lm}$/ui.test('\\u{02B1}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyL() {
+        // \p{L} (any Letter) should match both cases
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-true",
+                "/^\\p{L}$/ui.test('A') + '-' + "
+                        + "/^\\p{L}$/ui.test('a') + '-' + "
+                        + "/^\\p{L}$/ui.test('\\u{0391}') + '-' + "
+                        + "/^\\p{L}$/ui.test('\\u{03B1}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitivePropertyTitlecase() {
+        // Test titlecase letters with case-insensitive matching
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^\\p{Lt}$/ui.test('\\u{01C5}') + '-' + "
+                        + "/^\\p{Lt}$/ui.test('\\u{01C6}') + '-' + "
+                        + "/^\\p{Lt}$/ui.test('\\u{01C4}')");
     }
 }

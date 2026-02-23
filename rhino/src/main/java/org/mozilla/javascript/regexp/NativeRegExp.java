@@ -3197,10 +3197,27 @@ public class NativeRegExp extends ScriptableObject {
                     pc += INDEX_LEN;
                     if (cpInBounds) {
                         boolean sense = (op == REOP_UPROP);
-                        result =
-                                sense
-                                        ^ !UnicodeProperties.hasProperty(
-                                                encodedProp, input.codePointAt(cpToMatch));
+                        int cp = input.codePointAt(cpToMatch);
+
+                        if (isCaseInsensitiveUnicode) {
+                            // For \p{...}: match if any variant has the property
+                            // For \P{...}: match if any variant does NOT have the property
+                            if (sense) {
+                                result =
+                                        anyCaseVariantMatches(
+                                                cp,
+                                                v -> UnicodeProperties.hasProperty(encodedProp, v));
+                            } else {
+                                result =
+                                        anyCaseVariantMatches(
+                                                cp,
+                                                v ->
+                                                        !UnicodeProperties.hasProperty(
+                                                                encodedProp, v));
+                            }
+                        } else {
+                            result = sense ^ !UnicodeProperties.hasProperty(encodedProp, cp);
+                        }
                         gData.cp += cpDelta;
                     }
                     break;

@@ -269,16 +269,16 @@ public class UnicodeProperties {
             Character.UnicodeScript.values();
 
     /**
-     * Tests if a code point has a specific Unicode property.
-     *
-     * @param property Encoded property (from lookup method)
-     * @param codePoint Character code point to test
-     * @return true if the code point has the property
+     * Tests if a code point has a specific Unicode property (direct check without case handling).
      */
     public static boolean hasProperty(int property, int codePoint) {
         byte propByte = (byte) ((property >> 8) & 0xFF);
         int valueByte = (property & 0xFF);
+        return hasPropertyDirect(propByte, valueByte, codePoint);
+    }
 
+    /** Direct property check without any case handling. */
+    private static boolean hasPropertyDirect(byte propByte, int valueByte, int codePoint) {
         switch (propByte) {
             case ALPHABETIC:
                 return Character.isAlphabetic(codePoint) == (valueByte == TRUE);
