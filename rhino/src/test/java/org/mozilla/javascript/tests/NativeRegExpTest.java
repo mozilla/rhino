@@ -1249,4 +1249,50 @@ public class NativeRegExpTest {
         // The match returns the original Kelvin sign character, not ASCII 'K'
         Utils.assertWithAllModes_ES6("\u212A", "'\\u{212A}\\u{0130}'.match(/\\w+/ui)[0]");
     }
+
+    // --- Anchor Optimization Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitiveAnchorOptimization() {
+        // Test that anchor optimization works with case folding
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/\\u{212A}$/ui.test('k') + '-' + "
+                        + "/K$/ui.test('\\u{212A}') + '-' + "
+                        + "/\\u{10400}$/ui.test('\\u{10428}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveAnchorWithPrefix() {
+        // Test anchor optimization with preceding literal text
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/abc\\u{212A}$/ui.test('abck') + '-' + " + "/abcK$/ui.test('abc\\u{212A}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonBMPAnchor() {
+        // Non-BMP literal as first char exercises REOP_UCSPFLAT1i anchor optimization
+        Utils.assertWithAllModes_ES6(
+                "true-true-false",
+                "/\\u{10400}abc/ui.test('xyz\\u{10428}abc') + '-' + "
+                        + "/\\u{10400}abc/ui.test('\\u{10428}abc') + '-' + "
+                        + "/\\u{10400}abc/ui.test('xyzabc')");
+    }
+
+    // --- Flat Matcher Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitiveLookahead() {
+        // Lookahead with case folding
+        Utils.assertWithAllModes_ES6(
+                "true-true", "/^a(?=K)/ui.test('ak') + '-' + " + "/^a(?!K)/ui.test('ax')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNegativeLookbehind() {
+        // Negative lookbehind with case folding
+        Utils.assertWithAllModes_ES6(
+                "true-false", "/(?<!K)x$/ui.test('ax') + '-' + " + "/(?<!K)x$/ui.test('kx')");
+    }
 }

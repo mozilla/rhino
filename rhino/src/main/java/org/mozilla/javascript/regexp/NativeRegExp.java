@@ -873,6 +873,13 @@ public class NativeRegExp extends ScriptableObject {
             case REOP_UCFLAT1i:
                 regexp.anchorCodePoint = (char) getIndex(regexp.program, 1);
                 break;
+            case REOP_UCSPFLAT1:
+            case REOP_UCSPFLAT1i:
+                regexp.anchorCodePoint =
+                        Character.toCodePoint(
+                                (char) getIndex(regexp.program, 1),
+                                (char) getIndex(regexp.program, 1 + INDEX_LEN));
+                break;
             case REOP_FLAT1:
             case REOP_FLAT1i:
                 regexp.anchorCodePoint = (char) (regexp.program[1] & 0xFF);
@@ -3784,6 +3791,10 @@ public class NativeRegExp extends ScriptableObject {
                     if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
                         int matchCodePoint = input.codePointAt(i);
                         if (matchCodePoint == anchorCodePoint) {
+                            break;
+                        }
+                        if ((gData.regexp.flags & JSREG_FOLD) != 0
+                                && unicodeCaseInsensitiveEquals(matchCodePoint, anchorCodePoint)) {
                             break;
                         }
                         charCount = Character.charCount(matchCodePoint);
