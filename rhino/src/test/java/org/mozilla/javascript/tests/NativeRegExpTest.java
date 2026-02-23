@@ -1250,6 +1250,118 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6("\u212A", "'\\u{212A}\\u{0130}'.match(/\\w+/ui)[0]");
     }
 
+    @Test
+    public void testUnicodeCaseInsensitiveFlatMatching() {
+        // İ (U+0130) has no simple case fold, so /ki$/ui does NOT match 'Kİ'
+        Utils.assertWithAllModes_ES6(
+                "true-true-true-false",
+                "/cAfé$/ui.test('CAFÉ') + '-' + "
+                        + "/straße$/ui.test('Straße') + '-' + "
+                        + "/ελληνικά$/ui.test('ΕΛΛΗΝΙΚΆ') + '-' + "
+                        + "/ki$/ui.test('Kİ')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveBackwardFlatMatching() {
+        // İ (U+0130) has no simple case fold, so İ does NOT match i in lookbehind
+        Utils.assertWithAllModes_ES6(false, "/(?<=Kİ)1/ui.test('ki1')");
+    }
+
+    // --- Case Folding Tests ---
+
+    @Test
+    public void testUnicodeCaseFoldLongS() {
+        // ſ (U+017F) should match S and s
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^\\u{017F}$/ui.test('s') + '-' + "
+                        + "/^\\u{017F}$/ui.test('S') + '-' + "
+                        + "/^s$/ui.test('\\u{017F}')");
+    }
+
+    @Test
+    public void testUnicodeCaseFoldTurkishINoMatch() {
+        // İ (U+0130) should NOT match ASCII i or I
+        // ı (U+0131) should NOT match ASCII i or I
+        Utils.assertWithAllModes_ES6(
+                "false-false-false-false",
+                "/^\\u{0130}$/ui.test('i') + '-' + "
+                        + "/^\\u{0130}$/ui.test('I') + '-' + "
+                        + "/^\\u{0131}$/ui.test('i') + '-' + "
+                        + "/^\\u{0131}$/ui.test('I')");
+    }
+
+    @Test
+    public void testUnicodeCaseFoldLatinLigaturesST() {
+        // U+FB05 (ſt) and U+FB06 (st) should match each other via case folding through 'S'
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/^\\u{FB05}$/ui.test('\\u{FB06}') + '-' + " + "/^\\u{FB06}$/ui.test('\\u{FB05}')");
+    }
+
+    // --- Word Character Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonWordCharacter() {
+        // \W should NOT match Kelvin sign since it folds to 'K' (a word char)
+        // \W SHOULD match İ since it has no simple case fold
+        Utils.assertWithAllModes_ES6(
+                "false-true",
+                "/^\\W$/ui.test('\\u{212A}') + '-' + " + "/^\\W$/ui.test('\\u{0130}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveWordBoundary() {
+        // Word boundary before Kelvin sign
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/\\b\\u{212A}$/ui.test(' \\u{212A}') + '-' + " + "/\\bk$/ui.test(' \\u{212A}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonWordBoundary() {
+        // \B inside words with Kelvin sign
+        Utils.assertWithAllModes_ES6("true", "'' + /a\\Bk$/ui.test('a\\u{212A}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveWordBoundaryWithLongS() {
+        // ſ (U+017F) folds to 's' which is a word char
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/\\w$/ui.test('\\u{017F}') + '-' + " + "/\\b\\u{017F}$/ui.test(' \\u{017F}')");
+    }
+
+    // --- Non-BMP Character Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonBMPDeseret() {
+        // DESERET CAPITAL LETTER LONG I (U+10400) -> lowercase (U+10428)
+        Utils.assertWithAllModes_ES6(
+                "true-true-true",
+                "/^\\u{10400}$/ui.test('\\u{10428}') + '-' + "
+                        + "/^\\u{10428}$/ui.test('\\u{10400}') + '-' + "
+                        + "/^\\u{10400}\\u{10401}$/ui.test('\\u{10428}\\u{10429}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonBMPAdlam() {
+        // ADLAM CAPITAL LETTER ALIF (U+1E900) -> lowercase (U+1E922)
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/^\\u{1E900}$/ui.test('\\u{1E922}') + '-' + "
+                        + "/^\\u{1E922}$/ui.test('\\u{1E900}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveNonBMPOsage() {
+        // OSAGE CAPITAL LETTER A (U+104B0) -> lowercase (U+104D8)
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/^\\u{104B0}$/ui.test('\\u{104D8}') + '-' + "
+                        + "/^\\u{104D8}$/ui.test('\\u{104B0}')");
+    }
+
     // --- Anchor Optimization Tests ---
 
     @Test
@@ -1281,6 +1393,40 @@ public class NativeRegExpTest {
     }
 
     // --- Flat Matcher Tests ---
+
+    @Test
+    public void testUnicodeCaseInsensitiveFlatMixedBMPNonBMP() {
+        // Mix BMP case-folding chars with non-BMP
+        // Note: ß does NOT match SS because ß has no simple case fold in Unicode
+        Utils.assertWithAllModes_ES6(
+                "true-false",
+                "/café\\u{10400}$/ui.test('CAFÉ\\u{10428}') + '-' + "
+                        + "/straße\\u{10400}$/ui.test('STRASSE\\u{10428}')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveLookbehindWithNonBMP() {
+        // Lookbehind with non-BMP case-insensitive matching
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/(?<=\\u{10400})x$/ui.test('\\u{10428}x') + '-' + "
+                        + "/(?<=AB\\u{10400})x$/ui.test('ab\\u{10428}x')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveFlatKelvinInMiddle() {
+        // Flat matching with Kelvin sign in middle of string
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "/a\\u{212A}b$/ui.test('akb') + '-' + " + "/aKb$/ui.test('a\\u{212A}b')");
+    }
+
+    @Test
+    public void testUnicodeCaseInsensitiveQuantifierWithFolding() {
+        // Quantifiers with case folding
+        Utils.assertWithAllModes_ES6(
+                "true-true", "/^K+$/ui.test('kKk') + '-' + " + "/^K{2}$/ui.test('k\\u{212A}')");
+    }
 
     @Test
     public void testUnicodeCaseInsensitiveLookahead() {

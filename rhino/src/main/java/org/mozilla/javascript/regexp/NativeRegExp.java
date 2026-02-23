@@ -2544,14 +2544,27 @@ public class NativeRegExp extends ScriptableObject {
             REGlobalData gData, int matchChars, int length, String input, int end) {
         if ((gData.cp + length) > end) return false;
         char[] source = gData.regexp.source;
-        for (int i = 0; i < length; i++) {
-            char c1 = source[matchChars + i];
-            char c2 = input.charAt(gData.cp + i);
-            if (c1 != c2 && upcase(c1) != upcase(c2)) {
-                return false;
+        if ((gData.regexp.flags & JSREG_FOLD) != 0 && (gData.regexp.flags & JSREG_UNICODE) != 0) {
+            int inputPointer = gData.cp;
+            for (int i = 0; i < length && inputPointer < end; i++) {
+                int codepoint1 = input.codePointAt(inputPointer);
+                // source can never contain surrogate pairs - surrogate pairs in regexp source
+                // get their own opcode REOP_UCSPFLAT1(i)
+                int codepoint2 = source[matchChars + i];
+                if (!unicodeCaseInsensitiveEquals(codepoint1, codepoint2)) return false;
+                inputPointer += Character.charCount(codepoint1);
             }
+            gData.cp = inputPointer;
+        } else {
+            for (int i = 0; i < length; i++) {
+                char c1 = source[matchChars + i];
+                char c2 = input.charAt(gData.cp + i);
+                if (c1 != c2 && upcase(c1) != upcase(c2)) {
+                    return false;
+                }
+            }
+            gData.cp += length;
         }
-        gData.cp += length;
         return true;
     }
 
@@ -2559,17 +2572,28 @@ public class NativeRegExp extends ScriptableObject {
             REGlobalData gData, int matchChars, int length, String input) {
         if ((gData.cp - length) < 0) return false;
 
-        // in the input, start from cp - 1 and go back length chars
-        // in the regex source, do it the other way
-        for (int i = 1; i <= length; i++) {
-            char c1 = gData.regexp.source[matchChars + length - i];
-            char c2 = input.charAt(gData.cp - i);
-            if (c1 != c2 && upcase(c1) != upcase(c2)) {
-                return false;
+        char[] source = gData.regexp.source;
+        if ((gData.regexp.flags & JSREG_FOLD) != 0 && (gData.regexp.flags & JSREG_UNICODE) != 0) {
+            int inputPointer = gData.cp;
+            for (int i = 1; i <= length && inputPointer > 0; i++) {
+                int codepoint1 = input.codePointBefore(inputPointer);
+                int codepoint2 = source[matchChars + length - i];
+                if (!unicodeCaseInsensitiveEquals(codepoint1, codepoint2)) return false;
+                inputPointer -= Character.charCount(codepoint1);
             }
+            gData.cp = inputPointer;
+        } else {
+            // in the input, start from cp - 1 and go back length chars
+            // in the regex source, do it the other way
+            for (int i = 1; i <= length; i++) {
+                char c1 = source[matchChars + length - i];
+                char c2 = input.charAt(gData.cp - i);
+                if (c1 != c2 && upcase(c1) != upcase(c2)) {
+                    return false;
+                }
+            }
+            gData.cp -= length;
         }
-
-        gData.cp -= length;
         return true;
     }
 
@@ -3024,13 +3048,20 @@ public class NativeRegExp extends ScriptableObject {
                 break;
             case REOP_FLAT1i:
                 {
-                    // Note: No support for unicode with REOP_FLAT1i
                     matchCodePoint = (program[pc++] & 0xFF);
                     if (cpInBounds) {
-                        char c = input.charAt(cpToMatch);
-                        if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
-                            result = true;
-                            gData.cp += cpDelta;
+                        if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
+                            int inputCodePoint = input.codePointAt(cpToMatch);
+                            if (unicodeCaseInsensitiveEquals(matchCodePoint, inputCodePoint)) {
+                                result = true;
+                                gData.cp += cpDelta;
+                            }
+                        } else {
+                            char c = input.charAt(cpToMatch);
+                            if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
+                                result = true;
+                                gData.cp += cpDelta;
+                            }
                         }
                     }
                 }
@@ -3061,13 +3092,11 @@ public class NativeRegExp extends ScriptableObject {
                         int inputCodePoint;
                         if ((gData.regexp.flags & JSREG_UNICODE) != 0) {
                             inputCodePoint = input.codePointAt(cpToMatch);
-                            // Use Unicode case matching for Unicode mode
                             if (unicodeCaseInsensitiveEquals(matchCodePoint, inputCodePoint)) {
                                 result = true;
                                 gData.cp += cpDelta;
                             }
                         } else {
-                            // Legacy behavior for non-Unicode mode
                             char c = input.charAt(cpToMatch);
                             if (matchCodePoint == c || upcase((char) matchCodePoint) == upcase(c)) {
                                 result = true;
