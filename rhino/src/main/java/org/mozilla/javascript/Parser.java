@@ -1699,13 +1699,16 @@ public class Parser {
 
     private AstNode getNextStatementAfterInlineComments(AstNode pn) throws IOException {
         AstNode body = statement();
-        if (Token.COMMENT == body.getType()) {
-            AstNode commentNode = body;
+        AstNode lastComment = null;
+        while (Token.COMMENT == body.getType()) {
+            lastComment = body;
             body = statement();
+        }
+        if (lastComment != null) {
             if (pn != null) {
-                pn.setInlineComment(commentNode);
+                pn.setInlineComment(lastComment);
             } else {
-                body.setInlineComment(commentNode);
+                body.setInlineComment(lastComment);
             }
         }
         return body;
