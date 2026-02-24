@@ -86,6 +86,7 @@ public final class Interpreter extends Icode implements Evaluator {
         int savedStackTop;
         int savedCallOp;
         Object throwable;
+        boolean parentStrictness;
 
         CallFrame(
                 Context cx,
@@ -268,6 +269,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
             if (desc.getFunctionType() != 0) {
                 scope = fnOrScript.getDeclarationScope();
+                this.parentStrictness = ScriptRuntime.enterFunctionStrictness(cx, desc.isStrict());
 
                 if (useActivation) {
                     if (desc.getFunctionType() == FunctionNode.ARROW_FUNCTION) {
@@ -277,7 +279,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         scope,
                                         args,
-                                        desc.isStrict(),
                                         desc.hasRestArg(),
                                         desc.requiresArgumentObject());
                     } else {
@@ -287,7 +288,6 @@ public final class Interpreter extends Icode implements Evaluator {
                                         cx,
                                         scope,
                                         args,
-                                        desc.isStrict(),
                                         desc.hasRestArg(),
                                         desc.requiresArgumentObject());
                     }
@@ -1518,7 +1518,7 @@ public final class Interpreter extends Icode implements Evaluator {
     public static Object restartContinuation(
             NativeContinuation c, Context cx, Scriptable scope, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
-            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isTopLevelStrict);
+            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isStrictMode());
         }
 
         Object arg;
@@ -4977,6 +4977,10 @@ public final class Interpreter extends Icode implements Evaluator {
     private static void exitFrame(Context cx, CallFrame frame, Object throwable) {
         if (frame.fnOrScript.getDescriptor().requiresActivationFrame()) {
             ScriptRuntime.exitActivationFunction(cx);
+        }
+
+        if (frame.fnOrScript.getDescriptor().getFunctionType() != 0) {
+            ScriptRuntime.exitFunctionStrictness(cx, frame.parentStrictness);
         }
 
         if (frame.debuggerFrame != null) {

@@ -53,7 +53,7 @@ class Arguments extends ScriptableObject {
                 ScriptableObject.DONTENUM);
         defineProperty("length", lengthObj, ScriptableObject.DONTENUM);
 
-        if (activation.isStrict) {
+        if (f.isStrict()) {
             // ECMAScript2015
             // 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
             //   8. Perform DefinePropertyOrThrow(obj, "caller", PropertyDescriptor {[[Get]]:
@@ -150,11 +150,10 @@ class Arguments extends ScriptableObject {
     }
 
     private boolean sharedWithActivation(int index) {
-        Context cx = Context.getContext();
-        if (cx.isStrictMode()) {
+        JSFunction f = activation.function;
+        if (f.isStrict()) {
             return false;
         }
-        JSFunction f = activation.function;
 
         // Check if default arguments are present
         if (f == null || f.hasDefaultParameters()) {
