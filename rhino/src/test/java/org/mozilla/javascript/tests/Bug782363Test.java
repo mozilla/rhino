@@ -11,6 +11,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -133,6 +134,7 @@ public class Bug782363Test {
         test(338);
         try {
             test(339);
+            fail("test(339) did not throw");
         } catch (EvaluatorException e) {
             // may fail with 'out of locals' exception
         }
