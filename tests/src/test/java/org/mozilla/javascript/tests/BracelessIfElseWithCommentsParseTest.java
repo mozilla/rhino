@@ -79,6 +79,31 @@ public class BracelessIfElseWithCommentsParseTest {
     }
 
     @Test
+    public void testConsecutiveCommentsAreMergedInToSource() {
+        String source =
+                "if (x)\n"
+                        + "    // comment 1\n"
+                        + "    // comment 2\n"
+                        + "    doSomething();\n"
+                        + "else\n"
+                        + "    doSomethingElse();\n";
+
+        CompilerEnvirons env = new CompilerEnvirons();
+        env.setRecordingComments(true);
+
+        Parser parser = new Parser(env);
+        AstRoot ast = parser.parse(source, "test", 1);
+
+        String expected =
+                "if (x)     // comment 1\n"
+                        + "// comment 2\n"
+                        + "  doSomething();\n"
+                        + "else \n"
+                        + "  doSomethingElse();\n";
+        Assert.assertEquals(expected, ast.toSource());
+    }
+
+    @Test
     public void testWithoutRecordingCommentsStillWorks() {
         String source =
                 "if (x)\n"
