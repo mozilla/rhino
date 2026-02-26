@@ -81,13 +81,24 @@ class JavaMembers {
         return findExplicitFunction(name, isStatic) != null;
     }
 
-    Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
-        Map<String, Object> ht = isStatic ? staticMembers : members;
-        Object member = ht.get(name);
+    /**
+     * Get a member from a table of all reflected members
+     *
+     * <p>Unlike {@link #get(Scriptable, String, Object, boolean)}, this method will NOT 'use' the
+     * found member and return its result
+     */
+    Object getMember(String name, boolean isStatic) {
+        var ht = isStatic ? staticMembers : members;
+        var member = ht.get(name);
         if (!isStatic && member == null) {
             // Try to get static member from instance (LC3)
             member = staticMembers.get(name);
         }
+        return member;
+    }
+
+    Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+        var member = getMember(name, isStatic);
         if (member == null) {
             member =
                     this.getExplicitFunction(
@@ -283,7 +294,7 @@ class JavaMembers {
 
                 if (member instanceof NativeJavaMethod
                         && ((NativeJavaMethod) member).methods.length > 1) {
-                    NativeJavaMethod fun = new NativeJavaMethod(methodOrCtor, name);
+                    NativeJavaMethod fun = new NativeJavaMethod(cl, methodOrCtor, name);
                     fun.setPrototype(prototype);
                     ht.put(name, fun);
                     member = fun;
@@ -477,7 +488,7 @@ class JavaMembers {
                         methodBoxes[i] = new ExecutableBox(method, typeFactory, this.cl);
                     }
                 }
-                NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
+                NativeJavaMethod fun = new NativeJavaMethod(cl, methodBoxes, entry.getKey());
                 if (scope != null) {
                     ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
                 }
@@ -499,7 +510,7 @@ class JavaMembers {
                     NativeJavaMethod method = (NativeJavaMethod) member;
                     FieldAndMethods fam =
                             new FieldAndMethods(
-                                    scope, method.methods, new NativeJavaField(field, typeFactory));
+                                    scope, method, new NativeJavaField(field, typeFactory));
                     Map<String, FieldAndMethods> fmht =
                             isStatic ? staticFieldAndMethods : fieldAndMethods;
                     if (fmht == null) {
@@ -555,7 +566,7 @@ class JavaMembers {
         for (int i = 0; i != constructors.length; ++i) {
             ctorMembers[i] = new ExecutableBox(constructors[i], typeFactory);
         }
-        ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
+        ctors = new NativeJavaMethod(cl, ctorMembers, cl.getSimpleName());
     }
 
     private static boolean maskingExistedMember(
@@ -628,7 +639,7 @@ class JavaMembers {
                         if (method.methods.length == 1) {
                             bean.getter = method;
                         } else {
-                            bean.getter = new NativeJavaMethod(new ExecutableBox[] {candidate});
+                            bean.getter = new NativeJavaMethod(method.parent, candidate, name);
                         }
                     }
                 }
@@ -653,7 +664,7 @@ class JavaMembers {
                 // We have a getter. Now, do we have a setter with matching type?
                 match = extractSetMethod(type, setterCandidates.methods, isStatic);
                 if (match != null) {
-                    bean.setter = new NativeJavaMethod(match, match.getName());
+                    bean.setter = new NativeJavaMethod(getter.parent, match, match.getName());
                     continue;
                 }
             }
@@ -787,7 +798,7 @@ class JavaMembers {
         int len = ht.size();
         Map<String, FieldAndMethods> result = new HashMap<>(len);
         for (FieldAndMethods fam : ht.values()) {
-            FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
+            FieldAndMethods famNew = new FieldAndMethods(scope, fam, fam.field);
             famNew.javaObject = javaObject;
             result.put(fam.field.raw().getName(), famNew);
         }
@@ -902,8 +913,8 @@ final class BeanProperty {
 class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
-    FieldAndMethods(Scriptable scope, ExecutableBox[] methods, NativeJavaField field) {
-        super(methods);
+    FieldAndMethods(Scriptable scope, NativeJavaMethod methods, NativeJavaField field) {
+        super(methods.parent, methods.methods, methods.getFunctionName());
         this.field = field;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
@@ -911,6 +922,9 @@ class FieldAndMethods extends NativeJavaMethod {
 
     @Override
     public Object getDefaultValue(Class<?> hint) {
+        getMethods(); // trigger lazy initialization of 'field'
+        var field = this.field;
+
         if (hint == ScriptRuntime.FunctionClass) return this;
         Object rval;
         try {
@@ -925,6 +939,19 @@ class FieldAndMethods extends NativeJavaMethod {
             rval = ((Scriptable) rval).getDefaultValue(hint);
         }
         return rval;
+    }
+
+    @Override
+    protected void initMembers(Object found) {
+        super.initMembers(found);
+        if (found instanceof FieldAndMethods) {
+            this.field = ((FieldAndMethods) found).field;
+        } else {
+            throw new IllegalStateException(
+                    String.format(
+                            "Cannot find FieldAndMethods with name '%s' in '%s'",
+                            functionName, parent));
+        }
     }
 
     NativeJavaField field;
