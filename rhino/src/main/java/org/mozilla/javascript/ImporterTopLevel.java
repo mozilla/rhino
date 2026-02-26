@@ -120,25 +120,30 @@ public class ImporterTopLevel extends TopLevel {
     private Object getPackageProperty(String name, Scriptable start) {
         Object result = NOT_FOUND;
         Scriptable scope = start;
-        if (topScopeFlag) {
-            scope = ScriptableObject.getTopLevelScope(scope);
-        }
-        Object[] elements = getNativeJavaPackages(scope);
-        if (elements == null) {
-            return result;
-        }
-        for (Object element : elements) {
-            NativeJavaPackage p = (NativeJavaPackage) element;
-            Object v = p.getPkgProperty(name, start, false);
-            if (v != null && !(v instanceof NativeJavaPackage)) {
-                if (result == NOT_FOUND) {
-                    result = v;
-                } else {
-                    throw Context.reportRuntimeErrorById(
-                            "msg.ambig.import", result.toString(), v.toString());
+        int i = 0;
+        do {
+            if (topScopeFlag) {
+                scope = ScriptableObject.getTopLevelScope(scope);
+            }
+            Object[] elements = getNativeJavaPackages(scope);
+            if (elements != null) {
+                for (Object element : elements) {
+                    NativeJavaPackage p = (NativeJavaPackage) element;
+                    Object v = p.getPkgProperty(name, start, false);
+                    if (v != null && !(v instanceof NativeJavaPackage)) {
+                        if (result == NOT_FOUND) {
+                            result = v;
+                        } else {
+                            throw Context.reportRuntimeErrorById(
+                                    "msg.ambig.import", result.toString(), v.toString());
+                        }
+                    }
                 }
             }
-        }
+            // we may have a shared scope, we must check that also the prototype
+            // when we have the 'topScopeFlag' set. See #1936
+            scope = scope.getPrototype();
+        } while (topScopeFlag && scope != null && i++ < 2);
 
         return result;
     }
@@ -216,6 +221,21 @@ public class ImporterTopLevel extends TopLevel {
     private static void importPackage(ScriptableObject scope, NativeJavaPackage pkg) {
         if (pkg == null) {
             return;
+        }
+        Scriptable proto = scope.getPrototype();
+        if (proto instanceof ScriptableObject) {
+            // check, if package is already imported in shared scope.
+            // as this is a read only operation, we do not need synchronization here.
+            @SuppressWarnings("unchecked")
+            ArrayList<Object> importedPackages =
+                    (ArrayList<Object>) ((ScriptableObject) proto).getAssociatedValue(AKEY);
+            if (importedPackages != null) {
+                for (int j = 0; j != importedPackages.size(); j++) {
+                    if (pkg.equals(importedPackages.get(j))) {
+                        return;
+                    }
+                }
+            }
         }
         synchronized (scope) {
             @SuppressWarnings("unchecked")

@@ -5,12 +5,15 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.JDBCType;
 import java.util.Locale;
+import javax.xml.XMLConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +39,10 @@ public class SealedSharedScopeTest {
     public void setUp() throws Exception {
         try (Context tmpCtx = Context.enter()) {
             sharedScope = new ImporterTopLevel(tmpCtx, true);
+            tmpCtx.evaluateString(
+                    sharedScope, "importPackage(Packages.javax.xml)", "test", 1, null);
+            tmpCtx.evaluateString(
+                    sharedScope, "importClass(Packages.java.sql.JDBCType)", "test", 1, null);
             sharedScope.sealObject();
         }
 
@@ -177,5 +184,23 @@ public class SealedSharedScopeTest {
         } catch (EcmaError e) {
             assertEquals("ReferenceError: \"Locale\" is not defined. (test#1)", e.getMessage());
         }
+    }
+
+    @Test
+    public void accessGloballyImportedPackage() throws Exception {
+        evaluateString(scope2, "importPackage(Packages.javax.xml)"); // duplicate import
+        Object o1 = evaluateString(scope1, "XMLConstants.XMLNS_ATTRIBUTE");
+        assertEquals(XMLConstants.XMLNS_ATTRIBUTE, o1);
+        Object o2 = evaluateString(scope2, "XMLConstants.XMLNS_ATTRIBUTE");
+        assertSame(o1, o2);
+    }
+
+    @Test
+    public void accessGloballyImportedClass() throws Exception {
+        evaluateString(scope2, "importClass(Packages.java.sql.JDBCType)"); // duplicate import
+        Object o1 = evaluateString(scope1, "JDBCType.DOUBLE");
+        assertEquals(JDBCType.DOUBLE, o1);
+        Object o2 = evaluateString(scope2, "JDBCType.DOUBLE");
+        assertSame(o1, o2);
     }
 }
