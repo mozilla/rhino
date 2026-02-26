@@ -4462,6 +4462,12 @@ public class ScriptRuntime {
 
     /** Implement "SameValueZero" from ECMA 7.2.9 */
     public static boolean sameZero(Object x, Object y) {
+        if (x instanceof Wrapper) {
+            x = ((Wrapper) x).unwrap();
+        }
+        if (y instanceof Wrapper) {
+            y = ((Wrapper) y).unwrap();
+        }
         if (!typeof(x).equals(typeof(y))) {
             return false;
         }
@@ -4621,6 +4627,13 @@ public class ScriptRuntime {
     }
 
     public static boolean shallowEq(Object x, Object y) {
+        if (x instanceof Wrapper) {
+            x = ((Wrapper) x).unwrap();
+        }
+        if (y instanceof Wrapper) {
+            y = ((Wrapper) y).unwrap();
+        }
+
         if (x == y) {
             if (!(x instanceof Number)) {
                 return true;
@@ -4651,9 +4664,6 @@ public class ScriptRuntime {
                 return x.equals(y);
             }
         } else if (x instanceof Scriptable) {
-            if (x instanceof Wrapper && y instanceof Wrapper) {
-                return ((Wrapper) x).unwrap() == ((Wrapper) y).unwrap();
-            }
             if (x instanceof Delegator) {
                 x = ((Delegator) x).getDelegee();
                 if (y instanceof Delegator) {
@@ -4662,8 +4672,7 @@ public class ScriptRuntime {
                 if (x == y) {
                     return true;
                 }
-            }
-            if (y instanceof Delegator && ((Delegator) y).getDelegee() == x) {
+            } else if (y instanceof Delegator && ((Delegator) y).getDelegee() == x) {
                 return true;
             }
         } else {
