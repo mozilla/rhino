@@ -1484,8 +1484,9 @@ class BodyCodegen {
                     cfw.addLoadConstant(0);
                     ScriptRuntimeMethodSig.throwDeleteOnSuperPropertyNotAllowed.addInvoke(cfw);
                 } else {
-                    cfw.addALoad(contextLocal);
-                    cfw.addPush(isName);
+                    cfw.addALoad(contextLocal); // Context cx
+                    cfw.addALoad(variableObjectLocal); // Scriptable scope
+                    cfw.addPush(isName); // boolean isName
                     ScriptRuntimeMethodSig.delete.addInvoke(cfw);
                 }
                 break;
