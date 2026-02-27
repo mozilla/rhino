@@ -890,6 +890,12 @@ public final class Interpreter extends Icode implements Evaluator {
                         }
                         break;
                     }
+                case Icode_LITERAL_NEW_ARRAY:
+                    {
+                        int skipIdx = 0xFF & iCode[pc++];
+                        out.println(tname + " " + indexReg + " skipIdx=" + skipIdx);
+                        break;
+                    }
                 case Icode_SPARE_ARRAYLIT:
                     out.println(tname + " " + idata.literalIds[indexReg]);
                     break;
@@ -1215,6 +1221,10 @@ public final class Interpreter extends Icode implements Evaluator {
 
             case Icode_LITERAL_NEW_OBJECT:
                 // make a copy or not flag
+                return 1 + 1;
+
+            case Icode_LITERAL_NEW_ARRAY:
+                // skip indexes ID byte
                 return 1 + 1;
 
             case Icode_REG_BIGINT1:
