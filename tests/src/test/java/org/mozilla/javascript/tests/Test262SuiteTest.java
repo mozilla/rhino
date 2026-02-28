@@ -107,7 +107,6 @@ public class Test262SuiteTest {
                             "class-fields-private",
                             "class-fields-public",
                             "new.target",
-                            "resizable-arraybuffer",
                             "SharedArrayBuffer",
                             "tail-call-optimization",
                             "Temporal",
