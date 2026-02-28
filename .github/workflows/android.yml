@@ -43,7 +43,7 @@ jobs:
           adb logcat >> it-android/build/reports/emulator.log &          # pipe all logcat messages into log file as a background process
           ./gradlew it-android:connectedCheck
     - name: Upload results for Android
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: ${{ always() }}
       with:
         name: reports-android-sdk-${{ matrix.api-level }}
