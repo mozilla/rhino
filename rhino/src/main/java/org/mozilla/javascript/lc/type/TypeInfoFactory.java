@@ -23,7 +23,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.lc.type.impl.factory.WeakReferenceFactory;
+import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
+import org.mozilla.javascript.lc.type.impl.factory.LegacyCacheFactory;
 
 /**
  * Factory for {@link TypeInfo}
@@ -54,12 +55,7 @@ public interface TypeInfoFactory extends Serializable {
      * <p>For actions with scope available, the TypeInfoFactory can be obtained via {@link
      * #get(Scriptable)}.
      */
-    TypeInfoFactory GLOBAL =
-            new WeakReferenceFactory() {
-                private Object readResolve() {
-                    return GLOBAL;
-                }
-            };
+    TypeInfoFactory GLOBAL = createGlobalFactory();
 
     TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 
@@ -391,5 +387,36 @@ public interface TypeInfoFactory extends Serializable {
             return fallback;
         }
         return got;
+    }
+
+    /**
+     * the {@code androidApi} field from {@link org.mozilla.javascript.ScriptRuntime} is not
+     * accessible here, so we detect Android version manually
+     */
+    private static TypeInfoFactory createGlobalFactory() {
+        int androidAPI;
+        try {
+            androidAPI = Class.forName("android.os.Build$VERSION").getField("SDK_INT").getInt(null);
+        } catch (Exception e) {
+            if ("Dalvik".equals(System.getProperty("java.vm.name"))) {
+                androidAPI = 1;
+            } else {
+                androidAPI = -1;
+            }
+        }
+
+        if (androidAPI >= 34 || androidAPI < 0) {
+            // modern Android or not Android
+            return new ClassValueCacheFactory.WeakReference() {
+                private Object readResolve() {
+                    return GLOBAL;
+                }
+            };
+        }
+        return new LegacyCacheFactory.WeakReference() {
+            private Object readResolve() {
+                return GLOBAL;
+            }
+        };
     }
 }
