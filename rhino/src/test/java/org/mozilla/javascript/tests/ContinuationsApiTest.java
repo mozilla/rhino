@@ -70,6 +70,8 @@ public class ContinuationsApiTest {
                 throw cx.captureContinuation();
             }
         }
+
+        public Double publcField = 0.0;
     }
 
     @Before
@@ -263,13 +265,22 @@ public class ContinuationsApiTest {
                 cx.setInterpretedMode(true); // must use interpreter mode
                 globalScope.put(
                         "myObject", globalScope, Context.javaToJS(new MyClass(), globalScope));
+                var func = (Scriptable) globalScope.get("Function", globalScope);
+                var fp = func.get("prototype", func);
+                var myObj = (Scriptable) globalScope.get("myObject", globalScope);
+                var myFunc = (Scriptable) myObj.get("f", myObj);
+                var myProto = myFunc.getPrototype();
+                assertEquals("Thing should be equal", fp, myProto);
             }
 
             try (Context cx = Context.enter()) {
                 cx.setInterpretedMode(true); // must use interpreter mode
                 cx.evaluateString(
                         globalScope,
-                        "function f(a) { Number.prototype.blargh = function() {return 'foo';}; var k = myObject.f(a); var t = []; return new Number(8).blargh(); }",
+                        "function f(a) { Number.prototype.blargh = "
+                                + "function() {return 'foo';}; var k = myObject.f(a); "
+                                + "var t = []; return new Number(8).blargh(); }; "
+                                + "var foo = myObject.f;",
                         "function test source",
                         1,
                         null);
@@ -304,6 +315,15 @@ public class ContinuationsApiTest {
 
                     Object result = cx.resumeContinuation(continuation, globalScope, 8);
                     assertEquals("foo", result);
+
+                    var func = (Scriptable) globalScope.get("Function", globalScope);
+                    var fp = func.get("prototype", func);
+                    var myObj = (Scriptable) globalScope.get("myObject", globalScope);
+                    var myFunc = (Scriptable) myObj.get("f", myObj);
+                    var myProto = myFunc.getPrototype();
+                    var sameFunc = globalScope.get("foo", globalScope);
+                    assertEquals("Prototypes to be equal", fp, myProto);
+                    assertEquals("Functions to be equal", myFunc, sameFunc);
                 } catch (ContinuationPending e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();

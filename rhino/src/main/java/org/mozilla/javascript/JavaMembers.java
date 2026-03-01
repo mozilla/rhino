@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
 
+import java.io.Serializable;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -35,7 +36,8 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-class JavaMembers {
+class JavaMembers implements Serializable {
+    private static final long serialVersionUID = 8260700214130563887L;
 
     private static final boolean STRICT_REFLECTIVE_ACCESS = isModularJava();
 
@@ -889,7 +891,9 @@ class JavaMembers {
     NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
 }
 
-final class BeanProperty {
+final class BeanProperty implements Serializable {
+    private static final long serialVersionUID = 8260700214130563887L;
+
     BeanProperty(String name) {
         this.name = name;
     }
