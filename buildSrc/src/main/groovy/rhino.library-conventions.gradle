@@ -18,6 +18,9 @@ dependencies {
 
 version = project.version
 
+// OSGi-compatible version (remove anything after '-')
+ext.osgiVersion = project.version.toString().replaceAll('-.*', '')
+
 tasks.named('compileJava') {
     options.javaModuleVersion = provider { version }
 }

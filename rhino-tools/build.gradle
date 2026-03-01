@@ -23,6 +23,42 @@ dependencies {
     testImplementation project(':testutils')
 }
 
+jar {
+    manifest {
+        attributes(
+            "Bundle-ManifestVersion": "2",
+            "Bundle-SymbolicName": "org.mozilla.rhino.tools",
+            "Bundle-Version": osgiVersion,
+            "Bundle-Vendor": "Mozilla Foundation",
+            "Bundle-License": "https://www.mozilla.org/MPL/2.0/",
+            "Export-Package": [
+                "org.mozilla.javascript.tools",
+                "org.mozilla.javascript.tools.debugger",
+                "org.mozilla.javascript.tools.jsc",
+                "org.mozilla.javascript.tools.shell",
+            ].collect { "${it};version=\"${osgiVersion}\"" }.join(","),
+            "Import-Package": ([
+                "org.mozilla.javascript;version=\"${osgiVersion}\"",
+                "org.mozilla.javascript.config;version=\"${osgiVersion}\"",
+                "org.mozilla.javascript.debug;version=\"${osgiVersion}\"",
+                "org.mozilla.javascript.optimizer;version=\"${osgiVersion}\"",
+                "org.mozilla.javascript.serialize;version=\"${osgiVersion}\"",
+                "org.mozilla.javascript.commonjs.module;version=\"${osgiVersion}\"",
+                "org.mozilla.javascript.commonjs.module.provider;version=\"${osgiVersion}\"",
+                "org.jline.reader;resolution:=optional",
+                "org.jline.terminal;resolution:=optional",
+            ]).join(","),
+            "Provide-Capability": "osgi.serviceloader;osgi.serviceloader=\"org.mozilla.javascript.tools.ConsoleProvider\"",
+            "Require-Capability": [
+                "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=11))\"",
+                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.processor)\"",
+                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.registrar)\"",
+                "osgi.serviceloader;filter:=\"(osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider)\";cardinality:=multiple",
+            ].join(",")
+        )
+    }
+}
+
 run {
     standardInput = System.in
     classpath = sourceSets.main.runtimeClasspath +
