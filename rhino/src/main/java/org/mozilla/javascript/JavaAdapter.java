@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.ScriptableObject.DONTENUM;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -59,14 +57,13 @@ public final class JavaAdapter {
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
-        var ctor = new LambdaConstructor(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
+    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+        var obj = new LambdaConstructor(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
 
         if (sealed) {
-            ctor.sealObject();
+            obj.sealObject();
         }
-
-        ScriptableObject.defineProperty(scope, "JavaAdapter", ctor, DONTENUM);
+        return obj;
     }
 
     public static Object convertResult(Object result, Class<?> c) {
