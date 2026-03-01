@@ -13,7 +13,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Utility class, that search for testcases in "assets/tests".
@@ -25,7 +25,7 @@ import org.mozilla.javascript.ScriptableObject;
 public abstract class TestCase {
 
     protected final String name;
-    protected final Scriptable global;
+    protected final TopLevel global;
 
     private static final ContextFactory factory =
             new ContextFactory() {
@@ -47,7 +47,7 @@ public abstract class TestCase {
                 }
             };
 
-    public TestCase(String name, Scriptable global) {
+    public TestCase(String name, TopLevel global) {
         this.name = name;
         this.global = global;
     }
@@ -55,9 +55,7 @@ public abstract class TestCase {
     public String run() {
         Context cx = factory.enterContext();
         try {
-            Scriptable scope = cx.newObject(global);
-            scope.setPrototype(global);
-            scope.setParentScope(null);
+            Scriptable scope = TopLevel.createIsolate(global);
             return ScriptRuntime.toString(runTest(cx, scope));
         } finally {
             Context.exit();
@@ -74,7 +72,7 @@ public abstract class TestCase {
     public static class AssetScript extends TestCase {
         protected final AssetManager assetManager;
 
-        public AssetScript(String name, Scriptable global, AssetManager assetManager) {
+        public AssetScript(String name, TopLevel global, AssetManager assetManager) {
             super(name, global);
             this.assetManager = assetManager;
         }
@@ -94,7 +92,7 @@ public abstract class TestCase {
 
         AssetManager assetManager = context.getAssets();
         // define assert object
-        ScriptableObject global;
+        TopLevel global;
         Context cx = factory.enterContext();
         try (InputStream in = assetManager.open("assert.js");
                 Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {

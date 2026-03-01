@@ -188,17 +188,16 @@ public class ScriptRuntime {
                 || ScriptableClass.isAssignableFrom(cl));
     }
 
-    public static ScriptableObject initSafeStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
+    public static TopLevel initSafeStandardObjects(Context cx, TopLevel scope, boolean sealed) {
         if (scope == null) {
-            scope = new NativeObject();
-        } else if (scope instanceof TopLevel) {
-            ((TopLevel) scope).clearCache();
+            scope = new TopLevel();
         }
 
-        scope.put("global", scope, scope);
+        scope.put("global", scope, scope.getGlobalThis());
 
+        scope.clearCache();
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
+
         new ClassCache().associate(scope);
         var typeFactory =
                 (androidApi >= 34 || androidApi < 0)
@@ -296,23 +295,20 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
         }
 
-        if (scope instanceof TopLevel) {
-            ((TopLevel) scope).cacheBuiltins(scope, sealed);
-        }
+        scope.cacheBuiltins(sealed);
 
         return scope;
     }
 
-    private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
+    private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
             regExpProxy.register(scope, sealed);
         }
     }
 
-    public static ScriptableObject initStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
-        ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+    public static TopLevel initStandardObjects(Context cx, TopLevel scope, boolean sealed) {
+        TopLevel s = initSafeStandardObjects(cx, scope, sealed);
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
@@ -3353,6 +3349,7 @@ public class ScriptRuntime {
             // nested functions should have top scope as their thisObj
             thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
+
         storeScriptable(cx, thisObj);
         return f;
     }
@@ -3394,6 +3391,7 @@ public class ScriptRuntime {
             // nested functions should have top scope as their thisObj
             thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
+
         return new LookupResult(f, thisObj, value);
     }
 
@@ -3541,7 +3539,7 @@ public class ScriptRuntime {
             }
             if (callThis == null) {
                 // This covers the case of args[0] == (null|undefined) as well.
-                callThis = getTopCallScope(cx);
+                callThis = getTopCallScope(cx).getGlobalThis();
             }
         } else {
             // Spec-compliant behavior
@@ -3560,7 +3558,7 @@ public class ScriptRuntime {
             boolean isFunctionStrict =
                     !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
             if (missingCallThis && !isFunctionStrict) {
-                callThis = getTopCallScope(cx);
+                callThis = getTopCallScope(cx).getGlobalThis();
             }
         }
 
@@ -4866,8 +4864,8 @@ public class ScriptRuntime {
         return (cx.topCallScope != null);
     }
 
-    public static Scriptable getTopCallScope(Context cx) {
-        Scriptable scope = cx.topCallScope;
+    public static TopLevel getTopCallScope(Context cx) {
+        var scope = cx.topCallScope;
         if (scope == null) {
             throw new IllegalStateException();
         }
@@ -5427,9 +5425,9 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject object, Scriptable scope, TopLevel.Builtins type) {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        object.setParentScope(scope);
-        object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        object.setParentScope(top);
+        object.setPrototype(TopLevel.getBuiltinPrototype(top, type));
     }
 
     public static void setBuiltinProtoAndParent(
@@ -6241,7 +6239,8 @@ public class ScriptRuntime {
 
         LookupResult(Object result, Scriptable thisObj, Object name) {
             this.result = result;
-            this.thisObj = thisObj;
+            this.thisObj =
+                    thisObj instanceof TopLevel ? ((TopLevel) thisObj).getGlobalThis() : thisObj;
             this.name = name;
         }
 

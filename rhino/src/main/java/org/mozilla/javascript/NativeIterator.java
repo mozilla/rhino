@@ -21,7 +21,7 @@ public final class NativeIterator extends ScriptableObject {
 
     private Object objectIterator;
 
-    static void init(Context cx, ScriptableObject scope, boolean sealed) {
+    static void init(Context cx, TopLevel scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -63,6 +63,7 @@ public final class NativeIterator extends ScriptableObject {
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
         scope.associateValue(ITERATOR_TAG, obj);
+        scope.getGlobalThis().associateValue(ITERATOR_TAG, obj);
     }
 
     /** Only for constructing the prototype object. */

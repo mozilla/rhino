@@ -86,7 +86,7 @@ public class NativeWrappedArrayTest {
     public void customArray() throws IOException {
         ((ScriptableObject) global)
                 .defineFunctionProperties(
-                        new String[] {"makeCustomArray"}, NativeWrappedArrayTest.class, 0);
+                        global, new String[] {"makeCustomArray"}, NativeWrappedArrayTest.class, 0);
 
         final String setFunc = "function makeTestArray() { return makeCustomArray(); }";
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
@@ -108,7 +108,7 @@ public class NativeWrappedArrayTest {
         a.add("two");
         a.add("three");
         a.add("four");
-        return new WrappedArray(thisObj, a);
+        return new WrappedArray(fn.getDeclarationScope(), a);
     }
 
     static class WrappedArray extends ScriptableObject {

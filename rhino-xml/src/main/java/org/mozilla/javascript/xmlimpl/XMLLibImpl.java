@@ -141,6 +141,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
                         XmlNode.QName.create(XmlNode.Namespace.create(""), ""));
 
         xmlPrototype.exportAsJSClass(sealed);
+        xmlPrototype.getParentScope().put("__xml_lib__", xmlPrototype, xmlPrototype.getLib());
         xmlListPrototype.exportAsJSClass(sealed);
         namespacePrototype.exportAsJSClass(sealed);
         qnamePrototype.exportAsJSClass(sealed);

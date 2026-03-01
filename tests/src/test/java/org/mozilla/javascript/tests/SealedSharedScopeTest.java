@@ -22,6 +22,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Wrapper;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -41,12 +42,8 @@ public class SealedSharedScopeTest {
 
         ctx = Context.enter();
         ctx.setLanguageVersion(Context.VERSION_DEFAULT);
-        scope1 = ctx.newObject(sharedScope);
-        scope1.setPrototype(sharedScope);
-        scope1.setParentScope(null);
-        scope2 = ctx.newObject(sharedScope);
-        scope2.setPrototype(sharedScope);
-        scope2.setParentScope(null);
+        scope1 = TopLevel.createIsolate(sharedScope);
+        scope2 = TopLevel.createIsolate(sharedScope);
     }
 
     @After

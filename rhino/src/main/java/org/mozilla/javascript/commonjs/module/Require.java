@@ -16,6 +16,8 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Undefined;
 
 /**
  * Implements the require() function as defined by <a
@@ -44,7 +46,7 @@ import org.mozilla.javascript.ScriptableObject;
 public class Require extends BaseFunction {
     private static final long serialVersionUID = 1L;
     private final ModuleScriptProvider moduleScriptProvider;
-    private final Scriptable nativeScope;
+    private final TopLevel nativeScope;
     private final Scriptable paths;
     private final boolean sandboxed;
     private final Script preExec;
@@ -79,7 +81,7 @@ public class Require extends BaseFunction {
      */
     public Require(
             Context cx,
-            Scriptable nativeScope,
+            TopLevel nativeScope,
             ModuleScriptProvider moduleScriptProvider,
             Script preExec,
             Script postExec,
@@ -175,12 +177,18 @@ public class Require extends BaseFunction {
         if (args == null || args.length < 1) {
             throw ScriptRuntime.throwError(cx, scope, "require() needs one argument");
         }
+        // Top scope from the point of view of the callee
+        TopLevel topScope = ScriptableObject.getTopLevelScope(scope);
+        if (thisObj == null || Undefined.isUndefined(thisObj)) {
+            thisObj = topScope.getGlobalThis();
+        }
+        ModuleScope moduleScope = ModuleScope.findModuleScope(scope);
 
         String id = (String) Context.jsToJava(args[0], String.class);
         URI uri = null;
         URI base = null;
         if (id.startsWith("./") || id.startsWith("../")) {
-            if (!(thisObj instanceof ModuleScope)) {
+            if (moduleScope == null) {
                 throw ScriptRuntime.throwError(
                         cx,
                         scope,
@@ -189,7 +197,6 @@ public class Require extends BaseFunction {
                                 + "\" when require() is used outside of a module");
             }
 
-            ModuleScope moduleScope = (ModuleScope) thisObj;
             base = moduleScope.getBase();
             URI current = moduleScope.getUri();
             uri = current.resolve(id);
@@ -313,7 +320,7 @@ public class Require extends BaseFunction {
         if (!sandboxed) {
             defineReadOnlyProperty(moduleObject, "uri", uri.toString());
         }
-        final Scriptable executionScope = new ModuleScope(nativeScope, uri, base);
+        final Scriptable executionScope = ModuleScope.createModuleScope(nativeScope, uri, base);
         // Set this so it can access the global JS environment objects.
         // This means we're currently using the "MGN" approach (ModuleScript
         // with Global Natives) as specified here:

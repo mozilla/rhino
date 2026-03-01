@@ -2,6 +2,7 @@ package org.mozilla.javascript.android;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 
@@ -9,7 +10,7 @@ import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
  * @author ZZZank
  */
 public class TypeInfoFactoryTestCase extends TestCase {
-    public TypeInfoFactoryTestCase(String name, Scriptable global) {
+    public TypeInfoFactoryTestCase(String name, TopLevel global) {
         super(name, global);
     }
 

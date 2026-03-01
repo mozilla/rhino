@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.EnumMap;
 
 /**
@@ -26,8 +29,8 @@ import java.util.EnumMap;
  * <p>Calling {@link org.mozilla.javascript.Context#initStandardObjects()} with an instance of this
  * class as argument will automatically cache built-in classes after initialization. For other
  * setups involving top-level scopes that inherit global properties from their prototypes (e.g. with
- * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(Scriptable, boolean)} to
- * initialize the class cache for each top-level scope.
+ * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(boolean)} to initialize
+ * the class cache for each top-level scope.
  */
 public class TopLevel extends ScriptableObject {
 
@@ -99,12 +102,72 @@ public class TopLevel extends ScriptableObject {
         JavaException
     }
 
+    public static class GlobalThis extends ScriptableObject {
+
+        @Override
+        public String getClassName() {
+            return "global";
+        }
+    }
+
     private EnumMap<Builtins, BaseFunction> ctors;
     private EnumMap<NativeErrors, BaseFunction> errors;
+    private transient ScriptableObject globalThis;
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeObject(globalThis);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        globalThis = (ScriptableObject) in.readObject();
+    }
+
+    public TopLevel() {
+        this(new GlobalThis());
+    }
+
+    public TopLevel(ScriptableObject customGlobal) {
+        globalThis = customGlobal;
+    }
+
+    public static TopLevel createIsolate(TopLevel parent) {
+        var newGlobal = new NativeObject();
+        newGlobal.setPrototype(parent.getGlobalThis());
+        newGlobal.setParentScope(null);
+        var isolate = new TopLevel(newGlobal);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
+        return isolate;
+    }
+
+    public static TopLevel createIsolate(TopLevel parent, ScriptableObject customGlobal) {
+        customGlobal.setParentScope(null);
+        customGlobal.setPrototype(parent.getGlobalThis());
+        var isolate = new TopLevel(customGlobal);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
+        return isolate;
+    }
+
+    /**
+     * Only use this function if you have already set the customGlobal's prototype chain to point to
+     * this top level's global object. This should only be done if you know for certain that no
+     * other use will be made of this prototype chain.
+     */
+    public static TopLevel createIsolateCustomPrototypeChain(
+            TopLevel parent, ScriptableObject customGlobal) {
+        customGlobal.setParentScope(null);
+        var isolate = new TopLevel(customGlobal);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
+        return isolate;
+    }
 
     @Override
     public String getClassName() {
-        return "global";
+        return "topLevel";
     }
 
     /**
@@ -113,8 +176,16 @@ public class TopLevel extends ScriptableObject {
      * ScriptRuntime.initStandardObjects} if the scope argument is an instance of this class. It
      * only has to be called by the embedding if a top-level scope is not initialized through {@code
      * initStandardObjects()}.
+     *
+     * <p>This method is deprecated and kept for compatibility. Please use either {@link
+     * cacheBuiltins(boolean)} or {@link copyBuiltins(TopLevel, boolean)} instead.
      */
-    public void cacheBuiltins(Scriptable scope, boolean sealed) {
+    @Deprecated
+    public void cacheBuiltins(TopLevel scope, boolean sealed) {
+        cacheBuiltins(sealed);
+    }
+
+    public void cacheBuiltins(boolean sealed) {
         ctors = new EnumMap<>(Builtins.class);
         for (Builtins builtin : Builtins.values()) {
             Object value = ScriptableObject.getProperty(this, builtin.name());
@@ -124,8 +195,7 @@ public class TopLevel extends ScriptableObject {
                 // Handle weird situation of "GeneratorFunction" being a real constructor
                 // which is never registered in the top-level scope
                 ctors.put(
-                        builtin,
-                        (BaseFunction) BaseFunction.initAsGeneratorFunction(scope, sealed));
+                        builtin, (BaseFunction) BaseFunction.initAsGeneratorFunction(this, sealed));
             }
         }
         errors = new EnumMap<>(NativeErrors.class);
@@ -135,6 +205,11 @@ public class TopLevel extends ScriptableObject {
                 errors.put(error, (BaseFunction) value);
             }
         }
+    }
+
+    public void copyBuiltins(TopLevel other, boolean sealed) {
+        ctors = other.ctors;
+        errors = other.errors;
     }
 
     /** Clears the cache; this is necessary, when standard objects are reinitialized. */
@@ -207,15 +282,13 @@ public class TopLevel extends ScriptableObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
-    public static Scriptable getBuiltinPrototype(Scriptable scope, Builtins type) {
+    public static Scriptable getBuiltinPrototype(TopLevel scope, Builtins type) {
         // must be called with top level scope
-        assert scope.getParentScope() == null;
-        if (scope instanceof TopLevel) {
-            Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
-            if (result != null) {
-                return result;
-            }
+        Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
+        if (result != null) {
+            return result;
         }
+
         // fall back to normal prototype lookup
         String typeName;
         if (type == Builtins.GeneratorFunction) {
@@ -231,8 +304,7 @@ public class TopLevel extends ScriptableObject {
 
     /**
      * Get the cached built-in object constructor from this scope with the given {@code type}.
-     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
-     * object.
+     * Returns null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
      * @param type the built-in type
      * @return the built-in constructor
@@ -243,7 +315,7 @@ public class TopLevel extends ScriptableObject {
 
     /**
      * Get the cached native error constructor from this scope with the given {@code type}. Returns
-     * null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this object.
+     * null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
      * @param type the native error type
      * @return the native error constructor
@@ -254,7 +326,7 @@ public class TopLevel extends ScriptableObject {
 
     /**
      * Get the cached built-in object prototype from this scope with the given {@code type}. Returns
-     * null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this object.
+     * null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
      * @param type the built-in type
      * @return the built-in prototype
@@ -263,5 +335,92 @@ public class TopLevel extends ScriptableObject {
         BaseFunction func = getBuiltinCtor(type);
         Object proto = func != null ? func.getPrototypeProperty() : null;
         return proto instanceof Scriptable ? (Scriptable) proto : null;
+    }
+
+    public ScriptableObject getGlobalThis() {
+        return globalThis;
+    }
+
+    @Override
+    public Object get(String name, Scriptable start) {
+        var res = super.get(name, start);
+        if (res != NOT_FOUND) {
+            return res;
+        }
+        return ScriptableObject.getProperty(globalThis, name);
+    }
+
+    @Override
+    public void put(String name, Scriptable start, Object value) {
+        ScriptableObject.putProperty(globalThis, name, value);
+    }
+
+    @Override
+    public boolean has(String name, Scriptable start) {
+        return super.has(name, start) || ScriptableObject.hasProperty(globalThis, name);
+    }
+
+    @Override
+    public void delete(String name) {
+        globalThis.delete(name);
+    }
+
+    @Override
+    public void sealObject() {
+        globalThis.sealObject();
+        super.sealObject();
+    }
+
+    @Override
+    public void defineProperty(String propertyName, Object value, int attributes) {
+        globalThis.defineProperty(propertyName, value, attributes);
+    }
+
+    @Override
+    void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
+        globalThis.addLazilyInitializedValue(name, index, init, attributes);
+    }
+
+    @Override
+    public void setAttributes(String name, int attributes) {
+        if (super.get(name, this) != NOT_FOUND) {
+            super.setAttributes(name, attributes);
+        } else {
+            globalThis.setAttributes(name, attributes);
+        }
+    }
+
+    @Override
+    public int getAttributes(String name) {
+        if (super.get(name, this) != NOT_FOUND) {
+            return super.getAttributes(name);
+        } else {
+            return globalThis.getAttributes(name);
+        }
+    }
+
+    // Technically this is wrong, but there are currently tests that
+    // depend const variable being defined on globalThis.
+    //
+    // In a compliant implementation const declarations should bind
+    // the values on the global scope but not on the global object.
+
+    @Override
+    public boolean isConst(String name) {
+        if (super.get(name, this) != NOT_FOUND) {
+            return super.isConst(name);
+        } else {
+            return globalThis.isConst(name);
+        }
+    }
+
+    @Override
+    public void putConst(String name, Scriptable start, Object value) {
+        globalThis.putConst(name, globalThis, value);
+    }
+
+    @Override
+    public void defineConst(String name, Scriptable start) {
+        globalThis.defineConst(name, globalThis);
     }
 }

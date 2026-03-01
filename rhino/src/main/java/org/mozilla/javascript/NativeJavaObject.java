@@ -35,7 +35,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     private static final long serialVersionUID = -6948590651130498591L;
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(TopLevel scope, boolean sealed) {
         JavaIterableIterator.init(scope, sealed);
     }
 
@@ -923,7 +923,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
-        static void init(ScriptableObject scope, boolean sealed) {
+        static void init(TopLevel scope, boolean sealed) {
             ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
         }
 

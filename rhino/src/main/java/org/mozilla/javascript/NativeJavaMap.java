@@ -30,7 +30,7 @@ public class NativeJavaMap extends NativeJavaObject {
     private final TypeInfo keyType;
     private final TypeInfo valueType;
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(TopLevel scope, boolean sealed) {
         NativeJavaMapIterator.init(scope, sealed);
     }
 
@@ -171,7 +171,7 @@ public class NativeJavaMap extends NativeJavaObject {
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaMapIterator";
 
-        static void init(ScriptableObject scope, boolean sealed) {
+        static void init(TopLevel scope, boolean sealed) {
             ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
         }
 

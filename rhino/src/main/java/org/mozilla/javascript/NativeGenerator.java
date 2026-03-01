@@ -17,7 +17,7 @@ public final class NativeGenerator extends IdScriptableObject {
 
     private static final Object GENERATOR_TAG = "Generator";
 
-    static NativeGenerator init(ScriptableObject scope, boolean sealed) {
+    static NativeGenerator init(TopLevel scope, boolean sealed) {
         // Generator
         // Can't use "NativeGenerator().exportAsJSClass" since we don't want
         // to define "Generator" as a constructor in the top-level scope.

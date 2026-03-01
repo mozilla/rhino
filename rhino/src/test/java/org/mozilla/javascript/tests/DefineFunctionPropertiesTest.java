@@ -12,6 +12,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -21,7 +22,7 @@ import org.mozilla.javascript.Undefined;
  */
 public class DefineFunctionPropertiesTest {
 
-    ScriptableObject global;
+    TopLevel global;
     static Object key = "DefineFunctionPropertiesTest";
 
     /**
@@ -31,10 +32,10 @@ public class DefineFunctionPropertiesTest {
     @Before
     public void setUp() {
         try (Context cx = Context.enter()) {
-            global = cx.initStandardObjects();
+            global = (TopLevel) cx.initStandardObjects();
             String[] names = {"f", "g"};
             global.defineFunctionProperties(
-                    names, DefineFunctionPropertiesTest.class, ScriptableObject.DONTENUM);
+                    global, names, DefineFunctionPropertiesTest.class, ScriptableObject.DONTENUM);
         }
     }
 
@@ -71,7 +72,7 @@ public class DefineFunctionPropertiesTest {
     @Test
     public void privateData() {
         try (Context cx = Context.enter()) {
-            global.associateValue(key, "bar");
+            global.getGlobalThis().associateValue(key, "bar");
             Object result = cx.evaluateString(global, "g('foo');", "test source", 1, null);
             assertEquals("foobar", result);
         }
