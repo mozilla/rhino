@@ -41,8 +41,8 @@ public class Token {
             // Interpreter reuses the following as bytecodes
             FIRST_BYTECODE_TOKEN = EOL + 1,
             ENTERWITH = FIRST_BYTECODE_TOKEN,
-            LEAVEWITH = ENTERWITH + 1,
-            RETURN = LEAVEWITH + 1,
+            LEAVE_SCOPE = ENTERWITH + 1,
+            RETURN = LEAVE_SCOPE + 1,
             GOTO = RETURN + 1,
             IFEQ = GOTO + 1,
             IFNE = IFEQ + 1,
@@ -278,8 +278,8 @@ public class Token {
                 return "EOL";
             case ENTERWITH:
                 return "ENTERWITH";
-            case LEAVEWITH:
-                return "LEAVEWITH";
+            case LEAVE_SCOPE:
+                return "LEAVE_SCOPE";
             case RETURN:
                 return "RETURN";
             case GOTO:

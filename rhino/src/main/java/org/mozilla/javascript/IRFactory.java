@@ -1893,7 +1893,7 @@ public final class IRFactory {
                 // but prefix it with LEAVEWITH since try..catch produces
                 // "with"code in order to limit the scope of the exception
                 // object.
-                catchStatement.addChildToBack(new Node(Token.LEAVEWITH));
+                catchStatement.addChildToBack(new Node(Token.LEAVE_SCOPE));
                 catchStatement.addChildToBack(makeJump(Token.GOTO, endCatch));
 
                 // Create condition "if" when present
@@ -1912,13 +1912,9 @@ public final class IRFactory {
                 catchScope.putIntProp(Node.CATCH_SCOPE_PROP, scopeIndex);
                 catchScopeBlock.addChildToBack(catchScope);
 
-                // Add with statement based on catch scope object
-                catchScopeBlock.addChildToBack(
-                        createWith(
-                                createUseLocal(catchScopeBlock),
-                                condStmt,
-                                catchLineno,
-                                catchColumn));
+                parser.setRequiresActivation();
+                catchScopeBlock.addChildToBack(condStmt);
+                catchScopeBlock.addChildToBack(new Node(Token.LEAVE_SCOPE));
 
                 // move to next cb
                 cb = cb.getNext();
@@ -1963,7 +1959,7 @@ public final class IRFactory {
         result.addChildToBack(new Node(Token.ENTERWITH, obj));
         Node bodyNode = new Node(Token.WITH, body, lineno, column);
         result.addChildrenToBack(bodyNode);
-        result.addChildToBack(new Node(Token.LEAVEWITH));
+        result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         return result;
     }
 
