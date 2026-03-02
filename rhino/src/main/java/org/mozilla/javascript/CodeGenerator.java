@@ -328,8 +328,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(-1);
                 break;
 
-            case Token.LEAVEWITH:
-                addToken(Token.LEAVEWITH);
+            case Token.LEAVE_SCOPE:
+                addToken(Token.LEAVE_SCOPE);
                 break;
 
             case Token.LOCAL_BLOCK:
@@ -1179,7 +1179,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     addToken(Token.ENTERWITH);
                     stackChange(-1);
                     visitExpression(with.getFirstChild(), 0);
-                    addToken(Token.LEAVEWITH);
+                    addToken(Token.LEAVE_SCOPE);
                     break;
                 }
 

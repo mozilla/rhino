@@ -750,12 +750,15 @@ class BodyCodegen {
                     addScriptRuntimeInvoke(
                             "newCatchScope",
                             "(Ljava/lang/Throwable;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "Ljava/lang/String;"
                                     + "Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/VarScope;"
-                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                                    + ")Lorg/mozilla/javascript/VarScope;");
                     cfw.addAStore(local);
+                    cfw.addALoad(local);
+                    cfw.addAStore(variableObjectLocal);
+                    incReferenceWordLocal(variableObjectLocal);
                 }
                 break;
 
@@ -813,10 +816,10 @@ class BodyCodegen {
                 incReferenceWordLocal(variableObjectLocal);
                 break;
 
-            case Token.LEAVEWITH:
+            case Token.LEAVE_SCOPE:
                 cfw.addALoad(variableObjectLocal);
                 addScriptRuntimeInvoke(
-                        "leaveWith",
+                        "leaveScope",
                         "(Lorg/mozilla/javascript/VarScope;"
                                 + ")Lorg/mozilla/javascript/VarScope;");
                 cfw.addAStore(variableObjectLocal);
