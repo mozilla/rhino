@@ -1527,7 +1527,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode_UNDEF] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
-        instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
+        instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
@@ -4150,10 +4150,10 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoLeaveWith extends InstructionClass {
+    private static class DoLeaveScope extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.scope = ScriptRuntime.leaveWith(frame.scope);
+            frame.scope = ScriptRuntime.leaveScope(frame.scope);
             return null;
         }
     }
@@ -4170,15 +4170,17 @@ public final class Interpreter extends Icode implements Evaluator {
 
             boolean afterFirstScope = (frame.idata.itsICode[frame.pc] != 0);
             Throwable caughtException = (Throwable) frame.stack[state.stackTop + 1];
-            Scriptable lastCatchScope;
+            VarScope lastCatchScope;
             if (!afterFirstScope) {
                 lastCatchScope = null;
             } else {
-                lastCatchScope = (Scriptable) frame.stack[state.indexReg];
+                lastCatchScope = (VarScope) frame.stack[state.indexReg];
             }
-            frame.stack[state.indexReg] =
+            VarScope catchScope =
                     ScriptRuntime.newCatchScope(
                             caughtException, lastCatchScope, state.stringReg, cx, frame.scope);
+            frame.stack[state.indexReg] = catchScope;
+            frame.scope = catchScope;
             ++frame.pc;
             return null;
         }
@@ -5088,7 +5090,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // block ("catch" implicitly uses NativeWith to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
-                    if (scope instanceof WithScope) {
+                    if (!(scope instanceof NativeCall)) {
                         scope = scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null
