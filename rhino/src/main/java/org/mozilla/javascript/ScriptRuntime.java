@@ -27,8 +27,6 @@ import org.mozilla.javascript.dtoa.DoubleFormatter;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.LegacyCacheFactory;
-import org.mozilla.javascript.optimizer.ScriptRuntimeMethodSig;
-import org.mozilla.javascript.optimizer.ScriptRuntimeMethodSig.CodeGenMarker;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
@@ -113,7 +111,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.concat)
     public static Object concat(Object lhs, Object rhs) {
         String rhsString = ScriptRuntime.toString(rhs);
         String lhsString = ScriptRuntime.toString(lhs);
@@ -387,7 +384,6 @@ public class ScriptRuntime {
         return Boolean.valueOf(b);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.wrapInt)
     public static Integer wrapInt(int i) {
         return Integer.valueOf(i);
     }
@@ -875,7 +871,6 @@ public class ScriptRuntime {
      * are undefined if not supplied; this function pads the argument array out to the expected
      * length, if necessary.
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.padArguments)
     public static Object[] padArguments(Object[] args, int count) {
         if (count < args.length) return args;
 
@@ -892,7 +887,6 @@ public class ScriptRuntime {
      * are undefined if not supplied; this function pads the argument array out to the expected
      * length, if necessary. Also the rest parameter array construction is done here.
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.padAndRestArguments)
     public static Object[] padAndRestArguments(
             Context cx, Scriptable scope, Object[] args, int argCount) {
         Object[] result = new Object[argCount];
@@ -925,7 +919,6 @@ public class ScriptRuntime {
      * @param excludeKeys array of property names to exclude
      * @return a new object with all properties except the excluded ones
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.doObjectRest)
     public static Scriptable doObjectRest(
             Context cx, Scriptable scope, Object source, Object[] excludeKeys) {
         Scriptable sourceObj = toObject(cx, scope, source);
@@ -1524,7 +1517,6 @@ public class ScriptRuntime {
         return (index < args.length) ? toInt32(args[index]) : 0;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.toInt32)
     public static int toInt32(double d) {
         return DoubleConversion.doubleToInt32(d);
     }
@@ -1591,7 +1583,6 @@ public class ScriptRuntime {
     // properly and separates namespace form Scriptable.get etc.
     private static final String DEFAULT_NS_TAG = "__default_namespace__";
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.setDefaultNamespace)
     public static Object setDefaultNamespace(Object namespace, Context cx) {
         Scriptable scope = cx.currentActivationCall;
         if (scope == null) {
@@ -2257,7 +2248,6 @@ public class ScriptRuntime {
         return result;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.refGet)
     public static Object refGet(Ref ref, Context cx) {
         return ref.get(cx);
     }
@@ -2270,12 +2260,10 @@ public class ScriptRuntime {
         return refSet(ref, value, cx, getTopCallScope(cx));
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.refSet)
     public static Object refSet(Ref ref, Object value, Context cx, Scriptable scope) {
         return ref.set(cx, scope, value);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.refDel)
     public static Object refDel(Ref ref, Context cx) {
         return wrapBoolean(ref.delete(cx));
     }
@@ -2292,7 +2280,6 @@ public class ScriptRuntime {
         return specialRef(obj, specialProperty, cx, getTopCallScope(cx));
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.specialRef)
     public static Ref specialRef(Object obj, String specialProperty, Context cx, Scriptable scope) {
         return SpecialRef.createSpecial(cx, scope, obj, specialProperty);
     }
@@ -2330,7 +2317,6 @@ public class ScriptRuntime {
      * method returns a value. However, the definition of the [[Delete]] operator (8.6.2.5) does not
      * define a return value. Here we assume that the [[Delete]] method doesn't return a value.
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.delete)
     public static Object delete(
             Object obj, Object id, Context cx, Scriptable scope, boolean isName) {
         Scriptable sobj = toObjectOrNull(cx, obj, scope);
@@ -2715,7 +2701,6 @@ public class ScriptRuntime {
         return enumInit(value, cx, getTopCallScope(cx), enumType);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.enumInit)
     public static Object enumInit(Object value, Context cx, Scriptable scope, int enumType) {
         IdEnumeration x = new IdEnumeration();
         x.obj = toObjectOrNull(cx, value, scope);
@@ -2784,7 +2769,6 @@ public class ScriptRuntime {
         return enumNext(enumObj, Context.getContext());
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.enumNext)
     public static Boolean enumNext(Object enumObj, Context cx) {
         IdEnumeration x = (IdEnumeration) enumObj;
         if (x.iterator != null) {
@@ -2861,7 +2845,6 @@ public class ScriptRuntime {
         return Boolean.TRUE;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.enumId)
     public static Object enumId(Object enumObj, Context cx) {
         IdEnumeration x = (IdEnumeration) enumObj;
         if (x.iterator != null) {
@@ -3138,13 +3121,11 @@ public class ScriptRuntime {
      * Prepare for calling obj[id](...): return function corresponding to obj[id] and make obj
      * properly converted to Scriptable available in the result.
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.getElemAndThis)
     public static LookupResult getElemAndThis(
             Object obj, Object elem, Context cx, Scriptable scope) {
         return getElemAndThisInner(obj, elem, cx, scope, false);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.getElemAndThisOptional)
     public static LookupResult getElemAndThisOptional(
             Object obj, Object elem, Context cx, Scriptable scope) {
         return getElemAndThisInner(obj, elem, cx, scope, true);
@@ -3380,12 +3361,10 @@ public class ScriptRuntime {
      * Prepare for calling &lt;expression&gt;(...): return function corresponding to
      * &lt;expression&gt; and make parent scope of the function available in the result.
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.getValueAndThis)
     public static LookupResult getValueAndThis(Object value, Context cx) {
         return getValueAndThisInner(value, cx, false);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.getValueAndThisOptional)
     public static LookupResult getValueAndThisOptional(Object value, Context cx) {
         return getValueAndThisInner(value, cx, true);
     }
@@ -3447,7 +3426,6 @@ public class ScriptRuntime {
      * times. The args array reference should not be stored in any object that can be GC-reachable
      * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.callRef)
     public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
             RefCallable rfunction = (RefCallable) function;
@@ -3468,7 +3446,6 @@ public class ScriptRuntime {
      *
      * <p>See ECMA 11.2.2
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.newObject)
     public static Scriptable newObject(Object ctor, Context cx, Scriptable scope, Object[] args) {
         if (!(ctor instanceof Constructable)) {
             throw notFunctionError(ctor);
@@ -3476,7 +3453,6 @@ public class ScriptRuntime {
         return ((Constructable) ctor).construct(cx, scope, args);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.callSpecial)
     public static Object callSpecial(
             Context cx,
             Callable fun,
@@ -3507,7 +3483,6 @@ public class ScriptRuntime {
         return fun.call(cx, scope, thisObj, args);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.newSpecial)
     public static Object newSpecial(
             Context cx, Object fun, Object[] args, Scriptable scope, int callType) {
         if (callType == Node.SPECIALCALL_EVAL) {
@@ -3709,7 +3684,6 @@ public class ScriptRuntime {
     }
 
     /** The typeof operator */
-    @CodeGenMarker(ScriptRuntimeMethodSig.typeof)
     public static String typeof(Object value) {
         if (value == null) return "object";
         if (value == Undefined.instance) return "undefined";
@@ -3725,7 +3699,6 @@ public class ScriptRuntime {
     }
 
     /** The typeof operator that correctly handles the undefined case */
-    @CodeGenMarker(ScriptRuntimeMethodSig.typeofName)
     public static String typeofName(Scriptable scope, String id) {
         Context cx = Context.getContext();
         Scriptable val = bind(cx, scope, id);
@@ -3844,7 +3817,6 @@ public class ScriptRuntime {
         return new ConsString(toCharSequence(val1), val2);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.subtract)
     public static Number subtract(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).subtract((BigInteger) val2);
@@ -3857,7 +3829,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.multiply)
     public static Number multiply(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).multiply((BigInteger) val2);
@@ -3870,7 +3841,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.divide)
     public static Number divide(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             if (val2.equals(BigInteger.ZERO)) {
@@ -3886,7 +3856,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.remainder)
     public static Number remainder(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             if (val2.equals(BigInteger.ZERO)) {
@@ -3934,7 +3903,6 @@ public class ScriptRuntime {
     @SuppressWarnings("AndroidJdkLibsChecker")
     // java.math.BigInteger#intValueExact() available in API-level 31
     // https://developer.android.com/reference/java/math/BigInteger#intValueExact()
-    @CodeGenMarker(ScriptRuntimeMethodSig.exponentiate)
     public static Number exponentiate(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             if (((BigInteger) val2).signum() == -1) {
@@ -3959,7 +3927,6 @@ public class ScriptRuntime {
         return (double) (toInt32(val1) & toInt32(val2));
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.bitwiseAND)
     public static Number bitwiseAND(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).and((BigInteger) val2);
@@ -3977,7 +3944,6 @@ public class ScriptRuntime {
         return (double) (toInt32(val1) | toInt32(val2));
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.bitwiseOR)
     public static Number bitwiseOR(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).or((BigInteger) val2);
@@ -3995,7 +3961,6 @@ public class ScriptRuntime {
         return (double) (toInt32(val1) ^ toInt32(val2));
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.bitwiseXOR)
     public static Number bitwiseXOR(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             return ((BigInteger) val1).xor((BigInteger) val2);
@@ -4016,7 +3981,6 @@ public class ScriptRuntime {
     @SuppressWarnings("AndroidJdkLibsChecker")
     // java.math.BigInteger#intValueExact() available in API-level 31
     // https://developer.android.com/reference/java/math/BigInteger#intValueExact()
-    @CodeGenMarker(ScriptRuntimeMethodSig.leftShift)
     public static Number leftShift(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             try {
@@ -4036,7 +4000,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.signedRightShift_primitive)
     public static double signedRightShift(double val1, double val2) {
         return (double) (toInt32(val1) >> toInt32(val2));
     }
@@ -4044,7 +4007,6 @@ public class ScriptRuntime {
     @SuppressWarnings("AndroidJdkLibsChecker")
     // java.math.BigInteger#intValueExact() available in API-level 31
     // https://developer.android.com/reference/java/math/BigInteger#intValueExact()
-    @CodeGenMarker(ScriptRuntimeMethodSig.signedRightShift)
     public static Number signedRightShift(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
             try {
@@ -4064,7 +4026,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.bitwiseNOT)
     public static Number bitwiseNOT(Number val) {
         if (val instanceof BigInteger) {
             return ((BigInteger) val).not();
@@ -4086,7 +4047,6 @@ public class ScriptRuntime {
         return nameIncrDecr(scopeChain, id, Context.getContext(), incrDecrMask);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.nameIncrDecr)
     public static Object nameIncrDecr(
             Scriptable scopeChain, String id, Context cx, int incrDecrMask) {
         Scriptable target;
@@ -4124,7 +4084,6 @@ public class ScriptRuntime {
         return propIncrDecr(obj, id, cx, getTopCallScope(cx), incrDecrMask);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.propIncrDecr)
     public static Object propIncrDecr(
             Object obj, String id, Context cx, Scriptable scope, int incrDecrMask) {
         Scriptable start = asScriptableOrThrowUndefReadError(cx, scope, obj, id);
@@ -4197,7 +4156,6 @@ public class ScriptRuntime {
         return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.elemIncrDecr)
     public static Object elemIncrDecr(
             Object obj, Object index, Context cx, Scriptable scope, int incrDecrMask) {
         Object value = getObjectElem(obj, index, cx, scope);
@@ -4246,7 +4204,6 @@ public class ScriptRuntime {
         return refIncrDecr(ref, cx, getTopCallScope(cx), incrDecrMask);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.refIncrDecr)
     public static Object refIncrDecr(Ref ref, Context cx, Scriptable scope, int incrDecrMask) {
         Object value = ref.get(cx);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
@@ -4286,7 +4243,6 @@ public class ScriptRuntime {
         return result;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.negate)
     public static Number negate(Number val) {
         if (val instanceof BigInteger) {
             return ((BigInteger) val).negate();
@@ -4727,7 +4683,6 @@ public class ScriptRuntime {
      *
      * @return a instanceof b
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.instanceOf)
     public static boolean instanceOf(Object a, Object b, Context cx) {
         // Check RHS is an object
         if (!(b instanceof Scriptable)) {
@@ -4769,7 +4724,6 @@ public class ScriptRuntime {
      * @param b the right hand operand
      * @return true if property name or element number a is a property of b
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.in)
     public static boolean in(Object a, Object b, Context cx) {
         if (!(b instanceof Scriptable)) {
             throw typeErrorById("msg.in.not.object");
@@ -5018,7 +4972,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.addInstructionCount)
     public static void addInstructionCount(Context cx, int instructionsToAdd) {
         cx.instructionCount += instructionsToAdd;
         if (cx.instructionCount > cx.instructionThreshold) {
@@ -5027,7 +4980,6 @@ public class ScriptRuntime {
         }
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.initScript)
     public static void initScript(
             ScriptOrFn execObj,
             Scriptable thisObj,
@@ -5109,7 +5061,6 @@ public class ScriptRuntime {
         return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.createFunctionActivation)
     public static Scriptable createFunctionActivation(
             JSFunction funObj,
             Context cx,
@@ -5148,7 +5099,6 @@ public class ScriptRuntime {
         return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.createArrowFunctionActivation)
     public static Scriptable createArrowFunctionActivation(
             JSFunction funObj,
             Context cx,
@@ -5161,7 +5111,6 @@ public class ScriptRuntime {
                 funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.enterActivationFunction)
     public static void enterActivationFunction(Context cx, Scriptable scope) {
         if (cx.topCallScope == null) throw new IllegalStateException();
         NativeCall call = (NativeCall) scope;
@@ -5169,7 +5118,6 @@ public class ScriptRuntime {
         cx.currentActivationCall = call;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.exitActivationFunction)
     public static void exitActivationFunction(Context cx) {
         NativeCall call = cx.currentActivationCall;
         cx.currentActivationCall = call.parentActivationCall;
@@ -5185,7 +5133,6 @@ public class ScriptRuntime {
         return null;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.newCatchScope)
     public static Scriptable newCatchScope(
             Throwable t,
             Scriptable lastCatchScope,
@@ -5398,7 +5345,6 @@ public class ScriptRuntime {
         return shutter == null || shutter.visibleToScripts(obj.getClass().getName());
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.enterWith)
     public static Scriptable enterWith(Object obj, Context cx, Scriptable scope) {
         Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
@@ -5411,13 +5357,11 @@ public class ScriptRuntime {
         return new NativeWith(scope, sobj);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.leaveWith)
     public static Scriptable leaveWith(Scriptable scope) {
         NativeWith nw = (NativeWith) scope;
         return nw.getParentScope();
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.enterDotQuery)
     public static Scriptable enterDotQuery(Object value, Scriptable scope) {
         if (!(value instanceof XMLObject)) {
             throw notXmlError(value);
@@ -5426,14 +5370,12 @@ public class ScriptRuntime {
         return object.enterDotQuery(scope);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.updateDotQuery)
     public static Object updateDotQuery(boolean value, Scriptable scope) {
         // Return null to continue looping
         NativeWith nw = (NativeWith) scope;
         return nw.updateDotQuery(value);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.leaveDotQuery)
     public static Scriptable leaveDotQuery(Scriptable scope) {
         NativeWith nw = (NativeWith) scope;
         return nw.getParentScope();
@@ -5606,7 +5548,6 @@ public class ScriptRuntime {
         return object;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.fillObjectLiteral)
     public static void fillObjectLiteral(
             Scriptable object,
             Object[] propertyIds,
@@ -6033,12 +5974,10 @@ public class ScriptRuntime {
         return result;
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.wrapRegExp)
     public static Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
         return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.getTemplateLiteralCallSite)
     public static Scriptable getTemplateLiteralCallSite(
             Context cx, Scriptable scope, Object[] strings, int index) {
         Object callsite = strings[index];
@@ -6092,7 +6031,6 @@ public class ScriptRuntime {
      * @param value Unescaped text
      * @return The escaped text
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.escapeAttributeValue)
     public static String escapeAttributeValue(Object value, Context cx) {
         XMLLib xmlLib = currentXMLLib(cx);
         return xmlLib.escapeAttributeValue(value);
@@ -6104,13 +6042,11 @@ public class ScriptRuntime {
      * @param value Unescaped text
      * @return The escaped text
      */
-    @CodeGenMarker(ScriptRuntimeMethodSig.escapeTextValue)
     public static String escapeTextValue(Object value, Context cx) {
         XMLLib xmlLib = currentXMLLib(cx);
         return xmlLib.escapeTextValue(value);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.memberRef_member)
     public static Ref memberRef(Object obj, Object elem, Context cx, int memberTypeFlags) {
         if (!(obj instanceof XMLObject)) {
             throw notXmlError(obj);
@@ -6119,7 +6055,6 @@ public class ScriptRuntime {
         return xmlObject.memberRef(cx, elem, memberTypeFlags);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.memberRef_namespaceMember)
     public static Ref memberRef(
             Object obj, Object namespace, Object elem, Context cx, int memberTypeFlags) {
         if (!(obj instanceof XMLObject)) {
@@ -6129,13 +6064,11 @@ public class ScriptRuntime {
         return xmlObject.memberRef(cx, namespace, elem, memberTypeFlags);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.nameRef_name)
     public static Ref nameRef(Object name, Context cx, Scriptable scope, int memberTypeFlags) {
         XMLLib xmlLib = currentXMLLib(cx);
         return xmlLib.nameRef(cx, name, scope, memberTypeFlags);
     }
 
-    @CodeGenMarker(ScriptRuntimeMethodSig.nameRef_namespaceName)
     public static Ref nameRef(
             Object namespace, Object name, Context cx, Scriptable scope, int memberTypeFlags) {
         XMLLib xmlLib = currentXMLLib(cx);
@@ -6257,7 +6190,6 @@ public class ScriptRuntime {
     }
 
     /** Throws a ReferenceError "cannot delete a super property". See ECMAScript spec 13.5.1.2 */
-    @CodeGenMarker(ScriptRuntimeMethodSig.throwDeleteOnSuperPropertyNotAllowed)
     public static void throwDeleteOnSuperPropertyNotAllowed() {
         throw referenceError("msg.delete.super");
     }

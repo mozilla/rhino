@@ -23,6 +23,7 @@ import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.optimizer.info.ScriptRuntimeDesc;
 
 class BodyCodegen {
     void generateBodyCode() {
@@ -117,7 +118,7 @@ class BodyCodegen {
         cfw.addPush(
                 !(scriptOrFn instanceof FunctionNode)
                         || ((FunctionNode) scriptOrFn).requiresArgumentObject());
-        ScriptRuntimeMethodSig.createFunctionActivation.addInvoke(cfw);
+        ScriptRuntimeDesc.createFunctionActivation.addInvoke(cfw);
         cfw.addAStore(variableObjectLocal);
 
         // Evaluate default params for generators after creating activation scope
@@ -314,7 +315,7 @@ class BodyCodegen {
                     cfw.addALoad(variableObjectLocal);
                     cfw.addALoad(argsLocal);
                     cfw.addPush(parmCount);
-                    ScriptRuntimeMethodSig.padAndRestArguments.addInvoke(cfw);
+                    ScriptRuntimeDesc.padAndRestArguments.addInvoke(cfw);
                     cfw.addAStore(argsLocal);
                 } else {
                     // check length of arguments, pad if need be
@@ -325,7 +326,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.IF_ICMPGE, label);
                     cfw.addALoad(argsLocal);
                     cfw.addPush(parmCount);
-                    ScriptRuntimeMethodSig.padArguments.addInvoke(cfw);
+                    ScriptRuntimeDesc.padArguments.addInvoke(cfw);
                     cfw.addAStore(argsLocal);
                     cfw.markLabel(label);
                 }
@@ -404,14 +405,14 @@ class BodyCodegen {
                             || ((FunctionNode) scriptOrFn).requiresArgumentObject());
 
             if (isArrow) {
-                ScriptRuntimeMethodSig.createArrowFunctionActivation.addInvoke(cfw);
+                ScriptRuntimeDesc.createArrowFunctionActivation.addInvoke(cfw);
             } else {
-                ScriptRuntimeMethodSig.createFunctionActivation.addInvoke(cfw);
+                ScriptRuntimeDesc.createFunctionActivation.addInvoke(cfw);
             }
             cfw.addAStore(variableObjectLocal);
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
-            ScriptRuntimeMethodSig.enterActivationFunction.addInvoke(cfw);
+            ScriptRuntimeDesc.enterActivationFunction.addInvoke(cfw);
         } else {
             debugVariableName = "global";
             cfw.addALoad(funObjLocal);
@@ -419,7 +420,7 @@ class BodyCodegen {
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             cfw.addPush(0); // false to indicate it is not eval script
-            ScriptRuntimeMethodSig.initScript.addInvoke(cfw);
+            ScriptRuntimeDesc.initScript.addInvoke(cfw);
         }
 
         enterAreaStartLabel = cfw.acquireLabel();
@@ -604,7 +605,7 @@ class BodyCodegen {
     private void generateActivationExit() {
         if (fnCurrent == null || hasVarsInRegs) throw Kit.codeBug();
         cfw.addALoad(contextLocal);
-        ScriptRuntimeMethodSig.exitActivationFunction.addInvoke(cfw);
+        ScriptRuntimeDesc.exitActivationFunction.addInvoke(cfw);
     }
 
     private void generateStatement(Node node) {
@@ -697,7 +698,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
 
-                    ScriptRuntimeMethodSig.newCatchScope.addInvoke(cfw);
+                    ScriptRuntimeDesc.newCatchScope.addInvoke(cfw);
                     cfw.addAStore(local);
                 }
                 break;
@@ -746,14 +747,14 @@ class BodyCodegen {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
-                ScriptRuntimeMethodSig.enterWith.addInvoke(cfw);
+                ScriptRuntimeDesc.enterWith.addInvoke(cfw);
                 cfw.addAStore(variableObjectLocal);
                 incReferenceWordLocal(variableObjectLocal);
                 break;
 
             case Token.LEAVEWITH:
                 cfw.addALoad(variableObjectLocal);
-                ScriptRuntimeMethodSig.leaveWith.addInvoke(cfw);
+                ScriptRuntimeDesc.leaveWith.addInvoke(cfw);
                 cfw.addAStore(variableObjectLocal);
                 decReferenceWordLocal(variableObjectLocal);
                 break;
@@ -774,7 +775,7 @@ class BodyCodegen {
                                                 ? ScriptRuntime.ENUMERATE_VALUES_IN_ORDER
                                                 : ScriptRuntime.ENUMERATE_ARRAY;
                 cfw.addPush(enumType);
-                ScriptRuntimeMethodSig.enumInit.addInvoke(cfw);
+                ScriptRuntimeDesc.enumInit.addInvoke(cfw);
                 cfw.addAStore(getLocalBlockRegister(node));
                 break;
 
@@ -969,7 +970,7 @@ class BodyCodegen {
                     // Stack: [Context, Scriptable (scope), Object (source), Object[] (excludeKeys)]
                     // Call: ScriptRuntime.doObjectRest(cx, scope, source, excludeKeys) ->
                     // Scriptable
-                    ScriptRuntimeMethodSig.doObjectRest.addInvoke(cfw);
+                    ScriptRuntimeDesc.doObjectRest.addInvoke(cfw);
                 }
                 break;
 
@@ -1000,7 +1001,7 @@ class BodyCodegen {
                 child = child.getNext();
                 generateCallArgArray(node, child, false);
                 cfw.addALoad(contextLocal);
-                ScriptRuntimeMethodSig.callRef.addInvoke(cfw);
+                ScriptRuntimeDesc.callRef.addInvoke(cfw);
                 break;
 
             case Token.NUMBER:
@@ -1142,9 +1143,9 @@ class BodyCodegen {
                     cfw.addALoad(local);
                     cfw.addALoad(contextLocal);
                     if (type == Token.ENUM_NEXT) {
-                        ScriptRuntimeMethodSig.enumNext.addInvoke(cfw);
+                        ScriptRuntimeDesc.enumNext.addInvoke(cfw);
                     } else {
-                        ScriptRuntimeMethodSig.enumId.addInvoke(cfw);
+                        ScriptRuntimeDesc.enumId.addInvoke(cfw);
                     }
                     break;
                 }
@@ -1190,7 +1191,7 @@ class BodyCodegen {
 
             case Token.TYPEOF:
                 generateExpression(child, node);
-                ScriptRuntimeMethodSig.typeof.addInvoke(cfw);
+                ScriptRuntimeDesc.typeof.addInvoke(cfw);
                 break;
 
             case Token.TYPEOFNAME:
@@ -1265,7 +1266,7 @@ class BodyCodegen {
             case Token.STRING_CONCAT:
                 generateExpression(child, node);
                 generateExpression(child.getNext(), node);
-                ScriptRuntimeMethodSig.concat.addInvoke(cfw);
+                ScriptRuntimeDesc.concat.addInvoke(cfw);
                 break;
 
             case Token.SUB:
@@ -1305,7 +1306,7 @@ class BodyCodegen {
                     generateExpression(child, node);
                     if (childNumberFlag == -1) {
                         addObjectToNumeric();
-                        ScriptRuntimeMethodSig.negate.addInvoke(cfw);
+                        ScriptRuntimeDesc.negate.addInvoke(cfw);
                     } else {
                         cfw.add(ByteCode.DNEG);
                     }
@@ -1452,19 +1453,19 @@ class BodyCodegen {
                     if (type == Token.SET_REF_OP) {
                         cfw.add(ByteCode.DUP);
                         cfw.addALoad(contextLocal);
-                        ScriptRuntimeMethodSig.refGet.addInvoke(cfw);
+                        ScriptRuntimeDesc.refGet.addInvoke(cfw);
                     }
                     generateExpression(child, node);
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
-                    ScriptRuntimeMethodSig.refSet.addInvoke(cfw);
+                    ScriptRuntimeDesc.refSet.addInvoke(cfw);
                 }
                 break;
 
             case Token.DEL_REF:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                ScriptRuntimeMethodSig.refDel.addInvoke(cfw);
+                ScriptRuntimeDesc.refDel.addInvoke(cfw);
                 break;
 
             case Token.DELPROP:
@@ -1482,12 +1483,12 @@ class BodyCodegen {
                     // bytecode, it's fine.
                     cfw.add(ByteCode.POP2);
                     cfw.addLoadConstant(0);
-                    ScriptRuntimeMethodSig.throwDeleteOnSuperPropertyNotAllowed.addInvoke(cfw);
+                    ScriptRuntimeDesc.throwDeleteOnSuperPropertyNotAllowed.addInvoke(cfw);
                 } else {
                     cfw.addALoad(contextLocal); // Context cx
                     cfw.addALoad(variableObjectLocal); // Scriptable scope
                     cfw.addPush(isName); // boolean isName
-                    ScriptRuntimeMethodSig.delete.addInvoke(cfw);
+                    ScriptRuntimeDesc.delete.addInvoke(cfw);
                 }
                 break;
 
@@ -1544,20 +1545,20 @@ class BodyCodegen {
                         child = child.getNext();
                     } while (child != null);
                     cfw.addALoad(contextLocal);
-                    ScriptRuntimeMethodSig sig;
+                    ScriptRuntimeDesc sig;
                     switch (type) {
                         case Token.REF_MEMBER:
-                            sig = ScriptRuntimeMethodSig.memberRef_member;
+                            sig = ScriptRuntimeDesc.memberRef_member;
                             break;
                         case Token.REF_NS_MEMBER:
-                            sig = ScriptRuntimeMethodSig.memberRef_namespaceMember;
+                            sig = ScriptRuntimeDesc.memberRef_namespaceMember;
                             break;
                         case Token.REF_NAME:
-                            sig = ScriptRuntimeMethodSig.nameRef_name;
+                            sig = ScriptRuntimeDesc.nameRef_name;
                             cfw.addALoad(variableObjectLocal);
                             break;
                         case Token.REF_NS_NAME:
-                            sig = ScriptRuntimeMethodSig.nameRef_namespaceName;
+                            sig = ScriptRuntimeDesc.nameRef_namespaceName;
                             cfw.addALoad(variableObjectLocal);
                             break;
                         default:
@@ -1575,19 +1576,19 @@ class BodyCodegen {
             case Token.ESCXMLATTR:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                ScriptRuntimeMethodSig.escapeAttributeValue.addInvoke(cfw);
+                ScriptRuntimeDesc.escapeAttributeValue.addInvoke(cfw);
                 break;
 
             case Token.ESCXMLTEXT:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                ScriptRuntimeMethodSig.escapeTextValue.addInvoke(cfw);
+                ScriptRuntimeDesc.escapeTextValue.addInvoke(cfw);
                 break;
 
             case Token.DEFAULTNAMESPACE:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                ScriptRuntimeMethodSig.setDefaultNamespace.addInvoke(cfw);
+                ScriptRuntimeDesc.setDefaultNamespace.addInvoke(cfw);
                 break;
 
             case Token.YIELD:
@@ -1656,7 +1657,7 @@ class BodyCodegen {
 
     private void finishGetRefGeneration() {
         cfw.addALoad(contextLocal);
-        ScriptRuntimeMethodSig.refGet.addInvoke(cfw);
+        ScriptRuntimeDesc.refGet.addInvoke(cfw);
     }
 
     private void finishRefSpecialGeneration(Node node) {
@@ -1664,7 +1665,7 @@ class BodyCodegen {
         cfw.addPush(special);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        ScriptRuntimeMethodSig.specialRef.addInvoke(cfw);
+        ScriptRuntimeDesc.specialRef.addInvoke(cfw);
     }
 
     // Descend down the tree and return the first child that represents a yield
@@ -2390,7 +2391,7 @@ class BodyCodegen {
                 cfw.addPush((String) id);
             } else {
                 cfw.addPush(((Integer) id).intValue());
-                ScriptRuntimeMethodSig.wrapInt.addInvoke(cfw);
+                ScriptRuntimeDesc.wrapInt.addInvoke(cfw);
             }
         }
     }
@@ -2468,7 +2469,7 @@ class BodyCodegen {
 
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        ScriptRuntimeMethodSig.fillObjectLiteral.addInvoke(cfw);
+        ScriptRuntimeDesc.fillObjectLiteral.addInvoke(cfw);
     }
 
     private void visitSpecialCall(Node node, int type, int specialType, Node child) {
@@ -2489,7 +2490,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(specialType);
 
-        ScriptRuntimeMethodSig.newSpecial.addInvoke(cfw);
+        ScriptRuntimeDesc.newSpecial.addInvoke(cfw);
     }
 
     private void visitSpecialNormalCall(Node node, int specialType, Node child) {
@@ -2506,7 +2507,7 @@ class BodyCodegen {
         cfw.addPush(itsLineNumber);
         cfw.addPush(false);
 
-        ScriptRuntimeMethodSig.callSpecial.addInvoke(cfw);
+        ScriptRuntimeDesc.callSpecial.addInvoke(cfw);
     }
 
     private void visitSpecialOptionalChainingCall(Node node, int specialType, Node child) {
@@ -2540,7 +2541,7 @@ class BodyCodegen {
         cfw.addPush(itsLineNumber);
         cfw.addPush(true);
 
-        ScriptRuntimeMethodSig.callSpecial.addInvoke(cfw);
+        ScriptRuntimeDesc.callSpecial.addInvoke(cfw);
 
         cfw.markLabel(afterLabel);
     }
@@ -2632,7 +2633,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         // stack: ... functionObj cx scope
         generateCallArgArray(node, firstArgChild, false);
-        ScriptRuntimeMethodSig.newObject.addInvoke(cfw);
+        ScriptRuntimeDesc.newObject.addInvoke(cfw);
     }
 
     private void visitOptimizedCall(Node node, OptFunctionNode target, int type, Node child) {
@@ -2744,7 +2745,7 @@ class BodyCodegen {
         generateCallArgArray(node, firstArgChild, true);
 
         if (type == Token.NEW) {
-            ScriptRuntimeMethodSig.newObject.addInvoke(cfw);
+            ScriptRuntimeDesc.newObject.addInvoke(cfw);
         } else {
             cfw.addInvoke(
                     ByteCode.INVOKEINTERFACE,
@@ -2859,9 +2860,9 @@ class BodyCodegen {
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
                         if (isOptionalChainingCall) {
-                            ScriptRuntimeMethodSig.getElemAndThisOptional.addInvoke(cfw);
+                            ScriptRuntimeDesc.getElemAndThisOptional.addInvoke(cfw);
                         } else {
-                            ScriptRuntimeMethodSig.getElemAndThis.addInvoke(cfw);
+                            ScriptRuntimeDesc.getElemAndThis.addInvoke(cfw);
                         }
                     }
                     break;
@@ -2884,9 +2885,9 @@ class BodyCodegen {
                     generateExpression(node, parent);
                     cfw.addALoad(contextLocal);
                     if (isOptionalChainingCall) {
-                        ScriptRuntimeMethodSig.getValueAndThisOptional.addInvoke(cfw);
+                        ScriptRuntimeDesc.getValueAndThisOptional.addInvoke(cfw);
                     } else {
-                        ScriptRuntimeMethodSig.getValueAndThis.addInvoke(cfw);
+                        ScriptRuntimeDesc.getValueAndThis.addInvoke(cfw);
                     }
                     break;
                 }
@@ -3470,7 +3471,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.IF_ACMPEQ, isNumberLabel);
                     int stack = cfw.getStackTop();
                     cfw.addALoad(dcp_register);
-                    ScriptRuntimeMethodSig.typeof.addInvoke(cfw);
+                    ScriptRuntimeDesc.typeof.addInvoke(cfw);
                     int beyond = cfw.acquireLabel();
                     cfw.add(ByteCode.GOTO, beyond);
                     cfw.markLabel(isNumberLabel, stack);
@@ -3478,14 +3479,14 @@ class BodyCodegen {
                     cfw.markLabel(beyond);
                 } else {
                     cfw.addALoad(varRegisters[varIndex]);
-                    ScriptRuntimeMethodSig.typeof.addInvoke(cfw);
+                    ScriptRuntimeDesc.typeof.addInvoke(cfw);
                 }
                 return;
             }
         }
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(node.getString());
-        ScriptRuntimeMethodSig.typeofName.addInvoke(cfw);
+        ScriptRuntimeDesc.typeofName.addInvoke(cfw);
     }
 
     /**
@@ -3518,7 +3519,7 @@ class BodyCodegen {
     private void addInstructionCount(int count) {
         cfw.addALoad(contextLocal);
         cfw.addPush(count);
-        ScriptRuntimeMethodSig.addInstructionCount.addInvoke(cfw);
+        ScriptRuntimeDesc.addInstructionCount.addInvoke(cfw);
     }
 
     private void visitIncDec(Node node) {
@@ -3619,7 +3620,7 @@ class BodyCodegen {
                 cfw.addPush(child.getString()); // push name
                 cfw.addALoad(contextLocal);
                 cfw.addPush(incrDecrMask);
-                ScriptRuntimeMethodSig.nameIncrDecr.addInvoke(cfw);
+                ScriptRuntimeDesc.nameIncrDecr.addInvoke(cfw);
                 break;
             case Token.GETPROPNOWARN:
                 throw Kit.codeBug();
@@ -3631,7 +3632,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     cfw.addPush(incrDecrMask);
-                    ScriptRuntimeMethodSig.propIncrDecr.addInvoke(cfw);
+                    ScriptRuntimeDesc.propIncrDecr.addInvoke(cfw);
                     break;
                 }
             case Token.GETELEM:
@@ -3652,7 +3653,7 @@ class BodyCodegen {
                                         + "I"
                                         + ")Ljava/lang/Object;");
                     } else {
-                        ScriptRuntimeMethodSig.elemIncrDecr.addInvoke(cfw);
+                        ScriptRuntimeDesc.elemIncrDecr.addInvoke(cfw);
                     }
                     break;
                 }
@@ -3663,7 +3664,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     cfw.addPush(incrDecrMask);
-                    ScriptRuntimeMethodSig.refIncrDecr.addInvoke(cfw);
+                    ScriptRuntimeDesc.refIncrDecr.addInvoke(cfw);
                     break;
                 }
             default:
@@ -3791,16 +3792,16 @@ class BodyCodegen {
 
             switch (type) {
                 case Token.SUB:
-                    ScriptRuntimeMethodSig.subtract.addInvoke(cfw);
+                    ScriptRuntimeDesc.subtract.addInvoke(cfw);
                     break;
                 case Token.MUL:
-                    ScriptRuntimeMethodSig.multiply.addInvoke(cfw);
+                    ScriptRuntimeDesc.multiply.addInvoke(cfw);
                     break;
                 case Token.DIV:
-                    ScriptRuntimeMethodSig.divide.addInvoke(cfw);
+                    ScriptRuntimeDesc.divide.addInvoke(cfw);
                     break;
                 case Token.MOD:
-                    ScriptRuntimeMethodSig.remainder.addInvoke(cfw);
+                    ScriptRuntimeDesc.remainder.addInvoke(cfw);
                     break;
                 default:
                     throw Kit.codeBug(Token.typeToName(type));
@@ -3824,7 +3825,7 @@ class BodyCodegen {
             cfw.addALoad(reg);
             addObjectToNumeric();
 
-            ScriptRuntimeMethodSig.exponentiate.addInvoke(cfw);
+            ScriptRuntimeDesc.exponentiate.addInvoke(cfw);
         }
     }
 
@@ -3833,9 +3834,9 @@ class BodyCodegen {
         generateExpression(child, node);
         if (childNumberFlag == -1) {
             addObjectToNumeric();
-            ScriptRuntimeMethodSig.bitwiseNOT.addInvoke(cfw);
+            ScriptRuntimeDesc.bitwiseNOT.addInvoke(cfw);
         } else {
-            ScriptRuntimeMethodSig.toInt32.addInvoke(cfw);
+            ScriptRuntimeDesc.toInt32.addInvoke(cfw);
             cfw.addPush(-1); // implement ~a as (a ^ -1)
             cfw.add(ByteCode.IXOR);
             cfw.add(ByteCode.I2D);
@@ -3874,27 +3875,27 @@ class BodyCodegen {
 
             switch (type) {
                 case Token.BITOR:
-                    ScriptRuntimeMethodSig.bitwiseOR.addInvoke(cfw);
+                    ScriptRuntimeDesc.bitwiseOR.addInvoke(cfw);
                     break;
                 case Token.BITXOR:
-                    ScriptRuntimeMethodSig.bitwiseXOR.addInvoke(cfw);
+                    ScriptRuntimeDesc.bitwiseXOR.addInvoke(cfw);
                     break;
                 case Token.BITAND:
-                    ScriptRuntimeMethodSig.bitwiseAND.addInvoke(cfw);
+                    ScriptRuntimeDesc.bitwiseAND.addInvoke(cfw);
                     break;
                 case Token.RSH:
-                    ScriptRuntimeMethodSig.signedRightShift.addInvoke(cfw);
+                    ScriptRuntimeDesc.signedRightShift.addInvoke(cfw);
                     break;
                 case Token.LSH:
-                    ScriptRuntimeMethodSig.leftShift.addInvoke(cfw);
+                    ScriptRuntimeDesc.leftShift.addInvoke(cfw);
                     break;
                 default:
                     throw Kit.codeBug(Token.typeToName(type));
             }
         } else {
-            ScriptRuntimeMethodSig.toInt32.addInvoke(cfw);
+            ScriptRuntimeDesc.toInt32.addInvoke(cfw);
             generateExpression(child.getNext(), node);
-            ScriptRuntimeMethodSig.toInt32.addInvoke(cfw);
+            ScriptRuntimeDesc.toInt32.addInvoke(cfw);
 
             switch (type) {
                 case Token.BITOR:
@@ -3969,9 +3970,9 @@ class BodyCodegen {
             generateExpression(rChild, node);
             cfw.addALoad(contextLocal);
             if (type == Token.INSTANCEOF) {
-                ScriptRuntimeMethodSig.instanceOf.addInvoke(cfw);
+                ScriptRuntimeDesc.instanceOf.addInvoke(cfw);
             } else {
-                ScriptRuntimeMethodSig.in.addInvoke(cfw);
+                ScriptRuntimeDesc.in.addInvoke(cfw);
             }
             cfw.add(ByteCode.IFNE, trueGOTO);
             cfw.add(ByteCode.GOTO, falseGOTO);
@@ -4397,7 +4398,7 @@ class BodyCodegen {
         updateLineNumber(node);
         generateExpression(child, node);
         cfw.addALoad(variableObjectLocal);
-        ScriptRuntimeMethodSig.enterDotQuery.addInvoke(cfw);
+        ScriptRuntimeDesc.enterDotQuery.addInvoke(cfw);
         cfw.addAStore(variableObjectLocal);
 
         // add push null/pop with label in between to simplify code for loop
@@ -4411,12 +4412,12 @@ class BodyCodegen {
         generateExpression(child.getNext(), node);
         addDynamicInvoke("MATH:TOBOOLEAN", Signatures.MATH_TO_BOOLEAN);
         cfw.addALoad(variableObjectLocal);
-        ScriptRuntimeMethodSig.updateDotQuery.addInvoke(cfw);
+        ScriptRuntimeDesc.updateDotQuery.addInvoke(cfw);
         cfw.add(ByteCode.DUP);
         cfw.add(ByteCode.IFNULL, queryLoopStart);
         // stack: ... non_null_result_of_updateDotQuery
         cfw.addALoad(variableObjectLocal);
-        ScriptRuntimeMethodSig.leaveDotQuery.addInvoke(cfw);
+        ScriptRuntimeDesc.leaveDotQuery.addInvoke(cfw);
         cfw.addAStore(variableObjectLocal);
     }
 
