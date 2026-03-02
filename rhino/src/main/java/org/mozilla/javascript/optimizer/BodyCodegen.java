@@ -450,11 +450,7 @@ class BodyCodegen {
         } else {
             if (fnCurrent.itsContainsCalls0) {
                 itsZeroArgArray = getNewWordLocal();
-                cfw.add(
-                        ByteCode.GETSTATIC,
-                        "org/mozilla/javascript/ScriptRuntime",
-                        "emptyArgs",
-                        "[Ljava/lang/Object;");
+                ScriptRuntimeDesc.emptyArgs.getStatic(cfw);
                 cfw.addAStore(itsZeroArgArray);
             }
             if (fnCurrent.itsContainsCalls1) {
@@ -1112,14 +1108,7 @@ class BodyCodegen {
                             codegen.mainClassName,
                             codegen.getCompiledRegexpName(scriptOrFn, i),
                             "Ljava/lang/Object;");
-                    cfw.addInvoke(
-                            ByteCode.INVOKESTATIC,
-                            "org/mozilla/javascript/ScriptRuntime",
-                            "wrapRegExp",
-                            "(Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
-                                    + "Ljava/lang/Object;"
-                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                    ScriptRuntimeDesc.wrapRegExp.addInvoke(cfw);
                 }
                 break;
 
@@ -1833,14 +1822,7 @@ class BodyCodegen {
                 codegen.getTemplateLiteralName(scriptOrFn),
                 "[Ljava/lang/Object;");
         cfw.addPush(index);
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "getTemplateLiteralCallSite",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "[Ljava/lang/Object;I"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        ScriptRuntimeDesc.getTemplateLiteralCallSite.addInvoke(cfw);
     }
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {
@@ -2715,11 +2697,7 @@ class BodyCodegen {
             argChild = argChild.getNext();
         }
 
-        cfw.add(
-                ByteCode.GETSTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "emptyArgs",
-                "[Ljava/lang/Object;");
+        ScriptRuntimeDesc.emptyArgs.getStatic(cfw);
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
                 codegen.mainClassName,
@@ -4475,11 +4453,7 @@ class BodyCodegen {
             if (itsZeroArgArray >= 0) {
                 cfw.addALoad(itsZeroArgArray);
             } else {
-                cfw.add(
-                        ByteCode.GETSTATIC,
-                        "org/mozilla/javascript/ScriptRuntime",
-                        "emptyArgs",
-                        "[Ljava/lang/Object;");
+                ScriptRuntimeDesc.emptyArgs.getStatic(cfw);
             }
         } else {
             cfw.addPush(size);
