@@ -198,6 +198,7 @@ public final class IRFactory {
             case Token.NULL:
             case Token.UNDEFINED:
             case Token.DEBUGGER:
+            case Token.NEW_TARGET:
                 return transformLiteral(node);
             case Token.SUPER:
                 parser.setRequiresActivation();
