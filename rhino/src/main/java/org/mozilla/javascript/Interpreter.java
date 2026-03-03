@@ -76,6 +76,7 @@ public final class Interpreter extends Icode implements Evaluator {
         boolean isContinuationsTopFrame;
 
         final Object thisObj;
+        final Object newTarget;
 
         // The values that change during interpretation
 
@@ -94,6 +95,7 @@ public final class Interpreter extends Icode implements Evaluator {
         CallFrame(
                 Context cx,
                 Object thisObj,
+                Object newTarget,
                 ScriptOrFn fnOrScript,
                 InterpreterData code,
                 CallFrame parentFrame,
@@ -116,6 +118,7 @@ public final class Interpreter extends Icode implements Evaluator {
             this.fnOrScript = fnOrScript;
             varSource = this;
             this.thisObj = thisObj;
+            this.newTarget = newTarget;
 
             this.parentFrame = parentFrame;
             if (parentFrame == null) {
@@ -183,6 +186,7 @@ public final class Interpreter extends Icode implements Evaluator {
             isContinuationsTopFrame = original.isContinuationsTopFrame;
 
             thisObj = original.thisObj;
+            newTarget = original.newTarget;
 
             result = original.result;
             resultDbl = original.resultDbl;
@@ -235,6 +239,7 @@ public final class Interpreter extends Icode implements Evaluator {
             isContinuationsTopFrame = original.isContinuationsTopFrame;
 
             thisObj = original.thisObj;
+            newTarget = original.newTarget;
 
             result = original.result;
             resultDbl = original.resultDbl;
@@ -1171,7 +1176,8 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx,
             VarScope scope,
             Object thisObj,
-            Object[] args) {
+            Object[] args,
+            Object newTarget) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
         var desc = ifun.getDescriptor();
@@ -1219,7 +1225,8 @@ public final class Interpreter extends Icode implements Evaluator {
                         args.length,
                         ifun,
                         idata,
-                        null);
+                        null,
+                        newTarget);
         frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
         cx.isContinuationsTopCall = false;
 
@@ -1515,6 +1522,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.THIS] = new DoThis();
         instructionObjs[base + Token.SUPER] = new DoSuper();
         instructionObjs[base + Token.THISFN] = new DoThisFunction();
+        instructionObjs[base + Token.NEW_TARGET] = new DoNewTarget();
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode_UNDEF] = new DoUndef();
@@ -3593,7 +3601,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     state.indexReg,
                                     ifun,
                                     idata,
-                                    callParentFrame);
+                                    callParentFrame,
+                                    Undefined.instance);
                     if (op != Icode_TAIL_CALL) {
                         frame.savedStackTop = state.stackTop;
                         frame.savedCallOp = op;
@@ -3695,7 +3704,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     state.indexReg,
                                     f,
                                     idata,
-                                    frame);
+                                    frame,
+                                    lhs);
 
                     frame.stack[state.stackTop] = newInstance;
                     frame.savedStackTop = state.stackTop;
@@ -4093,6 +4103,14 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.stack[++state.stackTop] = frame.fnOrScript;
+            return null;
+        }
+    }
+
+    private static class DoNewTarget extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = frame.newTarget;
             return null;
         }
     }
@@ -5028,11 +5046,18 @@ public final class Interpreter extends Icode implements Evaluator {
             int argCount,
             ScriptOrFn fnOrScript,
             InterpreterData code,
-            CallFrame parentFrame) {
+            CallFrame parentFrame,
+            Object newTarget) {
+        // Arrow functions inherit new.target from their enclosing context
+        if (fnOrScript.getDescriptor().getFunctionType() == FunctionNode.ARROW_FUNCTION
+                && parentFrame != null) {
+            newTarget = parentFrame.newTarget;
+        }
         CallFrame frame =
                 new CallFrame(
                         cx,
                         thisObj,
+                        newTarget,
                         fnOrScript,
                         code,
                         parentFrame,
