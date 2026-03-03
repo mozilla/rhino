@@ -4378,13 +4378,13 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             boolean copyArray = ctx.idata.itsICode[ctx.pc] != 0;
-            ++ctx.pc;
             if (ctx.indexReg < 0) {
                 ctx.out.println(tname + " length: " + (-ctx.indexReg - 1));
             } else {
                 Object[] keys = (Object[]) ctx.idata.literalIds[ctx.indexReg];
                 ctx.out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
             }
+            ++ctx.pc;
         }
     }
 
@@ -4409,8 +4409,8 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             int skipIdx = 0xFF & ctx.idata.itsICode[ctx.pc];
-            ++ctx.pc;
             ctx.out.println(tname + " " + ctx.indexReg + " skipIdx=" + skipIdx);
+            ++ctx.pc;
         }
     }
 
