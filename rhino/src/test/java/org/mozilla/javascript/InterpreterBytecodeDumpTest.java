@@ -359,12 +359,6 @@ class InterpreterBytecodeDumpTest {
     }
 
     @Test
-    void objectRestIsPrinted() throws IOException {
-        var output = getByteCodeFrom("var {a, ...rest} = x");
-        assertTrue(output.contains("OBJECT_REST excluding"));
-    }
-
-    @Test
     void regIndConstantsArePrinted() throws IOException {
         var output =
                 getByteCodeFrom(
@@ -450,6 +444,47 @@ class InterpreterBytecodeDumpTest {
     void objectLiteralWithSpreadIsPrinted() throws IOException {
         var output = getByteCodeFrom("({...x})");
         assertTrue(output.contains("LITERAL_NEW_OBJECT "));
+    }
+
+    @Test
+    void objectRestIsPrinted() throws IOException {
+        assertEquals(
+                Utils.portableLines(
+                        "ICode dump, for null, length = 35",
+                        "MaxStack = 3",
+                        " [0] LINE : 1",
+                        " [3] REG_IND_C0",
+                        " [4] LITERAL_NEW_OBJECT [$0] false",
+                        " [6] REG_STR_C0 \"obj\"",
+                        " [7] NAME",
+                        " [8] LITERAL_SET",
+                        " [9] OBJECTLIT",
+                        " [10] ENTERWITH",
+                        " [11] REG_STR_C1 \"a\"",
+                        " [12] BINDNAME",
+                        " [13] REG_STR_C2 \"$0\"",
+                        " [14] NAME",
+                        " [15] REG_STR_C1 \"a\"",
+                        " [16] GETPROP",
+                        " [17] REG_STR_C1 \"a\"",
+                        " [18] SETNAME",
+                        " [19] POP",
+                        " [20] REG_STR_C3 \"rest\"",
+                        " [21] BINDNAME",
+                        " [22] REG_STR_C2 \"$0\"",
+                        " [23] NAME",
+                        " [24] REG_IND_C1",
+                        " [25] OBJECT_REST excluding [static: \"a\"; computed: 0]",
+                        " [27] REG_STR_C3 \"rest\"",
+                        " [28] SETNAME",
+                        " [29] POP",
+                        " [30] REG_STR_C2 \"$0\"",
+                        " [31] NAME",
+                        " [32] LEAVEWITH",
+                        " [33] POP",
+                        " [34] RETURN_RESULT",
+                        ""),
+                getByteCodeFrom("var {a, ...rest} = obj"));
     }
 
     private static String getByteCodeFrom(String source) throws IOException {
