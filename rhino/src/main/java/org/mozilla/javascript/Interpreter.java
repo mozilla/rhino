@@ -814,15 +814,7 @@ public final class Interpreter extends Icode implements Evaluator {
         out.println("ICode dump, for " + desc.name + ", length = " + iCodeLength);
         out.println("MaxStack = " + idata.itsMaxStack);
 
-        ICodeDumpContext ctx =
-                new ICodeDumpContext(
-                        out,
-                        iCode,
-                        idata.itsStringTable,
-                        idata.itsBigIntTable,
-                        idata.itsDoubleTable,
-                        idata.itsRegExpLiterals,
-                        idata.literalIds);
+        ICodeDumpContext ctx = new ICodeDumpContext(out, idata);
 
         for (int pc = 0; pc < iCodeLength; ) {
             out.flush();
@@ -1353,43 +1345,26 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static class ICodeDumpContext {
         final PrintStream out;
-        final byte[] iCode;
-        final String[] strings;
-        final BigInteger[] bigInts;
-        final double[] doubles;
-        final Object[] regExpLiterals;
-        final Object[] literalIds;
+        final InterpreterData.Builder<?> idata;
 
         int pc;
         int indexReg;
 
-        ICodeDumpContext(
-                PrintStream out,
-                byte[] iCode,
-                String[] strings,
-                BigInteger[] bigInts,
-                double[] doubles,
-                Object[] regExpLiterals,
-                Object[] literalIds) {
+        ICodeDumpContext(PrintStream out, InterpreterData.Builder<?> idata) {
             this.out = out;
-            this.iCode = iCode;
-            this.strings = strings;
-            this.bigInts = bigInts;
-            this.doubles = doubles;
-            this.regExpLiterals = regExpLiterals;
-            this.literalIds = literalIds;
+            this.idata = idata;
         }
 
         int getShort(int pc) {
-            return Interpreter.getShort(iCode, pc);
+            return Interpreter.getShort(idata.itsICode, pc);
         }
 
         int getIndex(int pc) {
-            return Interpreter.getIndex(iCode, pc);
+            return Interpreter.getIndex(idata.itsICode, pc);
         }
 
         int getInt(int pc) {
-            return Interpreter.getInt(iCode, pc);
+            return Interpreter.getInt(idata.itsICode, pc);
         }
     }
 
@@ -3031,7 +3006,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.iCode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3153,7 +3128,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.iCode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3205,7 +3180,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.iCode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3392,8 +3367,8 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int callType = ctx.iCode[ctx.pc] & 0xFF;
-            boolean isNew = (ctx.iCode[ctx.pc + 1] != 0);
+            int callType = ctx.idata.itsICode[ctx.pc] & 0xFF;
+            boolean isNew = (ctx.idata.itsICode[ctx.pc + 1] != 0);
             int line = ctx.getIndex(ctx.pc + 2);
             ctx.out.println(tname + " " + callType + " " + isNew + " " + ctx.indexReg + " " + line);
             ctx.pc += 4;
@@ -3822,7 +3797,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            double value = ctx.doubles[ctx.indexReg];
+            double value = ctx.idata.itsDoubleTable[ctx.indexReg];
             ctx.out.println(tname + " " + value);
         }
     }
@@ -3855,7 +3830,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.iCode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3882,7 +3857,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = ctx.iCode[ctx.pc];
+            ctx.indexReg = ctx.idata.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -3924,7 +3899,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = ctx.iCode[ctx.pc];
+            ctx.indexReg = ctx.idata.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -3958,7 +3933,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = ctx.iCode[ctx.pc];
+            ctx.indexReg = ctx.idata.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -4044,7 +4019,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.iCode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -4184,7 +4159,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            boolean afterFisrtFlag = (ctx.iCode[ctx.pc] != 0);
+            boolean afterFisrtFlag = (ctx.idata.itsICode[ctx.pc] != 0);
             ctx.out.println(tname + " " + afterFisrtFlag);
             ++ctx.pc;
         }
@@ -4361,7 +4336,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.regExpLiterals[ctx.indexReg]);
+            ctx.out.println(tname + " " + ctx.idata.itsRegExpLiterals[ctx.indexReg]);
         }
     }
 
@@ -4402,12 +4377,12 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            boolean copyArray = ctx.iCode[ctx.pc] != 0;
+            boolean copyArray = ctx.idata.itsICode[ctx.pc] != 0;
             ++ctx.pc;
             if (ctx.indexReg < 0) {
                 ctx.out.println(tname + " length: " + (-ctx.indexReg - 1));
             } else {
-                Object[] keys = (Object[]) ctx.literalIds[ctx.indexReg];
+                Object[] keys = (Object[]) ctx.idata.literalIds[ctx.indexReg];
                 ctx.out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
             }
         }
@@ -4433,7 +4408,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int skipIdx = 0xFF & ctx.iCode[ctx.pc];
+            int skipIdx = 0xFF & ctx.idata.itsICode[ctx.pc];
             ++ctx.pc;
             ctx.out.println(tname + " " + ctx.indexReg + " skipIdx=" + skipIdx);
         }
@@ -4545,15 +4520,17 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int computedKeyCount = ctx.iCode[ctx.pc] & 0xFF;
+            int computedKeyCount = ctx.idata.itsICode[ctx.pc] & 0xFF;
             ++ctx.pc;
             if (ctx.indexReg >= 0) {
-                int[] staticKeyIndices = (int[]) ctx.literalIds[ctx.indexReg];
+                int[] staticKeyIndices = (int[]) ctx.idata.literalIds[ctx.indexReg];
                 StringBuilder keys = new StringBuilder();
                 keys.append("[static: ");
                 for (int i = 0; i < staticKeyIndices.length; i++) {
                     if (i > 0) keys.append(", ");
-                    keys.append("\"").append(ctx.strings[staticKeyIndices[i]]).append("\"");
+                    keys.append("\"")
+                            .append(ctx.idata.itsStringTable[staticKeyIndices[i]])
+                            .append("\"");
                 }
                 keys.append("; computed: ").append(computedKeyCount).append("]");
                 ctx.out.println(tname + " excluding " + keys);
@@ -4604,7 +4581,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             if (op == Icode_SPARE_ARRAYLIT) {
-                ctx.out.println(tname + " " + ctx.literalIds[ctx.indexReg]);
+                ctx.out.println(tname + " " + ctx.idata.literalIds[ctx.indexReg]);
             } else {
                 ctx.out.println(tname);
             }
@@ -4730,7 +4707,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = 0xFF & ctx.iCode[ctx.pc];
+            ctx.indexReg = 0xFF & ctx.idata.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -4777,7 +4754,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.strings[Icode_REG_STR_C0 - op];
+            String str = ctx.idata.itsStringTable[Icode_REG_STR_C0 - op];
             ctx.out.println(tname + " \"" + str + '"');
         }
     }
@@ -4792,7 +4769,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.strings[0xFF & ctx.iCode[ctx.pc]];
+            String str = ctx.idata.itsStringTable[0xFF & ctx.idata.itsICode[ctx.pc]];
             ctx.out.println(tname + " \"" + str + '"');
             ++ctx.pc;
         }
@@ -4808,7 +4785,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.strings[ctx.getIndex(ctx.pc)];
+            String str = ctx.idata.itsStringTable[ctx.getIndex(ctx.pc)];
             ctx.out.println(tname + " \"" + str + '"');
             ctx.pc += 2;
         }
@@ -4824,7 +4801,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.strings[ctx.getInt(ctx.pc)];
+            String str = ctx.idata.itsStringTable[ctx.getInt(ctx.pc)];
             ctx.out.println(tname + " \"" + str + '"');
             ctx.pc += 4;
         }
@@ -4839,7 +4816,11 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.bigInts[Icode_REG_BIGINT_C0 - op].toString() + 'n');
+            ctx.out.println(
+                    tname
+                            + " "
+                            + ctx.idata.itsBigIntTable[Icode_REG_BIGINT_C0 - op].toString()
+                            + 'n');
         }
     }
 
@@ -4853,7 +4834,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt = ctx.bigInts[0xFF & ctx.iCode[ctx.pc]];
+            BigInteger bigInt = ctx.idata.itsBigIntTable[0xFF & ctx.idata.itsICode[ctx.pc]];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ++ctx.pc;
         }
@@ -4869,7 +4850,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt = ctx.bigInts[ctx.getIndex(ctx.pc)];
+            BigInteger bigInt = ctx.idata.itsBigIntTable[ctx.getIndex(ctx.pc)];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ctx.pc += 2;
         }
@@ -4885,7 +4866,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt = ctx.bigInts[ctx.getInt(ctx.pc)];
+            BigInteger bigInt = ctx.idata.itsBigIntTable[ctx.getInt(ctx.pc)];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ctx.pc += 4;
         }
