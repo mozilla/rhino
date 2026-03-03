@@ -393,7 +393,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             Context cx,
             VarScope scope,
             Object thisObj,
-            Object[] args) {
+            Object[] args,
+            Object newTarget) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
         var desc = ifun.getDescriptor();
@@ -441,7 +442,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         args.length,
                         ifun,
                         compilerData,
-                        null);
+                        null,
+                        newTarget);
         frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
         cx.isContinuationsTopCall = false;
 
@@ -735,6 +737,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.THIS] = new DoThis();
         instructionObjs[base + Token.SUPER] = new DoSuper();
         instructionObjs[base + Token.THISFN] = new DoThisFunction();
+        instructionObjs[base + Token.NEW_TARGET] = new DoNewTarget();
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode.UNDEF] = new DoUndef();
@@ -2813,7 +2816,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                     state.indexReg,
                                     ifun,
                                     compilerData,
-                                    callParentFrame);
+                                    callParentFrame,
+                                    Undefined.instance);
                     if (op != Icode.TAIL_CALL) {
                         frame.savedCallOp = op;
                     }
@@ -2912,7 +2916,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                     state.indexReg,
                                     f,
                                     compilerData,
-                                    frame);
+                                    frame,
+                                    lhs);
 
                     frame.stack[frame.stackTop] = newInstance;
                     frame.savedCallOp = op;
@@ -3314,6 +3319,14 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.stack[++frame.stackTop] = frame.fnOrScript;
+            return null;
+        }
+    }
+
+    private static class DoNewTarget extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++frame.stackTop] = frame.newTarget;
             return null;
         }
     }
@@ -4284,11 +4297,18 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             int argCount,
             ScriptOrFn<?> fnOrScript,
             InterpreterData<?> code,
-            CallFrame parentFrame) {
+            CallFrame parentFrame,
+            Object newTarget) {
+        // Arrow functions inherit new.target from their enclosing context
+        if (fnOrScript.getDescriptor().getFunctionType() == FunctionNode.ARROW_FUNCTION
+                && parentFrame != null) {
+            newTarget = parentFrame.newTarget;
+        }
         CallFrame frame =
                 new CallFrame(
                         cx,
                         thisObj,
+                        newTarget,
                         fnOrScript,
                         code,
                         parentFrame,

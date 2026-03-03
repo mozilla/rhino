@@ -132,10 +132,11 @@ public class Token {
             REF_NS_MEMBER = REF_MEMBER + 1, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
+            BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
+            NEW_TARGET = BIGINT + 1; // new.target meta-property
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = BIGINT,
+    public static final int LAST_BYTECODE_TOKEN = NEW_TARGET,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -637,6 +638,8 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
+            case NEW_TARGET:
+                return "NEW_TARGET";
             case TEMPLATE_LITERAL:
                 return "TEMPLATE_LITERAL";
             case STRING_CONCAT:

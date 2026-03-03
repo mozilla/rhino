@@ -146,8 +146,7 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
             VarScope scope,
             Object thisObj,
             Object[] args) {
-        return InterpreterV2.interpret(
-                executableObject, this, cx, scope, (Scriptable) thisObj, args);
+        return InterpreterV2.interpret(executableObject, this, cx, scope, thisObj, newTarget, args);
     }
 
     @Override
