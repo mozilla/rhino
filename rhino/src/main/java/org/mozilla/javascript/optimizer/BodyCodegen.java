@@ -1155,6 +1155,16 @@ class BodyCodegen {
                 cfw.addALoad(funObjLocal);
                 break;
 
+            case Token.NEW_TARGET:
+                if (isGenerator) {
+                    // Generators cannot be constructors, so new.target is always undefined.
+                    // Also, newTargetLocal is repurposed as generatorStateLocal for generators.
+                    Codegen.pushUndefined(cfw);
+                } else {
+                    cfw.addALoad(newTargetLocal);
+                }
+                break;
+
             case Token.NULL:
                 cfw.add(ByteCode.ACONST_NULL);
                 break;
