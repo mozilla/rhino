@@ -6,19 +6,39 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import java.util.Objects;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
+import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.IdScriptableObject;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 /** Class Namespace */
-class Namespace extends IdScriptableObject {
+class Namespace extends ScriptableObject {
     static final long serialVersionUID = -5765755238131301744L;
 
-    private static final Object NAMESPACE_TAG = "Namespace";
+    private static final String NAMESPACE_TAG = "Namespace";
+
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                NAMESPACE_TAG,
+                                2,
+                                Namespace::js_constructorCall,
+                                Namespace::js_constructor)
+                        .withMethod(PROTO, "toString", 0, Namespace::js_toString)
+                        .withMethod(PROTO, "toSource", 0, Namespace::js_toSource)
+                        .build();
+    }
+
+    public static void init(Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
+        DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
+    }
 
     private Namespace prototype;
     private XmlNode.Namespace ns;
@@ -31,15 +51,50 @@ class Namespace extends IdScriptableObject {
         rv.prototype = prototype;
         rv.setPrototype(prototype);
         rv.ns = namespace;
+        rv.createNSProps();
         return rv;
+    }
+
+    private void createNSProps() {
+        ScriptableObject.defineBuiltInProperty(
+                this, "prefix", PERMANENT | READONLY, Namespace::getPrefix);
+        ScriptableObject.defineBuiltInProperty(
+                this, "uri", PERMANENT | READONLY, Namespace::getURI);
+    }
+
+    private static Object getPrefix(Namespace ns, Scriptable start) {
+        var res = ns.prefix();
+        return res == null ? Undefined.instance : res;
+    }
+
+    private static String getURI(Namespace ns, Scriptable start) {
+        return ns.uri();
+    }
+
+    private static Object js_constructor(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        var realThis = realThis(f.getPrototypeProperty(), f);
+        return realThis.jsConstructor(cx, true, args);
+    }
+
+    private static Object js_constructorCall(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        var realThis = realThis(f.getPrototypeProperty(), f);
+        return realThis.jsConstructor(cx, false, args);
+    }
+
+    private static Object js_toString(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        return realThis(thisObj, f).toString();
+    }
+
+    private static Object js_toSource(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        return realThis(thisObj, f).js_toSource();
     }
 
     final XmlNode.Namespace getDelegate() {
         return ns;
-    }
-
-    public void exportAsJSClass(boolean sealed) {
-        exportAsJSClass(MAX_PROTOTYPE_ID, this.getParentScope(), sealed);
     }
 
     public String uri() {
@@ -90,155 +145,8 @@ class Namespace extends IdScriptableObject {
         return uri();
     }
 
-    // #string_id_map#
-    private static final int Id_prefix = 1, Id_uri = 2, MAX_INSTANCE_ID = 2;
-
-    @Override
-    protected int getMaxInstanceId() {
-        return super.getMaxInstanceId() + MAX_INSTANCE_ID;
-    }
-
-    @Override
-    protected int findInstanceIdInfo(String s) {
-        int id;
-        // #generated# Last update: 2007-08-20 08:23:22 EDT
-        L0:
-        {
-            id = 0;
-            String X = null;
-            int s_length = s.length();
-            if (s_length == 3) {
-                X = "uri";
-                id = Id_uri;
-            } else if (s_length == 6) {
-                X = "prefix";
-                id = Id_prefix;
-            }
-            if (!Objects.equals(X, s)) id = 0;
-            break L0;
-        }
-        // #/generated#
-
-        if (id == 0) return super.findInstanceIdInfo(s);
-
-        int attr;
-        switch (id) {
-            case Id_prefix:
-            case Id_uri:
-                attr = PERMANENT | READONLY;
-                break;
-            default:
-                throw new IllegalStateException();
-        }
-        return instanceIdInfo(attr, super.getMaxInstanceId() + id);
-    }
-
-    // #/string_id_map#
-
-    @Override
-    protected String getInstanceIdName(int id) {
-        switch (id - super.getMaxInstanceId()) {
-            case Id_prefix:
-                return "prefix";
-            case Id_uri:
-                return "uri";
-        }
-        return super.getInstanceIdName(id);
-    }
-
-    @Override
-    protected Object getInstanceIdValue(int id) {
-        switch (id - super.getMaxInstanceId()) {
-            case Id_prefix:
-                if (ns.getPrefix() == null) return Undefined.instance;
-                return ns.getPrefix();
-            case Id_uri:
-                return ns.getUri();
-        }
-        return super.getInstanceIdValue(id);
-    }
-
-    // #string_id_map#
-    private static final int Id_constructor = 1,
-            Id_toString = 2,
-            Id_toSource = 3,
-            MAX_PROTOTYPE_ID = 3;
-
-    @Override
-    protected int findPrototypeId(String s) {
-        int id;
-        // #generated# Last update: 2007-08-20 08:23:22 EDT
-        L0:
-        {
-            id = 0;
-            String X = null;
-            int c;
-            int s_length = s.length();
-            if (s_length == 8) {
-                c = s.charAt(3);
-                if (c == 'o') {
-                    X = "toSource";
-                    id = Id_toSource;
-                } else if (c == 't') {
-                    X = "toString";
-                    id = Id_toString;
-                }
-            } else if (s_length == 11) {
-                X = "constructor";
-                id = Id_constructor;
-            }
-            if (!Objects.equals(X, s)) id = 0;
-            break L0;
-        }
-        // #/generated#
-        return id;
-    }
-
-    // #/string_id_map#
-
-    @Override
-    protected void initPrototypeId(int id) {
-        String s;
-        int arity;
-        switch (id) {
-            case Id_constructor:
-                arity = 2;
-                s = "constructor";
-                break;
-            case Id_toString:
-                arity = 0;
-                s = "toString";
-                break;
-            case Id_toSource:
-                arity = 0;
-                s = "toSource";
-                break;
-            default:
-                throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(NAMESPACE_TAG, id, s, arity);
-    }
-
-    @Override
-    public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        if (!f.hasTag(NAMESPACE_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-        switch (id) {
-            case Id_constructor:
-                return jsConstructor(cx, (thisObj == null), args);
-            case Id_toString:
-                return realThis(thisObj, f).toString();
-            case Id_toSource:
-                return realThis(thisObj, f).js_toSource();
-        }
-        throw new IllegalArgumentException(String.valueOf(id));
-    }
-
-    private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
-        return ensureType(thisObj, Namespace.class, f);
+    private static Namespace realThis(Object thisObj, JSFunction f) {
+        return ensureType(thisObj, Namespace.class, f.getFunctionName());
     }
 
     Namespace newNamespace(String uri) {
