@@ -236,6 +236,9 @@ public final class IRFactory {
             case Token.YIELD:
             case Token.YIELD_STAR:
                 return transformYield((Yield) node);
+            case Token.AWAIT:
+                throw new UnsupportedOperationException(
+                        "await expressions are not yet supported at runtime");
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);

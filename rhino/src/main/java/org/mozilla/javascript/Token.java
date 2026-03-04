@@ -247,7 +247,8 @@ public class Token {
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
-            LAST_TOKEN = OBJECT_REST + 1;
+            AWAIT = OBJECT_REST + 1, // ES2017 await expression
+            LAST_TOKEN = AWAIT + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -600,6 +601,8 @@ public class Token {
                 return "TO_DOUBLE";
             case OBJECT_REST:
                 return "OBJECT_REST";
+            case AWAIT:
+                return "AWAIT";
             case GET:
                 return "GET";
             case SET:

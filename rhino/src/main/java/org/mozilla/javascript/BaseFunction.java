@@ -29,6 +29,9 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String FUNCTION_CLASS = "Function";
     static final SymbolKey GENERATOR_FUNCTION_CLASS =
             new SymbolKey("GeneratorFunctionPrototype", REGULAR);
+    static final SymbolKey ASYNC_FUNCTION_CLASS = new SymbolKey("AsyncFunctionPrototype", REGULAR);
+    static final SymbolKey ASYNC_GENERATOR_FUNCTION_CLASS =
+            new SymbolKey("AsyncGeneratorFunctionPrototype", REGULAR);
 
     private static final String APPLY_TAG = "APPLY_TAG";
     private static final String CALL_TAG = "CALL_TAG";
@@ -38,6 +41,8 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final ClassDescriptor ES6_DESCRIPTOR;
     private static final ClassDescriptor GENERATOR_DESCRIPTOR;
     //    private static final ClassDescriptor GENERATOR_DESCRIPTOR;
+    private static final ClassDescriptor ASYNC_DESCRIPTOR;
+    private static final ClassDescriptor ASYNC_GENERATOR_DESCRIPTOR;
     private static final JSDescriptor<JSFunction> APPLY_DESCRIPTOR;
     private static final JSDescriptor<JSFunction> CALL_DESCRIPTOR;
 
@@ -86,6 +91,32 @@ public class BaseFunction extends ScriptableObject implements Function {
                                 SymbolKey.TO_STRING_TAG,
                                 value("GeneratorFunction", READONLY | DONTENUM))
                         .build();
+
+        ASYNC_DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                ASYNC_FUNCTION_CLASS,
+                                "AsyncFunction",
+                                1,
+                                BaseFunction::js_async_constructor,
+                                BaseFunction::js_async_constructor)
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value("AsyncFunction", READONLY | DONTENUM))
+                        .build();
+
+        ASYNC_GENERATOR_DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                ASYNC_GENERATOR_FUNCTION_CLASS,
+                                "AsyncGeneratorFunction",
+                                1,
+                                BaseFunction::js_async_gen_constructor,
+                                BaseFunction::js_async_gen_constructor)
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value("AsyncGeneratorFunction", READONLY | DONTENUM))
+                        .build();
     }
 
     static JSFunction init(Context cx, VarScope scope, boolean sealed) {
@@ -130,6 +161,42 @@ public class BaseFunction extends ScriptableObject implements Function {
 
                     proto.setAttributes("constructor", DONTENUM | READONLY);
                     proto.defineProperty("prototype", generatorProto, READONLY | DONTENUM);
+                });
+    }
+
+    static Object initAsAsyncFunction(Context cx, VarScope scope, boolean sealed) {
+        var proto = new NativeObject();
+
+        return ASYNC_DESCRIPTOR.buildConstructor(
+                cx,
+                scope,
+                proto,
+                sealed,
+                (c, ctor) -> {
+                    var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
+                    var functionProto =
+                            (Scriptable)
+                                    ScriptableObject.getProperty(function, PROTOTYPE_PROPERTY_NAME);
+                    proto.setPrototype(functionProto);
+                    proto.setAttributes("constructor", DONTENUM | READONLY);
+                });
+    }
+
+    static Object initAsAsyncGeneratorFunction(Context cx, VarScope scope, boolean sealed) {
+        var proto = new NativeObject();
+
+        return ASYNC_GENERATOR_DESCRIPTOR.buildConstructor(
+                cx,
+                scope,
+                proto,
+                sealed,
+                (c, ctor) -> {
+                    var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
+                    var functionProto =
+                            (Scriptable)
+                                    ScriptableObject.getProperty(function, PROTOTYPE_PROPERTY_NAME);
+                    proto.setPrototype(functionProto);
+                    proto.setAttributes("constructor", DONTENUM | READONLY);
                 });
     }
 
@@ -304,7 +371,10 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     @Override
     public String getClassName() {
-        return isGeneratorFunction() ? "GeneratorFunction" : FUNCTION_CLASS;
+        if (isGeneratorFunction()) {
+            return isAsync() ? "AsyncGeneratorFunction" : "GeneratorFunction";
+        }
+        return isAsync() ? "AsyncFunction" : FUNCTION_CLASS;
     }
 
     // Generated code will override this
@@ -483,6 +553,42 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static Scriptable js_gen_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true);
+    }
+
+    private static Scriptable js_async_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (cx.isStrictMode()) {
+            NativeCall activation = cx.currentActivationCall;
+            boolean strictMode = cx.isTopLevelStrict;
+            try {
+                cx.currentActivationCall = null;
+                cx.isTopLevelStrict = false;
+                return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false, true);
+            } finally {
+                cx.isTopLevelStrict = strictMode;
+                cx.currentActivationCall = activation;
+            }
+        } else {
+            return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false, true);
+        }
+    }
+
+    private static Scriptable js_async_gen_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (cx.isStrictMode()) {
+            NativeCall activation = cx.currentActivationCall;
+            boolean strictMode = cx.isTopLevelStrict;
+            try {
+                cx.currentActivationCall = null;
+                cx.isTopLevelStrict = false;
+                return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true, true);
+            } finally {
+                cx.isTopLevelStrict = strictMode;
+                cx.currentActivationCall = activation;
+            }
+        } else {
+            return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true, true);
+        }
     }
 
     private static BaseFunction realFunction(Object thisObj, String functionName) {
@@ -760,9 +866,23 @@ public class BaseFunction extends ScriptableObject implements Function {
             VarScope scope,
             Object[] args,
             boolean isGeneratorFunction) {
+        return jsConstructor(cx, f, nt, scope, args, isGeneratorFunction, false);
+    }
+
+    private static Scriptable jsConstructor(
+            Context cx,
+            JSFunction f,
+            Object nt,
+            VarScope scope,
+            Object[] args,
+            boolean isGeneratorFunction,
+            boolean isAsync) {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
+        if (isAsync) {
+            sourceBuf.append("async ");
+        }
         sourceBuf.append("function ");
         if (isGeneratorFunction) {
             sourceBuf.append("* ");
@@ -810,9 +930,17 @@ public class BaseFunction extends ScriptableObject implements Function {
                 (JSFunction)
                         cx.compileFunction(global, source, evaluator, reporter, sourceURI, 1, null);
 
-        if (res.getDescriptor().isES6Generator()) {
+        boolean resIsGenerator = res.getDescriptor().isES6Generator();
+        boolean resIsAsync = res.getDescriptor().isAsync();
+        if (resIsGenerator && resIsAsync) {
+            ScriptRuntime.setBuiltinProtoAndParent(
+                    (ScriptableObject) res, f, nt, scope, TopLevel.Builtins.AsyncGeneratorFunction);
+        } else if (resIsGenerator) {
             ScriptRuntime.setBuiltinProtoAndParent(
                     (ScriptableObject) res, f, nt, scope, TopLevel.Builtins.GeneratorFunction);
+        } else if (resIsAsync) {
+            ScriptRuntime.setBuiltinProtoAndParent(
+                    (ScriptableObject) res, f, nt, scope, TopLevel.Builtins.AsyncFunction);
         } else {
             ScriptRuntime.setBuiltinProtoAndParent(
                     (ScriptableObject) res, f, nt, scope, TopLevel.Builtins.Function);

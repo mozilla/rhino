@@ -5376,9 +5376,22 @@ public class ScriptRuntime {
 
     public static void setFunctionProtoAndParent(
             BaseFunction fn, Context cx, VarScope scope, boolean es6GeneratorFunction) {
+        setFunctionProtoAndParent(fn, cx, scope, es6GeneratorFunction, false);
+    }
+
+    public static void setFunctionProtoAndParent(
+            BaseFunction fn,
+            Context cx,
+            VarScope scope,
+            boolean es6GeneratorFunction,
+            boolean isAsync) {
         fn.setParentScope(scope);
-        if (es6GeneratorFunction) {
+        if (es6GeneratorFunction && isAsync) {
+            fn.setPrototype(ScriptableObject.getAsyncGeneratorFunctionPrototype(scope));
+        } else if (es6GeneratorFunction) {
             fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));
+        } else if (isAsync) {
+            fn.setPrototype(ScriptableObject.getAsyncFunctionPrototype(scope));
         } else {
             fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
