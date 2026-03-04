@@ -23,7 +23,8 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
         this.homeObject = homeObject;
-        ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, descriptor.isES6Generator());
+        ScriptRuntime.setFunctionProtoAndParent(
+                this, cx, scope, descriptor.isES6Generator(), descriptor.isAsync());
         if (!descriptor.isShorthand()) {
             setupDefaultPrototype(scope);
         }
@@ -91,6 +92,11 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     @Override
     protected boolean isGeneratorFunction() {
         return descriptor.isES6Generator();
+    }
+
+    @Override
+    public boolean isAsync() {
+        return descriptor.isAsync();
     }
 
     @Override

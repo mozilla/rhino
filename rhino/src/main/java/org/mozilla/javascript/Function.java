@@ -64,4 +64,9 @@ public interface Function extends Scriptable, Callable, Constructable {
     default boolean isConstructor() {
         return true;
     }
+
+    /** Returns whether this is an async function. */
+    default boolean isAsync() {
+        return false;
+    }
 }
