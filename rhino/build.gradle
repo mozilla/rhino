@@ -85,6 +85,8 @@ decycle {
     // TODO: easy to remove: See #1890
     ignoring from: "org.mozilla.classfile.ClassFileWriter\$StackMapTable", to: "org.mozilla.javascript.Kit"
 
+    ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.optimizer.*"
+
     /// --- LiveConnect start ---
 
     // references from LiveConnect to LiveConnect
