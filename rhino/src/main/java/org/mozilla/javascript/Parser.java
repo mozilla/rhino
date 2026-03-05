@@ -1707,6 +1707,7 @@ public class Parser {
                 sb = new StringBuilder(mergedComment.getValue());
             } else {
                 sb.append('\n').append(((Comment) body).getValue());
+                scannedComments.remove(scannedComments.size() - 1);
             }
             body = statement();
         }
