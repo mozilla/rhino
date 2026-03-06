@@ -557,38 +557,12 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static Scriptable js_async_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        if (cx.isStrictMode()) {
-            NativeCall activation = cx.currentActivationCall;
-            boolean strictMode = cx.isTopLevelStrict;
-            try {
-                cx.currentActivationCall = null;
-                cx.isTopLevelStrict = false;
-                return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false, true);
-            } finally {
-                cx.isTopLevelStrict = strictMode;
-                cx.currentActivationCall = activation;
-            }
-        } else {
-            return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false, true);
-        }
+        return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, false, true);
     }
 
     private static Scriptable js_async_gen_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        if (cx.isStrictMode()) {
-            NativeCall activation = cx.currentActivationCall;
-            boolean strictMode = cx.isTopLevelStrict;
-            try {
-                cx.currentActivationCall = null;
-                cx.isTopLevelStrict = false;
-                return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true, true);
-            } finally {
-                cx.isTopLevelStrict = strictMode;
-                cx.currentActivationCall = activation;
-            }
-        } else {
-            return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true, true);
-        }
+        return jsConstructor(cx, f, nt, f.getDeclarationScope(), args, true, true);
     }
 
     private static BaseFunction realFunction(Object thisObj, String functionName) {
@@ -842,13 +816,16 @@ public class BaseFunction extends ScriptableObject implements Function {
             return argumentsObj;
         }
         Context cx = Context.getContext();
+        if (this instanceof JSFunction
+                && ((JSFunction) this).isStrict()
+                && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ScriptRuntime.ThrowTypeError.throwNotAllowed();
+        }
+
         NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
         // return (activation == null) ? null : activation.get("arguments", activation);
         if (activation == null) {
             return null;
-        }
-        if (activation.function.isStrict() && cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ScriptRuntime.ThrowTypeError.throwNotAllowed();
         }
         Object arguments = activation.get("arguments", activation);
         if (arguments instanceof Arguments && cx.getLanguageVersion() >= Context.VERSION_ES6) {

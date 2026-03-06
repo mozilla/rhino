@@ -309,7 +309,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // creation
             // Ref: Ecma 2026, 10.2.11, FunctionDeclarationInstantiation
 
-            if (desc.getFunctionCount() != 0 && !desc.isES6Generator()) {
+            if (desc.getFunctionCount() != 0 && !desc.isES6Generator() && !desc.isAsync()) {
                 if (desc.getFunctionType() != 0 && !desc.requiresActivationFrame()) Kit.codeBug();
                 for (int i = 0; i < desc.getFunctionCount(); i++) {
                     JSDescriptor fdesc = desc.getFunction(i);
@@ -1953,11 +1953,17 @@ public final class Interpreter extends Icode implements Evaluator {
             CallFrame generatorFrame = captureFrameForGenerator(frame);
             generatorFrame.frozen = true;
             if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-                frame.result =
-                        new ES6Generator(
-                                frame.scope,
-                                (JSFunction) generatorFrame.fnOrScript,
-                                generatorFrame);
+                JSFunction fn = (JSFunction) generatorFrame.fnOrScript;
+                ES6Generator gen = new ES6Generator(frame.scope, fn, generatorFrame);
+                if (fn.isAsync() && !fn.isGeneratorFunction()) {
+                    // Async non-generator function: drive via Promise runner.
+                    // isGeneratorFunction() returns descriptor.isES6Generator(), which is
+                    // false for async non-generators (we only called setIsGenerator(), not
+                    // setIsES6Generator(), in IRFactory).
+                    frame.result = NativePromise.createAsyncFunctionPromise(cx, frame.scope, gen);
+                } else {
+                    frame.result = gen;
+                }
             } else {
                 frame.result =
                         new NativeGenerator(
@@ -1991,7 +1997,10 @@ public final class Interpreter extends Icode implements Evaluator {
         frame.resultDbl = frame.sDbl[state.stackTop];
         frame.savedStackTop = state.stackTop;
         frame.pc--; // we want to come back here when we resume
-        ScriptRuntime.exitActivationFunction(cx);
+        var desc = frame.fnOrScript.getDescriptor();
+        if (!desc.isES6Generator() && !desc.isAsync()) {
+            ScriptRuntime.exitActivationFunction(cx);
+        }
         final Object result =
                 (frame.result != DOUBLE_MARK)
                         ? frame.result
@@ -5074,7 +5083,8 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static void enterFrame(
             Context cx, CallFrame frame, Object[] args, boolean continuationRestart) {
-        boolean usesActivation = frame.fnOrScript.getDescriptor().requiresActivationFrame();
+        var desc = frame.fnOrScript.getDescriptor();
+        boolean usesActivation = desc.requiresActivationFrame();
         boolean isDebugged = frame.debuggerFrame != null;
         if (usesActivation) {
             VarScope scope = frame.scope;
@@ -5110,14 +5120,22 @@ public final class Interpreter extends Icode implements Evaluator {
             if (isDebugged) {
                 frame.debuggerFrame.onEnter(cx, scope, frame.thisObj, args);
             }
-            ScriptRuntime.enterActivationFunction(cx, scope);
+            if (!(desc.isStrict() && cx.getLanguageVersion() >= Context.VERSION_ES6)
+                    && !desc.isES6Generator()
+                    && !desc.isAsync()) {
+                ScriptRuntime.enterActivationFunction(cx, scope);
+            }
         } else if (isDebugged) {
             frame.debuggerFrame.onEnter(cx, new DebugScope(frame), frame.thisObj, args);
         }
     }
 
     private static void exitFrame(Context cx, CallFrame frame, Object throwable) {
-        if (frame.fnOrScript.getDescriptor().requiresActivationFrame()) {
+        var desc = frame.fnOrScript.getDescriptor();
+        if (desc.requiresActivationFrame()
+                && !(desc.isStrict() && cx.getLanguageVersion() >= Context.VERSION_ES6)
+                && !desc.isES6Generator()
+                && !desc.isAsync()) {
             ScriptRuntime.exitActivationFunction(cx);
         }
 

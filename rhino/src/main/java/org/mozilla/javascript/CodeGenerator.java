@@ -1157,16 +1157,19 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.YIELD:
             case Token.YIELD_STAR:
+            case Token.AWAIT:
                 if (child != null) {
                     visitExpression(child, 0);
                 } else {
                     addIcode(Icode_UNDEF);
                     stackChange(1);
                 }
-                if (type == Token.YIELD) {
-                    addToken(Token.YIELD);
-                } else {
+                if (type == Token.YIELD_STAR) {
                     addIcode(Icode_YIELD_STAR);
+                } else {
+                    // Token.YIELD and Token.AWAIT both use the same yield opcode;
+                    // the async Promise runner drives the generator for await.
+                    addToken(Token.YIELD);
                 }
                 addUint16(node.getLineno() & 0xFFFF);
                 break;
