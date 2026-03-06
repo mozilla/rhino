@@ -1191,6 +1191,10 @@ public final class Interpreter extends Icode implements Evaluator {
                 // make a copy or not flag
                 return 1 + 1;
 
+            case Icode_LITERAL_NEW_ARRAY:
+                // skip indexes ID (uint16)
+                return 1 + 2;
+
             case Icode_REG_BIGINT1:
                 // ubyte bigint index
                 return 1 + 1;
@@ -4400,8 +4404,8 @@ public final class Interpreter extends Icode implements Evaluator {
             // indexReg: number of values in the literal
             NewLiteralStorage storage = NewLiteralStorage.create(cx, state.indexReg, false);
 
-            int skipIdx = 0xFF & frame.idata.itsICode[frame.pc];
-            ++frame.pc;
+            int skipIdx = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
 
             // fill in skip indexes in array literal storage
             if (skipIdx > 0) { // 0 - no skip index, otherwise subtract 1 from idx
@@ -4468,8 +4472,8 @@ public final class Interpreter extends Icode implements Evaluator {
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
 
             if (store.hasSkipIndexes()) {
-                int sourcePos = 0xFF & frame.idata.itsICode[frame.pc];
-                ++frame.pc;
+                int sourcePos = getIndex(frame.idata.itsICode, frame.pc);
+                frame.pc += 2;
                 store.spread(cx, frame.scope, source, sourcePos);
             } else {
                 store.spread(cx, frame.scope, source, 0);

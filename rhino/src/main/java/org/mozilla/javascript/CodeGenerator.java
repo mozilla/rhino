@@ -1552,7 +1552,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
 
         addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
-        addUint8(skipIndexesId + 1);
+        addUint16(skipIndexesId + 1);
         stackChange(1);
 
         int childIdx = 0;
@@ -1561,7 +1561,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child.getFirstChild(), 0);
                 addIcode(Icode_SPREAD);
                 if (skipIndexes != null) {
-                    addUint8(sourcePositions[childIdx]);
+                    addUint16(sourcePositions[childIdx]);
                 }
                 stackChange(-1);
             } else {
