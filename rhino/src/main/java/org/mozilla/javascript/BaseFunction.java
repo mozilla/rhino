@@ -816,13 +816,16 @@ public class BaseFunction extends ScriptableObject implements Function {
             return argumentsObj;
         }
         Context cx = Context.getContext();
+        if (this instanceof JSFunction
+                && ((JSFunction) this).isStrict()
+                && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ScriptRuntime.ThrowTypeError.throwNotAllowed();
+        }
+
         NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
         // return (activation == null) ? null : activation.get("arguments", activation);
         if (activation == null) {
             return null;
-        }
-        if (activation.function.isStrict() && cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            ScriptRuntime.ThrowTypeError.throwNotAllowed();
         }
         Object arguments = activation.get("arguments", activation);
         if (arguments instanceof Arguments && cx.getLanguageVersion() >= Context.VERSION_ES6) {
