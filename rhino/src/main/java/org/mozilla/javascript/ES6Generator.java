@@ -234,7 +234,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeLocal(Context cx, VarScope scope, Object value) {
+    Scriptable resumeLocal(Context cx, VarScope scope, Object value) {
         if (state == State.COMPLETED) {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
@@ -312,7 +312,7 @@ public final class ES6Generator extends ScriptableObject {
         return result;
     }
 
-    private Scriptable resumeAbruptLocal(Context cx, VarScope scope, int op, Object value) {
+    Scriptable resumeAbruptLocal(Context cx, VarScope scope, int op, Object value) {
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }

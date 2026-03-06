@@ -141,20 +141,34 @@ class BodyCodegen {
 
         generateNestedFunctionInits();
 
-        // create the NativeGenerator object that we return
+        // create the generator/async-function object that we return
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
         cfw.addALoad(funObjLocal);
         cfw.addLoadConstant(maxLocals);
         cfw.addLoadConstant(maxStack);
-        addOptRuntimeInvoke(
-                "createNativeGenerator",
-                "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/VarScope;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Lorg/mozilla/javascript/JSFunction;II"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+        boolean isAsyncNonGenerator =
+                (scriptOrFn instanceof FunctionNode)
+                        && ((FunctionNode) scriptOrFn).isAsync()
+                        && !((FunctionNode) scriptOrFn).isES6Generator();
+        if (isAsyncNonGenerator) {
+            addOptRuntimeInvoke(
+                    "createAsyncFunction",
+                    "(Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/VarScope;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/JSFunction;II"
+                            + ")Ljava/lang/Object;");
+        } else {
+            addOptRuntimeInvoke(
+                    "createNativeGenerator",
+                    "(Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/VarScope;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/JSFunction;II"
+                            + ")Lorg/mozilla/javascript/Scriptable;");
+        }
 
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) (localsMax + 1));
@@ -865,7 +879,8 @@ class BodyCodegen {
                     load's & pop's */
                     visitSetConstVar(child, child.getFirstChild(), false);
                 } else if ((child.getType() == Token.YIELD)
-                        || (child.getType() == Token.YIELD_STAR)) {
+                        || (child.getType() == Token.YIELD_STAR)
+                        || (child.getType() == Token.AWAIT)) {
                     generateYieldPoint(child, false);
                 } else {
                     generateExpression(child, node);
@@ -1757,6 +1772,7 @@ class BodyCodegen {
 
             case Token.YIELD:
             case Token.YIELD_STAR:
+            case Token.AWAIT:
                 generateYieldPoint(node, true);
                 break;
 
@@ -1847,7 +1863,9 @@ class BodyCodegen {
     private Node findNestedYield(Node node) {
         Node child = node.getFirstChild();
         while (child != null) {
-            if ((child.getType() == Token.YIELD) || (child.getType() == Token.YIELD_STAR)) {
+            if ((child.getType() == Token.YIELD)
+                    || (child.getType() == Token.YIELD_STAR)
+                    || (child.getType() == Token.AWAIT)) {
                 return child;
             }
             Node grandchild = findNestedYield(child);
@@ -3137,6 +3155,7 @@ class BodyCodegen {
      * Assume that a LookupResult is at the top of the stack, and push the callable and this object.
      */
     private void popFunctionAndThis() {
+        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/ScriptRuntime$LookupResult");
         cfw.add(ByteCode.DUP);
         cfw.addInvoke(
                 ByteCode.INVOKEVIRTUAL,

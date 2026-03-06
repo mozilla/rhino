@@ -599,6 +599,95 @@ public class NativePromise extends ScriptableObject {
         return ScriptRuntime.newNativeError(cx, scope, constructor, new Object[] {re.getMessage()});
     }
 
+    // Async function support: create a Promise that drives an ES6Generator
+    // This implements the "async function" semantics: await expr = yield expr internally,
+    // with the Promise runner stepping through the generator via .then() reactions.
+    public static Object createAsyncFunctionPromise(Context cx, VarScope scope, ES6Generator gen) {
+        VarScope topScope = ScriptableObject.getTopLevelScope(scope);
+        Object promiseCtor = TopLevel.getBuiltinCtor(cx, topScope, TopLevel.Builtins.Promise);
+        Capability cap = new Capability(cx, scope, promiseCtor);
+        asyncStep(cx, scope, gen, cap, Undefined.instance, false);
+        return cap.promise;
+    }
+
+    private static void asyncStep(
+            Context cx,
+            VarScope scope,
+            ES6Generator gen,
+            Capability cap,
+            Object value,
+            boolean isThrow) {
+        // Generator resumption requires cx.topCallScope to be set. When called
+        // from a microtask (after doTopCall has returned), it will be null.
+        boolean needTopCall = !ScriptRuntime.hasTopCall(cx);
+        if (needTopCall) {
+            cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
+            cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
+        }
+        try {
+            Scriptable result;
+            try {
+                if (isThrow) {
+                    result =
+                            gen.resumeAbruptLocal(
+                                    cx, scope, NativeGenerator.GENERATOR_THROW, value);
+                } else {
+                    result = gen.resumeLocal(cx, scope, value);
+                }
+            } catch (JavaScriptException jse) {
+                cap.reject.call(
+                        cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {jse.getValue()});
+                return;
+            } catch (RhinoException re) {
+                cap.reject.call(
+                        cx,
+                        scope,
+                        Undefined.SCRIPTABLE_UNDEFINED,
+                        new Object[] {getErrorObject(cx, scope, re)});
+                return;
+            }
+            boolean done =
+                    Boolean.TRUE.equals(
+                            ScriptableObject.getProperty(result, ES6Iterator.DONE_PROPERTY));
+            Object nextValue = ScriptableObject.getProperty(result, ES6Iterator.VALUE_PROPERTY);
+            if (done) {
+                cap.resolve.call(
+                        cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {nextValue});
+            } else {
+                VarScope topScope = ScriptableObject.getTopLevelScope(scope);
+                Object promiseCtor =
+                        TopLevel.getBuiltinCtor(cx, topScope, TopLevel.Builtins.Promise);
+                NativePromise nextPromise =
+                        (NativePromise) resolveInternal(cx, scope, promiseCtor, nextValue);
+                nextPromise.then(
+                        cx,
+                        scope,
+                        new Object[] {
+                            new LambdaFunction(
+                                    scope,
+                                    1,
+                                    (cx2, s, thisObj, args) -> {
+                                        Object v = args.length > 0 ? args[0] : Undefined.instance;
+                                        asyncStep(cx2, s, gen, cap, v, false);
+                                        return Undefined.instance;
+                                    }),
+                            new LambdaFunction(
+                                    scope,
+                                    1,
+                                    (cx2, s, thisObj, args) -> {
+                                        Object r = args.length > 0 ? args[0] : Undefined.instance;
+                                        asyncStep(cx2, s, gen, cap, r, true);
+                                        return Undefined.instance;
+                                    })
+                        });
+            }
+        } finally {
+            if (needTopCall) {
+                cx.topCallScope = null;
+            }
+        }
+    }
+
     // Output of "CreateResolvingFunctions." Carries with it an "alreadyResolved" state,
     // so we make it a separate object. This actually fires resolution functions on
     // the passed callbacks.
