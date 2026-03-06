@@ -1,5 +1,6 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'biz.aQute.bnd.builder'
 }
 
 dependencies {
@@ -7,39 +8,51 @@ dependencies {
 }
 
 jar {
-    manifest {
-        attributes(
-            "Bundle-ManifestVersion": "2",
-            "Bundle-SymbolicName": "org.mozilla.rhino",
-            "Bundle-Version": osgiVersion,
-            "Bundle-Vendor": "Mozilla Foundation",
-            "Bundle-License": "https://www.mozilla.org/MPL/2.0/",
-            "DynamicImport-Package": "*",
-            "Export-Package": [
-                "org.mozilla.classfile",
-                "org.mozilla.javascript",
-                "org.mozilla.javascript.annotations",
-                "org.mozilla.javascript.ast",
-                "org.mozilla.javascript.commonjs.module",
-                "org.mozilla.javascript.commonjs.module.provider",
-                "org.mozilla.javascript.config",
-                "org.mozilla.javascript.debug",
-                "org.mozilla.javascript.lc.type",
-                "org.mozilla.javascript.optimizer",
-                "org.mozilla.javascript.serialize",
-                "org.mozilla.javascript.typedarrays",
-                "org.mozilla.javascript.xml",
-            ].collect { "${it};version=\"${osgiVersion}\"" }.join(","),
-            "Provide-Capability": "osgi.serviceloader;osgi.serviceloader=\"org.mozilla.javascript.RegExpLoader\"",
-            "Require-Capability": [
-                "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=11))\"",
-                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.processor)\"",
-                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.registrar)\"",
-                "osgi.serviceloader;filter:=\"(osgi.serviceloader=org.mozilla.javascript.RegExpLoader)\"",
-                "osgi.serviceloader;filter:=\"(osgi.serviceloader=org.mozilla.javascript.NullabilityDetector)\";resolution:=optional",
-                "osgi.serviceloader;filter:=\"(osgi.serviceloader=org.mozilla.javascript.config.RhinoPropertiesLoader)\";resolution:=optional",
-                "osgi.serviceloader;filter:=\"(osgi.serviceloader=org.mozilla.javascript.xml.XMLLoader)\";resolution:=optional",
-            ].join(",")
+    bundle {
+        bnd(
+            'Bundle-SymbolicName': 'org.mozilla.rhino',
+            'Bundle-Vendor': 'Mozilla Foundation',
+            'Bundle-License': 'https://www.mozilla.org/MPL/2.0/',
+            'DynamicImport-Package': '*',
+            'Import-Package': [
+                'android.os;resolution:=optional',
+                'java.beans;resolution:=optional',
+                'jdk.dynalink*;resolution:=optional',
+                '*',
+            ].join(','),
+            '-exportcontents': [
+                'org.mozilla.classfile',
+                'org.mozilla.javascript',
+                'org.mozilla.javascript.annotations',
+                'org.mozilla.javascript.ast',
+                'org.mozilla.javascript.commonjs.module',
+                'org.mozilla.javascript.commonjs.module.provider',
+                'org.mozilla.javascript.config',
+                'org.mozilla.javascript.debug',
+                'org.mozilla.javascript.lc.type',
+                'org.mozilla.javascript.optimizer',
+                'org.mozilla.javascript.serialize',
+                'org.mozilla.javascript.typedarrays',
+                'org.mozilla.javascript.xml',
+            ].join(','),
+            'Provide-Capability': 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.RegExpLoader;register:=org.mozilla.javascript.regexp.RegExpLoaderImpl',
+            'Require-Capability': [
+                'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.RegExpLoader',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.NullabilityDetector;resolution:=optional',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.config.RhinoPropertiesLoader;resolution:=optional',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.xml.XMLLoader;resolution:=optional',
+            ].join(','),
+            '-jpms-module-info': 'org.mozilla.rhino;access=0;modules="java.compiler,jdk.dynalink"',
+            '-jpms-module-info-options': [
+                'java.desktop;transitive=false;static=true',
+                'jdk.dynalink;static=true;transitive=false',
+                'java.compiler;static=false',
+                'java.base;static=false',
+            ].join(','),
+            '-jpms-module-info-ee': 'java/11'
         )
     }
 }

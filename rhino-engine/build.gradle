@@ -1,5 +1,6 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'biz.aQute.bnd.builder'
 }
 
 dependencies {
@@ -8,23 +9,24 @@ dependencies {
 }
 
 jar {
-    manifest {
-        attributes(
-            "Bundle-ManifestVersion": "2",
-            "Bundle-SymbolicName": "org.mozilla.rhino.engine",
-            "Bundle-Version": osgiVersion,
-            "Bundle-Vendor": "Mozilla Foundation",
-            "Bundle-License": "https://www.mozilla.org/MPL/2.0/",
-            "Export-Package": "org.mozilla.javascript.engine;version=\"${osgiVersion}\"",
-            "Import-Package": [
-                "javax.script",
-                "org.mozilla.javascript;version=\"${osgiVersion}\"",
-            ].join(","),
-            "Provide-Capability": "osgi.serviceloader;osgi.serviceloader=\"javax.script.ScriptEngineFactory\"",
-            "Require-Capability": [
-                "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=11))\"",
-                "osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.registrar)\"",
-            ].join(","),
+    bundle {
+        bnd(
+            'Bundle-SymbolicName': 'org.mozilla.rhino.engine',
+            'Bundle-Vendor': 'Mozilla Foundation',
+            'Bundle-License': 'https://www.mozilla.org/MPL/2.0/',
+            '-exportcontents': 'org.mozilla.javascript.engine',
+            'Provide-Capability': 'osgi.serviceloader;osgi.serviceloader=javax.script.ScriptEngineFactory;register:=org.mozilla.javascript.engine.RhinoScriptEngineFactory',
+            'Require-Capability': [
+                'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
+                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
+            ].join(','),
+            '-jpms-module-info': 'org.mozilla.rhino.engine;access=0',
+            '-jpms-module-info-options': [
+                'org.mozilla.rhino;transitive=true;static=false',
+                'java.scripting;transitive=true;static=false',
+                'java.base;static=false',
+            ].join(','),
+            '-jpms-module-info-ee': 'java/11'
         )
     }
 }
