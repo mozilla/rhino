@@ -18,9 +18,6 @@ dependencies {
 
 version = project.version
 
-tasks.named('compileJava') {
-    options.javaModuleVersion = provider { version }
-}
 
 tasks.withType(Jar).configureEach {
     manifest {
