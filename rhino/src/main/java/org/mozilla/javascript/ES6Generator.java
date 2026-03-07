@@ -18,7 +18,7 @@ public final class ES6Generator extends ScriptableObject {
     private State state = State.SUSPENDED_START;
     private Object delegee;
 
-    static ES6Generator init(ScriptableObject scope, boolean sealed) {
+    static ES6Generator init(TopLevel scope, boolean sealed) {
 
         ES6Generator prototype = new ES6Generator();
         if (scope != null) {

@@ -19,6 +19,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -105,14 +106,13 @@ public class NestedContextPrototypeTest {
                                     scope = context.newObject(global);
                                     break;
                                 case SEALED:
-                                    scope = context.newObject(global);
-                                    scope.setPrototype(global);
-                                    scope.setParentScope(null);
+                                    scope = TopLevel.createIsolate(global);
                                     break;
                                 case SEALED_OWN_OBJECTS:
-                                    scope = context.initStandardObjects(null);
-                                    scope.setPrototype(global);
-                                    scope.setParentScope(null);
+                                    scope = context.initStandardObjects(new TopLevel());
+                                    ((TopLevel) scope)
+                                            .getGlobalThis()
+                                            .setPrototype(((TopLevel) global).getGlobalThis());
                                     break;
                                 default:
                                     throw new UnsupportedOperationException();
