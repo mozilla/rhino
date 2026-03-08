@@ -3,6 +3,7 @@ package org.mozilla.javascript.optimizer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.ref.WeakReference;
 import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
@@ -30,7 +31,8 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     @Override
-    public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc) {
+    public GuardedInvocation getGuardedInvocation(LinkRequest req, LinkerServices svc)
+            throws Exception {
         if (req.isCallSiteUnstable()) {
             return null;
         }
@@ -44,16 +46,36 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
             Object constValue = getConstValue(target, op.getName());
             if (constValue != null) {
                 MethodType mType = req.getCallSiteDescriptor().getMethodType();
-                // The guard returns boolean and compares the first argument to the
-                // target here. This works because the target is always our first argument.
-                MethodHandle guard = Guards.asType(Guards.getIdentityGuard(target), mType);
-                // Replace the actual method invocation with one that just returns a constant.
-                // Works because we can drop all arguments here.
-                MethodHandle mh =
-                        MethodHandles.dropArguments(
-                                MethodHandles.constant(Object.class, constValue),
-                                0,
-                                mType.parameterList());
+
+                WeakReference<Object> targetRef = new WeakReference<>(target);
+                WeakReference<Object> valueRef = new WeakReference<>(constValue);
+
+                // Create a guard that verifies that both the target and the constant
+                // value are still reachable.
+                MethodHandle guard =
+                        MethodHandles.lookup()
+                                .findStatic(
+                                        ConstAwareLinker.class,
+                                        "testConst",
+                                        MethodType.methodType(
+                                                boolean.class,
+                                                WeakReference.class,
+                                                WeakReference.class,
+                                                Object.class));
+
+                guard = MethodHandles.insertArguments(guard, 0, targetRef, valueRef);
+                guard = Guards.asType(guard, mType);
+
+                // Replace the actual method invocation with one that looks up the weak
+                // reference, or falls back to standard lookup if it has been collected.
+                MethodHandle getConst =
+                        MethodHandles.lookup()
+                                .findStatic(
+                                        ConstAwareLinker.class,
+                                        "getConst",
+                                        MethodType.methodType(Object.class, WeakReference.class));
+                MethodHandle mh = MethodHandles.insertArguments(getConst, 0, valueRef);
+                mh = MethodHandles.dropArguments(mh, 0, mType.parameterList());
                 if (DefaultLinker.DEBUG) {
                     System.out.println(op + ": constant");
                 }
@@ -62,6 +84,17 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
         }
 
         return null;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean testConst(
+            WeakReference<Object> targetRef, WeakReference<Object> valueRef, Object receiver) {
+        return receiver == targetRef.get() && valueRef.get() != null;
+    }
+
+    @SuppressWarnings("unused")
+    private static Object getConst(WeakReference<Object> ref) {
+        return ref.get();
     }
 
     /**
