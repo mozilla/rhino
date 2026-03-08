@@ -4,6 +4,19 @@ plugins {
     id 'jacoco-report-aggregation'
 }
 
+sourceSets {
+    integrationTest {
+        java.srcDir 'src/integrationTest/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
     implementation project(':rhino-engine')
     implementation project(':examples')
@@ -19,6 +32,8 @@ dependencies {
     testImplementation "org.yaml:snakeyaml:2.6"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     testImplementation "javax.activation:javax.activation-api:1.2.0"
+
+    integrationTestImplementation "org.apache.felix:org.apache.felix.framework:7.0.5"
 }
 
 tasks.withType(JavaCompile) {
@@ -28,6 +43,23 @@ tasks.withType(JavaCompile) {
             '-Xlint:-deprecation,unchecked'
     ]
 }
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs JPMS and OSGi integration tests against the built JARs.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+
+    dependsOn ':rhino:jar', ':rhino-engine:jar', ':rhino-tools:jar', ':rhino-xml:jar', ':rhino-kotlin:jar'
+
+    [':rhino', ':rhino-engine', ':rhino-tools', ':rhino-xml', ':rhino-kotlin'].each { proj ->
+        systemProperty "${proj.substring(1)}.jar", project(proj).jar.archiveFile.get().asFile.path
+    }
+}
+
+check.dependsOn integrationTest
 
 test {
     maxHeapSize = "1g"
