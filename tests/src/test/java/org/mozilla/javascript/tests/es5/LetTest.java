@@ -112,6 +112,16 @@ class LetTest {
     }
 
     @Test
+    void noSemicolonSameLine() {
+        Utils.assertEvaluatorException_1_8("missing ; before statement", "let a = 4 let b = 5");
+    }
+
+    @Test
+    void autoSemicolonInsertionNewline() {
+        Utils.assertWithAllModes_1_8(9, "let a = 4\nlet b = 5\na + b");
+    }
+
+    @Test
     void letInsideFunctionWhileIf() {
         String script =
                 "(function () {\n"
