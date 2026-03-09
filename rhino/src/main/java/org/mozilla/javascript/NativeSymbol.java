@@ -80,7 +80,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     private static void createStandardSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
+            VarScope scope, LambdaConstructor ctor, String name, SymbolKey key) {
         ctor.defineProperty(name, key, DONTENUM | READONLY | PERMANENT);
     }
 

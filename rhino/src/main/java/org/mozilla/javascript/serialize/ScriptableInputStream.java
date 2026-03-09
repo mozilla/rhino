@@ -16,6 +16,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.UniqueTag;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Class ScriptableInputStream is used to read in a JavaScript object or function previously
@@ -32,7 +33,7 @@ public class ScriptableInputStream extends ObjectInputStream {
      * @param in the InputStream to read from.
      * @param scope the top-level scope to create the object in.
      */
-    public ScriptableInputStream(InputStream in, Scriptable scope) throws IOException {
+    public ScriptableInputStream(InputStream in, VarScope scope) throws IOException {
         super(in);
         this.scope = scope;
         enableResolveObject(true);
@@ -72,6 +73,6 @@ public class ScriptableInputStream extends ObjectInputStream {
         return obj;
     }
 
-    private Scriptable scope;
+    private VarScope scope;
     private ClassLoader classLoader;
 }

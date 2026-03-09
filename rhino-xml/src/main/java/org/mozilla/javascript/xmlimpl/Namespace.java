@@ -37,8 +37,8 @@ class Namespace extends ScriptableObject {
                         .build();
     }
 
-    public static void init(Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
-        DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
+    public static void init(Context cx, VarScope scope, ScriptableObject proto, boolean sealed) {
+        DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
     }
 
     private Namespace prototype;
@@ -73,24 +73,24 @@ class Namespace extends ScriptableObject {
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(f.getPrototypeProperty(), f);
         return realThis.jsConstructor(cx, true, args);
     }
 
     private static Object js_constructorCall(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(f.getPrototypeProperty(), f);
         return realThis.jsConstructor(cx, false, args);
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).toString();
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).js_toSource();
     }
 

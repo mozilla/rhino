@@ -56,7 +56,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
         if (args.length == 0) {
             return lib.newXMLList();
@@ -66,7 +66,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private static Object js_constructorCall(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
         if (args.length == 0) {
             return lib.newXMLList();

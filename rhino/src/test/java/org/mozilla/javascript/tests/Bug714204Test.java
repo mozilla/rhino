@@ -13,8 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * @author André Bargull
@@ -22,7 +22,7 @@ import org.mozilla.javascript.Script;
 public class Bug714204Test {
 
     private Context cx;
-    private ScopeObject scope;
+    private TopLevel scope;
 
     @BeforeEach
     public void setUp() {
@@ -45,7 +45,7 @@ public class Bug714204Test {
         sb.append("var f = new F('a');\n");
         sb.append("(f.x == 'a')\n");
         Script script = cx.compileString(sb.toString(), "<eval>", 1, null);
-        Object result = script.exec(cx, scope, scope);
+        Object result = script.exec(cx, scope, scope.getGlobalThis());
         assertEquals(Boolean.TRUE, result);
     }
 
