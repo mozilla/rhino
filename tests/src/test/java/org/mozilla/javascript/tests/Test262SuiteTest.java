@@ -243,7 +243,7 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object gc(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             System.gc();
             return Undefined.instance;
         }
@@ -262,7 +262,7 @@ public class Test262SuiteTest {
         }
 
         public static $262 createRealm(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             TopLevel realm = cx.initSafeStandardObjects(new TopLevel());
             return install(realm, thisObj.getPrototype());
         }

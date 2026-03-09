@@ -60,7 +60,7 @@ public class IdFunctionObject extends BaseFunction {
         setImmunePrototypeProperty(prototypeProperty);
     }
 
-    public final void addAsProperty(Scriptable target) {
+    public final <T extends PropHolder<T>> void addAsProperty(T target) {
         ScriptableObject.defineProperty(target, functionName, this, ScriptableObject.DONTENUM);
     }
 
@@ -123,9 +123,7 @@ public class IdFunctionObject extends BaseFunction {
             }
             if (result.getParentScope() == null) {
                 VarScope parent = getParentScope();
-                if (result != parent) {
-                    result.setParentScope(parent);
-                }
+                result.setParentScope(parent);
             }
         } else {
             Object val = call(cx, scope, result, args);
@@ -137,7 +135,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, VarScope scope) {
         if (useCallAsConstructor) {
             return null;
         }

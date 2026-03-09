@@ -167,7 +167,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     Object eval(Script script, ScriptContext sc) throws ScriptException {
         try (Context cx = ctxFactory.enterContext()) {
             TopLevel scope = initScope(cx, sc);
-            Object ret = script.exec(cx, scope, scope);
+            Object ret = script.exec(cx, scope, scope.getGlobalThis());
             return Context.jsToJava(ret, Object.class);
         } catch (RhinoException re) {
             throw new ScriptException(
@@ -190,11 +190,11 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     Object invokeMethodRaw(Object thiz, String name, Class<?> returnType, Object... args)
             throws ScriptException, NoSuchMethodException {
         try (Context cx = ctxFactory.enterContext()) {
-            VarScope scope = initScope(cx, context);
+            TopLevel scope = initScope(cx, context);
 
             Scriptable localThis;
             if (thiz == null) {
-                localThis = scope;
+                localThis = scope.getGlobalThis();
             } else {
                 localThis = Context.toObject(thiz, scope);
             }
@@ -233,8 +233,8 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             throw new IllegalArgumentException("Not an interface");
         }
         try (Context cx = ctxFactory.enterContext()) {
-            Scriptable scope = initScope(cx, context);
-            if (methodsMissing(scope, clasz)) {
+            TopLevel scope = initScope(cx, context);
+            if (methodsMissing(scope.getGlobalThis(), clasz)) {
                 return null;
             }
         } catch (ScriptException se) {

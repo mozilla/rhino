@@ -16,7 +16,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ScopeObject;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.tools.shell.Global;
@@ -211,7 +210,7 @@ public class Main {
      * ContextFactory} with the given scope. No I/O redirection is performed as with {@link
      * #main(String[])}.
      */
-    public static Main mainEmbedded(ContextFactory factory, Scriptable scope, String title) {
+    public static Main mainEmbedded(ContextFactory factory, VarScope scope, String title) {
         return mainEmbeddedImpl(factory, scope, title);
     }
 

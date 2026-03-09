@@ -31,11 +31,11 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
     public NativeJavaClass() {}
 
-    public NativeJavaClass(Scriptable scope, Class<?> cl) {
+    public NativeJavaClass(VarScope scope, Class<?> cl) {
         this(scope, cl, false);
     }
 
-    public NativeJavaClass(Scriptable scope, Class<?> cl, boolean isAdapter) {
+    public NativeJavaClass(VarScope scope, Class<?> cl, boolean isAdapter) {
         super(scope, cl, TypeInfo.NONE, isAdapter);
     }
 
