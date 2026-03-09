@@ -10,7 +10,6 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.VarScope;
 
@@ -73,10 +72,10 @@ public abstract class XMLLib {
 
     public abstract boolean isXMLName(Context cx, Object name);
 
-    public abstract Ref nameRef(Context cx, Object name, Scriptable scope, int memberTypeFlags);
+    public abstract Ref nameRef(Context cx, Object name, VarScope scope, int memberTypeFlags);
 
     public abstract Ref nameRef(
-            Context cx, Object namespace, Object name, Scriptable scope, int memberTypeFlags);
+            Context cx, Object namespace, Object name, VarScope scope, int memberTypeFlags);
 
     /**
      * Escapes the reserved characters in a value of an attribute.

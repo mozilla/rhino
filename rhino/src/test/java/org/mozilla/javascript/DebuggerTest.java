@@ -87,7 +87,7 @@ public class DebuggerTest {
             cx.setGeneratingDebug(true);
             cx.setInterpretedMode(true);
             Script script = cx.compileString(TEST_SCRIPT, "this-klass", 0, null);
-            Object res = script.exec(cx, scope, scope);
+            Object res = script.exec(cx, scope, scope.getGlobalThis());
             Assertions.assertNotNull(res);
             System.err.println(res.toString());
             Assertions.assertEquals(

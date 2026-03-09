@@ -137,11 +137,6 @@ class JavaMembers {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
         var type = field.type();
-        if (scope instanceof NativeJavaObject) {
-            type =
-                    TypeInfoFactory.GLOBAL.consolidateType(
-                            type, ((NativeJavaObject) scope).staticType);
-        }
         // Need to wrap the object before we return it.
         return cx.getWrapFactory().wrap(cx, ScriptableObject.getTopLevelScope(scope), got, type);
     }

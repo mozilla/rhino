@@ -88,7 +88,7 @@ public class DynamicScopes {
 
         // Now we can execute the precompiled script against the scope
         // to define x variable and f function in the shared scope.
-        script.exec(cx, sharedScope, sharedScope);
+        script.exec(cx, sharedScope, sharedScope.getGlobalThis());
 
         // Now we spawn some threads that execute a script that calls the
         // function 'f'. The scope chain looks like this:

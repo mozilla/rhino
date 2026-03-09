@@ -16,7 +16,6 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.TopLevel;
-import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 
 public class Bug421071Test {
@@ -100,8 +99,8 @@ public class Bug421071Test {
             try (Context context = factory.enterContext()) {
                 // Run each script in its own scope, to keep global variables
                 // defined in each script separate
-                VarScope threadScope = TopLevel.createIsolate(globalScope);
-                script.exec(context, threadScope, threadScope);
+                TopLevel threadScope = TopLevel.createIsolate(globalScope);
+                script.exec(context, threadScope, threadScope.getGlobalThis());
             } catch (Exception ee) {
                 ee.printStackTrace();
             }
