@@ -114,7 +114,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         throw f.unknown();
     }
 
-    private Scriptable js_getClass(Context cx, Scriptable scope, Object[] args) {
+    private Scriptable js_getClass(Context cx, VarScope scope, Object[] args) {
         if (args.length > 0 && args[0] instanceof Wrapper) {
             Scriptable result = this;
             Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();

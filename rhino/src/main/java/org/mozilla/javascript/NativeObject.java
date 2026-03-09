@@ -280,7 +280,7 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object js_defineGetterOrSetter(
-            Context cx, Scriptable scope, boolean isSetter, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, boolean isSetter, Object thisObj, Object[] args) {
         if (args.length < 2 || !(args[1] instanceof Callable)) {
             Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
             throw ScriptRuntime.notFunctionError(badArg);
@@ -312,7 +312,7 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object js_lookupGetterOrSetter(
-            Context cx, Scriptable scope, boolean isSetter, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, boolean isSetter, Object thisObj, Object[] args) {
         if (args.length < 1 || !(thisObj instanceof ScriptableObject)) return Undefined.instance;
 
         ScriptableObject so = (ScriptableObject) thisObj;
@@ -320,7 +320,7 @@ public class NativeObject extends ScriptableObject implements Map {
         int index = s.stringId != null ? 0 : s.index;
         Object gs;
         for (; ; ) {
-            gs = so.getGetterOrSetter(s.stringId, index, scope, isSetter);
+            gs = so.getGetterOrSetter(s.stringId, index, so, isSetter);
             if (gs != null) {
                 break;
             }

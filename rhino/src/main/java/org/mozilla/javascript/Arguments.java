@@ -45,12 +45,11 @@ class Arguments extends ScriptableObject {
         JSFunction f = activation.function;
         calleeObj = f;
 
-        defineProperty(
-                SymbolKey.ITERATOR,
+        var iter =
                 TopLevel.getBuiltinPrototype(
-                                ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.Array)
-                        .get("values", parent),
-                ScriptableObject.DONTENUM);
+                        ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.Array);
+
+        defineProperty(SymbolKey.ITERATOR, iter.get("values", iter), ScriptableObject.DONTENUM);
         defineProperty("length", lengthObj, ScriptableObject.DONTENUM);
 
         if (f.isStrict()) {

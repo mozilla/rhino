@@ -79,7 +79,7 @@ public final class JavaAdapter {
     }
 
     public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
-        Scriptable scope = ScriptableObject.getTopLevelScope(obj.getParentScope());
+        VarScope scope = ScriptableObject.getTopLevelScope(obj.getParentScope());
         NativeJavaObject res = new NativeJavaObject(scope, adapter, TypeInfo.NONE, true);
         res.setPrototype(obj);
         return res;
@@ -576,9 +576,9 @@ public final class JavaAdapter {
         return ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            ScopeObject global = ScriptRuntime.getGlobal(cx);
-                            script.exec(cx, global, global);
-                            return global;
+                            TopLevel global = ScriptRuntime.getGlobal(cx);
+                            script.exec(cx, global, global.getGlobalThis());
+                            return global.getGlobalThis();
                         });
     }
 

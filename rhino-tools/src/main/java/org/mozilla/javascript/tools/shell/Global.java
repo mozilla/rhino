@@ -45,6 +45,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Synchronizer;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
@@ -353,7 +354,7 @@ public class Global extends ImporterTopLevel {
         Object obj = args[0];
         String filename = Context.toString(args[1]);
         FileOutputStream fos = new FileOutputStream(filename);
-        Scriptable scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
+        TopLevel scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
         try (ScriptableOutputStream out = new ScriptableOutputStream(fos, scope)) {
             out.writeObject(obj);
         }
@@ -550,16 +551,17 @@ public class Global extends ImporterTopLevel {
 
     private static ContextAction<Object> getAsyncAction(Context cx, Object[] args, VarScope scope) {
         ContextAction<Object> action;
+        Scriptable thisObj = ScriptableObject.getTopLevelScope(scope).getGlobalThis();
         if (args.length != 0 && args[0] instanceof Function) {
             Function f = (Function) args[0];
             Object[] newArgs =
                     args.length > 1 && args[1] instanceof Scriptable
                             ? cx.getElements((Scriptable) args[1])
                             : ScriptRuntime.emptyArgs;
-            action = cx2 -> f.call(cx2, scope, scope, newArgs);
+            action = cx2 -> f.call(cx2, scope, thisObj, newArgs);
         } else if (args.length != 0 && args[0] instanceof Script) {
             Script s = (Script) args[0];
-            action = cx2 -> s.exec(cx2, scope, scope);
+            action = cx2 -> s.exec(cx2, scope, thisObj);
         } else {
             throw reportRuntimeError("msg.spawn.args");
         }
@@ -786,7 +788,7 @@ public class Global extends ImporterTopLevel {
     }
 
     private static Global getInstance(Function function) {
-        Scriptable scope = function.getParentScope();
+        VarScope scope = function.getParentScope();
         if (!(scope instanceof Global))
             throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(scope));
         return (Global) scope;

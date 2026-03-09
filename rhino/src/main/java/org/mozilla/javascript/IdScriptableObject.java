@@ -722,7 +722,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     public final IdFunctionObject exportAsJSClass(
             int maxPrototypeId, VarScope scope, boolean sealed) {
         // Set scope and prototype unless this is top level scope itself
-        if (scope != this && scope != null) {
+        if (scope != null) {
             setParentScope(scope);
             setPrototype(getObjectPrototype(scope));
         }
