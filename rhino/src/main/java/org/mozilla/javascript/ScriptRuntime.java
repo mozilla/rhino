@@ -235,7 +235,6 @@ public class ScriptRuntime {
         new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
 
-        NativeWith.init(scope, sealed);
         NativeScript.init(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
@@ -1577,7 +1576,7 @@ public class ScriptRuntime {
     private static final String DEFAULT_NS_TAG = "__default_namespace__";
 
     public static Object setDefaultNamespace(Object namespace, Context cx) {
-        Scriptable scope = cx.currentActivationCall;
+        VarScope scope = cx.currentActivationCall;
         if (scope == null) {
             scope = getTopCallScope(cx);
         }
@@ -1601,13 +1600,13 @@ public class ScriptRuntime {
     }
 
     public static Object searchDefaultNamespace(Context cx) {
-        Scriptable scope = cx.currentActivationCall;
+        VarScope scope = cx.currentActivationCall;
         if (scope == null) {
             scope = getTopCallScope(cx);
         }
         Object nsObject;
         for (; ; ) {
-            Scriptable parent = scope.getParentScope();
+            VarScope parent = scope.getParentScope();
             if (parent == null) {
                 nsObject = ScriptableObject.getProperty(scope, DEFAULT_NS_TAG);
                 if (nsObject == Scriptable.NOT_FOUND) {
@@ -1899,6 +1898,9 @@ public class ScriptRuntime {
      * @param scope the scope that should be used to resolve primitive prototype
      */
     public static Object getObjectProp(Object obj, String property, Context cx, VarScope scope) {
+        if (obj instanceof VarScope) {
+            return ((VarScope) obj).get(property, (VarScope) obj);
+        }
         Scriptable sobj = asScriptableOrThrowUndefReadError(cx, scope, obj, property);
         return getObjectProp(sobj, property, cx);
     }
@@ -2208,12 +2210,16 @@ public class ScriptRuntime {
         return value;
     }
 
-    public static boolean deleteObjectElem(Scriptable target, Object elem, Context cx) {
+    public static <T extends PropHolder<T>> boolean deleteObjectElem(
+            T target, Object elem, Context cx) {
         if (isSymbol(elem)) {
+            if (target instanceof VarScope) {
+                Kit.codeBug();
+            }
             SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(target);
             Symbol s = (Symbol) elem;
             so.delete(s);
-            return !so.has(s, target);
+            return !so.has(s, (Scriptable) target);
         }
         StringIdOrIndex s = toStringIdOrIndex(elem);
         if (s.stringId == null) {
@@ -2246,14 +2252,14 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead
+     * @deprecated Use {@link #refSet(Ref, Object, Context, VarScope)} instead
      */
     @Deprecated
     public static Object refSet(Ref ref, Object value, Context cx) {
         return refSet(ref, value, cx, getTopCallScope(cx));
     }
 
-    public static Object refSet(Ref ref, Object value, Context cx, Scriptable scope) {
+    public static Object refSet(Ref ref, Object value, Context cx, VarScope scope) {
         return ref.set(cx, scope, value);
     }
 
@@ -2311,14 +2317,19 @@ public class ScriptRuntime {
      * define a return value. Here we assume that the [[Delete]] method doesn't return a value.
      */
     public static Object delete(Object obj, Object id, Context cx, VarScope scope, boolean isName) {
-        Scriptable sobj = toObjectOrNull(cx, obj, scope);
-        if (sobj == null) {
-            if (isName) {
-                return Boolean.TRUE;
+        boolean result;
+        if (obj instanceof VarScope) {
+            result = deleteObjectElem((VarScope) obj, id, cx);
+        } else {
+            Scriptable sobj = toObjectOrNull(cx, obj, scope);
+            if (sobj == null) {
+                if (isName) {
+                    return Boolean.TRUE;
+                }
+                throw undefDeleteError(obj, id);
             }
-            throw undefDeleteError(obj, id);
+            result = deleteObjectElem(sobj, id, cx);
         }
-        boolean result = deleteObjectElem(sobj, id, cx);
         return wrapBoolean(result);
     }
 
@@ -2338,13 +2349,14 @@ public class ScriptRuntime {
 
     private static Object nameOrFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             VarScope parentScope,
             String name,
             boolean asFunctionCall,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj = scope; // It is used only if asFunctionCall==true.
+        Scriptable thisObj =
+                Undefined.SCRIPTABLE_UNDEFINED; // It is used only if asFunctionCall==true.
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2374,11 +2386,6 @@ public class ScriptRuntime {
                 // can be called directly.
                 result = scope.get(name, scope);
                 if (result != Scriptable.NOT_FOUND) {
-                    if (asFunctionCall) {
-                        // ECMA 262 requires that this for nested funtions
-                        // should be top scope
-                        thisObj = ScriptableObject.getTopLevelScope(parentScope);
-                    }
                     break;
                 }
             } else {
@@ -2386,7 +2393,6 @@ public class ScriptRuntime {
                 // scopes are useful for what ever reasons.
                 result = ScriptableObject.getProperty(scope, name);
                 if (result != Scriptable.NOT_FOUND) {
-                    thisObj = scope;
                     break;
                 }
             }
@@ -2405,7 +2411,6 @@ public class ScriptRuntime {
                     result = firstXMLObject.get(name, firstXMLObject);
                 }
                 // For top scope thisObj for functions is always scope itself.
-                thisObj = scope;
                 break;
             }
         }
@@ -2429,8 +2434,8 @@ public class ScriptRuntime {
 
     private static LookupResult nameOrFunction(
             Context cx,
-            Scriptable scope,
-            Scriptable parentScope,
+            VarScope scope,
+            VarScope parentScope,
             String name,
             boolean isOptionalChainingCall) {
         Object result;
@@ -2498,7 +2503,7 @@ public class ScriptRuntime {
         return new LookupResult(result, thisObj, name);
     }
 
-    private static Object topScopeName(Context cx, Scriptable scope, String name) {
+    private static Object topScopeName(Context cx, VarScope scope, String name) {
         if (cx.useDynamicScope) {
             scope = checkDynamicScope(cx.topCallScope, scope);
         }
@@ -2516,9 +2521,9 @@ public class ScriptRuntime {
      *
      * <p>See ECMA 10.1.4
      */
-    public static Scriptable bind(Context cx, Scriptable scope, String id) {
-        Scriptable firstXMLObject = null;
-        Scriptable parent = scope.getParentScope();
+    public static VarScope bind(Context cx, VarScope scope, String id) {
+        VarScope firstXMLScope = null;
+        VarScope parent = scope.getParentScope();
         childScopesChecks:
         if (parent != null) {
             // Check for possibly nested "with" scopes first
@@ -2527,14 +2532,14 @@ public class ScriptRuntime {
                 if (withObj instanceof XMLObject) {
                     XMLObject xmlObject = (XMLObject) withObj;
                     if (xmlObject.has(cx, id)) {
-                        return xmlObject;
+                        return new WithScope(scope.getParentScope(), xmlObject);
                     }
-                    if (firstXMLObject == null) {
-                        firstXMLObject = xmlObject;
+                    if (firstXMLScope == null) {
+                        firstXMLScope = scope;
                     }
                 } else {
                     if (ScriptableObject.hasProperty(withObj, id)) {
-                        return withObj;
+                        return scope;
                     }
                 }
                 scope = parent;
@@ -2563,11 +2568,11 @@ public class ScriptRuntime {
         }
         // Nothing was found, but since XML objects always bind
         // return one if found
-        return firstXMLObject;
+        return firstXMLScope;
     }
 
     public static Object setName(
-            Scriptable bound, Object value, Context cx, VarScope scope, String id) {
+            VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and it's better to optimize  the common case
@@ -2591,7 +2596,7 @@ public class ScriptRuntime {
     }
 
     public static Object strictSetName(
-            Scriptable bound, Object value, Context cx, Scriptable scope, String id) {
+            VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
             // TODO: The LeftHandSide also may not be a reference to a
             // data property with the attribute value {[[Writable]]:false},
@@ -2609,12 +2614,8 @@ public class ScriptRuntime {
         throw constructError("ReferenceError", msg);
     }
 
-    public static Object setConst(Scriptable bound, Object value, Context cx, String id) {
-        if (bound instanceof XMLObject) {
-            bound.put(id, bound, value);
-        } else {
-            ScriptableObject.putConstProperty(bound, id, value);
-        }
+    public static Object setConst(VarScope bound, Object value, Context cx, String id) {
+        ScriptableObject.putConstProperty((VarScope) bound, id, value);
         return value;
     }
 
@@ -2981,7 +2982,7 @@ public class ScriptRuntime {
                 throw notFunctionError(result, name);
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            storeScriptable(cx, scope);
+            storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
             return (Callable) result;
         }
 
@@ -3003,7 +3004,7 @@ public class ScriptRuntime {
 
     private static LookupResult getNameAndThisInner(
             String name, Context cx, VarScope scope, boolean isOptionalChainingCall) {
-        Scriptable parent = scope.getParentScope();
+        VarScope parent = scope.getParentScope();
         if (parent == null) {
             Object result = topScopeName(cx, scope, name);
             if (!(result instanceof Callable)) {
@@ -3023,8 +3024,8 @@ public class ScriptRuntime {
             // Top scope is not NativeWith or NativeCall => thisObj == scope
             return new LookupResult(
                     result,
-                    scope instanceof NativeWith
-                            ? scope.getPrototype()
+                    scope instanceof WithScope
+                            ? ((WithScope) scope).getObject()
                             : Undefined.SCRIPTABLE_UNDEFINED,
                     name);
         }
@@ -3440,10 +3441,6 @@ public class ScriptRuntime {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
                 return evalSpecial(cx, (VarScope) scope, callerThis, args, filename, lineNumber);
             }
-        } else if (callType == Node.SPECIALCALL_WITH) {
-            if (NativeWith.isWithFunction(fun)) {
-                throw Context.reportRuntimeErrorById("msg.only.from.new", "With");
-            }
         } else {
             throw Kit.codeBug();
         }
@@ -3456,10 +3453,6 @@ public class ScriptRuntime {
         if (callType == Node.SPECIALCALL_EVAL) {
             if (NativeGlobal.isEvalFunction(fun)) {
                 throw typeErrorById("msg.not.ctor", "eval");
-            }
-        } else if (callType == Node.SPECIALCALL_WITH) {
-            if (NativeWith.isWithFunction(fun)) {
-                return NativeWith.newWithSpecial(cx, scope, args);
             }
         } else {
             throw Kit.codeBug();
@@ -3660,9 +3653,9 @@ public class ScriptRuntime {
     }
 
     /** The typeof operator that correctly handles the undefined case */
-    public static String typeofName(Scriptable scope, String id) {
+    public static String typeofName(VarScope scope, String id) {
         Context cx = Context.getContext();
-        Scriptable val = bind(cx, scope, id);
+        VarScope val = bind(cx, scope, id);
         if (val == null) return "undefined";
         return typeof(getObjectProp(val, id, cx));
     }
@@ -4001,16 +3994,16 @@ public class ScriptRuntime {
     /**
      * The method is only present for compatibility.
      *
-     * @deprecated Use {@link #nameIncrDecr(Scriptable, String, Context, int)} instead
+     * @deprecated Use {@link #nameIncrDecr(VarScope, String, Context, int)} instead
      */
     @Deprecated
-    public static Object nameIncrDecr(Scriptable scopeChain, String id, int incrDecrMask) {
+    public static Object nameIncrDecr(VarScope scopeChain, String id, int incrDecrMask) {
         return nameIncrDecr(scopeChain, id, Context.getContext(), incrDecrMask);
     }
 
     public static Object nameIncrDecr(
-            Scriptable scopeChain, String id, Context cx, int incrDecrMask) {
-        Scriptable target;
+            VarScope scopeChain, String id, Context cx, int incrDecrMask) {
+        VarScope target;
         Object value;
         search:
         {
@@ -4019,26 +4012,19 @@ public class ScriptRuntime {
                     scopeChain = checkDynamicScope(cx.topCallScope, scopeChain);
                 }
                 target = scopeChain;
-                do {
-                    if (target instanceof WithScope
-                            && ((WithScope) target).getObject() instanceof XMLObject) {
-                        break;
-                    }
+                if (!(target instanceof WithScope
+                        && ((WithScope) target).getObject() instanceof XMLObject)) {
                     value = target.get(id, scopeChain);
                     if (value != Scriptable.NOT_FOUND) {
                         break search;
                     }
-                    if (target instanceof VarScope) {
-                        target = null;
-                    } else {
-                        target = target.getPrototype();
-                    }
-                } while (target != null);
+                    target = null;
+                }
                 scopeChain = scopeChain.getParentScope();
             } while (scopeChain != null);
             throw notFoundError(null, id);
         }
-        return doScriptableIncrDecr(target, id, scopeChain, value, incrDecrMask);
+        return doScopeIncrDecr(target, id, value, incrDecrMask);
     }
 
     /**
@@ -4113,6 +4099,45 @@ public class ScriptRuntime {
         return result;
     }
 
+    private static Object doScopeIncrDecr(
+            VarScope target, String id, Object value, int incrDecrMask) {
+        final boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
+
+        Number number;
+        if (value instanceof Number) {
+            number = (Number) value;
+        } else {
+            number = toNumeric(value);
+        }
+
+        Number result;
+        if (number instanceof BigInteger) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((BigInteger) number).add(BigInteger.ONE);
+            } else {
+                result = ((BigInteger) number).subtract(BigInteger.ONE);
+            }
+        } else if (number instanceof Integer) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((Integer) number).intValue() + 1;
+            } else {
+                result = ((Integer) number).intValue() - 1;
+            }
+        } else {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = number.doubleValue() + 1.0;
+            } else {
+                result = number.doubleValue() - 1.0;
+            }
+        }
+
+        target.put(id, target, result);
+        if (post) {
+            return number;
+        }
+        return result;
+    }
+
     /**
      * @deprecated Use {@link #elemIncrDecr(Object, Object, Context, VarScope, int)} instead
      */
@@ -4162,14 +4187,14 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #refIncrDecr(Ref, Context, Scriptable, int)} instead
+     * @deprecated Use {@link #refIncrDecr(Ref, Context, VarScope, int)} instead
      */
     @Deprecated
     public static Object refIncrDecr(Ref ref, Context cx, int incrDecrMask) {
         return refIncrDecr(ref, cx, getTopCallScope(cx), incrDecrMask);
     }
 
-    public static Object refIncrDecr(Ref ref, Context cx, Scriptable scope, int incrDecrMask) {
+    public static Object refIncrDecr(Ref ref, Context cx, VarScope scope, int incrDecrMask) {
         Object value = ref.get(cx);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
 
@@ -4918,20 +4943,29 @@ public class ScriptRuntime {
      * chain and return {@code staticTopScope} otherwise. Should only be called when {@code
      * staticTopScope} is top scope.
      */
-    static Scriptable checkDynamicScope(
-            Scriptable possibleDynamicScope, Scriptable staticTopScope) {
+    static VarScope checkDynamicScope(TopLevel possibleDynamicScope, VarScope staticTopScope) {
         // Return cx.topCallScope if scope
-        if (possibleDynamicScope == staticTopScope) {
+
+        if (!(staticTopScope instanceof TopLevel)) {
+            return staticTopScope;
+        }
+        TopLevel staticTopLevel = (TopLevel) staticTopScope;
+        if (possibleDynamicScope == staticTopLevel) {
             return possibleDynamicScope;
         }
-        Scriptable proto = possibleDynamicScope;
+        return findDynamicScope(possibleDynamicScope, staticTopLevel);
+    }
+
+    private static VarScope findDynamicScope(
+            TopLevel possibleDynamicScope, TopLevel staticTopLevel) {
+        Scriptable proto = possibleDynamicScope.getGlobalThis();
         for (; ; ) {
             proto = proto.getPrototype();
-            if (proto == staticTopScope) {
+            if (proto == staticTopLevel.getGlobalThis()) {
                 return possibleDynamicScope;
             }
             if (proto == null) {
-                return staticTopScope;
+                return staticTopLevel;
             }
         }
     }
@@ -4948,7 +4982,7 @@ public class ScriptRuntime {
             ScriptOrFn execObj,
             Scriptable thisObj,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             boolean evalScript) {
         if (cx.topCallScope == null) throw new IllegalStateException();
 
@@ -4957,7 +4991,7 @@ public class ScriptRuntime {
         int varCount = desc.getParamAndVarCount();
         if (varCount != 0) {
 
-            Scriptable varScope = scope;
+            VarScope varScope = scope;
             // Never define any variables from var statements inside with
             // object. See bug 38590.
             while (varScope instanceof WithScope) {
@@ -5075,7 +5109,7 @@ public class ScriptRuntime {
                 funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
     }
 
-    public static void enterActivationFunction(Context cx, Scriptable scope) {
+    public static void enterActivationFunction(Context cx, VarScope scope) {
         if (cx.topCallScope == null) throw new IllegalStateException();
         NativeCall call = (NativeCall) scope;
         call.parentActivationCall = cx.currentActivationCall;
@@ -5403,7 +5437,7 @@ public class ScriptRuntime {
     }
 
     public static void initFunction(
-            Context cx, Scriptable scope, JSFunction function, int type, boolean fromEvalCode) {
+            Context cx, VarScope scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
             String name = function.getFunctionName();
             if (name != null && name.length() != 0) {
@@ -5854,7 +5888,7 @@ public class ScriptRuntime {
         throw typeErrorById("msg.undef.prop.delete", toString(object), toString(id));
     }
 
-    public static RuntimeException notFoundError(Scriptable object, String property) {
+    public static RuntimeException notFoundError(VarScope object, String property) {
         // XXX: use object to improve the error message
         String msg = getMessageById("msg.is.not.defined", property);
         throw constructError("ReferenceError", msg);
@@ -6028,13 +6062,13 @@ public class ScriptRuntime {
         return xmlObject.memberRef(cx, namespace, elem, memberTypeFlags);
     }
 
-    public static Ref nameRef(Object name, Context cx, Scriptable scope, int memberTypeFlags) {
+    public static Ref nameRef(Object name, Context cx, VarScope scope, int memberTypeFlags) {
         XMLLib xmlLib = currentXMLLib(cx);
         return xmlLib.nameRef(cx, name, scope, memberTypeFlags);
     }
 
     public static Ref nameRef(
-            Object namespace, Object name, Context cx, Scriptable scope, int memberTypeFlags) {
+            Object namespace, Object name, Context cx, VarScope scope, int memberTypeFlags) {
         XMLLib xmlLib = currentXMLLib(cx);
         return xmlLib.nameRef(cx, namespace, name, scope, memberTypeFlags);
     }

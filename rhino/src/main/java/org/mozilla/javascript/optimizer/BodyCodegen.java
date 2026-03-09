@@ -438,7 +438,7 @@ class BodyCodegen {
             addScriptRuntimeInvoke(
                     "enterActivationFunction",
                     "(Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/VarScope;"
                             + ")V");
         } else {
             debugVariableName = "global";
@@ -452,7 +452,7 @@ class BodyCodegen {
                     "(Lorg/mozilla/javascript/ScriptOrFn;"
                             + "Lorg/mozilla/javascript/Scriptable;"
                             + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/VarScope;"
                             + "Z"
                             + ")V");
         }
@@ -1544,7 +1544,7 @@ class BodyCodegen {
                             "(Lorg/mozilla/javascript/Ref;"
                                     + "Ljava/lang/Object;"
                                     + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + ")Ljava/lang/Object;");
                 }
                 break;
@@ -1666,7 +1666,7 @@ class BodyCodegen {
                             signature =
                                     "(Ljava/lang/Object;"
                                             + "Lorg/mozilla/javascript/Context;"
-                                            + "Lorg/mozilla/javascript/Scriptable;"
+                                            + "Lorg/mozilla/javascript/VarScope;"
                                             + "I"
                                             + ")Lorg/mozilla/javascript/Ref;";
                             cfw.addALoad(variableObjectLocal);
@@ -1677,7 +1677,7 @@ class BodyCodegen {
                                     "(Ljava/lang/Object;"
                                             + "Ljava/lang/Object;"
                                             + "Lorg/mozilla/javascript/Context;"
-                                            + "Lorg/mozilla/javascript/Scriptable;"
+                                            + "Lorg/mozilla/javascript/VarScope;"
                                             + "I"
                                             + ")Lorg/mozilla/javascript/Ref;";
                             cfw.addALoad(variableObjectLocal);
@@ -1835,8 +1835,7 @@ class BodyCodegen {
                 String name = unnestedYields.get(node);
                 cfw.addALoad(variableObjectLocal);
                 cfw.addALoad(contextLocal);
-                cfw.addALoad(variableObjectLocal);
-                addDynamicInvoke("PROP:GETNOWARN:" + name, Signatures.PROP_GET_NOWARN);
+                addDynamicInvoke("NAME:GET:" + name, Signatures.NAME_GET);
             }
             return;
         }
@@ -1856,7 +1855,7 @@ class BodyCodegen {
             cfw.add(ByteCode.SWAP);
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
-            addDynamicInvoke("PROP:SET:" + nn, Signatures.PROP_SET);
+            addDynamicInvoke("NAME:SET:" + nn, Signatures.NAME_SET);
             cfw.add(ByteCode.POP);
 
             unnestedYields.put(nestedYield, nn);
@@ -3697,7 +3696,7 @@ class BodyCodegen {
         cfw.addPush(node.getString());
         addScriptRuntimeInvoke(
                 "typeofName",
-                "(Lorg/mozilla/javascript/Scriptable;"
+                "(Lorg/mozilla/javascript/VarScope;"
                         + "Ljava/lang/String;"
                         + ")Ljava/lang/String;");
     }
@@ -3835,7 +3834,7 @@ class BodyCodegen {
                 cfw.addPush(incrDecrMask);
                 addScriptRuntimeInvoke(
                         "nameIncrDecr",
-                        "(Lorg/mozilla/javascript/Scriptable;"
+                        "(Lorg/mozilla/javascript/VarScope;"
                                 + "Ljava/lang/String;"
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "I)Ljava/lang/Object;");
