@@ -36,11 +36,6 @@ public class ScriptRuntimeES6 {
     }
 
     public static DescriptorInfo symbolSpecies(
-            Context cx, Scriptable scope, ScriptableObject constructor) {
-        return symbolSpecies(cx, (VarScope) scope, constructor);
-    }
-
-    public static DescriptorInfo symbolSpecies(
             Context cx, VarScope scope, ScriptableObject constructor) {
         return new DescriptorInfo(
                 false,

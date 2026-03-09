@@ -167,7 +167,7 @@ interface Signatures {
 
     /** NAME:SET:{name}: Sets the named value in the scope. Falls back to ScriptRuntime.setName. */
     String NAME_SET =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/VarScope;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/VarScope;"
@@ -180,19 +180,19 @@ interface Signatures {
      * "receiver".
      */
     String NAME_BIND =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/VarScope;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + ")Lorg/mozilla/javascript/Scriptable;";
+                    + ")Lorg/mozilla/javascript/VarScope;";
 
     /**
      * NAME:SETSTRICT:{name}: Sets the named value in the scope, and enforces strict mode. Falls
      * back to ScriptRuntime.strictSetName.
      */
     String NAME_SET_STRICT =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/VarScope;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/VarScope;"
                     + ")Ljava/lang/Object;";
 
     /**
@@ -200,7 +200,7 @@ interface Signatures {
      * ScriptRuntime.setConst.
      */
     String NAME_SET_CONST =
-            "(Lorg/mozilla/javascript/Scriptable;"
+            "(Lorg/mozilla/javascript/VarScope;"
                     + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Context;"
                     + ")Ljava/lang/Object;";

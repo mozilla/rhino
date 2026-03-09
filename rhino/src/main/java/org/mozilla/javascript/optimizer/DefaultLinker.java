@@ -11,7 +11,6 @@ import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.config.RhinoConfig;
@@ -139,9 +138,7 @@ class DefaultLinker implements GuardingDynamicLinker {
         // Like above for properties, the name to handle is not on the Java stack,
         // but is something that we parsed from the name of the invokedynamic operation.
         if (op.isOperation(RhinoOperation.BIND)) {
-            tt =
-                    MethodType.methodType(
-                            Scriptable.class, Context.class, Scriptable.class, String.class);
+            tt = MethodType.methodType(VarScope.class, Context.class, VarScope.class, String.class);
             mh = lookup.findStatic(ScriptRuntime.class, "bind", tt);
             mh = MethodHandles.insertArguments(mh, 2, name);
             mh = MethodHandles.permuteArguments(mh, mType, 1, 0);
