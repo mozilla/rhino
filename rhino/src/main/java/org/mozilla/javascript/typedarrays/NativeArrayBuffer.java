@@ -143,13 +143,13 @@ public class NativeArrayBuffer extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
 
-    private static NativeArrayBuffer js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeArrayBuffer js_constructor(Context cx, VarScope scope, Object[] args) {
         double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
         return new NativeArrayBuffer(length);
     }
 
     private static Boolean js_isView(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return Boolean.valueOf((isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
     }
 

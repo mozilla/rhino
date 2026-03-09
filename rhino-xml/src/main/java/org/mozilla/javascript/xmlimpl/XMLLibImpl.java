@@ -12,7 +12,6 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
@@ -122,7 +121,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
      * @deprecated
      */
     @Deprecated
-    Scriptable globalScope() {
+    VarScope globalScope() {
         return globalScope;
     }
 
@@ -311,7 +310,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         return listToAdd;
     }
 
-    private Ref xmlPrimaryReference(Context cx, XMLName xmlName, Scriptable scope) {
+    private Ref xmlPrimaryReference(Context cx, XMLName xmlName, VarScope scope) {
         XMLObjectImpl xmlObj;
         XMLObjectImpl firstXml = null;
         for (; ; ) {
@@ -626,18 +625,18 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     }
 
     @Override
-    public Ref nameRef(Context cx, Object name, Scriptable scope, int memberTypeFlags) {
+    public Ref nameRef(Context cx, Object name, VarScope scope, int memberTypeFlags) {
         if ((memberTypeFlags & Node.ATTRIBUTE_FLAG) == 0) {
             // should only be called for cases like @name or @[expr]
             throw Kit.codeBug();
         }
         XMLName xmlName = toAttributeName(cx, name);
-        return xmlPrimaryReference(cx, xmlName, scope);
+        return xmlPrimaryReference(cx, xmlName, (VarScope) scope);
     }
 
     @Override
     public Ref nameRef(
-            Context cx, Object namespace, Object name, Scriptable scope, int memberTypeFlags) {
+            Context cx, Object namespace, Object name, VarScope scope, int memberTypeFlags) {
         XMLName xmlName = XMLName.create(toNodeQName(cx, namespace, name), false, false);
 
         //    No idea what is coming in from the parser in this case; is it detecting the "@"?
@@ -647,6 +646,6 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
             }
         }
 
-        return xmlPrimaryReference(cx, xmlName, scope);
+        return xmlPrimaryReference(cx, xmlName, (VarScope) scope);
     }
 }

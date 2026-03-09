@@ -101,7 +101,7 @@ public class NativeGlobal implements Serializable {
                             // built-ins/NativeErrors/AggregateError/newtarget-proto-custom.js work
                             // correctly
                             @Override
-                            public Scriptable createObject(Context cx, Scriptable scope) {
+                            public Scriptable createObject(Context cx, VarScope scope) {
                                 return null;
                             }
                         };
@@ -148,7 +148,7 @@ public class NativeGlobal implements Serializable {
     }
 
     private static void registerGlobalFunction(
-            Scriptable scope, boolean sealed, String name, LambdaFunction fun) {
+            VarScope scope, boolean sealed, String name, LambdaFunction fun) {
         ScriptableObject.defineProperty(scope, name, fun, DONTENUM);
         if (sealed) {
             fun.sealObject();
@@ -487,8 +487,8 @@ public class NativeGlobal implements Serializable {
      * executed via ScriptRuntime.callSpecial().
      */
     private static Object js_eval(Context cx, VarScope scope, Object[] args) {
-        VarScope global = ScriptableObject.getTopLevelScope(scope);
-        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
+        TopLevel global = ScriptableObject.getTopLevelScope(scope);
+        return ScriptRuntime.evalSpecial(cx, global, global.getGlobalThis(), args, "eval code", 1);
     }
 
     /**

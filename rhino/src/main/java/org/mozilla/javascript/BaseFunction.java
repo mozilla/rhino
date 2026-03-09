@@ -591,9 +591,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             }
             if (result.getParentScope() == null) {
                 VarScope parent = getParentScope();
-                if (result != parent) {
-                    result.setParentScope(parent);
-                }
+                result.setParentScope(parent);
             }
         } else {
             Object val = call(cx, scope, result, args);
@@ -611,7 +609,7 @@ public class BaseFunction extends ScriptableObject implements Function {
      * itself. In this case {@link #construct} will set scope and prototype on the result {@link
      * #call} unless they are already set.
      */
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, VarScope scope) {
         Scriptable newInstance = new NativeObject();
         newInstance.setPrototype(getClassPrototype());
         newInstance.setParentScope(getParentScope());

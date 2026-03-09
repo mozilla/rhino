@@ -100,7 +100,7 @@ public class Undefined implements Serializable {
         }
 
         @Override
-        public VarScope getPrototype() {
+        public Scriptable getPrototype() {
             return null;
         }
 

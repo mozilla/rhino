@@ -306,7 +306,7 @@ public class NativeRegExp extends ScriptableObject {
         return "object";
     }
 
-    Scriptable compile(Context cx, Scriptable scope, Object[] args) {
+    Scriptable compile(Context cx, VarScope scope, Object[] args) {
         if (args.length >= 1
                 && args[0] instanceof NativeRegExp
                 && (args.length == 1 || args[1] == Undefined.instance)) {

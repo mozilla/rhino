@@ -554,10 +554,10 @@ public class Context implements Closeable {
      */
     public static Object call(
             ContextFactory factory,
-            final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            Callable callable,
+            VarScope scope,
+            Scriptable thisObj,
+            Object[] args) {
         if (factory == null) {
             factory = ContextFactory.getGlobal();
         }
@@ -1306,7 +1306,8 @@ public class Context implements Closeable {
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall(script, this, scope, scope, isTopLevelStrict);
+        return ScriptRuntime.doTopCall(
+                script, this, scope, Undefined.SCRIPTABLE_UNDEFINED, isTopLevelStrict);
     }
 
     public Object callFunctionWithContinuations(Callable callable, VarScope scope, Object[] args)

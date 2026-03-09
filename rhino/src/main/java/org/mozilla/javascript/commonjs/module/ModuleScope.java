@@ -7,8 +7,8 @@ package org.mozilla.javascript.commonjs.module;
 import java.net.URI;
 import org.mozilla.javascript.DeclarationScope;
 import org.mozilla.javascript.ScopeObject;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * A top-level module scope. This class provides methods to retrieve the module's source and base
@@ -38,14 +38,9 @@ public class ModuleScope extends DeclarationScope {
         return base;
     }
 
-    @Override
-    public String getClassName() {
-        return "module";
-    }
-
     /** Search up the chain of scopes to find a module scope. */
-    public static ModuleScope findModuleScope(Scriptable scope) {
-        Scriptable current = scope;
+    public static ModuleScope findModuleScope(VarScope scope) {
+        VarScope current = scope;
         while (current != null) {
             if (current instanceof ModuleScope) {
                 return (ModuleScope) current;

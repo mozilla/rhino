@@ -145,7 +145,7 @@ public class PolicySecurityController extends SecurityController {
 
     public abstract static class SecureCaller {
         public abstract Object call(
-                Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args);
+                Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args);
     }
 
     private static byte[] loadBytecode() {

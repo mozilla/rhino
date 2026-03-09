@@ -138,11 +138,6 @@ public class ImporterTopLevel extends TopLevel {
         topScopeFlag = true;
     }
 
-    @Override
-    public String getClassName() {
-        return topScopeFlag ? "global" : "JavaImporter";
-    }
-
     public static void init(Context cx, VarScope scope, boolean sealed) {
         init(cx, scope, sealed, false);
     }
