@@ -3413,10 +3413,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 outArgs, cx);
                 return null;
             }
-            Scriptable calleeScope = frame.scope;
-            if (frame.useActivation) {
-                calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
-            }
+            Scriptable callerScope = frame.scope;
             // Iteratively reduce known function types: arrows, lambdas,
             // bound functions, call/apply, and no-such-method-handler in
             // order to make a best-effort to keep them in this interpreter
@@ -3508,7 +3505,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 } else if (fun instanceof BoundFunction) {
                     BoundFunction bfun = (BoundFunction) fun;
                     fun = bfun.getTargetFunction();
-                    funThisObj = bfun.getCallThis(cx, calleeScope);
+                    funThisObj = bfun.getCallThis();
 
                     Object[] bArgs = bfun.getBoundArgs();
                     boundArgs = addBoundArgs(boundArgs, bArgs);
@@ -3531,7 +3528,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     boundArgs = new Object[2];
                     blen = 2;
                     boundArgs[0] = nsmfun.methodName;
-                    boundArgs[1] = cx.newArray(calleeScope, elements);
+                    boundArgs[1] = cx.newArray(callerScope, elements);
                     state.indexReg = 2;
                 } else if (fun == null) {
                     throw ScriptRuntime.notFunctionError(null, null);
@@ -3578,8 +3575,8 @@ public final class Interpreter extends Icode implements Evaluator {
                     CallFrame calleeFrame =
                             initFrame(
                                     cx,
-                                    calleeScope,
-                                    ifun.getFunctionThis(funThisObj),
+                                    ifun.getDeclarationScope(),
+                                    ifun.getThisObj(funThisObj),
                                     funHomeObj,
                                     stack,
                                     sDbl,
@@ -3629,7 +3626,7 @@ public final class Interpreter extends Icode implements Evaluator {
             stack[state.stackTop] =
                     fun.call(
                             cx,
-                            calleeScope,
+                            callerScope,
                             funThisObj,
                             getArgsArray(
                                     stack,

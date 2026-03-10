@@ -107,9 +107,9 @@ public class ClassDescriptor {
         @Override
         void makeProp(Context cx, Scriptable scope, ScriptableObject obj) {
             if (name instanceof String) {
-                obj.defineProperty(cx, (String) name, getter, setter, attributes);
+                obj.defineProperty(cx, scope, (String) name, getter, setter, attributes);
             } else {
-                obj.defineProperty(cx, (SymbolKey) name, getter, setter, attributes);
+                obj.defineProperty(cx, scope, (SymbolKey) name, getter, setter, attributes);
             }
         }
     }
@@ -203,7 +203,6 @@ public class ClassDescriptor {
         if (proto != null) {
             ctor.setPrototypeProperty(proto);
             ctor.setPrototypePropertyAttributes(ctorDesc.stdAttrs);
-            proto.setParentScope(scope);
             proto.put("constructor", proto, ctor);
         }
 

@@ -188,17 +188,16 @@ public class ScriptRuntime {
                 || ScriptableClass.isAssignableFrom(cl));
     }
 
-    public static ScriptableObject initSafeStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
+    public static TopLevel initSafeStandardObjects(Context cx, TopLevel scope, boolean sealed) {
         if (scope == null) {
-            scope = new NativeObject();
-        } else if (scope instanceof TopLevel) {
-            ((TopLevel) scope).clearCache();
+            scope = new TopLevel();
         }
 
-        scope.put("global", scope, scope);
+        scope.put("global", scope, scope.getGlobalThis());
 
+        scope.clearCache();
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
+
         new ClassCache().associate(scope);
         var typeFactory =
                 (androidApi >= 34 || androidApi < 0)
@@ -296,23 +295,20 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
         }
 
-        if (scope instanceof TopLevel) {
-            ((TopLevel) scope).cacheBuiltins(scope, sealed);
-        }
+        scope.cacheBuiltins(sealed);
 
         return scope;
     }
 
-    private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
+    private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
             regExpProxy.register(scope, sealed);
         }
     }
 
-    public static ScriptableObject initStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
-        ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+    public static TopLevel initStandardObjects(Context cx, TopLevel scope, boolean sealed) {
+        TopLevel s = initSafeStandardObjects(cx, scope, sealed);
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
         new LazilyLoadedCtor(
@@ -2442,7 +2438,7 @@ public class ScriptRuntime {
             String name,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj = scope;
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2474,7 +2470,6 @@ public class ScriptRuntime {
                 if (result != Scriptable.NOT_FOUND) {
                     // ECMA 262 requires that this for nested funtions
                     // should be top scope
-                    thisObj = ScriptableObject.getTopLevelScope(parentScope);
                     break;
                 }
             } else {
@@ -2482,7 +2477,6 @@ public class ScriptRuntime {
                 // scopes are useful for what ever reasons.
                 result = ScriptableObject.getProperty(scope, name);
                 if (result != Scriptable.NOT_FOUND) {
-                    thisObj = scope;
                     break;
                 }
             }
@@ -2493,8 +2487,6 @@ public class ScriptRuntime {
                 if (result == Scriptable.NOT_FOUND) {
                     throw notFoundError(scope, name);
                 }
-                // For top scope thisObj for functions is always scope itself.
-                thisObj = scope;
                 break;
             }
         }
@@ -3033,7 +3025,12 @@ public class ScriptRuntime {
                 }
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            return new LookupResult(result, scope, name);
+            return new LookupResult(
+                    result,
+                    scope instanceof NativeWith
+                            ? scope.getPrototype()
+                            : Undefined.SCRIPTABLE_UNDEFINED,
+                    name);
         }
 
         // name will call storeScriptable(cx, thisObj);
@@ -3353,6 +3350,7 @@ public class ScriptRuntime {
             // nested functions should have top scope as their thisObj
             thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
+
         storeScriptable(cx, thisObj);
         return f;
     }
@@ -3382,18 +3380,8 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        Scriptable thisObj = null;
-        if (f instanceof Function) {
-            thisObj = ((Function) f).getDeclarationScope();
-        }
-        if (thisObj == null) {
-            if (cx.topCallScope == null) throw new IllegalStateException();
-            thisObj = cx.topCallScope;
-        }
-        if (thisObj instanceof NativeCall) {
-            // nested functions should have top scope as their thisObj
-            thisObj = ScriptableObject.getTopLevelScope(thisObj);
-        }
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+
         return new LookupResult(f, thisObj, value);
     }
 
@@ -3510,7 +3498,8 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis = getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, function);
+        Scriptable callThis =
+                getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, (Function) function);
 
         Object[] callArgs;
         if (isApply) {
@@ -3530,7 +3519,7 @@ public class ScriptRuntime {
     }
 
     public static Scriptable getApplyOrCallThis(
-            Context cx, Scriptable scope, Object arg0, int l, Callable target) {
+            Context cx, Scriptable scope, Object arg0, int l, Function target) {
         Scriptable callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             // Legacy behavior
@@ -3540,8 +3529,9 @@ public class ScriptRuntime {
                 callThis = null;
             }
             if (callThis == null) {
-                // This covers the case of args[0] == (null|undefined) as well.
-                callThis = getTopCallScope(cx);
+                callThis =
+                        ScriptableObject.getTopLevelScope(target.getDeclarationScope())
+                                .getGlobalThis();
             }
         } else {
             // Spec-compliant behavior
@@ -3552,15 +3542,6 @@ public class ScriptRuntime {
                                 : toObjectOrNull(cx, arg0, scope);
             } else {
                 callThis = Undefined.SCRIPTABLE_UNDEFINED;
-            }
-
-            // Replace missing this with global object only for non-strict functions
-            boolean missingCallThis =
-                    callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
-            boolean isFunctionStrict =
-                    !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
-            if (missingCallThis && !isFunctionStrict) {
-                callThis = getTopCallScope(cx);
             }
         }
 
@@ -4866,8 +4847,8 @@ public class ScriptRuntime {
         return (cx.topCallScope != null);
     }
 
-    public static Scriptable getTopCallScope(Context cx) {
-        Scriptable scope = cx.topCallScope;
+    public static TopLevel getTopCallScope(Context cx) {
+        var scope = cx.topCallScope;
         if (scope == null) {
             throw new IllegalStateException();
         }
@@ -5427,9 +5408,9 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject object, Scriptable scope, TopLevel.Builtins type) {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        object.setParentScope(scope);
-        object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        object.setParentScope(top);
+        object.setPrototype(TopLevel.getBuiltinPrototype(top, type));
     }
 
     public static void setBuiltinProtoAndParent(
@@ -6225,6 +6206,15 @@ public class ScriptRuntime {
         } else {
             return value;
         }
+    }
+
+    public static Scriptable getThisForScope(Scriptable scope, Object callThisArg) {
+        if (Undefined.isUndefined(callThisArg)) {
+            callThisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        } else if (callThisArg == null) {
+            return null;
+        }
+        return ScriptRuntime.toObject(scope, callThisArg);
     }
 
     /**
