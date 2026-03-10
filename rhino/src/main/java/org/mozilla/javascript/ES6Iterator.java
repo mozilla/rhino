@@ -17,7 +17,7 @@ public abstract class ES6Iterator extends ScriptableObject {
     public static final String RETURN_METHOD = "return";
 
     protected static void init(
-            ScriptableObject scope, boolean sealed, ScriptableObject prototype, String tag) {
+            TopLevel scope, boolean sealed, ScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
@@ -52,36 +52,35 @@ public abstract class ES6Iterator extends ScriptableObject {
 
     protected ES6Iterator() {}
 
-    protected ES6Iterator(Scriptable scope, String tag) {
+    protected ES6Iterator(VarScope scope, String tag) {
         // Set parent and prototype properties. Since we don't have a
         // "Iterator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
         this.tag = tag;
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         ScriptableObject prototype = (ScriptableObject) ScriptableObject.getTopScopeValue(top, tag);
         setPrototype(prototype);
     }
 
-    private static ES6Iterator realThis(Scriptable thisObj) {
+    private static ES6Iterator realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, ES6Iterator.class);
     }
 
-    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Iterator iterator = realThis(thisObj);
         return iterator.next(cx, scope);
     }
 
-    private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_iterator(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return thisObj;
     }
 
-    protected abstract boolean isDone(Context cx, Scriptable scope);
+    protected abstract boolean isDone(Context cx, VarScope scope);
 
-    protected abstract Object nextValue(Context cx, Scriptable scope);
+    protected abstract Object nextValue(Context cx, VarScope scope);
 
-    protected Object next(Context cx, Scriptable scope) {
+    protected Object next(Context cx, VarScope scope) {
         Object value = Undefined.instance;
         boolean done = isDone(cx, scope) || this.exhausted;
         if (!done) {
@@ -97,11 +96,11 @@ public abstract class ES6Iterator extends ScriptableObject {
     }
 
     // 25.1.1.3 The IteratorResult Interface
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
+    static Scriptable makeIteratorResult(Context cx, VarScope scope, Boolean done) {
         return makeIteratorResult(cx, scope, done, Undefined.instance);
     }
 
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
+    static Scriptable makeIteratorResult(Context cx, VarScope scope, Boolean done, Object value) {
         final Scriptable iteratorResult = cx.newObject(scope);
         ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);

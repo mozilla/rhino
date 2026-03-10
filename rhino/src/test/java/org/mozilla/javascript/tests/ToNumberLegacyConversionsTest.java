@@ -11,7 +11,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Test cases for a legacy ToNumber conversion applied to a String type.
@@ -116,12 +117,12 @@ public class ToNumberLegacyConversionsTest {
     public boolean interpreted;
 
     @SuppressWarnings("ConstantConditions")
-    private boolean execute(Context cx, Scriptable scope, String script) {
+    private boolean execute(Context cx, VarScope scope, String script) {
         return (Boolean) cx.evaluateString(scope, script, "inline", 1, null);
     }
 
     public Context cx;
-    public Scriptable scope;
+    public TopLevel scope;
 
     @Before
     public void setup() {

@@ -7,8 +7,7 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /** Example of controlling the JavaScript with multiple scopes and threads. */
 public class DynamicScopes {
@@ -85,11 +84,11 @@ public class DynamicScopes {
         // Initialize the standard objects (Object, Function, etc.)
         // This must be done before scripts can be executed. The call
         // returns a new scope that we will share.
-        ScriptableObject sharedScope = cx.initStandardObjects(null, true);
+        TopLevel sharedScope = cx.initStandardObjects(null, true);
 
         // Now we can execute the precompiled script against the scope
         // to define x variable and f function in the shared scope.
-        script.exec(cx, sharedScope, sharedScope);
+        script.exec(cx, sharedScope, sharedScope.getGlobalThis());
 
         // Now we spawn some threads that execute a script that calls the
         // function 'f'. The scope chain looks like this:
@@ -135,7 +134,7 @@ public class DynamicScopes {
 
     static class PerThread implements Runnable {
 
-        PerThread(Scriptable sharedScope, String source, String x) {
+        PerThread(TopLevel sharedScope, String source, String x) {
             this.sharedScope = sharedScope;
             this.source = source;
             this.x = x;
@@ -147,14 +146,7 @@ public class DynamicScopes {
             Context cx = Context.enter();
             try {
                 // We can share the scope.
-                Scriptable threadScope = cx.newObject(sharedScope);
-                threadScope.setPrototype(sharedScope);
-
-                // We want "threadScope" to be a new top-level
-                // scope, so set its parent scope to null. This
-                // means that any variables created by assignments
-                // will be properties of "threadScope".
-                threadScope.setParentScope(null);
+                var threadScope = TopLevel.createIsolate(sharedScope);
 
                 // Create a JavaScript property of the thread scope named
                 // 'x' and save a value for it.
@@ -165,7 +157,7 @@ public class DynamicScopes {
             }
         }
 
-        private Scriptable sharedScope;
+        private TopLevel sharedScope;
         private String source;
         private String x;
     }

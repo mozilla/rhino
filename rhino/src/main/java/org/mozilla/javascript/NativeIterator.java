@@ -21,7 +21,7 @@ public final class NativeIterator extends ScriptableObject {
 
     private Object objectIterator;
 
-    static void init(Context cx, ScriptableObject scope, boolean sealed) {
+    static void init(Context cx, TopLevel scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -63,6 +63,7 @@ public final class NativeIterator extends ScriptableObject {
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
         scope.associateValue(ITERATOR_TAG, obj);
+        scope.getGlobalThis().associateValue(ITERATOR_TAG, obj);
     }
 
     /** Only for constructing the prototype object. */
@@ -80,8 +81,8 @@ public final class NativeIterator extends ScriptableObject {
      * @param scope a scope whose parent chain reaches a top-level scope
      * @return the StopIteration object
      */
-    public static Object getStopIterationObject(Scriptable scope) {
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+    public static Object getStopIterationObject(VarScope scope) {
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         return ScriptableObject.getTopScopeValue(top, ITERATOR_TAG);
     }
 
@@ -123,13 +124,13 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static Object jsConstructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         Scriptable target = requireIteratorTarget(cx, scope, args);
         boolean keyOnly = isKeyOnly(args);
 
         Iterator<?> iterator = getJavaIterator(target);
         if (iterator != null) {
-            Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
+            VarScope topScope = ScriptableObject.getTopLevelScope(scope);
             return cx.getWrapFactory()
                     .wrap(
                             cx,
@@ -146,13 +147,13 @@ public final class NativeIterator extends ScriptableObject {
         return createNativeIterator(cx, scope, target, keyOnly);
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
         Scriptable target = requireIteratorTarget(cx, scope, args);
         boolean keyOnly = isKeyOnly(args);
         return createNativeIterator(cx, scope, target, keyOnly);
     }
 
-    private static Scriptable requireIteratorTarget(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable requireIteratorTarget(Context cx, VarScope scope, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             Object argument = args.length == 0 ? Undefined.instance : args[0];
             throw ScriptRuntime.typeErrorById(
@@ -165,13 +166,13 @@ public final class NativeIterator extends ScriptableObject {
         return args.length > 1 && ScriptRuntime.toBoolean(args[1]);
     }
 
-    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
         NativeIterator iterator = realThis(thisObj);
         return iterator.next(cx, scope);
     }
 
     private static NativeIterator createNativeIterator(
-            Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
+            Context cx, VarScope scope, Scriptable obj, boolean keyOnly) {
         Object objectIterator =
                 ScriptRuntime.enumInit(
                         obj,
@@ -188,15 +189,15 @@ public final class NativeIterator extends ScriptableObject {
     }
 
     private static Object js_iteratorMethod(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return realThis(thisObj);
     }
 
-    private static NativeIterator realThis(Scriptable thisObj) {
+    private static NativeIterator realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeIterator.class);
     }
 
-    private Object next(Context cx, Scriptable scope) {
+    private Object next(Context cx, VarScope scope) {
         Boolean b = ScriptRuntime.enumNext(this.objectIterator, cx);
         if (!b) {
             // Out of values. Throw StopIteration.
@@ -222,9 +223,9 @@ public final class NativeIterator extends ScriptableObject {
 
     public static class WrappedJavaIterator {
         private final Iterator<?> iterator;
-        private final Scriptable scope;
+        private final VarScope scope;
 
-        WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
+        WrappedJavaIterator(Iterator<?> iterator, VarScope scope) {
             this.iterator = iterator;
             this.scope = scope;
         }

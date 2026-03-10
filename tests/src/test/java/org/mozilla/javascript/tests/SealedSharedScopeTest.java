@@ -21,7 +21,8 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.JSFunction;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -29,8 +30,8 @@ public class SealedSharedScopeTest {
 
     private Context ctx;
     private ImporterTopLevel sharedScope;
-    private Scriptable scope1;
-    private Scriptable scope2;
+    private VarScope scope1;
+    private VarScope scope2;
 
     @Before
     public void setUp() throws Exception {
@@ -41,12 +42,8 @@ public class SealedSharedScopeTest {
 
         ctx = Context.enter();
         ctx.setLanguageVersion(Context.VERSION_DEFAULT);
-        scope1 = ctx.newObject(sharedScope);
-        scope1.setPrototype(sharedScope);
-        scope1.setParentScope(null);
-        scope2 = ctx.newObject(sharedScope);
-        scope2.setPrototype(sharedScope);
-        scope2.setParentScope(null);
+        scope1 = TopLevel.createIsolate(sharedScope);
+        scope2 = TopLevel.createIsolate(sharedScope);
     }
 
     @After
@@ -54,7 +51,7 @@ public class SealedSharedScopeTest {
         Context.exit();
     }
 
-    private Object evaluateString(Scriptable scope, String source) {
+    private Object evaluateString(VarScope scope, String source) {
         Object o = ctx.evaluateString(scope, source, "test", 1, null);
         if (o instanceof Wrapper) {
             o = ((Wrapper) o).unwrap();

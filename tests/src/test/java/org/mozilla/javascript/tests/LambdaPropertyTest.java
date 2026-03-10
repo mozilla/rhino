@@ -9,12 +9,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 
 public class LambdaPropertyTest {
     private Context cx;
-    private Scriptable global;
+    private VarScope global;
 
     @Before
     public void init() throws IOException {

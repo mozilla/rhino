@@ -38,7 +38,7 @@ public class ArrayLikeAbstractOperations {
     public static Object iterativeMethod(
             Context cx,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
@@ -53,7 +53,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             IdFunctionObject fun,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
@@ -64,7 +64,7 @@ public class ArrayLikeAbstractOperations {
             Context cx,
             IdFunctionObject fun,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
@@ -89,7 +89,7 @@ public class ArrayLikeAbstractOperations {
             Object tag,
             String name,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor) {
@@ -102,7 +102,7 @@ public class ArrayLikeAbstractOperations {
             Object tag,
             String name,
             IterativeOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             LengthAccessor lengthAccessor,
@@ -125,8 +125,8 @@ public class ArrayLikeAbstractOperations {
     public static Object coercibleIterativeMethod(
             Context cx,
             IterativeOperation operation,
-            Scriptable scope,
-            Scriptable o,
+            VarScope scope,
+            Object o,
             Object[] args,
             long length) {
         if (operation == IterativeOperation.MAP && length > Integer.MAX_VALUE) {
@@ -137,10 +137,10 @@ public class ArrayLikeAbstractOperations {
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
 
         Function f = getCallbackArg(cx, callbackArg);
-        Scriptable parent = ScriptableObject.getTopLevelScope(f);
+        TopLevel parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
         Scriptable thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = parent;
+            thisArg = Undefined.SCRIPTABLE_UNDEFINED;
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
@@ -168,7 +168,7 @@ public class ArrayLikeAbstractOperations {
                         : +1;
         for (long i = start; i != end; i += increment) {
             Object[] innerArgs = new Object[3];
-            Object elem = getRawElem(o, i);
+            Object elem = getRawElem((Scriptable) o, i);
             if (elem == NOT_FOUND) {
                 if (operation == IterativeOperation.FIND
                         || operation == IterativeOperation.FIND_INDEX
@@ -226,9 +226,9 @@ public class ArrayLikeAbstractOperations {
         }
     }
 
-    static Scriptable arraySpeciesCreate(Context cx, Scriptable scope, Scriptable o, int length) {
+    static Scriptable arraySpeciesCreate(Context cx, VarScope scope, Object o, int length) {
         if (o instanceof NativeArray) {
-            Object c = ScriptableObject.getProperty(o, "constructor");
+            Object c = ScriptableObject.getProperty((Scriptable) o, "constructor");
             if (c instanceof Scriptable) {
                 c = ScriptableObject.getProperty((Scriptable) c, SymbolKey.SPECIES);
                 if (c == null || c == NOT_FOUND) {
@@ -314,11 +314,7 @@ public class ArrayLikeAbstractOperations {
 
     /** Implements the methods "reduce" and "reduceRight". */
     public static Object reduceMethod(
-            Context cx,
-            ReduceOperation operation,
-            Scriptable scope,
-            Object thisObj,
-            Object[] args) {
+            Context cx, ReduceOperation operation, VarScope scope, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
         long length = getLengthProperty(cx, o);
@@ -328,7 +324,7 @@ public class ArrayLikeAbstractOperations {
     public static Object reduceMethodWithLength(
             Context cx,
             ReduceOperation operation,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args,
             long length) {
@@ -339,13 +335,13 @@ public class ArrayLikeAbstractOperations {
             throw ScriptRuntime.notFunctionError(callbackArg);
         }
         Function f = (Function) callbackArg;
-        Scriptable parent = ScriptableObject.getTopLevelScope(f);
+        TopLevel parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
         // hack to serve both reduce and reduceRight with the same loop
         boolean movingLeft = operation == ReduceOperation.REDUCE;
         Object value = args.length > 1 ? args[1] : NOT_FOUND;
         for (long i = 0; i < length; i++) {
             long index = movingLeft ? i : (length - 1 - i);
-            Object elem = getRawElem(o, index);
+            Object elem = getRawElem((Scriptable) o, index);
             if (elem == NOT_FOUND) {
                 continue;
             }
@@ -354,7 +350,7 @@ public class ArrayLikeAbstractOperations {
                 value = elem;
             } else {
                 Object[] innerArgs = {value, elem, index, o};
-                value = f.call(cx, parent, parent, innerArgs);
+                value = f.call(cx, parent, Undefined.SCRIPTABLE_UNDEFINED, innerArgs);
             }
         }
         if (value == NOT_FOUND) {
@@ -365,7 +361,7 @@ public class ArrayLikeAbstractOperations {
     }
 
     public static Comparator<Object> getSortComparator(
-            final Context cx, final Scriptable scope, final Object[] args) {
+            final Context cx, VarScope scope, final Object[] args) {
         if (args.length > 0 && Undefined.instance != args[0]) {
             return getSortComparatorFromArguments(cx, scope, args);
         } else {
@@ -374,7 +370,7 @@ public class ArrayLikeAbstractOperations {
     }
 
     public static ElementComparator getSortComparatorFromArguments(
-            Context cx, Scriptable scope, Object[] args) {
+            Context cx, VarScope scope, Object[] args) {
         var compareFunc = ScriptRuntime.getValueAndThis(args[0], cx);
         Callable compare = compareFunc.getCallable();
         Scriptable compareThis = compareFunc.getThis();

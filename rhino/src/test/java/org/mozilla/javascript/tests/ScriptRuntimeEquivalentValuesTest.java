@@ -19,7 +19,7 @@ public class ScriptRuntimeEquivalentValuesTest {
     public void equivalentValuesUndefined() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    final TopLevel scope = cx.initStandardObjects();
                     try {
                         ScriptableObject.defineClass(scope, EquivalentTesterObject.class);
                     } catch (Exception e) {
@@ -43,7 +43,7 @@ public class ScriptRuntimeEquivalentValuesTest {
     public void equivalentValuesNull() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         ScriptableObject.defineClass(scope, EquivalentTesterObject.class);
                     } catch (Exception e) {

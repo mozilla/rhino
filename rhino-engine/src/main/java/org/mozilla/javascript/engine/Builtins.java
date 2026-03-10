@@ -13,7 +13,9 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This class defines the following built-in functions for the RhinoScriptEngine.
@@ -29,25 +31,26 @@ public class Builtins {
 
     private Writer stdout;
 
-    void register(Context cx, ScriptableObject scope, ScriptContext sc) {
+    void register(Context cx, TopLevel scope, ScriptContext sc) {
         if (sc.getWriter() == null) {
             stdout = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
         } else {
             stdout = sc.getWriter();
         }
 
-        scope.defineProperty(
-                scope,
-                "print",
-                0,
-                Builtins::print,
-                ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
-                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        scope.getGlobalThis()
+                .defineProperty(
+                        scope,
+                        "print",
+                        0,
+                        Builtins::print,
+                        ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
+                        ScriptableObject.DONTENUM | ScriptableObject.READONLY);
     }
 
-    private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object print(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         try {
-            Builtins self = getSelf(thisObj);
+            Builtins self = getSelf(scope);
             for (Object arg : args) {
                 self.stdout.write(ScriptRuntime.toString(arg));
             }
@@ -60,7 +63,7 @@ public class Builtins {
         return Undefined.instance;
     }
 
-    private static Builtins getSelf(Scriptable scope) {
+    private static Builtins getSelf(VarScope scope) {
         // Since this class is invoked as a set of anonymous functions, "this"
         // in JavaScript does not point to "this" in Java. We set a key on the
         // top-level scope to address this.

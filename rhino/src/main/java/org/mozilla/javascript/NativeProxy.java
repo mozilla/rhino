@@ -47,7 +47,7 @@ class NativeProxy extends ScriptableObject {
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handlerObj = null;
                 revocableProxy.targetObj = null;
@@ -57,7 +57,7 @@ class NativeProxy extends ScriptableObject {
         }
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -68,7 +68,7 @@ class NativeProxy extends ScriptableObject {
                         NativeProxy::constructor) {
 
                     @Override
-                    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+                    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
                         NativeProxy obj =
                                 (NativeProxy) getTargetConstructor().construct(cx, scope, args);
                         // avoid getting trapped
@@ -1224,7 +1224,7 @@ class NativeProxy extends ScriptableObject {
         target.setPrototype(prototype);
     }
 
-    private static NativeProxy constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeProxy constructor(Context cx, VarScope scope, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -1248,8 +1248,7 @@ class NativeProxy extends ScriptableObject {
     }
 
     // Proxy.revocable
-    private static Object revocable(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object revocable(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
@@ -1300,7 +1299,7 @@ class NativeProxy extends ScriptableObject {
          * [[Construct]] (argumentsList, newTarget)</a>
          */
         @Override
-        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+        public Scriptable construct(Context cx, VarScope scope, Object[] args) {
             /*
              * 1. Let handler be O.[[ProxyHandler]].
              * 2. If handler is null, throw a TypeError exception.
@@ -1335,7 +1334,7 @@ class NativeProxy extends ScriptableObject {
          * [[Call]] (thisArgument, argumentsList)</a>
          */
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             /*
              * 1. Let handler be O.[[ProxyHandler]].
              * 2. If handler is null, throw a TypeError exception.
@@ -1361,7 +1360,7 @@ class NativeProxy extends ScriptableObject {
         }
 
         @Override
-        public Scriptable getDeclarationScope() {
+        public VarScope getDeclarationScope() {
             ScriptableObject target = getTargetThrowIfRevoked();
             if (target instanceof Function) {
                 return ((Function) target).getDeclarationScope();
