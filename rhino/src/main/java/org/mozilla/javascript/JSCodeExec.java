@@ -24,7 +24,7 @@ public interface JSCodeExec<T extends ScriptOrFn<T>> {
             Context cx,
             T executableObject,
             Object newTarget,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args);
 }

@@ -29,7 +29,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final String CALL_TAG = "CALL_TAG";
     private static final String PROTOTYPE_PROPERTY_NAME = "prototype";
 
-    static LambdaConstructor init(Context cx, Scriptable scope, boolean sealed) {
+    static LambdaConstructor init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(
                         scope,
@@ -90,7 +90,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static void defOnProto(
             LambdaConstructor constructor,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -100,7 +100,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static void defKnownBuiltInOnProto(
             LambdaConstructor constructor,
             Object tag,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -110,7 +110,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static void defOnProto(
             LambdaConstructor constructor,
-            Scriptable scope,
+            VarScope scope,
             SymbolKey name,
             int length,
             SerializableCallable target,
@@ -120,16 +120,16 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     /**
-     * @deprecated Use {@link #init(Context, Scriptable, boolean)} instead
+     * @deprecated Use {@link #init(Context, VarScope, boolean)} instead
      */
     @Deprecated
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         init(Context.getContext(), scope, sealed);
     }
 
-    static Object initAsGeneratorFunction(Scriptable scope, boolean sealed) {
+    static Object initAsGeneratorFunction(VarScope scope, boolean sealed) {
         var proto = new NativeObject();
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        VarScope top = ScriptableObject.getTopLevelScope(scope);
 
         var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
         var functionProto =
@@ -173,7 +173,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         this.isGeneratorFunction = isGenerator;
     }
 
-    public BaseFunction(Scriptable scope, Scriptable prototype) {
+    public BaseFunction(VarScope scope, Scriptable prototype) {
         super(scope, prototype);
         createProperties();
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.Function);
@@ -252,7 +252,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    protected void createPrototypeProperty(CompoundOperationMap compoundOp) {
+    protected void createPrototypeProperty(CompoundOperationMap<Scriptable> compoundOp) {
         compoundOp.compute(
                 this,
                 compoundOp,
@@ -405,7 +405,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Object js_hasInstance(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             return false;
         }
@@ -415,7 +415,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                     ((JSFunction) ((BoundFunction) thisObj).getTargetFunction())
                             .getPrototypeProperty();
         else {
-            protoProp = ScriptableObject.getProperty(thisObj, PROTOTYPE_PROPERTY_NAME);
+            protoProp = ScriptableObject.getProperty((Scriptable) thisObj, PROTOTYPE_PROPERTY_NAME);
         }
 
         if (ScriptRuntime.isObject(protoProp) || protoProp instanceof XMLObject) {
@@ -434,7 +434,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                         : "unknown");
     }
 
-    private static Object js_bind(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_bind(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (!(thisObj instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(thisObj);
         }
@@ -453,17 +453,15 @@ public class BaseFunction extends ScriptableObject implements Function {
         return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
     }
 
-    private static Object js_apply(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return ScriptRuntime.applyOrCall(true, cx, scope, thisObj, args);
+    private static Object js_apply(Context cx, VarScope scope, Object thisObj, Object[] args) {
+        return ScriptRuntime.applyOrCall(true, cx, scope, (Scriptable) thisObj, args);
     }
 
-    private static Object js_call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return ScriptRuntime.applyOrCall(false, cx, scope, thisObj, args);
+    private static Object js_call(Context cx, VarScope scope, Object thisObj, Object[] args) {
+        return ScriptRuntime.applyOrCall(false, cx, scope, (Scriptable) thisObj, args);
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, VarScope scope, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toSource");
         int indent = 0;
         EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
@@ -478,19 +476,18 @@ public class BaseFunction extends ScriptableObject implements Function {
         return realf.decompile(indent, flags);
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
         BaseFunction realf = realFunction(thisObj, "toString");
         int indent = ScriptRuntime.toInt32(args, 0);
         return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
     }
 
     private static Scriptable js_gen_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return js_gen_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -509,11 +506,11 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     private static Scriptable js_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return js_constructor(cx, scope, args);
     }
 
-    private static Scriptable js_gen_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_gen_constructor(Context cx, VarScope scope, Object[] args) {
         if (cx.isStrictMode()) {
             // Disable strict mode forcefully, and restore it after the call
             NativeCall activation = cx.currentActivationCall;
@@ -531,11 +528,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    private static BaseFunction realFunction(Scriptable thisObj, String functionName) {
+    private static BaseFunction realFunction(Object thisObj, String functionName) {
         if (thisObj == null) {
             throw ScriptRuntime.notFunctionError(null);
         }
-        Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+        Object x = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof Delegator) {
             x = ((Delegator) x).getDelegee();
         }
@@ -557,17 +554,17 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (protoVal instanceof Scriptable) {
             return (Scriptable) protoVal;
         }
-        return ScriptableObject.getObjectPrototype(this);
+        return ScriptableObject.getObjectPrototype(getDeclarationScope());
     }
 
     /** Should be overridden. */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return Undefined.instance;
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6 && this.getHomeObject() != null) {
             // Only methods have home objects associated with them
             throw ScriptRuntime.typeErrorById("msg.not.ctor", getFunctionName());
@@ -593,10 +590,8 @@ public class BaseFunction extends ScriptableObject implements Function {
                 }
             }
             if (result.getParentScope() == null) {
-                Scriptable parent = getParentScope();
-                if (result != parent) {
-                    result.setParentScope(parent);
-                }
+                VarScope parent = getParentScope();
+                result.setParentScope(parent);
             }
         } else {
             Object val = call(cx, scope, result, args);
@@ -614,7 +609,7 @@ public class BaseFunction extends ScriptableObject implements Function {
      * itself. In this case {@link #construct} will set scope and prototype on the result {@link
      * #call} unless they are already set.
      */
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, VarScope scope) {
         Scriptable newInstance = new NativeObject();
         newInstance.setPrototype(getClassPrototype());
         newInstance.setParentScope(getParentScope());
@@ -709,7 +704,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    protected synchronized Object setupDefaultPrototype(Scriptable scope) {
+    protected synchronized Object setupDefaultPrototype(VarScope scope) {
         if (!has(PROTOTYPE_PROPERTY_NAME, this)) {
             createPrototypeProperty();
         }
@@ -724,16 +719,16 @@ public class BaseFunction extends ScriptableObject implements Function {
         if (isGeneratorFunction()) {
             // For generator functions, the .prototype property's [[Prototype]]
             // should be %GeneratorPrototype%, not Object.prototype
-            Scriptable top = ScriptableObject.getTopLevelScope(scope);
+            VarScope top = ScriptableObject.getTopLevelScope(scope);
             Object generatorProto =
                     ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG);
             if (generatorProto instanceof Scriptable) {
                 proto = (Scriptable) generatorProto;
             } else {
-                proto = getObjectPrototype(this); // fallback
+                proto = getObjectPrototype(getDeclarationScope()); // fallback
             }
         } else {
-            proto = getObjectPrototype(this);
+            proto = getObjectPrototype(getDeclarationScope());
         }
         if (proto != obj) {
             // not the one we just made, it must remain grounded
@@ -775,7 +770,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     void setArguments(Object caller) {}
 
     private static Scriptable jsConstructor(
-            Context cx, Scriptable scope, Object[] args, boolean isGeneratorFunction) {
+            Context cx, VarScope scope, Object[] args, boolean isGeneratorFunction) {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
@@ -810,7 +805,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
         String sourceURI = ScriptRuntime.makeUrlForGeneratedScript(false, filename, linep[0]);
 
-        Scriptable global = ScriptableObject.getTopLevelScope(scope);
+        TopLevel global = ScriptableObject.getTopLevelScope(scope);
 
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());

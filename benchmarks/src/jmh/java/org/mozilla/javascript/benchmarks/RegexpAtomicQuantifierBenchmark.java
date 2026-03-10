@@ -3,8 +3,8 @@ package org.mozilla.javascript.benchmarks;
 import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -16,7 +16,7 @@ public class RegexpAtomicQuantifierBenchmark {
     @State(Scope.Thread)
     public static class RegExpState {
         Context cx;
-        Scriptable scope;
+        TopLevel scope;
         Callable testFunc;
 
         @Setup(Level.Trial)

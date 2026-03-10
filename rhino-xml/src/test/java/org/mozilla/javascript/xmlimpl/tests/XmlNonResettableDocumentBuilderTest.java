@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 public class XmlNonResettableDocumentBuilderTest {
     private static final String XML_PROPERTY = "javax.xml.parsers.DocumentBuilderFactory";
@@ -29,7 +29,7 @@ public class XmlNonResettableDocumentBuilderTest {
     @Test
     public void nonResettableDocumentBuilder() {
         try (Context cx = new ContextFactory().enterContext()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             Object result =
                     cx.evaluateString(
                             scope,

@@ -8,6 +8,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Example of controlling the JavaScript execution engine.
@@ -32,7 +33,7 @@ public class Control {
 
             // Initialize the standard objects (Object, Function, etc.)
             // This must be done before scripts can be executed.
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             // Now we can evaluate a script. Let's create a new object
             // using the object literal notation.

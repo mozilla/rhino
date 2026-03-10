@@ -16,6 +16,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This class implements the RegExp constructor native object.
@@ -112,7 +113,7 @@ class NativeRegExpCtor {
     }
 
     private static Scriptable js_constructCall(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length > 0
                 && args[0] instanceof NativeRegExp
                 && (args.length == 1 || args[1] == Undefined.instance)) {
@@ -122,7 +123,7 @@ class NativeRegExpCtor {
     }
 
     private static Scriptable js_construct(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         re.compile(cx, s, args);
         ScriptRuntime.setBuiltinProtoAndParent(re, s, TopLevel.Builtins.RegExp);

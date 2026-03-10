@@ -22,7 +22,7 @@ public class GeneratorStackTraceTest {
     private static void runWithExpectedStackTrace(final String _source, final String expected) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         cx.evaluateString(scope, _source, "test.js", 0, null);
                     } catch (final JavaScriptException e) {
@@ -53,7 +53,7 @@ public class GeneratorStackTraceTest {
         Utils.runWithAllModes(
                 context -> {
                     try {
-                        final Scriptable scope = context.initStandardObjects();
+                        TopLevel scope = context.initStandardObjects();
                         context.evaluateString(scope, jsCode, "nestedGeneratorTest.js", 1, null);
                         Assert.fail("Expected exception from nested generator not thrown.");
                     } catch (JavaScriptException e) {
@@ -93,7 +93,7 @@ public class GeneratorStackTraceTest {
         Utils.runWithAllModes(
                 context -> {
                     try {
-                        final Scriptable scope = context.initStandardObjects();
+                        TopLevel scope = context.initStandardObjects();
                         context.evaluateString(scope, jsCode, "nestedGeneratorTest.js", 1, null);
                         Assert.fail("Expected exception from nested generator not thrown.");
                     } catch (JavaScriptException e) {
@@ -118,14 +118,14 @@ public class GeneratorStackTraceTest {
     public void testJavaCallbackThrowsFromGenerator() {
         Utils.runWithAllModes(
                 context -> {
-                    Scriptable scope = context.initStandardObjects();
+                    TopLevel scope = context.initStandardObjects();
                     LambdaFunction f =
                             new LambdaFunction(
                                     scope,
                                     "javaHelper",
                                     0,
                                     (Context ctx,
-                                            Scriptable scope2,
+                                            VarScope scope2,
                                             Scriptable thisObj,
                                             Object[] args) -> {
                                         throw new RuntimeException("Java-side failure!");

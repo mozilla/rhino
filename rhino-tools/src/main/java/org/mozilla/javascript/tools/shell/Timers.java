@@ -9,6 +9,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This class supports the "setTimeout" and "clearTimeout" methods of semi-standard JavaScript. It
@@ -25,13 +26,13 @@ public class Timers {
      *
      * @param scope the scope where the functions should be defined
      */
-    public void install(Scriptable scope) {
+    public void install(VarScope scope) {
         LambdaFunction setTimeout =
                 new LambdaFunction(
                         scope,
                         "setTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                                 setTimeout(args));
         ScriptableObject.defineProperty(scope, "setTimeout", setTimeout, ScriptableObject.DONTENUM);
         LambdaFunction clearTimeout =
@@ -39,7 +40,7 @@ public class Timers {
                         scope,
                         "clearTimeout",
                         1,
-                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                                 clearTimeout(args));
         ScriptableObject.defineProperty(
                 scope, "clearTimeout", clearTimeout, ScriptableObject.DONTENUM);
@@ -53,7 +54,7 @@ public class Timers {
      * @param scope the global scope
      * @throws InterruptedException if the thread is interrupted while sleeping
      */
-    public void runAllTimers(Context cx, Scriptable scope) throws InterruptedException {
+    public void runAllTimers(Context cx, VarScope scope) throws InterruptedException {
         boolean executed;
         do {
             cx.processMicrotasks();
@@ -71,7 +72,7 @@ public class Timers {
      * @return true if something was placed on the queue, and false if the queue is empty
      * @throws InterruptedException if the thread was interrupted
      */
-    private boolean executeNext(Context cx, Scriptable scope) throws InterruptedException {
+    private boolean executeNext(Context cx, VarScope scope) throws InterruptedException {
         Timeout t = timerQueue.peek();
         if (t == null) {
             return false;
@@ -82,7 +83,13 @@ public class Timers {
         }
         timerQueue.remove();
         timers.remove(t.id);
-        cx.enqueueMicrotask(() -> t.func.call(cx, scope, scope, t.funcArgs));
+        cx.enqueueMicrotask(
+                () ->
+                        t.func.call(
+                                cx,
+                                scope,
+                                ScriptableObject.getTopLevelScope(scope).getGlobalThis(),
+                                t.funcArgs));
         return true;
     }
 

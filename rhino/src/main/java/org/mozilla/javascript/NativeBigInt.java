@@ -16,7 +16,7 @@ final class NativeBigInt extends ScriptableObject {
 
     private final BigInteger bigIntValue;
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -29,13 +29,13 @@ final class NativeBigInt extends ScriptableObject {
                 scope,
                 "asIntN",
                 2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                         js_asIntOrUintN(true, args));
         constructor.defineConstructorMethod(
                 scope,
                 "asUintN",
                 2,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                         js_asIntOrUintN(false, args));
         constructor.definePrototypeMethod(scope, "toString", 0, NativeBigInt::js_toString);
         // Alias toLocaleString to toString
@@ -45,7 +45,7 @@ final class NativeBigInt extends ScriptableObject {
                 scope,
                 "valueOf",
                 0,
-                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
                         toSelf(thisObj).bigIntValue);
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
@@ -65,21 +65,20 @@ final class NativeBigInt extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static NativeBigInt toSelf(Scriptable thisObj) {
+    private static NativeBigInt toSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeBigInt.class);
     }
 
     private static Object js_constructorFunc(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         return (args.length >= 1) ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.no.new", CLASS_NAME);
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
         int base =
                 (args.length == 0 || args[0] == Undefined.instance)
                         ? 10
@@ -88,8 +87,7 @@ final class NativeBigInt extends ScriptableObject {
         return ScriptRuntime.bigIntToString(value, base);
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return "(new BigInt(" + ScriptRuntime.toString(toSelf(thisObj).bigIntValue) + "))";
     }
 

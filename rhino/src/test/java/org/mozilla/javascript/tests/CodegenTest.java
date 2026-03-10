@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.optimizer.OptJSCode;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -96,7 +96,7 @@ public class CodegenTest {
 
         Utils.runWithAllModes(
                 _cx -> {
-                    final Scriptable scope = _cx.initStandardObjects();
+                    TopLevel scope = _cx.initStandardObjects();
                     Assert.assertEquals(
                             1000d,
                             (double)

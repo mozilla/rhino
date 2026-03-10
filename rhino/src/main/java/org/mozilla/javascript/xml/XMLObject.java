@@ -7,10 +7,11 @@
 package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.WithScope;
 
 /** This Interface describes what all XML objects (XML, XMLList) should have in common. */
 public abstract class XMLObject extends ScriptableObject {
@@ -19,7 +20,7 @@ public abstract class XMLObject extends ScriptableObject {
 
     public XMLObject() {}
 
-    public XMLObject(Scriptable scope, Scriptable prototype) {
+    public XMLObject(VarScope scope, Scriptable prototype) {
         super(scope, prototype);
     }
 
@@ -52,10 +53,10 @@ public abstract class XMLObject extends ScriptableObject {
     public abstract Ref memberRef(Context cx, Object namespace, Object elem, int memberTypeFlags);
 
     /** Wrap this object into NativeWith to implement the with statement. */
-    public abstract NativeWith enterWith(Scriptable scope);
+    public abstract WithScope enterWith(VarScope scope);
 
     /** Wrap this object into NativeWith to implement the .() query. */
-    public abstract NativeWith enterDotQuery(Scriptable scope);
+    public abstract WithScope enterDotQuery(VarScope scope);
 
     /**
      * Custom {@code +} operator. Should return {@link Scriptable#NOT_FOUND} if this object does not

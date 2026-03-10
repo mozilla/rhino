@@ -5,11 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript.tools.debugger;
 
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 /** Interface to provide a scope object for script evaluation to the debugger. */
 public interface ScopeProvider {
 
     /** Returns the scope object to be used for script evaluation. */
-    Scriptable getScope();
+    VarScope getScope();
 }

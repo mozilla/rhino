@@ -17,12 +17,12 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class NativeArrayIteratorTest {
     private Context cx;
-    private Scriptable root;
+    private VarScope root;
 
     @Before
     public void init() {
@@ -31,7 +31,7 @@ public class NativeArrayIteratorTest {
         cx.setGeneratingDebug(true);
 
         Global global = new Global(cx);
-        root = cx.newObject(global);
+        root = cx.newVarEnv(global);
     }
 
     @After

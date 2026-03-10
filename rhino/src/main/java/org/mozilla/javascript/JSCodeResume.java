@@ -26,7 +26,7 @@ public interface JSCodeResume<T extends ScriptOrFn<T>> {
             Context cx,
             T executableObject,
             Object state,
-            Scriptable scope,
+            VarScope scope,
             int operation,
             Object value);
 
@@ -42,7 +42,7 @@ public interface JSCodeResume<T extends ScriptOrFn<T>> {
                 Context cx,
                 T executableObject,
                 Object state,
-                Scriptable scope,
+                VarScope scope,
                 int operation,
                 Object value) {
             Kit.codeBug("Attempt to resume a non-generator function");

@@ -12,7 +12,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Test for secure xml parsing
@@ -121,7 +121,7 @@ public class XMLSecureParserTest {
     }
 
     private void executeXML(Context cx) {
-        Scriptable scope = cx.initStandardObjects();
+        TopLevel scope = cx.initStandardObjects();
         cx.evaluateString(scope, "new XML('<a></a>').toXMLString();", "source", 1, null);
     }
 
