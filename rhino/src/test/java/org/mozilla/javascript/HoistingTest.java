@@ -202,7 +202,7 @@ public class HoistingTest {
                     int languageVersion = cx.getLanguageVersion();
                     try {
                         cx.setLanguageVersion(Context.VERSION_ES6);
-                        Scriptable scope = cx.initStandardObjects();
+                        TopLevel scope = cx.initStandardObjects();
                         String script =
                                 ""
                                         + "var arr_obj = [];\n"

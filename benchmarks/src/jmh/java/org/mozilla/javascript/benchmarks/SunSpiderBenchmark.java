@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.openjdk.jmh.annotations.*;
 
 public class SunSpiderBenchmark {
@@ -14,7 +14,7 @@ public class SunSpiderBenchmark {
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     abstract static class AbstractState {
         Context cx;
-        Scriptable scope;
+        TopLevel scope;
         Script script;
         String fileName;
 
@@ -44,7 +44,7 @@ public class SunSpiderBenchmark {
         }
 
         Object run() {
-            return script.exec(cx, scope, scope);
+            return script.exec(cx, scope, scope.getGlobalThis());
         }
     }
 

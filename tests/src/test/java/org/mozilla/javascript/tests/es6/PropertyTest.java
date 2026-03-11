@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class PropertyTest {
@@ -16,7 +17,7 @@ public class PropertyTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final String expected = "undefined - true - true | function - function";
 
@@ -33,7 +34,7 @@ public class PropertyTest {
                         final Method getter = MyHostObject.class.getMethod("getFoo");
                         final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
                         myHostObject.defineProperty(
-                                "foo", null, getter, setter, ScriptableObject.EMPTY);
+                                scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                         scope.put("MyHostObject", scope, myHostObject);
                     } catch (Exception e) {
                     }
@@ -52,7 +53,7 @@ public class PropertyTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final String expected = "undefined - true - true | function - function";
 
@@ -70,7 +71,7 @@ public class PropertyTest {
                         final Method getter = MyHostObject.class.getMethod("getFoo");
                         final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
                         myHostObject.defineProperty(
-                                "foo", null, getter, setter, ScriptableObject.EMPTY);
+                                scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                         scope.put("MyHostObject", scope, myHostObject);
                     } catch (Exception e) {
                     }
@@ -89,7 +90,7 @@ public class PropertyTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final String expected = "undefined - true - true | function - function";
 
@@ -107,7 +108,7 @@ public class PropertyTest {
                         Method getter = MyHostObject.class.getMethod("getFoo");
                         final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
                         myHostObject.defineProperty(
-                                "foo", null, getter, setter, ScriptableObject.EMPTY);
+                                scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                         scope.put("MyHostObject", scope, myHostObject);
                     } catch (Exception e) {
                     }
@@ -129,7 +130,7 @@ public class PropertyTest {
 
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
-            ScriptableObject scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             final String expected = "undefined - true - true | function - function";
 
@@ -146,7 +147,8 @@ public class PropertyTest {
                 // define custom getter method
                 final Method getter = MyHostObject.class.getMethod("getFoo");
                 final Method setter = MyHostObject.class.getMethod("setFoo", String.class);
-                myHostObject.defineProperty("foo", null, getter, setter, ScriptableObject.EMPTY);
+                myHostObject.defineProperty(
+                        scope, "foo", null, getter, setter, ScriptableObject.EMPTY);
                 scope.put("MyHostObject", scope, myHostObject);
             } catch (Exception e) {
             }

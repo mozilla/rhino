@@ -116,7 +116,7 @@ public class AbstractEcmaStringOperations {
 
     public static <T> String getSubstitution(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String matched,
             String str,
             int position,
@@ -155,7 +155,7 @@ public class AbstractEcmaStringOperations {
 
         abstract <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -174,7 +174,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -194,7 +194,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -223,7 +223,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -255,7 +255,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -269,7 +269,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -283,7 +283,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,
@@ -305,7 +305,7 @@ public class AbstractEcmaStringOperations {
         @Override
         <T> String replacement(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String matched,
                 String str,
                 int position,

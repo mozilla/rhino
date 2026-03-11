@@ -22,24 +22,24 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * map from which a slot was fetched. We store it in the slot's value field as this is not used for
  * any real value storage on a built in slot.
  */
-public class BuiltInSlot<T extends ScriptableObject> extends Slot {
+public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
 
-    public interface Getter<U extends ScriptableObject> extends Serializable {
-        Object apply(U builtIn, Scriptable start);
+    public interface Getter<T extends ScriptableObject> extends Serializable {
+        Object apply(T builtIn, Scriptable start);
     }
 
-    public interface Setter<U extends ScriptableObject> extends Serializable {
-        boolean apply(U builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow);
+    public interface Setter<T extends ScriptableObject> extends Serializable {
+        boolean apply(T builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow);
     }
 
     public interface AttributeSetter<U extends ScriptableObject> extends Serializable {
         void apply(U builtIn, int attributes);
     }
 
-    public interface PropDescriptionSetter<U extends ScriptableObject> extends Serializable {
+    public interface PropDescriptionSetter<T extends ScriptableObject> extends Serializable {
         boolean apply(
-                U builtIn,
-                BuiltInSlot<U> current,
+                T builtIn,
+                BuiltInSlot<T> current,
                 Object id,
                 DescriptorInfo info,
                 boolean checkValid,
@@ -121,7 +121,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     }
 
     @Override
-    Slot copySlot() {
+    Slot<Scriptable> copySlot() {
         var res = new BuiltInSlot<T>(this);
         res.next = null;
         res.orderedNext = null;
@@ -166,7 +166,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     @Override
     @SuppressWarnings("unchecked")
-    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable start) {
         return ScriptableObject.buildDataDescriptor(getValue((T) this.value), getAttributes());
     }
 

@@ -13,7 +13,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * implementing properties that behave like standard JavaScript properties, but are implemented with
  * native functionality without the need for reflection.
  */
-public class LambdaAccessorSlot extends Slot {
+public class LambdaAccessorSlot extends Slot<Scriptable> {
     private ScriptableObject.LambdaGetterFunction getter;
     private ScriptableObject.LambdaSetterFunction setter;
     private LambdaFunction getterFunction;
@@ -23,7 +23,7 @@ public class LambdaAccessorSlot extends Slot {
         super(name, index, 0);
     }
 
-    LambdaAccessorSlot(Slot oldSlot) {
+    LambdaAccessorSlot(Slot<Scriptable> oldSlot) {
         super(oldSlot);
     }
 
@@ -129,7 +129,7 @@ public class LambdaAccessorSlot extends Slot {
         return super.getValue(owner);
     }
 
-    public void setGetter(Scriptable scope, ScriptableObject.LambdaGetterFunction getter) {
+    public void setGetter(VarScope scope, ScriptableObject.LambdaGetterFunction getter) {
         this.getter = getter;
         if (getter != null) {
             this.getterFunction =
@@ -137,12 +137,12 @@ public class LambdaAccessorSlot extends Slot {
                             scope,
                             "get " + super.name,
                             0,
-                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj),
+                            (cx1, scope1, thisObj, args) -> getter.apply((Scriptable) thisObj),
                             false);
         }
     }
 
-    public void setSetter(Scriptable scope, ScriptableObject.LambdaSetterFunction setter) {
+    public void setSetter(VarScope scope, ScriptableObject.LambdaSetterFunction setter) {
         this.setter = setter;
         if (setter != null) {
             this.setterFunction =
@@ -152,7 +152,8 @@ public class LambdaAccessorSlot extends Slot {
                             1,
                             (cx1, scope1, thisObj, args) -> {
                                 setter.accept(
-                                        thisObj, args.length > 0 ? args[0] : Undefined.instance);
+                                        (Scriptable) thisObj,
+                                        args.length > 0 ? args[0] : Undefined.instance);
                                 return Undefined.instance;
                             },
                             false);

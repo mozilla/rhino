@@ -7,6 +7,7 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * RunScript3: Example of using JavaScript objects
@@ -69,7 +70,7 @@ public class RunScript3 {
     public static void main(String args[]) {
         Context cx = Context.enter();
         try {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             // Collect the arguments into a single string.
             String s = "";
@@ -95,7 +96,7 @@ public class RunScript3 {
             } else {
                 Object functionArgs[] = {"my arg"};
                 Function f = (Function) fObj;
-                Object result = f.call(cx, scope, scope, functionArgs);
+                Object result = f.call(cx, scope, scope.getGlobalThis(), functionArgs);
                 String report = "f('my args') = " + Context.toString(result);
                 System.out.println(report);
             }

@@ -14,8 +14,6 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.JavaScriptException;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 
 /**
@@ -66,7 +64,7 @@ public class Utils {
     public static void executeScript(String script, boolean interpreted) {
         Utils.runWithMode(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     return cx.evaluateString(scope, script, "myScript.js", 1, null);
                 },
                 interpreted);
@@ -77,7 +75,7 @@ public class Utils {
      *
      * @param action the action to execute
      */
-    public static void runWithAllModes(final ContextAction<?> action) {
+    public static <T> void runWithAllModes(final ContextAction<T> action) {
         runWithMode(action, true);
         runWithMode(action, false);
     }
@@ -88,8 +86,8 @@ public class Utils {
      * @param contextFactory the context factory to use
      * @param action the action to execute
      */
-    public static void runWithAllModes(
-            final ContextFactory contextFactory, final ContextAction<?> action) {
+    public static <T> void runWithAllModes(
+            final ContextFactory contextFactory, final ContextAction<T> action) {
         runWithMode(contextFactory, action, true);
         runWithMode(contextFactory, action, false);
     }
@@ -100,7 +98,8 @@ public class Utils {
      * @param action the action to execute
      * @param interpretedMode true if interpreted mode should be used
      */
-    public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
+    public static <T> void runWithMode(
+            final ContextAction<T> action, final boolean interpretedMode) {
         runWithMode(new ContextFactory(), action, interpretedMode);
     }
 
@@ -111,9 +110,9 @@ public class Utils {
      * @param action the action to execute
      * @param interpretedMode true if interpreted mode should be used
      */
-    public static void runWithMode(
+    public static <T> void runWithMode(
             final ContextFactory contextFactory,
-            final ContextAction<?> action,
+            final ContextAction<T> action,
             final boolean interpretedMode) {
 
         try (final Context cx = contextFactory.enterContext()) {
@@ -169,7 +168,7 @@ public class Utils {
         Utils.runWithAllModes(
                 Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
                     assertEquals(expected, res);
@@ -191,7 +190,7 @@ public class Utils {
         Utils.runWithAllModes(
                 Utils.contextFactoryWithFeatures(Context.FEATURE_INTL_402),
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     cx.setLocale(locale);
 
                     final Object res = cx.evaluateString(scope, script, "test.js", 0, null);
@@ -293,7 +292,7 @@ public class Utils {
                     if (languageVersion > -1) {
                         cx.setLanguageVersion(languageVersion);
                     }
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     final Object res = cx.evaluateString(scope, script, "test.js", 1, null);
 
                     if (expected instanceof Integer && res instanceof Double) {
@@ -330,7 +329,7 @@ public class Utils {
         runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    Scriptable scope = cx.initStandardObjects(new TopLevel());
+                    TopLevel scope = cx.initStandardObjects(new TopLevel());
                     final Object res = cx.evaluateString(scope, script, "test.js", 1, null);
 
                     assertEquals(expected, res);
@@ -487,7 +486,7 @@ public class Utils {
                     if (languageVersion > -1) {
                         cx.setLanguageVersion(languageVersion);
                     }
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     T e =
                             assertThrows(

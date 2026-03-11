@@ -28,7 +28,7 @@ public class WrapFactory {
     /**
      * @see #wrap(Context, Scriptable, Object, TypeInfo)
      */
-    public final Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+    public final Object wrap(Context cx, VarScope scope, Object obj, Class<?> staticType) {
         return wrap(cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType));
     }
 
@@ -54,7 +54,7 @@ public class WrapFactory {
      * @return the wrapped value.
      * @since 1.9.0
      */
-    public Object wrap(Context cx, Scriptable scope, Object obj, TypeInfo staticType) {
+    public Object wrap(Context cx, VarScope scope, Object obj, TypeInfo staticType) {
         if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
             return obj;
         }
@@ -92,7 +92,7 @@ public class WrapFactory {
      * @param obj the object to be wrapped
      * @return the wrapped value.
      */
-    public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj) {
+    public Scriptable wrapNewObject(Context cx, VarScope scope, Object obj) {
         if (obj instanceof Scriptable) {
             return (Scriptable) obj;
         }
@@ -103,7 +103,7 @@ public class WrapFactory {
      * @see #wrapAsJavaObject(Context, Scriptable, Object, TypeInfo)
      */
     public final Scriptable wrapAsJavaObject(
-            Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
+            Context cx, VarScope scope, Object javaObject, Class<?> staticType) {
         return wrapAsJavaObject(cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
     }
 
@@ -111,8 +111,8 @@ public class WrapFactory {
      * Wrap Java object as Scriptable instance to allow full access to its methods and fields from
      * JavaScript.
      *
-     * <p>{@link #wrap(Context, Scriptable, Object, Class)} and {@link #wrapNewObject(Context,
-     * Scriptable, Object)} call this method when they can not convert {@code javaObject} to
+     * <p>{@link #wrap(Context, VarScope, Object, Class)} and {@link #wrapNewObject(Context,
+     * VarScope, Object)} call this method when they can not convert {@code javaObject} to
      * JavaScript primitive value or JavaScript array.
      *
      * <p>Subclasses can override the method to provide custom wrappers for Java objects.
@@ -126,7 +126,7 @@ public class WrapFactory {
      * @since 1.9.0
      */
     public Scriptable wrapAsJavaObject(
-            Context cx, Scriptable scope, Object javaObject, TypeInfo staticType) {
+            Context cx, VarScope scope, Object javaObject, TypeInfo staticType) {
         if (staticType.shouldReplace() && javaObject != null) {
             staticType =
                     TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL)
@@ -154,7 +154,7 @@ public class WrapFactory {
      * @return the wrapped value which shall not be null
      * @since 1.7R3
      */
-    public Scriptable wrapJavaClass(Context cx, Scriptable scope, Class<?> javaClass) {
+    public Scriptable wrapJavaClass(Context cx, VarScope scope, Class<?> javaClass) {
         return new NativeJavaClass(scope, javaClass);
     }
 

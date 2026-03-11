@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.WrapFactory;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
@@ -25,7 +25,7 @@ import org.mozilla.javascript.lc.type.TypeInfo;
 public class PrimitiveWrapFactory extends WrapFactory {
 
     @Override
-    public Object wrap(Context cx, Scriptable scope, Object obj, TypeInfo staticType) {
+    public Object wrap(Context cx, VarScope scope, Object obj, TypeInfo staticType) {
         if (obj instanceof String || obj instanceof Number || obj instanceof Boolean) {
             return obj;
         } else if (obj instanceof Character) {
