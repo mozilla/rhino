@@ -1,5 +1,10 @@
 package org.mozilla.javascript.lc.member;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -22,17 +27,18 @@ import org.mozilla.javascript.lc.type.VariableTypeInfo;
 /**
  * @author ZZZank
  */
-public final class ExecutableBox {
+public final class ExecutableBox implements Serializable {
+    private static final long serialVersionUID = 8260700214130563887L;
 
     /**
      * Must be either {@link Method} or {@link Constructor}.
      *
      * <p>Not using {@link java.lang.reflect.Executable} for Android compatibility
      */
-    private final Member member;
+    private transient Member member;
 
-    private final List<TypeInfo> argTypes;
-    private final TypeInfo returnType;
+    private transient List<TypeInfo> argTypes;
+    private transient TypeInfo returnType;
     private final boolean varArgs;
 
     public ExecutableBox(Method method, TypeInfoFactory factory, Class<?> parent) {
@@ -278,5 +284,65 @@ public final class ExecutableBox {
             accessible.setAccessible(true);
         }
         return true;
+    }
+
+    private void init(Constructor<?> member, TypeInfoFactory factory, Class<?> parent) {
+        this.member = member;
+
+        var argTypes = factory.createList(member.getGenericParameterTypes());
+        this.argTypes = argTypes;
+        this.returnType = TypeInfo.NONE;
+    }
+
+    private void init(Method member, TypeInfoFactory factory, Class<?> parent) {
+        this.member = member;
+
+        var argTypes = factory.createList(member.getGenericParameterTypes());
+        var returnType = factory.create(member.getGenericReturnType());
+        var mapping = factory.getConsolidationMapping(parent);
+        if (mapping.isEmpty()) {
+            this.argTypes = argTypes;
+            this.returnType = returnType;
+        } else {
+            this.argTypes = TypeInfoFactory.consolidateAll(argTypes, mapping);
+            this.returnType = returnType.consolidate(mapping);
+        }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        boolean isMethod = in.readBoolean();
+        String name = (String) in.readObject();
+        Class<?> declaring = (Class<?>) in.readObject();
+        Class<?>[] parms =
+                MethodType.fromMethodDescriptorString(
+                                (String) in.readObject(), ExecutableBox.class.getClassLoader())
+                        .parameterArray();
+
+        try {
+            if (isMethod) {
+                var member = declaring.getMethod(name, parms);
+                init(member, TypeInfoFactory.GLOBAL, declaring);
+            } else {
+                var member = declaring.getConstructor(parms);
+                init(member, TypeInfoFactory.GLOBAL, declaring);
+            }
+        } catch (NoSuchMethodException e) {
+            throw new IOException("Cannot find member: " + e);
+        }
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeBoolean(member instanceof Method);
+        out.writeObject(member.getName());
+        out.writeObject(member.getDeclaringClass());
+
+        var argTypes =
+                member instanceof Method
+                        ? ((Method) member).getParameterTypes()
+                        : ((Constructor<?>) member).getParameterTypes();
+        // we only care about parameter types, so return type is always void
+        out.writeObject(MethodType.methodType(void.class, argTypes).toMethodDescriptorString());
     }
 }
