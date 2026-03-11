@@ -13,6 +13,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 public class CatchTest {
     public static class Foo extends ScriptableObject {
@@ -54,7 +55,7 @@ public class CatchTest {
                     if (shutter != null) {
                         context.setClassShutter(shutter);
                     }
-                    final Scriptable scope = context.initStandardObjects();
+                    TopLevel scope = context.initStandardObjects();
 
                     try {
                         ScriptableObject.defineClass(scope, Foo.class);

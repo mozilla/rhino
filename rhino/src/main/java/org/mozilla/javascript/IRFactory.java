@@ -198,6 +198,7 @@ public final class IRFactory {
             case Token.NULL:
             case Token.UNDEFINED:
             case Token.DEBUGGER:
+            case Token.NEW_TARGET:
                 return transformLiteral(node);
             case Token.SUPER:
                 parser.setRequiresActivation();
@@ -2096,8 +2097,6 @@ public final class IRFactory {
             String name = child.getString();
             if ("eval".equals(name)) {
                 type = Node.SPECIALCALL_EVAL;
-            } else if ("With".equals(name)) {
-                type = Node.SPECIALCALL_WITH;
             }
         }
         Node node = new Node(nodeType, child);

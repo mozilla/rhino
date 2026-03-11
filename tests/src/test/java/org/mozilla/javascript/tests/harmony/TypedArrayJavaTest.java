@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.ListIterator;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeFloat32Array;
 import org.mozilla.javascript.typedarrays.NativeFloat64Array;
@@ -293,7 +293,7 @@ public class TypedArrayJavaTest {
 
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
-            Scriptable global = cx.initStandardObjects();
+            TopLevel global = cx.initStandardObjects();
 
             for (String type : allNativeTypes) {
                 ScriptableObject obj =

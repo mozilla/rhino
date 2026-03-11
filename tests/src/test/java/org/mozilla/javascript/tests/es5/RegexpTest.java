@@ -16,12 +16,12 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScopeObject;
 
 public class RegexpTest {
 
     private Context cx;
-    private ScriptableObject scope;
+    private ScopeObject scope;
 
     @Before
     public void setUp() {

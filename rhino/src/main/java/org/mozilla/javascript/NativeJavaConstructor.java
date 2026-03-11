@@ -25,12 +25,13 @@ public class NativeJavaConstructor extends BaseFunction {
 
     ExecutableBox ctor;
 
-    public NativeJavaConstructor(ExecutableBox ctor) {
+    public NativeJavaConstructor(VarScope scope, ExecutableBox ctor) {
+        super(scope);
         this.ctor = ctor;
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return NativeJavaClass.constructSpecific(cx, scope, args, ctor);
     }
 

@@ -12,6 +12,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -53,10 +55,10 @@ public class TypeOfTest {
     @Test
     public void test0() throws Exception {
         final Function f =
-                new BaseFunction() {
+                new BaseFunction(null) {
                     @Override
                     public Object call(
-                            Context _cx, Scriptable _scope, Scriptable _thisObj, Object[] _args) {
+                            Context _cx, VarScope _scope, Object _thisObj, Object[] _args) {
                         return _args[0].getClass().getName();
                     }
                 };
@@ -73,7 +75,7 @@ public class TypeOfTest {
     private static void doTest(String expected, final String script, final Scriptable obj) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     scope.put("myObj", scope, obj);
 
                     String res =

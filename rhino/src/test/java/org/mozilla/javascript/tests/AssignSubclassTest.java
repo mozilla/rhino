@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class AssignSubclassTest {
@@ -13,7 +14,7 @@ public class AssignSubclassTest {
     public void basicOperations() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         ScriptableObject.defineClass(scope, MySubclass.class);
                     } catch (Exception e) {
@@ -45,10 +46,11 @@ public class AssignSubclassTest {
     public void assign() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         ScriptableObject.defineClass(scope, MySubclass.class);
                     } catch (Exception e) {
+                        e.printStackTrace();
                         fail(e);
                     }
                     Object result =

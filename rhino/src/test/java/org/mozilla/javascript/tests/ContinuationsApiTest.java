@@ -23,7 +23,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContinuationPending;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.WrappedException;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
@@ -35,7 +35,7 @@ import org.mozilla.javascript.serialize.ScriptableOutputStream;
  * @author Norris Boyd
  */
 public class ContinuationsApiTest {
-    Scriptable globalScope;
+    TopLevel globalScope;
 
     public static class MyClass implements Serializable {
 
@@ -237,7 +237,7 @@ public class ContinuationsApiTest {
                 // deserialize
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
                         ScriptableInputStream sis = new ScriptableInputStream(bais, globalScope)) {
-                    globalScope = (Scriptable) sis.readObject();
+                    globalScope = (TopLevel) sis.readObject();
                     Object continuation = sis.readObject();
                     sis.close();
                     bais.close();
@@ -256,7 +256,7 @@ public class ContinuationsApiTest {
         byte[] serializedData = null;
 
         {
-            Scriptable globalScope;
+            TopLevel globalScope;
 
             try (Context cx = Context.enter()) {
                 globalScope = cx.initStandardObjects();
@@ -292,12 +292,12 @@ public class ContinuationsApiTest {
 
         {
             try (Context cx = Context.enter()) {
-                Scriptable globalScope;
+                TopLevel globalScope;
 
                 // deserialize
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
                         ObjectInputStream sis = new ObjectInputStream(bais)) {
-                    globalScope = (Scriptable) sis.readObject();
+                    globalScope = (TopLevel) sis.readObject();
                     Object continuation = sis.readObject();
                     sis.close();
                     bais.close();
@@ -316,7 +316,7 @@ public class ContinuationsApiTest {
     public void continuationsInlineFunctionsSerialization()
             throws IOException, ClassNotFoundException {
 
-        Scriptable globalScope;
+        TopLevel globalScope;
 
         try (Context cx = Context.enter()) {
             globalScope = cx.initStandardObjects();
@@ -355,7 +355,7 @@ public class ContinuationsApiTest {
                 // deserialize
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
                         ScriptableInputStream sis = new ScriptableInputStream(bais, globalScope)) {
-                    globalScope = (Scriptable) sis.readObject();
+                    globalScope = (TopLevel) sis.readObject();
                     Object continuation = sis.readObject();
                     sis.close();
                     bais.close();
