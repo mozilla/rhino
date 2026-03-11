@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,6 +52,9 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.debug.DebugFrame;
+import org.mozilla.javascript.debug.DebuggableScript;
+import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -198,8 +202,22 @@ public class Test262SuiteTest {
     private static final Pattern LINE_SPLITTER =
             Pattern.compile(
                     "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+"
-                            + "(?:strict|non-strict|compiled-strict|compiled-non-strict|interpreted-strict|interpreted-non-strict|compiled|interpreted|"
+                            + "(?:"
+                            + buildTestModeNames()
                             + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
+
+    private static String buildTestModeNames() {
+        var sb = new StringBuilder();
+        sb.append("strict|non-strict|");
+        for (var mode : TestMode.values()) {
+            if (mode.shouldRun()) {
+                sb.append(mode.keyPart()).append('|');
+                sb.append(mode.keyPart()).append("-strict").append('|');
+                sb.append(mode.keyPart()).append("-non-strict").append('|');
+            }
+        }
+        return sb.toString();
+    }
 
     /**
      * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
@@ -285,11 +303,11 @@ public class Test262SuiteTest {
         }
     }
 
-    private Scriptable buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
+    private Scriptable buildScope(Context cx, Test262Case testCase, TestMode mode) {
         ScriptableObject scope = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
-            String harnessKey = harnessFile + '-' + interpretedMode;
+            String harnessKey = harnessFile + '-' + mode.keyPart();
             Script harnessScript =
                     HARNESS_SCRIPT_CACHE.computeIfAbsent(
                             harnessKey,
@@ -335,14 +353,15 @@ public class Test262SuiteTest {
             Test262Case testCase,
             boolean markedAsFailing) {
         try (Context cx = Context.enter()) {
-            cx.setInterpretedMode(testMode == TestMode.INTERPRETED);
             // Ensure maximum compatibility, including future strict mode and "const" checks
             cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
             cx.setGeneratingDebug(true);
 
+            testMode.setup(cx);
+
             boolean failedEarly = false;
             try {
-                Scriptable scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
+                Scriptable scope = buildScope(cx, testCase, testMode);
                 String str = testCase.source;
                 int line = 1;
                 if (useStrict) {
@@ -644,7 +663,10 @@ public class Test262SuiteTest {
                 continue;
             }
 
-            for (TestMode testMode : new TestMode[] {TestMode.INTERPRETED, TestMode.COMPILED}) {
+            for (TestMode testMode :
+                    new TestMode[] {
+                        TestMode.INTERPRETED, TestMode.COMPILED, TestMode.DEBUGGER_INTERPRETED
+                    }) {
                 if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
@@ -779,9 +801,52 @@ public class Test262SuiteTest {
     }
 
     private enum TestMode {
-        INTERPRETED,
-        COMPILED,
-        SKIPPED,
+        INTERPRETED(
+                "interpreted",
+                true,
+                cx -> {
+                    cx.setInterpretedMode(true);
+                }),
+        COMPILED(
+                "compiled",
+                true,
+                cx -> {
+                    cx.setInterpretedMode(false);
+                }),
+        DEBUGGER_INTERPRETED(
+                "debugger",
+                true,
+                cx -> {
+                    cx.setInterpretedMode(true);
+                    cx.setDebugger(new NoOpDebugger(), null);
+                }),
+        SKIPPED("skipped", false, cx -> {});
+
+        private final String keyPart;
+        private final boolean shouldRun;
+        private final Consumer<Context> setup;
+
+        TestMode(String name, boolean shouldRun, Consumer<Context> setup) {
+            this.shouldRun = shouldRun;
+            this.keyPart = name;
+            this.setup = setup;
+        }
+
+        public String keyPart() {
+            return keyPart;
+        }
+
+        public void setup(Context cx) {
+            setup.accept(cx);
+        }
+
+        public boolean shouldRun() {
+            return shouldRun;
+        }
+
+        public String trackerName(boolean strict) {
+            return keyPart() + "-" + (strict ? "strict" : "non-strict");
+        }
     }
 
     private static class TestResultTracker {
@@ -796,7 +861,7 @@ public class Test262SuiteTest {
         }
 
         private static String makeKey(TestMode mode, boolean useStrict) {
-            return mode.name().toLowerCase() + '-' + (useStrict ? "strict" : "non-strict");
+            return mode.trackerName(useStrict);
         }
 
         public void setExpectations(
@@ -850,37 +915,71 @@ public class Test262SuiteTest {
             }
 
             // failure on all optLevels in both strict and non-strict mode
-            if (modes.size() == 4) {
+            if (modes.size() == TestMode.values().length * 2 - 2) {
                 return "";
             }
 
             // simplify the output for some cases
             ArrayList<String> res = new ArrayList<>(modes);
-            if (res.contains("compiled-non-strict") && res.contains("interpreted-non-strict")) {
-                res.remove("compiled-non-strict");
-                res.remove("interpreted-non-strict");
+            if (containsAllModes(res, false)) {
+                removeAllModes(res, false);
                 res.add("non-strict");
             }
-            if (res.contains("compiled-strict") && res.contains("interpreted-strict")) {
-                res.remove("compiled-strict");
-                res.remove("interpreted-strict");
+            if (containsAllModes(res, true)) {
+                removeAllModes(res, true);
                 res.add("strict");
             }
-            if (res.contains("compiled-strict") && res.contains("compiled-non-strict")) {
-                res.remove("compiled-strict");
-                res.remove("compiled-non-strict");
-                res.add("compiled");
-            }
-            if (res.contains("interpreted-strict") && res.contains("interpreted-non-strict")) {
-                res.remove("interpreted-strict");
-                res.remove("interpreted-non-strict");
-                res.add("interpreted");
+
+            for (var mode : TestMode.values()) {
+                if (mode.shouldRun()) {
+                    if (containsAllStrictType(res, mode)) {
+                        removeAllStrictType(res, mode);
+                        res.add(mode.keyPart());
+                    }
+                }
             }
 
             if (res.size() > 1) {
                 return '{' + String.join(",", res) + '}';
             }
             return String.join(",", res);
+        }
+
+        public boolean containsAllStrictType(List<String> desc, TestMode mode) {
+            return desc.contains(mode.trackerName(false)) && desc.contains(mode.trackerName(true));
+        }
+
+        public void removeAllStrictType(List<String> desc, TestMode mode) {
+            desc.remove(mode.trackerName(false));
+            desc.remove(mode.trackerName(true));
+        }
+
+        public boolean containsAllModes(List<String> desc, boolean useStrict) {
+            for (var mode : TestMode.values()) {
+                if (mode.shouldRun) {
+                    if (!desc.contains(mode.trackerName(useStrict))) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public boolean containsAllModes(List<String> desc) {
+            return containsAllModes(desc, true) && containsAllModes(desc, false);
+        }
+
+        public void removeAllModes(List<String> desc, boolean useStrict) {
+            for (var mode : TestMode.values()) {
+                if (mode.shouldRun) {
+                    desc.remove(mode.trackerName(useStrict));
+                }
+            }
+        }
+
+        public void removeAllModes(List<String> desc) {
+            removeAllModes(desc, true);
+            removeAllModes(desc, false);
         }
     }
 
@@ -1125,5 +1224,35 @@ public class Test262SuiteTest {
             }
             writer.write('\n');
         }
+    }
+
+    private static class NoOpDebugger implements Debugger {
+        @Override
+        public DebugFrame getFrame(Context cx, DebuggableScript fnOrScript) {
+            return new NoOpDebugFrame();
+        }
+
+        @Override
+        public void handleCompilationDone(Context cx, DebuggableScript fnOrScript, String source) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+
+    private static class NoOpDebugFrame implements DebugFrame {
+        @Override
+        public void onDebuggerStatement(Context cx) {}
+
+        @Override
+        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) {}
+
+        @Override
+        public void onExit(Context cx, boolean byThrow, Object resultOrException) {}
+
+        @Override
+        public void onExceptionThrown(Context cx, Throwable ex) {}
+
+        @Override
+        public void onLineChange(Context cx, int lineNumber) {}
     }
 }
