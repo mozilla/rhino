@@ -155,7 +155,7 @@ public class NativeRegExp extends ScriptableObject {
 
     static {
         DESCRIPTOR =
-                NativeRegExpCtor.makeCtorBuilder()
+                makeCtorBuilder()
                         .withMethod(PROTO, "compile", 2, NativeRegExp::js_compile)
                         .withMethod(PROTO, "toString", 0, NativeRegExp::js_toString)
                         .withMethod(PROTO, "toSource", 0, NativeRegExp::js_toSource)
@@ -247,6 +247,110 @@ public class NativeRegExp extends ScriptableObject {
         proto.re = compileRE(cx, "", null, false);
 
         return DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
+    }
+
+    static ClassDescriptor.Builder makeCtorBuilder() {
+        var builder =
+                new ClassDescriptor.Builder(
+                                "RegExp",
+                                2,
+                                NativeRegExp::js_constructCall,
+                                NativeRegExp::js_construct)
+                        .withProp(
+                                CTOR,
+                                "multiline",
+                                (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
+                                (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
+                                PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "$*",
+                                (c) -> ScriptRuntime.wrapBoolean(getImpl().multiline),
+                                (c, v) -> getImpl().multiline = ScriptRuntime.toBoolean(v),
+                                PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "input",
+                                (c) -> toStr(getImpl().input),
+                                (c, v) -> getImpl().input = ScriptRuntime.toString(v),
+                                PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "$_",
+                                (c) -> toStr(getImpl().input),
+                                (c, v) -> getImpl().input = ScriptRuntime.toString(v),
+                                PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "lastMatch",
+                                (c) -> toStr(getImpl().lastMatch),
+                                null,
+                                PERMANENT)
+                        .withProp(CTOR, "$&", (c) -> toStr(getImpl().lastMatch), null, PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "lastParen",
+                                (c) -> toStr(getImpl().lastParen),
+                                null,
+                                PERMANENT)
+                        .withProp(CTOR, "$+", (c) -> toStr(getImpl().lastParen), null, PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "leftContext",
+                                (c) -> toStr(getImpl().leftContext),
+                                null,
+                                PERMANENT)
+                        .withProp(CTOR, "$`", (c) -> toStr(getImpl().leftContext), null, PERMANENT)
+                        .withProp(
+                                CTOR,
+                                "rightContext",
+                                (c) -> toStr(getImpl().rightContext),
+                                null,
+                                PERMANENT)
+                        .withProp(
+                                CTOR, "$'", (c) -> toStr(getImpl().rightContext), null, PERMANENT);
+
+        for (int i = 1; i < 10; i++) {
+            int c = i - 1;
+            builder.withProp(
+                    CTOR,
+                    String.format("$%d", i),
+                    (x) -> toStr(getImpl().getParenSubString(c)),
+                    null,
+                    PERMANENT);
+        }
+        return builder;
+    }
+
+    private static Scriptable js_constructCall(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        if (args.length > 0
+                && args[0] instanceof NativeRegExp
+                && (args.length == 1 || args[1] == Undefined.instance)) {
+            return (Scriptable) args[0];
+        }
+        return js_construct(cx, f, nt, s, thisObj, args);
+    }
+
+    private static Scriptable js_construct(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
+        re.compile(cx, s, args);
+        ScriptRuntime.setBuiltinProtoAndParent(re, s, TopLevel.Builtins.RegExp);
+        return re;
+    }
+
+    private static String toStr(String subStr) {
+        return subStr == null ? "" : subStr;
+    }
+
+    private static String toStr(SubString subStr) {
+        return subStr == null ? "" : subStr.toString();
+    }
+
+    private static RegExpImpl getImpl() {
+        Context cx = Context.getCurrentContext();
+        return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
     }
 
     NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {

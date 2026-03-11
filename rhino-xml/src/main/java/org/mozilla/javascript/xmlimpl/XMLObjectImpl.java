@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
 import org.mozilla.javascript.ClassDescriptor;
@@ -17,6 +18,8 @@ import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SymbolScriptable;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -84,7 +87,40 @@ abstract class XMLObjectImpl extends XMLObject {
                 .withMethod(PROTO, "toString", 0, XMLObjectImpl::js_toString)
                 .withMethod(PROTO, "toSource", 1, XMLObjectImpl::js_toSource)
                 .withMethod(PROTO, "toXMLString", 1, XMLObjectImpl::js_toXMLString)
-                .withMethod(PROTO, "valueOf", 0, XMLObjectImpl::js_valueOf);
+                .withMethod(PROTO, "valueOf", 0, XMLObjectImpl::js_valueOf)
+                .withMethod(CTOR, "defaultSettings", 0, XMLObjectImpl::js_defaultSettings)
+                .withMethod(CTOR, "settings", 0, XMLObjectImpl::js_settings)
+                .withMethod(CTOR, "setSettings", 0, XMLObjectImpl::js_setSettings)
+                .withProp(
+                        CTOR,
+                        "prettyPrinting",
+                        XMLObjectImpl::getPrettyPrinting,
+                        XMLObjectImpl::setPrettyPrinting,
+                        0)
+                .withProp(
+                        CTOR,
+                        "prettyIndent",
+                        XMLObjectImpl::getPrettyIndent,
+                        XMLObjectImpl::setPrettyIndent,
+                        0)
+                .withProp(
+                        CTOR,
+                        "ignoreWhitespace",
+                        XMLObjectImpl::getIgnoreWhitespace,
+                        XMLObjectImpl::setIgnoreWhitespace,
+                        0)
+                .withProp(
+                        CTOR,
+                        "ignoreProcessingInstructions",
+                        XMLObjectImpl::getIgnoreProcessingInstructions,
+                        XMLObjectImpl::setIgnoreProcessingInstructions,
+                        0)
+                .withProp(
+                        CTOR,
+                        "ignoreComments",
+                        XMLObjectImpl::getIgnoreComments,
+                        XMLObjectImpl::setIgnoreComments,
+                        0);
     }
 
     protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
@@ -104,6 +140,19 @@ abstract class XMLObjectImpl extends XMLObject {
 
     XMLLibImpl getLib() {
         return lib;
+    }
+
+    private static XMLLibImpl getLib(Object obj) {
+        if (obj instanceof XMLObjectImpl) {
+            return ((XMLObjectImpl) obj).lib;
+        } else if (obj instanceof SymbolScriptable) {
+            var sobj = (SymbolScriptable) obj;
+            var lib = sobj.get(XML.LIB_KEY, (Scriptable) obj);
+            if (lib instanceof XMLLibImpl) {
+                return (XMLLibImpl) lib;
+            }
+        }
+        return null;
     }
 
     final XML newXML(XmlNode node) {
@@ -839,4 +888,150 @@ abstract class XMLObjectImpl extends XMLObject {
     final XML createEmptyXML() {
         return newXML(XmlNode.createEmpty(getProcessor()));
     }
+
+    private static Object getPrettyPrinting(ScriptableObject builtIn, Scriptable start) {
+        return ScriptRuntime.wrapBoolean(getLib(builtIn).getProcessor().isPrettyPrinting());
+    }
+
+    private static boolean setPrettyPrinting(
+            ScriptableObject builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        getLib(builtIn).getProcessor().setPrettyPrinting(ScriptRuntime.toBoolean(value));
+        return true;
+    }
+
+    private static Object getPrettyIndent(ScriptableObject builtIn, Scriptable start) {
+        return ScriptRuntime.wrapInt(getLib(builtIn).getProcessor().getPrettyIndent());
+    }
+
+    private static boolean setPrettyIndent(
+            ScriptableObject builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        getLib(builtIn).getProcessor().setPrettyIndent(ScriptRuntime.toInt32(value));
+        return true;
+    }
+
+    private static Object getIgnoreWhitespace(ScriptableObject builtIn, Scriptable start) {
+        return ScriptRuntime.wrapBoolean(getLib(builtIn).getProcessor().isIgnoreWhitespace());
+    }
+
+    private static boolean setIgnoreWhitespace(
+            ScriptableObject builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        getLib(builtIn).getProcessor().setIgnoreWhitespace(ScriptRuntime.toBoolean(value));
+        return true;
+    }
+
+    private static Object getIgnoreProcessingInstructions(
+            ScriptableObject builtIn, Scriptable start) {
+        return ScriptRuntime.wrapBoolean(
+                getLib(builtIn).getProcessor().isIgnoreProcessingInstructions());
+    }
+
+    private static boolean setIgnoreProcessingInstructions(
+            ScriptableObject builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        getLib(builtIn)
+                .getProcessor()
+                .setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(value));
+        return true;
+    }
+
+    private static Object getIgnoreComments(ScriptableObject builtIn, Scriptable start) {
+        return ScriptRuntime.wrapBoolean(getLib(builtIn).getProcessor().isIgnoreComments());
+    }
+
+    private static boolean setIgnoreComments(
+            ScriptableObject builtIn,
+            Object value,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
+        getLib(builtIn).getProcessor().setIgnoreComments(ScriptRuntime.toBoolean(value));
+        return true;
+    }
+
+    private static Object js_defaultSettings(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        getLib(thisObj).getProcessor().setDefault();
+        var res = cx.newObject(s);
+        writeSetting(thisObj, res);
+        return res;
+    }
+
+    private static Object js_settings(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        var res = cx.newObject(s);
+        writeSetting(thisObj, res);
+        return res;
+    }
+
+    private static Object js_setSettings(
+            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+        if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
+            getLib(thisObj).getProcessor().setDefault();
+        } else if (args[0] instanceof Scriptable) {
+            readSettings(thisObj, (Scriptable) args[0]);
+        }
+        return Undefined.instance;
+    }
+
+    private static void writeSetting(Object thisObj, Scriptable target) {
+        var sobj = ScriptableObject.ensureScriptableObject(thisObj);
+        for (var p : propNames) {
+            Object value = sobj.get(p, sobj);
+            ScriptableObject.putProperty(target, p, value);
+        }
+    }
+
+    private static void readSettings(Object thisObj, Scriptable source) {
+        var sobj = ScriptableObject.ensureScriptableObject(thisObj);
+        for (var p : propNames) {
+            Object value = ScriptableObject.getProperty(source, p);
+            if (value == Scriptable.NOT_FOUND) {
+                continue;
+            }
+            switch (p) {
+                case "ignoreComments":
+                case "ignoreProcessingInstructions":
+                case "ignoreWhitespace":
+                case "prettyPrinting":
+                    if (!(value instanceof Boolean)) {
+                        continue;
+                    }
+                    break;
+                case "prettyIndent":
+                    if (!(value instanceof Number)) {
+                        continue;
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException();
+            }
+            ScriptableObject.putProperty(sobj, p, value);
+        }
+    }
+
+    // #string_id_map#
+
+    private static final String[] propNames =
+            new String[] {
+                "ignoreComments",
+                "ignoreProcessingInstructions",
+                "ignoreWhitespace",
+                "prettyIndent",
+                "prettyPrinting"
+            };
 }
