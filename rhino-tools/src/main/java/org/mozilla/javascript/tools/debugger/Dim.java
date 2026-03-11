@@ -30,6 +30,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityUtilities;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableObject;
 import org.mozilla.javascript.debug.DebuggableScript;
@@ -578,7 +579,7 @@ public class Dim {
         }
 
         Scriptable proto = scriptable.getPrototype();
-        Scriptable parent = scriptable.getParentScope();
+        VarScope parent = scriptable.getParentScope();
         int extra = 0;
         if (proto != null) {
             ++extra;
@@ -745,14 +746,14 @@ public class Dim {
         cx.setInterpretedMode(false);
         cx.setGeneratingDebug(false);
         try {
-            Scriptable scope = frame.scope;
+            VarScope scope = (VarScope) frame.scope;
             if (!frame.isFunction && scope != null) {
-                Scriptable parentScope = scope.getParentScope();
+                VarScope parentScope = scope.getParentScope();
                 if (parentScope != null) {
                     scope = parentScope;
                 }
             }
-            Script script = cx.compileString(expr, "", 0, null);
+            Script script = (Script) cx.compileString(expr, "", 0, null);
             Object result = script.exec(cx, scope, frame.thisObj);
             if (result == Undefined.instance) {
                 resultString = "";
@@ -825,7 +826,7 @@ public class Dim {
 
                 case IPROXY_EVAL_SCRIPT:
                     {
-                        Scriptable scope = null;
+                        VarScope scope = null;
                         if (dim.scopeProvider != null) {
                             scope = dim.scopeProvider.getScope();
                         }
@@ -976,10 +977,10 @@ public class Dim {
         private ContextData contextData;
 
         /** The scope. */
-        private Scriptable scope;
+        private VarScope scope;
 
         /** The 'this' object. */
-        private Scriptable thisObj;
+        private Object thisObj;
 
         /** Whether this frame represents a function (vs a top-level script). */
         private boolean isFunction;
@@ -1005,7 +1006,7 @@ public class Dim {
 
         /** Called when the stack frame is entered. */
         @Override
-        public void onEnter(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public void onEnter(Context cx, VarScope scope, Object thisObj, Object[] args) {
             contextData.pushFrame(this);
             this.scope = scope;
             this.thisObj = thisObj;

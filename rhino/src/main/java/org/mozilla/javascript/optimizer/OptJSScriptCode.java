@@ -4,7 +4,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSScript;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Subclass of {@link OptJSCode} which narrows the type paramter to {@link JSScript}. This allows
@@ -19,7 +19,7 @@ public abstract class OptJSScriptCode extends OptJSCode<JSScript> {
             Context cx,
             JSScript executableObject,
             Object newTarget,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args);
 
@@ -28,7 +28,7 @@ public abstract class OptJSScriptCode extends OptJSCode<JSScript> {
             Context cx,
             JSScript executableObject,
             Object state,
-            Scriptable scope,
+            VarScope scope,
             int operation,
             Object value);
 

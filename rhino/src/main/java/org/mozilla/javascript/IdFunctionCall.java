@@ -13,5 +13,5 @@ public interface IdFunctionCall {
      * be returned
      */
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args);
+            IdFunctionObject f, Context cx, VarScope scope, Scriptable thisObj, Object[] args);
 }

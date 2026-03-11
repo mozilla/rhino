@@ -13,17 +13,19 @@ class SpecialRef extends Ref {
     private static final int SPECIAL_PROTO = 1;
     private static final int SPECIAL_PARENT = 2;
 
-    private Scriptable target;
-    private int type;
-    private String name;
+    private final Scriptable target;
+    private final int type;
+    private final String name;
+    private final VarScope scope;
 
-    private SpecialRef(Scriptable target, int type, String name) {
+    private SpecialRef(Scriptable target, int type, String name, VarScope scope) {
         this.target = target;
         this.type = type;
         this.name = name;
+        this.scope = scope;
     }
 
-    static Ref createSpecial(Context cx, Scriptable scope, Object object, String name) {
+    static Ref createSpecial(Context cx, VarScope scope, Object object, String name) {
         Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
         if (target == null) {
             throw ScriptRuntime.undefReadError(object, name);
@@ -43,7 +45,7 @@ class SpecialRef extends Ref {
             type = SPECIAL_NONE;
         }
 
-        return new SpecialRef(target, type, name);
+        return new SpecialRef(target, type, name, scope);
     }
 
     @Override
@@ -54,9 +56,20 @@ class SpecialRef extends Ref {
             case SPECIAL_PROTO:
                 return target.getPrototype();
             case SPECIAL_PARENT:
-                return target.getParentScope();
+                return getScriptableForScope(target.getParentScope());
             default:
                 throw Kit.codeBug();
+        }
+    }
+
+    private static Scriptable getScriptableForScope(VarScope scope) {
+        if (scope instanceof WithScope) {
+            return ((WithScope) scope).getObject();
+        } else if (scope != null) {
+            // Wrap it.
+            return new ScopeWrapper(scope);
+        } else {
+            return null;
         }
     }
 
@@ -67,12 +80,11 @@ class SpecialRef extends Ref {
     }
 
     @Override
-    public Object set(Context cx, Scriptable scope, Object value) {
+    public Object set(Context cx, VarScope owner, Object value) {
         switch (type) {
             case SPECIAL_NONE:
                 return ScriptRuntime.setObjectProp(target, name, value, cx);
             case SPECIAL_PROTO:
-            case SPECIAL_PARENT:
                 {
                     Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value, scope);
                     if (obj != null) {
@@ -83,54 +95,49 @@ class SpecialRef extends Ref {
                             if (search == target) {
                                 throw Context.reportRuntimeErrorById("msg.cyclic.value", name);
                             }
-                            if (type == SPECIAL_PROTO) {
-                                search = search.getPrototype();
-                            } else {
-                                search = search.getParentScope();
-                            }
+                            search = search.getPrototype();
                         } while (search != null);
                     }
-                    if (type == SPECIAL_PROTO) {
-                        if (target instanceof ScriptableObject
-                                && !((ScriptableObject) target).isExtensible()
-                                && cx.getLanguageVersion() >= Context.VERSION_1_8) {
-                            throw ScriptRuntime.typeErrorById("msg.not.extensible");
-                        }
+                    if (target instanceof ScriptableObject
+                            && !((ScriptableObject) target).isExtensible()
+                            && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+                        throw ScriptRuntime.typeErrorById("msg.not.extensible");
+                    }
 
-                        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-                            final String typeOfTarget = ScriptRuntime.typeof(target);
-                            if ("function".equals(typeOfTarget)) {
-                                if (value == null) {
-                                    target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
-                                    return value;
-                                }
-
-                                final String typeOfValue = ScriptRuntime.typeof(value);
-                                if ("object".equals(typeOfValue)
-                                        || "function".equals(typeOfValue)) {
-                                    target.setPrototype(obj);
-                                }
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                        final String typeOfTarget = ScriptRuntime.typeof(target);
+                        if ("function".equals(typeOfTarget)) {
+                            if (value == null) {
+                                target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
                                 return value;
                             }
 
                             final String typeOfValue = ScriptRuntime.typeof(value);
-                            if (NativeSymbol.TYPE_NAME.equals(typeOfTarget)) {
-                                return value;
+                            if ("object".equals(typeOfValue) || "function".equals(typeOfValue)) {
+                                target.setPrototype(obj);
                             }
-
-                            if ((value != null && !"object".equals(typeOfValue))
-                                    || !"object".equals(typeOfTarget)) {
-                                return Undefined.instance;
-                            }
-
-                            target.setPrototype(obj);
-                        } else {
-                            target.setPrototype(obj);
+                            return value;
                         }
+
+                        final String typeOfValue = ScriptRuntime.typeof(value);
+                        if (NativeSymbol.TYPE_NAME.equals(typeOfTarget)) {
+                            return value;
+                        }
+
+                        if ((value != null && !"object".equals(typeOfValue))
+                                || !"object".equals(typeOfTarget)) {
+                            return Undefined.instance;
+                        }
+
+                        target.setPrototype(obj);
                     } else {
-                        target.setParentScope(obj);
+                        target.setPrototype(obj);
                     }
                     return obj;
+                }
+            case SPECIAL_PARENT:
+                {
+                    throw Kit.codeBug();
                 }
             default:
                 throw Kit.codeBug();

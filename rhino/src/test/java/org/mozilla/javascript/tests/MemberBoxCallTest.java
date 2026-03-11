@@ -9,8 +9,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
@@ -19,7 +19,7 @@ import org.mozilla.javascript.annotations.JSStaticFunction;
 
 public class MemberBoxCallTest {
 
-    Scriptable scope;
+    TopLevel scope;
 
     @Test
     public void prototypeProperty() {
