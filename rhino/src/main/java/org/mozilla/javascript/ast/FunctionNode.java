@@ -97,6 +97,12 @@ public class FunctionNode extends ScriptNode {
     }
 
     @Override
+    public boolean hasDestructuring() {
+        return getProp(Node.DESTRUCTURING_PARAMS) != null
+                || ((destructuringRvalues != null) && !destructuringRvalues.isEmpty());
+    }
+
+    @Override
     public List<Node[]> getDestructuringRvalues() {
         return destructuringRvalues;
     }
