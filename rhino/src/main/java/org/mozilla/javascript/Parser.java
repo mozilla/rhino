@@ -750,9 +750,10 @@ public class Parser {
                                         reportError("msg.default.args.use.strict");
                                     }
                                     // "use strict" not allowed with non-simple params
-                                    if (fnNode.hasRestParameter()) {
+                                    if (fnNode.hasRestParameter() || fnNode.hasDestructuring()) {
                                         reportError("msg.rest.param.use.strict");
                                     }
+
                                     inUseStrictDirective = true;
                                     fnNode.setInStrictMode(true);
                                 }
@@ -5653,7 +5654,8 @@ public class Parser {
                     reportError("msg.parm.after.rest");
                 }
             }
-        } else if (node instanceof ParenthesizedExpression) {
+        } else if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6
+                && node instanceof ParenthesizedExpression) {
             markDestructuring(((ParenthesizedExpression) node).getExpression());
         }
     }
