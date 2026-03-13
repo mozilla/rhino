@@ -102,4 +102,8 @@ public class WithScope implements VarScope {
         // WithScope itself does not support it
         throw new IllegalStateException();
     }
+
+    public boolean isNestedScope() {
+        return true;
+    }
 }
