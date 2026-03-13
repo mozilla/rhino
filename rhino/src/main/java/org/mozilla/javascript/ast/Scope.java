@@ -22,6 +22,11 @@ public class Scope extends Jump {
 
     // Use LinkedHashMap so that the iteration order is the insertion order
     protected Map<String, Symbol> symbolTable;
+    // Tracks var- and function-hoisted names that are declared anywhere within
+    // this scope's subtree, up to (and including) the enclosing function/script.
+    // Separate from symbolTable so block-scoped (let/const) declarations are
+    // never mixed in.
+    protected Map<String, Symbol> varSymbolTable;
     protected Scope parentScope;
     protected ScriptNode top; // current script or function scope
 
@@ -97,6 +102,9 @@ public class Scope extends Jump {
         if (symbolTable != null && !symbolTable.isEmpty()) {
             joinScopes(this, newScope);
         }
+        if (varSymbolTable != null && !varSymbolTable.isEmpty()) {
+            joinVarScopes(this, newScope);
+        }
     }
 
     /** Returns current script or function scope */
@@ -118,6 +126,8 @@ public class Scope extends Jump {
         Scope result = new Scope(scope.getPosition(), scope.getLength());
         result.symbolTable = scope.symbolTable;
         scope.symbolTable = null;
+        result.varSymbolTable = scope.varSymbolTable;
+        scope.varSymbolTable = null;
         result.parent = scope.parent;
         result.setParentScope(scope.getParentScope());
         scope.parent = result;
@@ -137,6 +147,13 @@ public class Scope extends Jump {
             sym.setContainingTable(dest);
             dst.put(entry.getKey(), sym);
         }
+    }
+
+    /** Copies all var-hoisted symbol entries from source scope to dest scope. */
+    public static void joinVarScopes(Scope source, Scope dest) {
+        if (source.varSymbolTable == null) return;
+        if (dest.varSymbolTable == null) dest.varSymbolTable = new LinkedHashMap<>(4);
+        dest.varSymbolTable.putAll(source.varSymbolTable);
     }
 
     /**
@@ -187,6 +204,36 @@ public class Scope extends Jump {
     /** Sets the symbol table for this scope. May be {@code null}. */
     public void setSymbolTable(Map<String, Symbol> table) {
         symbolTable = table;
+    }
+
+    /**
+     * Looks up a var-hoisted symbol recorded in this scope.
+     *
+     * @param name the symbol name
+     * @return the Symbol, or {@code null} if not found
+     */
+    public Symbol getVarSymbol(String name) {
+        return varSymbolTable == null ? null : varSymbolTable.get(name);
+    }
+
+    /**
+     * Records a var- or function-hoisted symbol in this scope's secondary index. Does not affect
+     * the master symbol list on the enclosing {@link ScriptNode}; that registration is handled by
+     * the normal {@link #putSymbol} call.
+     */
+    public void putVarSymbol(Symbol symbol) {
+        if (symbol.getName() == null) throw new IllegalArgumentException("null symbol name");
+        if (varSymbolTable == null) varSymbolTable = new LinkedHashMap<>(4);
+        varSymbolTable.put(symbol.getName(), symbol);
+    }
+
+    /**
+     * Returns the var symbol table for this scope.
+     *
+     * @return the var symbol table. May be {@code null}.
+     */
+    public Map<String, Symbol> getVarSymbolTable() {
+        return varSymbolTable;
     }
 
     private Map<String, Symbol> ensureSymbolTable() {
