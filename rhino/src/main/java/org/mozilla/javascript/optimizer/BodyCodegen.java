@@ -681,6 +681,7 @@ class BodyCodegen {
             case Token.WITH:
             case Token.SCRIPT:
             case Token.BLOCK:
+            case Token.SCOPE_BLOCK:
             case Token.EMPTY:
                 // no-ops.
                 if (compilerEnv.isGenerateObserverCount()) {
@@ -828,6 +829,10 @@ class BodyCodegen {
                                 + ")Lorg/mozilla/javascript/VarScope;");
                 cfw.addAStore(variableObjectLocal);
                 incReferenceWordLocal(variableObjectLocal);
+                break;
+
+            case Token.ENTER_SCOPE:
+                visitEnterScope(node, child);
                 break;
 
             case Token.LEAVE_SCOPE:
@@ -1786,6 +1791,16 @@ class BodyCodegen {
                     break;
                 }
 
+            case Token.SCOPEEXPR:
+                {
+                    Node expr = child.getNext();
+                    Node leave = expr.getNext();
+                    generateStatement(child);
+                    generateExpression(expr.getFirstChild(), expr);
+                    generateStatement(leave);
+                    break;
+                }
+
             case Token.ARRAYCOMP:
                 {
                     Node expr = child.getNext();
@@ -2081,6 +2096,34 @@ class BodyCodegen {
                 cfw.add(ByteCode.IFNE, trueLabel);
                 cfw.add(ByteCode.GOTO, falseLabel);
         }
+    }
+
+    private void visitEnterScope(Node node, Node child) {
+        Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+
+        cfw.addALoad(variableObjectLocal);
+        addScriptRuntimeInvoke(
+                "enterScope",
+                "(Lorg/mozilla/javascript/VarScope;" + ")Lorg/mozilla/javascript/VarScope;");
+        cfw.add(ByteCode.DUP);
+        cfw.addAStore(variableObjectLocal);
+        int i = 0;
+        while (child != null) {
+            cfw.add(ByteCode.DUP);
+            cfw.add(ByteCode.DUP);
+            String id = (String) properties[i];
+            generateExpression(child, node);
+            cfw.add(ByteCode.SWAP);
+            cfw.addALoad(contextLocal);
+            cfw.add(ByteCode.SWAP);
+            addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+            cfw.add(ByteCode.POP);
+            child = child.getNext();
+            i++;
+        }
+        cfw.add(ByteCode.POP);
+
+        incReferenceWordLocal(variableObjectLocal);
     }
 
     private void visitFunction(OptFunctionNode ofn, int functionType) {
@@ -2427,7 +2470,7 @@ class BodyCodegen {
     }
 
     /** load two arrays with property ids and values */
-    private void addLoadProperty(Node node, Node child, Object[] properties, int count) {
+    private void addLoadProperties(Node node, Node child, Object[] properties, int count) {
         cfw.addALoad(contextLocal);
         cfw.addLoadConstant(count - node.getIntProp(Node.NUMBER_OF_SPREAD, 0));
         cfw.addLoadConstant(1);
@@ -2635,7 +2678,7 @@ class BodyCodegen {
         cfw.addAStore(savedHomeObjectLocal);
         cfw.add(ByteCode.DUP);
 
-        addLoadProperty(node, child, properties, count);
+        addLoadProperties(node, child, properties, count);
 
         // stack: [store]
         cfw.add(ByteCode.DUP); // stack: [store, store]

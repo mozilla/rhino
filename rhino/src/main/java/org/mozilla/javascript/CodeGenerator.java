@@ -311,6 +311,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.LABEL:
             case Token.LOOP:
             case Token.BLOCK:
+            case Token.SCOPE_BLOCK:
             case Token.EMPTY:
             case Token.WITH:
                 updateLineNumber(node);
@@ -326,6 +327,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child, 0);
                 addToken(Token.ENTERWITH);
                 stackChange(-1);
+                break;
+
+            case Token.ENTER_SCOPE:
+                visitEnterScope(node, child);
                 break;
 
             case Token.LEAVE_SCOPE:
@@ -551,6 +556,25 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         if (stackDepth != initialStackDepth) {
             throw Kit.codeBug();
         }
+    }
+
+    private void visitEnterScope(Node node, Node child) {
+        addToken(Token.ENTER_SCOPE);
+        stackChange(1);
+        Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        int i = 0;
+        while (child != null) {
+            addIcode(Icode_DUP);
+            stackChange(1);
+            visitExpression(child, 0);
+            addStringOp(Token.SETNAME, (String) names[i]);
+            addIcode(Icode_POP);
+            stackChange(-2);
+            child = child.getNext();
+            i++;
+        }
+        addIcode(Icode_POP);
+        stackChange(-1);
     }
 
     private void visitExpression(Node node, int contextFlags) {
@@ -1182,6 +1206,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     addToken(Token.ENTERWITH);
                     stackChange(-1);
                     visitExpression(with.getFirstChild(), 0);
+                    addToken(Token.LEAVE_SCOPE);
+                    break;
+                }
+
+            case Token.SCOPEEXPR:
+                {
+                    Node enterScope = node.getFirstChild();
+                    Node expr = enterScope.getNext();
+                    visitEnterScope(enterScope, enterScope.getFirstChild());
+                    visitExpression(expr.getFirstChild(), 0);
                     addToken(Token.LEAVE_SCOPE);
                     break;
                 }
