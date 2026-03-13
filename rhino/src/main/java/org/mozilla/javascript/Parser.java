@@ -148,6 +148,9 @@ public class Parser {
     Scope currentScope;
     private int endFlags;
     private boolean inForInit; // bound temporarily during forStatement()
+    private boolean
+            inSingleStatementContext; // true when parsing a single-statement body (if/while/for
+    // without braces)
     private Map<String, LabeledStatement> labelSet;
     private List<Loop> loopSet;
     private List<Jump> loopAndSwitchSet;
@@ -1564,6 +1567,9 @@ public class Parser {
         int pos = ts.tokenBeg, lineno = lineNumber(), elsePos = -1, column = columnNumber();
         IfStatement pn = new IfStatement(pos);
         ConditionData data = condition();
+        boolean isES6 = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+        boolean savedInSingleStatementContext = inSingleStatementContext;
+        inSingleStatementContext = isES6;
         AstNode ifTrue = getNextStatementAfterInlineComments(pn), ifFalse = null;
         if (matchToken(Token.ELSE, true)) {
             int tt = peekToken();
@@ -1572,8 +1578,10 @@ public class Parser {
                 consumeToken();
             }
             elsePos = ts.tokenBeg - pos;
+            inSingleStatementContext = isES6;
             ifFalse = statement();
         }
+        inSingleStatementContext = savedInSingleStatementContext;
         int end = getNodeEnd(ifFalse != null ? ifFalse : ifTrue);
         pn.setLength(end - pos);
         pn.setCondition(data.condition);
@@ -1685,7 +1693,10 @@ public class Parser {
             ConditionData data = condition();
             pn.setCondition(data.condition);
             pn.setParens(data.lp - pos, data.rp - pos);
+            boolean savedInSingleStatementContext = inSingleStatementContext;
+            inSingleStatementContext = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
             AstNode body = getNextStatementAfterInlineComments(pn);
+            inSingleStatementContext = savedInSingleStatementContext;
             pn.setLength(getNodeEnd(body) - pos);
             restoreRelativeLoopPosition(pn);
             pn.setBody(body);
@@ -1703,7 +1714,10 @@ public class Parser {
         pn.setLineColumnNumber(lineNumber(), columnNumber());
         enterLoop(pn);
         try {
+            boolean savedInSingleStatementContext = inSingleStatementContext;
+            inSingleStatementContext = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
             AstNode body = getNextStatementAfterInlineComments(pn);
+            inSingleStatementContext = savedInSingleStatementContext;
             mustMatchToken(Token.WHILE, "msg.no.while.do", true);
             pn.setWhilePosition(ts.tokenBeg - pos);
             ConditionData data = condition();
@@ -1867,7 +1881,10 @@ public class Parser {
             // break/continue statements to find the enclosing loop.
             enterLoop(pn);
             try {
+                boolean savedInSingleStatementContext = inSingleStatementContext;
+                inSingleStatementContext = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
                 AstNode body = getNextStatementAfterInlineComments(pn);
+                inSingleStatementContext = savedInSingleStatementContext;
                 pn.setLength(getNodeEnd(body) - forPos);
                 restoreRelativeLoopPosition(pn);
                 pn.setBody(body);
@@ -2338,6 +2355,8 @@ public class Parser {
         Scope block = new Scope(pos);
         block.setLineColumnNumber(lineNumber(), columnNumber());
         pushScope(block);
+        boolean savedInSingleStatementContext = inSingleStatementContext;
+        inSingleStatementContext = false;
         try {
             statements(block);
             mustMatchToken(Token.RC, "msg.no.brace.block", true);
@@ -2345,6 +2364,7 @@ public class Parser {
             return block;
         } finally {
             popScope();
+            inSingleStatementContext = savedInSingleStatementContext;
         }
     }
 
@@ -2615,11 +2635,25 @@ public class Parser {
         }
         Scope definingScope = currentScope.getDefiningScope(name);
         Symbol symbol = definingScope != null ? definingScope.getSymbol(name) : null;
+        Symbol varSymbol = currentScope.getVarSymbol(name);
         int symDeclType = symbol != null ? symbol.getDeclType() : -1;
-        if (symbol != null
-                && (symDeclType == Token.CONST
-                        || declType == Token.CONST
-                        || (definingScope == currentScope && symDeclType == Token.LET))) {
+        boolean isES6 = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+        if ((isES6
+                        && !isValidES6Redeclaration(
+                                declType,
+                                symDeclType,
+                                symbol,
+                                varSymbol,
+                                currentScope,
+                                definingScope))
+                || (!isES6
+                        && !isValidLegacyRedeclaration(
+                                declType,
+                                symDeclType,
+                                symbol,
+                                varSymbol,
+                                currentScope,
+                                definingScope))) {
             addError(
                     symDeclType == Token.CONST
                             ? "msg.const.redecl"
@@ -2636,15 +2670,25 @@ public class Parser {
         switch (declType) {
             case Token.LET:
                 if (!ignoreNotInBlock
-                        && ((currentScope.getType() == Token.IF) || currentScope instanceof Loop)) {
+                        && (inSingleStatementContext || currentScope instanceof Loop)) {
                     addError("msg.let.decl.not.in.block");
                     return;
                 }
                 currentScope.putSymbol(new Symbol(declType, name));
                 return;
 
-            case Token.VAR:
             case Token.CONST:
+                if (isES6) {
+                    if (!ignoreNotInBlock
+                            && (inSingleStatementContext || currentScope instanceof Loop)) {
+                        addError("msg.const.decl.not.in.block");
+                        return;
+                    }
+                    currentScope.putSymbol(new Symbol(declType, name));
+                    return;
+                }
+            // fall through for pre-ES6: const is function-scoped like var
+            case Token.VAR:
             case Token.FUNCTION:
                 if (symbol != null) {
                     if (symDeclType == Token.VAR) addStrictWarning("msg.var.redecl", name);
@@ -2652,7 +2696,16 @@ public class Parser {
                         addStrictWarning("msg.var.hides.arg", name);
                     }
                 } else {
-                    currentScriptOrFn.putSymbol(new Symbol(declType, name));
+                    varSymbol = new Symbol(declType, name);
+                    varSymbol.setDeclaredScope(currentScope);
+                    currentScriptOrFn.putSymbol(varSymbol);
+                    currentScriptOrFn.putVarSymbol(varSymbol);
+                    // Record in every scope from the declaration site up to and
+                    // including the enclosing function/script so each intermediate
+                    // block scope knows which var-hoisted names originate within it.
+                    for (Scope s = currentScope; s != currentScriptOrFn; s = s.getParentScope()) {
+                        s.putVarSymbol(varSymbol);
+                    }
                 }
                 return;
 
@@ -2668,6 +2721,90 @@ public class Parser {
             default:
                 throw codeBug();
         }
+    }
+
+    private boolean isValidES6Redeclaration(
+            int newDeclType,
+            int oldDeclType,
+            Symbol symbol,
+            Symbol varSymbol,
+            Scope currentScope,
+            Scope definingScope) {
+        return isSimpleRedefinition(
+                        newDeclType, oldDeclType, symbol, varSymbol, currentScope, definingScope)
+                || (!maskingLexicalDefinition(
+                                newDeclType,
+                                oldDeclType,
+                                symbol,
+                                varSymbol,
+                                currentScope,
+                                definingScope)
+                        && !maskingVarDefinition(
+                                newDeclType,
+                                oldDeclType,
+                                symbol,
+                                varSymbol,
+                                currentScope,
+                                definingScope));
+    }
+
+    private boolean isValidLegacyRedeclaration(
+            int newDeclType,
+            int oldDeclType,
+            Symbol symbol,
+            Symbol varSymbol,
+            Scope currentScope,
+            Scope definingScope) {
+        return !(symbol != null
+                && (oldDeclType == Token.CONST
+                        || newDeclType == Token.CONST
+                        || (definingScope == currentScope && oldDeclType == Token.LET)));
+    }
+
+    private boolean isSimpleRedefinition(
+            int newDeclType,
+            int oldDeclType,
+            Symbol symbol,
+            Symbol varSymbol,
+            Scope currentScope,
+            Scope definingScope) {
+        return ((symbol != null
+                                && currentScope == symbol.getDeclaredScope()
+                                && oldDeclType != Token.FUNCTION
+                                && newDeclType != Token.FUNCTION)
+                        || currentScope == currentScriptOrFn)
+                && !Symbol.isDeclTypeLexical(oldDeclType)
+                && !Symbol.isDeclTypeLexical(newDeclType);
+    }
+
+    private boolean maskingLexicalDefinition(
+            int newDeclType,
+            int oldDeclType,
+            Symbol symbol,
+            Symbol varSymbol,
+            Scope currentScope,
+            Scope definingScope) {
+        return (currentScope == definingScope && Symbol.isDeclTypeLexical(oldDeclType))
+                || ((symbol != null
+                                && symbol.isDeclTypeLexical()
+                                && !Symbol.isDeclTypeLexical(newDeclType))
+                        || (varSymbol != null && Symbol.isDeclTypeLexical(newDeclType)));
+    }
+
+    private boolean maskingVarDefinition(
+            int newDeclType,
+            int oldDeclType,
+            Symbol symbol,
+            Symbol varSymbol,
+            Scope currentScope,
+            Scope definingScope) {
+        if (currentScope != currentScriptOrFn && varSymbol != null) {
+            return true;
+        }
+        return (!Symbol.isDeclTypeLexical(newDeclType)
+                        && symbol != null
+                        && !symbol.isDeclTypeLexical())
+                && newDeclType != oldDeclType;
     }
 
     private AstNode expr(boolean allowTrailingComma) throws IOException {

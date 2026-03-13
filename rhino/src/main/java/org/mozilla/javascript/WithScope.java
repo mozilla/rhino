@@ -104,4 +104,8 @@ public class WithScope implements VarScope {
         // NativeWith itself does not support it
         throw new IllegalStateException();
     }
+
+    public boolean isNestedScope() {
+        return true;
+    }
 }

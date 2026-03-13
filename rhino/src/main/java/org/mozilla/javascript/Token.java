@@ -41,7 +41,8 @@ public class Token {
             // Interpreter reuses the following as bytecodes
             FIRST_BYTECODE_TOKEN = EOL + 1,
             ENTERWITH = FIRST_BYTECODE_TOKEN,
-            LEAVE_SCOPE = ENTERWITH + 1,
+            ENTER_SCOPE = ENTERWITH + 1,
+            LEAVE_SCOPE = ENTER_SCOPE + 1,
             RETURN = LEAVE_SCOPE + 1,
             GOTO = RETURN + 1,
             IFEQ = GOTO + 1,
@@ -210,7 +211,8 @@ public class Token {
             SETPROP_OP = USE_STACK + 1, // x.y op= something
             SETELEM_OP = SETPROP_OP + 1, // x[y] op= something
             LOCAL_BLOCK = SETELEM_OP + 1,
-            SET_REF_OP = LOCAL_BLOCK + 1, // *reference op= something
+            SCOPE_BLOCK = LOCAL_BLOCK + 1,
+            SET_REF_OP = SCOPE_BLOCK + 1, // *reference op= something
 
             // For XML support:
             DOTDOT = SET_REF_OP + 1, // member operator (..)
@@ -231,7 +233,8 @@ public class Token {
             SETCONSTVAR = SETCONST + 1,
             ARRAYCOMP = SETCONSTVAR + 1, // array comprehension
             LETEXPR = ARRAYCOMP + 1,
-            WITHEXPR = LETEXPR + 1,
+            SCOPEEXPR = LETEXPR + 1,
+            WITHEXPR = SCOPEEXPR + 1,
             DEBUGGER = WITHEXPR + 1,
             COMMENT = DEBUGGER + 1,
             GENEXPR = COMMENT + 1,
@@ -279,6 +282,8 @@ public class Token {
                 return "EOL";
             case ENTERWITH:
                 return "ENTERWITH";
+            case ENTER_SCOPE:
+                return "ENTER_SCOPE";
             case LEAVE_SCOPE:
                 return "LEAVE_SCOPE";
             case RETURN:
@@ -581,6 +586,8 @@ public class Token {
                 return "SETELEM_OP";
             case LOCAL_BLOCK:
                 return "LOCAL_BLOCK";
+            case SCOPE_BLOCK:
+                return "SCOPE_BLOCK";
             case SET_REF_OP:
                 return "SET_REF_OP";
             case DOTDOT:
@@ -625,6 +632,8 @@ public class Token {
                 return "ARRAYCOMP";
             case WITHEXPR:
                 return "WITHEXPR";
+            case SCOPEEXPR:
+                return "SCOPEEXPR";
             case LETEXPR:
                 return "LETEXPR";
             case DEBUGGER:
