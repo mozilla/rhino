@@ -1522,6 +1522,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode_UNDEF] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
+        instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
         instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
@@ -4141,6 +4142,15 @@ public final class Interpreter extends Icode implements Evaluator {
             if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             frame.scope = ScriptRuntime.enterWith(lhs, cx, frame.scope);
             state.stackTop--;
+            return null;
+        }
+    }
+
+    private static class DoEnterScope extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope = new LocalScope(frame.scope);
+            frame.stack[++state.stackTop] = frame.scope;
             return null;
         }
     }

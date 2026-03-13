@@ -2554,18 +2554,24 @@ public class ScriptRuntime {
         childScopesChecks:
         if (parent != null) {
             // Check for possibly nested "with" scopes first
-            while (scope instanceof WithScope) {
-                Scriptable withObj = ((WithScope) scope).getObject();
-                if (withObj instanceof XMLObject) {
-                    XMLObject xmlObject = (XMLObject) withObj;
-                    if (xmlObject.has(cx, id)) {
-                        return new WithScope(scope.getParentScope(), xmlObject);
-                    }
-                    if (firstXMLScope == null) {
-                        firstXMLScope = scope;
+            while (scope.isNestedScope()) {
+                if (scope instanceof WithScope) {
+                    Scriptable withObj = ((WithScope) scope).getObject();
+                    if (withObj instanceof XMLObject) {
+                        XMLObject xmlObject = (XMLObject) withObj;
+                        if (xmlObject.has(cx, id)) {
+                            return new WithScope(scope.getParentScope(), xmlObject);
+                        }
+                        if (firstXMLScope == null) {
+                            firstXMLScope = scope;
+                        }
+                    } else {
+                        if (ScriptableObject.hasProperty(withObj, id)) {
+                            return scope;
+                        }
                     }
                 } else {
-                    if (ScriptableObject.hasProperty(withObj, id)) {
+                    if (scope.has(id, scope)) {
                         return scope;
                     }
                 }
@@ -5020,7 +5026,7 @@ public class ScriptRuntime {
             VarScope varScope = scope;
             // Never define any variables from var statements inside with
             // object. See bug 38590.
-            while (varScope instanceof CatchScope || varScope instanceof WithScope) {
+            while (varScope.isNestedScope()) {
                 varScope = varScope.getParentScope();
             }
 
@@ -5334,6 +5340,10 @@ public class ScriptRuntime {
         return new WithScope(scope, sobj);
     }
 
+    public static VarScope enterScope(VarScope scope) {
+        return new LocalScope(scope);
+    }
+
     public static VarScope leaveScope(VarScope scope) {
         return scope.getParentScope();
     }
@@ -5457,7 +5467,7 @@ public class ScriptRuntime {
                 // Always put function expression statements into initial
                 // activation object ignoring the with statement to follow
                 // SpiderMonkey
-                while (scope instanceof CatchScope || scope instanceof WithScope) {
+                while (scope.isNestedScope()) {
                     scope = scope.getParentScope();
                 }
                 scope.put(name, scope, function);
