@@ -20,7 +20,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 
     private ARRAY_ITERATOR_TYPE type;
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(TopLevel scope, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
     }
 
