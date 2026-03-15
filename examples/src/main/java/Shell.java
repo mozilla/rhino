@@ -15,6 +15,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.WrappedException;
 
 /**
@@ -49,12 +50,13 @@ public class Shell extends ScriptableObject {
             // Initialize the standard objects (Object, Function, etc.)
             // This must be done before scripts can be executed.
             Shell shell = new Shell();
-            cx.initStandardObjects(shell);
+            TopLevel topLevel = new TopLevel(shell);
+            cx.initStandardObjects(topLevel);
 
             // Define some global functions particular to the shell. Note
             // that these functions are not part of ECMA.
             String[] names = {"print", "quit", "version", "load", "help"};
-            shell.defineFunctionProperties(names, Shell.class, ScriptableObject.DONTENUM);
+            shell.defineFunctionProperties(topLevel, names, Shell.class, ScriptableObject.DONTENUM);
 
             args = processOptions(cx, args);
 
@@ -202,7 +204,7 @@ public class Shell extends ScriptableObject {
      * @param funObj the function object of the invoked JavaScript function
      */
     public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Shell shell = (Shell) getTopLevelScope(thisObj);
+        Shell shell = (Shell) getTopLevelScope(thisObj).getGlobalThis();
         for (int i = 0; i < args.length; i++) {
             shell.processSource(cx, Context.toString(args[i]));
         }

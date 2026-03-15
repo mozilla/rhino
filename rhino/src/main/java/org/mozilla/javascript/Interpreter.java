@@ -81,7 +81,7 @@ public final class Interpreter extends Icode implements Evaluator {
         int pc;
         int pcPrevBranch;
         int pcSourceLineStart;
-        Scriptable scope;
+        VarScope scope;
 
         int savedStackTop;
         int savedCallOp;
@@ -246,7 +246,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         void initializeArgs(
                 Context cx,
-                Scriptable callerScope,
+                VarScope callerScope,
                 Object[] args,
                 double[] argsDbl,
                 Object[] boundArgs,
@@ -564,7 +564,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public Scriptable getParentScope() {
+        public VarScope getParentScope() {
             return frame.scope;
         }
 
@@ -1154,7 +1154,7 @@ public final class Interpreter extends Icode implements Evaluator {
             ScriptOrFn ifun,
             InterpreterData idata,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
@@ -3138,7 +3138,8 @@ public final class Interpreter extends Icode implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             Ref ref = (Ref) stack[state.stackTop];
-            stack[state.stackTop] = ScriptRuntime.refGet(ref, cx);
+            var res = ScriptRuntime.refGet(ref, cx);
+            stack[state.stackTop] = res;
             return null;
         }
     }
@@ -3413,10 +3414,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 outArgs, cx);
                 return null;
             }
-            Scriptable calleeScope = frame.scope;
-            if (frame.useActivation) {
-                calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
-            }
+            Scriptable callerScope = frame.scope;
             // Iteratively reduce known function types: arrows, lambdas,
             // bound functions, call/apply, and no-such-method-handler in
             // order to make a best-effort to keep them in this interpreter
@@ -3508,7 +3506,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 } else if (fun instanceof BoundFunction) {
                     BoundFunction bfun = (BoundFunction) fun;
                     fun = bfun.getTargetFunction();
-                    funThisObj = bfun.getCallThis(cx, calleeScope);
+                    funThisObj = bfun.getCallThis();
 
                     Object[] bArgs = bfun.getBoundArgs();
                     boundArgs = addBoundArgs(boundArgs, bArgs);
@@ -3531,7 +3529,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     boundArgs = new Object[2];
                     blen = 2;
                     boundArgs[0] = nsmfun.methodName;
-                    boundArgs[1] = cx.newArray(calleeScope, elements);
+                    boundArgs[1] = cx.newArray(callerScope, elements);
                     state.indexReg = 2;
                 } else if (fun == null) {
                     throw ScriptRuntime.notFunctionError(null, null);
@@ -3578,8 +3576,8 @@ public final class Interpreter extends Icode implements Evaluator {
                     CallFrame calleeFrame =
                             initFrame(
                                     cx,
-                                    calleeScope,
-                                    ifun.getFunctionThis(funThisObj),
+                                    ifun.getDeclarationScope(),
+                                    ifun.getThisObj(funThisObj),
                                     funHomeObj,
                                     stack,
                                     sDbl,
@@ -3629,7 +3627,7 @@ public final class Interpreter extends Icode implements Evaluator {
             stack[state.stackTop] =
                     fun.call(
                             cx,
-                            calleeScope,
+                            callerScope,
                             funThisObj,
                             getArgsArray(
                                     stack,
@@ -4270,7 +4268,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.indexReg += frame.idata.itsMaxVars;
-            frame.scope = (Scriptable) frame.stack[state.indexReg];
+            frame.scope = (VarScope) frame.stack[state.indexReg];
             return null;
         }
     }
@@ -4917,7 +4915,7 @@ public final class Interpreter extends Icode implements Evaluator {
             int localShift = frame.idata.itsMaxVars;
             int scopeLocal = localShift + table[indexReg + EXCEPTION_SCOPE_SLOT];
             int exLocal = localShift + table[indexReg + EXCEPTION_LOCAL_SLOT];
-            frame.scope = (Scriptable) frame.stack[scopeLocal];
+            frame.scope = (VarScope) frame.stack[scopeLocal];
             frame.stack[exLocal] = throwable;
 
             throwable = null;
@@ -5008,7 +5006,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static CallFrame initFrame(
             Context cx,
-            Scriptable callerScope,
+            VarScope callerScope,
             Scriptable thisObj,
             Scriptable homeObj,
             Object[] args,
@@ -5048,12 +5046,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 // found. Normally, frame.scope is a NativeCall when called
                 // from initFrame() for a debugged or activatable function.
                 // However, when called from interpretLoop() as part of
-                // restarting a continuation, it can also be a NativeWith if
+                // restarting a continuation, it can also be a WIthScope if
                 // the continuation was captured within a "with" or "catch"
                 // block ("catch" implicitly uses NativeWith to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
-                    if (scope instanceof NativeWith) {
+                    if (scope instanceof WithScope) {
                         scope = scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null

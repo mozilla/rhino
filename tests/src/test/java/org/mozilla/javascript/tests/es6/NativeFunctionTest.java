@@ -8,8 +8,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.testutils.Utils;
@@ -137,7 +137,7 @@ public class NativeFunctionTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         ScriptableObject.defineClass(scope, HelperObject.class);
                     } catch (Exception e) {

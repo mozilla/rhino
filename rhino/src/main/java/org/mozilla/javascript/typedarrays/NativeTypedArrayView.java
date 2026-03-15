@@ -32,6 +32,7 @@ import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -192,7 +193,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     static void init(
             Context cx, Scriptable scope, LambdaConstructor constructor, RealThis realThis) {
-        ScriptableObject s = (ScriptableObject) scope;
+        ScopeObject s = (ScopeObject) scope;
         // Where do we store this prototype? Top level scope for now?
 
         LambdaConstructor ta = (LambdaConstructor) s.getAssociatedValue(TYPED_ARRAY_TAG);

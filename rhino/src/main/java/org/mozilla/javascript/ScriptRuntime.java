@@ -91,12 +91,12 @@ public class ScriptRuntime {
             preventExtensions();
         }
 
-        private static Slot removeWithoutChecking(
+        private static <T extends PropHolder<T>> Slot<T> removeWithoutChecking(
                 Object key,
                 int index,
                 Slot slot,
-                CompoundOperationMap compoundOp,
-                SlotMapOwner owner) {
+                CompoundOperationMap<T> compoundOp,
+                SlotMapOwner<T> owner) {
             return null;
         }
 
@@ -188,17 +188,16 @@ public class ScriptRuntime {
                 || ScriptableClass.isAssignableFrom(cl));
     }
 
-    public static ScriptableObject initSafeStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
+    public static TopLevel initSafeStandardObjects(Context cx, TopLevel scope, boolean sealed) {
         if (scope == null) {
-            scope = new NativeObject();
-        } else if (scope instanceof TopLevel) {
-            ((TopLevel) scope).clearCache();
+            scope = new TopLevel();
         }
 
-        scope.put("global", scope, scope);
+        scope.put("global", scope, scope.getGlobalThis());
 
+        scope.clearCache();
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
+
         new ClassCache().associate(scope);
         var typeFactory =
                 (androidApi >= 34 || androidApi < 0)
@@ -217,9 +216,6 @@ public class ScriptRuntime {
         function.setPrototype(functionPrototype);
         obj.setPrototype(functionPrototype);
 
-        // Set the prototype of the object passed in if need be
-        if (scope.getPrototype() == null) scope.setPrototype(objectPrototype);
-
         // must precede NativeGlobal since it's needed therein
         NativeError.init(cx, scope, sealed);
         NativeGlobal.init(cx, scope, sealed);
@@ -235,11 +231,10 @@ public class ScriptRuntime {
         NativeBoolean.init(cx, scope, sealed);
         NativeNumber.init(scope, sealed);
         NativeDate.init(cx, scope, sealed);
-        new LazilyLoadedCtor(scope, "Math", sealed, true, NativeMath::init);
-        new LazilyLoadedCtor(scope, "JSON", sealed, true, NativeJSON::init);
+        new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
+        new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
 
         NativeWith.init(scope, sealed);
-        NativeCall.init(scope, sealed);
         NativeScript.init(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
@@ -254,7 +249,7 @@ public class ScriptRuntime {
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
         // to property initialize the prototype.
-        new LazilyLoadedCtor(
+        new LazilyLoadedCtor<>(
                 scope, "Continuation", "org.mozilla.javascript.NativeContinuation", sealed, true);
 
         if (cx.hasFeature(Context.FEATURE_E4X)) {
@@ -266,65 +261,64 @@ public class ScriptRuntime {
         if (((cx.getLanguageVersion() >= Context.VERSION_1_8)
                         && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS))
                 || (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
-            new LazilyLoadedCtor(scope, "ArrayBuffer", sealed, true, NativeArrayBuffer::init);
-            new LazilyLoadedCtor(scope, "Int8Array", sealed, true, NativeInt8Array::init);
-            new LazilyLoadedCtor(scope, "Uint8Array", sealed, true, NativeUint8Array::init);
-            new LazilyLoadedCtor(
+            new LazilyLoadedCtor<>(scope, "ArrayBuffer", sealed, true, NativeArrayBuffer::init);
+            new LazilyLoadedCtor<>(scope, "Int8Array", sealed, true, NativeInt8Array::init);
+            new LazilyLoadedCtor<>(scope, "Uint8Array", sealed, true, NativeUint8Array::init);
+            new LazilyLoadedCtor<>(
                     scope, "Uint8ClampedArray", sealed, true, NativeUint8ClampedArray::init);
-            new LazilyLoadedCtor(scope, "Int16Array", sealed, true, NativeInt16Array::init);
-            new LazilyLoadedCtor(scope, "Uint16Array", sealed, true, NativeUint16Array::init);
-            new LazilyLoadedCtor(scope, "Int32Array", sealed, true, NativeInt32Array::init);
-            new LazilyLoadedCtor(scope, "Uint32Array", sealed, true, NativeUint32Array::init);
-            new LazilyLoadedCtor(scope, "BigInt64Array", sealed, true, NativeBigInt64Array::init);
-            new LazilyLoadedCtor(scope, "BigUint64Array", sealed, true, NativeBigUint64Array::init);
-            new LazilyLoadedCtor(scope, "Float32Array", sealed, true, NativeFloat32Array::init);
-            new LazilyLoadedCtor(scope, "Float64Array", sealed, true, NativeFloat64Array::init);
-            new LazilyLoadedCtor(scope, "DataView", sealed, true, NativeDataView::init);
+            new LazilyLoadedCtor<>(scope, "Int16Array", sealed, true, NativeInt16Array::init);
+            new LazilyLoadedCtor<>(scope, "Uint16Array", sealed, true, NativeUint16Array::init);
+            new LazilyLoadedCtor<>(scope, "Int32Array", sealed, true, NativeInt32Array::init);
+            new LazilyLoadedCtor<>(scope, "Uint32Array", sealed, true, NativeUint32Array::init);
+            new LazilyLoadedCtor<>(scope, "BigInt64Array", sealed, true, NativeBigInt64Array::init);
+            new LazilyLoadedCtor<>(
+                    scope, "BigUint64Array", sealed, true, NativeBigUint64Array::init);
+            new LazilyLoadedCtor<>(scope, "Float32Array", sealed, true, NativeFloat32Array::init);
+            new LazilyLoadedCtor<>(scope, "Float64Array", sealed, true, NativeFloat64Array::init);
+            new LazilyLoadedCtor<>(scope, "DataView", sealed, true, NativeDataView::init);
         }
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
             NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
             NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
-            new LazilyLoadedCtor(scope, "Map", sealed, true, NativeMap::init);
-            new LazilyLoadedCtor(scope, "Promise", sealed, true, NativePromise::init);
-            new LazilyLoadedCtor(scope, "Set", sealed, true, NativeSet::init);
-            new LazilyLoadedCtor(scope, "WeakMap", sealed, true, NativeWeakMap::init);
-            new LazilyLoadedCtor(scope, "WeakSet", sealed, true, NativeWeakSet::init);
-            new LazilyLoadedCtor(scope, "BigInt", sealed, true, NativeBigInt::init);
-            new LazilyLoadedCtor(scope, "Proxy", sealed, true, NativeProxy::init);
-            new LazilyLoadedCtor(scope, "Reflect", sealed, true, NativeReflect::init);
+            new LazilyLoadedCtor<>(scope, "Map", sealed, true, NativeMap::init);
+            new LazilyLoadedCtor<>(scope, "Promise", sealed, true, NativePromise::init);
+            new LazilyLoadedCtor<>(scope, "Set", sealed, true, NativeSet::init);
+            new LazilyLoadedCtor<>(scope, "WeakMap", sealed, true, NativeWeakMap::init);
+            new LazilyLoadedCtor<>(scope, "WeakSet", sealed, true, NativeWeakSet::init);
+            new LazilyLoadedCtor<>(scope, "BigInt", sealed, true, NativeBigInt::init);
+            new LazilyLoadedCtor<>(scope, "Proxy", sealed, true, NativeProxy::init);
+            new LazilyLoadedCtor<>(scope, "Reflect", sealed, true, NativeReflect::init);
         }
 
-        if (scope instanceof TopLevel) {
-            ((TopLevel) scope).cacheBuiltins(scope, sealed);
-        }
+        scope.cacheBuiltins(sealed);
 
         return scope;
     }
 
-    private static void registerRegExp(Context cx, ScriptableObject scope, boolean sealed) {
+    private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
             regExpProxy.register(scope, sealed);
         }
     }
 
-    public static ScriptableObject initStandardObjects(
-            Context cx, ScriptableObject scope, boolean sealed) {
-        ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+    public static TopLevel initStandardObjects(Context cx, TopLevel scope, boolean sealed) {
+        TopLevel s = initSafeStandardObjects(cx, scope, sealed);
 
         // These depend on the legacy initialization behavior of the lazy loading mechanism
-        new LazilyLoadedCtor(
+        new LazilyLoadedCtor<>(
                 s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(
+        new LazilyLoadedCtor<>(
                 s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
-        new LazilyLoadedCtor(
+        new LazilyLoadedCtor<>(
+                s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
+        new LazilyLoadedCtor<>(
                 s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
 
         for (String packageName : getTopPackageNames()) {
-            new LazilyLoadedCtor(
+            new LazilyLoadedCtor<>(
                     s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         }
 
@@ -338,10 +332,8 @@ public class ScriptRuntime {
                 : new String[] {"java", "javax", "org", "com", "edu", "net"};
     }
 
-    public static ScriptableObject getLibraryScopeOrNull(Scriptable scope) {
-        ScriptableObject libScope;
-        libScope = (ScriptableObject) ScriptableObject.getTopScopeValue(scope, LIBRARY_SCOPE_KEY);
-        return libScope;
+    public static ScopeObject getLibraryScopeOrNull(Scriptable scope) {
+        return (ScopeObject) ScriptableObject.getTopScopeValue(scope, LIBRARY_SCOPE_KEY);
     }
 
     // It is public so NativeRegExp can access it.
@@ -2356,8 +2348,8 @@ public class ScriptRuntime {
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
-            if (scope instanceof NativeWith) {
-                Scriptable withObj = scope.getPrototype();
+            if (scope instanceof WithScope) {
+                Scriptable withObj = ((WithScope) scope).getObject();
                 if (withObj instanceof XMLObject) {
                     XMLObject xmlObj = (XMLObject) withObj;
                     if (xmlObj.has(name, xmlObj)) {
@@ -2442,12 +2434,12 @@ public class ScriptRuntime {
             String name,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj = scope;
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
-            if (scope instanceof NativeWith) {
-                Scriptable withObj = scope.getPrototype();
+            if (scope instanceof WithScope) {
+                Scriptable withObj = ((WithScope) scope).getObject();
                 if (withObj instanceof XMLObject) {
                     XMLObject xmlObj = (XMLObject) withObj;
                     if (xmlObj.has(name, xmlObj)) {
@@ -2474,7 +2466,6 @@ public class ScriptRuntime {
                 if (result != Scriptable.NOT_FOUND) {
                     // ECMA 262 requires that this for nested funtions
                     // should be top scope
-                    thisObj = ScriptableObject.getTopLevelScope(parentScope);
                     break;
                 }
             } else {
@@ -2482,7 +2473,6 @@ public class ScriptRuntime {
                 // scopes are useful for what ever reasons.
                 result = ScriptableObject.getProperty(scope, name);
                 if (result != Scriptable.NOT_FOUND) {
-                    thisObj = scope;
                     break;
                 }
             }
@@ -2493,8 +2483,6 @@ public class ScriptRuntime {
                 if (result == Scriptable.NOT_FOUND) {
                     throw notFoundError(scope, name);
                 }
-                // For top scope thisObj for functions is always scope itself.
-                thisObj = scope;
                 break;
             }
         }
@@ -2534,8 +2522,8 @@ public class ScriptRuntime {
         childScopesChecks:
         if (parent != null) {
             // Check for possibly nested "with" scopes first
-            while (scope instanceof NativeWith) {
-                Scriptable withObj = scope.getPrototype();
+            while (scope instanceof WithScope) {
+                Scriptable withObj = ((WithScope) scope).getObject();
                 if (withObj instanceof XMLObject) {
                     XMLObject xmlObject = (XMLObject) withObj;
                     if (xmlObject.has(cx, id)) {
@@ -3033,7 +3021,12 @@ public class ScriptRuntime {
                 }
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            return new LookupResult(result, scope, name);
+            return new LookupResult(
+                    result,
+                    scope instanceof NativeWith
+                            ? scope.getPrototype()
+                            : Undefined.SCRIPTABLE_UNDEFINED,
+                    name);
         }
 
         // name will call storeScriptable(cx, thisObj);
@@ -3353,6 +3346,7 @@ public class ScriptRuntime {
             // nested functions should have top scope as their thisObj
             thisObj = ScriptableObject.getTopLevelScope(thisObj);
         }
+
         storeScriptable(cx, thisObj);
         return f;
     }
@@ -3382,18 +3376,8 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        Scriptable thisObj = null;
-        if (f instanceof Function) {
-            thisObj = ((Function) f).getDeclarationScope();
-        }
-        if (thisObj == null) {
-            if (cx.topCallScope == null) throw new IllegalStateException();
-            thisObj = cx.topCallScope;
-        }
-        if (thisObj instanceof NativeCall) {
-            // nested functions should have top scope as their thisObj
-            thisObj = ScriptableObject.getTopLevelScope(thisObj);
-        }
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+
         return new LookupResult(f, thisObj, value);
     }
 
@@ -3510,7 +3494,8 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis = getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, function);
+        Scriptable callThis =
+                getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, (Function) function);
 
         Object[] callArgs;
         if (isApply) {
@@ -3530,7 +3515,7 @@ public class ScriptRuntime {
     }
 
     public static Scriptable getApplyOrCallThis(
-            Context cx, Scriptable scope, Object arg0, int l, Callable target) {
+            Context cx, Scriptable scope, Object arg0, int l, Function target) {
         Scriptable callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             // Legacy behavior
@@ -3540,8 +3525,9 @@ public class ScriptRuntime {
                 callThis = null;
             }
             if (callThis == null) {
-                // This covers the case of args[0] == (null|undefined) as well.
-                callThis = getTopCallScope(cx);
+                callThis =
+                        ScriptableObject.getTopLevelScope(target.getDeclarationScope())
+                                .getGlobalThis();
             }
         } else {
             // Spec-compliant behavior
@@ -3552,15 +3538,6 @@ public class ScriptRuntime {
                                 : toObjectOrNull(cx, arg0, scope);
             } else {
                 callThis = Undefined.SCRIPTABLE_UNDEFINED;
-            }
-
-            // Replace missing this with global object only for non-strict functions
-            boolean missingCallThis =
-                    callThis == null || callThis == Undefined.SCRIPTABLE_UNDEFINED;
-            boolean isFunctionStrict =
-                    !(target instanceof JSFunction) || ((JSFunction) target).isStrict();
-            if (missingCallThis && !isFunctionStrict) {
-                callThis = getTopCallScope(cx);
             }
         }
 
@@ -4059,15 +4036,19 @@ public class ScriptRuntime {
                 }
                 target = scopeChain;
                 do {
-                    if (target instanceof NativeWith
-                            && target.getPrototype() instanceof XMLObject) {
+                    if (target instanceof WithScope
+                            && ((WithScope) target).getObject() instanceof XMLObject) {
                         break;
                     }
                     value = target.get(id, scopeChain);
                     if (value != Scriptable.NOT_FOUND) {
                         break search;
                     }
-                    target = target.getPrototype();
+                    if (target instanceof VarScope) {
+                        target = null;
+                    } else {
+                        target = target.getPrototype();
+                    }
                 } while (target != null);
                 scopeChain = scopeChain.getParentScope();
             } while (scopeChain != null);
@@ -4844,7 +4825,7 @@ public class ScriptRuntime {
     // Statements
     // ------------------
 
-    public static ScriptableObject getGlobal(Context cx) {
+    public static TopLevel getGlobal(Context cx) {
         final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
         Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
         if (globalClass != null) {
@@ -4852,7 +4833,7 @@ public class ScriptRuntime {
                 Class<?>[] parm = {ScriptRuntime.ContextClass};
                 Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
                 Object[] arg = {cx};
-                return (ScriptableObject) globalClassCtor.newInstance(arg);
+                return (TopLevel) globalClassCtor.newInstance(arg);
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
@@ -4866,8 +4847,8 @@ public class ScriptRuntime {
         return (cx.topCallScope != null);
     }
 
-    public static Scriptable getTopCallScope(Context cx) {
-        Scriptable scope = cx.topCallScope;
+    public static TopLevel getTopCallScope(Context cx) {
+        var scope = cx.topCallScope;
         if (scope == null) {
             throw new IllegalStateException();
         }
@@ -4996,7 +4977,7 @@ public class ScriptRuntime {
             Scriptable varScope = scope;
             // Never define any variables from var statements inside with
             // object. See bug 38590.
-            while (varScope instanceof NativeWith) {
+            while (varScope instanceof WithScope) {
                 varScope = varScope.getParentScope();
             }
 
@@ -5025,46 +5006,54 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, VarScope, Object[],
      *     boolean, boolean)} instead
      */
     @Deprecated
-    public static Scriptable createFunctionActivation(
+    public static VarScope createFunctionActivation(
             JSFunction funObj, Scriptable scope, Object[] args) {
         return createFunctionActivation(
-                funObj, Context.getCurrentContext(), scope, args, false, false);
+                funObj, Context.getCurrentContext(), (VarScope) scope, args, false, false);
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, VarScope, Object[],
      *     boolean, boolean, boolean)} instead
      */
     @Deprecated
-    public static Scriptable createFunctionActivation(
+    public static VarScope createFunctionActivation(
             JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, false, isStrict, false, true);
+                funObj,
+                Context.getCurrentContext(),
+                (VarScope) scope,
+                args,
+                false,
+                isStrict,
+                false,
+                true);
     }
 
     /**
-     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, Scriptable, Object[],
+     * @deprecated Use {@link #createFunctionActivation(JSFunction, Context, VarScope, Object[],
      *     boolean, boolean, boolean)} instead
      */
     @Deprecated
-    public static Scriptable createFunctionActivation(
+    public static VarScope createFunctionActivation(
             JSFunction funObj,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, false, isStrict, argsHasRest, true);
+        return new NativeCall(
+                funObj, cx, (VarScope) scope, args, false, isStrict, argsHasRest, true);
     }
 
-    public static Scriptable createFunctionActivation(
+    public static VarScope createFunctionActivation(
             JSFunction funObj,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
@@ -5074,41 +5063,56 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, VarScope,
      *     Object[], boolean, boolean, boolean)} instead
      */
     @Deprecated
-    public static Scriptable createArrowFunctionActivation(
+    public static VarScope createArrowFunctionActivation(
             JSFunction funObj, Scriptable scope, Object[] args, boolean isStrict) {
         return new NativeCall(
-                funObj, Context.getCurrentContext(), scope, args, true, isStrict, false, true);
+                funObj,
+                Context.getCurrentContext(),
+                (VarScope) scope,
+                args,
+                true,
+                isStrict,
+                false,
+                true);
     }
 
     /**
-     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, Scriptable,
+     * @deprecated Use {@link #createArrowFunctionActivation(JSFunction, Context, VarScope,
      *     Object[], boolean, boolean, boolean)} instead
      */
     @Deprecated
-    public static Scriptable createArrowFunctionActivation(
+    public static VarScope createArrowFunctionActivation(
             JSFunction funObj,
             Context cx,
             Scriptable scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest) {
-        return new NativeCall(funObj, cx, scope, args, true, isStrict, argsHasRest, true);
+        return new NativeCall(
+                funObj, cx, (VarScope) scope, args, true, isStrict, argsHasRest, true);
     }
 
-    public static Scriptable createArrowFunctionActivation(
+    public static VarScope createArrowFunctionActivation(
             JSFunction funObj,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Object[] args,
             boolean isStrict,
             boolean argsHasRest,
             boolean requiresArgumentObject) {
         return new NativeCall(
-                funObj, cx, scope, args, true, isStrict, argsHasRest, requiresArgumentObject);
+                funObj,
+                cx,
+                (VarScope) scope,
+                args,
+                true,
+                isStrict,
+                argsHasRest,
+                requiresArgumentObject);
     }
 
     public static void enterActivationFunction(Context cx, Scriptable scope) {
@@ -5345,7 +5349,7 @@ public class ScriptRuntime {
         return shutter == null || shutter.visibleToScripts(obj.getClass().getName());
     }
 
-    public static Scriptable enterWith(Object obj, Context cx, Scriptable scope) {
+    public static VarScope enterWith(Object obj, Context cx, VarScope scope) {
         Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw typeErrorById("msg.undef.with", toString(obj));
@@ -5354,15 +5358,15 @@ public class ScriptRuntime {
             XMLObject xmlObject = (XMLObject) sobj;
             return xmlObject.enterWith(scope);
         }
-        return new NativeWith(scope, sobj);
+        return new WithScope((VarScope) scope, sobj);
     }
 
-    public static Scriptable leaveWith(Scriptable scope) {
-        NativeWith nw = (NativeWith) scope;
+    public static VarScope leaveWith(VarScope scope) {
+        WithScope nw = (WithScope) scope;
         return nw.getParentScope();
     }
 
-    public static Scriptable enterDotQuery(Object value, Scriptable scope) {
+    public static VarScope enterDotQuery(Object value, VarScope scope) {
         if (!(value instanceof XMLObject)) {
             throw notXmlError(value);
         }
@@ -5370,14 +5374,14 @@ public class ScriptRuntime {
         return object.enterDotQuery(scope);
     }
 
-    public static Object updateDotQuery(boolean value, Scriptable scope) {
+    public static Object updateDotQuery(boolean value, VarScope scope) {
         // Return null to continue looping
-        NativeWith nw = (NativeWith) scope;
+        WithScope nw = (WithScope) scope;
         return nw.updateDotQuery(value);
     }
 
-    public static Scriptable leaveDotQuery(Scriptable scope) {
-        NativeWith nw = (NativeWith) scope;
+    public static VarScope leaveDotQuery(VarScope scope) {
+        WithScope nw = (WithScope) scope;
         return nw.getParentScope();
     }
 
@@ -5427,9 +5431,9 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject object, Scriptable scope, TopLevel.Builtins type) {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        object.setParentScope(scope);
-        object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        object.setParentScope(top);
+        object.setPrototype(TopLevel.getBuiltinPrototype(top, type));
     }
 
     public static void setBuiltinProtoAndParent(
@@ -5458,7 +5462,7 @@ public class ScriptRuntime {
                 // Always put function expression statements into initial
                 // activation object ignoring the with statement to follow
                 // SpiderMonkey
-                while (scope instanceof NativeWith) {
+                while (scope instanceof WithScope) {
                     scope = scope.getParentScope();
                 }
                 scope.put(name, scope, function);
@@ -6225,6 +6229,15 @@ public class ScriptRuntime {
         } else {
             return value;
         }
+    }
+
+    public static Scriptable getThisForScope(Scriptable scope, Object callThisArg) {
+        if (Undefined.isUndefined(callThisArg)) {
+            callThisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        } else if (callThisArg == null) {
+            return null;
+        }
+        return ScriptRuntime.toObject(scope, callThisArg);
     }
 
     /**

@@ -77,14 +77,8 @@ public class ClassCache implements Serializable {
         if (cache == null) {
             // we expect this to not happen frequently, so computing top scope twice is acceptable
             var topScope = ScriptableObject.getTopLevelScope(scope);
-            if (!(topScope instanceof ScriptableObject)) {
-                // Note: it's originally a RuntimeException, the super class of
-                // IllegalArgumentException, so this will not break error catching
-                throw new IllegalArgumentException(
-                        "top scope have no associated ClassCache and cannot have ClassCache associated due to not being a ScriptableObject");
-            }
             cache = new ClassCache();
-            cache.associate(((ScriptableObject) topScope));
+            cache.associate(topScope);
         }
         return cache;
     }
@@ -98,7 +92,7 @@ public class ClassCache implements Serializable {
      *     ClassCache were successfully associated or false otherwise.
      * @see #get(Scriptable scope)
      */
-    public boolean associate(ScriptableObject topScope) {
+    public boolean associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {
             // Can only associate cache with top level scope
             throw new IllegalArgumentException();

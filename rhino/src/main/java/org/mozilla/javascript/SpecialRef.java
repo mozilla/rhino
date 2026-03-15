@@ -54,9 +54,20 @@ class SpecialRef extends Ref {
             case SPECIAL_PROTO:
                 return target.getPrototype();
             case SPECIAL_PARENT:
-                return target.getParentScope();
+                return getScriptableForScope(target.getParentScope());
             default:
                 throw Kit.codeBug();
+        }
+    }
+
+    private static Scriptable getScriptableForScope(Scriptable scope) {
+        if (scope instanceof WithScope) {
+            return ((WithScope) scope).getObject();
+        } else if (scope != null) {
+            // Wrap it.
+            return new ScopeWrapper(scope);
+        } else {
+            return null;
         }
     }
 
@@ -72,7 +83,6 @@ class SpecialRef extends Ref {
             case SPECIAL_NONE:
                 return ScriptRuntime.setObjectProp(target, name, value, cx);
             case SPECIAL_PROTO:
-            case SPECIAL_PARENT:
                 {
                     Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value, scope);
                     if (obj != null) {
@@ -127,10 +137,12 @@ class SpecialRef extends Ref {
                         } else {
                             target.setPrototype(obj);
                         }
-                    } else {
-                        target.setParentScope(obj);
                     }
                     return obj;
+                }
+            case SPECIAL_PARENT:
+                {
+                    throw Kit.codeBug();
                 }
             default:
                 throw Kit.codeBug();

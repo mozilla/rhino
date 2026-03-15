@@ -11,8 +11,8 @@ import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 public class Bug482203Test {
 
@@ -23,7 +23,7 @@ public class Bug482203Test {
             InputStreamReader in =
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             script.exec(cx, scope, scope);
             int counter = 0;
             for (; ; ) {
@@ -46,7 +46,7 @@ public class Bug482203Test {
             InputStreamReader in =
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             cx.executeScriptWithContinuations(script, scope);
             int counter = 0;
             for (; ; ) {

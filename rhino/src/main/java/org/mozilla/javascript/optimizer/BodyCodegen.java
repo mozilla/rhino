@@ -103,7 +103,7 @@ class BodyCodegen {
                     ByteCode.INVOKEINTERFACE,
                     "org/mozilla/javascript/Function",
                     "getDeclarationScope",
-                    "()Lorg/mozilla/javascript/Scriptable;");
+                    "()Lorg/mozilla/javascript/VarScope;");
             cfw.addAStore(variableObjectLocal);
         }
 
@@ -111,6 +111,7 @@ class BodyCodegen {
         cfw.addALoad(funObjLocal);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
+        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
         cfw.addALoad(argsLocal);
         cfw.addPush(scriptOrFn.isInStrictMode());
         cfw.addPush(scriptOrFn.hasRestParameter());
@@ -121,12 +122,12 @@ class BodyCodegen {
                 "createFunctionActivation",
                 "(Lorg/mozilla/javascript/JSFunction;"
                         + "Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + "[Ljava/lang/Object;"
                         + "Z"
                         + "Z"
                         + "Z"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+                        + ")Lorg/mozilla/javascript/VarScope;");
         cfw.addAStore(variableObjectLocal);
 
         // Evaluate default params for generators after creating activation scope
@@ -250,7 +251,7 @@ class BodyCodegen {
                     ByteCode.INVOKEINTERFACE,
                     "org/mozilla/javascript/Function",
                     "getDeclarationScope",
-                    "()Lorg/mozilla/javascript/Scriptable;");
+                    "()Lorg/mozilla/javascript/VarScope;");
             cfw.addAStore(variableObjectLocal);
         }
 
@@ -413,6 +414,7 @@ class BodyCodegen {
             cfw.addALoad(funObjLocal);
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
+            cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
             cfw.addALoad(argsLocal);
             cfw.addPush(scriptOrFn.isInStrictMode());
             cfw.addPush(scriptOrFn.hasRestParameter());
@@ -426,12 +428,12 @@ class BodyCodegen {
                     methodName,
                     "(Lorg/mozilla/javascript/JSFunction;"
                             + "Lorg/mozilla/javascript/Context;"
-                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/VarScope;"
                             + "[Ljava/lang/Object;"
                             + "Z"
                             + "Z"
                             + "Z"
-                            + ")Lorg/mozilla/javascript/Scriptable;");
+                            + ")Lorg/mozilla/javascript/VarScope;");
             cfw.addAStore(variableObjectLocal);
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
@@ -788,22 +790,24 @@ class BodyCodegen {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
                 addScriptRuntimeInvoke(
                         "enterWith",
                         "(Ljava/lang/Object;"
                                 + "Lorg/mozilla/javascript/Context;"
-                                + "Lorg/mozilla/javascript/Scriptable;"
-                                + ")Lorg/mozilla/javascript/Scriptable;");
+                                + "Lorg/mozilla/javascript/VarScope;"
+                                + ")Lorg/mozilla/javascript/VarScope;");
                 cfw.addAStore(variableObjectLocal);
                 incReferenceWordLocal(variableObjectLocal);
                 break;
 
             case Token.LEAVEWITH:
                 cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
                 addScriptRuntimeInvoke(
                         "leaveWith",
-                        "(Lorg/mozilla/javascript/Scriptable;"
-                                + ")Lorg/mozilla/javascript/Scriptable;");
+                        "(Lorg/mozilla/javascript/VarScope;"
+                                + ")Lorg/mozilla/javascript/VarScope;");
                 cfw.addAStore(variableObjectLocal);
                 decReferenceWordLocal(variableObjectLocal);
                 break;
@@ -2865,6 +2869,16 @@ class BodyCodegen {
         cfw.add(ByteCode.IF_ACMPNE, regularCall);
 
         // stack: ... directFunct
+        if (type != Token.NEW) {
+            cfw.add(ByteCode.DUP);
+            cfw.addALoad(thisObjLocal);
+            cfw.addInvoke(
+                    ByteCode.INVOKEVIRTUAL,
+                    "org/mozilla/javascript/JSFunction",
+                    "getThisObj",
+                    "(Lorg/mozilla/javascript/Scriptable;)Lorg/mozilla/javascript/Scriptable;");
+            cfw.addAStore(thisObjLocal);
+        }
         cfw.addALoad(contextLocal);
         cfw.add(ByteCode.SWAP);
         cfw.addALoad(newTargetLocal);
@@ -4641,11 +4655,12 @@ class BodyCodegen {
         updateLineNumber(node);
         generateExpression(child, node);
         cfw.addALoad(variableObjectLocal);
+        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
         addScriptRuntimeInvoke(
                 "enterDotQuery",
                 "(Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + ")Lorg/mozilla/javascript/Scriptable;");
+                        + "Lorg/mozilla/javascript/VarScope;"
+                        + ")Lorg/mozilla/javascript/VarScope;");
         cfw.addAStore(variableObjectLocal);
 
         // add push null/pop with label in between to simplify code for loop
@@ -4659,16 +4674,18 @@ class BodyCodegen {
         generateExpression(child.getNext(), node);
         addDynamicInvoke("MATH:TOBOOLEAN", Signatures.MATH_TO_BOOLEAN);
         cfw.addALoad(variableObjectLocal);
+        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
         addScriptRuntimeInvoke(
                 "updateDotQuery",
-                "(Z" + "Lorg/mozilla/javascript/Scriptable;" + ")Ljava/lang/Object;");
+                "(Z" + "Lorg/mozilla/javascript/VarScope;" + ")Ljava/lang/Object;");
         cfw.add(ByteCode.DUP);
         cfw.add(ByteCode.IFNULL, queryLoopStart);
         // stack: ... non_null_result_of_updateDotQuery
         cfw.addALoad(variableObjectLocal);
+        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/VarScope");
         addScriptRuntimeInvoke(
                 "leaveDotQuery",
-                "(Lorg/mozilla/javascript/Scriptable;" + ")Lorg/mozilla/javascript/Scriptable;");
+                "(Lorg/mozilla/javascript/VarScope;" + ")Lorg/mozilla/javascript/VarScope;");
         cfw.addAStore(variableObjectLocal);
     }
 

@@ -252,7 +252,7 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    protected void createPrototypeProperty(CompoundOperationMap compoundOp) {
+    protected void createPrototypeProperty(CompoundOperationMap<Scriptable> compoundOp) {
         compoundOp.compute(
                 this,
                 compoundOp,

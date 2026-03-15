@@ -52,94 +52,103 @@ public class Undefined implements Serializable {
      * "this" parameter of a Callable instance, because we cannot change that interface without
      * breaking backward compatibility.
      */
-    public static final Scriptable SCRIPTABLE_UNDEFINED =
-            new Scriptable() {
-                @Override
-                public String getClassName() {
-                    return "undefined";
-                }
+    public static final Scriptable SCRIPTABLE_UNDEFINED = new ScriptableUndefined();
 
-                @Override
-                public Object get(String name, Scriptable start) {
-                    return NOT_FOUND;
-                }
+    private static class ScriptableUndefined implements Scriptable, Serializable {
+        private ScriptableUndefined() {}
 
-                @Override
-                public Object get(int index, Scriptable start) {
-                    return NOT_FOUND;
-                }
+        @Override
+        public String getClassName() {
+            return "undefined";
+        }
 
-                @Override
-                public boolean has(String name, Scriptable start) {
-                    return false;
-                }
+        @Override
+        public Object get(String name, Scriptable start) {
+            return NOT_FOUND;
+        }
 
-                @Override
-                public boolean has(int index, Scriptable start) {
-                    return false;
-                }
+        @Override
+        public Object get(int index, Scriptable start) {
+            return NOT_FOUND;
+        }
 
-                @Override
-                public void put(String name, Scriptable start, Object value) {}
+        @Override
+        public boolean has(String name, Scriptable start) {
+            return false;
+        }
 
-                @Override
-                public void put(int index, Scriptable start, Object value) {}
+        @Override
+        public boolean has(int index, Scriptable start) {
+            return false;
+        }
 
-                @Override
-                public void delete(String name) {}
+        @Override
+        public void put(String name, Scriptable start, Object value) {}
 
-                @Override
-                public void delete(int index) {}
+        @Override
+        public void put(int index, Scriptable start, Object value) {}
 
-                @Override
-                public Scriptable getPrototype() {
-                    return null;
-                }
+        @Override
+        public void delete(String name) {}
 
-                @Override
-                public void setPrototype(Scriptable prototype) {}
+        @Override
+        public void delete(int index) {}
 
-                @Override
-                public Scriptable getParentScope() {
-                    return null;
-                }
+        @Override
+        public Scriptable getAncestor() {
+            return null;
+        }
 
-                @Override
-                public void setParentScope(Scriptable parent) {}
+        @Override
+        public Scriptable getPrototype() {
+            return null;
+        }
 
-                @Override
-                public Object[] getIds() {
-                    return ScriptRuntime.emptyArgs;
-                }
+        @Override
+        public void setPrototype(Scriptable prototype) {}
 
-                @Override
-                public Object getDefaultValue(Class<?> hint) {
-                    if (hint == null || hint == ScriptRuntime.StringClass) {
-                        return toString();
-                    }
-                    return null;
-                }
+        @Override
+        public VarScope getParentScope() {
+            return null;
+        }
 
-                @Override
-                public boolean hasInstance(Scriptable instance) {
-                    return false;
-                }
+        @Override
+        public void setParentScope(Scriptable parent) {}
 
-                @Override
-                public String toString() {
-                    return "undefined";
-                }
+        @Override
+        public Object[] getIds() {
+            return ScriptRuntime.emptyArgs;
+        }
 
-                @Override
-                public boolean equals(Object obj) {
-                    return isUndefined(obj) || (obj == this);
-                }
+        @Override
+        public Object getDefaultValue(Class<?> hint) {
+            if (hint == null || hint == ScriptRuntime.StringClass) {
+                return toString();
+            }
+            return null;
+        }
 
-                @Override
-                public int hashCode() {
-                    return instanceHash;
-                }
-            };
+        @Override
+        public boolean hasInstance(Scriptable instance) {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "undefined";
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return isUndefined(obj) || (obj == this);
+        }
+
+        @Override
+        public int hashCode() {
+            return instanceHash;
+        }
+    }
+    ;
 
     /**
      * Safely test whether "obj" is undefined. Java code must use this function rather than testing

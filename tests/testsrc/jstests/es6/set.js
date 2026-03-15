@@ -24,7 +24,8 @@ function logElement(value, key) {
   var mySet = new Set(['key1', 17]);
   mySet.forEach(logElement);
 
-  assertEquals("a) set[key1] (undefined) set[17] (undefined) ", res);
+  // `logElement` is not strict, so will resolve `this` to be `globalThis`.
+  assertEquals("a) set[key1] (globalThis) set[17] (globalThis) ", res);
 })();
 
 (function TestForEachNoKey() {
@@ -41,7 +42,8 @@ function logElement(value, key) {
   var mySet = new Set(['', undefined, null, 19]);
   mySet.forEach(logElement);
 
-  assertEquals("b) set[] (undefined) set[undefined] (undefined) set[null] (undefined) set[19] (undefined) ", res);
+  // `logElement` is not strict, so will resolve `this` to be `globalThis`.
+  assertEquals("b) set[] (globalThis) set[undefined] (globalThis) set[null] (globalThis) set[19] (globalThis) ", res);
 })();
 
 (function TestAddConcatenatedStrings() {
