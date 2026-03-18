@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 /**
  * @see <a
@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
  */
 public class StringSearchTest {
     private Context cx;
-    private Scriptable scope;
+    private VarScope scope;
 
     @Before
     public void setUp() {

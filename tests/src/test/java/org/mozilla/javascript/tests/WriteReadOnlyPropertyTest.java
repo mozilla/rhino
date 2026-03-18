@@ -11,6 +11,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Test that read-only properties can be... set when needed. This was the standard behavior in Rhino
@@ -49,8 +50,6 @@ public class WriteReadOnlyPropertyTest {
 
     void testWriteReadOnly(final boolean acceptWriteReadOnly) throws Exception {
         final Method readMethod = Foo.class.getMethod("getMyProp", (Class[]) null);
-        final Foo foo = new Foo("hello");
-        foo.defineProperty("myProp", null, readMethod, null, ScriptableObject.EMPTY);
 
         final String script = "foo.myProp = 123; foo.myProp";
 
@@ -66,7 +65,10 @@ public class WriteReadOnlyPropertyTest {
                 };
         contextFactory.call(
                 cx -> {
-                    final ScriptableObject top = cx.initStandardObjects();
+                    TopLevel top = cx.initStandardObjects();
+                    final Foo foo = new Foo("hello");
+                    foo.defineProperty(
+                            top, "myProp", null, readMethod, null, ScriptableObject.EMPTY);
                     ScriptableObject.putProperty(top, "foo", foo);
 
                     cx.evaluateString(top, script, "script", 0, null);

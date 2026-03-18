@@ -85,6 +85,15 @@ public class PromiseTryTest {
                 "var thisValue = null;"
                         + "Promise.try(function() { thisValue = this; });"
                         + "thisValue === undefined";
+        Utils.assertWithAllModes_ES6(false, script);
+    }
+
+    @Test
+    public void promiseTryThisValueStrict() {
+        final String script =
+                "var thisValue = null;"
+                        + "Promise.try(function() {\"use strict\"; thisValue = this; });"
+                        + "thisValue === undefined";
         Utils.assertWithAllModes_ES6(true, script);
     }
 

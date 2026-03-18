@@ -55,32 +55,32 @@ final class NativeError extends ScriptableObject {
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return make(cx, s, f, args);
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_toString((Scriptable) thisObj);
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_toSource(cx, s, (Scriptable) thisObj);
     }
 
     private static Object js_captureStackTrace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         js_captureStackTrace(cx, f.getDeclarationScope(), thisObj, args);
         return Undefined.instance;
     }
 
     private static Object js_isError(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return js_isError(args);
     }
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static void init(Context cx, VarScope scope, boolean sealed) {
         var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
         NativeCallSite.init(scope, sealed);
 
@@ -99,7 +99,7 @@ final class NativeError extends ScriptableObject {
                 0);
     }
 
-    static NativeError makeProto(Scriptable scope, Function ctorObj) {
+    static NativeError makeProto(VarScope scope, Function ctorObj) {
         Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
 
         NativeError obj = new NativeError();
@@ -108,7 +108,7 @@ final class NativeError extends ScriptableObject {
         return obj;
     }
 
-    static NativeError make(Context cx, Scriptable scope, Function ctorObj, Object[] args) {
+    static NativeError make(Context cx, VarScope scope, Function ctorObj, Object[] args) {
         NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;
@@ -135,8 +135,7 @@ final class NativeError extends ScriptableObject {
         return obj;
     }
 
-    static NativeError makeAggregate(
-            Context cx, Scriptable scope, Function ctorObj, Object[] args) {
+    static NativeError makeAggregate(Context cx, VarScope scope, Function ctorObj, Object[] args) {
         NativeError obj = makeProto(scope, ctorObj);
 
         int arglen = args.length;
@@ -256,13 +255,14 @@ final class NativeError extends ScriptableObject {
 
         // The "prepareStackTrace" function takes an array of CallSite objects.
         for (int i = 0; i < stack.length; i++) {
-            NativeCallSite site = (NativeCallSite) cx.newObject(this, "CallSite");
+            NativeCallSite site =
+                    (NativeCallSite) cx.newObject(prepare.getDeclarationScope(), "CallSite");
             site.setElement(stack[i]);
             elts[i] = site;
         }
 
-        Scriptable eltArray = cx.newArray(this, elts);
-        return prepare.call(cx, prepare, this, new Object[] {this, eltArray});
+        Scriptable eltArray = cx.newArray(prepare.getDeclarationScope(), elts);
+        return prepare.call(cx, prepare.getDeclarationScope(), this, new Object[] {this, eltArray});
     }
 
     private static Object js_toString(Scriptable thisObj) {
@@ -296,7 +296,8 @@ final class NativeError extends ScriptableObject {
         }
     }
 
-    private static String js_toSource(Context cx, Scriptable scope, Scriptable thisObj) {
+    private static String js_toSource(Context cx, VarScope scope, Object thisThing) {
+        var thisObj = (Scriptable) thisThing;
         // Emulation of SpiderMonkey behavior
         Object name = ScriptableObject.getProperty(thisObj, "name");
         Object message = ScriptableObject.getProperty(thisObj, "message");
@@ -335,7 +336,7 @@ final class NativeError extends ScriptableObject {
     }
 
     private static void js_captureStackTrace(
-            Context cx, Scriptable scope, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         ScriptableObject obj = (ScriptableObject) ScriptRuntime.toObject(cx, scope, args[0]);
         Function func = null;
         if (args.length > 1) {

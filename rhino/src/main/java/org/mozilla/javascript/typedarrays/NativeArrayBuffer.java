@@ -16,6 +16,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * A NativeArrayBuffer is the backing buffer for a typed array. Used inside JavaScript code, it
@@ -37,7 +38,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -140,7 +141,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }
 
-    private static NativeArrayBuffer js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static NativeArrayBuffer js_constructor(Context cx, VarScope scope, Object[] args) {
         double length = isArg(args, 0) ? ScriptRuntime.toIndex(args[0]) : 0;
 
         // ES2024: Check for options parameter with maxByteLength
@@ -167,12 +168,12 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     private static Boolean js_isView(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         return Boolean.valueOf((isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
     }
 
     private static NativeArrayBuffer js_slice(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
 
         if (self.isDetached()) {
@@ -230,7 +231,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     private NativeArrayBuffer copyAndDetach(
-            Context cx, Scriptable scope, Object lenObj, boolean preserveResizability) {
+            Context cx, VarScope scope, Object lenObj, boolean preserveResizability) {
         int newLength;
         if (Undefined.isUndefined(lenObj)) {
             newLength = getLength();
@@ -269,7 +270,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     // ES2025 ArrayBuffer.prototype.transfer
     private static Scriptable js_transfer(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         var self = getSelf(thisObj);
         var arg1 = args.length > 0 ? args[0] : Undefined.instance;
         return self.copyAndDetach(cx, scope, arg1, true);
@@ -277,7 +278,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     // ES2025 ArrayBuffer.prototype.transferToFixedLength
     private static Scriptable js_transferToFixedLength(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         var self = getSelf(thisObj);
         var arg1 = args.length > 0 ? args[0] : Undefined.instance;
         return self.copyAndDetach(cx, scope, arg1, false);
@@ -288,8 +289,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     // ES2024 ArrayBuffer.prototype.resize
-    private static Object js_resize(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_resize(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
         if (!self.isResizable()) {
             throw ScriptRuntime.typeErrorById("msg.arraybuf.notresizeable");

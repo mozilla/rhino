@@ -22,7 +22,7 @@ public class BoundFunction extends BaseFunction {
 
     public BoundFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Callable targetFunction,
             Scriptable boundThis,
             Object[] boundArgs) {
@@ -58,12 +58,12 @@ public class BoundFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs) {
-        return targetFunction.call(cx, scope, getCallThis(cx, scope), concat(boundArgs, extraArgs));
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] extraArgs) {
+        return targetFunction.call(cx, scope, getCallThis(), concat(boundArgs, extraArgs));
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] extraArgs) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] extraArgs) {
         if (targetFunction instanceof Constructable) {
             return ((Constructable) targetFunction)
                     .construct(cx, scope, concat(boundArgs, extraArgs));
@@ -107,15 +107,8 @@ public class BoundFunction extends BaseFunction {
         return boundArgs;
     }
 
-    Scriptable getCallThis(Context cx, Scriptable scope) {
-        Scriptable callThis = boundThis;
-        if (callThis == null && ScriptRuntime.hasTopCall(cx)) {
-            callThis = ScriptRuntime.getTopCallScope(cx);
-        }
-        if (callThis == null) {
-            callThis = getTopLevelScope(scope);
-        }
-        return callThis;
+    Scriptable getCallThis() {
+        return boundThis;
     }
 
     static boolean equalObjectGraphs(BoundFunction f1, BoundFunction f2, EqualObjectGraphs eq) {

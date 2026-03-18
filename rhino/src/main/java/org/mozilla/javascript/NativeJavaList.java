@@ -49,7 +49,7 @@ public class NativeJavaList extends NativeJavaObject {
     private final TypeInfo elementType;
 
     @SuppressWarnings("unchecked")
-    public NativeJavaList(Scriptable scope, Object list, TypeInfo staticType) {
+    public NativeJavaList(VarScope scope, Object list, TypeInfo staticType) {
         super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
@@ -108,7 +108,7 @@ public class NativeJavaList extends NativeJavaObject {
             Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
             if (cx != null) {
-                return cx.getWrapFactory().wrap(cx, this, obj, elementType);
+                return cx.getWrapFactory().wrap(cx, parent, obj, elementType);
             }
             return obj;
         }

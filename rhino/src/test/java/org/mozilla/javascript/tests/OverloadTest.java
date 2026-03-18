@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Map;
 import org.junit.Test;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class OverloadTest {
@@ -53,7 +53,7 @@ public class OverloadTest {
     private static void assertEvaluates(final Object expected, final String source) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
                     assertEquals(expected, rep);
                     return null;
@@ -64,7 +64,7 @@ public class OverloadTest {
             final Class<? extends Exception> exceptionClass, final String source) {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     try {
                         cx.evaluateString(scope, source, "test.js", 0, null);
                         fail("Did not throw exception");

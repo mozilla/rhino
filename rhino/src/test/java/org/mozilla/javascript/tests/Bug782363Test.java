@@ -25,7 +25,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -154,7 +154,7 @@ public class Bug782363Test {
         }
         sb.append("}; F()");
 
-        ScriptableObject scope = cx.initStandardObjects();
+        TopLevel scope = cx.initStandardObjects();
         Object ret = cx.evaluateString(scope, sb.toString(), "<eval>", 1, null);
         assertTrue(ret instanceof Number);
         assertEquals(expected, ((Number) ret).doubleValue(), 0);
