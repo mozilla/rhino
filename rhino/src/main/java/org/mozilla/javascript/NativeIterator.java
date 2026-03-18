@@ -63,7 +63,6 @@ public final class NativeIterator extends ScriptableObject {
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
         scope.associateValue(ITERATOR_TAG, obj);
-        scope.getGlobalThis().associateValue(ITERATOR_TAG, obj);
     }
 
     /** Only for constructing the prototype object. */

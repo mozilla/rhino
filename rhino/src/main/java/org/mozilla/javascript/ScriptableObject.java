@@ -2331,6 +2331,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * constructed from the methods found, and are added to this object as properties with the given
      * names.
      *
+     * @param scope the declaration scope for the created function.
      * @param names the names of the Methods to add as function properties
      * @param clazz the class to search for the Methods
      * @param attributes the attributes of the new properties
