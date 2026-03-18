@@ -12,7 +12,9 @@ import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1647,30 +1649,6 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static String toLocale_helper(Context cx, double t, int methodId, Object[] args) {
-        DateTimeFormatter formatter;
-        switch (methodId) {
-            case Id_toLocaleString:
-                formatter =
-                        cx.getLanguageVersion() >= Context.VERSION_ES6
-                                ? localeDateTimeFormatterES6
-                                : localeDateTimeFormatter;
-                break;
-            case Id_toLocaleTimeString:
-                formatter =
-                        cx.getLanguageVersion() >= Context.VERSION_ES6
-                                ? localeTimeFormatterES6
-                                : localeTimeFormatter;
-                break;
-            case Id_toLocaleDateString:
-                formatter =
-                        cx.getLanguageVersion() >= Context.VERSION_ES6
-                                ? localeDateFormatterES6
-                                : localeDateFormatter;
-                break;
-            default:
-                throw new AssertionError(); // unreachable
-        }
-
         final List<String> languageTags = new ArrayList<>();
         if (args.length != 0) {
             // we use the 'locales' argument but ignore the second 'options' argument as per spec of
@@ -1686,13 +1664,62 @@ final class NativeDate extends ScriptableObject {
             }
         }
 
+        Locale firstSupportedLocale = null;
         final List<Locale> availableLocales = Arrays.asList(Locale.getAvailableLocales());
         for (String languageTag : languageTags) {
             Locale locale = Locale.forLanguageTag(languageTag);
             if (availableLocales.contains(locale)) {
-                formatter = formatter.withLocale(locale);
+                firstSupportedLocale = locale;
                 break;
             }
+        }
+        if (firstSupportedLocale == null) {
+            firstSupportedLocale = Locale.getDefault();
+        }
+
+        DateTimeFormatter formatter;
+        switch (methodId) {
+            case Id_toLocaleString:
+                if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                    final String pattern =
+                            DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                                    FormatStyle.SHORT,
+                                    FormatStyle.MEDIUM,
+                                    IsoChronology.INSTANCE,
+                                    firstSupportedLocale);
+                    formatter = DateTimeFormatter.ofPattern(pattern.replaceAll("y+", "yyyy"));
+                } else {
+                    formatter = localeDateTimeFormatter;
+                }
+                break;
+            case Id_toLocaleTimeString:
+                if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                    final String pattern =
+                            DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                                    null,
+                                    FormatStyle.MEDIUM,
+                                    IsoChronology.INSTANCE,
+                                    firstSupportedLocale);
+                    formatter = DateTimeFormatter.ofPattern(pattern);
+                } else {
+                    formatter = localeTimeFormatter;
+                }
+                break;
+            case Id_toLocaleDateString:
+                if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                    final String pattern =
+                            DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                                    FormatStyle.SHORT,
+                                    null,
+                                    IsoChronology.INSTANCE,
+                                    firstSupportedLocale);
+                    formatter = DateTimeFormatter.ofPattern(pattern.replaceAll("y+", "yyyy"));
+                } else {
+                    formatter = localeDateFormatter;
+                }
+                break;
+            default:
+                throw new AssertionError(); // unreachable
         }
 
         final ZoneId zoneid = cx.getTimeZone().toZoneId();
@@ -2052,13 +2079,5 @@ final class NativeDate extends ScriptableObject {
     private static final DateTimeFormatter localeTimeFormatter =
             DateTimeFormatter.ofPattern("h:mm:ss a z");
 
-    // use FormatStyle.SHORT for these as per spec of an implementation that has no
-    // Intl.DateTimeFormat support
-    private static final DateTimeFormatter localeDateTimeFormatterES6 =
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
-    private static final DateTimeFormatter localeDateFormatterES6 =
-            DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
-    private static final DateTimeFormatter localeTimeFormatterES6 =
-            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT);
     private double date;
 }
