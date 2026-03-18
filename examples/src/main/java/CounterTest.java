@@ -7,6 +7,7 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * An example illustrating how to create a JavaScript object and retrieve properties and call
@@ -62,7 +63,7 @@ public class CounterTest {
     public static void main(String[] args) throws Exception {
         Context cx = Context.enter();
         try {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, Counter.class);
 
             Scriptable testCounter = cx.newObject(scope, "Counter");

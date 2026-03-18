@@ -4,6 +4,8 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.EmbeddedSlotMap;
 import org.mozilla.javascript.HashSlotMap;
+import org.mozilla.javascript.PropHolder;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Slot;
 import org.mozilla.javascript.SlotMap;
 import org.openjdk.jmh.annotations.*;
@@ -15,9 +17,9 @@ public class SlotMapBenchmark {
 
     @State(Scope.Thread)
     public static class EmbeddedState {
-        final EmbeddedSlotMap emptyMap = new EmbeddedSlotMap();
-        final EmbeddedSlotMap size10Map = new EmbeddedSlotMap();
-        final EmbeddedSlotMap size100Map = new EmbeddedSlotMap();
+        final EmbeddedSlotMap<Scriptable> emptyMap = new EmbeddedSlotMap<>();
+        final EmbeddedSlotMap<Scriptable> size10Map = new EmbeddedSlotMap<>();
+        final EmbeddedSlotMap<Scriptable> size100Map = new EmbeddedSlotMap<>();
         final String[] randomKeys = new String[100];
         String size100LastKey;
         String size10LastKey;
@@ -42,7 +44,7 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object embeddedInsert1Key(EmbeddedState state) {
-        Slot newSlot = null;
+        Slot<Scriptable> newSlot = null;
         for (int i = 0; i < 100; i++) {
             newSlot = state.emptyMap.modify(null, state.randomKeys[i], 0, 0);
         }
@@ -55,7 +57,7 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object embeddedQueryKey10Entries(EmbeddedState state) {
-        Slot slot = null;
+        Slot<Scriptable> slot = null;
         for (int i = 0; i < 100; i++) {
             slot = state.size10Map.query(state.size10LastKey, 0);
         }
@@ -68,7 +70,7 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object embeddedQueryKey100Entries(EmbeddedState state) {
-        Slot slot = null;
+        Slot<Scriptable> slot = null;
         for (int i = 0; i < 100; i++) {
             slot = state.size100Map.query(state.size100LastKey, 0);
         }
@@ -80,9 +82,9 @@ public class SlotMapBenchmark {
 
     @State(Scope.Thread)
     public static class HashState {
-        final HashSlotMap emptyMap = new HashSlotMap();
-        final HashSlotMap size10Map = new HashSlotMap();
-        final HashSlotMap size100Map = new HashSlotMap();
+        final HashSlotMap<Scriptable> emptyMap = new HashSlotMap<>();
+        final HashSlotMap<Scriptable> size10Map = new HashSlotMap<>();
+        final HashSlotMap<Scriptable> size100Map = new HashSlotMap<>();
         final String[] randomKeys = new String[100];
         String size100LastKey;
         String size10LastKey;
@@ -107,7 +109,7 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object hashInsert1Key(HashState state) {
-        Slot newSlot = null;
+        Slot<Scriptable> newSlot = null;
         for (int i = 0; i < 100; i++) {
             newSlot = state.emptyMap.modify(null, state.randomKeys[i], 0, 0);
         }
@@ -120,7 +122,7 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object hashQueryKey10Entries(HashState state) {
-        Slot slot = null;
+        Slot<Scriptable> slot = null;
         for (int i = 0; i < 100; i++) {
             slot = state.size10Map.query(state.size10LastKey, 0);
         }
@@ -133,7 +135,7 @@ public class SlotMapBenchmark {
     @Benchmark
     @OperationsPerInvocation(100)
     public Object hashQueryKey100Entries(HashState state) {
-        Slot slot = null;
+        Slot<Scriptable> slot = null;
         for (int i = 0; i < 100; i++) {
             slot = state.size100Map.query(state.size100LastKey, 0);
         }
@@ -154,9 +156,9 @@ public class SlotMapBenchmark {
     }
 
     /** Insert a random key and value into the map */
-    private static String insertRandomEntry(SlotMap map) {
+    private static <T extends PropHolder<T>> String insertRandomEntry(SlotMap<T> map) {
         String key = makeRandomString();
-        Slot slot = map.modify(null, key, 0, 0);
+        Slot<T> slot = map.modify(null, key, 0, 0);
         slot.setValue(key, null, null);
         return key;
     }

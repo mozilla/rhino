@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests;
 import org.junit.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Expect parsing errors when encountering default values inside destructuring assignments, instead
@@ -19,7 +19,7 @@ import org.mozilla.javascript.Scriptable;
  */
 public class Issue385Test {
     private Context cx;
-    private Scriptable scope;
+    private VarScope scope;
 
     @Before
     public void setUp() {

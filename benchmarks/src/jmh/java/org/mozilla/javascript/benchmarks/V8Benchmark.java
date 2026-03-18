@@ -5,8 +5,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.openjdk.jmh.annotations.*;
 
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -15,7 +16,7 @@ public class V8Benchmark {
 
     abstract static class AbstractState {
         Context cx;
-        Scriptable scope;
+        TopLevel scope;
 
         Callable getFunc(String name) {
             Object f = ScriptableObject.getProperty(scope, name);
@@ -27,10 +28,10 @@ public class V8Benchmark {
 
         Callable getRunFunc(String name) {
             Callable grf = getFunc("getRunFunc");
-            return (Callable) grf.call(cx, scope, scope, new Object[] {name});
+            return (Callable) grf.call(cx, scope, scope.getGlobalThis(), new Object[] {name});
         }
 
-        void evaluateSource(Context cx, Scriptable scope, String fileName) {
+        void evaluateSource(Context cx, VarScope scope, String fileName) {
             try (FileReader rdr = new FileReader(fileName)) {
                 cx.evaluateReader(scope, rdr, fileName, 1, null);
             } catch (IOException ioe) {
@@ -52,12 +53,12 @@ public class V8Benchmark {
 
         void runSetup() {
             Callable setup = getFunc("setup");
-            setup.call(cx, scope, scope, new Object[] {});
+            setup.call(cx, scope, scope.getGlobalThis(), new Object[] {});
         }
 
         void runCleanup() {
             Callable cleanup = getFunc("cleanup");
-            cleanup.call(cx, scope, scope, emptyArgs);
+            cleanup.call(cx, scope, scope.getGlobalThis(), emptyArgs);
         }
     }
 
@@ -85,7 +86,7 @@ public class V8Benchmark {
 
     @Benchmark
     public Object splay(SplayState state) {
-        return state.splay.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.splay.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @State(Scope.Thread)
@@ -104,7 +105,7 @@ public class V8Benchmark {
             encrypt = getRunFunc("Encrypt");
             decrypt = getRunFunc("Decrypt");
             // We need to run encrypt once to set the encrypted value or decrypt will fail
-            encrypt.call(cx, scope, scope, emptyArgs);
+            encrypt.call(cx, scope, scope.getGlobalThis(), emptyArgs);
         }
 
         @TearDown(Level.Trial)
@@ -116,12 +117,12 @@ public class V8Benchmark {
 
     @Benchmark
     public Object cryptoEncrpyt(CryptoState state) {
-        return state.encrypt.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.encrypt.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @Benchmark
     public Object cryptoDecrypt(CryptoState state) {
-        return state.decrypt.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.decrypt.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @State(Scope.Thread)
@@ -148,7 +149,7 @@ public class V8Benchmark {
 
     @Benchmark
     public Object deltaBlue(DeltaBlueState state) {
-        return state.db.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.db.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @State(Scope.Thread)
@@ -175,7 +176,7 @@ public class V8Benchmark {
 
     @Benchmark
     public Object rayTrace(RayTraceState state) {
-        return state.rt.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.rt.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @State(Scope.Thread)
@@ -202,7 +203,7 @@ public class V8Benchmark {
 
     @Benchmark
     public Object regExp(RegExpState state) {
-        return state.re.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.re.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @State(Scope.Thread)
@@ -229,7 +230,7 @@ public class V8Benchmark {
 
     @Benchmark
     public Object richards(RichardsState state) {
-        return state.r.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.r.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @State(Scope.Thread)
@@ -258,11 +259,11 @@ public class V8Benchmark {
 
     @Benchmark
     public Object earley(EarleyBoyerState state) {
-        return state.earley.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.earley.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 
     @Benchmark
     public Object boyer(EarleyBoyerState state) {
-        return state.boyer.call(state.cx, state.scope, state.scope, emptyArgs);
+        return state.boyer.call(state.cx, state.scope, state.scope.getGlobalThis(), emptyArgs);
     }
 }

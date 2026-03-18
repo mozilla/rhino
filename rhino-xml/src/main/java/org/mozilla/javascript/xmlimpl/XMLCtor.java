@@ -16,10 +16,11 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SerializableCallable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 class XMLCtor {
     public static void createProperties(
-            Context cx, ScriptableObject scope, ScriptableObject obj, XMLLibImpl lib) {
+            Context cx, VarScope scope, ScriptableObject obj, XMLLibImpl lib) {
         defineMethod(
                 obj,
                 scope,
@@ -106,7 +107,7 @@ class XMLCtor {
 
     private static void defineMethod(
             ScriptableObject obj,
-            ScriptableObject scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -115,7 +116,7 @@ class XMLCtor {
 
     private static void defineMethod(
             ScriptableObject obj,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,

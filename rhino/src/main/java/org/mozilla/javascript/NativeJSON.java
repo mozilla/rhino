@@ -30,7 +30,7 @@ public final class NativeJSON extends ScriptableObject {
 
     private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
+    static Object init(Context cx, VarScope scope, boolean sealed) {
         NativeJSON json = new NativeJSON();
         json.setPrototype(getObjectPrototype(scope));
         json.setParentScope(scope);
@@ -54,7 +54,7 @@ public final class NativeJSON extends ScriptableObject {
         return "JSON";
     }
 
-    private static Object parse(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object parse(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String jtext = ScriptRuntime.toString(args, 0);
         Object reviver = null;
         if (args.length > 1) {
@@ -66,8 +66,7 @@ public final class NativeJSON extends ScriptableObject {
         return parse(cx, scope, jtext);
     }
 
-    private static Object stringify(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object stringify(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object value = Undefined.instance, replacer = null, space = null;
 
         if (args.length > 0) {
@@ -82,7 +81,7 @@ public final class NativeJSON extends ScriptableObject {
         return stringify(cx, scope, value, replacer, space);
     }
 
-    private static Object parse(Context cx, Scriptable scope, String jtext) {
+    private static Object parse(Context cx, VarScope scope, String jtext) {
         try {
             return new JsonParser(cx, scope).parseValue(jtext);
         } catch (JsonParser.ParseException ex) {
@@ -90,7 +89,7 @@ public final class NativeJSON extends ScriptableObject {
         }
     }
 
-    public static Object parse(Context cx, Scriptable scope, String jtext, Callable reviver) {
+    public static Object parse(Context cx, VarScope scope, String jtext, Callable reviver) {
         Object unfiltered = parse(cx, scope, jtext);
         Scriptable root = cx.newObject(scope);
         root.put("", root, unfiltered);
@@ -98,7 +97,7 @@ public final class NativeJSON extends ScriptableObject {
     }
 
     private static Object walk(
-            Context cx, Scriptable scope, Callable reviver, Scriptable holder, Object name) {
+            Context cx, VarScope scope, Callable reviver, Scriptable holder, Object name) {
         final Object property;
         if (name instanceof Number) {
             property = holder.get(((Number) name).intValue(), holder);
@@ -157,7 +156,7 @@ public final class NativeJSON extends ScriptableObject {
     private static class StringifyState {
         StringifyState(
                 Context cx,
-                Scriptable scope,
+                VarScope scope,
                 String indent,
                 String gap,
                 Callable replacer,
@@ -178,11 +177,11 @@ public final class NativeJSON extends ScriptableObject {
         Object[] propertyList;
 
         Context cx;
-        Scriptable scope;
+        VarScope scope;
     }
 
     public static Object stringify(
-            Context cx, Scriptable scope, Object value, Object replacer, Object space) {
+            Context cx, VarScope scope, Object value, Object replacer, Object space) {
         String indent = "";
         String gap = "";
 

@@ -39,7 +39,7 @@ final class NativeString extends ScriptableObject {
 
     private final CharSequence string;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         LambdaConstructor c =
                 new LambdaConstructor(
                         scope,
@@ -155,7 +155,7 @@ final class NativeString extends ScriptableObject {
 
     private static void defConsMethod(
             LambdaConstructor c,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -164,7 +164,7 @@ final class NativeString extends ScriptableObject {
 
     private static void defProtoMethod(
             LambdaConstructor c,
-            Scriptable scope,
+            VarScope scope,
             SymbolKey key,
             int length,
             SerializableCallable target) {
@@ -173,7 +173,7 @@ final class NativeString extends ScriptableObject {
 
     private static void defProtoMethod(
             LambdaConstructor c,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target) {
@@ -193,7 +193,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static SerializableCallable wrapConstructor(SerializableCallable target) {
-        return (Context cx, Scriptable scope, Scriptable origThis, Object[] origArgs) -> {
+        return (Context cx, VarScope scope, Scriptable origThis, Object[] origArgs) -> {
             Scriptable thisObj;
             Object[] newArgs;
             if (origArgs.length > 0) {
@@ -210,7 +210,7 @@ final class NativeString extends ScriptableObject {
         };
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
         CharSequence s;
         if (args.length == 0) {
             s = "";
@@ -221,7 +221,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_constructorFunc(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence s;
         if (args.length == 0) {
             s = "";
@@ -237,7 +237,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_fromCharCode(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         int n = args.length;
         if (n < 1) {
             return "";
@@ -250,7 +250,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_fromCodePoint(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         int n = args.length;
         if (n < 1) {
             return "";
@@ -268,17 +268,15 @@ final class NativeString extends ScriptableObject {
         return new String(codePoints, 0, n);
     }
 
-    private static Object js_charAt(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_charAt(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return charAt(cx, thisObj, args, false);
     }
 
-    private static Object js_charCodeAt(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_charCodeAt(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return charAt(cx, thisObj, args, true);
     }
 
-    private static Object charAt(Context cx, Scriptable thisObj, Object[] args, boolean getCode) {
+    private static Object charAt(Context cx, Object thisObj, Object[] args, boolean getCode) {
         // See ECMA 15.5.4.[4,5]
         CharSequence target =
                 ScriptRuntime.toCharSequence(
@@ -293,8 +291,7 @@ final class NativeString extends ScriptableObject {
         return ScriptRuntime.wrapInt(c);
     }
 
-    private static Object js_indexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_indexOf(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "indexOf"));
         String searchStr = ScriptRuntime.toString(args, 0);
@@ -310,8 +307,7 @@ final class NativeString extends ScriptableObject {
         return target.indexOf(searchStr, (int) position);
     }
 
-    private static Object js_startsWith(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_startsWith(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "startsWith"));
@@ -323,8 +319,7 @@ final class NativeString extends ScriptableObject {
         return target.startsWith(searchStr, (int) position);
     }
 
-    private static Object js_endsWith(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_endsWith(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "endsWith"));
         checkValidRegex(cx, args, 0, "endsWith");
@@ -338,8 +333,7 @@ final class NativeString extends ScriptableObject {
         return target.substring(0, (int) position).endsWith(searchStr);
     }
 
-    private static Object js_includes(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_includes(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "includes"));
         String searchStr = ScriptRuntime.toString(args, 0);
@@ -364,8 +358,7 @@ final class NativeString extends ScriptableObject {
         }
     }
 
-    private static Object js_split(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_split(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.23
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "split");
 
@@ -449,25 +442,22 @@ final class NativeString extends ScriptableObject {
         return cx.newArray(scope, substrings.toArray());
     }
 
-    private static NativeString realThis(Scriptable thisObj) {
+    private static NativeString realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeString.class);
     }
 
-    private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_iterator(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return new NativeStringIterator(
                 scope, requireObjectCoercible(cx, thisObj, CLASS_NAME, "[Symbol.iterator]"));
     }
 
-    private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // ECMA 15.5.4.2: the toString function is not generic.
         CharSequence cs = realThis(thisObj).string;
         return cs instanceof String ? cs : cs.toString();
     }
 
-    private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_toSource(Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence s = realThis(thisObj).string;
         return "(new String(\"" + ScriptRuntime.escapeString(s.toString()) + "\"))";
     }
@@ -477,7 +467,7 @@ final class NativeString extends ScriptableObject {
      */
     private static String tagify(
             Context cx,
-            Scriptable thisObj,
+            Object thisObj,
             String functionName,
             String tag,
             String attribute,
@@ -546,7 +536,8 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+    protected Object[] getIds(
+            CompoundOperationMap<Scriptable> map, boolean nonEnumerable, boolean getSymbols) {
         // In ES6, Strings have entries in the property map for each character.
         Context cx = Context.getCurrentContext();
         if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -585,8 +576,7 @@ final class NativeString extends ScriptableObject {
      * See ECMA 22.1.3.13
      *
      */
-    private static Object js_match(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_match(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "match");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
         RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
@@ -629,7 +619,7 @@ final class NativeString extends ScriptableObject {
      *
      */
     private static Object js_lastIndexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "lastIndexOf"));
@@ -645,8 +635,7 @@ final class NativeString extends ScriptableObject {
     /*
      * See ECMA 15.5.4.15
      */
-    private static Object js_substring(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_substring(Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "substring"));
@@ -675,7 +664,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toLowerCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMA 15.5.4.11
         String thisStr =
                 ScriptRuntime.toString(
@@ -684,7 +673,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toUpperCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMA 15.5.4.12
         String thisStr =
                 ScriptRuntime.toString(
@@ -700,7 +689,7 @@ final class NativeString extends ScriptableObject {
      * Non-ECMA methods.
      */
     private static CharSequence js_substr(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "substr"));
@@ -741,8 +730,7 @@ final class NativeString extends ScriptableObject {
     /*
      * Python-esque sequence operations.
      */
-    private static String js_concat(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_concat(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "concat"));
         int N = args.length;
@@ -771,8 +759,7 @@ final class NativeString extends ScriptableObject {
         return result.toString();
     }
 
-    private static Object js_slice(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_slice(Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "slice"));
@@ -801,7 +788,7 @@ final class NativeString extends ScriptableObject {
         return target.subSequence((int) begin, (int) end);
     }
 
-    private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_at(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "at"));
         Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
         int len = str.length();
@@ -816,22 +803,20 @@ final class NativeString extends ScriptableObject {
         return str.substring(k, k + 1);
     }
 
-    private static Object js_equals(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_equals(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String s1 = ScriptRuntime.toString(thisObj);
         String s2 = ScriptRuntime.toString(args, 0);
         return s1.equals(s2);
     }
 
     private static Object js_equalsIgnoreCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String s1 = ScriptRuntime.toString(thisObj);
         String s2 = ScriptRuntime.toString(args, 0);
         return s1.equalsIgnoreCase(s2);
     }
 
-    private static Object js_search(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_search(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "search");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
         RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
@@ -867,8 +852,7 @@ final class NativeString extends ScriptableObject {
         return ((Callable) method).call(cx, scope, rx, new Object[] {s});
     }
 
-    private static Object js_replace(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_replace(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.19
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replace");
 
@@ -927,7 +911,7 @@ final class NativeString extends ScriptableObject {
         String replacement;
         if (functionalReplace) {
             Scriptable callThis =
-                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Function) replaceValue);
 
             Object replacementObj =
                     ((Callable) replaceValue)
@@ -955,8 +939,7 @@ final class NativeString extends ScriptableObject {
         return preceding + replacement + following;
     }
 
-    private static Object js_replaceAll(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_replaceAll(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.20
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replaceAll");
 
@@ -1024,7 +1007,7 @@ final class NativeString extends ScriptableObject {
             if (functionalReplace) {
                 Scriptable callThis =
                         ScriptRuntime.getApplyOrCallThis(
-                                cx, scope, null, 0, (Callable) replaceValue);
+                                cx, scope, null, 0, (Function) replaceValue);
 
                 Object replacementObj =
                         ((Callable) replaceValue)
@@ -1059,8 +1042,7 @@ final class NativeString extends ScriptableObject {
         return result.toString();
     }
 
-    private static Object js_matchAll(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_matchAll(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.14
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "matchAll");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
@@ -1101,7 +1083,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_localeCompare(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         // For now, create and configure a collator instance. I can't
         // actually imagine that this'd be slower than caching them
         // a la ClassCache, so we aren't trying to outsmart ourselves
@@ -1116,7 +1098,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toLocaleLowerCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String thisStr =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toLocaleLowerCase"));
@@ -1133,7 +1115,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toLocaleUpperCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String thisStr =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toLocaleUpperCase"));
@@ -1149,7 +1131,7 @@ final class NativeString extends ScriptableObject {
         return thisStr.toUpperCase(locale);
     }
 
-    private static Object js_trim(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_trim(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "trim"));
         char[] chars = str.toCharArray();
@@ -1166,8 +1148,7 @@ final class NativeString extends ScriptableObject {
         return str.substring(start, end);
     }
 
-    private static Object js_trimLeft(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_trimLeft(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "trimLeft"));
         char[] chars = str.toCharArray();
@@ -1181,8 +1162,7 @@ final class NativeString extends ScriptableObject {
         return str.substring(start, end);
     }
 
-    private static Object js_trimRight(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_trimRight(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "trimRight"));
@@ -1198,8 +1178,7 @@ final class NativeString extends ScriptableObject {
         return str.substring(start, end);
     }
 
-    private static Object js_normalize(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_normalize(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (args.length == 0 || Undefined.isUndefined(args[0])) {
             return Normalizer.normalize(
                     ScriptRuntime.toString(
@@ -1224,8 +1203,7 @@ final class NativeString extends ScriptableObject {
                 form);
     }
 
-    private static String js_repeat(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_repeat(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "repeat"));
         double cnt = ScriptRuntime.toInteger(args, 0);
@@ -1261,7 +1239,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_codePointAt(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "codePointAt"));
@@ -1278,7 +1256,7 @@ final class NativeString extends ScriptableObject {
      *     fillString])</a>
      */
     private static String pad(
-            Context cx, Scriptable thisObj, String functionName, Object[] args, boolean atStart) {
+            Context cx, Object thisObj, String functionName, Object[] args, boolean atStart) {
         String pad =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, functionName));
@@ -1310,13 +1288,11 @@ final class NativeString extends ScriptableObject {
         return concat.insert(0, pad).toString();
     }
 
-    private static Object js_padStart(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_padStart(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return pad(cx, thisObj, "padStart", args, true);
     }
 
-    private static Object js_padEnd(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_padEnd(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return pad(cx, thisObj, "padEnd", args, false);
     }
 
@@ -1327,7 +1303,7 @@ final class NativeString extends ScriptableObject {
      *
      * <p>22.1.2.4 String.raw [Draft ECMA-262 / April 28, 2021]
      */
-    private static Object js_raw(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_raw(Context cx, VarScope scope, Object thisObj, Object[] args) {
         /* step 1-2 */
         Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
         Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
@@ -1365,7 +1341,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_isWellFormed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence str =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "isWellFormed"));
@@ -1391,7 +1367,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toWellFormed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         CharSequence str =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toWellFormed"));
@@ -1437,63 +1413,55 @@ final class NativeString extends ScriptableObject {
         return sb.toString();
     }
 
-    private static Object js_bold(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_bold(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "bold", "b", null, args);
     }
 
-    private static Object js_italics(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_italics(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "italics", "i", null, args);
     }
 
-    private static Object js_fixed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_fixed(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "fixed", "tt", null, args);
     }
 
-    private static Object js_strike(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_strike(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "strike", "strike", null, args);
     }
 
-    private static Object js_small(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_small(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "small", "small", null, args);
     }
 
-    private static Object js_big(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_big(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "big", "big", null, args);
     }
 
-    private static Object js_blink(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_blink(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "blink", "blink", null, args);
     }
 
-    private static Object js_sup(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_sup(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "sup", "sup", null, args);
     }
 
-    private static Object js_sub(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_sub(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "sub", "sub", null, args);
     }
 
-    private static Object js_fontsize(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_fontsize(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "fontsize", "font", "size", args);
     }
 
-    private static Object js_fontcolor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_fontcolor(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "fontcolor", "font", "color", args);
     }
 
-    private static Object js_link(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_link(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "link", "a", "href", args);
     }
 
-    private static Object js_anchor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_anchor(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "anchor", "a", "name", args);
     }
 }
