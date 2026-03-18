@@ -5,7 +5,7 @@ package org.mozilla.javascript;
  * should only be used internally by implementation, or by other {@link SlotMap}s which share the
  * same lock.
  */
-interface LockAwareSlotMap extends SlotMap {
+interface LockAwareSlotMap<T extends PropHolder<T>> extends SlotMap<T> {
     /** The equivalent of {@link SlotMap#size()}. */
     int sizeWithLock();
 
@@ -13,24 +13,24 @@ interface LockAwareSlotMap extends SlotMap {
     boolean isEmptyWithLock();
 
     /** The equivalent of {@link SlotMap#modify(SlotMapOwner, Object, int, int)}. */
-    Slot modifyWithLock(SlotMapOwner owner, Object key, int index, int attributes);
+    Slot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes);
 
     /** The equivalent of {@link SlotMap#query(Object, int)}. */
-    Slot queryWithLock(Object key, int index);
+    Slot<T> queryWithLock(Object key, int index);
 
     /**
      * The equivalent of {@link SlotMap#compute(SlotMapOwner, Object, int,
      * org.mozilla.javascript.SlotMap.SlotComputer)}.
      */
-    <S extends Slot> S computeWithLock(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
+    <S extends Slot<T>> S computeWithLock(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> compoundOp,
             Object key,
             int index,
-            SlotComputer<S> compute);
+            SlotComputer<S, T> compute);
 
     /** The equivalent of {@link SlotMap#add(SlotMapOwner, Slot)}. */
-    void addWithLock(SlotMapOwner owner, Slot newSlot);
+    void addWithLock(SlotMapOwner<T> owner, Slot<T> newSlot);
 
     long getReadLock();
 
@@ -39,8 +39,8 @@ interface LockAwareSlotMap extends SlotMap {
     void releaseLock(long lock);
 
     @Override
-    default CompoundOperationMap startCompoundOp(SlotMapOwner owner, boolean forWriting) {
+    default CompoundOperationMap<T> startCompoundOp(SlotMapOwner<T> owner, boolean forWriting) {
         long stamp = forWriting ? getWriteLock() : getReadLock();
-        return new ThreadSafeCompoundOperationMap(owner, this, stamp);
+        return new ThreadSafeCompoundOperationMap<T>(owner, this, stamp);
     }
 }

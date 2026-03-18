@@ -13,7 +13,7 @@ import java.math.BigInteger;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeJavaObject;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 public class NativeJavaObjectTest {
 
@@ -22,7 +22,7 @@ public class NativeJavaObjectTest {
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
 
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             {
                 String source = "java.util.Collections.singletonList('123').get(0)";
                 Object result = cx.evaluateString(scope, source, "source", 1, null);

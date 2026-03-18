@@ -10,6 +10,7 @@ import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -18,7 +19,7 @@ public class LambdaAccessorSlotTest {
     public void testGetterProperty() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -43,7 +44,7 @@ public class LambdaAccessorSlotTest {
     public void testThrowIfNeitherGetterOrSetterAreDefined() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     var error =
                             assertThrows(
                                     EcmaError.class,
@@ -62,7 +63,7 @@ public class LambdaAccessorSlotTest {
     public void testCanUpdateValueUsingSetter() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -93,7 +94,7 @@ public class LambdaAccessorSlotTest {
     public void testOnlyGetterCanBeAccessed() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx, "status", (thisObj) -> self(thisObj).getStatus(), DONTENUM);
@@ -122,17 +123,19 @@ public class LambdaAccessorSlotTest {
     public void testRedefineExistingProperty() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     var sh = new StatusHolder("PENDING");
 
                     sh.defineProperty("value", "oldValueOfValue", DONTENUM);
 
-                    sh.defineProperty(cx, "value", (thisObj) -> "valueOfValue", null, DONTENUM);
+                    sh.defineProperty(
+                            cx, scope, "value", (thisObj) -> "valueOfValue", null, DONTENUM);
 
-                    sh.defineProperty(cx, "status", (thisObj) -> 42, null, DONTENUM);
+                    sh.defineProperty(cx, scope, "status", (thisObj) -> 42, null, DONTENUM);
 
                     sh.defineProperty(
                             cx,
+                            scope,
                             "status",
                             (thisObj) -> self(thisObj).getStatus(),
                             (thisObj, value) -> self(thisObj).setStatus(value),
@@ -151,7 +154,7 @@ public class LambdaAccessorSlotTest {
     public void testWhenNoSetterDefined_InStrictMode_WillThrowException() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx, "status", (thisObj) -> self(thisObj).getStatus(), DONTENUM);
@@ -186,7 +189,7 @@ public class LambdaAccessorSlotTest {
     public void testWhenNoSetterDefined_InNormalMode_NoErrorButValueIsNotChanged() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx, "status", (thisObj) -> self(thisObj).getStatus(), DONTENUM);
@@ -216,7 +219,7 @@ public class LambdaAccessorSlotTest {
     public void testSetterOnly_WillModifyUnderlyingValue() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -243,7 +246,7 @@ public class LambdaAccessorSlotTest {
     public void testGetterUsing_getOwnPropertyDescriptor() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx, "status", (thisObj) -> self(thisObj).getStatus(), DONTENUM);
@@ -266,7 +269,7 @@ public class LambdaAccessorSlotTest {
     public void testSetterOnlyUsing_getOwnPropertyDescriptor() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -295,7 +298,7 @@ public class LambdaAccessorSlotTest {
     public void testSetterOnlyUsing_getOwnPropertyDescriptor_missingValue() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -324,7 +327,7 @@ public class LambdaAccessorSlotTest {
     public void testSetValueUsing_getOwnPropertyDescriptor() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -352,7 +355,7 @@ public class LambdaAccessorSlotTest {
     public void testSetterOnlyUsing_getOwnPropertyDescriptor_ErrorOnGet() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -383,7 +386,7 @@ public class LambdaAccessorSlotTest {
     public void testRedefineExistingProperty_ChangingConfigurableAttr_ShouldFailValidation() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     var sh = new StatusHolder("PENDING");
                     ScriptableObject existingDesc = (ScriptableObject) cx.newObject(scope);
 
@@ -398,6 +401,7 @@ public class LambdaAccessorSlotTest {
                                     () ->
                                             sh.defineProperty(
                                                     cx,
+                                                    scope,
                                                     "status",
                                                     (thisObj) -> self(thisObj).getStatus(),
                                                     (thisObj, value) ->
@@ -418,7 +422,7 @@ public class LambdaAccessorSlotTest {
             testRedefineExistingProperty_ModifyingNotConfigurableProperty_ShouldFailValidation() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     var sh = new StatusHolder("PENDING");
                     ScriptableObject existingDesc = (ScriptableObject) cx.newObject(scope);
 
@@ -434,6 +438,7 @@ public class LambdaAccessorSlotTest {
                                     () ->
                                             sh.defineProperty(
                                                     cx,
+                                                    scope,
                                                     "status",
                                                     (thisObj) -> self(thisObj).getStatus(),
                                                     (thisObj, value) ->
@@ -456,7 +461,7 @@ public class LambdaAccessorSlotTest {
     public void testSetterOnlyUsing_getOwnPropertyDescriptor_InStrictMode_ErrorOnGet() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx,
@@ -488,7 +493,7 @@ public class LambdaAccessorSlotTest {
     public void testGetterOnlyUsing_getOwnPropertyDescriptor_ErrorOnSet() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx, "status", (thisObj) -> self(thisObj).getStatus(), DONTENUM);
@@ -516,7 +521,7 @@ public class LambdaAccessorSlotTest {
     public void testGetterOnlyUsing_getOwnPropertyDescriptor_InStrictMode_ErrorOnSet() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     StatusHolder.init(scope)
                             .definePrototypeProperty(
                                     cx, "status", (thisObj) -> self(thisObj).getStatus(), DONTENUM);

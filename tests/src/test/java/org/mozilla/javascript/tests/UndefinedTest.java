@@ -44,12 +44,14 @@ public class UndefinedTest {
         final String testFuncSource =
                 "load('testsrc/assert.js');\n"
                         + "function testFunc() {\n"
+                        + "\"use strict\";\n"
                         + "assertSame(this, undefined);\n"
                         + "}\n"
                         + "testFunc;";
         Callable testFunc =
                 (Callable) cx.evaluateString(global, testFuncSource, "test.js", 1, null);
         // Ensure that using SCRIPTABLE_UNDEFINED means that "this" is really undefined
+        // for strict mode functions.
         testFunc.call(cx, global, Undefined.SCRIPTABLE_UNDEFINED, ScriptRuntime.emptyArgs);
     }
 

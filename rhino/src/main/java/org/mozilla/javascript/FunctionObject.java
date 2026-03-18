@@ -14,7 +14,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import org.mozilla.javascript.commonjs.module.ModuleScope;
 
 public class FunctionObject extends BaseFunction {
     private static final long serialVersionUID = -5332312783643935019L;
@@ -79,10 +78,10 @@ public class FunctionObject extends BaseFunction {
      */
     public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor<?>) methodOrConstructor);
+            member = new MemberBox(scope, (Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox((Method) methodOrConstructor);
+            member = new MemberBox(scope, (Method) methodOrConstructor);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
@@ -325,7 +324,7 @@ public class FunctionObject extends BaseFunction {
         ScriptRuntime.setFunctionProtoAndParent(this, Context.getCurrentContext(), scope);
         setImmunePrototypeProperty(prototype);
 
-        prototype.setParentScope(this);
+        prototype.setParentScope(scope);
 
         defineProperty(prototype, "constructor", this, attributes);
         setParentScope(scope);
@@ -353,10 +352,14 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Function#call( Context, Scriptable, Scriptable, Object[])
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Scriptable scope, Scriptable thisArg, Object[] args) {
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;
+        Scriptable thisObj = ScriptRuntime.getThisForScope(getDeclarationScope(), thisArg);
+        if (thisObj == null || Undefined.isUndefined(thisObj)) {
+            thisObj = ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
+        }
 
         if (parmsLength < 0) {
             for (int i = 0; i < argsLength; i++) {
@@ -388,19 +391,17 @@ public class FunctionObject extends BaseFunction {
                 }
                 if (!clazz.isInstance(thisObj)) {
                     boolean compatible = false;
-                    if (thisObj == scope || thisObj instanceof ModuleScope) {
-                        Scriptable parentScope = getDeclarationScope();
-                        if (scope != parentScope) {
-                            // Call with dynamic scope for standalone function,
-                            // use parentScope as thisObj
-                            compatible = clazz.isInstance(parentScope);
-                            if (compatible) {
-                                thisObj = parentScope;
-                            }
+                    var top1 = ScriptableObject.getTopLevelScope(scope);
+                    var top2 = ScriptableObject.getTopLevelScope(getDeclarationScope());
+                    if (top1 != top2 && thisArg != thisObj) {
+                        thisObj = top1.getGlobalThis();
+                        if (clazz.isInstance(thisObj)) {
+                            compatible = true;
                         }
                     }
+
+                    // Couldn't find an object to call this on.
                     if (!compatible) {
-                        // Couldn't find an object to call this on.
                         throw ScriptRuntime.typeErrorById("msg.incompat.call", functionName);
                     }
                 }

@@ -13,6 +13,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -29,25 +30,26 @@ public class Builtins {
 
     private Writer stdout;
 
-    void register(Context cx, ScriptableObject scope, ScriptContext sc) {
+    void register(Context cx, TopLevel scope, ScriptContext sc) {
         if (sc.getWriter() == null) {
             stdout = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
         } else {
             stdout = sc.getWriter();
         }
 
-        scope.defineProperty(
-                scope,
-                "print",
-                0,
-                Builtins::print,
-                ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
-                ScriptableObject.DONTENUM | ScriptableObject.READONLY);
+        scope.getGlobalThis()
+                .defineProperty(
+                        scope,
+                        "print",
+                        0,
+                        Builtins::print,
+                        ScriptableObject.PERMANENT | ScriptableObject.DONTENUM,
+                        ScriptableObject.DONTENUM | ScriptableObject.READONLY);
     }
 
     private static Object print(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         try {
-            Builtins self = getSelf(thisObj);
+            Builtins self = getSelf(scope);
             for (Object arg : args) {
                 self.stdout.write(ScriptRuntime.toString(arg));
             }

@@ -8,14 +8,19 @@ import org.junit.jupiter.api.Test;
 /** Ensures that slot map promotion */
 class SlotMapPromotionTest {
     @Test
+    @SuppressWarnings("unchecked")
     public void promotionFromEmptyToSingleSlot() {
-        assertPromotes(() -> SlotMapOwner.EMPTY_SLOT_MAP, SlotMapOwner.SingleEntrySlotMap.class);
+        assertPromotes(
+                () -> (SlotMap<Scriptable>) SlotMapOwner.EMPTY_SLOT_MAP,
+                SlotMapOwner.SingleEntrySlotMap.class);
     }
 
     @Test
     public void promotionFromSingleToEmbedded() {
         assertPromotes(
-                () -> new SlotMapOwner.SingleEntrySlotMap(new Slot(new Object(), 0, 0)),
+                () ->
+                        new SlotMapOwner.SingleEntrySlotMap<>(
+                                new Slot<Scriptable>(new Object(), 0, 0)),
                 EmbeddedSlotMap.class);
     }
 
@@ -23,7 +28,7 @@ class SlotMapPromotionTest {
     public void promotionFromEmbeddedToHash() {
         assertPromotes(
                 () -> {
-                    var map = new EmbeddedSlotMap(SlotMapOwner.LARGE_HASH_SIZE);
+                    var map = new EmbeddedSlotMap<Scriptable>(SlotMapOwner.LARGE_HASH_SIZE);
                     fillToCapacity(SlotMapOwner.LARGE_HASH_SIZE, map);
                     return map;
                 },
@@ -31,16 +36,19 @@ class SlotMapPromotionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void promotionFromThreadSafeEmptyToSingleSlot() {
         assertPromotes(
-                () -> SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP,
+                () -> (SlotMap<Scriptable>) SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP,
                 SlotMapOwner.ThreadSafeSingleEntrySlotMap.class);
     }
 
     @Test
     public void promotionFromThreadSafeSingleToEmbedded() {
         assertPromotes(
-                () -> new SlotMapOwner.ThreadSafeSingleEntrySlotMap(new Slot(new Object(), 0, 0)),
+                () ->
+                        new SlotMapOwner.ThreadSafeSingleEntrySlotMap<>(
+                                new Slot<Scriptable>(new Object(), 0, 0)),
                 ThreadSafeEmbeddedSlotMap.class);
     }
 
@@ -48,21 +56,21 @@ class SlotMapPromotionTest {
     public void promotionFromThreadSafeEmbeddedToHash() {
         assertPromotes(
                 () -> {
-                    var map = new ThreadSafeEmbeddedSlotMap();
+                    var map = new ThreadSafeEmbeddedSlotMap<Scriptable>();
                     fillToCapacity(SlotMapOwner.LARGE_HASH_SIZE, map);
                     return map;
                 },
                 ThreadSafeHashSlotMap.class);
     }
 
-    private static void fillToCapacity(int size, EmbeddedSlotMap map) {
+    private static void fillToCapacity(int size, EmbeddedSlotMap<Scriptable> map) {
         for (int i = 0; i < size; ++i) {
-            map.add(null, new Slot(Integer.toString(i), i, 0));
+            map.add(null, new Slot<Scriptable>(Integer.toString(i), i, 0));
         }
     }
 
     private void assertPromotes(
-            Supplier<SlotMap> slotMapSupplier, Class<? extends SlotMap> expectedClass) {
+            Supplier<SlotMap<Scriptable>> slotMapSupplier, Class<?> expectedClass) {
         ScriptableObject obj = new TestScriptableObject();
         obj.setMap(slotMapSupplier.get());
 

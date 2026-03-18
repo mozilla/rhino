@@ -70,7 +70,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         }
 
         if (members.has(name, true)) {
-            return members.get(this, name, javaObject, true);
+            return members.get(this, parent, name, javaObject, true);
         }
 
         Context cx = Context.getContext();
@@ -86,7 +86,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         Class<?> nestedClass = findNestedClass(getClassObject(), name);
         if (nestedClass != null) {
             Scriptable nestedValue = wrapFactory.wrapJavaClass(cx, scope, nestedClass);
-            nestedValue.setParentScope(this);
+            nestedValue.setParentScope(parent);
             return nestedValue;
         }
 

@@ -81,7 +81,7 @@ class JavaMembers {
         return findExplicitFunction(name, isStatic) != null;
     }
 
-    Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+    Object get(Scriptable obj, Scriptable scope, String name, Object javaObject, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
         if (!isStatic && member == null) {
@@ -105,7 +105,7 @@ class JavaMembers {
             if (bean.getter == null) {
                 return Scriptable.NOT_FOUND;
             }
-            return bean.getter.call(cx, scope, scope, ScriptRuntime.emptyArgs);
+            return bean.getter.call(cx, scope, obj, ScriptRuntime.emptyArgs);
         }
 
         var field = (NativeJavaField) member;

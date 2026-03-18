@@ -13,8 +13,8 @@ import static org.mozilla.javascript.tests.Evaluator.eval;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeObject;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSGetter;
 import org.mozilla.javascript.annotations.JSSetter;
@@ -49,7 +49,7 @@ public class ObjectGetOwnPropertyDescriptorTest {
     @Test
     public void callPropertyDescriptorSetterWithConsString() throws Exception {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, AnnotatedHostObject.class);
 
             final String script =

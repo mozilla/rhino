@@ -546,7 +546,8 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected Object[] getIds(CompoundOperationMap map, boolean nonEnumerable, boolean getSymbols) {
+    protected Object[] getIds(
+            CompoundOperationMap<Scriptable> map, boolean nonEnumerable, boolean getSymbols) {
         // In ES6, Strings have entries in the property map for each character.
         Context cx = Context.getCurrentContext();
         if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -927,7 +928,7 @@ final class NativeString extends ScriptableObject {
         String replacement;
         if (functionalReplace) {
             Scriptable callThis =
-                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Function) replaceValue);
 
             Object replacementObj =
                     ((Callable) replaceValue)
@@ -1024,7 +1025,7 @@ final class NativeString extends ScriptableObject {
             if (functionalReplace) {
                 Scriptable callThis =
                         ScriptRuntime.getApplyOrCallThis(
-                                cx, scope, null, 0, (Callable) replaceValue);
+                                cx, scope, null, 0, (Function) replaceValue);
 
                 Object replacementObj =
                         ((Callable) replaceValue)
