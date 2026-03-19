@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Test for TypedArrays. */
@@ -115,7 +115,7 @@ public class TypedArrayJavaTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     for (String type : allNativeTypes) {
                         String scr = script.replace("§§type§§", type);

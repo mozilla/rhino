@@ -38,6 +38,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
                 Utils.contextFactoryWithFeatures(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE);
 
         try (Context context = contextFactory.enterContext()) {
+            context.setLanguageVersion(Context.VERSION_1_8);
             context.setInterpretedMode(interpretedMode);
             Global global = new Global(context);
             int testsPassed = global.runDoctest(context, global, source, name, 1);

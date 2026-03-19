@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 
 class SlotMapConcurrentLocksPromotionTest {
     @Test
+    @SuppressWarnings("unchecked")
     public void singleThreadPromotionInCompute_emptyToOne() {
         ScriptableObject obj = new TestScriptableObject();
-        obj.setMap(SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP);
+        obj.setMap((SlotMap<Scriptable>) SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP);
 
         obj.getMap()
                 .compute(
@@ -28,9 +29,10 @@ class SlotMapConcurrentLocksPromotionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void singleThreadPromotionInCompute_emptyToTwo() {
         ScriptableObject obj = new TestScriptableObject();
-        obj.setMap(SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP);
+        obj.setMap((SlotMap<Scriptable>) SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP);
 
         obj.getMap()
                 .compute(
@@ -52,7 +54,7 @@ class SlotMapConcurrentLocksPromotionTest {
     @Test
     public void singleThreadPromotionInCompute_oneToTwo() {
         ScriptableObject obj = new TestScriptableObject();
-        obj.setMap(new SlotMapOwner.SingleEntrySlotMap(new Slot("a", 1, 0)));
+        obj.setMap(new SlotMapOwner.SingleEntrySlotMap<>(new Slot<Scriptable>("a", 1, 0)));
 
         obj.getMap()
                 .compute(
@@ -62,7 +64,7 @@ class SlotMapConcurrentLocksPromotionTest {
                         (key, index, existing, mutableMap, owner) -> {
                             assertSame(owner, obj);
 
-                            mutableMap.add(owner, new Slot("b", 2, 0));
+                            mutableMap.add(owner, new Slot<>("b", 2, 0));
 
                             return null;
                         });

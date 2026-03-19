@@ -16,6 +16,8 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -25,7 +27,7 @@ import org.mozilla.javascript.tools.shell.Global;
 public class NativeWrappedArrayTest {
 
     private Context cx;
-    private Scriptable global;
+    private TopLevel global;
 
     @Before
     public void init() {
@@ -84,9 +86,9 @@ public class NativeWrappedArrayTest {
 
     @Test
     public void customArray() throws IOException {
-        ((ScriptableObject) global)
+        global.getGlobalThis()
                 .defineFunctionProperties(
-                        new String[] {"makeCustomArray"}, NativeWrappedArrayTest.class, 0);
+                        global, new String[] {"makeCustomArray"}, NativeWrappedArrayTest.class, 0);
 
         final String setFunc = "function makeTestArray() { return makeCustomArray(); }";
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
@@ -108,7 +110,7 @@ public class NativeWrappedArrayTest {
         a.add("two");
         a.add("three");
         a.add("four");
-        return new WrappedArray(thisObj, a);
+        return new WrappedArray(fn.getDeclarationScope(), a);
     }
 
     static class WrappedArray extends ScriptableObject {
@@ -116,7 +118,7 @@ public class NativeWrappedArrayTest {
         private final ArrayList<String> list;
         private int length;
 
-        WrappedArray(Scriptable scope, ArrayList<String> l) {
+        WrappedArray(VarScope scope, ArrayList<String> l) {
             super(scope, ScriptableObject.getArrayPrototype(scope));
             this.list = l;
             this.length = l.size();

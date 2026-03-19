@@ -15,7 +15,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=448816
@@ -37,7 +37,7 @@ public class Bug448816Test {
         reference.put(Integer.valueOf(1), Integer.valueOf(42));
         // get a js object as map
         try (Context context = Context.enter()) {
-            ScriptableObject scope = context.initStandardObjects();
+            TopLevel scope = context.initStandardObjects();
             map =
                     (Map<Object, Object>)
                             context.evaluateString(

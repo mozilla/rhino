@@ -40,7 +40,7 @@ import org.mozilla.javascript.ScriptableObject.LambdaSetterFunction;
  *                       .withMethod(PROTO, "valueOf", 0, NativeBoolean::js_valueOf)
  *                       .build();
  *
- *   static void init(Scriptable scope, boolean sealed) {
+ *   static void init(VarScope scope, boolean sealed) {
  *       // Boolean is an unusual object in that the prototype is itself a Boolean
  *       var constructor = DESCRIPTOR.buildConstructor(scope, new NativeBoolean(false), sealed);
  *   }
@@ -87,7 +87,7 @@ public class ClassDescriptor {
             this.attributes = attributes;
         }
 
-        abstract void makeProp(Context cx, Scriptable scope, ScriptableObject object);
+        abstract void makeProp(Context cx, VarScope scope, ScriptableObject object);
     }
 
     private static class LambdaGetSetPropDesc extends PropDesc {
@@ -105,17 +105,17 @@ public class ClassDescriptor {
         }
 
         @Override
-        void makeProp(Context cx, Scriptable scope, ScriptableObject obj) {
+        void makeProp(Context cx, VarScope scope, ScriptableObject obj) {
             if (name instanceof String) {
-                obj.defineProperty(cx, (String) name, getter, setter, attributes);
+                obj.defineProperty(cx, scope, (String) name, getter, setter, attributes);
             } else {
-                obj.defineProperty(cx, (SymbolKey) name, getter, setter, attributes);
+                obj.defineProperty(cx, scope, (SymbolKey) name, getter, setter, attributes);
             }
         }
     }
 
     public interface ValueCreator {
-        DescriptorInfo apply(Context cx, Scriptable Scope, ScriptableObject obj);
+        DescriptorInfo apply(Context cx, VarScope scope, ScriptableObject obj);
     }
 
     private static class CreateValuePropDesc extends PropDesc {
@@ -127,7 +127,7 @@ public class ClassDescriptor {
         }
 
         @Override
-        void makeProp(Context cx, Scriptable scope, ScriptableObject obj) {
+        void makeProp(Context cx, VarScope scope, ScriptableObject obj) {
             if (name instanceof String) {
                 obj.defineOwnProperty(cx, name, creator.apply(cx, scope, obj), false);
             } else {
@@ -157,12 +157,12 @@ public class ClassDescriptor {
 
     /** Build a constructor from this descriptor. */
     public JSFunction buildConstructor(
-            Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
+            Context cx, VarScope scope, ScriptableObject proto, boolean sealed) {
         return buildConstructor(cx, scope, proto, sealed, (c, s) -> {});
     }
 
     public ScriptableObject populateGlobal(
-            Context cx, Scriptable scope, ScriptableObject global, boolean sealed) {
+            Context cx, VarScope scope, ScriptableObject global, boolean sealed) {
         var objProto = ScriptableObject.getObjectPrototype(scope);
         global.setPrototype(objProto);
         ScriptableObject.defineProperty(
@@ -194,7 +194,7 @@ public class ClassDescriptor {
      */
     public JSFunction buildConstructor(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             ScriptableObject proto,
             boolean sealed,
             BiConsumer<Context, JSFunction> customStep) {
@@ -203,7 +203,6 @@ public class ClassDescriptor {
         if (proto != null) {
             ctor.setPrototypeProperty(proto);
             ctor.setPrototypePropertyAttributes(ctorDesc.stdAttrs);
-            proto.setParentScope(scope);
             proto.put("constructor", proto, ctor);
         }
 
@@ -735,7 +734,7 @@ public class ClassDescriptor {
                 Context cx,
                 JSFunction executableObject,
                 Object newTarget,
-                Scriptable scope,
+                VarScope scope,
                 Object thisObj,
                 Object[] args) {
             return exec.execute(cx, executableObject, newTarget, scope, thisObj, args);
@@ -746,7 +745,7 @@ public class ClassDescriptor {
                 Context cx,
                 JSFunction executableObject,
                 Object state,
-                Scriptable scope,
+                VarScope scope,
                 int operation,
                 Object value) {
             return resume.resume(cx, executableObject, state, scope, operation, value);

@@ -5,7 +5,6 @@ import static org.mozilla.javascript.Context.FEATURE_E4X;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.testutils.Utils;
@@ -219,7 +218,7 @@ public class OptionalChainingOperatorTest {
     @Test
     public void canParseOptionalChainingEvenWithoutXml() {
         try (Context cx = Utils.contextFactoryWithFeatureDisabled(FEATURE_E4X).enterContext()) {
-            Scriptable scope = cx.initStandardObjects(new TopLevel());
+            TopLevel scope = cx.initStandardObjects(new TopLevel());
             String source = "o = {a: true}; o?.['a']\n";
             Object result = cx.evaluateString(scope, source, "test", 1, null);
             assertEquals(Boolean.TRUE, result);

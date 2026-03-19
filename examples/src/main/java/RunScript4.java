@@ -7,6 +7,7 @@
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * RunScript4: Execute scripts in an environment that includes the example Counter class.
@@ -69,7 +70,7 @@ public class RunScript4 {
     public static void main(String args[]) throws Exception {
         Context cx = Context.enter();
         try {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             // Use the Counter class to define a Counter constructor
             // and prototype in JavaScript.

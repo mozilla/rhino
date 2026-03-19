@@ -12,7 +12,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Timers;
@@ -22,7 +22,7 @@ import org.mozilla.javascript.tools.shell.Timers;
 public class ShellTimerTest {
     final int optLevel;
     private Context cx;
-    private Scriptable global;
+    private TopLevel global;
     private final Timers timers = new Timers();
 
     public ShellTimerTest(int optLevel) {

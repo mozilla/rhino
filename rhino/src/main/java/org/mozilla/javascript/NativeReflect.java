@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -20,32 +23,37 @@ final class NativeReflect extends ScriptableObject {
 
     private static final String REFLECT_TAG = "Reflect";
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
-        NativeReflect reflect = new NativeReflect();
-        reflect.setPrototype(getObjectPrototype(scope));
-        reflect.setParentScope(scope);
+    private static final ClassDescriptor DESCRIPTOR;
 
-        reflect.defineBuiltinProperty(scope, "apply", 3, NativeReflect::apply);
-        reflect.defineBuiltinProperty(scope, "construct", 2, NativeReflect::construct);
-        reflect.defineBuiltinProperty(scope, "defineProperty", 3, NativeReflect::defineProperty);
-        reflect.defineBuiltinProperty(scope, "deleteProperty", 2, NativeReflect::deleteProperty);
-        reflect.defineBuiltinProperty(scope, "get", 2, NativeReflect::get);
-        reflect.defineBuiltinProperty(
-                scope, "getOwnPropertyDescriptor", 2, NativeReflect::getOwnPropertyDescriptor);
-        reflect.defineBuiltinProperty(scope, "getPrototypeOf", 1, NativeReflect::getPrototypeOf);
-        reflect.defineBuiltinProperty(scope, "has", 2, NativeReflect::has);
-        reflect.defineBuiltinProperty(scope, "isExtensible", 1, NativeReflect::isExtensible);
-        reflect.defineBuiltinProperty(scope, "ownKeys", 1, NativeReflect::ownKeys);
-        reflect.defineBuiltinProperty(
-                scope, "preventExtensions", 1, NativeReflect::preventExtensions);
-        reflect.defineBuiltinProperty(scope, "set", 3, NativeReflect::set);
-        reflect.defineBuiltinProperty(scope, "setPrototypeOf", 2, NativeReflect::setPrototypeOf);
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(REFLECT_TAG)
+                        .withMethod(CTOR, "apply", 3, NativeReflect::apply)
+                        .withMethod(CTOR, "construct", 2, NativeReflect::construct)
+                        .withMethod(CTOR, "defineProperty", 3, NativeReflect::defineProperty)
+                        .withMethod(CTOR, "deleteProperty", 2, NativeReflect::deleteProperty)
+                        .withMethod(CTOR, "get", 2, NativeReflect::get)
+                        .withMethod(
+                                CTOR,
+                                "getOwnPropertyDescriptor",
+                                2,
+                                NativeReflect::getOwnPropertyDescriptor)
+                        .withMethod(CTOR, "getPrototypeOf", 1, NativeReflect::getPrototypeOf)
+                        .withMethod(CTOR, "has", 2, NativeReflect::has)
+                        .withMethod(CTOR, "isExtensible", 1, NativeReflect::isExtensible)
+                        .withMethod(CTOR, "ownKeys", 1, NativeReflect::ownKeys)
+                        .withMethod(CTOR, "preventExtensions", 1, NativeReflect::preventExtensions)
+                        .withMethod(CTOR, "set", 3, NativeReflect::set)
+                        .withMethod(CTOR, "setPrototypeOf", 2, NativeReflect::setPrototypeOf)
+                        .withProp(
+                                CTOR,
+                                SymbolKey.TO_STRING_TAG,
+                                value(REFLECT_TAG, DONTENUM | READONLY))
+                        .build();
+    }
 
-        reflect.defineProperty(SymbolKey.TO_STRING_TAG, REFLECT_TAG, DONTENUM | READONLY);
-        if (sealed) {
-            reflect.sealObject();
-        }
-        return reflect;
+    public static Object init(Context cx, VarScope scope, boolean sealed) {
+        return DESCRIPTOR.populateGlobal(cx, scope, new NativeObject(), sealed);
     }
 
     private NativeReflect() {}
@@ -55,7 +63,8 @@ final class NativeReflect extends ScriptableObject {
         return "Reflect";
     }
 
-    private static Object apply(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object apply(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -69,7 +78,7 @@ final class NativeReflect extends ScriptableObject {
         if (args[1] instanceof Scriptable) {
             thisObj = (Scriptable) args[1];
         } else if (ScriptRuntime.isPrimitive(args[1])) {
-            thisObj = cx.newObject(scope, "Object", new Object[] {args[1]});
+            thisObj = cx.newObject(s, "Object", new Object[] {args[1]});
         }
 
         if (ScriptRuntime.isSymbol(args[2])) {
@@ -78,7 +87,7 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject argumentsList = ScriptableObject.ensureScriptableObject(args[2]);
 
         return ScriptRuntime.applyOrCall(
-                true, cx, scope, callable, new Object[] {thisObj, argumentsList});
+                true, cx, s, callable, new Object[] {thisObj, argumentsList});
     }
 
     /**
@@ -86,7 +95,7 @@ final class NativeReflect extends ScriptableObject {
      * Reflect.construct (target, argumentsList[, newTarget])</a>
      */
     private static Scriptable construct(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         /*
          * 1. If IsConstructor(target) is false, throw a TypeError exception.
          * 2. If newTarget is not present, set newTarget to target.
@@ -106,62 +115,27 @@ final class NativeReflect extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[0]));
         }
 
-        Constructable ctor = (Constructable) args[0];
+        Constructable target = (Constructable) args[0];
         if (args.length < 2) {
-            return ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
-        }
-
-        if (args.length > 2 && !AbstractEcmaObjectOperations.isConstructor(cx, args[2])) {
-            throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
+            return target.construct(cx, target, s, null, ScriptRuntime.emptyArgs);
         }
 
         Object[] callArgs = ScriptRuntime.getApplyArguments(cx, args[1]);
 
-        Object newTargetPrototype = null;
-        if (args.length > 2) {
-            Scriptable newTarget = ScriptableObject.ensureScriptable(args[2]);
-
-            if (newTarget instanceof BaseFunction) {
-                newTargetPrototype = ((BaseFunction) newTarget).getPrototypeProperty();
-            } else {
-                newTargetPrototype = newTarget.get("prototype", newTarget);
-            }
-
-            if (!(newTargetPrototype instanceof Scriptable)
-                    || ScriptRuntime.isSymbol(newTargetPrototype)
-                    || Undefined.isUndefined(newTargetPrototype)) {
-                newTargetPrototype = null;
-            }
+        Constructable newTarget;
+        if (args.length < 3) {
+            newTarget = target;
+        } else if (AbstractEcmaObjectOperations.isConstructor(cx, args[2])) {
+            newTarget = (Function) args[2];
+        } else {
+            throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(args[2]));
         }
 
-        // our Constructable interface does not support the newTarget;
-        // therefore we use a cloned implementation that fixes
-        // the prototype before executing call(..).
-        if (ctor instanceof BaseFunction && newTargetPrototype != null) {
-            BaseFunction ctorBaseFunction = (BaseFunction) ctor;
-            Scriptable result = ctorBaseFunction.createObject(cx, scope);
-            if (result != null) {
-                result.setPrototype((Scriptable) newTargetPrototype);
-
-                Object val = ctorBaseFunction.call(cx, scope, result, callArgs);
-                if (val instanceof Scriptable) {
-                    return (Scriptable) val;
-                }
-
-                return result;
-            }
-        }
-
-        Scriptable newScriptable = ctor.construct(cx, scope, callArgs);
-        if (newTargetPrototype != null) {
-            newScriptable.setPrototype((Scriptable) newTargetPrototype);
-        }
-
-        return newScriptable;
+        return target.construct(cx, newTarget, s, null, callArgs);
     }
 
     private static Object defineProperty(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -191,7 +165,7 @@ final class NativeReflect extends ScriptableObject {
     }
 
     private static Object deleteProperty(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -204,7 +178,8 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
-    private static Object get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object get(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -224,29 +199,30 @@ final class NativeReflect extends ScriptableObject {
     }
 
     private static Scriptable getOwnPropertyDescriptor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
                 var desc = target.getOwnPropertyDescriptor(cx, args[1]);
-                return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(scope);
+                return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(s);
             }
 
             var desc = target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(args[1]));
-            return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(scope);
+            return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(s);
         }
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
     private static Scriptable getPrototypeOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         return target.getPrototype();
     }
 
-    private static Object has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object has(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -260,13 +236,13 @@ final class NativeReflect extends ScriptableObject {
     }
 
     private static Object isExtensible(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
         return target.isExtensible();
     }
 
     private static Scriptable ownKeys(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         final List<Object> strings = new ArrayList<>();
@@ -288,17 +264,18 @@ final class NativeReflect extends ScriptableObject {
         System.arraycopy(strings.toArray(), 0, keys, 0, strings.size());
         System.arraycopy(symbols.toArray(), 0, keys, strings.size(), symbols.size());
 
-        return cx.newArray(scope, keys);
+        return cx.newArray(s, keys);
     }
 
     private static Object preventExtensions(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
 
         return target.preventExtensions();
     }
 
-    private static Object set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object set(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ScriptableObject target = checkTarget(args);
         if (args.length < 2) {
             return true;
@@ -311,7 +288,7 @@ final class NativeReflect extends ScriptableObject {
             if (descriptor != null) {
                 Object setter = descriptor.setter;
                 if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter).call(cx, scope, receiver, new Object[] {args[2]});
+                    ((Function) setter).call(cx, s, receiver, new Object[] {args[2]});
                     return true;
                 }
 
@@ -324,11 +301,11 @@ final class NativeReflect extends ScriptableObject {
         if (ScriptRuntime.isSymbol(args[1])) {
             receiver.put((Symbol) args[1], receiver, args[2]);
         } else {
-            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[1]);
-            if (s.stringId == null) {
-                receiver.put(s.index, receiver, args[2]);
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
+            if (soi.stringId == null) {
+                receiver.put(soi.index, receiver, args[2]);
             } else {
-                receiver.put(s.stringId, receiver, args[2]);
+                receiver.put(soi.stringId, receiver, args[2]);
             }
         }
 
@@ -336,7 +313,7 @@ final class NativeReflect extends ScriptableObject {
     }
 
     private static Object setPrototypeOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
