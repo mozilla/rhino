@@ -12,7 +12,7 @@ import java.io.IOException;
 import org.junit.BeforeClass;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public abstract class JsTestsBase {
@@ -29,10 +29,9 @@ public abstract class JsTestsBase {
         this.interpretedMode = interpretedMode;
     }
 
-    public void runJsTest(Context cx, Scriptable shared, String name, String source) {
+    public void runJsTest(Context cx, TopLevel shared, String name, String source) {
         // create a lightweight top-level scope
-        Scriptable scope = cx.newObject(shared);
-        scope.setPrototype(shared);
+        TopLevel scope = TopLevel.createIsolate(shared);
         Object result;
         try {
             result = cx.evaluateString(scope, source, "jstest input: " + name, 1, null);
@@ -48,7 +47,7 @@ public abstract class JsTestsBase {
     public void runJsTests(File[] tests) throws IOException {
         try (Context cx = threadSafeFactory.enterContext()) {
             cx.setInterpretedMode(this.interpretedMode);
-            Scriptable shared = cx.initStandardObjects();
+            TopLevel shared = cx.initStandardObjects();
             for (File f : tests) {
                 int length = (int) f.length(); // don't worry about very long
                 // files

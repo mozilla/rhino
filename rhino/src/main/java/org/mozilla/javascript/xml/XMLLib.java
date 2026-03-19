@@ -8,9 +8,10 @@ package org.mozilla.javascript.xml;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Ref;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 
 public abstract class XMLLib {
     private static final Object XML_LIB_KEY = new Object();
@@ -37,8 +38,8 @@ public abstract class XMLLib {
         public abstract String getImplementationClassName();
     }
 
-    public static XMLLib extractFromScopeOrNull(Scriptable scope) {
-        ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
+    public static XMLLib extractFromScopeOrNull(VarScope scope) {
+        ScopeObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // If library is not yet initialized, return null
             return null;
@@ -51,7 +52,7 @@ public abstract class XMLLib {
         return (XMLLib) so.getAssociatedValue(XML_LIB_KEY);
     }
 
-    public static XMLLib extractFromScope(Scriptable scope) {
+    public static XMLLib extractFromScope(VarScope scope) {
         XMLLib lib = extractFromScopeOrNull(scope);
         if (lib != null) {
             return lib;
@@ -60,8 +61,8 @@ public abstract class XMLLib {
         throw Context.reportRuntimeError(msg);
     }
 
-    protected final XMLLib bindToScope(Scriptable scope) {
-        ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
+    protected final XMLLib bindToScope(VarScope scope) {
+        ScopeObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // standard library should be initialized at this point
             throw new IllegalStateException();
@@ -71,10 +72,10 @@ public abstract class XMLLib {
 
     public abstract boolean isXMLName(Context cx, Object name);
 
-    public abstract Ref nameRef(Context cx, Object name, Scriptable scope, int memberTypeFlags);
+    public abstract Ref nameRef(Context cx, Object name, VarScope scope, int memberTypeFlags);
 
     public abstract Ref nameRef(
-            Context cx, Object namespace, Object name, Scriptable scope, int memberTypeFlags);
+            Context cx, Object namespace, Object name, VarScope scope, int memberTypeFlags);
 
     /**
      * Escapes the reserved characters in a value of an attribute.

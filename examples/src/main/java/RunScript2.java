@@ -5,8 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * RunScript2: Like RunScript, but reflects the System.out into JavaScript.
@@ -53,7 +53,7 @@ public class RunScript2 {
     public static void main(String args[]) {
         Context cx = Context.enter();
         try {
-            Scriptable scope = cx.initStandardObjects();
+            TopLevel scope = cx.initStandardObjects();
 
             // Add a global variable "out" that is a JavaScript reflection
             // of System.out

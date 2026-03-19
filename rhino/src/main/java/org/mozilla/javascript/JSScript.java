@@ -29,7 +29,7 @@ public class JSScript implements Script, ScriptOrFn<JSScript> {
     }
 
     @Override
-    public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {
+    public Object exec(Context cx, VarScope scope, Object thisObj) {
         Object ret;
         if (!ScriptRuntime.hasTopCall(cx)) {
             // It will go through "call" path. but they are equivalent

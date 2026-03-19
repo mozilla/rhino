@@ -35,7 +35,7 @@ class Arguments extends ScriptableObject {
     public Arguments(NativeCall activation, Context cx) {
         this.activation = activation;
 
-        Scriptable parent = activation.getParentScope();
+        VarScope parent = activation.getParentScope();
         setParentScope(parent);
         setPrototype(ScriptableObject.getObjectPrototype(parent));
 
@@ -45,12 +45,11 @@ class Arguments extends ScriptableObject {
         JSFunction f = activation.function;
         calleeObj = f;
 
-        defineProperty(
-                SymbolKey.ITERATOR,
+        var iter =
                 TopLevel.getBuiltinPrototype(
-                                ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.Array)
-                        .get("values", parent),
-                ScriptableObject.DONTENUM);
+                        ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.Array);
+
+        defineProperty(SymbolKey.ITERATOR, iter.get("values", iter), ScriptableObject.DONTENUM);
         defineProperty("length", lengthObj, ScriptableObject.DONTENUM);
 
         if (f.isStrict()) {
@@ -205,7 +204,8 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    Object[] getIds(CompoundOperationMap map, boolean getNonEnumerable, boolean getSymbols) {
+    Object[] getIds(
+            CompoundOperationMap<Scriptable> map, boolean getNonEnumerable, boolean getSymbols) {
         Object[] ids = super.getIds(map, getNonEnumerable, getSymbols);
         if (args.length != 0) {
             boolean[] present = new boolean[args.length];

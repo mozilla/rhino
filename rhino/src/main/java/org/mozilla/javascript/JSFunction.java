@@ -10,14 +10,14 @@ import org.mozilla.javascript.debug.DebuggableScript;
  */
 public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     private final JSDescriptor<JSFunction> descriptor;
-    private final Scriptable lexicalThis;
+    private final Object lexicalThis;
     private final Scriptable homeObject;
 
     public JSFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             JSDescriptor<JSFunction> descriptor,
-            Scriptable lexicalThis,
+            Object lexicalThis,
             Scriptable homeObject) {
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
@@ -29,7 +29,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     JSFunction(
-            Scriptable scope,
+            VarScope scope,
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,
             Scriptable homeObject) {
@@ -46,7 +46,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    public Scriptable getDeclarationScope() {
+    public VarScope getDeclarationScope() {
         return this.getParentScope();
     }
 
@@ -136,16 +136,30 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
-        var realThis = descriptor.hasLexicalThis() ? lexicalThis : thisObj;
+        var realThis = getThisObj(thisObj);
         return descriptor.getCode().execute(cx, this, Undefined.instance, scope, realThis, args);
     }
 
+    public final Object getThisObj(Object thisObj) {
+        if (descriptor.hasLexicalThis()) {
+            return lexicalThis;
+        } else if (!descriptor.isStrict()) {
+            if (thisObj == null || Undefined.isUndefined(thisObj)) {
+                return ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
+            } else {
+                return ScriptRuntime.toObject(getDeclarationScope(), thisObj);
+            }
+        } else {
+            return thisObj;
+        }
+    }
+
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return (Scriptable)
                     ScriptRuntime.doTopCall(
@@ -188,7 +202,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     public Object resumeGenerator(
-            Context cx, Scriptable scope, int operation, Object state, Object value) {
+            Context cx, VarScope scope, int operation, Object state, Object value) {
         return descriptor.getCode().resume(cx, this, state, scope, operation, value);
     }
 
@@ -202,7 +216,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         throw new UnsupportedOperationException("Cannot set home object on JS function.");
     }
 
-    public Scriptable getFunctionThis(Scriptable functionThis) {
+    public Object getFunctionThis(Scriptable functionThis) {
         if (descriptor.hasLexicalThis()) {
             return this.lexicalThis;
         } else {
@@ -221,7 +235,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     /** Create function compiled from Function(...) constructor. */
     public static JSFunction createFunction(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             JSDescriptor<JSFunction> desc,
             Scriptable homeObject,
             Object staticSecurityDomain) {
@@ -232,11 +246,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
 
     /** Create function embedded in script or another function. */
     static JSFunction createFunction(
-            Context cx,
-            Scriptable scope,
-            JSDescriptor<?> parent,
-            int index,
-            Scriptable homeObject) {
+            Context cx, VarScope scope, JSDescriptor<?> parent, int index, Scriptable homeObject) {
         JSDescriptor<JSFunction> desc = parent.getFunction(index);
         JSFunction f = new JSFunction(cx, scope, desc, null, homeObject);
         return f;

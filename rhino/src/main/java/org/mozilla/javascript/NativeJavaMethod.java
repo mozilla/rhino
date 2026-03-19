@@ -37,11 +37,6 @@ public class NativeJavaMethod extends BaseFunction {
     private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
             new CopyOnWriteArrayList<>();
 
-    NativeJavaMethod(ExecutableBox[] methods) {
-        this.functionName = methods[0].getName();
-        this.methods = methods;
-    }
-
     NativeJavaMethod(ExecutableBox[] methods, String name) {
         this.functionName = name;
         this.methods = methods;
@@ -53,7 +48,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Deprecated
-    public NativeJavaMethod(Method method, String name) {
+    public NativeJavaMethod(VarScope scope, Method method, String name) {
         this(new ExecutableBox(method, TypeInfoFactory.GLOBAL, method.getDeclaringClass()), name);
     }
 
@@ -134,7 +129,7 @@ public class NativeJavaMethod extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // Find a method that matches the types given.
         if (methods.length == 0) {
             throw new RuntimeException("No methods defined for call");
@@ -164,7 +159,7 @@ public class NativeJavaMethod extends BaseFunction {
         if (meth.isStatic()) {
             javaObject = null; // don't need an object
         } else {
-            Scriptable o = thisObj;
+            Scriptable o = ScriptRuntime.toObject(getDeclarationScope(), thisObj);
             Class<?> c = meth.getDeclaringClass();
             for (; ; ) {
                 if (o == null) {

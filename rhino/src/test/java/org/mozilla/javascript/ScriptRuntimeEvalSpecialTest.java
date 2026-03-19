@@ -24,7 +24,7 @@ public class ScriptRuntimeEvalSpecialTest {
     private static void canUseEvalSpecialWithThisSetTo(Object thisArg) {
         Utils.runWithAllModes(
                 cx -> {
-                    ScriptableObject scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     Object o =
                             ScriptRuntime.evalSpecial(
                                     cx, scope, thisArg, new Object[] {"true"}, "", 0);

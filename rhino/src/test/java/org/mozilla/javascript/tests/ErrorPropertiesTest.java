@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.RhinoException;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -79,7 +79,7 @@ public class ErrorPropertiesTest {
         Utils.runWithAllModes(
                 cx -> {
                     try {
-                        final ScriptableObject scope = cx.initStandardObjects();
+                        TopLevel scope = cx.initStandardObjects();
                         final Object o = cx.evaluateString(scope, script, "myScript.js", 1, null);
                         Assert.assertEquals(expected, o);
                         return o;

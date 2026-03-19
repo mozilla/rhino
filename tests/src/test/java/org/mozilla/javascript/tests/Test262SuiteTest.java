@@ -44,6 +44,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -51,6 +52,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -209,11 +211,11 @@ public class Test262SuiteTest {
             super();
         }
 
-        $262(Scriptable scope, Scriptable prototype) {
+        $262(VarScope scope, Scriptable prototype) {
             super(scope, prototype);
         }
 
-        static $262 init(Context cx, Scriptable scope) {
+        static $262 init(Context cx, VarScope scope) {
             $262 proto = new $262();
             proto.setPrototype(getObjectPrototype(scope));
             proto.setParentScope(scope);
@@ -223,8 +225,8 @@ public class Test262SuiteTest {
             proto.defineProperty(scope, "evalScript", 1, $262::evalScript);
             proto.defineProperty(scope, "detachArrayBuffer", 0, $262::detachArrayBuffer);
 
-            proto.defineProperty(cx, "global", $262::getGlobal, null, DONTENUM | READONLY);
-            proto.defineProperty(cx, "agent", $262::getAgent, null, DONTENUM | READONLY);
+            proto.defineProperty(cx, scope, "global", $262::getGlobal, null, DONTENUM | READONLY);
+            proto.defineProperty(cx, scope, "agent", $262::getAgent, null, DONTENUM | READONLY);
 
             proto.defineProperty(SymbolKey.TO_STRING_TAG, "__262__", DONTENUM | READONLY);
 
@@ -232,7 +234,7 @@ public class Test262SuiteTest {
             return proto;
         }
 
-        static $262 install(ScriptableObject scope, Scriptable parentScope) {
+        static $262 install(ScopeObject scope, Scriptable parentScope) {
             $262 instance = new $262(scope, parentScope);
 
             scope.put("$262", scope, instance);
@@ -241,13 +243,12 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object gc(Context cx, VarScope scope, Object thisObj, Object[] args) {
             System.gc();
             return Undefined.instance;
         }
 
-        public static Object evalScript(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public static Object evalScript(Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (args.length == 0) {
                 throw ScriptRuntime.throwError(cx, scope, "not enough args");
             }
@@ -256,17 +257,16 @@ public class Test262SuiteTest {
         }
 
         public static Object getGlobal(Scriptable scriptable) {
-            return scriptable.getParentScope();
+            return ((TopLevel) scriptable.getParentScope()).getGlobalThis();
         }
 
-        public static $262 createRealm(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            ScriptableObject realm = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
-            return install(realm, thisObj.getPrototype());
+        public static $262 createRealm(Context cx, VarScope scope, Object thisObj, Object[] args) {
+            TopLevel realm = cx.initSafeStandardObjects(new TopLevel());
+            return install(realm, ScriptRuntime.toObject(realm, thisObj).getPrototype());
         }
 
         public static Object detachArrayBuffer(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Object thisObj, Object[] args) {
             Scriptable buf = ScriptRuntime.toObject(scope, args[0]);
             if (buf instanceof NativeArrayBuffer) {
                 ((NativeArrayBuffer) buf).detach();
@@ -284,8 +284,8 @@ public class Test262SuiteTest {
         }
     }
 
-    private Scriptable buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
-        ScriptableObject scope = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
+    private TopLevel buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
+        TopLevel scope = cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
             String harnessKey = harnessFile + '-' + interpretedMode;
@@ -303,7 +303,7 @@ public class Test262SuiteTest {
                                             "Error reading test file " + harnessPath, ioe);
                                 }
                             });
-            harnessScript.exec(cx, scope, scope);
+            harnessScript.exec(cx, scope, scope.getGlobalThis());
         }
 
         $262 proto = $262.init(cx, scope);
@@ -341,7 +341,7 @@ public class Test262SuiteTest {
 
             boolean failedEarly = false;
             try {
-                Scriptable scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
+                TopLevel scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
                 String str = testCase.source;
                 int line = 1;
                 if (useStrict) {
@@ -353,7 +353,7 @@ public class Test262SuiteTest {
                 Script caseScript = cx.compileString(str, testFilePath, line, null);
 
                 failedEarly = false; // not after this line
-                caseScript.exec(cx, scope, scope);
+                caseScript.exec(cx, scope, scope.getGlobalThis());
 
                 if (testCase.isNegative()) {
                     fail(

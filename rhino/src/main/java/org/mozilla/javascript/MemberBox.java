@@ -36,14 +36,18 @@ final class MemberBox implements Serializable {
     transient Function asSetterFunction;
     transient Object delegateTo;
 
+    final VarScope scope;
+
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Method method) {
+    MemberBox(VarScope scope, Method method) {
+        this.scope = scope;
         init(method);
     }
 
-    MemberBox(Constructor<?> constructor) {
+    MemberBox(VarScope scope, Constructor<?> constructor) {
+        this.scope = scope;
         init(constructor);
     }
 
@@ -156,7 +160,7 @@ final class MemberBox implements Serializable {
     }
 
     /** Function returned by calls to __lookupGetter__ */
-    Function asGetterFunction(final String name, final Scriptable scope) {
+    Function asGetterFunction(final String name) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
@@ -166,8 +170,8 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
-                                Scriptable thisObj,
+                                VarScope callScope,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
                             if (nativeGetter.delegateTo == null) {
@@ -188,7 +192,7 @@ final class MemberBox implements Serializable {
     }
 
     /** Function returned by calls to __lookupSetter__ */
-    Function asSetterFunction(final String name, final Scriptable scope) {
+    Function asSetterFunction(final String name) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
@@ -199,15 +203,15 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
-                                Scriptable thisObj,
+                                VarScope callScope,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
                             Object value =
                                     originalArgs.length > 0
                                             ? FunctionObject.convertArg(
                                                     cx,
-                                                    thisObj,
+                                                    callScope,
                                                     originalArgs[0],
                                                     setterTypeTag,
                                                     nativeSetter.getArgNullability().isNullable(0))

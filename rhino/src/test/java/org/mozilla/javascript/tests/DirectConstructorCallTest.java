@@ -11,6 +11,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class DirectConstructorCallTest {
@@ -23,7 +24,7 @@ public class DirectConstructorCallTest {
     public void testDirectConstructInterpreted() {
         Utils.runWithAllModes(
                 cx -> {
-                    Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
                     Function f =
                             cx.compileFunction(
                                     scope, "function f(a) { this.x = a; }", "test.js", 1, null);
