@@ -24,7 +24,7 @@ import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -49,7 +49,7 @@ public class Bug708801Test {
 
     private abstract static class Action implements ContextAction<Object> {
         protected Context cx;
-        protected ScriptableObject scope;
+        protected ScopeObject scope;
 
         @SuppressWarnings("unused")
         protected Object evaluate(String s) {

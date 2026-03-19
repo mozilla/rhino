@@ -13,14 +13,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScopeObject;
 
 /**
  * @author André Bargull
  */
 public class Test262RegExpTest {
     private Context cx;
-    private ScriptableObject scope;
+    private ScopeObject scope;
 
     @Before
     public void setUp() {

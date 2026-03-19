@@ -1,7 +1,8 @@
 package org.mozilla.javascript.android;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 
@@ -9,12 +10,12 @@ import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
  * @author ZZZank
  */
 public class TypeInfoFactoryTestCase extends TestCase {
-    public TypeInfoFactoryTestCase(String name, Scriptable global) {
+    public TypeInfoFactoryTestCase(String name, TopLevel global) {
         super(name, global);
     }
 
     @Override
-    protected Object runTest(Context cx, Scriptable scope) {
+    protected Object runTest(Context cx, VarScope scope) {
         TypeInfoFactory typeInfoFactory = TypeInfoFactory.get(scope);
         int apiLevel = android.os.Build.VERSION.SDK_INT;
         if (apiLevel >= 34 != typeInfoFactory instanceof ClassValueCacheFactory) {

@@ -26,7 +26,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private final SymbolKey key;
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor ctor =
                 new LambdaConstructor(scope, CLASS_NAME, 0, NativeSymbol::js_constructorCall, null);
 
@@ -80,16 +80,16 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     private static void createStandardSymbol(
-            Scriptable scope, LambdaConstructor ctor, String name, SymbolKey key) {
+            VarScope scope, LambdaConstructor ctor, String name, SymbolKey key) {
         ctor.defineProperty(name, key, DONTENUM | READONLY | PERMANENT);
     }
 
-    private static NativeSymbol getSelf(Scriptable thisObj) {
+    private static NativeSymbol getSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
 
     private static SymbolKey js_constructorCall(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String desc;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             desc = ScriptRuntime.toString(args[0]);
@@ -99,13 +99,11 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return new SymbolKey(desc, Symbol.Kind.REGULAR);
     }
 
-    private static String js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return getSelf(thisObj).toString();
     }
 
-    private static Object js_valueOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_valueOf(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return getSelf(thisObj).key;
     }
 
@@ -113,7 +111,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         return getSelf(thisObj).getKey().getDescription();
     }
 
-    private static Object js_for(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_for(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String name =
                 (args.length > 0
                         ? ScriptRuntime.toString(args[0])
@@ -124,8 +122,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @SuppressWarnings("ReferenceEquality")
-    private static Object js_keyFor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_keyFor(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object s = (args.length > 0 ? args[0] : Undefined.instance);
         SymbolKey sym;
         if (s instanceof NativeSymbol) {

@@ -35,19 +35,19 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     private static final long serialVersionUID = -6948590651130498591L;
 
-    static void init(ScriptableObject scope, boolean sealed) {
-        JavaIterableIterator.init(scope, sealed);
+    static void init(Context cx, TopLevel scope, boolean sealed) {
+        JavaIterableIterator.init(cx, scope, sealed);
     }
 
     public NativeJavaObject() {}
 
-    public NativeJavaObject(Scriptable scope, Object javaObject, TypeInfo staticType) {
+    public NativeJavaObject(VarScope scope, Object javaObject, TypeInfo staticType) {
         this(scope, javaObject, staticType, false);
     }
 
     public NativeJavaObject(
-            Scriptable scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
-        this.parent = scope;
+            VarScope scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
+        this.parent = (VarScope) scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
         this.isAdapter = isAdapter;
@@ -62,7 +62,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             dynamicType = staticType.asClass();
         }
         members = JavaMembers.lookupClass(parent, dynamicType, staticType.asClass(), isAdapter);
-        fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
+        fieldAndMethods = members.getFieldAndMethodsObjects(parent, javaObject, false);
     }
 
     @Override
@@ -85,15 +85,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(String name, Scriptable start) {
-        if (fieldAndMethods != null) {
-            Object result = fieldAndMethods.get(name);
-            if (result != null) {
-                return result;
-            }
+        var fieldAndMethod = fieldAndMethods.get(name);
+        if (fieldAndMethod != null) {
+            return fieldAndMethod;
         }
-        // TODO: passing 'this' as the scope is bogus since it has
-        //  no parent scope
-        return members.get(this, name, javaObject, false);
+        return members.get(this, parent, name, javaObject, false);
     }
 
     @Override
@@ -116,7 +112,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         if (prototype == null || members.has(name, false))
-            members.put(this, name, javaObject, value, false);
+            members.put(this, parent, name, javaObject, value, false);
         else prototype.put(name, prototype, value);
     }
 
@@ -127,7 +123,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
         if (prototype == null || members.has(name, false)) {
-            members.put(this, name, javaObject, value, false);
+            members.put(this, parent, name, javaObject, value, false);
         } else if (prototype instanceof SymbolScriptable) {
             ((SymbolScriptable) prototype).put(symbol, prototype, value);
         }
@@ -170,13 +166,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Returns the parent (enclosing) scope of the object. */
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return parent;
     }
 
     /** Sets the parent (enclosing) scope of the object. */
     @Override
-    public void setParentScope(Scriptable m) {
+    public void setParentScope(VarScope m) {
         parent = m;
     }
 
@@ -190,7 +186,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
      *     WrapFactory#wrap(Context, Scriptable, Object, Class)}
      */
     @Deprecated
-    public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
+    public static Object wrap(VarScope scope, Object obj, Class<?> staticType) {
 
         Context cx = Context.getContext();
         return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
@@ -908,7 +904,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     private static Callable symbol_iterator =
-            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> {
                 if (!(thisObj instanceof NativeJavaObject)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
@@ -923,8 +919,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
-        static void init(ScriptableObject scope, boolean sealed) {
-            ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
+        private static final ClassDescriptor DESCRIPTOR =
+                ES6Iterator.makeDescriptor(ITERATOR_TAG, "Java Iterable Iterator");
+
+        static void init(Context cx, TopLevel scope, boolean sealed) {
+            ES6Iterator.initialize(
+                    DESCRIPTOR, cx, scope, new JavaIterableIterator(), sealed, ITERATOR_TAG);
         }
 
         /** Only for constructing the prototype object. */
@@ -932,7 +932,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             super();
         }
 
-        JavaIterableIterator(Scriptable scope, Iterable iterable) {
+        JavaIterableIterator(VarScope scope, Iterable iterable) {
             super(scope, ITERATOR_TAG);
             this.iterator = iterable.iterator();
         }
@@ -943,17 +943,17 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, VarScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, VarScope scope) {
             if (!iterator.hasNext()) {
                 return Undefined.instance;
             }
             Object obj = iterator.next();
-            return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+            return cx.getWrapFactory().wrap(cx, scope, obj, obj == null ? null : obj.getClass());
         }
 
         @Override
@@ -968,7 +968,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected Scriptable prototype;
 
     /** The parent scope of this object. */
-    protected Scriptable parent;
+    protected VarScope parent;
 
     protected transient Object javaObject;
 

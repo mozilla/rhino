@@ -17,6 +17,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Interpreter;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 public class ContinuationComparisonTest {
 
@@ -33,7 +34,7 @@ public class ContinuationComparisonTest {
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setInterpretedMode(true); // interpreter for continuations
-            ScriptableObject global = cx.initStandardObjects();
+            TopLevel global = cx.initStandardObjects();
             final AtomicReference<NativeContinuation> captured = new AtomicReference<>();
             ScriptableObject.putProperty(
                     global,
@@ -52,7 +53,7 @@ public class ContinuationComparisonTest {
                         cx.compileReader(r, "ContinuationComparisonTest.js", 1, null), global);
             }
             // Make the global standard again
-            ScriptableObject.deleteProperty(global, "capture");
+            global.delete("capture");
 
             return captured.get();
         }

@@ -19,12 +19,12 @@ package org.mozilla.javascript;
 public interface Script {
 
     /**
-     * @deprecated Use {@link #exec(Context, Scriptable, Scriptable)}
+     * @deprecated Use {@link #exec(Context, VarScope, Scriptable)}
      */
     // Maintained for backward compatibility of already-compiled classes
     @Deprecated(since = "1.8.1")
-    default Object exec(Context cx, Scriptable scope) {
-        return exec(cx, scope, scope);
+    default Object exec(Context cx, VarScope scope) {
+        return exec(cx, scope, Undefined.SCRIPTABLE_UNDEFINED);
     }
 
     /**
@@ -42,7 +42,7 @@ public interface Script {
      * @return the result of executing the script
      * @see org.mozilla.javascript.Context#initStandardObjects()
      */
-    Object exec(Context cx, Scriptable scope, Scriptable thisObj);
+    Object exec(Context cx, VarScope scope, Scriptable thisObj);
 
     default JSDescriptor<JSScript> getDescriptor() {
         return null;

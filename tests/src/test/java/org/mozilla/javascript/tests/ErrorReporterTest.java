@@ -14,12 +14,12 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScopeObject;
 
 public class ErrorReporterTest {
 
     private Context cx;
-    private ScriptableObject scope;
+    private ScopeObject scope;
 
     @Before
     public void setUp() throws Exception {

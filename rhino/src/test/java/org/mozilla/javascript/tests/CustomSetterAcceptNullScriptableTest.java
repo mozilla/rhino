@@ -10,6 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Takes care that it's possible to set <code>null</code> value when using custom setter for a
@@ -47,12 +48,13 @@ public class CustomSetterAcceptNullScriptableTest {
         final ContextFactory factory = new ContextFactory();
 
         try (Context cx = factory.enterContext()) {
-            final ScriptableObject topScope = cx.initStandardObjects();
+            TopLevel topScope = cx.initStandardObjects();
             final Foo foo = new Foo();
 
             // define custom setter method
             final Method setMyPropMethod = Foo.class.getMethod("setMyProp", Foo2.class);
-            foo.defineProperty("myProp", null, null, setMyPropMethod, ScriptableObject.EMPTY);
+            foo.defineProperty(
+                    topScope, "myProp", null, null, setMyPropMethod, ScriptableObject.EMPTY);
 
             topScope.put("foo", topScope, foo);
 

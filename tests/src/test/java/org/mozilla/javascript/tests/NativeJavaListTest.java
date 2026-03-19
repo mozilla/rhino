@@ -20,7 +20,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
@@ -232,7 +232,7 @@ public class NativeJavaListTest {
         return ContextFactory.getGlobal()
                 .call(
                         context -> {
-                            Scriptable scope = context.newObject(global);
+                            VarScope scope = context.newVarEnv(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
                                     context.evaluateString(scope, scriptSourceText, "", 1, null));

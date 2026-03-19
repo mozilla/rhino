@@ -8,12 +8,12 @@ import java.util.Iterator;
  * has been mutated as part of the operation to allow the underlying map to delegate operations as
  * required.
  */
-public class CompoundOperationMap implements SlotMap, AutoCloseable {
-    protected final SlotMapOwner owner;
-    protected SlotMap map;
+public class CompoundOperationMap<T extends PropHolder<T>> implements SlotMap<T>, AutoCloseable {
+    protected final SlotMapOwner<T> owner;
+    protected SlotMap<T> map;
     boolean touched = false;
 
-    public CompoundOperationMap(SlotMapOwner owner) {
+    public CompoundOperationMap(SlotMapOwner<T> owner) {
         this.owner = owner;
         this.map = owner.getMap();
     }
@@ -30,14 +30,14 @@ public class CompoundOperationMap implements SlotMap, AutoCloseable {
     }
 
     @Override
-    public void add(SlotMapOwner owner, Slot newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         map.add(owner, newSlot);
         touched = true;
     }
 
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner, Object key, int index, SlotComputer<S, T> compute) {
         updateMap(true);
         var res = map.compute(owner, this, key, index, compute);
         touched = true;
@@ -45,12 +45,12 @@ public class CompoundOperationMap implements SlotMap, AutoCloseable {
     }
 
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> compoundOp,
             Object key,
             int index,
-            SlotComputer<S> compute) {
+            SlotComputer<S, T> compute) {
         assert (compoundOp == this);
         updateMap(true);
         var res = map.compute(owner, this, key, index, compute);
@@ -71,7 +71,7 @@ public class CompoundOperationMap implements SlotMap, AutoCloseable {
     }
 
     @Override
-    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         updateMap(true);
         var res = map.modify(owner, key, index, attributes);
         touched = true;
@@ -79,7 +79,7 @@ public class CompoundOperationMap implements SlotMap, AutoCloseable {
     }
 
     @Override
-    public Slot query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         updateMap(false);
         return map.query(key, index);
     }
@@ -91,7 +91,7 @@ public class CompoundOperationMap implements SlotMap, AutoCloseable {
     }
 
     @Override
-    public Iterator<Slot> iterator() {
+    public Iterator<Slot<T>> iterator() {
         updateMap(false);
         return map.iterator();
     }

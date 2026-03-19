@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * Tests the ConsString class to ensure it properly supports String, StringBuffer and StringBuilder.
@@ -18,7 +18,7 @@ public class Issue1206Test {
     @Test
     public void consStringUsingString() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects(null);
+            TopLevel scope = cx.initStandardObjects(null);
             scope.put("var1", scope, "hello");
             Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
             assertEquals("hello world", result);
@@ -28,7 +28,7 @@ public class Issue1206Test {
     @Test
     public void consStringUsingStringBuffer() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects(null);
+            TopLevel scope = cx.initStandardObjects(null);
             scope.put("var1", scope, new StringBuffer("hello"));
             Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
             assertEquals("hello world", result);
@@ -38,7 +38,7 @@ public class Issue1206Test {
     @Test
     public void consStringUsingStringBuilder() {
         try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects(null);
+            TopLevel scope = cx.initStandardObjects(null);
             scope.put("var1", scope, new StringBuilder("hello"));
             Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
             assertEquals("hello world", result);
