@@ -15,6 +15,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /** Class QName */
 final class QName extends ScriptableObject {
@@ -33,29 +34,29 @@ final class QName extends ScriptableObject {
                         .build();
     }
 
-    static void init(Context cx, Scriptable scope, ScriptableObject proto, boolean sealed) {
+    static void init(Context cx, VarScope scope, ScriptableObject proto, boolean sealed) {
         DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(f.getPrototypeProperty(), f);
         return realThis.jsConstructor(cx, true, args);
     }
 
     private static Object js_constructorCall(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(f.getPrototypeProperty(), f);
         return realThis.jsConstructor(cx, false, args);
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).toString();
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, f).js_toSource();
     }
 
@@ -67,7 +68,7 @@ final class QName extends ScriptableObject {
 
     private QName() {}
 
-    static QName create(XMLLibImpl lib, Scriptable scope, QName prototype, XmlNode.QName delegate) {
+    static QName create(XMLLibImpl lib, VarScope scope, QName prototype, XmlNode.QName delegate) {
         QName rv = new QName();
         rv.lib = lib;
         rv.setParentScope(scope);

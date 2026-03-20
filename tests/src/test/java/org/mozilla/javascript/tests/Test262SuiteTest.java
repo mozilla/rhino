@@ -43,18 +43,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.SerializableCallable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
-import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
+import org.mozilla.javascript.tools.shell.Test262;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -101,12 +100,10 @@ public class Test262SuiteTest {
                     Arrays.asList(
                             "Atomics",
                             "IsHTMLDDA",
-                            "async-functions",
                             "async-iteration",
                             "class",
                             "class-fields-private",
                             "class-fields-public",
-                            "new.target",
                             "SharedArrayBuffer",
                             "tail-call-optimization",
                             "Temporal",
@@ -200,92 +197,8 @@ public class Test262SuiteTest {
                             + "(?:strict|non-strict|compiled-strict|compiled-non-strict|interpreted-strict|interpreted-non-strict|compiled|interpreted|"
                             + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
-    /**
-     * @see https://github.com/tc39/test262/blob/main/INTERPRETING.md#host-defined-functions
-     */
-    public static class $262 extends ScriptableObject {
-
-        $262() {
-            super();
-        }
-
-        $262(Scriptable scope, Scriptable prototype) {
-            super(scope, prototype);
-        }
-
-        static $262 init(Context cx, Scriptable scope) {
-            $262 proto = new $262();
-            proto.setPrototype(getObjectPrototype(scope));
-            proto.setParentScope(scope);
-
-            proto.defineProperty(scope, "gc", 0, $262::gc);
-            proto.defineProperty(scope, "createRealm", 0, $262::createRealm);
-            proto.defineProperty(scope, "evalScript", 1, $262::evalScript);
-            proto.defineProperty(scope, "detachArrayBuffer", 0, $262::detachArrayBuffer);
-
-            proto.defineProperty(cx, "global", $262::getGlobal, null, DONTENUM | READONLY);
-            proto.defineProperty(cx, "agent", $262::getAgent, null, DONTENUM | READONLY);
-
-            proto.defineProperty(SymbolKey.TO_STRING_TAG, "__262__", DONTENUM | READONLY);
-
-            ScriptableObject.defineProperty(scope, "__262__", proto, DONTENUM);
-            return proto;
-        }
-
-        static $262 install(ScriptableObject scope, Scriptable parentScope) {
-            $262 instance = new $262(scope, parentScope);
-
-            scope.put("$262", scope, instance);
-            scope.setAttributes("$262", ScriptableObject.DONTENUM);
-
-            return instance;
-        }
-
-        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            System.gc();
-            return Undefined.instance;
-        }
-
-        public static Object evalScript(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            if (args.length == 0) {
-                throw ScriptRuntime.throwError(cx, scope, "not enough args");
-            }
-            String source = Context.toString(args[0]);
-            return cx.evaluateString(scope, source, "<evalScript>", 1, null);
-        }
-
-        public static Object getGlobal(Scriptable scriptable) {
-            return scriptable.getParentScope();
-        }
-
-        public static $262 createRealm(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            ScriptableObject realm = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
-            return install(realm, thisObj.getPrototype());
-        }
-
-        public static Object detachArrayBuffer(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            Scriptable buf = ScriptRuntime.toObject(scope, args[0]);
-            if (buf instanceof NativeArrayBuffer) {
-                ((NativeArrayBuffer) buf).detach();
-            }
-            return Undefined.instance;
-        }
-
-        public static Object getAgent(Scriptable scriptable) {
-            throw new UnsupportedOperationException("$262.agent property not yet implemented");
-        }
-
-        @Override
-        public String getClassName() {
-            return "__262__";
-        }
-    }
-
-    private Scriptable buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
-        ScriptableObject scope = (ScriptableObject) cx.initSafeStandardObjects(new TopLevel());
+    private TopLevel buildScope(Context cx, Test262Case testCase, boolean interpretedMode) {
+        TopLevel scope = cx.initSafeStandardObjects(new TopLevel());
 
         for (String harnessFile : testCase.harnessFiles) {
             String harnessKey = harnessFile + '-' + interpretedMode;
@@ -303,11 +216,34 @@ public class Test262SuiteTest {
                                             "Error reading test file " + harnessPath, ioe);
                                 }
                             });
-            harnessScript.exec(cx, scope, scope);
+            harnessScript.exec(cx, scope, scope.getGlobalThis());
         }
 
-        $262 proto = $262.init(cx, scope);
-        $262.install(scope, proto);
+        Test262 proto = Test262.init(cx, scope, Test262.RealmMode.SAFE);
+        Test262.install(scope, proto, Test262.RealmMode.SAFE);
+
+        if (testCase.hasFlag("async")) {
+            LambdaFunction printFn =
+                    new LambdaFunction(
+                            scope,
+                            "print",
+                            1,
+                            (SerializableCallable)
+                                    (cx2, scope2, thisObj, args) -> {
+                                        if (args.length > 0) {
+                                            String msg = Context.toString(args[0]);
+                                            if ("Test262:AsyncTestComplete".equals(msg)) {
+                                                testCase.asyncSuccess = true;
+                                            } else if (msg.startsWith(
+                                                    "Test262:AsyncTestFailure:")) {
+                                                testCase.asyncFailed = true;
+                                            }
+                                        }
+                                        return Undefined.instance;
+                                    });
+            scope.defineProperty("print", printFn, ScriptableObject.DONTENUM);
+        }
+
         return scope;
     }
 
@@ -341,7 +277,7 @@ public class Test262SuiteTest {
 
             boolean failedEarly = false;
             try {
-                Scriptable scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
+                TopLevel scope = buildScope(cx, testCase, testMode == TestMode.INTERPRETED);
                 String str = testCase.source;
                 int line = 1;
                 if (useStrict) {
@@ -353,7 +289,16 @@ public class Test262SuiteTest {
                 Script caseScript = cx.compileString(str, testFilePath, line, null);
 
                 failedEarly = false; // not after this line
-                caseScript.exec(cx, scope, scope);
+                caseScript.exec(cx, scope, scope.getGlobalThis());
+
+                if (testCase.hasFlag("async")) {
+                    cx.processMicrotasks();
+                    if (testCase.asyncFailed) {
+                        fail("Async test failed");
+                    } else if (!testCase.asyncSuccess) {
+                        fail("Async test did not complete");
+                    }
+                }
 
                 if (testCase.isNegative()) {
                     fail(
@@ -627,7 +572,7 @@ public class Test262SuiteTest {
                 }
             }
             // 2. it runs in an unsupported environment
-            if (testCase.hasFlag("module") || testCase.hasFlag("async")) {
+            if (testCase.hasFlag("module")) {
                 if (includeUnsupported) {
                     TestResultTracker tracker =
                             RESULT_TRACKERS.computeIfAbsent(
@@ -692,6 +637,9 @@ public class Test262SuiteTest {
         private final Set<String> flags;
         private final List<String> harnessFiles;
         private final Set<String> features;
+
+        volatile boolean asyncSuccess;
+        volatile boolean asyncFailed;
 
         Test262Case(
                 File file,
@@ -769,6 +717,10 @@ public class Test262SuiteTest {
 
                 if (metadata.containsKey("includes")) {
                     harnessFiles.addAll((List<String>) metadata.get("includes"));
+                }
+
+                if (flags.contains("async")) {
+                    harnessFiles.add("doneprintHandle.js");
                 }
             }
 

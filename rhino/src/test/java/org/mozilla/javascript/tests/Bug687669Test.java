@@ -14,7 +14,7 @@ import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.ast.AstRoot;
 
@@ -24,7 +24,7 @@ import org.mozilla.javascript.ast.AstRoot;
 public class Bug687669Test {
 
     private Context cx;
-    private ScriptableObject scope;
+    private ScopeObject scope;
 
     @Before
     public void setUp() {

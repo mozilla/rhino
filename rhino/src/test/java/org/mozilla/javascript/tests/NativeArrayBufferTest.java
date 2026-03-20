@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 public class NativeArrayBufferTest {
@@ -21,7 +21,7 @@ public class NativeArrayBufferTest {
     public void test() throws Exception {
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
-            Scriptable global = cx.initStandardObjects();
+            TopLevel global = cx.initStandardObjects();
             Object result = cx.evaluateString(global, "(new ArrayBuffer(5)).isView", "", 1, null);
             Assert.assertEquals(Undefined.instance, result);
         }

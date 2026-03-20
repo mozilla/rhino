@@ -311,6 +311,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.LABEL:
             case Token.LOOP:
             case Token.BLOCK:
+            case Token.SCOPE_BLOCK:
             case Token.EMPTY:
             case Token.WITH:
                 updateLineNumber(node);
@@ -328,8 +329,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(-1);
                 break;
 
-            case Token.LEAVEWITH:
-                addToken(Token.LEAVEWITH);
+            case Token.ENTER_SCOPE:
+                visitEnterScope(node, child);
+                break;
+
+            case Token.LEAVE_SCOPE:
+                addToken(Token.LEAVE_SCOPE);
                 break;
 
             case Token.LOCAL_BLOCK:
@@ -551,6 +556,25 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         if (stackDepth != initialStackDepth) {
             throw Kit.codeBug();
         }
+    }
+
+    private void visitEnterScope(Node node, Node child) {
+        addToken(Token.ENTER_SCOPE);
+        stackChange(1);
+        Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        int i = 0;
+        while (child != null) {
+            addIcode(Icode_DUP);
+            stackChange(1);
+            visitExpression(child, 0);
+            addStringOp(Token.SETNAME, (String) names[i]);
+            addIcode(Icode_POP);
+            stackChange(-2);
+            child = child.getNext();
+            i++;
+        }
+        addIcode(Icode_POP);
+        stackChange(-1);
     }
 
     private void visitExpression(Node node, int contextFlags) {
@@ -1052,6 +1076,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.THIS:
             case Token.SUPER:
             case Token.THISFN:
+            case Token.NEW_TARGET:
             case Token.FALSE:
             case Token.TRUE:
                 addToken(type);
@@ -1156,16 +1181,19 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.YIELD:
             case Token.YIELD_STAR:
+            case Token.AWAIT:
                 if (child != null) {
                     visitExpression(child, 0);
                 } else {
                     addIcode(Icode_UNDEF);
                     stackChange(1);
                 }
-                if (type == Token.YIELD) {
-                    addToken(Token.YIELD);
-                } else {
+                if (type == Token.YIELD_STAR) {
                     addIcode(Icode_YIELD_STAR);
+                } else {
+                    // Token.YIELD and Token.AWAIT both use the same yield opcode;
+                    // the async Promise runner drives the generator for await.
+                    addToken(Token.YIELD);
                 }
                 addUint16(node.getLineno() & 0xFFFF);
                 break;
@@ -1178,7 +1206,17 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     addToken(Token.ENTERWITH);
                     stackChange(-1);
                     visitExpression(with.getFirstChild(), 0);
-                    addToken(Token.LEAVEWITH);
+                    addToken(Token.LEAVE_SCOPE);
+                    break;
+                }
+
+            case Token.SCOPEEXPR:
+                {
+                    Node enterScope = node.getFirstChild();
+                    Node expr = enterScope.getNext();
+                    visitEnterScope(enterScope, enterScope.getFirstChild());
+                    visitExpression(expr.getFirstChild(), 0);
+                    addToken(Token.LEAVE_SCOPE);
                     break;
                 }
 

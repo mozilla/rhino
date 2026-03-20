@@ -19,6 +19,9 @@ public class Symbol {
     private String name;
     private Node node;
     private Scope containingTable;
+    // For VAR (and pre-ES6 CONST/FUNCTION) symbols, the lexical scope in which
+    // the declaration actually appears, before hoisting to containingTable.
+    private Scope declaredScope;
 
     public Symbol() {}
 
@@ -89,8 +92,30 @@ public class Symbol {
         this.containingTable = containingTable;
     }
 
+    /**
+     * Returns the lexical scope in which this symbol was declared, or {@code null} if not set. For
+     * VAR symbols this is the block scope containing the declaration, which may differ from {@link
+     * #getContainingTable()} (the enclosing function/script to which the var is hoisted).
+     */
+    public Scope getDeclaredScope() {
+        return declaredScope;
+    }
+
+    /** Sets the lexical scope in which this symbol was declared. */
+    public void setDeclaredScope(Scope declaredScope) {
+        this.declaredScope = declaredScope;
+    }
+
     public String getDeclTypeName() {
         return Token.typeToName(declType);
+    }
+
+    public boolean isDeclTypeLexical() {
+        return declType == Token.LET || declType == Token.CONST;
+    }
+
+    public static boolean isDeclTypeLexical(int declType) {
+        return declType == Token.LET || declType == Token.CONST;
     }
 
     @Override

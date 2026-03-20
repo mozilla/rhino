@@ -396,7 +396,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 Id_yield = Token.YIELD,
 
                 // 11.6.2.2 Future Reserved Words
-                Id_await = Token.RESERVED,
+                Id_await = Token.NAME,
                 Id_enum = Token.RESERVED,
 
                 // 11.6.2.2 NOTE Strict Future Reserved Words

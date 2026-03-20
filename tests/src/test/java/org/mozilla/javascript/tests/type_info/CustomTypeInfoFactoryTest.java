@@ -31,7 +31,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
 
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             new NoGenericNoCacheFactory().associate(scope);
             cx.initStandardObjects(scope);
 
@@ -59,7 +59,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             new NoGenericNoCacheFactory().associate(scope);
             cx.initStandardObjects(scope);
 
@@ -79,7 +79,7 @@ public class CustomTypeInfoFactoryTest {
         var contextFactory = new ContextFactory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
-            var scope = new NativeObject();
+            var scope = new TopLevel();
             TypeInfoFactory.GLOBAL.associate(scope);
             cx.initStandardObjects(scope);
 
@@ -94,7 +94,7 @@ public class CustomTypeInfoFactoryTest {
         }
     }
 
-    private static byte[] simulateSer(ScriptableObject o) throws IOException {
+    private static byte[] simulateSer(ScopeObject o) throws IOException {
         var output = new ByteArrayOutputStream();
         var objectOut = new ObjectOutputStream(output);
         objectOut.writeObject(o);
@@ -102,10 +102,10 @@ public class CustomTypeInfoFactoryTest {
         return output.toByteArray();
     }
 
-    private static ScriptableObject simulateDeser(byte[] data)
+    private static ScopeObject simulateDeser(byte[] data)
             throws IOException, ClassNotFoundException {
         var input = new ByteArrayInputStream(data);
         var objectIn = new ObjectInputStream(input);
-        return (ScriptableObject) objectIn.readObject();
+        return (ScopeObject) objectIn.readObject();
     }
 }

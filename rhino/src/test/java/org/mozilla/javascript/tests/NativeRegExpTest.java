@@ -11,7 +11,7 @@ import static org.junit.Assert.fail;
 import java.util.function.BiFunction;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.regexp.NativeRegExp;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -22,7 +22,7 @@ public class NativeRegExpTest {
         final String script = "/0{0/";
         Utils.runWithAllModes(
                 _cx -> {
-                    final ScriptableObject scope = _cx.initStandardObjects();
+                    TopLevel scope = _cx.initStandardObjects();
                     final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
                     assertEquals(script, Context.toString(result));
                     return null;
@@ -563,7 +563,7 @@ public class NativeRegExpTest {
         final String regexp = "/(a{3,6})(?=\\1)/g";
         Utils.runWithAllModes(
                 _cx -> {
-                    final ScriptableObject scope = _cx.initStandardObjects();
+                    TopLevel scope = _cx.initStandardObjects();
                     final Object result = _cx.evaluateString(scope, regexp, "test script", 0, null);
                     assertTrue(result instanceof NativeRegExp);
 

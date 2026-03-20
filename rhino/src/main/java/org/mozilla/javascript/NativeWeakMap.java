@@ -6,6 +6,10 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.WeakHashMap;
@@ -23,36 +27,35 @@ public class NativeWeakMap extends ScriptableObject {
 
     private static final String CLASS_NAME = "WeakMap";
 
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                0,
+                                ClassDescriptor.typeError(),
+                                NativeWeakMap::jsConstructor)
+                        .withMethod(PROTO, "set", 2, NativeWeakMap::js_set)
+                        .withMethod(PROTO, "delete", 1, NativeWeakMap::js_delete)
+                        .withMethod(PROTO, "get", 1, NativeWeakMap::js_get)
+                        .withMethod(PROTO, "has", 1, NativeWeakMap::js_has)
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value(CLASS_NAME, DONTENUM | READONLY))
+                        .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
+                        .build();
+    }
+
     private boolean instanceOfWeakMap = false;
 
     private transient WeakHashMap<Object, Object> map = new WeakHashMap<>();
 
     private static final Object NULL_VALUE = new Object();
 
-    static Object init(Context cx, Scriptable scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        0,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
-                        NativeWeakMap::jsConstructor);
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-
-        constructor.definePrototypeMethod(scope, "set", 2, NativeWeakMap::js_set);
-        constructor.definePrototypeMethod(scope, "delete", 1, NativeWeakMap::js_delete);
-        constructor.definePrototypeMethod(scope, "get", 1, NativeWeakMap::js_get);
-        constructor.definePrototypeMethod(scope, "has", 1, NativeWeakMap::js_has);
-
-        constructor.definePrototypeProperty(
-                SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
-        }
-        return constructor;
+    static Object init(Context cx, VarScope scope, boolean sealed) {
+        return DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
     }
 
     @Override
@@ -60,17 +63,19 @@ public class NativeWeakMap extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeWeakMap nm = new NativeWeakMap();
         nm.instanceOfWeakMap = true;
         if (args.length > 0) {
-            NativeMap.loadFromIterable(cx, scope, nm, NativeMap.key(args));
+            NativeMap.loadFromIterable(cx, f.getDeclarationScope(), nm, NativeMap.key(args));
         }
+        ScriptRuntime.setBuiltinProtoAndParent(nm, f, nt, s, TopLevel.Builtins.WeakMap);
         return nm;
     }
 
     private static Object js_delete(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, "delete").js_delete(NativeMap.key(args));
     }
 
@@ -81,7 +86,8 @@ public class NativeWeakMap extends ScriptableObject {
         return map.remove(key) != null;
     }
 
-    private static Object js_get(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_get(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, "get").js_get(NativeMap.key(args));
     }
 
@@ -98,7 +104,8 @@ public class NativeWeakMap extends ScriptableObject {
         return result;
     }
 
-    private static Object js_has(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_has(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, "has").js_has(NativeMap.key(args));
     }
 
@@ -109,7 +116,8 @@ public class NativeWeakMap extends ScriptableObject {
         return map.containsKey(key);
     }
 
-    private static Object js_set(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_set(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return realThis(thisObj, "set")
                 .js_set(NativeMap.key(args), args.length > 1 ? args[1] : Undefined.instance);
     }
@@ -133,7 +141,7 @@ public class NativeWeakMap extends ScriptableObject {
         return ScriptRuntime.isUnregisteredSymbol(key) || ScriptRuntime.isObject(key);
     }
 
-    private static NativeWeakMap realThis(Scriptable thisObj, String name) {
+    private static NativeWeakMap realThis(Object thisObj, String name) {
         NativeWeakMap nm = LambdaConstructor.convertThisObject(thisObj, NativeWeakMap.class);
         if (!nm.instanceOfWeakMap) {
             // Check for "Map internal data tag"

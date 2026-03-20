@@ -3,10 +3,11 @@ package org.mozilla.javascript;
 import java.util.concurrent.locks.StampedLock;
 
 @SuppressWarnings("AndroidJdkLibsChecker")
-class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlotMap {
+class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap<T>
+        implements LockAwareSlotMap<T> {
 
     private final StampedLock lock = new StampedLock();
-    private volatile LockAwareSlotMap current = this;
+    private volatile LockAwareSlotMap<T> current = this;
 
     public ThreadSafeEmbeddedSlotMap() {
         super();
@@ -55,7 +56,7 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         final long stamp = lock.writeLock();
         try {
             return current.modifyWithLock(owner, key, index, attributes);
@@ -65,19 +66,19 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap mutableMap,
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> mutableMap,
             Object key,
             int index,
-            SlotComputer<S> c) {
+            SlotComputer<S, T> c) {
         return current.computeWithLock(owner, mutableMap, key, index, c);
     }
 
     @Override
-    public Slot query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         long stamp = lock.tryOptimisticRead();
-        Slot s = current.queryWithLock(key, index);
+        Slot<T> s = current.queryWithLock(key, index);
         if (lock.validate(stamp)) {
             return s;
         }
@@ -91,7 +92,7 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    public void add(SlotMapOwner owner, Slot newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         final long stamp = lock.writeLock();
         try {
             current.addWithLock(owner, newSlot);
@@ -101,17 +102,17 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    public void addWithLock(SlotMapOwner owner, Slot newSlot) {
+    public void addWithLock(SlotMapOwner<T> owner, Slot<T> newSlot) {
         super.add(owner, newSlot);
     }
 
     @Override
-    public <S extends Slot> S computeWithLock(
-            SlotMapOwner owner,
-            CompoundOperationMap mutableMap,
+    public <S extends Slot<T>> S computeWithLock(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> mutableMap,
             Object key,
             int index,
-            SlotComputer<S> compute) {
+            SlotComputer<S, T> compute) {
         return super.compute(owner, mutableMap, key, index, compute);
     }
 
@@ -121,12 +122,12 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    public Slot modifyWithLock(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         return super.modify(owner, key, index, attributes);
     }
 
     @Override
-    public Slot queryWithLock(Object key, int index) {
+    public Slot<T> queryWithLock(Object key, int index) {
         return super.query(key, index);
     }
 
@@ -151,11 +152,11 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
     }
 
     @Override
-    protected void promoteMap(SlotMapOwner owner, Slot newSlot) {
+    protected void promoteMap(SlotMapOwner<T> owner, Slot<T> newSlot) {
         // We can use `setMap` here as this promotion can only be done
         // by the lock holder and the operation will be being done on
         // the "current" map.
-        var newMap = new ThreadSafeHashSlotMap(lock, this, newSlot);
+        var newMap = new ThreadSafeHashSlotMap<>(lock, this, newSlot);
         owner.setMap(newMap);
         current = newMap;
     }
