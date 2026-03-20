@@ -11,6 +11,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class LookupSetterTest {
@@ -149,7 +150,7 @@ public class LookupSetterTest {
         }
     }
 
-    public static class TopScope extends ScriptableObject {
+    public static class TopScope extends TopLevel {
         @Override
         public String getClassName() {
             return "TopScope";

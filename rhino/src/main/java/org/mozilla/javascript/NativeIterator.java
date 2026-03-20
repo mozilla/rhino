@@ -21,7 +21,7 @@ public final class NativeIterator extends ScriptableObject {
 
     private Object objectIterator;
 
-    static void init(Context cx, ScriptableObject scope, boolean sealed) {
+    static void init(Context cx, TopLevel scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
