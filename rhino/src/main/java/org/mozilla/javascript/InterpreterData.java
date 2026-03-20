@@ -98,10 +98,10 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             Context cx,
             T executableObject,
             Object newTarget,
-            Scriptable scope,
+            VarScope scope,
             Object thisObj,
             Object[] args) {
-        return Interpreter.interpret(executableObject, this, cx, scope, (Scriptable) thisObj, args);
+        return Interpreter.interpret(executableObject, this, cx, scope, thisObj, args, newTarget);
     }
 
     @Override
@@ -109,7 +109,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             Context cx,
             T executableObject,
             Object state,
-            Scriptable scope,
+            VarScope scope,
             int operation,
             Object value) {
         return Interpreter.resumeGenerator(cx, scope, operation, state, value);

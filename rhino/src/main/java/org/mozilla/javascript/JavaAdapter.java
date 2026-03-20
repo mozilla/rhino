@@ -59,7 +59,7 @@ public final class JavaAdapter {
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         var ctor = new LambdaConstructor(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
 
         if (sealed) {
@@ -79,7 +79,7 @@ public final class JavaAdapter {
     }
 
     public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
-        Scriptable scope = ScriptableObject.getTopLevelScope(obj);
+        VarScope scope = ScriptableObject.getTopLevelScope(obj.getParentScope());
         NativeJavaObject res = new NativeJavaObject(scope, adapter, TypeInfo.NONE, true);
         res.setPrototype(obj);
         return res;
@@ -91,7 +91,7 @@ public final class JavaAdapter {
         return self.get(adapter);
     }
 
-    static Scriptable js_createAdapter(Context cx, Scriptable scope, Object[] args) {
+    static Scriptable js_createAdapter(Context cx, VarScope scope, Object[] args) {
         int N = args.length;
         if (N == 0) {
             throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");
@@ -261,7 +261,7 @@ public final class JavaAdapter {
         Scriptable delegee = (Scriptable) in.readObject();
         sig.names = getObjectFunctionNames(delegee);
 
-        Class<?> adapterClass = getAdapterClass(self, sig);
+        Class<?> adapterClass = getAdapterClass(self.getParentScope(), sig);
 
         Class<?>[] ctorParms = {
             ScriptRuntime.ContextFactoryClass,
@@ -299,7 +299,7 @@ public final class JavaAdapter {
         return map;
     }
 
-    private static Class<?> getAdapterClass(Scriptable scope, JavaAdapterSignature sig) {
+    private static Class<?> getAdapterClass(VarScope scope, JavaAdapterSignature sig) {
         ClassCache cache = ClassCache.get(scope);
         Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
@@ -541,7 +541,7 @@ public final class JavaAdapter {
             factory = ContextFactory.getGlobal();
         }
 
-        final Scriptable scope = f.getDeclarationScope();
+        final VarScope scope = f.getDeclarationScope();
         if (argsToWrap == 0) {
             return Context.call(factory, f, scope, thisObj, args);
         }
@@ -555,7 +555,7 @@ public final class JavaAdapter {
 
     private static Object doCall(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             Function f,
             Object[] args,
@@ -576,9 +576,9 @@ public final class JavaAdapter {
         return ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            ScriptableObject global = ScriptRuntime.getGlobal(cx);
-                            script.exec(cx, global, global);
-                            return global;
+                            TopLevel global = ScriptRuntime.getGlobal(cx);
+                            script.exec(cx, global, global.getGlobalThis());
+                            return global.getGlobalThis();
                         });
     }
 

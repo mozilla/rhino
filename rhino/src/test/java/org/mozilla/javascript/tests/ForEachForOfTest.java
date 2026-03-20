@@ -13,7 +13,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -73,7 +73,7 @@ public class ForEachForOfTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
@@ -90,7 +90,7 @@ public class ForEachForOfTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
@@ -107,7 +107,7 @@ public class ForEachForOfTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");
@@ -125,7 +125,7 @@ public class ForEachForOfTest {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
-                    final Scriptable scope = cx.initStandardObjects();
+                    TopLevel scope = cx.initStandardObjects();
 
                     Dto dto = new Dto();
                     dto.setData("foo");

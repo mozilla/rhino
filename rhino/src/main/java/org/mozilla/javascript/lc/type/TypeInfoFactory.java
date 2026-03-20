@@ -23,6 +23,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.LegacyCacheFactory;
 
@@ -53,7 +55,7 @@ public interface TypeInfoFactory extends Serializable {
      * types from being unloaded
      *
      * <p>For actions with scope available, the TypeInfoFactory can be obtained via {@link
-     * #get(Scriptable)}.
+     * #get(VarScope)}.
      */
     TypeInfoFactory GLOBAL = createGlobalFactory();
 
@@ -348,7 +350,7 @@ public interface TypeInfoFactory extends Serializable {
      * @throws IllegalArgumentException if provided scope is not top scope
      * @see #get(Scriptable scope)
      */
-    default TypeInfoFactory associate(ScriptableObject topScope) {
+    default TypeInfoFactory associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {
             throw new IllegalArgumentException("provided scope not top scope");
         }
@@ -364,7 +366,7 @@ public interface TypeInfoFactory extends Serializable {
      *     TypeInfoFactory.
      * @see #associate(ScriptableObject topScope)
      */
-    static TypeInfoFactory get(Scriptable scope) {
+    static TypeInfoFactory get(VarScope scope) {
         var got = getOrElse(scope, null);
         if (got == null) {
             throw new IllegalArgumentException("top scope have no associated TypeInfoFactory");
@@ -381,7 +383,7 @@ public interface TypeInfoFactory extends Serializable {
      * @see #get(Scriptable)
      * @see #associate(ScriptableObject topScope)
      */
-    static TypeInfoFactory getOrElse(Scriptable scope, TypeInfoFactory fallback) {
+    static TypeInfoFactory getOrElse(VarScope scope, TypeInfoFactory fallback) {
         var got = (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");
         if (got == null) {
             return fallback;

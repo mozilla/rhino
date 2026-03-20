@@ -8,42 +8,42 @@ import java.util.Iterator;
  * threads. This means that the instance fields do not need to be volatile as we are only
  * considering access from this thread.
  */
-class ThreadSafeCompoundOperationMap extends CompoundOperationMap {
+class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOperationMap<T> {
     private boolean closed = false;
     private long lockStamp = 0;
 
     public ThreadSafeCompoundOperationMap(
-            SlotMapOwner owner, LockAwareSlotMap map, long lockStamp) {
+            SlotMapOwner<T> owner, LockAwareSlotMap<T> map, long lockStamp) {
         super(owner);
         this.map = map;
         this.lockStamp = lockStamp;
     }
 
     @Override
-    public void add(SlotMapOwner owner, Slot newSlot) {
-        ((LockAwareSlotMap) map).addWithLock(owner, newSlot);
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
+        ((LockAwareSlotMap<T>) map).addWithLock(owner, newSlot);
         touched = true;
     }
 
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner, Object key, int index, SlotComputer<S, T> compute) {
         updateMap(true);
-        S res = ((LockAwareSlotMap) map).computeWithLock(owner, this, key, index, compute);
+        S res = ((LockAwareSlotMap<T>) map).computeWithLock(owner, this, key, index, compute);
         touched = true;
         return res;
     }
 
     @Override
-    public <S extends Slot> S compute(
-            SlotMapOwner owner,
-            CompoundOperationMap compoundOp,
+    public <S extends Slot<T>> S compute(
+            SlotMapOwner<T> owner,
+            CompoundOperationMap<T> compoundOp,
             Object key,
             int index,
-            SlotComputer<S> compute) {
+            SlotComputer<S, T> compute) {
         assert (compoundOp == this);
         updateMap(true);
-        S res = ((LockAwareSlotMap) map).computeWithLock(owner, this, key, index, compute);
+        S res = ((LockAwareSlotMap<T>) map).computeWithLock(owner, this, key, index, compute);
         touched = true;
         return res;
     }
@@ -51,47 +51,47 @@ class ThreadSafeCompoundOperationMap extends CompoundOperationMap {
     @Override
     public boolean isEmpty() {
         updateMap(false);
-        return ((LockAwareSlotMap) map).isEmptyWithLock();
+        return ((LockAwareSlotMap<T>) map).isEmptyWithLock();
     }
 
     @Override
-    public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         updateMap(true);
-        Slot res = ((LockAwareSlotMap) map).modifyWithLock(owner, key, index, attributes);
+        Slot<T> res = ((LockAwareSlotMap<T>) map).modifyWithLock(owner, key, index, attributes);
         touched = true;
         return res;
     }
 
     @Override
-    public Slot query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         updateMap(false);
-        return ((LockAwareSlotMap) map).queryWithLock(key, index);
+        return ((LockAwareSlotMap<T>) map).queryWithLock(key, index);
     }
 
     @Override
     public int size() {
         updateMap(false);
-        return ((LockAwareSlotMap) map).sizeWithLock();
+        return ((LockAwareSlotMap<T>) map).sizeWithLock();
     }
 
     @Override
-    public Iterator<Slot> iterator() {
+    public Iterator<Slot<T>> iterator() {
         updateMap(false);
-        return new Iter(map.iterator());
+        return new Iter<>(map.iterator());
     }
 
     @Override
     public void close() {
         if (!closed) {
-            ((LockAwareSlotMap) owner.getMap()).releaseLock(lockStamp);
+            ((LockAwareSlotMap<T>) owner.getMap()).releaseLock(lockStamp);
             closed = true;
         }
     }
 
-    private static class Iter implements Iterator<Slot> {
-        private final Iterator<Slot> mapIterator;
+    private static class Iter<T extends PropHolder<T>> implements Iterator<Slot<T>> {
+        private final Iterator<Slot<T>> mapIterator;
 
-        private Iter(Iterator<Slot> mapIterator) {
+        private Iter(Iterator<Slot<T>> mapIterator) {
             this.mapIterator = mapIterator;
         }
 
@@ -101,7 +101,7 @@ class ThreadSafeCompoundOperationMap extends CompoundOperationMap {
         }
 
         @Override
-        public Slot next() {
+        public Slot<T> next() {
             return mapIterator.next();
         }
     }

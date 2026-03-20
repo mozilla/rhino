@@ -17,6 +17,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
@@ -45,7 +47,7 @@ public class ComplianceTest {
         return retval;
     }
 
-    private static Require createRequire(File dir, Context cx, Scriptable scope)
+    private static Require createRequire(File dir, Context cx, TopLevel scope)
             throws URISyntaxException {
         return new Require(
                 cx,
@@ -68,7 +70,7 @@ public class ComplianceTest {
     public void require() throws Throwable {
         Utils.runWithAllModes(
                 cx -> {
-                    final Scriptable scope = cx.initStandardObjects();
+                    final TopLevel scope = cx.initStandardObjects();
                     ScriptableObject.putProperty(scope, "print", new Print(scope));
                     try {
                         createRequire(testDir, cx, scope).requireMain(cx, "program");
@@ -81,12 +83,12 @@ public class ComplianceTest {
     }
 
     private static class Print extends ScriptableObject implements Function {
-        Print(Scriptable scope) {
+        Print(VarScope scope) {
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
 
         @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (args.length > 1 && "fail".equals(args[1])) {
                 throw new AssertionFailedError(String.valueOf(args[0]));
             }
@@ -94,7 +96,13 @@ public class ComplianceTest {
         }
 
         @Override
-        public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+        public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+            throw new AssertionFailedError("Shouldn't be invoked as constructor");
+        }
+
+        @Override
+        public Scriptable construct(
+                Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
             throw new AssertionFailedError("Shouldn't be invoked as constructor");
         }
 

@@ -8,13 +8,13 @@ import org.junit.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class UndefinedTest {
     private Context cx;
-    private Scriptable global;
+    private VarScope global;
 
     @Before
     public void init() {
@@ -44,12 +44,14 @@ public class UndefinedTest {
         final String testFuncSource =
                 "load('testsrc/assert.js');\n"
                         + "function testFunc() {\n"
+                        + "\"use strict\";\n"
                         + "assertSame(this, undefined);\n"
                         + "}\n"
                         + "testFunc;";
         Callable testFunc =
                 (Callable) cx.evaluateString(global, testFuncSource, "test.js", 1, null);
         // Ensure that using SCRIPTABLE_UNDEFINED means that "this" is really undefined
+        // for strict mode functions.
         testFunc.call(cx, global, Undefined.SCRIPTABLE_UNDEFINED, ScriptRuntime.emptyArgs);
     }
 

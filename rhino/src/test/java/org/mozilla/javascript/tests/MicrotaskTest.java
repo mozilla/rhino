@@ -9,11 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public class MicrotaskTest {
     private Context cx;
-    private Scriptable scope;
+    private TopLevel scope;
 
     @BeforeEach
     public void init() {

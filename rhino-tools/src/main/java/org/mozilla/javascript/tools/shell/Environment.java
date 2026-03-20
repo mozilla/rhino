@@ -18,6 +18,7 @@ import java.util.Map;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Environment, intended to be instantiated at global scope, provides a natural way to access System
@@ -30,11 +31,11 @@ public class Environment extends ScriptableObject {
 
     private Environment thePrototypeInstance = null;
 
-    public static void defineClass(ScriptableObject scope) {
+    public static void defineClass(VarScope scope) {
         try {
             ScriptableObject.defineClass(scope, Environment.class);
         } catch (Exception e) {
-            throw new Error(e.getMessage());
+            throw new Error(e);
         }
     }
 
@@ -47,7 +48,7 @@ public class Environment extends ScriptableObject {
         if (thePrototypeInstance == null) thePrototypeInstance = this;
     }
 
-    public Environment(ScriptableObject scope) {
+    public Environment(VarScope scope) {
         setParentScope(scope);
         Object ctor = ScriptRuntime.getTopLevelProp(scope, "Environment");
         if (ctor != null && ctor instanceof Scriptable) {

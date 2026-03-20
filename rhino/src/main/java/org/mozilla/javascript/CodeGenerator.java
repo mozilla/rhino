@@ -328,8 +328,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(-1);
                 break;
 
-            case Token.LEAVEWITH:
-                addToken(Token.LEAVEWITH);
+            case Token.LEAVE_SCOPE:
+                addToken(Token.LEAVE_SCOPE);
                 break;
 
             case Token.LOCAL_BLOCK:
@@ -1052,6 +1052,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.THIS:
             case Token.SUPER:
             case Token.THISFN:
+            case Token.NEW_TARGET:
             case Token.FALSE:
             case Token.TRUE:
                 addToken(type);
@@ -1156,16 +1157,19 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.YIELD:
             case Token.YIELD_STAR:
+            case Token.AWAIT:
                 if (child != null) {
                     visitExpression(child, 0);
                 } else {
                     addIcode(Icode_UNDEF);
                     stackChange(1);
                 }
-                if (type == Token.YIELD) {
-                    addToken(Token.YIELD);
-                } else {
+                if (type == Token.YIELD_STAR) {
                     addIcode(Icode_YIELD_STAR);
+                } else {
+                    // Token.YIELD and Token.AWAIT both use the same yield opcode;
+                    // the async Promise runner drives the generator for await.
+                    addToken(Token.YIELD);
                 }
                 addUint16(node.getLineno() & 0xFFFF);
                 break;
@@ -1178,7 +1182,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     addToken(Token.ENTERWITH);
                     stackChange(-1);
                     visitExpression(with.getFirstChild(), 0);
-                    addToken(Token.LEAVEWITH);
+                    addToken(Token.LEAVE_SCOPE);
                     break;
                 }
 

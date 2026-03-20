@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=466207
@@ -44,7 +44,7 @@ public class Bug466207Test {
         // get a js object as map
 
         try (Context context = Context.enter()) {
-            ScriptableObject scope = context.initStandardObjects();
+            TopLevel scope = context.initStandardObjects();
             list =
                     (List<Object>)
                             context.evaluateString(
@@ -190,7 +190,7 @@ public class Bug466207Test {
 
     private void listPop() {
         try (Context context = Context.enter()) {
-            ScriptableObject scope = context.initStandardObjects();
+            TopLevel scope = context.initStandardObjects();
             scope.put("list", scope, list);
             context.evaluateString(scope, "list.pop()", "testsrc", 1, null);
         }
@@ -199,7 +199,7 @@ public class Bug466207Test {
     @Test
     public void bigList() {
         try (Context context = Context.enter()) {
-            ScriptableObject scope = context.initStandardObjects();
+            TopLevel scope = context.initStandardObjects();
             NativeArray array =
                     (NativeArray)
                             context.evaluateString(

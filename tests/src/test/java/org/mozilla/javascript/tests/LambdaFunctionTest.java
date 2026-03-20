@@ -15,12 +15,13 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 
 public class LambdaFunctionTest {
 
     private Context cx;
-    private Scriptable root;
+    private VarScope root;
 
     @Before
     public void init() throws IOException {
@@ -61,7 +62,7 @@ public class LambdaFunctionTest {
                         root,
                         "foo",
                         0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                        (ctx, scope, thisObj, args) -> {
                             return "Hello";
                         });
         ScriptableObject.putProperty(root, "foo", f);
@@ -180,7 +181,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, VarScope scope, Object[] args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = new NewOnly();\n"
@@ -196,7 +197,7 @@ public class LambdaFunctionTest {
                         "NewOnly",
                         0,
                         LambdaConstructor.CONSTRUCTOR_FUNCTION,
-                        (Context ctx, Scriptable scope, Object[] args) -> ctx.newObject(scope));
+                        (Context ctx, VarScope scope, Object[] args) -> ctx.newObject(scope));
         ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
         eval(
                 "let o = NewOnly();\n"
@@ -206,11 +207,7 @@ public class LambdaFunctionTest {
 
     @Test
     public void lambdaFunctionNoNew() {
-        LambdaFunction func =
-                new LambdaFunction(
-                        root,
-                        0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> true);
+        LambdaFunction func = new LambdaFunction(root, 0, (ctx, scope, thisObj, args) -> true);
         ScriptableObject.defineProperty(root, "noNewFunc", func, 0);
         eval(
                 "let o = noNewFunc();\n"
@@ -238,13 +235,13 @@ public class LambdaFunctionTest {
 
         private String instanceVal;
 
-        public static void init(Scriptable scope) {
+        public static void init(VarScope scope) {
             LambdaConstructor constructor =
                     new LambdaConstructor(
                             scope,
                             "TestClass",
                             1,
-                            (Context cx, Scriptable s, Object[] args) -> {
+                            (Context cx, VarScope s, Object[] args) -> {
                                 TestClass tc = new TestClass();
                                 if (args.length > 0) {
                                     tc.instanceVal = ScriptRuntime.toString(args[0]);
@@ -255,15 +252,14 @@ public class LambdaFunctionTest {
                     scope,
                     "sayHello",
                     1,
-                    (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
-                            TestClass.sayHello(args),
+                    (cx, s, thisObj, args) -> TestClass.sayHello(args),
                     0,
                     DONTENUM | READONLY);
             constructor.definePrototypeMethod(
                     scope,
                     "appendToValue",
                     1,
-                    (Context cx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                    (cx, s, thisObj, args) -> {
                         TestClass self =
                                 LambdaConstructor.convertThisObject(thisObj, TestClass.class);
                         return self.appendToValue(args);
@@ -322,20 +318,20 @@ public class LambdaFunctionTest {
     private static class SpecialConstructorClass extends ScriptableObject {
         private String value;
 
-        public static void init(Context cx, Scriptable scope) {
+        public static void init(Context cx, VarScope scope) {
             LambdaConstructor constructor =
                     new LambdaConstructor(
                             scope,
                             "SpecialConstructorClass",
                             1,
-                            (Context lcx, Scriptable s, Scriptable thisObj, Object[] args) -> {
+                            (lcx, s, thisObj, args) -> {
                                 String arg = "";
                                 if (args.length > 0) {
                                     arg = ScriptRuntime.toString(args[0]);
                                 }
                                 return "You passed " + arg;
                             },
-                            (Context lcx, Scriptable s, Object[] args) -> {
+                            (lcx, s, args) -> {
                                 SpecialConstructorClass tc = new SpecialConstructorClass();
                                 if (args.length > 0) {
                                     tc.value = ScriptRuntime.toString(args[0]);

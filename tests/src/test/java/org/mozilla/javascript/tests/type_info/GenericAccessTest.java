@@ -221,7 +221,7 @@ public class GenericAccessTest {
             Utils.contextFactoryWithFeatures(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS);
 
     private static Object readClassAndValue(
-            Context cx, Scriptable scope, Scriptable thiz, Object[] args) {
+            Context cx, VarScope scope, Object thiz, Object[] args) {
         return Arrays.stream(args)
                 .map(arg -> Context.jsToJava(arg, TypeInfo.OBJECT))
                 .map(arg -> arg.getClass().getSimpleName() + ' ' + arg)

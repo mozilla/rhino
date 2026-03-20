@@ -3,6 +3,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * A Slot is the base class for all properties stored in the ScriptableObject class. There are a
@@ -10,14 +11,14 @@ import java.io.Serializable;
  * primitive type or another object. Separate classes are used to represent properties that have
  * various types of getter and setter methods.
  */
-public class Slot implements Serializable {
+public class Slot<T extends PropHolder<T>> implements Serializable {
     private static final long serialVersionUID = -6090581677123995491L;
     Object name; // This can change due to caching
     int indexOrHash;
     private short attributes;
     Object value;
-    transient Slot next; // next in hash table bucket
-    transient Slot orderedNext; // next in linked list
+    transient Slot<T> next; // next in hash table bucket
+    transient Slot<T> orderedNext; // next in linked list
 
     Slot(Object name, int index, int attributes) {
         this.name = name;
@@ -25,8 +26,8 @@ public class Slot implements Serializable {
         this.attributes = (short) attributes;
     }
 
-    Slot copySlot() {
-        var newSlot = new Slot(this);
+    Slot<T> copySlot() {
+        var newSlot = new Slot<T>(this);
         newSlot.next = null;
         newSlot.orderedNext = null;
         return newSlot;
@@ -47,7 +48,7 @@ public class Slot implements Serializable {
         return false;
     }
 
-    protected Slot(Slot oldSlot) {
+    protected Slot(Slot<T> oldSlot) {
         name = oldSlot.name;
         indexOrHash = oldSlot.indexOrHash;
         attributes = oldSlot.attributes;
@@ -63,11 +64,11 @@ public class Slot implements Serializable {
         }
     }
 
-    public final boolean setValue(Object value, Scriptable owner, Scriptable start) {
+    public final boolean setValue(Object value, T owner, T start) {
         return setValue(value, owner, start, Context.isCurrentContextStrict());
     }
 
-    public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+    public boolean setValue(Object value, T owner, T start, boolean isThrow) {
         if ((attributes & ScriptableObject.READONLY) != 0) {
             if (isThrow) {
                 throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
@@ -81,7 +82,7 @@ public class Slot implements Serializable {
         return false;
     }
 
-    public Object getValue(Scriptable start) {
+    public Object getValue(T start) {
         return value;
     }
 
@@ -94,11 +95,11 @@ public class Slot implements Serializable {
         attributes = (short) value;
     }
 
-    ScriptableObject.DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+    DescriptorInfo getPropertyDescriptor(Context cx, T scope) {
         return ScriptableObject.buildDataDescriptor(value, attributes);
     }
 
-    protected void throwNoSetterException(Scriptable start, Object newValue) {
+    protected void throwNoSetterException(T start, Object newValue) {
         Context cx = Context.getContext();
         if (cx.isStrictMode()
                 ||
@@ -108,7 +109,7 @@ public class Slot implements Serializable {
 
             String prop = "";
             if (name != null) {
-                prop = "[" + start.getClassName() + "]." + name;
+                prop = "[" + ((Scriptable) start).getClassName() + "]." + name;
             }
             throw ScriptRuntime.typeErrorById(
                     "msg.set.prop.no.setter", prop, Context.toString(newValue));
@@ -119,12 +120,12 @@ public class Slot implements Serializable {
      * Return a JavaScript function that represents the "setter". This is used by some legacy
      * functionality. Return null if there is no setter.
      */
-    Function getSetterFunction(String name, Scriptable scope) {
+    Function getSetterFunction(String name, T scope) {
         return null;
     }
 
     /** Same for the "getter." */
-    Function getGetterFunction(String name, Scriptable scope) {
+    Function getGetterFunction(String name, T scope) {
         return null;
     }
 
