@@ -4141,14 +4141,14 @@ public class NativeRegExp extends ScriptableObject {
         Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
         boolean functionalReplace = replaceValue instanceof Callable;
         List<ReplacementOperation> replaceOps;
-        Callable replaceFn;
+        Function replaceFn;
         if (!functionalReplace) {
             replaceFn = null;
             replaceOps =
                     AbstractEcmaStringOperations.buildReplacementList(
                             ScriptRuntime.toString(replaceValue));
         } else {
-            replaceFn = (Callable) replaceValue;
+            replaceFn = (Function) replaceValue;
             replaceOps = List.of();
         }
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
@@ -4263,7 +4263,7 @@ public class NativeRegExp extends ScriptableObject {
         Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
         boolean functionalReplace = replaceValue instanceof Callable;
         List<ReplacementOperation> replaceOps;
-        Callable replaceFn;
+        Function replaceFn;
 
         if (!functionalReplace) {
             replaceFn = null;
@@ -4271,7 +4271,7 @@ public class NativeRegExp extends ScriptableObject {
                     AbstractEcmaStringOperations.buildReplacementList(
                             ScriptRuntime.toString(replaceValue));
         } else {
-            replaceFn = (Callable) replaceValue;
+            replaceFn = (Function) replaceValue;
             replaceOps = List.of();
         }
         String flags = ScriptRuntime.toString(ScriptRuntime.getObjectProp(thisObj, "flags", cx));
@@ -4376,7 +4376,7 @@ public class NativeRegExp extends ScriptableObject {
             int position,
             String s,
             Object namedCaptures,
-            Callable replaceFunction) {
+            Function replaceFunction) {
         Object[] replacerArgs =
                 new Object[1 + captures.size() + (Undefined.isUndefined(namedCaptures) ? 2 : 3)];
         replacerArgs[0] = matched;

@@ -927,7 +927,7 @@ final class NativeString extends ScriptableObject {
         String replacement;
         if (functionalReplace) {
             Scriptable callThis =
-                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Callable) replaceValue);
+                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Function) replaceValue);
 
             Object replacementObj =
                     ((Callable) replaceValue)
@@ -1024,7 +1024,7 @@ final class NativeString extends ScriptableObject {
             if (functionalReplace) {
                 Scriptable callThis =
                         ScriptRuntime.getApplyOrCallThis(
-                                cx, scope, null, 0, (Callable) replaceValue);
+                                cx, scope, null, 0, (Function) replaceValue);
 
                 Object replacementObj =
                         ((Callable) replaceValue)
