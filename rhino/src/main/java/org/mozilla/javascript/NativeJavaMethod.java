@@ -37,11 +37,6 @@ public class NativeJavaMethod extends BaseFunction {
     private final transient CopyOnWriteArrayList<ResolvedOverload> overloadCache =
             new CopyOnWriteArrayList<>();
 
-    NativeJavaMethod(ExecutableBox[] methods) {
-        this.functionName = methods[0].getName();
-        this.methods = methods;
-    }
-
     NativeJavaMethod(ExecutableBox[] methods, String name) {
         this.functionName = name;
         this.methods = methods;
