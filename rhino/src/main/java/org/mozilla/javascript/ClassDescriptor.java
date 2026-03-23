@@ -114,6 +114,49 @@ public class ClassDescriptor {
         }
     }
 
+    private static class BuiltInPropDesc<T extends ScriptableObject> extends PropDesc {
+        private final BuiltInSlot.Getter<T> getter;
+        private final BuiltInSlot.Setter<T> setter;
+        private final BuiltInSlot.AttributeSetter<T> attrUpdater;
+        private final BuiltInSlot.PropDescriptionSetter<T> propDescSetter;
+
+        BuiltInPropDesc(
+                Object name,
+                BuiltInSlot.Getter<T> getter,
+                BuiltInSlot.Setter<T> setter,
+                int attributes) {
+            this(name, getter, setter, null, null, attributes);
+        }
+
+        BuiltInPropDesc(
+                Object name,
+                BuiltInSlot.Getter<T> getter,
+                BuiltInSlot.Setter<T> setter,
+                BuiltInSlot.AttributeSetter<T> attrUpdater,
+                BuiltInSlot.PropDescriptionSetter<T> propDescSetter,
+                int attributes) {
+            super(name, attributes);
+            this.getter = getter;
+            this.setter = setter;
+            this.attrUpdater = attrUpdater;
+            this.propDescSetter = propDescSetter;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        void makeProp(Context cx, Scriptable scope, ScriptableObject obj) {
+            if (attrUpdater == null && propDescSetter == null) {
+                ScriptableObject.defineBuiltInProperty((T) obj, name, attributes, getter, setter);
+            } else if (propDescSetter == null) {
+                ScriptableObject.defineBuiltInProperty(
+                        (T) obj, obj, attributes, getter, setter, attrUpdater);
+            } else {
+                ScriptableObject.defineBuiltInProperty(
+                        (T) obj, name, attributes, getter, setter, attrUpdater, propDescSetter);
+            }
+        }
+    }
+
     public interface ValueCreator {
         DescriptorInfo apply(Context cx, Scriptable Scope, ScriptableObject obj);
     }
@@ -618,6 +661,26 @@ public class ClassDescriptor {
                 LambdaSetterFunction setter,
                 int attributes) {
             dest.get(this).props.add(new LambdaGetSetPropDesc(name, getter, setter, attributes));
+            return this;
+        }
+
+        public <T extends ScriptableObject> Builder withProp(
+                Destination dest,
+                String name,
+                BuiltInSlot.Getter<T> getter,
+                BuiltInSlot.Setter<T> setter,
+                int attributes) {
+            dest.get(this).props.add(new BuiltInPropDesc<>(name, getter, setter, attributes));
+            return this;
+        }
+
+        public <T extends ScriptableObject> Builder withProp(
+                Destination dest,
+                SymbolKey name,
+                BuiltInSlot.Getter<T> getter,
+                BuiltInSlot.Setter<T> setter,
+                int attributes) {
+            dest.get(this).props.add(new BuiltInPropDesc<>(name, getter, setter, attributes));
             return this;
         }
 

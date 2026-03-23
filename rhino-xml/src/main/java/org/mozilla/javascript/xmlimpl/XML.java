@@ -25,7 +25,7 @@ class XML extends XMLObjectImpl {
     private XmlNode node;
 
     private static final ClassDescriptor DESCRIPTOR;
-    private static final SymbolKey LIB_KEY = new SymbolKey("__xml_lib__", REGULAR);
+    static final SymbolKey LIB_KEY = new SymbolKey("__xml_lib__", REGULAR);
 
     static {
         DESCRIPTOR =
@@ -49,7 +49,6 @@ class XML extends XMLObjectImpl {
                 sealed,
                 (ctx, ctor) -> {
                     ctor.put(LIB_KEY, ctor, lib);
-                    XMLCtor.createProperties(cx, scope, ctor, lib);
                 });
     }
 

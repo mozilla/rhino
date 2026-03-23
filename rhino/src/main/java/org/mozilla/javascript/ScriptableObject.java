@@ -3301,7 +3301,7 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     public static <T extends ScriptableObject> void defineBuiltInProperty(
             T owner,
-            String name,
+            Object name,
             int attributes,
             BuiltInSlot.Getter<T> getter,
             BuiltInSlot.Setter<T> setter) {
@@ -3328,7 +3328,7 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     public static <T extends ScriptableObject> void defineBuiltInProperty(
             T owner,
-            String name,
+            Object name,
             int attributes,
             BuiltInSlot.Getter<T> getter,
             BuiltInSlot.Setter<T> setter,
