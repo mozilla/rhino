@@ -975,6 +975,14 @@ public class NativeRegExp extends ScriptableObject {
      * case folding without full tables.
      */
     private static int unicodeCaseFold(int codePoint) {
+        // Fast path for ASCII (0-127): simple case folding is just toUpperCase
+        if (codePoint < 128) {
+            if (codePoint >= 'a' && codePoint <= 'z') {
+                return codePoint - ('a' - 'A');
+            }
+            return codePoint;
+        }
+
         // Turkish ı (U+0131) has no simple case fold mapping, only Turkish-specific ('T').
         // Java incorrectly maps it to 'I', so we must handle it explicitly.
         // Note: İ (U+0130) is handled correctly by the algorithm below (toLowerCase
@@ -989,19 +997,44 @@ public class NativeRegExp extends ScriptableObject {
         if (codePoint == 0x1FE3) return 0x03B0; // Greek small upsilon with dialytika and oxia
         if (codePoint == 0xFB05) return 0xFB06; // Latin small ligature long s t
 
+        // Fast path for BMP characters: try Character methods first to avoid String allocation
+        if (codePoint <= 0xFFFF) {
+            char ch = (char) codePoint;
+            char lower = Character.toLowerCase(ch);
+            char upper = Character.toUpperCase(lower);
+
+            // If conversions are stable (single char -> single char), use the result
+            if (upper == lower && lower == ch) {
+                return codePoint; // No case mapping exists
+            }
+
+            // Check if this character expands to multiple chars when uppercased
+            // (e.g., ß -> SS, ﬀ -> FF). Use String methods only for these cases.
+            if (Character.toUpperCase(ch) != ch) {
+                String upperStr = String.valueOf(ch).toUpperCase(Locale.ROOT);
+                if (upperStr.length() > 1) {
+                    // Has full case folding only - return lowercase if single char
+                    return lower;
+                }
+            }
+            if (lower != ch) {
+                String lowerStr = String.valueOf(ch).toLowerCase(Locale.ROOT);
+                if (lowerStr.length() > 1) {
+                    // toLowerCase expanded (e.g., İ) - no simple fold
+                    return codePoint;
+                }
+            }
+
+            return upper;
+        }
+
+        // Non-BMP characters: must use String methods
         String s = Character.toString(codePoint);
         String lower = s.toLowerCase(Locale.ROOT);
         String upper = lower.toUpperCase(Locale.ROOT);
 
         // If toUpperCase expanded to multiple characters (e.g., ß -> SS),
         // then this character has only a full case fold, not a simple one.
-        // In that case, use the lowercase form if it's a single character,
-        // otherwise keep the original. This correctly handles:
-        // - ß (no simple fold, stays ß)
-        // - ẞ (simple fold to ß)
-        // - Greek letters with ypogegrammeni (fold to lowercase form)
-        // - Ligatures like ﬀ, ﬁ, ﬂ (no simple fold, stay unchanged)
-        // - İ (U+0130) - toLowerCase produces 2 codepoints, returns original
         if (upper.codePointCount(0, upper.length()) > 1) {
             if (lower.codePointCount(0, lower.length()) == 1) {
                 return lower.codePointAt(0);
