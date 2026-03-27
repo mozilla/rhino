@@ -1,9 +1,9 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
@@ -29,11 +29,11 @@ public class BuiltinCtorTest {
                         continue;
                     }
                     assertTrue(
-                            String.format("Expected %s() to return an object", bi.name()),
-                            res instanceof Scriptable);
+                            res instanceof Scriptable,
+                            String.format("Expected %s() to return an object", bi.name()));
                     assertNotNull(
-                            String.format("Expected %s() to set parent scope", bi.name()),
-                            ((Scriptable) res).getParentScope());
+                            ((Scriptable) res).getParentScope(),
+                            String.format("Expected %s() to set parent scope", bi.name()));
                 }
             }
         }

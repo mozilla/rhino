@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests.es2015;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 /**

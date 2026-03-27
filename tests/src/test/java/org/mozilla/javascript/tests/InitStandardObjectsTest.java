@@ -4,11 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
@@ -28,12 +28,12 @@ public class InitStandardObjectsTest {
         global.init(ContextFactory.getGlobal());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         context = ContextFactory.getGlobal().enterContext();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         context.close();
     }

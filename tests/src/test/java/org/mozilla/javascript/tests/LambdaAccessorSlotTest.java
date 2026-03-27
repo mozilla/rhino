@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mozilla.javascript.ScriptableObject.*;
 import static org.mozilla.javascript.tests.LambdaAccessorSlotTest.StatusHolder.self;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
@@ -112,9 +112,9 @@ public class LambdaAccessorSlotTest {
                                     1,
                                     null);
                     assertEquals(
-                            "fields not explicitly defined as properties should return undefined",
                             Undefined.instance,
-                            hiddenFieldResult);
+                            hiddenFieldResult,
+                            "fields not explicitly defined as properties should return undefined");
                     return null;
                 });
     }
@@ -206,7 +206,7 @@ public class LambdaAccessorSlotTest {
                     Object setResult =
                             cx.evaluateString(
                                     scope, "s.status = 'DONE'; s.status", "source", 1, null);
-                    assertEquals("status won't be changed", "Constant", setResult);
+                    assertEquals("Constant", setResult, "status won't be changed");
 
                     Object shObj = cx.evaluateString(scope, "s", "source", 1, null);
                     var statusHolder = (StatusHolder) shObj;
@@ -346,7 +346,7 @@ public class LambdaAccessorSlotTest {
                                     "source",
                                     1,
                                     null);
-                    assertEquals("Status with prefix", "NewStatus: DONE", result);
+                    assertEquals("NewStatus: DONE", result, "Status with prefix");
                     return null;
                 });
     }

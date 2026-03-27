@@ -1,15 +1,15 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.RhinoException;
@@ -28,7 +28,7 @@ public class NativeWrappedArrayTest {
     private Context cx;
     private TopLevel global;
 
-    @Before
+    @BeforeEach
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
@@ -36,7 +36,7 @@ public class NativeWrappedArrayTest {
         global = new Global(cx);
     }
 
-    @After
+    @AfterEach
     public void terminate() {
         Context.exit();
     }

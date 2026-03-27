@@ -4,16 +4,16 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
@@ -24,7 +24,7 @@ public class NativeArrayIteratorTest {
     private Context cx;
     private Scriptable root;
 
-    @Before
+    @BeforeEach
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
@@ -34,7 +34,7 @@ public class NativeArrayIteratorTest {
         root = cx.newObject(global);
     }
 
-    @After
+    @AfterEach
     public void terminate() {
         Context.exit();
     }

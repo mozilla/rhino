@@ -12,8 +12,8 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.commonjs.module.provider.ModuleSource;
 import org.mozilla.javascript.commonjs.module.provider.ModuleSourceProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlConnectionExpiryCalculator;
@@ -42,7 +42,7 @@ public class UrlModuleSourceProviderTest {
         }
 
         // then
-        Assert.assertEquals("Not modified", ModuleSourceProvider.NOT_MODIFIED, result);
+        Assertions.assertEquals(ModuleSourceProvider.NOT_MODIFIED, result, "Not modified");
     }
 
     @Test
@@ -66,8 +66,8 @@ public class UrlModuleSourceProviderTest {
         }
 
         // then
-        Assert.assertNotNull(result);
-        Assert.assertNotEquals("Modified", ModuleSourceProvider.NOT_MODIFIED, result);
+        Assertions.assertNotNull(result);
+        Assertions.assertNotEquals(ModuleSourceProvider.NOT_MODIFIED, result, "Modified");
     }
 
     @Test
@@ -76,7 +76,7 @@ public class UrlModuleSourceProviderTest {
                 UrlModuleSourceProvider.class.getDeclaredMethod(
                         "getCharacterEncoding", new Class[] {URLConnection.class});
         int mods = method.getModifiers();
-        Assert.assertTrue(Modifier.isPublic(mods) || Modifier.isProtected(mods));
+        Assertions.assertTrue(Modifier.isPublic(mods) || Modifier.isProtected(mods));
     }
 
     private static URI getModuleURI(final Path filePath) throws URISyntaxException {

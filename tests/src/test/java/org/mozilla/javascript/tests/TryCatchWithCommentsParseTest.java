@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
@@ -37,9 +37,9 @@ public class TryCatchWithCommentsParseTest {
         // Check that exactly all comments were registered in tree
         int i = 0;
         for (Comment comment : ast.getComments()) {
-            Assert.assertEquals(comment.getValue(), "//" + i);
+            Assertions.assertEquals(comment.getValue(), "//" + i);
             i++;
         }
-        Assert.assertEquals(i, 15);
+        Assertions.assertEquals(i, 15);
     }
 }

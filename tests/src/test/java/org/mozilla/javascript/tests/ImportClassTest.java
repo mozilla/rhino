@@ -5,13 +5,13 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
@@ -35,12 +35,12 @@ public class ImportClassTest {
         global.init(contextFactory);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         TestUtils.setGlobalContextFactory(contextFactory);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         TestUtils.setGlobalContextFactory(null);
     }

@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests.commentspr465;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
@@ -45,8 +45,8 @@ public class CommentsTestUtils {
         //        env.setIdeMode(true);
         env.setErrorReporter(ter);
         AstRoot node = new Parser(env).parse(scriptStr, scriptName, 1);
-        Assert.assertTrue(ter.hasEncounteredAllErrors());
-        Assert.assertTrue(ter.hasEncounteredAllWarnings());
+        Assertions.assertTrue(ter.hasEncounteredAllErrors());
+        Assertions.assertTrue(ter.hasEncounteredAllWarnings());
         return node;
     }
 }

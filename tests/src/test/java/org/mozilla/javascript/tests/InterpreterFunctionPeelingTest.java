@@ -1,7 +1,7 @@
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContinuationPending;
 import org.mozilla.javascript.Script;
@@ -22,11 +22,8 @@ public class InterpreterFunctionPeelingTest {
             Script s = cx.compileString(script, "unknown source", 0, null);
             TopLevel scope = cx.initStandardObjects();
             scope.put("c", scope, Context.javaToJS(CAPTURER, scope));
-            Assert.assertThrows(
-                    ContinuationPending.class,
-                    () -> {
-                        cx.executeScriptWithContinuations(s, scope);
-                    });
+            Assertions.assertThrows(
+                    ContinuationPending.class, () -> cx.executeScriptWithContinuations(s, scope));
         }
     }
 

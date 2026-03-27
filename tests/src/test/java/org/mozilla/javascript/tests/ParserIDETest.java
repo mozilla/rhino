@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ast.AstRoot;
 
@@ -16,7 +16,7 @@ public class ParserIDETest {
 
     private static CompilerEnvirons environment;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         environment = CompilerEnvirons.ideEnvirons();
     }

@@ -1,12 +1,12 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.FileReader;
 import java.io.IOException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -16,7 +16,7 @@ public class LambdaPropertyTest {
     private Context cx;
     private Scriptable global;
 
-    @Before
+    @BeforeEach
     public void init() throws IOException {
         try (FileReader rdr = new FileReader("testsrc/assert.js")) {
             cx = Context.enter();
@@ -27,7 +27,7 @@ public class LambdaPropertyTest {
         }
     }
 
-    @After
+    @AfterEach
     public void terminate() {
         Context.exit();
     }

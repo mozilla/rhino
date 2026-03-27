@@ -1,11 +1,11 @@
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -15,7 +15,7 @@ public class UnhandledPromiseTest {
     private Context cx;
     private Scriptable scope;
 
-    @Before
+    @BeforeEach
     public void init() {
         cx = Context.enter();
         cx.setGeneratingDebug(true);
@@ -24,7 +24,7 @@ public class UnhandledPromiseTest {
         scope = new Global(cx);
     }
 
-    @After
+    @AfterEach
     public void terminate() {
         cx.close();
     }

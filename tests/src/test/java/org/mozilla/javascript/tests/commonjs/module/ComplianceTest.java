@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.net.URI;
@@ -9,10 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import junit.framework.AssertionFailedError;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
@@ -22,17 +20,16 @@ import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 import org.mozilla.javascript.testutils.Utils;
+import org.opentest4j.AssertionFailedError;
 
-@RunWith(Parameterized.class)
 public class ComplianceTest {
 
     private File testDir;
 
-    public ComplianceTest(String name, File testDir) {
+    public void initComplianceTest(String name, File testDir) {
         this.testDir = testDir;
     }
 
-    @Parameterized.Parameters(name = "/{0}")
     public static Collection<Object[]> data() {
         List<Object[]> retval = new ArrayList<Object[]>(16);
         final File[] files =
@@ -65,8 +62,10 @@ public class ComplianceTest {
                 false);
     }
 
-    @Test
-    public void require() throws Throwable {
+    @MethodSource("data")
+    @ParameterizedTest(name = "/{0}")
+    public void require(String name, File testDir) throws Throwable {
+        initComplianceTest(name, testDir);
         Utils.runWithAllModes(
                 cx -> {
                     final TopLevel scope = cx.initStandardObjects();

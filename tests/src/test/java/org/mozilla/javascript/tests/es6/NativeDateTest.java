@@ -7,12 +7,10 @@
  */
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.TimeZone;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.TopLevel;
@@ -444,12 +442,12 @@ public class NativeDateTest {
                                     () -> cx.evaluateString(scope, js, "test", 1, null));
 
                     assertTrue(
+                            e.getMessage().startsWith(expectedMessage),
                             "'"
                                     + e.getMessage()
                                     + "' does not start with '"
                                     + expectedMessage
-                                    + "'",
-                            e.getMessage().startsWith(expectedMessage));
+                                    + "'");
                     return null;
                 });
     }

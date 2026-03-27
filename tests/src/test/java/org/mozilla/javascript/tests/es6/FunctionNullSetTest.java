@@ -1,9 +1,9 @@
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;

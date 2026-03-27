@@ -4,13 +4,14 @@
 
 package org.mozilla.javascript.tests.es5;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
@@ -22,13 +23,13 @@ public class Test262RegExpTest {
     private Context cx;
     private ScriptableObject scope;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         cx = Context.enter();
         scope = cx.initStandardObjects();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Context.exit();
     }
@@ -70,44 +71,64 @@ public class Test262RegExpTest {
         cx.evaluateString(scope, source, sourceName, 0, null);
     }
 
-    @Test(expected = EcmaError.class)
+    @Test
     public void s15_10_2_15_A1_T4() {
-        String source = "(new RegExp('[\\\\Db-G]').exec('a'))";
-        String sourceName =
-                "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T4.js";
-        cx.evaluateString(scope, source, sourceName, 0, null);
+        assertThrows(
+                EcmaError.class,
+                () -> {
+                    String source = "(new RegExp('[\\\\Db-G]').exec('a'))";
+                    String sourceName =
+                            "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T4.js";
+                    cx.evaluateString(scope, source, sourceName, 0, null);
+                });
     }
 
-    @Test(expected = EcmaError.class)
+    @Test
     public void s15_10_2_15_A1_T5() {
-        String source = "(new RegExp('[\\\\sb-G]').exec('a'))";
-        String sourceName =
-                "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T5.js";
-        cx.evaluateString(scope, source, sourceName, 0, null);
+        assertThrows(
+                EcmaError.class,
+                () -> {
+                    String source = "(new RegExp('[\\\\sb-G]').exec('a'))";
+                    String sourceName =
+                            "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T5.js";
+                    cx.evaluateString(scope, source, sourceName, 0, null);
+                });
     }
 
-    @Test(expected = EcmaError.class)
+    @Test
     public void s15_10_2_15_A1_T6() {
-        String source = "(new RegExp('[\\\\Sb-G]').exec('a'))";
-        String sourceName =
-                "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T6.js";
-        cx.evaluateString(scope, source, sourceName, 0, null);
+        assertThrows(
+                EcmaError.class,
+                () -> {
+                    String source = "(new RegExp('[\\\\Sb-G]').exec('a'))";
+                    String sourceName =
+                            "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T6.js";
+                    cx.evaluateString(scope, source, sourceName, 0, null);
+                });
     }
 
-    @Test(expected = EcmaError.class)
+    @Test
     public void s15_10_2_15_A1_T7() {
-        String source = "(new RegExp('[\\\\wb-G]').exec('a'))";
-        String sourceName =
-                "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T7.js";
-        cx.evaluateString(scope, source, sourceName, 0, null);
+        assertThrows(
+                EcmaError.class,
+                () -> {
+                    String source = "(new RegExp('[\\\\wb-G]').exec('a'))";
+                    String sourceName =
+                            "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T7.js";
+                    cx.evaluateString(scope, source, sourceName, 0, null);
+                });
     }
 
-    @Test(expected = EcmaError.class)
+    @Test
     public void s15_10_2_15_A1_T8() {
-        String source = "(new RegExp('[\\\\Wb-G]').exec('a'))";
-        String sourceName =
-                "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T8.js";
-        cx.evaluateString(scope, source, sourceName, 0, null);
+        assertThrows(
+                EcmaError.class,
+                () -> {
+                    String source = "(new RegExp('[\\\\Wb-G]').exec('a'))";
+                    String sourceName =
+                            "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T8.js";
+                    cx.evaluateString(scope, source, sourceName, 0, null);
+                });
     }
 
     @Test

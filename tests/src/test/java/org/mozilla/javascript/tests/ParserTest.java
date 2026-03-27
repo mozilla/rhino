@@ -4,18 +4,13 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
@@ -65,7 +60,7 @@ import org.mozilla.javascript.testing.TestErrorReporter;
 public class ParserTest {
     CompilerEnvirons environment;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         environment = new CompilerEnvirons();
         environment.setLanguageVersion(Context.VERSION_DEFAULT);
@@ -1426,7 +1421,7 @@ public class ParserTest {
         Parser p = new Parser(environment);
         try {
             p.parse(code, code, 0);
-            assertFalse("Expected an EvaluatorException", true);
+            assertFalse(true, "Expected an EvaluatorException");
         } catch (EvaluatorException ee) {
             // Normal failure
         }

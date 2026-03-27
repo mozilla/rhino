@@ -5,7 +5,7 @@
 package org.mozilla.javascript.tests.es6;
 
 import java.util.Locale;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.testutils.Utils;

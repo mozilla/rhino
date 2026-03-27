@@ -1,12 +1,12 @@
 package org.mozilla.classfile.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.DefiningClassLoader;

@@ -6,12 +6,12 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Interpreter;

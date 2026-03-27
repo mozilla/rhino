@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -13,10 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.drivers.TestUtils;
@@ -30,7 +28,6 @@ import org.mozilla.javascript.tools.shell.Global;
  *
  * @author Norris Boyd
  */
-@RunWith(Parameterized.class)
 public class DoctestsTest {
     static final String baseDirectory = "testsrc" + File.separator + "doctests";
     static final String doctestsExtension = ".doctest";
@@ -38,7 +35,7 @@ public class DoctestsTest {
     String source;
     boolean interpretedMode;
 
-    public DoctestsTest(String name, String source, boolean interpretedMode) {
+    public void initDoctestsTest(String name, String source, boolean interpretedMode) {
         this.name = name;
         this.source = source;
         this.interpretedMode = interpretedMode;
@@ -64,7 +61,6 @@ public class DoctestsTest {
         return new String(buf);
     }
 
-    @Parameters(name = "{0} interpreted:{2}")
     public static Collection<Object[]> doctestValues() throws IOException {
         File[] doctests = getDoctestFiles();
         List<Object[]> result = new ArrayList<Object[]>();
@@ -85,8 +81,10 @@ public class DoctestsTest {
         return result;
     }
 
-    @Test
-    public void runDoctest() throws Exception {
+    @MethodSource("doctestValues")
+    @ParameterizedTest(name = "{0} interpreted:{2}")
+    public void runDoctest(String name, String source, boolean interpretedMode) throws Exception {
+        initDoctestsTest(name, source, interpretedMode);
         ContextFactory factory = ContextFactory.getGlobal();
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);

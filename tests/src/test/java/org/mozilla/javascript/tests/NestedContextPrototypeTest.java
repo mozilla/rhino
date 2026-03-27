@@ -6,16 +6,15 @@
  */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
@@ -53,7 +52,6 @@ import org.mozilla.javascript.tools.shell.Global;
  *
  * @author Roland Praml, FOCONIS AG
  */
-@RunWith(Parameterized.class)
 public class NestedContextPrototypeTest {
 
     protected final Global global = new Global();
@@ -66,12 +64,11 @@ public class NestedContextPrototypeTest {
         SEALED_OWN_OBJECTS;
     }
 
-    @Parameters(name = "{0}")
     public static Collection<Mode> data() {
         return Arrays.asList(Mode.values());
     }
 
-    public NestedContextPrototypeTest(Mode mode) {
+    public void initNestedContextPrototypeTest(Mode mode) {
         this.mode = mode;
         boolean sealed = mode == Mode.SEALED || mode == Mode.SEALED_OWN_OBJECTS;
         global.setSealedStdLib(sealed);
@@ -122,23 +119,31 @@ public class NestedContextPrototypeTest {
                         });
     }
 
-    @Test
-    public void arrayInstanceOfObject() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void arrayInstanceOfObject(Mode mode) {
+        initNestedContextPrototypeTest(mode);
         assertEquals(true, runScript("[] instanceof Object"));
     }
 
-    @Test
-    public void arrayInstanceOfArray() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void arrayInstanceOfArray(Mode mode) {
+        initNestedContextPrototypeTest(mode);
         assertEquals(true, runScript("[] instanceof Array"));
     }
 
-    @Test
-    public void objectInstanceOfObject() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void objectInstanceOfObject(Mode mode) {
+        initNestedContextPrototypeTest(mode);
         assertEquals(true, runScript("({} instanceof Object)"));
     }
 
-    @Test
-    public void globalInstanceInstance() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void globalInstanceInstance(Mode mode) {
+        initNestedContextPrototypeTest(mode);
         assertEquals(true, runScript("myInstance instanceof MyClass"));
 
         if (mode == Mode.SEALED_OWN_OBJECTS) {
@@ -156,38 +161,52 @@ public class NestedContextPrototypeTest {
     private static String defineFoo =
             "Object.prototype.foo = function() {\n" + " return 'bar';\n" + "};\n";
 
-    @Test(expected = EvaluatorException.class)
-    public void prototypeModification1Sealed() {
-        assumeTrue("check for exception in sealed mode", mode == Mode.SEALED);
-        runScript(defineFoo + "var v=[]; (v.foo())");
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void prototypeModification1Sealed(Mode mode) {
+        assumeTrue(mode == Mode.SEALED, "check for exception in sealed mode");
+        initNestedContextPrototypeTest(mode);
+        assertThrows(
+                EvaluatorException.class,
+                () -> {
+                    runScript(defineFoo + "var v=[]; (v.foo())");
+                });
     }
 
-    @Test
-    public void prototypeModification1() {
-        assumeFalse("cannot define foo in sealed mode", mode == Mode.SEALED);
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void prototypeModification1(Mode mode) {
+        initNestedContextPrototypeTest(mode);
+        assumeFalse(mode == Mode.SEALED, "cannot define foo in sealed mode");
         assertEquals("bar", runScript(defineFoo + "var v=[]; (v.foo())"));
         if (mode == Mode.GLOBAL || mode == Mode.NESTED)
             assertEquals("bar", runScript("var v=[]; v.foo()"));
     }
 
-    @Test
-    public void prototypeModification2() {
-        assumeFalse("ignored in sealed mode", mode == Mode.SEALED);
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void prototypeModification2(Mode mode) {
+        initNestedContextPrototypeTest(mode);
+        assumeFalse(mode == Mode.SEALED, "ignored in sealed mode");
         assertEquals("bar", runScript(defineFoo + "var v={}; (v.foo())"));
         if (mode == Mode.GLOBAL || mode == Mode.NESTED)
             assertEquals("bar", runScript("var v={}; v.foo()"));
     }
 
-    @Test
-    public void prototypeModification3() {
-        assumeFalse("ignored in sealed mode", mode == Mode.SEALED);
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void prototypeModification3(Mode mode) {
+        initNestedContextPrototypeTest(mode);
+        assumeFalse(mode == Mode.SEALED, "ignored in sealed mode");
         assertEquals("bar", runScript(defineFoo + "var v=new Object(); v.foo()"));
         if (mode == Mode.GLOBAL || mode == Mode.NESTED)
             assertEquals("bar", runScript("var v=new Object(); v.foo()"));
     }
 
-    @Test
-    public void modeLocalVar() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void modeLocalVar(Mode mode) {
+        initNestedContextPrototypeTest(mode);
         runScript("var v='hi'");
         if (mode == Mode.GLOBAL) {
             // only in GLOBAL mode, the local value will visible
@@ -198,8 +217,10 @@ public class NestedContextPrototypeTest {
         }
     }
 
-    @Test
-    public void modeGlobalVar() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "{0}")
+    public void modeGlobalVar(Mode mode) {
+        initNestedContextPrototypeTest(mode);
         runScript("v='hi'");
         if (mode == Mode.GLOBAL || mode == Mode.NESTED) {
             // globally defined values will be visible in GLOBAL and NESTED mode
