@@ -5,8 +5,8 @@
 package org.mozilla.javascript.tests;
 
 import java.lang.reflect.Method;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
@@ -38,13 +38,13 @@ public class WriteReadOnlyPropertyTest {
     public void writeReadOnly_throws() throws Exception {
         try {
             testWriteReadOnly(false);
-            Assert.fail();
+            Assertions.fail();
         } catch (EcmaError e) {
-            Assert.assertTrue(
-                    e.getMessage(),
+            Assertions.assertTrue(
                     e.getMessage()
                             .contains(
-                                    "Cannot set property [Foo].myProp that has only a getter to value '123'"));
+                                    "Cannot set property [Foo].myProp that has only a getter to value '123'"),
+                    e.getMessage());
         }
     }
 

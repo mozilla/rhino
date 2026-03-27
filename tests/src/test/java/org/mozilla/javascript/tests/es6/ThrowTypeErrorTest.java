@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for ThrowTypeError support. */

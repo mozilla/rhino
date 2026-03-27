@@ -1,15 +1,13 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -18,18 +16,17 @@ import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Timers;
 
 /** Test the setTimeout and clearTimeout functions added to the shell. */
-@RunWith(Parameterized.class)
 public class ShellTimerTest {
-    final int optLevel;
+    int optLevel;
     private Context cx;
     private Scriptable global;
     private final Timers timers = new Timers();
 
-    public ShellTimerTest(int optLevel) {
+    public void initShellTimerTest(int optLevel) {
         this.optLevel = optLevel;
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
@@ -38,12 +35,11 @@ public class ShellTimerTest {
         global.put("TestsComplete", global, false);
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         cx.close();
     }
 
-    @Parameters(name = "{index}, opt={0}")
     public static Collection<Object[]> optLevels() {
         int[] optLevels = Utils.getTestOptLevels();
         ArrayList<Object[]> params = new ArrayList<>();
@@ -54,14 +50,18 @@ public class ShellTimerTest {
     }
 
     /** Just make sure that a timeout fires. */
-    @Test
-    public void setImmediateTimeout() throws InterruptedException {
+    @MethodSource("optLevels")
+    @ParameterizedTest(name = "{index}, opt={0}")
+    public void setImmediateTimeout(int optLevel) throws InterruptedException {
+        initShellTimerTest(optLevel);
         runTest("setTimeout(() => { TestsComplete = true; });");
     }
 
     /** Ensure that parameters work. */
-    @Test
-    public void checkTimeoutParameters() throws InterruptedException {
+    @MethodSource("optLevels")
+    @ParameterizedTest(name = "{index}, opt={0}")
+    public void checkTimeoutParameters(int optLevel) throws InterruptedException {
+        initShellTimerTest(optLevel);
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "setTimeout((a, b) => { \n"
@@ -73,8 +73,10 @@ public class ShellTimerTest {
     }
 
     /** Ensure that invalid stuff doesn't happen. */
-    @Test
-    public void checkTypeChecks() throws InterruptedException {
+    @MethodSource("optLevels")
+    @ParameterizedTest(name = "{index}, opt={0}")
+    public void checkTypeChecks(int optLevel) throws InterruptedException {
+        initShellTimerTest(optLevel);
         runTest(
                 "load('testsrc/assert.js');\n"
                         +
@@ -97,8 +99,10 @@ public class ShellTimerTest {
     }
 
     /** Make sure that timeouts are executed in absolute numerical order. */
-    @Test
-    public void setTimeoutOrder() throws InterruptedException {
+    @MethodSource("optLevels")
+    @ParameterizedTest(name = "{index}, opt={0}")
+    public void setTimeoutOrder(int optLevel) throws InterruptedException {
+        initShellTimerTest(optLevel);
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "var count = 0;\n"
@@ -108,8 +112,10 @@ public class ShellTimerTest {
     }
 
     /** Make sure that timers can be cancelled. */
-    @Test
-    public void timerCancellation() throws InterruptedException {
+    @MethodSource("optLevels")
+    @ParameterizedTest(name = "{index}, opt={0}")
+    public void timerCancellation(int optLevel) throws InterruptedException {
+        initShellTimerTest(optLevel);
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "let count = 0;\n"
@@ -121,8 +127,10 @@ public class ShellTimerTest {
     }
 
     /** Make sure that timers can be nested inside other timers and so on. */
-    @Test
-    public void nestedTimers() throws InterruptedException {
+    @MethodSource("optLevels")
+    @ParameterizedTest(name = "{index}, opt={0}")
+    public void nestedTimers(int optLevel) throws InterruptedException {
+        initShellTimerTest(optLevel);
         runTest(
                 "load('testsrc/assert.js');\n"
                         + "let count = 0;\n"

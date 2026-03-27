@@ -1,7 +1,7 @@
 package org.mozilla.javascript.tests.commentspr465;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
@@ -30,22 +30,24 @@ public class IfCommentsTest {
 
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
         Node comm1Node = funcDef.getBody().getFirstChild();
-        Assert.assertEquals(Token.COMMENT, comm1Node.getType());
+        Assertions.assertEquals(Token.COMMENT, comm1Node.getType());
 
         IfStatement ifSt = (IfStatement) comm1Node.getNext();
         AstNode ifInlineComm = ifSt.getInlineComment();
-        Assert.assertNotNull(ifInlineComm);
-        Assert.assertEquals("// if comment", ((Comment) ifInlineComm).getValue());
+        Assertions.assertNotNull(ifInlineComm);
+        Assertions.assertEquals("// if comment", ((Comment) ifInlineComm).getValue());
 
         AstNode thenPartNode = ifSt.getThenPart();
-        Assert.assertNotNull(thenPartNode.getInlineComment());
-        Assert.assertEquals("//Dont show", ((Comment) thenPartNode.getInlineComment()).getValue());
+        Assertions.assertNotNull(thenPartNode.getInlineComment());
+        Assertions.assertEquals(
+                "//Dont show", ((Comment) thenPartNode.getInlineComment()).getValue());
 
-        Assert.assertNotNull(ifSt.getElseKeyWordInlineComment());
-        Assert.assertEquals("//else", ((Comment) ifSt.getElseKeyWordInlineComment()).getValue());
+        Assertions.assertNotNull(ifSt.getElseKeyWordInlineComment());
+        Assertions.assertEquals(
+                "//else", ((Comment) ifSt.getElseKeyWordInlineComment()).getValue());
 
         Node comm2Node = ifSt.getNext();
-        Assert.assertEquals(Token.COMMENT, comm2Node.getType());
+        Assertions.assertEquals(Token.COMMENT, comm2Node.getType());
     }
 
     @Test
@@ -65,23 +67,23 @@ public class IfCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         IfStatement ifSt = (IfStatement) funcDef.getBody().getFirstChild();
-        Assert.assertNotNull(ifSt.getElseKeyWordInlineComment());
-        Assert.assertEquals(
+        Assertions.assertNotNull(ifSt.getElseKeyWordInlineComment());
+        Assertions.assertEquals(
                 "//test else", ((Comment) ifSt.getElseKeyWordInlineComment()).getValue());
 
         AstNode elseNode = ifSt.getElsePart();
-        Assert.assertEquals(Token.BLOCK, elseNode.getType());
+        Assertions.assertEquals(Token.BLOCK, elseNode.getType());
         Node comm1Node = elseNode.getFirstChild();
-        Assert.assertEquals(Token.COMMENT, comm1Node.getType());
-        Assert.assertEquals("//else part", ((Comment) comm1Node).getValue());
+        Assertions.assertEquals(Token.COMMENT, comm1Node.getType());
+        Assertions.assertEquals("//else part", ((Comment) comm1Node).getValue());
 
         Node comm2Node = ifSt.getNext();
-        Assert.assertEquals(Token.COMMENT, comm2Node.getType());
-        Assert.assertEquals("//7800", ((Comment) comm2Node).getValue());
+        Assertions.assertEquals(Token.COMMENT, comm2Node.getType());
+        Assertions.assertEquals("//7800", ((Comment) comm2Node).getValue());
 
         Node comm3Node = comm2Node.getNext();
-        Assert.assertEquals(Token.COMMENT, comm3Node.getType());
-        Assert.assertEquals("//9034", ((Comment) comm3Node).getValue());
+        Assertions.assertEquals(Token.COMMENT, comm3Node.getType());
+        Assertions.assertEquals("//9034", ((Comment) comm3Node).getValue());
     }
 
     @Test
@@ -102,7 +104,7 @@ public class IfCommentsTest {
         AstNode scriptRoot = CommentsTestUtils.getRhinoASTRootNode(inputStr, "ifelse3", null, null);
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
         IfStatement ifSt = (IfStatement) funcDef.getBody().getFirstChild();
-        Assert.assertEquals(outputStr.trim(), ifSt.toSource().trim());
+        Assertions.assertEquals(outputStr.trim(), ifSt.toSource().trim());
     }
 
     @Test
@@ -125,27 +127,27 @@ public class IfCommentsTest {
 
         IfStatement ifSt = (IfStatement) funcDef.getBody().getFirstChild();
         AstNode ifInlineComm = ifSt.getInlineComment();
-        Assert.assertNotNull(ifInlineComm);
-        Assert.assertEquals("//if 2", ((Comment) ifInlineComm).getValue());
+        Assertions.assertNotNull(ifInlineComm);
+        Assertions.assertEquals("//if 2", ((Comment) ifInlineComm).getValue());
 
         IfStatement elsePartIfSt = (IfStatement) ifSt.getElsePart();
         AstNode elseIfInlineComm = elsePartIfSt.getInlineComment();
-        Assert.assertNotNull(elseIfInlineComm);
-        Assert.assertEquals("//else if 2", ((Comment) elseIfInlineComm).getValue());
+        Assertions.assertNotNull(elseIfInlineComm);
+        Assertions.assertEquals("//else if 2", ((Comment) elseIfInlineComm).getValue());
 
-        Assert.assertNotNull(elsePartIfSt.getElseKeyWordInlineComment());
-        Assert.assertEquals(
+        Assertions.assertNotNull(elsePartIfSt.getElseKeyWordInlineComment());
+        Assertions.assertEquals(
                 "//else 2", ((Comment) elsePartIfSt.getElseKeyWordInlineComment()).getValue());
 
         AstNode elseNode = elsePartIfSt.getElsePart();
-        Assert.assertEquals("//elsepart 2", ((Comment) elseNode.getInlineComment()).getValue());
+        Assertions.assertEquals("//elsepart 2", ((Comment) elseNode.getInlineComment()).getValue());
 
         Node comm2Node = ifSt.getNext();
-        Assert.assertEquals(Token.COMMENT, comm2Node.getType());
-        Assert.assertEquals("// xysdflj ljk", ((Comment) comm2Node).getValue());
+        Assertions.assertEquals(Token.COMMENT, comm2Node.getType());
+        Assertions.assertEquals("// xysdflj ljk", ((Comment) comm2Node).getValue());
 
         Node comm3Node = comm2Node.getNext();
-        Assert.assertEquals(Token.COMMENT, comm3Node.getType());
-        Assert.assertEquals("//test", ((Comment) comm3Node).getValue());
+        Assertions.assertEquals(Token.COMMENT, comm3Node.getType());
+        Assertions.assertEquals("//test", ((Comment) comm3Node).getValue());
     }
 }

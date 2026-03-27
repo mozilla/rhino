@@ -1,12 +1,12 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.FileReader;
 import java.io.IOException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.LambdaFunction;
@@ -22,7 +22,7 @@ public class LambdaFunctionTest {
     private Context cx;
     private Scriptable root;
 
-    @Before
+    @BeforeEach
     public void init() throws IOException {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
@@ -32,7 +32,7 @@ public class LambdaFunctionTest {
         }
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         Context.exit();
     }
@@ -61,9 +61,8 @@ public class LambdaFunctionTest {
                         root,
                         "foo",
                         0,
-                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
-                            return "Hello";
-                        });
+                        (Context ctx, Scriptable scope, Scriptable thisObj, Object[] args) ->
+                                "Hello");
         ScriptableObject.putProperty(root, "foo", f);
         eval(
                 "assertEquals(foo.name, 'foo');\n"
@@ -138,9 +137,7 @@ public class LambdaFunctionTest {
         TestClass.init(root);
         assertThrows(
                 RhinoException.class,
-                () -> {
-                    eval("let tc = new TestClass('foo');\n" + "tc.notFound();");
-                });
+                () -> eval("let tc = new TestClass('foo');\n" + "tc.notFound();"));
     }
 
     @Test

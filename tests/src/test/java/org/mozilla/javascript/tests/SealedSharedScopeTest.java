@@ -4,18 +4,14 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
@@ -25,7 +21,6 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Wrapper;
 
-@RunWith(BlockJUnit4ClassRunner.class)
 public class SealedSharedScopeTest {
 
     private Context ctx;
@@ -33,7 +28,7 @@ public class SealedSharedScopeTest {
     private Scriptable scope1;
     private Scriptable scope2;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         try (Context tmpCtx = Context.enter()) {
             sharedScope = new ImporterTopLevel(tmpCtx, true);
@@ -46,7 +41,7 @@ public class SealedSharedScopeTest {
         scope2 = TopLevel.createIsolate(sharedScope);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         Context.exit();
     }
@@ -158,9 +153,11 @@ public class SealedSharedScopeTest {
         assertEquals("undefined", o);
     }
 
-    @Test(expected = EvaluatorException.class)
+    @Test
     public void importClassFailsOnSealedScope() throws Exception {
-        evaluateString(sharedScope, "importClass(java.util.Locale);");
+        assertThrows(
+                EvaluatorException.class,
+                () -> evaluateString(sharedScope, "importClass(java.util.Locale);"));
     }
 
     @Test

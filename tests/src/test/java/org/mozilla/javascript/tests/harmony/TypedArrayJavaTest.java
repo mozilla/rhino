@@ -1,9 +1,6 @@
 package org.mozilla.javascript.tests.harmony;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
@@ -74,7 +71,7 @@ public class TypedArrayJavaTest {
 
         try {
             list.toArray(new String[2]);
-            assertTrue("Expected exception", false);
+            assertTrue(false, "Expected exception");
         } catch (ArrayStoreException ae) {
         }
     }
@@ -137,64 +134,64 @@ public class TypedArrayJavaTest {
 
         try {
             list.get(3);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (IndexOutOfBoundsException ie) {
         }
         try {
             list.set(-1, a);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (IndexOutOfBoundsException ie) {
         }
         try {
             list.add(a);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.remove(0);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.remove(a);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.removeAll(Arrays.asList(a, b));
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.retainAll(Arrays.asList(a, b));
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.add(0, a);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             Collection<T> empty = Collections.emptyList();
             list.addAll(empty);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             Collection<T> empty = Collections.emptyList();
             list.addAll(0, empty);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.subList(0, 1);
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
         try {
             list.clear();
-            assertFalse("Exception expected", true);
+            assertFalse(true, "Exception expected");
         } catch (UnsupportedOperationException uoe) {
         }
 
@@ -246,7 +243,7 @@ public class TypedArrayJavaTest {
 
         try {
             l2.set(bogus);
-            assertTrue("Expected exception", false);
+            assertTrue(false, "Expected exception");
         } catch (IllegalStateException e) {
         }
 
@@ -261,13 +258,13 @@ public class TypedArrayJavaTest {
 
         try {
             l2.remove();
-            assertFalse("Expected exception", true);
+            assertFalse(true, "Expected exception");
         } catch (UnsupportedOperationException e) {
         }
 
         try {
             l2.add(bogus);
-            assertFalse("Expected exception", true);
+            assertFalse(true, "Expected exception");
         } catch (UnsupportedOperationException e) {
         }
     }

@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -49,7 +49,7 @@ public class DynamicScopeTest {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         while (Context.getCurrentContext() != null) {
             Context.exit();

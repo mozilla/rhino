@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
@@ -35,10 +35,10 @@ public class BracelessIfElseWithCommentsParseTest {
 
         // Parsing should not throw a syntax error
         AstRoot ast = parser.parse(source, "test", 1);
-        Assert.assertNotNull(ast);
+        Assertions.assertNotNull(ast);
 
         // The fixture has 18 comments — verify they were all recorded
-        Assert.assertEquals(14, ast.getComments().size());
+        Assertions.assertEquals(14, ast.getComments().size());
     }
 
     @Test
@@ -56,8 +56,8 @@ public class BracelessIfElseWithCommentsParseTest {
 
         Parser parser = new Parser(env);
         AstRoot ast = parser.parse(source, "test", 1);
-        Assert.assertNotNull(ast);
-        Assert.assertEquals(1, ast.getComments().size());
+        Assertions.assertNotNull(ast);
+        Assertions.assertEquals(1, ast.getComments().size());
     }
 
     @Test
@@ -74,8 +74,8 @@ public class BracelessIfElseWithCommentsParseTest {
 
         Parser parser = new Parser(env);
         AstRoot ast = parser.parse(source, "test", 1);
-        Assert.assertNotNull(ast);
-        Assert.assertEquals(1, ast.getComments().size());
+        Assertions.assertNotNull(ast);
+        Assertions.assertEquals(1, ast.getComments().size());
     }
 
     @Test
@@ -100,7 +100,7 @@ public class BracelessIfElseWithCommentsParseTest {
                         + "  doSomething();\n"
                         + "else \n"
                         + "  doSomethingElse();\n";
-        Assert.assertEquals(expected, ast.toSource());
+        Assertions.assertEquals(expected, ast.toSource());
     }
 
     @Test
@@ -116,12 +116,12 @@ public class BracelessIfElseWithCommentsParseTest {
 
         // Check how many comments are in the global list
         java.util.SortedSet<org.mozilla.javascript.ast.Comment> comments = ast.getComments();
-        Assert.assertEquals(1, comments.size());
+        Assertions.assertEquals(1, comments.size());
 
         java.util.Iterator<org.mozilla.javascript.ast.Comment> it = comments.iterator();
         org.mozilla.javascript.ast.Comment c1 = it.next();
 
-        Assert.assertEquals("// comment 1\n// comment 2", c1.getValue());
+        Assertions.assertEquals("// comment 1\n// comment 2", c1.getValue());
     }
 
     @Test
@@ -139,6 +139,6 @@ public class BracelessIfElseWithCommentsParseTest {
 
         Parser parser = new Parser(env);
         AstRoot ast = parser.parse(source, "test", 1);
-        Assert.assertNotNull(ast);
+        Assertions.assertNotNull(ast);
     }
 }

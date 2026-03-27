@@ -4,9 +4,7 @@
 
 package org.mozilla.javascript.drivers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,9 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
@@ -33,7 +29,6 @@ import org.mozilla.javascript.tools.shell.Global;
  * represented by a class that extends this class, and has a "RhinoTest" annotation at the class
  * level that returns the file name of the script to execute.
  */
-@RunWith(BlockJUnit4ClassRunner.class)
 public abstract class ScriptTestsBase {
 
     private Object executeRhinoScript(boolean interpretedMode) {

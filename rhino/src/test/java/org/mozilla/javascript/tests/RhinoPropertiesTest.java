@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.util.Map;

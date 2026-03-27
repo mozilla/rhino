@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
@@ -16,14 +16,14 @@ public class UndefinedTest {
     private Context cx;
     private Scriptable global;
 
-    @Before
+    @BeforeEach
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
         global = new Global(cx);
     }
 
-    @After
+    @AfterEach
     public void close() {
         cx.close();
     }

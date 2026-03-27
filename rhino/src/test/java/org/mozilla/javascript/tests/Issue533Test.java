@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.SortedSet;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
@@ -20,7 +20,7 @@ public class Issue533Test {
 
     private Parser parser;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.setRecordingComments(true);

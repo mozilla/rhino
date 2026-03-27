@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -11,8 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
@@ -42,32 +42,33 @@ public class NativeConsoleTest {
         }
 
         public void assertEquals(PrinterCall expectedCall) {
-            Assert.assertEquals(expectedCall.level, this.level);
+            Assertions.assertEquals(expectedCall.level, this.level);
             if (expectedCall.args != null) {
-                Assert.assertEquals(expectedCall.args.length, this.args.length);
+                Assertions.assertEquals(expectedCall.args.length, this.args.length);
                 for (int i = 0; i < expectedCall.args.length; ++i) {
                     if (expectedCall.args[i] instanceof Pattern && this.args[i] instanceof String) {
-                        Assert.assertTrue(
+                        Assertions.assertTrue(
+                                ((Pattern) expectedCall.args[i])
+                                        .matcher((String) this.args[i])
+                                        .matches(),
                                 "\""
                                         + this.args[i]
                                         + "\" does not matches \""
                                         + expectedCall.args[i]
-                                        + "\"",
-                                ((Pattern) expectedCall.args[i])
-                                        .matcher((String) this.args[i])
-                                        .matches());
+                                        + "\"");
                     } else {
-                        Assert.assertEquals(expectedCall.args[i], this.args[i]);
+                        Assertions.assertEquals(expectedCall.args[i], this.args[i]);
                     }
                 }
             }
             if (expectedCall.stack != null) {
-                Assert.assertEquals(expectedCall.stack.length, this.stack.length);
+                Assertions.assertEquals(expectedCall.stack.length, this.stack.length);
                 for (int i = 0; i < expectedCall.stack.length; ++i) {
-                    Assert.assertEquals(expectedCall.stack[i].fileName, this.stack[i].fileName);
-                    Assert.assertEquals(
+                    Assertions.assertEquals(expectedCall.stack[i].fileName, this.stack[i].fileName);
+                    Assertions.assertEquals(
                             expectedCall.stack[i].functionName, this.stack[i].functionName);
-                    Assert.assertEquals(expectedCall.stack[i].lineNumber, this.stack[i].lineNumber);
+                    Assertions.assertEquals(
+                            expectedCall.stack[i].lineNumber, this.stack[i].lineNumber);
                 }
             }
         }

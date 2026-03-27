@@ -64,7 +64,8 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
         implementation project(':rhino-tools')
         implementation project(':rhino-xml')*/
 
-        testImplementation libs.junit4
+        testImplementation platform(libs.junit.platform.get())
+        testImplementation "org.junit.jupiter:junit-jupiter"
         androidTestImplementation 'androidx.test:runner:1.7.0'
         androidTestImplementation 'androidx.test.ext:junit:1.3.0'
     }

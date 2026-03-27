@@ -9,12 +9,12 @@ package org.mozilla.javascript.tests;
 
 import static java.util.Locale.FRANCE;
 import static java.util.Locale.US;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Locale;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 
@@ -32,12 +32,12 @@ public class MessageProviderLanguageTest {
 
     private Context cx;
 
-    @Before
+    @BeforeEach
     public void init() {
         cx = Context.enter();
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         Context.exit();
         Locale.setDefault(DEFAULT_LOCALE);

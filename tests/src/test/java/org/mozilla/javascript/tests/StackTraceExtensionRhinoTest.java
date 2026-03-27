@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.FileReader;
 import java.io.IOException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -33,7 +33,7 @@ public class StackTraceExtensionRhinoTest {
                 cx.evaluateReader(root, rdr, "stack-traces-rhino.js", 1, null);
             }
         } catch (IOException ioe) {
-            assertFalse("I/O Error: " + ioe, true);
+            assertFalse(true, "I/O Error: " + ioe);
         }
     }
 

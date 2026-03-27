@@ -4,12 +4,7 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,8 +12,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Iterator;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Hashtable;
 import org.mozilla.javascript.Hashtable.Entry;
 import org.mozilla.javascript.Undefined;
@@ -31,7 +26,7 @@ import org.mozilla.javascript.Undefined;
 public class CollectionHashtableTest {
     private Hashtable ht;
 
-    @Before
+    @BeforeEach
     public void init() {
         ht = new Hashtable();
     }
@@ -40,7 +35,7 @@ public class CollectionHashtableTest {
     @Test
     public void empty() {
         assertEquals(0, ht.size());
-        assertNull(null, ht.getEntry("one"));
+        assertNull(ht.getEntry("one"));
         assertFalse(ht.has("one"));
         assertNull(ht.delete("one"));
         assertFalse(ht.deleteEntry("one"));

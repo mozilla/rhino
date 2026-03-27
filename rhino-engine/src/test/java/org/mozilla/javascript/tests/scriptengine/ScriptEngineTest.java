@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests.scriptengine;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,9 +15,9 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.engine.RhinoScriptEngine;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
@@ -27,13 +27,13 @@ public class ScriptEngineTest {
     private ScriptEngine engine;
     private Compilable cEngine;
 
-    @BeforeClass
+    @BeforeAll
     public static void initManager() {
         manager = new ScriptEngineManager();
         manager.registerEngineName("rhino", new RhinoScriptEngineFactory());
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         engine = manager.getEngineByName("rhino");
         cEngine = (Compilable) engine;
@@ -69,11 +69,7 @@ public class ScriptEngineTest {
 
     @Test
     public void testThrows() {
-        assertThrows(
-                ScriptException.class,
-                () -> {
-                    engine.eval("throw 'This is an error'");
-                });
+        assertThrows(ScriptException.class, () -> engine.eval("throw 'This is an error'"));
     }
 
     @Test
@@ -106,11 +102,7 @@ public class ScriptEngineTest {
         // Make sure we can delete
         engineBindings.remove("string");
         // This will throw because string is undefined
-        assertThrows(
-                ScriptException.class,
-                () -> {
-                    engine.eval("let failing = string + '123';");
-                });
+        assertThrows(ScriptException.class, () -> engine.eval("let failing = string + '123';"));
     }
 
     @Test
@@ -221,10 +213,7 @@ public class ScriptEngineTest {
     @Test
     public void cantCompile() {
         assertThrows(
-                ScriptException.class,
-                () -> {
-                    cEngine.compile("This is not JavaScript at all!");
-                });
+                ScriptException.class, () -> cEngine.compile("This is not JavaScript at all!"));
     }
 
     @Test
@@ -236,20 +225,12 @@ public class ScriptEngineTest {
         // Older language versions
         ScriptEngine oldEngine = manager.getEngineByName("rhino");
         oldEngine.put(ScriptEngine.LANGUAGE_VERSION, 150);
-        assertThrows(
-                ScriptException.class,
-                () -> {
-                    oldEngine.eval("Symbol() == Symbol()");
-                });
+        assertThrows(ScriptException.class, () -> oldEngine.eval("Symbol() == Symbol()"));
 
         // The same with a string
         ScriptEngine olderEngine = manager.getEngineByName("rhino");
         olderEngine.put(ScriptEngine.LANGUAGE_VERSION, "150");
-        assertThrows(
-                ScriptException.class,
-                () -> {
-                    olderEngine.eval("Symbol() == Symbol()");
-                });
+        assertThrows(ScriptException.class, () -> olderEngine.eval("Symbol() == Symbol()"));
     }
 
     @Test

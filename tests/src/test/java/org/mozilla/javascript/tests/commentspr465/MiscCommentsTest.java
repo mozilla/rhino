@@ -1,7 +1,7 @@
 package org.mozilla.javascript.tests.commentspr465;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.CatchClause;
 import org.mozilla.javascript.ast.Comment;
@@ -33,10 +33,10 @@ public class MiscCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
         TryStatement tryNode = (TryStatement) funcDef.getBody().getFirstChild();
 
-        Assert.assertEquals("//try comment", ((Comment) tryNode.getInlineComment()).getValue());
+        Assertions.assertEquals("//try comment", ((Comment) tryNode.getInlineComment()).getValue());
 
         CatchClause clauseNode = tryNode.getCatchClauses().get(0);
-        Assert.assertEquals(outputStr, clauseNode.toSource());
+        Assertions.assertEquals(outputStr, clauseNode.toSource());
     }
 
     @Test
@@ -69,6 +69,6 @@ public class MiscCommentsTest {
                         + "}\n";
         AstNode scriptRoot =
                 CommentsTestUtils.getRhinoASTRootNode(inputStr, "tryCatch1", null, null);
-        Assert.assertEquals(outputStr, scriptRoot.toSource());
+        Assertions.assertEquals(outputStr, scriptRoot.toSource());
     }
 }

@@ -4,11 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
@@ -16,7 +16,7 @@ import org.mozilla.javascript.ast.AstRoot;
 public class BugGetterSetterTest {
     private CompilerEnvirons environment = new CompilerEnvirons();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         environment.setLanguageVersion(180);
         environment.setStrictMode(false);

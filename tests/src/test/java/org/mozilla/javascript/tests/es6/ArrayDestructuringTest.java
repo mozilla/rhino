@@ -4,7 +4,8 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -309,7 +310,7 @@ public class ArrayDestructuringTest {
      * Test rest parameters in array destructuring assignment. Currently not supported - this test
      * documents expected behavior when implemented.
      */
-    @org.junit.Ignore("Rest parameters in array destructuring not yet implemented")
+    @Disabled("Rest parameters in array destructuring not yet implemented")
     @Test
     public void arrayDestructuringWithRest() {
         Utils.runWithAllModes(

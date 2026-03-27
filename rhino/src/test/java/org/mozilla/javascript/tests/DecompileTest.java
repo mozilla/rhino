@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.testutils.Utils;
@@ -29,7 +29,7 @@ public class DecompileTest {
         Utils.runWithAllModes(
                 cx -> {
                     final Script script = cx.compileString(source, "my script", 0, null);
-                    Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
+                    Assertions.assertEquals(source, cx.decompileScript(script, 4).trim());
                     return null;
                 });
     }
@@ -41,7 +41,7 @@ public class DecompileTest {
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Script script = cx.compileString(source, "my script", 0, null);
-                    Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
+                    Assertions.assertEquals(source, cx.decompileScript(script, 4).trim());
                     return null;
                 });
     }
@@ -53,7 +53,7 @@ public class DecompileTest {
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Script script = cx.compileString(source, "my script", 0, null);
-                    Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
+                    Assertions.assertEquals(source, cx.decompileScript(script, 4).trim());
                     return null;
                 });
     }
@@ -65,7 +65,7 @@ public class DecompileTest {
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Script script = cx.compileString(source, "my script", 0, null);
-                    Assert.assertEquals(
+                    Assertions.assertEquals(
                             source,
                             cx.decompileScript(script, 4)
                                     .trim()

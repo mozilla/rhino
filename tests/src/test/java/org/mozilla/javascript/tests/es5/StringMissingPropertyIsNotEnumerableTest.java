@@ -1,9 +1,9 @@
 package org.mozilla.javascript.tests.es5;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mozilla.javascript.tests.Evaluator.eval;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeObject;
 

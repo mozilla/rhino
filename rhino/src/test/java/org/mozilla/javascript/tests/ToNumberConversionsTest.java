@@ -3,9 +3,8 @@ package org.mozilla.javascript.tests;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.testutils.Utils;
@@ -17,7 +16,6 @@ import org.mozilla.javascript.testutils.Utils;
  *
  * <p>This is only enabled with a language version >= ES6 (200).
  */
-@RunWith(Parameterized.class)
 public class ToNumberConversionsTest {
     private static final Object[][] TESTS = {
         // order: expected result, source string
@@ -84,7 +82,6 @@ public class ToNumberConversionsTest {
     private static final String PRELUDE =
             "function eq(a,b) {" + "if (a != a) return b != b;" + "return a == b;" + "}\n";
 
-    @Parameterized.Parameters(name = "ToNumber(\"{1}\") == {0} (opt={2})")
     public static Collection<Object[]> data() {
         List<Object[]> cases = new ArrayList<>();
 
@@ -95,10 +92,7 @@ public class ToNumberConversionsTest {
         return cases;
     }
 
-    @Parameterized.Parameter(0)
     public String expected;
-
-    @Parameterized.Parameter(1)
     public String source;
 
     @SuppressWarnings("ConstantConditions")
@@ -106,32 +100,45 @@ public class ToNumberConversionsTest {
         return (Boolean) cx.evaluateString(scope, script, "inline", 1, null);
     }
 
-    @Test
-    public void cumberConstructor() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "ToNumber(\"{1}\") == {0} (opt={2})")
+    public void cumberConstructor(String expected, String source) {
+        initToNumberConversionsTest(expected, source);
         String script = String.format("%seq(Number(\"%s\"), %s)", PRELUDE, source, expected);
         Utils.assertWithAllModes_ES6(
                 "Number('" + source + "') doesn't produce " + expected, true, script);
     }
 
-    @Test
-    public void coercion() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "ToNumber(\"{1}\") == {0} (opt={2})")
+    public void coercion(String expected, String source) {
+        initToNumberConversionsTest(expected, source);
         String script = String.format("%seq(+(\"%s\"), %s)", PRELUDE, source, expected);
         Utils.assertWithAllModes_ES6(
                 "+('" + source + "') doesn't produce " + expected, true, script);
     }
 
-    @Test
-    public void isNaN() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "ToNumber(\"{1}\") == {0} (opt={2})")
+    public void isNaN(String expected, String source) {
+        initToNumberConversionsTest(expected, source);
         String script = String.format("%seq(isNaN(\"%s\"), isNaN(%s))", PRELUDE, source, expected);
         Utils.assertWithAllModes_ES6(
                 "isNaN('" + source + "') !== isNaN(" + expected + ")", true, script);
     }
 
-    @Test
-    public void isFinite() {
+    @MethodSource("data")
+    @ParameterizedTest(name = "ToNumber(\"{1}\") == {0} (opt={2})")
+    public void isFinite(String expected, String source) {
+        initToNumberConversionsTest(expected, source);
         String script =
                 String.format("%seq(isFinite(\"%s\"), isFinite(%s))", PRELUDE, source, expected);
         Utils.assertWithAllModes_ES6(
                 "isFinite('" + source + "') !== isFinite(" + expected + ")", true, script);
+    }
+
+    public void initToNumberConversionsTest(String expected, String source) {
+        this.expected = expected;
+        this.source = source;
     }
 }

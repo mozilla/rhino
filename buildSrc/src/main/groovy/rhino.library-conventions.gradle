@@ -13,7 +13,7 @@ plugins {
 }
 
 dependencies {
-    errorprone "com.google.errorprone:error_prone_core:2.45.0"
+    errorprone libs.errorprone.core
 }
 
 version = project.version

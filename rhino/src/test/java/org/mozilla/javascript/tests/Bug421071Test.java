@@ -9,8 +9,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
@@ -74,7 +74,7 @@ public class Bug421071Test {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         globalScope = createGlobalScope();
     }

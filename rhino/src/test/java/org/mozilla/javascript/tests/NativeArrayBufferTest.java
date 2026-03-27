@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
@@ -23,7 +23,7 @@ public class NativeArrayBufferTest {
             cx.setLanguageVersion(Context.VERSION_ES6);
             TopLevel global = cx.initStandardObjects();
             Object result = cx.evaluateString(global, "(new ArrayBuffer(5)).isView", "", 1, null);
-            Assert.assertEquals(Undefined.instance, result);
+            Assertions.assertEquals(Undefined.instance, result);
         }
     }
 }

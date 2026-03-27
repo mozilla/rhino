@@ -9,8 +9,8 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.TopLevel;
@@ -41,15 +41,15 @@ public class ErrorHandlingTest {
                 "\n" // 1
                         + "throw new Error('foo')", // 2
                 e -> {
-                    Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals("Error: foo (myScript.js#2)", e.getMessage());
+                    Assertions.assertEquals(JavaScriptException.class, e.getClass());
+                    Assertions.assertEquals("Error: foo (myScript.js#2)", e.getMessage());
                 });
         testIt(
                 "\n" // 1
                         + "throw new EvalError('foo')",
                 e -> {
-                    Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals("EvalError: foo (myScript.js#2)", e.getMessage());
+                    Assertions.assertEquals(JavaScriptException.class, e.getClass());
+                    Assertions.assertEquals("EvalError: foo (myScript.js#2)", e.getMessage());
                 });
         testIt(
                 "try {\n" // 1
@@ -58,15 +58,15 @@ public class ErrorHandlingTest {
                         + " throw e\n" // 4
                         + "}", // 5
                 e -> {
-                    Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals("Error: foo (myScript.js#4)", e.getMessage());
+                    Assertions.assertEquals(JavaScriptException.class, e.getClass());
+                    Assertions.assertEquals("Error: foo (myScript.js#4)", e.getMessage());
                 });
         testIt(
                 "\n" // 1
                         + "null.toString()", // 2
                 e -> {
-                    Assert.assertEquals(EcmaError.class, e.getClass());
-                    Assert.assertEquals(
+                    Assertions.assertEquals(EcmaError.class, e.getClass());
+                    Assertions.assertEquals(
                             "TypeError: Cannot call method \"toString\" of null (myScript.js#2)",
                             e.getMessage());
                 });
@@ -92,24 +92,24 @@ public class ErrorHandlingTest {
         testIt(
                 "org.mozilla.javascript.tests.ErrorHandlingTest.generateJavaError()",
                 e -> {
-                    Assert.assertEquals(WrappedException.class, e.getClass());
-                    Assert.assertEquals(
+                    Assertions.assertEquals(WrappedException.class, e.getClass());
+                    Assertions.assertEquals(
                             "Wrapped java.lang.RuntimeException: foo (myScript.js#1)",
                             e.getMessage());
-                    Assert.assertEquals(RuntimeException.class, e.getCause().getClass());
-                    Assert.assertEquals("foo", e.getCause().getMessage());
-                    Assert.assertTrue(stackToLines(e).contains(EXPECTED_LINE_IN_STACK));
+                    Assertions.assertEquals(RuntimeException.class, e.getCause().getClass());
+                    Assertions.assertEquals("foo", e.getCause().getMessage());
+                    Assertions.assertTrue(stackToLines(e).contains(EXPECTED_LINE_IN_STACK));
                 });
         testIt(
                 "try { org.mozilla.javascript.tests.ErrorHandlingTest.generateJavaError() } catch (e) { throw e }",
                 e -> {
-                    Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals(
+                    Assertions.assertEquals(JavaScriptException.class, e.getClass());
+                    Assertions.assertEquals(
                             "JavaException: java.lang.RuntimeException: foo (myScript.js#1)",
                             e.getMessage());
-                    Assert.assertEquals(RuntimeException.class, e.getCause().getClass());
-                    Assert.assertEquals("foo", e.getCause().getMessage());
-                    Assert.assertTrue(stackToLines(e).contains(EXPECTED_LINE_IN_STACK));
+                    Assertions.assertEquals(RuntimeException.class, e.getCause().getClass());
+                    Assertions.assertEquals("foo", e.getCause().getMessage());
+                    Assertions.assertTrue(stackToLines(e).contains(EXPECTED_LINE_IN_STACK));
                 });
     }
 
@@ -119,20 +119,20 @@ public class ErrorHandlingTest {
         testIt(
                 "throw new java.lang.RuntimeException('foo')",
                 e -> {
-                    Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals(
+                    Assertions.assertEquals(JavaScriptException.class, e.getClass());
+                    Assertions.assertEquals(
                             "java.lang.RuntimeException: foo (myScript.js#1)", e.getMessage());
-                    Assert.assertEquals(RuntimeException.class, e.getCause().getClass());
-                    Assert.assertEquals("foo", e.getCause().getMessage());
+                    Assertions.assertEquals(RuntimeException.class, e.getCause().getClass());
+                    Assertions.assertEquals("foo", e.getCause().getMessage());
                 });
         testIt(
                 "try { throw new java.lang.RuntimeException('foo') } catch (e) { throw e }",
                 e -> {
-                    Assert.assertEquals(JavaScriptException.class, e.getClass());
-                    Assert.assertEquals(
+                    Assertions.assertEquals(JavaScriptException.class, e.getClass());
+                    Assertions.assertEquals(
                             "java.lang.RuntimeException: foo (myScript.js#1)", e.getMessage());
-                    Assert.assertEquals(RuntimeException.class, e.getCause().getClass());
-                    Assert.assertEquals("foo", e.getCause().getMessage());
+                    Assertions.assertEquals(RuntimeException.class, e.getCause().getClass());
+                    Assertions.assertEquals("foo", e.getCause().getMessage());
                 });
     }
 
@@ -151,7 +151,7 @@ public class ErrorHandlingTest {
                     try {
                         TopLevel scope = cx.initStandardObjects();
                         cx.evaluateString(scope, script, "myScript.js", 1, null);
-                        Assert.fail("No error was thrown");
+                        Assertions.fail("No error was thrown");
                     } catch (final Throwable t) {
                         exception.accept(t);
                     }

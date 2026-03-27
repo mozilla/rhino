@@ -6,9 +6,7 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,8 +14,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContinuationPending;
@@ -72,7 +70,7 @@ public class ContinuationsApiTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         try (Context cx = Context.enter()) {
             globalScope = cx.initStandardObjects();
@@ -384,7 +382,7 @@ public class ContinuationsApiTest {
 
         CharSequence r2 = (CharSequence) ois.readObject();
 
-        assertEquals("still the same at the other end", r1.toString(), r2.toString());
+        assertEquals(r1.toString(), r2.toString(), "still the same at the other end");
     }
 
     /**

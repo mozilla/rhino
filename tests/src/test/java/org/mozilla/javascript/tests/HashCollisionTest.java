@@ -3,8 +3,8 @@ package org.mozilla.javascript.tests;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringWriter;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -12,7 +12,7 @@ public class HashCollisionTest {
     private static final String mediumInput = "testsrc/jstests/collisions.json";
     private static String collisions;
 
-    @BeforeClass
+    @BeforeAll
     public static void loadFile() throws IOException {
         StringWriter out = new StringWriter();
 

@@ -4,9 +4,9 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.NativeArray;
 
 public class Bug492525Test {

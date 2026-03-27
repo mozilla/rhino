@@ -11,16 +11,13 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
-import com.tngtech.archunit.junit.ArchUnitRunner;
 import com.tngtech.archunit.lang.ArchRule;
-import org.junit.runner.RunWith;
 
 /**
  * Architecture tests.
  *
  * @author Ronald Brill
  */
-@RunWith(ArchUnitRunner.class)
 @AnalyzeClasses(
         packages = "org.mozilla.javascript",
         importOptions = ImportOption.DoNotIncludeTests.class)

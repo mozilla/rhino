@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
@@ -81,7 +81,7 @@ public class ForEachForOfTest {
                     scope.put("dtos", scope, dtos);
 
                     cx.evaluateString(scope, script, "myScript.js", 1, null);
-                    Assert.assertEquals("bar", dto.getData());
+                    Assertions.assertEquals("bar", dto.getData());
                     return null;
                 });
     }
@@ -98,7 +98,7 @@ public class ForEachForOfTest {
                     scope.put("dtos", scope, dtos);
 
                     cx.evaluateString(scope, script, "myScript.js", 1, null);
-                    Assert.assertEquals("bar", dto.getData());
+                    Assertions.assertEquals("bar", dto.getData());
                     return null;
                 });
     }
@@ -116,7 +116,7 @@ public class ForEachForOfTest {
                     scope.put("dtos", scope, dtos);
 
                     cx.evaluateString(scope, script, "myScript.js", 1, null);
-                    Assert.assertEquals("bar", dto.getData());
+                    Assertions.assertEquals("bar", dto.getData());
                     return null;
                 });
     }
@@ -134,7 +134,7 @@ public class ForEachForOfTest {
                     scope.put("dtos", scope, dtos);
 
                     cx.evaluateString(scope, script, "myScript.js", 1, null);
-                    Assert.assertEquals("bar", dto.getData());
+                    Assertions.assertEquals("bar", dto.getData());
                     return null;
                 });
     }

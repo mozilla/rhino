@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mozilla.javascript.drivers.TestUtils.JS_FILE_FILTER;
 import static org.mozilla.javascript.drivers.TestUtils.recursiveListFilesHelper;
 
@@ -388,7 +388,7 @@ public class Test262SuiteTest {
                 }
 
                 try {
-                    assertEquals(ex.details(), testCase.expectedError, errorName);
+                    assertEquals(testCase.expectedError, errorName, ex.details());
                 } catch (AssertionError aex) {
                     if (markedAsFailing) return;
 

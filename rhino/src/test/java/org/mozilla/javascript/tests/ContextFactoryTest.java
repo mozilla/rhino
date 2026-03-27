@@ -5,29 +5,26 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 
-@RunWith(BlockJUnit4ClassRunner.class)
 public class ContextFactoryTest {
 
     private static Context CTX;
     private static int LV;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         CTX = Context.enter();
         LV = CTX.getLanguageVersion();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
         CTX.setLanguageVersion(LV);
         Context.exit();

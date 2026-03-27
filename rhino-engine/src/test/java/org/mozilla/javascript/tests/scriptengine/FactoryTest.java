@@ -1,11 +1,11 @@
 package org.mozilla.javascript.tests.scriptengine;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.engine.RhinoScriptEngine;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 

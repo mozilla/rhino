@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Test that we can redefine a function's name. */

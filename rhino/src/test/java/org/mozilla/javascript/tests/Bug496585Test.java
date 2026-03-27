@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
 
@@ -25,7 +25,7 @@ public class Bug496585Test {
                 .call(
                         cx -> {
                             cx.getWrapFactory().setJavaPrimitiveWrap(false);
-                            Assert.assertEquals(
+                            Assertions.assertEquals(
                                     "string[]",
                                     cx.evaluateString(
                                             cx.initStandardObjects(),
@@ -33,7 +33,7 @@ public class Bug496585Test {
                                             "<test>",
                                             1,
                                             null));
-                            Assert.assertEquals(
+                            Assertions.assertEquals(
                                     "string+function",
                                     cx.evaluateString(
                                             cx.initStandardObjects(),

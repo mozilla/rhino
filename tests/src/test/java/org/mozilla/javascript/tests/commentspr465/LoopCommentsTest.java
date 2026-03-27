@@ -1,7 +1,7 @@
 package org.mozilla.javascript.tests.commentspr465;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
@@ -34,12 +34,12 @@ public class LoopCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         Node firstNode = funcDef.getBody().getFirstChild();
-        Assert.assertEquals(Token.COMMENT, firstNode.getType());
+        Assertions.assertEquals(Token.COMMENT, firstNode.getType());
 
         ForLoop forNode = (ForLoop) firstNode.getNext();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test For comment", ((Comment) forNode.getInlineComment()).getValue());
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test in formy =",
                 ((Comment) ((AstNode) (forNode.getBody().getFirstChild())).getInlineComment())
                         .getValue());
@@ -58,10 +58,10 @@ public class LoopCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         ForLoop forNode = (ForLoop) funcDef.getBody().getFirstChild();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test For comment", ((Comment) forNode.getInlineComment()).getValue());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test in formy =", ((Comment) forNode.getBody().getInlineComment()).getValue());
     }
 
@@ -78,10 +78,10 @@ public class LoopCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         WhileLoop whileNode = (WhileLoop) funcDef.getBody().getFirstChild();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test For comment", ((Comment) whileNode.getInlineComment()).getValue());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test in while =", ((Comment) whileNode.getBody().getInlineComment()).getValue());
     }
 
@@ -100,15 +100,15 @@ public class LoopCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         DoLoop doWhileNode = (DoLoop) funcDef.getBody().getFirstChild();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test do comment", ((Comment) doWhileNode.getInlineComment()).getValue());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test in do-while =",
                 ((Comment) ((AstNode) (doWhileNode.getBody().getFirstChild())).getInlineComment())
                         .getValue());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test do-while condition comment", ((Comment) doWhileNode.getNext()).getValue());
     }
 
@@ -127,15 +127,15 @@ public class LoopCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         DoLoop doWhileNode = (DoLoop) funcDef.getBody().getFirstChild();
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test do comment", ((Comment) doWhileNode.getInlineComment()).getValue());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//test in do-while =",
                 ((Comment) ((AstNode) (doWhileNode.getBody().getFirstChild())).getInlineComment())
                         .getValue());
 
-        Assert.assertNull(doWhileNode.getNext());
+        Assertions.assertNull(doWhileNode.getNext());
     }
 
     @Test
@@ -147,9 +147,9 @@ public class LoopCommentsTest {
         FunctionNode funcDef = (FunctionNode) scriptRoot.getFirstChild();
 
         WithStatement withNode = (WithStatement) funcDef.getBody().getFirstChild();
-        Assert.assertEquals("//comment1", ((Comment) withNode.getInlineComment()).getValue());
+        Assertions.assertEquals("//comment1", ((Comment) withNode.getInlineComment()).getValue());
 
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "//comment2", ((Comment) withNode.getStatement().getInlineComment()).getValue());
     }
 }

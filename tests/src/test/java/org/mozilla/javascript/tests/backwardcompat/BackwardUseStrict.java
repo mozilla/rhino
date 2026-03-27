@@ -1,14 +1,12 @@
 package org.mozilla.javascript.tests.backwardcompat;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.testutils.Utils;
@@ -17,7 +15,7 @@ import org.mozilla.javascript.tools.shell.Global;
 public class BackwardUseStrict {
     private static String source;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws IOException {
         try (InputStream is =
                 BackwardUseStrict.class.getResourceAsStream(
@@ -65,7 +63,7 @@ public class BackwardUseStrict {
                     try {
                         Global root = new Global(cx);
                         cx.evaluateString(root, source, "[test]", 1, null);
-                        assertTrue("Expected a runtime exception", false);
+                        assertTrue(false, "Expected a runtime exception");
                     } catch (RhinoException re) {
                         // We expect an error here.
                     }

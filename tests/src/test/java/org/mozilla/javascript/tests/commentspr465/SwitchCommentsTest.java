@@ -1,8 +1,8 @@
 package org.mozilla.javascript.tests.commentspr465;
 
 import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
@@ -31,7 +31,7 @@ public class SwitchCommentsTest {
                 "function f1() {\n" + "  switch (a) {\n" + "    case 1:\n" + "  }\n" + "}\n";
 
         AstNode scriptRoot = CommentsTestUtils.getRhinoASTRootNode(inputStr, "switch1", null, null);
-        Assert.assertEquals(expectedStr, scriptRoot.toSource());
+        Assertions.assertEquals(expectedStr, scriptRoot.toSource());
     }
 
     @Test
@@ -45,8 +45,8 @@ public class SwitchCommentsTest {
 
         AstNode scriptRoot = CommentsTestUtils.getRhinoASTRootNode(inputStr, "switch2", null, null);
         List<SwitchCase> caseNodes = assertSwitch(scriptRoot, 3);
-        Assert.assertNotNull(caseNodes.get(1).getInlineComment());
-        Assert.assertEquals(
+        Assertions.assertNotNull(caseNodes.get(1).getInlineComment());
+        Assertions.assertEquals(
                 "//testcase", ((Comment) caseNodes.get(1).getInlineComment()).getValue());
     }
 
@@ -68,16 +68,16 @@ public class SwitchCommentsTest {
         AstNode scriptRoot = CommentsTestUtils.getRhinoASTRootNode(inputStr, "switch3", null, null);
         List<SwitchCase> caseNodes = assertSwitch(scriptRoot, 2);
         SwitchCase case6 = caseNodes.get(0);
-        Assert.assertEquals(5, case6.getStatements().size());
+        Assertions.assertEquals(5, case6.getStatements().size());
         AstNode comment1St = case6.getStatements().get(1);
-        Assert.assertEquals(Token.COMMENT, comment1St.getType());
-        Assert.assertEquals(
+        Assertions.assertEquals(Token.COMMENT, comment1St.getType());
+        Assertions.assertEquals(
                 "/*\n" + "            case6 block comment\n" + "        */",
                 ((Comment) comment1St).getValue());
 
         AstNode comment2St = case6.getStatements().get(4);
-        Assert.assertEquals(Token.COMMENT, comment2St.getType());
-        Assert.assertEquals("//End of case 6", ((Comment) comment2St).getValue());
+        Assertions.assertEquals(Token.COMMENT, comment2St.getType());
+        Assertions.assertEquals("//End of case 6", ((Comment) comment2St).getValue());
     }
 
     @Test
@@ -96,12 +96,12 @@ public class SwitchCommentsTest {
         AstNode scriptRoot = CommentsTestUtils.getRhinoASTRootNode(inputStr, "switch4", null, null);
         List<SwitchCase> caseNodes = assertSwitch(scriptRoot, 3);
         SwitchCase case9 = caseNodes.get(1);
-        Assert.assertTrue(
+        Assertions.assertTrue(
                 case9.getStatements().size() == 1
                         && case9.getStatements().get(0).getType() == Token.BLOCK);
         Node firstCommentChild = ((Scope) case9.getStatements().get(0)).getFirstChild();
-        Assert.assertEquals(Token.COMMENT, firstCommentChild.getType());
-        Assert.assertEquals(
+        Assertions.assertEquals(Token.COMMENT, firstCommentChild.getType());
+        Assertions.assertEquals(
                 Token.COMMENT, firstCommentChild.getNext().getNext().getNext().getNext().getType());
     }
 
@@ -126,19 +126,19 @@ public class SwitchCommentsTest {
 
         SwitchCase case11 = caseNodes.get(1);
         AstNode comm1Node = case11.getStatements().get(0).getInlineComment();
-        Assert.assertNotNull(comm1Node);
-        Assert.assertEquals("//inline comment", ((Comment) comm1Node).getValue());
+        Assertions.assertNotNull(comm1Node);
+        Assertions.assertEquals("//inline comment", ((Comment) comm1Node).getValue());
 
         SwitchCase case12 = caseNodes.get(2);
         AstNode comm2Node = case12.getStatements().get(0);
-        Assert.assertNotNull(comm1Node);
-        Assert.assertEquals("//case 12 inline comment", ((Comment) comm2Node).getValue());
+        Assertions.assertNotNull(comm1Node);
+        Assertions.assertEquals("//case 12 inline comment", ((Comment) comm2Node).getValue());
 
         SwitchCase case13 = caseNodes.get(3);
         AstNode comm3Node = case13.getStatements().get(0);
-        Assert.assertNotNull(comm3Node);
-        Assert.assertNull(comm3Node.getInlineComment());
-        Assert.assertEquals("var x = 3;\n", comm3Node.toSource());
+        Assertions.assertNotNull(comm3Node);
+        Assertions.assertNull(comm3Node.getInlineComment());
+        Assertions.assertEquals("var x = 3;\n", comm3Node.toSource());
     }
 
     @Test
@@ -169,28 +169,28 @@ public class SwitchCommentsTest {
 
         SwitchCase case15 = caseNodes.get(1);
         AstNode comm1Node = case15.getStatements().get(1);
-        Assert.assertNotNull(comm1Node);
-        Assert.assertEquals("//case 14 line comment", ((Comment) comm1Node).getValue());
+        Assertions.assertNotNull(comm1Node);
+        Assertions.assertEquals("//case 14 line comment", ((Comment) comm1Node).getValue());
 
         SwitchCase case16 = caseNodes.get(2);
         AstNode comm2Node = case16.getStatements().get(0);
-        Assert.assertNotNull(comm1Node);
-        Assert.assertEquals(Token.COMMENT, comm2Node.getType());
+        Assertions.assertNotNull(comm1Node);
+        Assertions.assertEquals(Token.COMMENT, comm2Node.getType());
 
         SwitchCase case17 = caseNodes.get(3);
-        Assert.assertNotNull(case17.getInlineComment());
-        Assert.assertEquals("//in comment", ((Comment) case17.getInlineComment()).getValue());
-        Assert.assertEquals(Token.BLOCK, case17.getStatements().get(0).getType());
+        Assertions.assertNotNull(case17.getInlineComment());
+        Assertions.assertEquals("//in comment", ((Comment) case17.getInlineComment()).getValue());
+        Assertions.assertEquals(Token.BLOCK, case17.getStatements().get(0).getType());
     }
 
     private static List<SwitchCase> assertSwitch(AstNode scriptRoot, int noOfCaseNodes) {
-        Assert.assertNotNull(scriptRoot);
+        Assertions.assertNotNull(scriptRoot);
         Node firstChild = scriptRoot.getFirstChild();
-        Assert.assertNotNull(firstChild);
-        Assert.assertEquals(Token.SWITCH, firstChild.getType());
+        Assertions.assertNotNull(firstChild);
+        Assertions.assertEquals(Token.SWITCH, firstChild.getType());
         SwitchStatement switchNode = (SwitchStatement) firstChild;
         List<SwitchCase> caseNodes = switchNode.getCases();
-        Assert.assertTrue(caseNodes.size() == noOfCaseNodes);
+        Assertions.assertTrue(caseNodes.size() == noOfCaseNodes);
         return caseNodes;
     }
 }

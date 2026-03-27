@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.Parser;
@@ -32,8 +32,8 @@ public class ReadCommentsTest {
         IRFactory irf = new IRFactory(compilerEnv, testJs);
         ScriptNode tree = irf.transformTree(ast);
 
-        Assert.assertEquals(1, tree.getFunctions().size());
-        Assert.assertEquals(
+        Assertions.assertEquals(1, tree.getFunctions().size());
+        Assertions.assertEquals(
                 "/** @responseClass HttpAdapter */", tree.getFunctionNode(0).getJsDoc());
     }
 }

@@ -4,12 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.function.BiFunction;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.regexp.NativeRegExp;
@@ -707,19 +705,18 @@ public class NativeRegExpTest {
         // With the pattern /(?:(\2)(\d))*/, the first capture group should be always empty
         // when used with a quantifier
         BiFunction<String, String, String> test =
-                (quantifier, input) -> {
-                    return "var regexStr = '(?:(\\\\2)(\\\\d))'\n"
-                            + "function test(quantifier, input) {\n"
-                            + "  var regexp = new RegExp(regexStr + quantifier + '$');\n"
-                            + "  var res = regexp.exec(input);\n"
-                            + "  return res != null && res.length == 3 && res[1] == '' && res[2] != '';\n"
-                            + "}\n"
-                            + "test('"
-                            + quantifier
-                            + "','"
-                            + input
-                            + "');";
-                };
+                (quantifier, input) ->
+                        "var regexStr = '(?:(\\\\2)(\\\\d))'\n"
+                                + "function test(quantifier, input) {\n"
+                                + "  var regexp = new RegExp(regexStr + quantifier + '$');\n"
+                                + "  var res = regexp.exec(input);\n"
+                                + "  return res != null && res.length == 3 && res[1] == '' && res[2] != '';\n"
+                                + "}\n"
+                                + "test('"
+                                + quantifier
+                                + "','"
+                                + input
+                                + "');";
 
         Utils.assertWithAllModes_ES6("greedy-*", true, test.apply("*", "123"));
         Utils.assertWithAllModes_ES6("greedy-+", true, test.apply("+", "123"));

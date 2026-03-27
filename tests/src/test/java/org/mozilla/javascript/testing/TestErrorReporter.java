@@ -4,7 +4,9 @@
 
 package org.mozilla.javascript.testing;
 
-import org.junit.Assert;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
 
@@ -22,7 +24,7 @@ import org.mozilla.javascript.EvaluatorException;
  *
  * @author Pascal-Louis Perez
  */
-public class TestErrorReporter extends Assert implements ErrorReporter {
+public class TestErrorReporter implements ErrorReporter {
     private final String[] errors;
     private final String[] warnings;
     private int errorsIndex = 0;

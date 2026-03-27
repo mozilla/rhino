@@ -1,28 +1,23 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
-@RunWith(Parameterized.class)
 public class DoctestFeature18EnabledTest extends DoctestsTest {
-    public DoctestFeature18EnabledTest(String name, String source, boolean interpretedMode) {
-        super(name, source, interpretedMode);
-    }
+    public void initDoctestFeature18EnabledTest(
+            String name, String source, boolean interpretedMode) {}
 
-    @Parameters(name = "{0}")
     public static Collection<Object[]> singleDoctest() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         File f = new File(DoctestsTest.baseDirectory, "feature18enabled.doctest");
@@ -31,9 +26,11 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
         return result;
     }
 
+    @MethodSource("singleDoctest")
     @Override
-    @Test
-    public void runDoctest() {
+    @ParameterizedTest(name = "{0}")
+    public void runDoctest(String name, String source, boolean interpretedMode) {
+        initDoctestFeature18EnabledTest(name, source, interpretedMode);
         ContextFactory contextFactory =
                 Utils.contextFactoryWithFeatures(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE);
 

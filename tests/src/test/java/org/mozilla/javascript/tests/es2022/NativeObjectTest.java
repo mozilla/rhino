@@ -5,7 +5,7 @@
 /** Test for the Object.hasOwn */
 package org.mozilla.javascript.tests.es2022;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 public class NativeObjectTest {

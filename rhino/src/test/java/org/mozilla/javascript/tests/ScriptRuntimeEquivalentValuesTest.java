@@ -1,8 +1,8 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.testutils.Utils;
@@ -33,7 +33,7 @@ public class ScriptRuntimeEquivalentValuesTest {
                                     "test",
                                     1,
                                     null);
-                    assertEquals("" + cx.isInterpretedMode(), "true true", result);
+                    assertEquals("true true", result, "" + cx.isInterpretedMode());
 
                     return null;
                 });
@@ -57,7 +57,7 @@ public class ScriptRuntimeEquivalentValuesTest {
                                     "test",
                                     1,
                                     null);
-                    assertEquals("" + cx.isInterpretedMode(), "true true", result);
+                    assertEquals("true true", result, "" + cx.isInterpretedMode());
 
                     return null;
                 });

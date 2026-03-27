@@ -5,7 +5,7 @@
 package org.mozilla.javascript.tests;
 
 import java.io.InputStreamReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;

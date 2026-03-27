@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests.scriptengine;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -10,7 +10,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
-import org.junit.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
 public class BuiltinsTest {
@@ -19,23 +21,23 @@ public class BuiltinsTest {
 
     private ScriptEngine engine;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         manager = new ScriptEngineManager();
         manager.registerEngineName("rhino", new RhinoScriptEngineFactory());
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         engine = manager.getEngineByName("rhino");
     }
 
-    @Test
+    @org.junit.jupiter.api.Test
     public void printStdout() throws ScriptException {
         engine.eval("print('Hello, World!');");
     }
 
-    @Test
+    @org.junit.jupiter.api.Test
     public void printStdoutAndCheckItPrints() throws Exception {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             PrintStream original = System.out;
@@ -49,7 +51,7 @@ public class BuiltinsTest {
                     engine.eval("print('Hello, World!');", sc);
 
                     // this has been hard work https://github.com/mozilla/rhino/issues/1356
-                    Assert.assertEquals("Hello, World!\n", bos.toString());
+                    Assertions.assertEquals("Hello, World!\n", bos.toString());
                 } finally {
                     // revert the sys out
                     System.setOut(original);
@@ -58,7 +60,7 @@ public class BuiltinsTest {
         }
     }
 
-    @Test
+    @org.junit.jupiter.api.Test
     public void printWriter() throws ScriptException {
         StringWriter sw = new StringWriter();
         ScriptContext sc = new SimpleScriptContext();
@@ -67,7 +69,7 @@ public class BuiltinsTest {
         assertEquals(sw.toString(), "one2true\n");
     }
 
-    @Test
+    @org.junit.jupiter.api.Test
     public void printWriterGeneric() throws ScriptException {
         StringWriter sw = new StringWriter();
         engine.getContext().setWriter(sw);

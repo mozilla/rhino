@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
@@ -33,7 +33,7 @@ public class Bug491621Test {
         env.setLanguageVersion(languageVersion);
         Parser parser = new Parser(env);
         AstRoot root = parser.parse(source, null, 0);
-        Assert.assertEquals(expectedOutput, root.toSource());
+        Assertions.assertEquals(expectedOutput, root.toSource());
     }
 
     /** Tests that var declaration AST nodes is properly decompiled. */

@@ -6,16 +6,14 @@
  */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
@@ -207,7 +205,7 @@ public class NativeJavaListTest {
         List<String> list = new ArrayList<>();
         NativeArray resEmpty =
                 (NativeArray) runScript("Object.keys(value)", list, Function.identity());
-        Assert.assertEquals(0, resEmpty.size());
+        Assertions.assertEquals(0, resEmpty.size());
 
         list.add("a");
         list.add("b");

@@ -1,9 +1,10 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -55,18 +56,18 @@ public class GeneratorStackTraceTest {
                     try {
                         TopLevel scope = context.initStandardObjects();
                         context.evaluateString(scope, jsCode, "nestedGeneratorTest.js", 1, null);
-                        Assert.fail("Expected exception from nested generator not thrown.");
+                        Assertions.fail("Expected exception from nested generator not thrown.");
                     } catch (JavaScriptException e) {
                         String stack = e.getScriptStackTrace();
 
                         // Validate that both generator functions appear in the stack
-                        Assert.assertTrue(
-                                "Stack trace should include innerGen", stack.contains("innerGen"));
-                        Assert.assertTrue(
-                                "Stack trace should include outerGen", stack.contains("outerGen"));
+                        Assertions.assertTrue(
+                                stack.contains("innerGen"), "Stack trace should include innerGen");
+                        Assertions.assertTrue(
+                                stack.contains("outerGen"), "Stack trace should include outerGen");
 
                         // Validate line number for the throw
-                        assertEquals("Line number of exception should be 3", 3, e.lineNumber());
+                        assertEquals(3, e.lineNumber(), "Line number of exception should be 3");
 
                         System.out.println("Nested Generator Exception Stack: \n" + stack);
                     }
@@ -75,42 +76,54 @@ public class GeneratorStackTraceTest {
     }
 
     // Doesn't work due to our implementation of yield*.
-    @Test(expected = AssertionError.class)
+    @Test
     public void testNestedGeneratorsYieldStarException() {
-        String jsCode =
-                ""
-                        + "function* innerGen() {\n"
-                        + "    yield 1;\n"
-                        + "    throw new Error('Inner Exception'); // Line 4\n"
-                        + "}\n"
-                        + "function* outerGen() {\n"
-                        + "    yield* innerGen();\n"
-                        + "}\n"
-                        + "var g = outerGen();\n"
-                        + "g.next();\n"
-                        + "g.next();"; // This should throw
+        assertThrows(
+                AssertionError.class,
+                () -> {
+                    String jsCode =
+                            ""
+                                    + "function* innerGen() {\n"
+                                    + "    yield 1;\n"
+                                    + "    throw new Error('Inner Exception'); // Line 4\n"
+                                    + "}\n"
+                                    + "function* outerGen() {\n"
+                                    + "    yield* innerGen();\n"
+                                    + "}\n"
+                                    + "var g = outerGen();\n"
+                                    + "g.next();\n"
+                                    + "g.next();"; // This should throw
 
-        Utils.runWithAllModes(
-                context -> {
-                    try {
-                        TopLevel scope = context.initStandardObjects();
-                        context.evaluateString(scope, jsCode, "nestedGeneratorTest.js", 1, null);
-                        Assert.fail("Expected exception from nested generator not thrown.");
-                    } catch (JavaScriptException e) {
-                        String stack = e.getScriptStackTrace();
+                    Utils.runWithAllModes(
+                            context -> {
+                                try {
+                                    TopLevel scope = context.initStandardObjects();
+                                    context.evaluateString(
+                                            scope, jsCode, "nestedGeneratorTest.js", 1, null);
+                                    Assertions.fail(
+                                            "Expected exception from nested generator not thrown.");
+                                } catch (JavaScriptException e) {
+                                    String stack = e.getScriptStackTrace();
 
-                        // Validate that both generator functions appear in the stack
-                        Assert.assertTrue(
-                                "Stack trace should include innerGen", stack.contains("innerGen"));
-                        Assert.assertTrue(
-                                "Stack trace should include outerGen", stack.contains("outerGen"));
+                                    // Validate that both generator functions appear in the stack
+                                    Assertions.assertTrue(
+                                            stack.contains("innerGen"),
+                                            "Stack trace should include innerGen");
+                                    Assertions.assertTrue(
+                                            stack.contains("outerGen"),
+                                            "Stack trace should include outerGen");
 
-                        // Validate line number for the throw
-                        assertEquals("Line number of exception should be 3", 3, e.lineNumber());
+                                    // Validate line number for the throw
+                                    assertEquals(
+                                            3,
+                                            e.lineNumber(),
+                                            "Line number of exception should be 3");
 
-                        System.out.println("Nested Generator Exception Stack: \n" + stack);
-                    }
-                    return null;
+                                    System.out.println(
+                                            "Nested Generator Exception Stack: \n" + stack);
+                                }
+                                return null;
+                            });
                 });
     }
 
@@ -146,12 +159,12 @@ public class GeneratorStackTraceTest {
 
                     try {
                         context.evaluateString(scope, jsCode, "javaCallbackTest.js", 1, null);
-                        Assert.fail("Expected Java exception not thrown.");
+                        Assertions.fail("Expected Java exception not thrown.");
                     } catch (RuntimeException e) {
                         // Rhino should surface the Java exception directly
-                        Assert.assertTrue(
-                                "Exception message should contain 'Java-side failure!'",
-                                e.getMessage().contains("Java-side failure!"));
+                        Assertions.assertTrue(
+                                e.getMessage().contains("Java-side failure!"),
+                                "Exception message should contain 'Java-side failure!'");
                         System.out.println("Caught Java Exception from JS: " + e.getMessage());
                     }
                     return null;

@@ -1,7 +1,8 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -13,10 +14,8 @@ import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.security.URIParameter;
 import java.util.Enumeration;
-import org.hamcrest.CoreMatchers;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.SecurityController;
@@ -37,12 +36,9 @@ public class SecurityControllerTest {
     static void setupSecurityManager() {}
 
     /** Setup the security */
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Exception {
-        Assume.assumeThat(
-                "Skipping test for Java 21",
-                Utils.isJavaVersionAtLeast(21),
-                CoreMatchers.is(false));
+        assumeFalse(Utils.isJavaVersionAtLeast(21), "Skipping test for Java 21");
         URL url = SecurityControllerTest.class.getResource("grant-all-java.policy");
         if (url != null) {
             System.setProperty("java.security.policy", url.toString());
@@ -77,10 +73,7 @@ public class SecurityControllerTest {
     @Test
     public void barAccess() {
         // Security managers are out in Java 21, so skip.
-        Assume.assumeThat(
-                "Skipping test for Java 21",
-                Utils.isJavaVersionAtLeast(21),
-                CoreMatchers.is(false));
+        assumeFalse(Utils.isJavaVersionAtLeast(21), "Skipping test for Java 21");
 
         // f.create produces "SomeClass extends ArrayList<String> implements
         // SomeInterface"
@@ -100,7 +93,7 @@ public class SecurityControllerTest {
             runScript(script, RESTRICT_IMPL_ACCESS);
             fail("EcmaError expected");
         } catch (EcmaError ee) {
-            assertTrue(ee.toString(), ee.getMessage().contains("Cannot find function bar"));
+            assertTrue(ee.getMessage().contains("Cannot find function bar"), ee.toString());
         }
 
         // try in allowed scope again
