@@ -1,0 +1,4 @@
+exports_files([
+    "LICENSE.txt",
+    "rhino-test.config",
+])

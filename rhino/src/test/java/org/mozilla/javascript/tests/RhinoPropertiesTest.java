@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.config.RhinoProperties;
@@ -37,7 +38,10 @@ public class RhinoPropertiesTest {
         assertFalse(RhinoConfig.get("test.rhino-explicit.loaded", false));
         assertFalse(RhinoConfig.get("test.file.rhino-config.loaded", false));
 
+        // This depends on "rhino-test.config" being in the current directory
+        // while the tests are run.
         assertTrue(RhinoConfig.get("test.file.rhino-test-config.loaded", false));
+
         assertTrue(RhinoConfig.get("test.cp.rhino-config.loaded", false));
         assertTrue(RhinoConfig.get("test.cp.rhino-config.loaded", false));
 
@@ -80,7 +84,7 @@ public class RhinoPropertiesTest {
 
     /** Tests explicit loading a file. */
     @Test
-    void testFileLoad() {
+    void testFileLoad() throws IOException {
         RhinoProperties properties = new RhinoProperties();
         properties.loadFromFile(new File(TestSource.resolve("testsrc/rhino-explicit.config")));
         assertEquals("value1", properties.get("test.config.foo"));
@@ -94,6 +98,7 @@ public class RhinoPropertiesTest {
             RhinoProperties properties = new RhinoProperties();
             properties.loadDefaults();
             assertEquals("value3", properties.get("test.config.foo"));
+            // This is a complex hierarchical thing that is much harder to replicate in Bazel.
             assertEquals("value4-mod", properties.get("test.config.bar"));
             assertEquals("value5", properties.get("test.config.baz"));
             assertEquals("value6", properties.get("some.system.value"));

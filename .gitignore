@@ -4,6 +4,7 @@
 # build directories
 build/
 lib/
+bazel-*
 
 # artifacts
 *.zip
