@@ -975,18 +975,41 @@ public class NativeRegExp extends ScriptableObject {
      * case folding without full tables.
      */
     private static int unicodeCaseFold(int codePoint) {
-        // Turkish İ (U+0130) and ı (U+0131) have no simple case fold mapping.
-        // They only have Turkish-specific ('T') and full ('F') mappings in Unicode,
-        // which should be ignored for ECMAScript simple case folding.
-        if (codePoint == 0x0130 || codePoint == 0x0131) {
+        // Turkish ı (U+0131) has no simple case fold mapping, only Turkish-specific ('T').
+        // Java incorrectly maps it to 'I', so we must handle it explicitly.
+        // Note: İ (U+0130) is handled correctly by the algorithm below (toLowerCase
+        // produces multiple codepoints, so it returns the original).
+        if (codePoint == 0x0131) {
             return codePoint;
         }
-        // For other characters, use Java's built-in case conversion
-        // This approximates Unicode case folding for most common cases
-        return Character.toString(codePoint)
-                .toLowerCase(Locale.ROOT)
-                .toUpperCase(Locale.ROOT)
-                .codePointAt(0);
+
+        // Special lowercase→lowercase mappings from Unicode CaseFolding.txt (status 'S')
+        // that Java's case conversion doesn't handle:
+        if (codePoint == 0x1FD3) return 0x0390; // Greek small iota with dialytika and oxia
+        if (codePoint == 0x1FE3) return 0x03B0; // Greek small upsilon with dialytika and oxia
+        if (codePoint == 0xFB05) return 0xFB06; // Latin small ligature long s t
+
+        String s = Character.toString(codePoint);
+        String lower = s.toLowerCase(Locale.ROOT);
+        String upper = lower.toUpperCase(Locale.ROOT);
+
+        // If toUpperCase expanded to multiple characters (e.g., ß -> SS),
+        // then this character has only a full case fold, not a simple one.
+        // In that case, use the lowercase form if it's a single character,
+        // otherwise keep the original. This correctly handles:
+        // - ß (no simple fold, stays ß)
+        // - ẞ (simple fold to ß)
+        // - Greek letters with ypogegrammeni (fold to lowercase form)
+        // - Ligatures like ﬀ, ﬁ, ﬂ (no simple fold, stay unchanged)
+        // - İ (U+0130) - toLowerCase produces 2 codepoints, returns original
+        if (upper.codePointCount(0, upper.length()) > 1) {
+            if (lower.codePointCount(0, lower.length()) == 1) {
+                return lower.codePointAt(0);
+            }
+            return codePoint;
+        }
+
+        return upper.codePointAt(0);
     }
 
     /** Check if two code points match case-insensitively in Unicode mode */
@@ -1009,18 +1032,21 @@ public class NativeRegExp extends ScriptableObject {
         switch (folded) {
             case 0x004B: // 'K' - also Kelvin sign U+212A and 'k'
                 return (predicate.test(0x212A) || predicate.test(0x006B)) ? 1 : 0;
-            case 0x0053: // 'S' - also long s U+017F, ligatures U+FB05, U+FB06
-                return (predicate.test(0x017F)
-                                || predicate.test(0xFB05)
-                                || predicate.test(0xFB06)
-                                || predicate.test(0x0073))
-                        ? 1
-                        : 0;
+            case 0x0053: // 'S' - also long s U+017F and 's'
+                return (predicate.test(0x017F) || predicate.test(0x0073)) ? 1 : 0;
             case 0x0049: // 'I' - also 'i'
                 return predicate.test(0x0069) ? 1 : 0;
+            case 0x00DF:
+                return predicate.test(0x1E9E) ? 1 : 0;
             case 0x0130: // İ - no simple case fold, no equivalents
             case 0x0131: // ı - no simple case fold, no equivalents
                 return 0;
+            case 0x0390: // Greek small iota with dialytika and tonos - also U+1FD3
+                return predicate.test(0x1FD3) ? 1 : 0;
+            case 0x03B0: // Greek small upsilon with dialytika and tonos - also U+1FE3
+                return predicate.test(0x1FE3) ? 1 : 0;
+            case 0xFB06: // Latin small ligature st - also U+FB05
+                return predicate.test(0xFB05) ? 1 : 0;
             case 0x0399: // Greek capital iota - U+0390, U+1FD3, U+03B9, U+0345
                 return (predicate.test(0x0390)
                                 || predicate.test(0x1FD3)

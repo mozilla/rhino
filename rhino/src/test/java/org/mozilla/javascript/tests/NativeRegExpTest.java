@@ -1741,6 +1741,14 @@ public class NativeRegExpTest {
                 "/^\\u{FB05}$/ui.test('\\u{FB06}') + '-' + " + "/^\\u{FB06}$/ui.test('\\u{FB05}')");
     }
 
+    @Test
+    public void testUnicodeCaseFoldAngstrom() {
+        // Å (U+212B Angstrom) simple-folds to å (U+00E5), not ASCII 'a'
+        Utils.assertWithAllModes_ES6(
+                "true-false",
+                "/^\\u{212B}$/ui.test('\\u{00E5}') + '-' + " + "/^\\u{212B}$/ui.test('a')");
+    }
+
     // --- Word Character Tests ---
 
     @Test
@@ -1772,6 +1780,69 @@ public class NativeRegExpTest {
         Utils.assertWithAllModes_ES6(
                 "true-true",
                 "/\\w$/ui.test('\\u{017F}') + '-' + " + "/\\b\\u{017F}$/ui.test(' \\u{017F}')");
+    }
+
+    @Test
+    public void testUnicodeSharpSNotWordChar() {
+        // ß folds to 'ss' (two chars) — not a word char, no bidirectional match
+        // /S/ui should also NOT match 'ß' because ß folds to 'ss', not 'S'
+        Utils.assertWithAllModes_ES6(
+                "false-false-false-false",
+                "/\\w/ui.test('ß') + '-' + "
+                        + "/^ß$/ui.test('ss') + '-' + "
+                        + "/^ss$/ui.test('ß') + '-' + "
+                        + "/S/ui.test('ß')");
+    }
+
+    @Test
+    public void testUnicodeCapitalSharpSNotWordChar() {
+        // ẞ (U+1E9E) also folds to 'ss'
+        Utils.assertWithAllModes_ES6(
+                "false-false", "/\\w/ui.test('\\u{1E9E}') + '-' + " + "/^\\u{1E9E}$/ui.test('ss')");
+    }
+
+    @Test
+    public void testUnicodeLigatureFFNotWordChar() {
+        // ﬀ (U+FB00) folds to 'ff'
+        Utils.assertWithAllModes_ES6(
+                "false-false", "/\\w/ui.test('\\u{FB00}') + '-' + " + "/^\\u{FB00}$/ui.test('ff')");
+    }
+
+    @Test
+    public void testUnicodeLigaturesNotWordChar() {
+        // remaining Latin ligatures U+FB01..FB06
+        Utils.assertWithAllModes_ES6(
+                "false-false-false-false-false-false",
+                "/\\w/ui.test('\\u{FB01}') + '-' + " // ﬁ → fi
+                        + "/\\w/ui.test('\\u{FB02}') + '-' + " // ﬂ → fl
+                        + "/\\w/ui.test('\\u{FB03}') + '-' + " // ﬃ → ffi
+                        + "/\\w/ui.test('\\u{FB04}') + '-' + " // ﬄ → ffl
+                        + "/\\w/ui.test('\\u{FB05}') + '-' + " // ﬅ → st
+                        + "/\\w/ui.test('\\u{FB06}')"); // ﬆ → st
+    }
+
+    @Test
+    public void testUnicodeGreekDiacriticsNotWordChar() {
+        // ΐ (U+0390) and ΰ (U+03B0) fold to letter + combining marks
+        Utils.assertWithAllModes_ES6(
+                "false-false", "/\\w/ui.test('\\u{0390}') + '-' + " + "/\\w/ui.test('\\u{03B0}')");
+    }
+
+    @Test
+    public void testUnicodeCombiningLatinNotWordChar() {
+        // ẖ ẗ ẘ ẙ fold to base letter + combining diacritic
+        Utils.assertWithAllModes_ES6(
+                "false-false-false-false",
+                "/\\w/ui.test('\\u{1E96}') + '-' + " // ẖ → h + macron below
+                        + "/\\w/ui.test('\\u{1E97}') + '-' + " // ẗ → t + diaeresis
+                        + "/\\w/ui.test('\\u{1E98}') + '-' + " // ẘ → w + ring above
+                        + "/\\w/ui.test('\\u{1E99}')"); // ẙ → y + ring above
+    }
+
+    @Test
+    public void testUnicodeWordBoundaryWithSharpS() {
+        // ' ß' has no word boundary: space is non-word, ß is also non-word (folds to 'ss')
+        Utils.assertWithAllModes_ES6("-1", "' ß'.search(/\\b/ui) + ''");
     }
 
     // --- Non-BMP Character Tests ---
