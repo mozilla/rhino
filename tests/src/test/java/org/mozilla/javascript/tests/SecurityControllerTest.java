@@ -2,6 +2,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -13,8 +14,6 @@ import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.security.URIParameter;
 import java.util.Enumeration;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.junit.MatcherAssume;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ClassShutter;
@@ -39,10 +38,7 @@ public class SecurityControllerTest {
     /** Setup the security */
     @BeforeAll
     public static void setup() throws Exception {
-        MatcherAssume.assumeThat(
-                "Skipping test for Java 21",
-                Utils.isJavaVersionAtLeast(21),
-                CoreMatchers.is(false));
+        assumeFalse(Utils.isJavaVersionAtLeast(21), "Skipping test for Java 21");
         URL url = SecurityControllerTest.class.getResource("grant-all-java.policy");
         if (url != null) {
             System.setProperty("java.security.policy", url.toString());
@@ -77,10 +73,7 @@ public class SecurityControllerTest {
     @Test
     public void barAccess() {
         // Security managers are out in Java 21, so skip.
-        MatcherAssume.assumeThat(
-                "Skipping test for Java 21",
-                Utils.isJavaVersionAtLeast(21),
-                CoreMatchers.is(false));
+        assumeFalse(Utils.isJavaVersionAtLeast(21), "Skipping test for Java 21");
 
         // f.create produces "SomeClass extends ArrayList<String> implements
         // SomeInterface"

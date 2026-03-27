@@ -4,7 +4,6 @@ module org.mozilla.javascript.xml.test {
 
     requires org.mozilla.javascript.xml;
     requires org.mozilla.rhino.testutils;
-    requires junit;
     requires org.junit.jupiter.api;
     requires org.junit.jupiter.params;
 }

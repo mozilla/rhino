@@ -4,13 +4,14 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * Takes care that the name of the method generated for a function "looks like" the original
@@ -94,18 +95,12 @@ public class GeneratedMethodNameTest {
         // Stack traces seem to be showing up differently in Java 21. Since
         // this is not something that we can control, we're going to ignore
         // these tests in that case.
-        assumeTrue(isJava21(), () -> "Skipping test: Java 21 or higher");
+        assumeFalse(Utils.isJavaVersionAtLeast(21), () -> "Skipping test: Java 21 or higher");
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
             TopLevel topScope = cx.initStandardObjects();
             topScope.put("javaNameGetter", topScope, new JavaNameGetter());
             Script script = cx.compileString(scriptCode, "myScript", 1, null);
             script.exec(cx, topScope, topScope);
         }
-    }
-
-    private static boolean isJava21() {
-        String[] v = System.getProperty("java.version").split("\\.");
-        int version = Integer.parseInt(v[0]);
-        return version >= 21;
     }
 }

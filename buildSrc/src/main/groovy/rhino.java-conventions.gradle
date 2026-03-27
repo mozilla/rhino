@@ -18,12 +18,10 @@ repositories {
 }
 
 dependencies {
-    testImplementation platform("org.junit:junit-bom:5.10.3")
+    testImplementation platform(libs.junit.platform.get())
     testImplementation "org.junit.jupiter:junit-jupiter"
-    testImplementation libs.junit4
-    testRuntimeOnly "org.junit.vintage:junit-vintage-engine"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-    testImplementation "org.hamcrest:hamcrest:3.0"
+    testImplementation libs.hamcrest
 }
 
 tasks.withType(JavaCompile).configureEach {

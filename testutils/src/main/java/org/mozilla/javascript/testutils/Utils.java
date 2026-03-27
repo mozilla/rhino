@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.testutils;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Locale;
 import java.util.stream.IntStream;
@@ -296,22 +296,22 @@ public class Utils {
 
                     if (expected instanceof Integer && res instanceof Double) {
                         assertEquals(
-                                message,
                                 ((Integer) expected).doubleValue(),
                                 ((Double) res).doubleValue(),
-                                0.00001);
+                                0.00001,
+                                message);
                         return null;
                     }
                     if (expected instanceof Double && res instanceof Integer) {
                         assertEquals(
-                                message,
                                 ((Double) expected).doubleValue(),
                                 ((Integer) res).doubleValue(),
-                                0.00001);
+                                0.00001,
+                                message);
                         return null;
                     }
 
-                    assertEquals(message, expected, res);
+                    assertEquals(expected, res, message);
                     return null;
                 });
     }
@@ -476,8 +476,8 @@ public class Utils {
 
         // to avoid false positives because we use startsWith()
         assertTrue(
-                "expectedMessage can't be empty",
-                expectedMessage != null && !expectedMessage.isEmpty());
+                expectedMessage != null && !expectedMessage.isEmpty(),
+                "expectedMessage can't be empty");
 
         Utils.runWithAllModes(
                 contextFactory,
@@ -493,12 +493,12 @@ public class Utils {
                                     () -> cx.evaluateString(scope, script, "test", 1, null));
 
                     assertTrue(
+                            e.getMessage().startsWith(expectedMessage),
                             "'"
                                     + e.getMessage()
                                     + "' does not start with '"
                                     + expectedMessage
-                                    + "'",
-                            e.getMessage().startsWith(expectedMessage));
+                                    + "'");
                     return null;
                 });
     }
