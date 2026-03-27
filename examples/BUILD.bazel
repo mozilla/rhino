@@ -1,0 +1,13 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "examples",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rhino",
+        "//rhino-tools",
+        "//rhino-xml",
+    ],
+)

@@ -3,8 +3,8 @@ package org.mozilla.javascript.tests.commonjs.module;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,18 +47,14 @@ public class ComplianceTest {
 
     private static Require createRequire(File dir, Context cx, TopLevel scope)
             throws URISyntaxException {
+        var base = Path.of(TestSource.resolve("testsrc/commonjs")).toUri();
         return new Require(
                 cx,
                 scope,
                 new StrongCachingModuleScriptProvider(
                         new UrlModuleSourceProvider(
                                 Collections.singleton(dir.getAbsoluteFile().toURI()),
-                                Collections.singleton(
-                                        new URI(
-                                                ComplianceTest.class
-                                                                .getResource(".")
-                                                                .toExternalForm()
-                                                        + "/")))),
+                                Collections.singleton(base))),
                 null,
                 null,
                 false);

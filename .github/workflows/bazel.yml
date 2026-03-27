@@ -1,0 +1,52 @@
+name: Bazel test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:  
+
+permissions: read-all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Bazel Tests
+    steps:
+      - name: Check out Rhino
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: 'temurin'
+
+      - name: Mount Bazel cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/bazelisk
+            ~/.cache/bazel-repo
+            ~/.cache/bazel-disk
+          key: bazel-${{ runner.os }}-${{ hashFiles('.bazelversion', 'MODULE.bazel') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-
+
+      - name: Install Bazelisk
+        run: |
+          curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64
+          chmod +x bazelisk-linux-amd64
+          sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
+
+      - name: Configure Bazel
+        run: |
+          mkdir -p ~/.cache/bazel-repo ~/.cache/bazel-disk
+          echo "build --disk_cache=$HOME/.cache/bazel-disk" >> ~/.bazelrc
+          echo "build --repository_cache=$HOME/.cache/bazel-repo" >> ~/.bazelrc
+
+      - name: Run Bazel tests
+        run: bazel test ...
