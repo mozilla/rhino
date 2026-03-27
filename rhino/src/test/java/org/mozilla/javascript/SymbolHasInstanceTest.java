@@ -1,6 +1,6 @@
 package org.mozilla.javascript;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 public class SymbolHasInstanceTest {

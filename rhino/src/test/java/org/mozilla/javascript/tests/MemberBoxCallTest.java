@@ -4,10 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -77,7 +77,7 @@ public class MemberBoxCallTest {
         return cx.evaluateString(scope, str, "<testsrc>", 0, null);
     }
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         try (Context cx = Context.enter()) {
             scope = cx.initStandardObjects();

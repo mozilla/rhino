@@ -1,8 +1,8 @@
 package org.mozilla.javascript.typedarrays;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Comprehensive tests for Float16 read/write operations in ByteIo.
@@ -52,9 +52,9 @@ public class ByteIoFloat16Test {
         }
 
         assertEquals(
-                String.format("Bit pattern mismatch for value %.10f", value),
                 expectedBits,
-                actualBits);
+                actualBits,
+                String.format("Bit pattern mismatch for value %.10f", value));
     }
 
     // === Zero Tests ===
@@ -263,10 +263,10 @@ public class ByteIoFloat16Test {
 
             // Both endianness should produce the same float value
             assertEquals(
-                    String.format("Endianness mismatch for value %f", value),
                     littleResult,
                     bigResult,
-                    EPSILON);
+                    EPSILON,
+                    String.format("Endianness mismatch for value %f", value));
         }
     }
 
@@ -305,7 +305,7 @@ public class ByteIoFloat16Test {
             float result = roundTrip(value, true);
             // Result should be finite for these values
             if (Math.abs(value) <= 65504) {
-                assertFalse("Value " + value + " should not overflow", Float.isInfinite(result));
+                assertFalse(Float.isInfinite(result), "Value " + value + " should not overflow");
             }
         }
     }
@@ -351,16 +351,16 @@ public class ByteIoFloat16Test {
             // All these values should be representable or overflow predictably
             if (Float.isInfinite(result)) {
                 assertTrue(
-                        "Unexpected overflow for " + value,
-                        Math.abs(value) > 65504 || Float.isInfinite((float) value));
+                        Math.abs(value) > 65504 || Float.isInfinite((float) value),
+                        "Unexpected overflow for " + value);
             } else {
                 // Should be close to original value
                 double tolerance = Math.max(Math.abs(value) * 0.001, 0.01);
                 assertEquals(
-                        String.format("Value mismatch for %.4f", value),
                         (float) value,
                         result,
-                        (float) tolerance);
+                        (float) tolerance,
+                        String.format("Value mismatch for %.4f", value));
             }
         }
     }
@@ -378,7 +378,7 @@ public class ByteIoFloat16Test {
             float intermediate = ByteIo.readFloat16(buf1, 0, true);
             ByteIo.writeFloat16(buf2, 0, intermediate, true);
 
-            assertArrayEquals("Round-trip produced different bytes for " + value, buf1, buf2);
+            assertArrayEquals(buf1, buf2, "Round-trip produced different bytes for " + value);
         }
     }
 
@@ -458,11 +458,11 @@ public class ByteIoFloat16Test {
 
         for (double value : denormalizedValues) {
             float result = roundTrip(value, true);
-            assertTrue("Value " + value + " should be positive", result >= 0);
+            assertTrue(result >= 0, "Value " + value + " should be positive");
 
             // Negative versions
             float negResult = roundTrip(-value, true);
-            assertTrue("Value " + (-value) + " should be negative", negResult <= 0);
+            assertTrue(negResult <= 0, "Value " + (-value) + " should be negative");
         }
     }
 
@@ -478,17 +478,17 @@ public class ByteIoFloat16Test {
         // Float32 with large exponent that should overflow to Float16 infinity
         float largeExp = Float.intBitsToFloat(0x7F000000); // Large positive value
         float result1 = roundTrip(largeExp, true);
-        assertTrue("Large exponent should overflow to infinity", Float.isInfinite(result1));
+        assertTrue(Float.isInfinite(result1), "Large exponent should overflow to infinity");
 
         // Float32 with small exponent near denormalized boundary
         float smallExp = Float.intBitsToFloat(0x38800000); // 2^-14
         float result2 = roundTrip(smallExp, true);
-        assertTrue("Small exponent at boundary should be normalized", result2 > 0);
+        assertTrue(result2 > 0, "Small exponent at boundary should be normalized");
 
         // Float32 slightly smaller (denormalized in Float16)
         float slightlySmaller = Float.intBitsToFloat(0x387FC000); // Just below 2^-14
         float result3 = roundTrip(slightlySmaller, true);
-        assertTrue("Value below normalized boundary should work", result3 > 0);
+        assertTrue(result3 > 0, "Value below normalized boundary should work");
     }
 
     /**
@@ -612,14 +612,14 @@ public class ByteIoFloat16Test {
         float value1 = Float.intBitsToFloat(0x47800000); // 2^16 = 65536
         float result1 = roundTrip(value1, true);
         assertTrue(
-                "2^16 should overflow to infinity",
-                Float.isInfinite(result1) || result1 == 65504.0f);
+                Float.isInfinite(result1) || result1 == 65504.0f,
+                "2^16 should overflow to infinity");
 
         // Float32 with exponent that would be exactly 0 in Float16 (2^-15)
         // exp32 = -15, so exponent = -15 + 15 = 0 (denormalized)
         float value2 = Float.intBitsToFloat(0x38000000); // 2^-15
         float result2 = roundTrip(value2, true);
-        assertTrue("2^-15 should be positive", result2 >= 0);
+        assertTrue(result2 >= 0, "2^-15 should be positive");
 
         // Test with various exponent values near boundaries
         int[] exponents = {
@@ -638,8 +638,8 @@ public class ByteIoFloat16Test {
                 float result = roundTrip(value, true);
                 // Just verify it doesn't crash and produces a valid result
                 assertTrue(
-                        "Result should be valid for exponent " + exp,
-                        !Float.isNaN(result) || Float.isNaN(value));
+                        !Float.isNaN(result) || Float.isNaN(value),
+                        "Result should be valid for exponent " + exp);
             }
         }
     }
@@ -663,19 +663,19 @@ public class ByteIoFloat16Test {
         float value1 = Float.intBitsToFloat(bits1);
         float result1 = roundTrip(value1, true);
         // Should round up and potentially overflow
-        assertTrue("Value should not be NaN", !Float.isNaN(result1));
+        assertTrue(!Float.isNaN(result1), "Value should not be NaN");
 
         // Test with odd mantissa (should round up)
         int bits2 = (127 << 23) | 0x7FF800; // Mantissa with specific pattern
         float value2 = Float.intBitsToFloat(bits2);
         float result2 = roundTrip(value2, true);
-        assertTrue("Value should not be NaN", !Float.isNaN(result2));
+        assertTrue(!Float.isNaN(result2), "Value should not be NaN");
 
         // Test with even mantissa (should round to even)
         int bits3 = (127 << 23) | 0x7FE800; // Mantissa with specific pattern
         float value3 = Float.intBitsToFloat(bits3);
         float result3 = roundTrip(value3, true);
-        assertTrue("Value should not be NaN", !Float.isNaN(result3));
+        assertTrue(!Float.isNaN(result3), "Value should not be NaN");
     }
 
     /**
@@ -721,7 +721,7 @@ public class ByteIoFloat16Test {
         for (double d : nearOverflow) {
             float result = roundTrip(d, true);
             // Should either be finite or infinity, never NaN
-            assertFalse("Value " + d + " should not produce NaN", Float.isNaN(result));
+            assertFalse(Float.isNaN(result), "Value " + d + " should not produce NaN");
         }
 
         // Double values very close to FLOAT16_MIN_NORMAL
@@ -739,27 +739,27 @@ public class ByteIoFloat16Test {
         for (double d : nearMinNormal) {
             float result = roundTrip(d, true);
             // Should be positive and not NaN
-            assertTrue("Value " + d + " should be >= 0", result >= 0);
-            assertFalse("Value " + d + " should not be NaN", Float.isNaN(result));
+            assertTrue(result >= 0, "Value " + d + " should be >= 0");
+            assertFalse(Float.isNaN(result), "Value " + d + " should not be NaN");
         }
 
         // Test values where double and float representation might differ
         // Use nextAfter to get values extremely close to boundaries
         double d1 = Math.nextAfter(65520.0, 0.0); // Just below 65520
         float result1 = roundTrip(d1, true);
-        assertFalse("nextAfter(65520, 0) should not be NaN", Float.isNaN(result1));
+        assertFalse(Float.isNaN(result1), "nextAfter(65520, 0) should not be NaN");
 
         double d2 = Math.nextAfter(65504.0, Double.POSITIVE_INFINITY); // Just above 65504
         float result2 = roundTrip(d2, true);
-        assertFalse("nextAfter(65504, +inf) should not be NaN", Float.isNaN(result2));
+        assertFalse(Float.isNaN(result2), "nextAfter(65504, +inf) should not be NaN");
 
         double d3 = Math.nextAfter(minNormal, 0.0); // Just below min normal
         float result3 = roundTrip(d3, true);
-        assertFalse("nextAfter(minNormal, 0) should not be NaN", Float.isNaN(result3));
+        assertFalse(Float.isNaN(result3), "nextAfter(minNormal, 0) should not be NaN");
 
         double d4 = Math.nextAfter(minNormal, Double.POSITIVE_INFINITY); // Just above min normal
         float result4 = roundTrip(d4, true);
-        assertFalse("nextAfter(minNormal, +inf) should not be NaN", Float.isNaN(result4));
+        assertFalse(Float.isNaN(result4), "nextAfter(minNormal, +inf) should not be NaN");
     }
 
     /**
@@ -775,27 +775,27 @@ public class ByteIoFloat16Test {
         float result1 = roundTrip(maxMantissa, true);
         // This is close to max float16, should be finite or infinity
         assertTrue(
-                "Max mantissa with exp 142 should be valid",
-                !Float.isNaN(result1) && (Float.isFinite(result1) || Float.isInfinite(result1)));
+                !Float.isNaN(result1) && (Float.isFinite(result1) || Float.isInfinite(result1)),
+                "Max mantissa with exp 142 should be valid");
 
         // Test Float32 where exp32 = -15 (float16 exp = 0, denormalized boundary)
         // Bits: sign=0, exp=112, mantissa=0 (exactly at boundary)
         float denormBoundary = Float.intBitsToFloat(112 << 23);
         float result2 = roundTrip(denormBoundary, true);
-        assertTrue("Denorm boundary should be positive", result2 >= 0);
+        assertTrue(result2 >= 0, "Denorm boundary should be positive");
 
         // Test Float32 where exp32 = -15 with non-zero mantissa
         // This should force the normalized-to-denormalized path
         float belowNormal = Float.intBitsToFloat((112 << 23) | 0x400000);
         float result3 = roundTrip(belowNormal, true);
-        assertTrue("Below normal should be positive", result3 >= 0);
+        assertTrue(result3 >= 0, "Below normal should be positive");
 
         // Test Float32 with exp32 = 16 (float16 exp would be 31, overflow)
         // But guard condition should catch this
         float overflow = Float.intBitsToFloat(143 << 23);
         float result4 = roundTrip(overflow, true);
         // Should overflow to infinity
-        assertTrue("Exp 143 should overflow", Float.isInfinite(result4) || result4 == 65504.0f);
+        assertTrue(Float.isInfinite(result4) || result4 == 65504.0f, "Exp 143 should overflow");
     }
 
     /**
@@ -810,24 +810,24 @@ public class ByteIoFloat16Test {
         // Float32 exponent 143: exp32 = 143 - 127 = 16, float16 exponent = 16 + 15 = 31 (overflow)
         float value1 = Float.intBitsToFloat((143 << 23)); // 2^16 = 65536
         float result1 = roundTrip(value1, true);
-        assertTrue("Exponent 143 should trigger overflow path", Float.isInfinite(result1));
+        assertTrue(Float.isInfinite(result1), "Exponent 143 should trigger overflow path");
 
         // Float32 exponent 144: exp32 = 17, float16 exponent = 32 (overflow)
         float value2 = Float.intBitsToFloat((144 << 23)); // 2^17
         float result2 = roundTrip(value2, true);
-        assertTrue("Exponent 144 should trigger overflow path", Float.isInfinite(result2));
+        assertTrue(Float.isInfinite(result2), "Exponent 144 should trigger overflow path");
 
         // Float32 exponent 143 with non-zero mantissa
         float value3 = Float.intBitsToFloat((143 << 23) | 0x400000); // 2^16 + fraction
         float result3 = roundTrip(value3, true);
-        assertTrue("Exponent 143 with mantissa should trigger overflow", Float.isInfinite(result3));
+        assertTrue(Float.isInfinite(result3), "Exponent 143 with mantissa should trigger overflow");
 
         // Negative versions
         float value4 = Float.intBitsToFloat((1 << 31) | (143 << 23)); // -2^16
         float result4 = roundTrip(value4, true);
         assertTrue(
-                "Negative exponent 143 should trigger overflow",
-                Float.isInfinite(result4) && result4 < 0);
+                Float.isInfinite(result4) && result4 < 0,
+                "Negative exponent 143 should trigger overflow");
 
         // Float32 exponent at exactly the boundary (142: exp32=15, float16 exp=30, should not
         // overflow)
@@ -835,8 +835,8 @@ public class ByteIoFloat16Test {
         float result5 = roundTrip(value5, true);
         // This should be finite, not overflow
         assertTrue(
-                "Exponent 142 should not overflow through this path",
-                Float.isFinite(result5) || Float.isInfinite(result5));
+                Float.isFinite(result5) || Float.isInfinite(result5),
+                "Exponent 142 should not overflow through this path");
     }
 
     /**
@@ -853,58 +853,58 @@ public class ByteIoFloat16Test {
         // (denormalized)
         float value1 = Float.intBitsToFloat((112 << 23)); // 2^-15 = 0.000030517578125
         float result1 = roundTrip(value1, true);
-        assertTrue("2^-15 should be positive", result1 >= 0);
-        assertFalse("2^-15 should not be NaN", Float.isNaN(result1));
+        assertTrue(result1 >= 0, "2^-15 should be positive");
+        assertFalse(Float.isNaN(result1), "2^-15 should not be NaN");
 
         // Float32 exponent 112 with non-zero mantissa (various values in denormalized range)
         float value2 = Float.intBitsToFloat((112 << 23) | 0x700000);
         float result2 = roundTrip(value2, true);
-        assertTrue("Below min normal with mantissa should be positive", result2 >= 0);
+        assertTrue(result2 >= 0, "Below min normal with mantissa should be positive");
 
         // Test multiple mantissa values to exercise rounding paths in denormalized conversion
         // More than halfway: should round up
         float value3 = Float.intBitsToFloat((112 << 23) | 0x600000);
         float result3 = roundTrip(value3, true);
-        assertTrue("Denorm with rounding up should be positive", result3 >= 0);
+        assertTrue(result3 >= 0, "Denorm with rounding up should be positive");
 
         // Exactly halfway (tests round-to-even)
         float value4 = Float.intBitsToFloat((112 << 23) | 0x400000);
         float result4 = roundTrip(value4, true);
-        assertTrue("Denorm at halfway should round to even", result4 >= 0);
+        assertTrue(result4 >= 0, "Denorm at halfway should round to even");
 
         // Less than halfway: should round down
         float value5 = Float.intBitsToFloat((112 << 23) | 0x200000);
         float result5 = roundTrip(value5, true);
-        assertTrue("Denorm with rounding down should be positive", result5 >= 0);
+        assertTrue(result5 >= 0, "Denorm with rounding down should be positive");
 
         // Float32 exponent 111: exp32 = -16, float16 exponent = -1 (denormalized)
         float value6 = Float.intBitsToFloat((111 << 23)); // 2^-16
         float result6 = roundTrip(value6, true);
-        assertTrue("2^-16 should be positive", result6 >= 0);
+        assertTrue(result6 >= 0, "2^-16 should be positive");
 
         // Float32 exponent 111 with mantissa creating odd/even rounding scenarios
         float value7 = Float.intBitsToFloat((111 << 23) | 0x500000);
         float result7 = roundTrip(value7, true);
-        assertTrue("2^-16 with mantissa should be positive", result7 >= 0);
+        assertTrue(result7 >= 0, "2^-16 with mantissa should be positive");
 
         // Negative versions to test sign handling
         float value8 = Float.intBitsToFloat((1 << 31) | (112 << 23)); // -2^-15
         float result8 = roundTrip(value8, true);
-        assertTrue("Negative denorm should be negative", result8 <= 0);
+        assertTrue(result8 <= 0, "Negative denorm should be negative");
 
         float value9 = Float.intBitsToFloat((1 << 31) | (112 << 23) | 0x400000);
         float result9 = roundTrip(value9, true);
-        assertTrue("Negative denorm with mantissa should be negative", result9 <= 0);
+        assertTrue(result9 <= 0, "Negative denorm with mantissa should be negative");
 
         // Test with mantissa that's exactly odd (for round-to-even)
         float value10 = Float.intBitsToFloat((112 << 23) | 0x300000);
         float result10 = roundTrip(value10, true);
-        assertTrue("Odd mantissa rounding should be positive", result10 >= 0);
+        assertTrue(result10 >= 0, "Odd mantissa rounding should be positive");
 
         // Test with mantissa that's exactly even (for round-to-even)
         float value11 = Float.intBitsToFloat((112 << 23) | 0x200001);
         float result11 = roundTrip(value11, true);
-        assertTrue("Even mantissa rounding should be positive", result11 >= 0);
+        assertTrue(result11 >= 0, "Even mantissa rounding should be positive");
     }
 
     /**
@@ -917,24 +917,24 @@ public class ByteIoFloat16Test {
         // These should be caught by early guards, but test defensive paths
         float exactBoundary1 = Float.intBitsToFloat((143 << 23) - 1); // Just below 2^16
         float result1 = roundTrip(exactBoundary1, true);
-        assertTrue("Near 2^16 should produce valid result", !Float.isNaN(result1));
+        assertTrue(!Float.isNaN(result1), "Near 2^16 should produce valid result");
 
         // Try with extremely specific exponent=-15 boundary values
         // Float32 with exp=-15, mantissa near maximum
         float boundary2 = Float.intBitsToFloat((112 << 23) | 0x7FFFFF);
         float result2 = roundTrip(boundary2, true);
-        assertTrue("Exp=-15 boundary should produce valid result", !Float.isNaN(result2));
+        assertTrue(!Float.isNaN(result2), "Exp=-15 boundary should produce valid result");
 
         // Edge case: values constructed to test precision boundaries
         // This tests if float casting and precision loss might bypass guards
         double precisionEdge1 = 65519.99999999; // Just below overflow guard
         float result3 = roundTrip(precisionEdge1, true);
-        assertFalse("Precision edge should not produce NaN", Float.isNaN(result3));
+        assertFalse(Float.isNaN(result3), "Precision edge should not produce NaN");
 
         // Test with nextAfter to get closest representable values
         float nextAfterMin = Math.nextAfter((float) 6.103515625e-5, 0.0f);
         float result4 = roundTrip(nextAfterMin, true);
-        assertTrue("NextAfter min normal should be >= 0", result4 >= 0);
+        assertTrue(result4 >= 0, "NextAfter min normal should be >= 0");
 
         // Values at exact Float32 representation boundaries
         float[] boundaryValues = {
@@ -946,7 +946,7 @@ public class ByteIoFloat16Test {
 
         for (float value : boundaryValues) {
             float result = roundTrip(value, true);
-            assertFalse("Boundary value should not produce NaN", Float.isNaN(result));
+            assertFalse(Float.isNaN(result), "Boundary value should not produce NaN");
         }
     }
 
@@ -970,32 +970,32 @@ public class ByteIoFloat16Test {
         float value1 = Float.intBitsToFloat(bits1);
         float result1 = roundTrip(value1, true);
         assertTrue(
-                "Mantissa overflow at max exponent should cause infinity",
-                Float.isInfinite(result1));
+                Float.isInfinite(result1),
+                "Mantissa overflow at max exponent should cause infinity");
 
         // Test with exactly 0x1000 in low bits and odd mantissa (will round up, lines 308-313)
         int bits2 = (142 << 23) | 0x7FE000 | 0x1000 | (1 << 13); // Make mantissa odd
         float value2 = Float.intBitsToFloat(bits2);
         float result2 = roundTrip(value2, true);
         assertTrue(
-                "Mantissa overflow with round-to-even (odd) should cause infinity",
-                Float.isInfinite(result2));
+                Float.isInfinite(result2),
+                "Mantissa overflow with round-to-even (odd) should cause infinity");
 
         // Test with maximum mantissa
         int bits3 = (142 << 23) | 0x7FFFFF; // All mantissa bits set
         float value3 = Float.intBitsToFloat(bits3);
         float result3 = roundTrip(value3, true);
         assertTrue(
-                "Maximum mantissa at exponent 142 should overflow to infinity",
-                Float.isInfinite(result3));
+                Float.isInfinite(result3),
+                "Maximum mantissa at exponent 142 should overflow to infinity");
 
         // Negative version
         int bits4 = (1 << 31) | (142 << 23) | 0x7FE000 | 0x1001;
         float value4 = Float.intBitsToFloat(bits4);
         float result4 = roundTrip(value4, true);
         assertTrue(
-                "Negative mantissa overflow should cause negative infinity",
-                Float.isInfinite(result4) && result4 < 0);
+                Float.isInfinite(result4) && result4 < 0,
+                "Negative mantissa overflow should cause negative infinity");
 
         // Test multiple rounding scenarios at exponent 142
         int bits5 = (142 << 23) | 0x7FE800; // Different mantissa pattern
@@ -1003,8 +1003,8 @@ public class ByteIoFloat16Test {
         float result5 = roundTrip(value5, true);
         // Should be close to max or infinity
         assertTrue(
-                "Near-max value should be finite or infinite",
-                Float.isFinite(result5) || Float.isInfinite(result5));
+                Float.isFinite(result5) || Float.isInfinite(result5),
+                "Near-max value should be finite or infinite");
 
         // Test with bits that are exactly at the halfway point with even mantissa
         // Should not overflow if rounding to even keeps it at 0x3FF
@@ -1013,8 +1013,8 @@ public class ByteIoFloat16Test {
         float result6 = roundTrip(value6, true);
         // Might or might not overflow depending on rounding
         assertTrue(
-                "Halfway rounding at boundary should be valid",
-                Float.isFinite(result6) || Float.isInfinite(result6));
+                Float.isFinite(result6) || Float.isInfinite(result6),
+                "Halfway rounding at boundary should be valid");
     }
 
     /**
@@ -1040,8 +1040,8 @@ public class ByteIoFloat16Test {
         // Read back and verify it's infinity (guards ensure this)
         float result = ByteIo.readFloat16(buf, 0, true);
         assertTrue(
-                "Defensive path scenario: exp32=16 should produce infinity",
-                Float.isInfinite(result));
+                Float.isInfinite(result),
+                "Defensive path scenario: exp32=16 should produce infinity");
 
         // Test with even larger exponents to ensure robustness
         for (int exp = 143; exp <= 150; exp++) {
@@ -1050,8 +1050,8 @@ public class ByteIoFloat16Test {
             ByteIo.writeFloat16(buffer, 0, value, true);
             float readBack = ByteIo.readFloat16(buffer, 0, true);
             assertTrue(
-                    "Large exponent " + exp + " should produce infinity",
-                    Float.isInfinite(readBack) && readBack > 0);
+                    Float.isInfinite(readBack) && readBack > 0,
+                    "Large exponent " + exp + " should produce infinity");
         }
 
         // Negative versions
@@ -1060,8 +1060,8 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(negBuf, 0, negValue, true);
         float negResult = ByteIo.readFloat16(negBuf, 0, true);
         assertTrue(
-                "Defensive path scenario: negative exp32=16 should produce -infinity",
-                Float.isInfinite(negResult) && negResult < 0);
+                Float.isInfinite(negResult) && negResult < 0,
+                "Defensive path scenario: negative exp32=16 should produce -infinity");
     }
 
     /**
@@ -1079,13 +1079,13 @@ public class ByteIoFloat16Test {
         byte[] buf1 = new byte[2];
         ByteIo.writeFloat16(buf1, 0, minValue, true);
         float result1 = ByteIo.readFloat16(buf1, 0, true);
-        assertTrue("2^-15 should produce positive denormalized result", result1 >= 0);
-        assertTrue("2^-15 should be small", result1 < 0.001);
+        assertTrue(result1 >= 0, "2^-15 should produce positive denormalized result");
+        assertTrue(result1 < 0.001, "2^-15 should be small");
 
         byte[] buf2 = new byte[2];
         ByteIo.writeFloat16(buf2, 0, boundary, true);
         float result2 = ByteIo.readFloat16(buf2, 0, true);
-        assertTrue("2^-14 should produce positive result", result2 >= 0);
+        assertTrue(result2 >= 0, "2^-14 should produce positive result");
 
         // Test the full denormalized range with values that have exp32 <= -15
         for (int exp = 102; exp <= 112; exp++) {
@@ -1094,8 +1094,8 @@ public class ByteIoFloat16Test {
             ByteIo.writeFloat16(buffer, 0, value, true);
             float readBack = ByteIo.readFloat16(buffer, 0, true);
             assertTrue(
-                    "Small exponent " + exp + " should produce non-negative result", readBack >= 0);
-            assertFalse("Should not produce NaN", Float.isNaN(readBack));
+                    readBack >= 0, "Small exponent " + exp + " should produce non-negative result");
+            assertFalse(Float.isNaN(readBack), "Should not produce NaN");
         }
 
         // Test with mantissa variations to exercise rounding paths in denormalized path
@@ -1103,19 +1103,19 @@ public class ByteIoFloat16Test {
         byte[] bufA = new byte[2];
         ByteIo.writeFloat16(bufA, 0, value1, true);
         float resultA = ByteIo.readFloat16(bufA, 0, true);
-        assertTrue("Denorm with rounding should be valid", resultA >= 0);
+        assertTrue(resultA >= 0, "Denorm with rounding should be valid");
 
         float value2 = Float.intBitsToFloat((112 << 23) | 0x400000); // Exactly halfway
         byte[] bufB = new byte[2];
         ByteIo.writeFloat16(bufB, 0, value2, true);
         float resultB = ByteIo.readFloat16(bufB, 0, true);
-        assertTrue("Denorm at tie should be valid", resultB >= 0);
+        assertTrue(resultB >= 0, "Denorm at tie should be valid");
 
         float value3 = Float.intBitsToFloat((112 << 23) | 0x200000); // Less than halfway
         byte[] bufC = new byte[2];
         ByteIo.writeFloat16(bufC, 0, value3, true);
         float resultC = ByteIo.readFloat16(bufC, 0, true);
-        assertTrue("Denorm with round down should be valid", resultC >= 0);
+        assertTrue(resultC >= 0, "Denorm with round down should be valid");
     }
 
     /**
@@ -1141,8 +1141,8 @@ public class ByteIoFloat16Test {
 
         // This should either be the max float16 or infinity (guards determine which)
         assertTrue(
-                "Max mantissa at exp=30 should produce max or infinity",
-                result1 >= 65504.0f || Float.isInfinite(result1));
+                result1 >= 65504.0f || Float.isInfinite(result1),
+                "Max mantissa at exp=30 should produce max or infinity");
 
         // Test a range of mantissa values at exponent 142 that could cause overflow
         for (int mantissaHigh = 0x7FE; mantissaHigh <= 0x7FF; mantissaHigh++) {
@@ -1155,10 +1155,10 @@ public class ByteIoFloat16Test {
                 float readBack = ByteIo.readFloat16(buffer, 0, true);
 
                 // Should be finite max or infinity, never NaN
-                assertFalse("Near-overflow value should not produce NaN", Float.isNaN(readBack));
+                assertFalse(Float.isNaN(readBack), "Near-overflow value should not produce NaN");
                 assertTrue(
-                        "Should be large positive value or infinity",
-                        readBack >= 65504.0f || Float.isInfinite(readBack));
+                        readBack >= 65504.0f || Float.isInfinite(readBack),
+                        "Should be large positive value or infinity");
             }
         }
 
@@ -1172,8 +1172,8 @@ public class ByteIoFloat16Test {
         float boundaryResult = ByteIo.readFloat16(boundaryBuf, 0, true);
 
         assertTrue(
-                "Boundary case should produce valid result",
-                Float.isFinite(boundaryResult) || Float.isInfinite(boundaryResult));
+                Float.isFinite(boundaryResult) || Float.isInfinite(boundaryResult),
+                "Boundary case should produce valid result");
 
         // Negative versions
         int negBits = (1 << 31) | (142 << 23) | 0x7FFFFF;
@@ -1184,8 +1184,8 @@ public class ByteIoFloat16Test {
         float negResult = ByteIo.readFloat16(negBuf, 0, true);
 
         assertTrue(
-                "Negative near-max should produce large negative or -infinity",
-                negResult <= -65504.0f || (Float.isInfinite(negResult) && negResult < 0));
+                negResult <= -65504.0f || (Float.isInfinite(negResult) && negResult < 0),
+                "Negative near-max should produce large negative or -infinity");
     }
 
     /**
@@ -1207,9 +1207,9 @@ public class ByteIoFloat16Test {
 
         // Both should produce the same infinity bit pattern
         assertArrayEquals(
-                "Large exponent should produce same result as explicit infinity",
                 positiveInfBuf,
-                testBuf);
+                testBuf,
+                "Large exponent should produce same result as explicit infinity");
 
         // Test 2: Verify denormalized conversion logic
         // Even though guards route these, verify the math is correct
@@ -1222,8 +1222,8 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(smallBuf, 0, smallValue, true);
         float smallResult = ByteIo.readFloat16(smallBuf, 0, true);
 
-        assertTrue("Small value should be positive", smallResult >= 0);
-        assertTrue("Small value should be less than minNormal", smallResult <= minNormal);
+        assertTrue(smallResult >= 0, "Small value should be positive");
+        assertTrue(smallResult <= minNormal, "Small value should be less than minNormal");
 
         // Test 3: Verify mantissa overflow handling
         // Create a scenario that exercises mantissa rounding near the limit
@@ -1232,8 +1232,8 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(nearMaxBuf, 0, nearMax, true);
         float nearMaxResult = ByteIo.readFloat16(nearMaxBuf, 0, true);
 
-        assertTrue("Near-max should produce finite result", Float.isFinite(nearMaxResult));
-        assertTrue("Should be close to max", nearMaxResult >= 65500.0f);
+        assertTrue(Float.isFinite(nearMaxResult), "Near-max should produce finite result");
+        assertTrue(nearMaxResult >= 65500.0f, "Should be close to max");
     }
 
     @Test
@@ -1247,7 +1247,7 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(buf1, 0, value1, true);
 
         float result1 = ByteIo.readFloat16(buf1, 0, true);
-        assertTrue("2^-15 should produce valid denormalized result", result1 >= 0);
+        assertTrue(result1 >= 0, "2^-15 should produce valid denormalized result");
 
         // Test with various small values that go through denormalized path
         float value2 = Float.intBitsToFloat((112 << 23) | 0x600000);
@@ -1255,7 +1255,7 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(buf2, 0, value2, true);
 
         float result2 = ByteIo.readFloat16(buf2, 0, true);
-        assertTrue("Small value should be handled by denormalized path", result2 >= 0);
+        assertTrue(result2 >= 0, "Small value should be handled by denormalized path");
 
         // Test boundary: exactly at FLOAT16_MIN_NORMAL
         float boundary = Float.intBitsToFloat(113 << 23); // 2^-14
@@ -1263,7 +1263,7 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(bufBoundary, 0, boundary, true);
 
         float resultBoundary = ByteIo.readFloat16(bufBoundary, 0, true);
-        assertTrue("Boundary value should produce valid result", resultBoundary >= 0);
+        assertTrue(resultBoundary >= 0, "Boundary value should produce valid result");
 
         // Verify that very small values produce correct results
         for (int exp = 102; exp <= 112; exp++) {
@@ -1272,8 +1272,8 @@ public class ByteIoFloat16Test {
             ByteIo.writeFloat16(buffer, 0, value, true);
             float readBack = ByteIo.readFloat16(buffer, 0, true);
             assertTrue(
-                    "Small exponent " + exp + " should produce non-negative result", readBack >= 0);
-            assertFalse("Should not produce NaN", Float.isNaN(readBack));
+                    readBack >= 0, "Small exponent " + exp + " should produce non-negative result");
+            assertFalse(Float.isNaN(readBack), "Should not produce NaN");
         }
 
         // Negative versions
@@ -1282,6 +1282,6 @@ public class ByteIoFloat16Test {
         ByteIo.writeFloat16(negBuf, 0, negValue, true);
 
         float negResult = ByteIo.readFloat16(negBuf, 0, true);
-        assertTrue("Negative small value should work", negResult <= 0);
+        assertTrue(negResult <= 0, "Negative small value should work");
     }
 }

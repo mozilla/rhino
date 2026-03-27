@@ -1,10 +1,10 @@
 package org.mozilla.javascript;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mozilla.javascript.Token.FIRST_TOKEN;
 import static org.mozilla.javascript.Token.LAST_TOKEN;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TokenTest {
     @Test

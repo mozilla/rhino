@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
@@ -30,7 +30,7 @@ public class ErrorPropertiesTest {
         try {
             Utils.executeScript(script, interpreted);
         } catch (final RhinoException e) {
-            Assert.assertEquals(expectedStackTrace, e.getScriptStackTrace());
+            Assertions.assertEquals(expectedStackTrace, e.getScriptStackTrace());
         }
     }
 
@@ -81,7 +81,7 @@ public class ErrorPropertiesTest {
                     try {
                         TopLevel scope = cx.initStandardObjects();
                         final Object o = cx.evaluateString(scope, script, "myScript.js", 1, null);
-                        Assert.assertEquals(expected, o);
+                        Assertions.assertEquals(expected, o);
                         return o;
                     } catch (final RuntimeException e) {
                         throw e;

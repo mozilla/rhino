@@ -4,8 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.TopLevel;
 
@@ -16,10 +16,10 @@ public class Issue1041Test {
             TopLevel scope = cx.initStandardObjects();
             Boolean result =
                     (Boolean) cx.evaluateString(scope, "/ab{0}c/.test('abc')", "<eval>", 1, null);
-            Assert.assertFalse(result);
+            Assertions.assertFalse(result);
 
             result = (Boolean) cx.evaluateString(scope, "/ab{0}c/.test('ac')", "<eval>", 1, null);
-            Assert.assertTrue(result);
+            Assertions.assertTrue(result);
         }
     }
 }

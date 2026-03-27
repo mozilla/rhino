@@ -4,7 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -14,10 +14,8 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
@@ -29,20 +27,18 @@ import org.mozilla.javascript.ast.IdeErrorReporter;
  * @author André Bargull
  */
 @SuppressWarnings("serial")
-@RunWith(Parameterized.class)
 public class Bug789277Test {
 
     private static final String SOURCE_NAME = "<eval>";
     private static final String MISSING_SEMI = "missing ; after statement";
     private static final int SOURCE_BUFFER_LENGTH = 512; // cf. TokenStream
 
-    private final TestData data;
+    private TestData data;
 
-    public Bug789277Test(TestData data) {
+    public void initBug789277Test(TestData data) {
         this.data = data;
     }
 
-    @Parameters
     public static List<Object[]> parameters() {
         List<TestData> data = new ArrayList<TestData>();
         addSimpleTests(data);
@@ -376,8 +372,10 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    @Test
-    public void parserWithErrorReporter_String() throws IOException {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    public void parserWithErrorReporter_String(TestData data) throws IOException {
+        initBug789277Test(data);
         TestErrorReporter reporter = new TestErrorReporter();
         parseStrict(data.source, reporter, false);
 
@@ -388,8 +386,10 @@ public class Bug789277Test {
                 data, data.map.get(Type.ErrorReporter_String), reporter.warnings.get(0));
     }
 
-    @Test
-    public void parserWithErrorReporter_Reader() throws IOException {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    public void parserWithErrorReporter_Reader(TestData data) throws IOException {
+        initBug789277Test(data);
         TestErrorReporter reporter = new TestErrorReporter();
         parseStrict(new StringReader(data.source), reporter, false);
 
@@ -400,8 +400,10 @@ public class Bug789277Test {
                 data, data.map.get(Type.ErrorReporter_Reader), reporter.warnings.get(0));
     }
 
-    @Test
-    public void parserWithIdeErrorReporter_String() throws IOException {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    public void parserWithIdeErrorReporter_String(TestData data) throws IOException {
+        initBug789277Test(data);
         TestErrorReporter reporter = new TestIdeErrorReporter();
         parseStrict(data.source, reporter, false);
 
@@ -412,8 +414,10 @@ public class Bug789277Test {
                 data, data.map.get(Type.IdeErrorReporter_String), reporter.warnings.get(0));
     }
 
-    @Test
-    public void parserWithIdeErrorReporter_Reader() throws IOException {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    public void parserWithIdeErrorReporter_Reader(TestData data) throws IOException {
+        initBug789277Test(data);
         TestErrorReporter reporter = new TestIdeErrorReporter();
         parseStrict(new StringReader(data.source), reporter, false);
 
@@ -424,8 +428,10 @@ public class Bug789277Test {
                 data, data.map.get(Type.IdeErrorReporter_Reader), reporter.warnings.get(0));
     }
 
-    @Test
-    public void parserWithIdeErrorReporter_String_IdeMode() throws IOException {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    public void parserWithIdeErrorReporter_String_IdeMode(TestData data) throws IOException {
+        initBug789277Test(data);
         TestErrorReporter reporter = new TestIdeErrorReporter();
         parseStrict(data.source, reporter, true);
 
@@ -436,8 +442,10 @@ public class Bug789277Test {
                 data, data.map.get(Type.IdeErrorReporter_String_IdeMode), reporter.warnings.get(0));
     }
 
-    @Test
-    public void parserWithIdeErrorReporter_Reader_IdeMode() throws IOException {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    public void parserWithIdeErrorReporter_Reader_IdeMode(TestData data) throws IOException {
+        initBug789277Test(data);
         TestErrorReporter reporter = new TestIdeErrorReporter();
         parseStrict(new StringReader(data.source), reporter, true);
 
@@ -450,13 +458,13 @@ public class Bug789277Test {
 
     private static void assertMessageEquals(TestData t, Message expected, Message actual) {
         String source = String.format("`%s`", raw(t.source));
-        assertEquals(source + " [MESSAGE]", expected.message, actual.message);
-        assertEquals(source + " [SOURCE_NAME]", expected.sourceName, actual.sourceName);
-        assertEquals(source + " [LINE]", expected.line, actual.line);
-        assertEquals(source + " [LINE_SOURCE]", expected.lineSource, actual.lineSource);
-        assertEquals(source + " [LINE_OFFSET]", expected.lineOffset, actual.lineOffset);
-        assertEquals(source + " [OFFSET]", expected.offset, actual.offset);
-        assertEquals(source + " [LENGTH]", expected.length, actual.length);
+        assertEquals(expected.message, actual.message, source + " [MESSAGE]");
+        assertEquals(expected.sourceName, actual.sourceName, source + " [SOURCE_NAME]");
+        assertEquals(expected.line, actual.line, source + " [LINE]");
+        assertEquals(expected.lineSource, actual.lineSource, source + " [LINE_SOURCE]");
+        assertEquals(expected.lineOffset, actual.lineOffset, source + " [LINE_OFFSET]");
+        assertEquals(expected.offset, actual.offset, source + " [OFFSET]");
+        assertEquals(expected.length, actual.length, source + " [LENGTH]");
     }
 
     private static boolean isLineTerminator(char c) {
@@ -537,12 +545,12 @@ public class Bug789277Test {
     }
 
     private static class TestData {
-        private final String source;
-        private final Map<Type, Message> map;
+        private String source;
+        private Map<Type, Message> map;
 
         static class DataMap<K extends Enum<K>, V> extends EnumMap<K, V> {
-            public DataMap(Class<K> keyType) {
-                super(keyType);
+            public DataMap(Class<K> k) {
+                super(k);
             }
 
             @SuppressWarnings("unchecked")
@@ -613,13 +621,13 @@ public class Bug789277Test {
             this.length = -1;
         }
 
-        private Message(String message, String sourceName, int offset, int length) {
+        private Message(String message, String sourceName, int lineOffset, int length) {
             this.message = message;
             this.sourceName = sourceName;
             this.line = -1;
-            this.lineSource = null;
-            this.lineOffset = -1;
-            this.offset = offset;
+            this.lineSource = "";
+            this.lineOffset = lineOffset;
+            this.offset = -1;
             this.length = length;
         }
     }

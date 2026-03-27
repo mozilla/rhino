@@ -7,15 +7,11 @@ package org.mozilla.javascript.tests;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
@@ -109,7 +105,7 @@ public class Bug708801Test {
                 assertFalse(opt.isParameter(i));
                 String name = fnode.getParamOrVarName(i);
                 String msg = format("{%s -> number? = %b}", name, opt.isNumberVar(i));
-                assertEquals(msg, set.contains(name), opt.isNumberVar(i));
+                assertEquals(set.contains(name), opt.isNumberVar(i), msg);
             }
         }
 

@@ -5,13 +5,11 @@
 /** */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collection;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;

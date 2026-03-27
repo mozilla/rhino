@@ -1,8 +1,8 @@
 package org.mozilla.javascript;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
 public class HoistingTest {
@@ -140,7 +140,7 @@ public class HoistingTest {
     }
 
     @Test
-    @Ignore("switch-doesnt-open-a-block")
+    @Disabled("switch-doesnt-open-a-block")
     public void hoistedFunctionCallSwitchShouldNotThrowReferenceError() {
         String script =
                 ""
@@ -223,11 +223,11 @@ public class HoistingTest {
                                         + "\n"
                                         + "arr_obj";
                         Object result = cx.evaluateString(scope, script, "hoistedRef", 1, null);
-                        Assert.assertTrue(result instanceof NativeArray);
-                        Assert.assertEquals(3, ((NativeArray) result).size());
+                        Assertions.assertTrue(result instanceof NativeArray);
+                        Assertions.assertEquals(3, ((NativeArray) result).size());
                     } catch (Exception e) {
                         e.printStackTrace();
-                        Assert.fail();
+                        Assertions.fail();
                     } finally {
                         cx.setLanguageVersion(languageVersion);
                     }

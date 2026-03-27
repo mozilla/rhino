@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
 import java.util.function.Predicate;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
@@ -13,13 +13,13 @@ public class JavaAdapterTest {
     Context cx = null;
     Scriptable topScope = null;
 
-    @Before
+    @BeforeEach
     public void enterContext() {
         cx = Context.enter();
         topScope = cx.initStandardObjects();
     }
 
-    @After
+    @AfterEach
     public void exitContext() {
         Context.exit();
     }
@@ -50,7 +50,7 @@ public class JavaAdapterTest {
 
         var adapterObject = (NativeJavaObject) eval(testCode);
         var adapted = (C) adapterObject.unwrap();
-        Assert.assertEquals(123, adapted.methodInC("123"));
+        Assertions.assertEquals(123, adapted.methodInC("123"));
     }
 
     @Test
@@ -63,7 +63,7 @@ public class JavaAdapterTest {
 
         var adapterObject = (NativeJavaObject) eval(testCode);
         var adapted = (C) adapterObject.unwrap();
-        Assert.assertEquals(42, adapted.methodInC("whatever string"));
+        Assertions.assertEquals(42, adapted.methodInC("whatever string"));
     }
 
     public abstract static class StaticA implements B {}
@@ -78,7 +78,7 @@ public class JavaAdapterTest {
 
         var adapterObject = (NativeJavaObject) eval(testCode);
         var adapted = (C) adapterObject.unwrap();
-        Assert.assertEquals(42, adapted.methodInC("whatever string"));
+        Assertions.assertEquals(42, adapted.methodInC("whatever string"));
     }
 
     @SuppressWarnings("unchecked")
@@ -92,10 +92,10 @@ public class JavaAdapterTest {
 
         var adapterObject = (NativeJavaObject) eval(testCode);
         var adapted = (Predicate<Object>) adapterObject.unwrap();
-        Assert.assertTrue(adapted.test("rhino"));
-        Assert.assertFalse(adapted.test("rhizo"));
-        Assert.assertFalse(adapted.test(null));
-        Assert.assertFalse(adapted.test(42));
+        Assertions.assertTrue(adapted.test("rhino"));
+        Assertions.assertFalse(adapted.test("rhizo"));
+        Assertions.assertFalse(adapted.test(null));
+        Assertions.assertFalse(adapted.test(42));
     }
 
     /**
@@ -111,6 +111,7 @@ public class JavaAdapterTest {
 
         var adapterObject1 = (NativeJavaObject) eval(testCode);
         var adapterObject2 = (NativeJavaObject) eval(testCode);
-        Assert.assertSame(adapterObject1.unwrap().getClass(), adapterObject2.unwrap().getClass());
+        Assertions.assertSame(
+                adapterObject1.unwrap().getClass(), adapterObject2.unwrap().getClass());
     }
 }

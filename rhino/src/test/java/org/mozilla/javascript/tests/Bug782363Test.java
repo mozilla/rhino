@@ -6,19 +6,14 @@ package org.mozilla.javascript.tests;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
@@ -40,13 +35,13 @@ public class Bug782363Test {
 
     private Context cx;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_1_8);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Context.exit();
     }
@@ -103,7 +98,7 @@ public class Bug782363Test {
             assertFalse(opt.isParameter(i));
             String name = fnode.getParamOrVarName(i);
             String msg = format("{%s -> number? = %b}", name, opt.isNumberVar(i));
-            assertEquals(msg, set.contains(name), opt.isNumberVar(i));
+            assertEquals(set.contains(name), opt.isNumberVar(i), msg);
         }
     }
 

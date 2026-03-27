@@ -6,15 +6,12 @@ import static org.mozilla.javascript.FunctionObject.*;
 
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.testutils.Utils;
 
-@RunWith(Parameterized.class)
 public class NullableArgumentsConversionTest {
 
-    @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] {
@@ -37,12 +34,12 @@ public class NullableArgumentsConversionTest {
                 });
     }
 
-    private final Object arg;
-    private final int typeTag;
-    private final boolean isNullable;
-    private final Object expectedConvertedArg;
+    private Object arg;
+    private int typeTag;
+    private boolean isNullable;
+    private Object expectedConvertedArg;
 
-    public NullableArgumentsConversionTest(
+    public void initNullableArgumentsConversionTest(
             Object arg, int typeTag, boolean isNullable, Object expectedConvertedArg) {
         this.arg = arg;
         this.typeTag = typeTag;
@@ -50,8 +47,11 @@ public class NullableArgumentsConversionTest {
         this.expectedConvertedArg = expectedConvertedArg;
     }
 
-    @Test
-    public void checkArgumentConversion() {
+    @MethodSource("data")
+    @ParameterizedTest
+    public void checkArgumentConversion(
+            Object arg, int typeTag, boolean isNullable, Object expectedConvertedArg) {
+        initNullableArgumentsConversionTest(arg, typeTag, isNullable, expectedConvertedArg);
         Utils.runWithAllModes(
                 context -> {
                     Scriptable scriptable =

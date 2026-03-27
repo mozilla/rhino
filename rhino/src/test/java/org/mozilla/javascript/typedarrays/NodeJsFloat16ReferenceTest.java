@@ -1,8 +1,8 @@
 package org.mozilla.javascript.typedarrays;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests Float16 implementation against reference values from the IEEE 754 specification.
@@ -115,29 +115,29 @@ public class NodeJsFloat16ReferenceTest {
             // Check bit pattern
             int actualBits = (buf[0] & 0xff) | ((buf[1] & 0xff) << 8);
             assertEquals(
-                    String.format(
-                            "Bit pattern mismatch for input %.15e (%.10f)", tc.input, tc.input),
                     tc.expectedBitsLE,
-                    actualBits);
+                    actualBits,
+                    String.format(
+                            "Bit pattern mismatch for input %.15e (%.10f)", tc.input, tc.input));
 
             // Check read-back value
             float result = ByteIo.readFloat16(buf, 0, true);
 
             if (tc.expectNaN) {
-                assertTrue("Expected NaN for input " + tc.input, Float.isNaN(result));
+                assertTrue(Float.isNaN(result), "Expected NaN for input " + tc.input);
             } else if (tc.expectInfinite) {
-                assertTrue("Expected infinite for input " + tc.input, Float.isInfinite(result));
+                assertTrue(Float.isInfinite(result), "Expected infinite for input " + tc.input);
                 assertEquals(
-                        "Infinity sign mismatch for input " + tc.input,
                         Math.signum(tc.expectedOutput),
                         Math.signum(result),
-                        0.0f);
+                        0.0f,
+                        "Infinity sign mismatch for input " + tc.input);
             } else {
                 assertEquals(
-                        String.format("Value mismatch for input %.15e", tc.input),
                         tc.expectedOutput,
                         result,
-                        Math.abs(tc.expectedOutput) * 1e-6f);
+                        Math.abs(tc.expectedOutput) * 1e-6f,
+                        String.format("Value mismatch for input %.15e", tc.input));
             }
         }
     }
@@ -151,9 +151,9 @@ public class NodeJsFloat16ReferenceTest {
             // Check bit pattern (big-endian)
             int actualBits = ((buf[0] & 0xff) << 8) | (buf[1] & 0xff);
             assertEquals(
-                    String.format("Big-endian bit pattern mismatch for input %.15e", tc.input),
                     tc.expectedBitsLE,
-                    actualBits);
+                    actualBits,
+                    String.format("Big-endian bit pattern mismatch for input %.15e", tc.input));
 
             // Check read-back value
             float result = ByteIo.readFloat16(buf, 0, false);
@@ -206,11 +206,11 @@ public class NodeJsFloat16ReferenceTest {
         }
 
         assertEquals(
+                expectedBits,
+                actualBits,
                 String.format(
                         "Expected bits 0x%04X for input %f, got 0x%04X",
-                        expectedBits, input, actualBits),
-                expectedBits,
-                actualBits);
+                        expectedBits, input, actualBits));
     }
 
     @Test
@@ -261,10 +261,10 @@ public class NodeJsFloat16ReferenceTest {
     private void assertRoundsTo(double input, float expected) {
         float result = roundTrip(input);
         assertEquals(
-                String.format("Rounding failed for %.15e", input),
                 expected,
                 result,
-                Math.abs(expected) * 1e-6f);
+                Math.abs(expected) * 1e-6f,
+                String.format("Rounding failed for %.15e", input));
     }
 
     private float roundTrip(double value) {

@@ -4,12 +4,11 @@
 
 package org.mozilla.javascript.tests.json;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
@@ -20,20 +19,20 @@ public class JsonParserTest {
     private JsonParser parser;
     private Context cx;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         cx = Context.enter();
         parser = new JsonParser(cx, cx.initStandardObjects());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Context.exit();
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseIllegalWhitespaceChars() throws Exception {
-        parser.parseValue(" \u000b 1");
+        assertThrows(ParseException.class, () -> parser.parseValue(" \u000b 1"));
     }
 
     @Test
@@ -41,9 +40,9 @@ public class JsonParserTest {
         assertEquals(null, parser.parseValue("null"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseJavaNull() throws Exception {
-        parser.parseValue(null);
+        assertThrows(ParseException.class, () -> parser.parseValue(null));
     }
 
     @Test
@@ -62,19 +61,19 @@ public class JsonParserTest {
         assertEquals(Double.POSITIVE_INFINITY, parser.parseValue("1.5e99999999"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseDoubleNegativeNumbers() throws Exception {
-        parser.parseValue("--5");
+        assertThrows(ParseException.class, () -> parser.parseValue("--5"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseNumbersWithDecimalExponent() throws Exception {
-        parser.parseValue("5e5.5");
+        assertThrows(ParseException.class, () -> parser.parseValue("5e5.5"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseNumbersBeginningWithZero() throws Exception {
-        parser.parseValue("05");
+        assertThrows(ParseException.class, () -> parser.parseValue("05"));
     }
 
     @Test
@@ -94,24 +93,24 @@ public class JsonParserTest {
         assertEquals("\"", parser.parseValue(str('"', '\\', '"', '"')));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseEmptyJavaString() throws Exception {
-        parser.parseValue("");
+        assertThrows(ParseException.class, () -> parser.parseValue(""));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseSingleDoubleQuote() throws Exception {
-        parser.parseValue(str('"'));
+        assertThrows(ParseException.class, () -> parser.parseValue(str('"')));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseStringContainingSingleBackslash() throws Exception {
-        parser.parseValue(str('"', '\\', '"'));
+        assertThrows(ParseException.class, () -> parser.parseValue(str('"', '\\', '"')));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseStringIllegalStringChars() throws Exception {
-        parser.parseValue(str('"', '\n', '"'));
+        assertThrows(ParseException.class, () -> parser.parseValue(str('"', '\n', '"')));
     }
 
     @Test
@@ -132,9 +131,9 @@ public class JsonParserTest {
         assertEquals(4, actual.getLength());
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseArrayWithInvalidElements() throws Exception {
-        parser.parseValue("[wtf]");
+        assertThrows(ParseException.class, () -> parser.parseValue("[wtf]"));
     }
 
     @Test
@@ -145,9 +144,9 @@ public class JsonParserTest {
         assertEquals(false, actual.get("bool", actual));
         assertEquals("xyz", actual.get("str", actual));
         assertArrayEquals(
-                "Property ordering should match",
                 new Object[] {"bool", "str", "obj"},
-                actual.getIds());
+                actual.getIds(),
+                "Property ordering should match");
 
         NativeObject innerObj = (NativeObject) actual.get("obj", actual);
         assertEquals(1, innerObj.get("a", innerObj));
@@ -163,35 +162,35 @@ public class JsonParserTest {
             // Ensure that modern ECMAScript property ordering works, which depends on
             // valid index values being treated as numbers and not as strings.
             assertArrayEquals(
-                    "Property ordering should match",
                     new Object[] {1, "foo", "bar", "-1", "x"},
-                    actual.getIds());
+                    actual.getIds(),
+                    "Property ordering should match");
         }
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseJsonObjectsWithInvalidFormat() throws Exception {
-        parser.parseValue("{\"only\", \"keys\"}");
+        assertThrows(ParseException.class, () -> parser.parseValue("{\"only\", \"keys\"}"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseMoreThanOneToplevelValue() throws Exception {
-        parser.parseValue("1 2");
+        assertThrows(ParseException.class, () -> parser.parseValue("1 2"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseStringTruncatedUnicode() throws Exception {
-        parser.parseValue("\"\\u00f\"");
+        assertThrows(ParseException.class, () -> parser.parseValue("\"\\u00f\""));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseStringControlChars1() throws Exception {
-        parser.parseValue("\"\u0000\"");
+        assertThrows(ParseException.class, () -> parser.parseValue("\"\u0000\""));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseStringControlChars2() throws Exception {
-        parser.parseValue("\"\u001f\"");
+        assertThrows(ParseException.class, () -> parser.parseValue("\"\u001f\""));
     }
 
     @Test
@@ -199,44 +198,44 @@ public class JsonParserTest {
         parser.parseValue("1 ");
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldThrowParseExceptionWhenIncompleteObject() throws Exception {
-        parser.parseValue("{\"a\" ");
+        assertThrows(ParseException.class, () -> parser.parseValue("{\"a\" "));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldThrowParseExceptionWhenIncompleteArray() throws Exception {
-        parser.parseValue("[1 ");
+        assertThrows(ParseException.class, () -> parser.parseValue("[1 "));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseIllegalUnicodeEscapeSeq() throws Exception {
-        parser.parseValue("\"\\u-123\"");
+        assertThrows(ParseException.class, () -> parser.parseValue("\"\\u-123\""));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseIllegalUnicodeEscapeSeq2() throws Exception {
-        parser.parseValue("\"\\u006\u0661\"");
+        assertThrows(ParseException.class, () -> parser.parseValue("\"\\u006\u0661\""));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseIllegalUnicodeEscapeSeq3() throws Exception {
-        parser.parseValue("\"\\u006١\"");
+        assertThrows(ParseException.class, () -> parser.parseValue("\"\\u006١\""));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseTrailingCommaInObject1() throws Exception {
-        parser.parseValue("{\"a\": 1,}");
+        assertThrows(ParseException.class, () -> parser.parseValue("{\"a\": 1,}"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseTrailingCommaInObject2() throws Exception {
-        parser.parseValue("{,\"a\": 1}");
+        assertThrows(ParseException.class, () -> parser.parseValue("{,\"a\": 1}"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseTrailingCommaInObject3() throws Exception {
-        parser.parseValue("{,}");
+        assertThrows(ParseException.class, () -> parser.parseValue("{,}"));
     }
 
     @Test
@@ -244,19 +243,19 @@ public class JsonParserTest {
         parser.parseValue("{}");
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseTrailingCommaInArray1() throws Exception {
-        parser.parseValue("[1,]");
+        assertThrows(ParseException.class, () -> parser.parseValue("[1,]"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseTrailingCommaInArray2() throws Exception {
-        parser.parseValue("[,1]");
+        assertThrows(ParseException.class, () -> parser.parseValue("[,1]"));
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseTrailingCommaInArray3() throws Exception {
-        parser.parseValue("[,]");
+        assertThrows(ParseException.class, () -> parser.parseValue("[,]"));
     }
 
     @Test
@@ -264,9 +263,9 @@ public class JsonParserTest {
         parser.parseValue("[]");
     }
 
-    @Test(expected = ParseException.class)
+    @Test
     public void shouldFailToParseIllegalNumber() throws Exception {
-        parser.parseValue("1.");
+        assertThrows(ParseException.class, () -> parser.parseValue("1."));
     }
 
     private String str(char... chars) {

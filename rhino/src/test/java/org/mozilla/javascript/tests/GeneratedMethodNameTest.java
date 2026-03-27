@@ -4,9 +4,9 @@
 
 package org.mozilla.javascript.tests;
 
-import org.hamcrest.CoreMatchers;
-import org.junit.Assume;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
@@ -94,7 +94,7 @@ public class GeneratedMethodNameTest {
         // Stack traces seem to be showing up differently in Java 21. Since
         // this is not something that we can control, we're going to ignore
         // these tests in that case.
-        Assume.assumeThat("Skipping test for Java 21", isJava21(), CoreMatchers.is(false));
+        assumeTrue(isJava21(), () -> "Skipping test: Java 21 or higher");
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
             TopLevel topScope = cx.initStandardObjects();
             topScope.put("javaNameGetter", topScope, new JavaNameGetter());

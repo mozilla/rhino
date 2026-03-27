@@ -3,8 +3,8 @@ package org.mozilla.javascript;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
@@ -88,28 +88,28 @@ public class DebuggerTest {
             cx.setInterpretedMode(true);
             Script script = cx.compileString(TEST_SCRIPT, "this-klass", 0, null);
             Object res = script.exec(cx, scope, scope);
-            Assert.assertNotNull(res);
+            Assertions.assertNotNull(res);
             System.err.println(res.toString());
-            Assert.assertEquals(
-                    "The expected number of breakpoints were not hit",
+            Assertions.assertEquals(
                     NUM_BREAKPOINTS,
-                    frame.getBreakPointsHit());
-            Assert.assertEquals(
-                    "The expected number of frames were not entered",
+                    frame.getBreakPointsHit(),
+                    "The expected number of breakpoints were not hit");
+            Assertions.assertEquals(
                     NUM_FRAMES,
-                    frame.getFrameIds().size());
-            Assert.assertEquals(
-                    "The top frame to be {`ScriptDebuggerTest`}",
+                    frame.getFrameIds().size(),
+                    "The expected number of frames were not entered");
+            Assertions.assertEquals(
                     Set.of("ScriptDebuggerTest"),
-                    frame.getFrameIds().get(0));
-            Assert.assertEquals(
-                    "The second frame to be {`a`, 'b'}",
+                    frame.getFrameIds().get(0),
+                    "The top frame to be {`ScriptDebuggerTest`}");
+            Assertions.assertEquals(
                     Set.of("a", "b"),
-                    frame.getFrameIds().get(1));
-            Assert.assertEquals(
-                    "The second frame to be {`x`, 'y'}",
+                    frame.getFrameIds().get(1),
+                    "The second frame to be {`a`, 'b'}");
+            Assertions.assertEquals(
                     Set.of("x", "y"),
-                    frame.getFrameIds().get(2));
+                    frame.getFrameIds().get(2),
+                    "The second frame to be {`x`, 'y'}");
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
