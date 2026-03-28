@@ -5,19 +5,17 @@ updates:
   - package-ecosystem: "github-actions"
     # Workflow files stored in the default location of `.github/workflows`. (No need to specify `/.github/workflows` for `directory`. You can use `directory: "/"`.)
     directory: "/"
-    # Allow dependabot to run on GitHub Actions
-    open-pull-requests-limit: 4
     schedule:
-      interval: "weekly"
-      day: "saturday"
-      time: "12:00"
+      interval: "monthly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
 
   # Maintain Gradle Dependencies
   - package-ecosystem: "gradle"
     directory: "/"
-    # Allow Dependabot to run on code
-    open-pull-requests-limit: 4
     schedule:
-      interval: "weekly"
-      day: "saturday"
-      time: "12:00"
+      interval: "monthly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
