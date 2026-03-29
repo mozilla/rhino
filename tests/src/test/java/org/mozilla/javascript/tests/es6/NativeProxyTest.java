@@ -954,4 +954,56 @@ public class NativeProxyTest {
 
         Utils.assertWithAllModes_ES6(true, js);
     }
+
+    @Test
+    public void setTrapReceivesReceiver() {
+        String js =
+                "var _receiver;\n"
+                        + "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    _receiver = receiver;\n"
+                        + "    t[prop] = value;\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "proxy.x = 1;\n"
+                        + "'' + (_receiver === proxy) + ' ' + target.x";
+        Utils.assertWithAllModes_ES6("true 1", js);
+    }
+
+    @Test
+    public void setTrapReceiverWithIndexProperty() {
+        String js =
+                "var _receiver;\n"
+                        + "var target = [10, 20, 30];\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    _receiver = receiver;\n"
+                        + "    t[prop] = value;\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "proxy[1] = 99;\n"
+                        + "'' + (_receiver === proxy) + ' ' + target[1]";
+        Utils.assertWithAllModes_ES6("true 99", js);
+    }
+
+    @Test
+    public void setTrapReceiverWithSymbolProperty() {
+        String js =
+                "var _receiver;\n"
+                        + "var sym = Symbol('test');\n"
+                        + "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    _receiver = receiver;\n"
+                        + "    t[prop] = value;\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "proxy[sym] = 'hello';\n"
+                        + "'' + (_receiver === proxy) + ' ' + target[sym]";
+        Utils.assertWithAllModes_ES6("true hello", js);
+    }
 }
