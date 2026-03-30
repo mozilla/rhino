@@ -49,7 +49,7 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope, String name, int length, SerializableConstructable target) {
+            VarScope scope, String name, int length, SerializableConstructable target) {
         super(scope, name, length, null);
         this.targetConstructor = target;
         this.flags = CONSTRUCTOR_DEFAULT;
@@ -70,11 +70,7 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope,
-            String name,
-            int length,
-            int flags,
-            SerializableConstructable target) {
+            VarScope scope, String name, int length, int flags, SerializableConstructable target) {
         super(scope, name, length, null);
         this.targetConstructor = target;
         this.flags = flags;
@@ -96,7 +92,7 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -109,7 +105,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     public LambdaConstructor(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             Object prototype,
@@ -128,7 +124,7 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
@@ -140,14 +136,14 @@ public class LambdaConstructor extends LambdaFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         if ((flags & CONSTRUCTOR_NEW) == 0) {
             throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
         }
         return fireConstructor(cx, getDeclarationScope(), args);
     }
 
-    private Scriptable fireConstructor(Context cx, Scriptable scope, Object[] args) {
+    private Scriptable fireConstructor(Context cx, VarScope scope, Object[] args) {
         Scriptable obj = targetConstructor.construct(cx, scope, args);
         obj.setPrototype(getClassPrototype());
         obj.setParentScope(scope);
@@ -159,7 +155,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope, String name, int length, SerializableCallable target) {
+            VarScope scope, String name, int length, SerializableCallable target) {
         definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
@@ -168,7 +164,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -185,12 +181,12 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope, SymbolKey name, int length, SerializableCallable target) {
+            VarScope scope, SymbolKey name, int length, SerializableCallable target) {
         definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     public void definePrototypeMethod(
-            Scriptable scope,
+            VarScope scope,
             SymbolKey name,
             int length,
             SerializableCallable target,
@@ -203,7 +199,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            VarScope scope,
             SymbolKey name,
             int length,
             SerializableCallable target,
@@ -221,7 +217,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             Object prototype,
@@ -240,7 +236,7 @@ public class LambdaConstructor extends LambdaFunction {
      */
     public void defineKnownBuiltInPrototypeMethod(
             Object tag,
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             Object prototype,
@@ -259,7 +255,7 @@ public class LambdaConstructor extends LambdaFunction {
      * the covers.
      */
     public void definePrototypeMethod(
-            Scriptable scope,
+            VarScope scope,
             SymbolKey name,
             int length,
             Object prototype,
@@ -395,7 +391,7 @@ public class LambdaConstructor extends LambdaFunction {
      * @param target the target to call when the method is invoked
      */
     public void defineConstructorMethod(
-            Scriptable scope, String name, int length, SerializableCallable target) {
+            VarScope scope, String name, int length, SerializableCallable target) {
         defineConstructorMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
@@ -409,7 +405,7 @@ public class LambdaConstructor extends LambdaFunction {
      * @param target the target to call when the method is invoked
      */
     public void defineConstructorMethod(
-            Scriptable scope, Symbol key, String name, int length, SerializableCallable target) {
+            VarScope scope, Symbol key, String name, int length, SerializableCallable target) {
         defineConstructorMethod(scope, name, length, target);
     }
 
@@ -419,7 +415,7 @@ public class LambdaConstructor extends LambdaFunction {
      * properties.
      */
     public void defineConstructorMethod(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
@@ -436,7 +432,7 @@ public class LambdaConstructor extends LambdaFunction {
      * "protoyupe" properties.
      */
     public void defineConstructorMethod(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             Object prototype,
@@ -456,7 +452,7 @@ public class LambdaConstructor extends LambdaFunction {
     public void setPrototypeScriptable(ScriptableObject proto) {
         proto.setParentScope(getDeclarationScope());
         setPrototypeProperty(proto);
-        Scriptable objectProto = getObjectPrototype(this);
+        Scriptable objectProto = getObjectPrototype(getDeclarationScope());
         if (proto != objectProto) {
             // not the one we just made, it must remain grounded
             proto.setPrototype(objectProto);

@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.PropHolder;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
@@ -239,7 +240,7 @@ public class GeneratorsYieldStarReturnTest {
                 });
     }
 
-    private double getNumberProperty(Scriptable obj, String property) {
+    private <T extends PropHolder<T>> double getNumberProperty(T obj, String property) {
         Object value = obj.get(property, obj);
         if (value instanceof Number) {
             return ((Number) value).doubleValue();

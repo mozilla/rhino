@@ -32,9 +32,9 @@ import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptOrFn;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -138,7 +138,7 @@ public class Codegen implements Evaluator {
     @Override
     @SuppressWarnings("unchecked")
     public Function createFunctionObject(
-            Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain) {
+            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain) {
         JSDescriptor<JSFunction> desc =
                 defineClass((CompilationResult<JSFunction>) bytecode, staticSecurityDomain);
         return JSFunction.createFunction(cx, scope, desc, null, staticSecurityDomain);
@@ -523,7 +523,7 @@ public class Codegen implements Evaluator {
                 "org/mozilla/javascript/BaseFunction",
                 "createObject",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(firstLocal);
 
@@ -893,9 +893,7 @@ public class Codegen implements Evaluator {
             sb.append("Lorg/mozilla/javascript/JSScript;");
         }
         sb.append(
-                "Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Ljava/lang/Object;");
+                "Ljava/lang/Object;" + "Lorg/mozilla/javascript/VarScope;" + "Ljava/lang/Object;");
         sb.append("[Ljava/lang/Object;)Ljava/lang/Object;");
         return sb.toString();
     }
@@ -910,9 +908,7 @@ public class Codegen implements Evaluator {
             sb.append("Lorg/mozilla/javascript/JSScript;");
         }
         sb.append(
-                "Ljava/lang/Object;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
-                        + "Ljava/lang/Object;");
+                "Ljava/lang/Object;" + "Lorg/mozilla/javascript/VarScope;" + "Ljava/lang/Object;");
         if (n.getType() == Token.FUNCTION) {
             OptFunctionNode ofn = OptFunctionNode.get(n);
             if (ofn.isTargetOfDirectCall()) {
@@ -971,7 +967,7 @@ public class Codegen implements Evaluator {
     static final String JSFUNCTION_CONSTRUCTOR_SIGNATURE =
             "("
                     + "Lorg/mozilla/javascript/Context;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/VarScope;"
                     + "Lorg/mozilla/javascript/JSDescriptor;"
                     + "Lorg/mozilla/javascript/Scriptable;"
                     + "Lorg/mozilla/javascript/Scriptable;"
@@ -982,7 +978,7 @@ public class Codegen implements Evaluator {
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/JSFunction;"
                     + "Ljava/lang/Object;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Lorg/mozilla/javascript/VarScope;"
                     + "I"
                     + "Ljava/lang/Object;)Ljava/lang/Object;";
 

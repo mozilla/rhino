@@ -16,14 +16,15 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /** */
 public class RegExpImpl implements RegExpProxy {
 
     @Override
-    public void register(TopLevel scope, boolean sealed) {
-        NativeRegExpStringIterator.init(scope, sealed);
-        new LazilyLoadedCtor(scope, "RegExp", sealed, true, NativeRegExp::init);
+    public void register(Context cx, TopLevel scope, boolean sealed) {
+        NativeRegExpStringIterator.init(cx, scope, sealed);
+        new LazilyLoadedCtor<>(scope, "RegExp", sealed, true, NativeRegExp::init);
     }
 
     @Override
@@ -37,14 +38,14 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     @Override
-    public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
+    public Scriptable wrapRegExp(Context cx, VarScope scope, Object compiled) {
         return NativeRegExpInstantiator.withLanguageVersionScopeCompiled(
                 cx.getLanguageVersion(), scope, (RECompiled) compiled);
     }
 
     @Override
     public Object action(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
+            Context cx, VarScope scope, Object thisObj, Object[] args, int actionType) {
         GlobData data = new GlobData();
         data.mode = actionType;
         data.str = ScriptRuntime.toString(thisObj);
@@ -174,9 +175,9 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     private static NativeRegExp createRegExp(
-            Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
+            Context cx, VarScope scope, Object[] args, int optarg, boolean forceFlat) {
         NativeRegExp re;
-        Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
+        VarScope topScope = ScriptableObject.getTopLevelScope(scope);
         if (args.length == 0 || args[0] == Undefined.instance) {
             RECompiled compiled = NativeRegExp.compileRE(cx, "", "", false);
             re =
@@ -204,8 +205,8 @@ public class RegExpImpl implements RegExpProxy {
     /** Analog of C match_or_replace. */
     private static Object matchOrReplace(
             Context cx,
-            Scriptable scope,
-            Scriptable thisObj,
+            VarScope scope,
+            Object thisObj,
             Object[] args,
             RegExpImpl reImpl,
             GlobData data,
@@ -255,7 +256,7 @@ public class RegExpImpl implements RegExpProxy {
     @Override
     public int find_split(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String target,
             String separator,
             Scriptable reObj,
@@ -338,7 +339,7 @@ public class RegExpImpl implements RegExpProxy {
      * Analog of match_glob() in jsstr.c
      */
     private static void match_glob(
-            GlobData mdata, Context cx, Scriptable scope, int count, RegExpImpl reImpl) {
+            GlobData mdata, Context cx, VarScope scope, int count, RegExpImpl reImpl) {
         if (mdata.arrayobj == null) {
             mdata.arrayobj = cx.newArray(scope, 0);
         }
@@ -353,7 +354,7 @@ public class RegExpImpl implements RegExpProxy {
     private static void replace_glob(
             GlobData rdata,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             RegExpImpl reImpl,
             int leftIndex,
             int leftlen) {
@@ -520,7 +521,7 @@ public class RegExpImpl implements RegExpProxy {
      * argument.
      */
     @Override
-    public Object js_split(Context cx, Scriptable scope, String target, Object[] args) {
+    public Object js_split(Context cx, VarScope scope, String target, Object[] args) {
         // create an empty Array to return;
         Scriptable result = cx.newArray(scope, 0);
 
@@ -615,7 +616,7 @@ public class RegExpImpl implements RegExpProxy {
      */
     private static int find_split(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             String target,
             String separator,
             int version,

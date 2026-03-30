@@ -45,11 +45,11 @@ class JavaMembers {
 
     private static final Permission allPermission = new AllPermission();
 
-    JavaMembers(Scriptable scope, Class<?> cl) {
+    JavaMembers(VarScope scope, Class<?> cl) {
         this(scope, cl, false);
     }
 
-    JavaMembers(Scriptable scope, Class<?> cl, boolean includeProtected) {
+    JavaMembers(VarScope scope, Class<?> cl, boolean includeProtected) {
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
             ClassShutter shutter = cx.getClassShutter();
             if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
@@ -87,7 +87,7 @@ class JavaMembers {
         return findExplicitFunction(name, isStatic) != null;
     }
 
-    Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+    Object get(Scriptable obj, VarScope scope, String name, Object javaObject, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
         if (!isStatic && member == null) {
@@ -126,7 +126,7 @@ class JavaMembers {
             if (bean.getter == null) {
                 return Scriptable.NOT_FOUND;
             }
-            return bean.getter.call(cx, scope, scope, ScriptRuntime.emptyArgs);
+            return bean.getter.call(cx, scope, obj, ScriptRuntime.emptyArgs);
         }
 
         var field = (NativeJavaField) member;
@@ -137,16 +137,17 @@ class JavaMembers {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
         var type = field.type();
-        if (scope instanceof NativeJavaObject) {
-            type =
-                    TypeInfoFactory.GLOBAL.consolidateType(
-                            type, ((NativeJavaObject) scope).staticType);
-        }
         // Need to wrap the object before we return it.
         return cx.getWrapFactory().wrap(cx, ScriptableObject.getTopLevelScope(scope), got, type);
     }
 
-    void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
+    void put(
+            Scriptable obj,
+            VarScope scope,
+            String name,
+            Object javaObject,
+            Object value,
+            boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
         if (!isStatic && member == null) {
@@ -165,18 +166,14 @@ class JavaMembers {
             if (bp.setter == null) {
                 throw reportMemberNotFound(name);
             }
-            bp.setter.call(
-                    Context.getContext(),
-                    ScriptableObject.getTopLevelScope(scope),
-                    scope,
-                    new Object[] {value});
+            bp.setter.call(Context.getContext(), scope, obj, new Object[] {value});
         } else if (member instanceof NativeJavaField) {
             var field = (NativeJavaField) member;
             var type = field.type();
-            if (scope instanceof NativeJavaObject) {
+            if (obj instanceof NativeJavaObject) {
                 type =
                         TypeInfoFactory.GLOBAL.consolidateType(
-                                type, ((NativeJavaObject) scope).staticType);
+                                type, ((NativeJavaObject) obj).staticType);
             }
             try {
                 field.set(javaObject, Context.jsToJava(value, type));
@@ -284,7 +281,7 @@ class JavaMembers {
     }
 
     private Object getExplicitFunction(
-            Scriptable scope, String name, Object javaObject, boolean isStatic) {
+            VarScope scope, String name, Object javaObject, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = null;
         var methodOrCtor = findExplicitFunction(name, isStatic);
@@ -444,7 +441,7 @@ class JavaMembers {
     }
 
     private void reflect(
-            Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate) {
+            Context cx, VarScope scope, boolean includeProtected, boolean includePrivate) {
         var typeFactory = TypeInfoFactory.get(scope);
 
         var accessibleMethods = discoverAccessibleMethods(cl, includeProtected, includePrivate);
@@ -782,7 +779,7 @@ class JavaMembers {
     }
 
     Map<String, FieldAndMethods> getFieldAndMethodsObjects(
-            Scriptable scope, Object javaObject, boolean isStatic) {
+            VarScope scope, Object javaObject, boolean isStatic) {
         var ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
 
         var expectedCapacity = (int) Math.ceil(ht.size() / 0.75);
@@ -797,7 +794,7 @@ class JavaMembers {
     }
 
     static JavaMembers lookupClass(
-            Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
+            VarScope scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
         JavaMembers members;
         ClassCache cache = ClassCache.get(scope);
         Map<ClassCache.CacheKey, JavaMembers> ct = cache.getClassCacheMap();
@@ -852,7 +849,7 @@ class JavaMembers {
     }
 
     private static JavaMembers createJavaMembers(
-            Scriptable associatedScope, Class<?> cl, boolean includeProtected) {
+            VarScope associatedScope, Class<?> cl, boolean includeProtected) {
         if (STRICT_REFLECTIVE_ACCESS) {
             return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
         } else {
@@ -913,7 +910,7 @@ final class BeanProperty {
 class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
-    FieldAndMethods(Scriptable scope, ExecutableOverload.WithField withField) {
+    FieldAndMethods(VarScope scope, ExecutableOverload.WithField withField) {
         super(withField.methods, withField.name);
         this.field = withField.field;
         setParentScope(scope);
@@ -931,7 +928,7 @@ class FieldAndMethods extends NativeJavaMethod {
                     "msg.java.internal.private", field.raw().getName());
         }
         Context cx = Context.getContext();
-        rval = cx.getWrapFactory().wrap(cx, this, rval, field.type());
+        rval = cx.getWrapFactory().wrap(cx, this.getParentScope(), rval, field.type());
         if (rval instanceof Scriptable) {
             rval = ((Scriptable) rval).getDefaultValue(hint);
         }

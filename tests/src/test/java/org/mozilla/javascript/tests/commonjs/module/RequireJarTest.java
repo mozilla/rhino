@@ -10,9 +10,9 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
@@ -112,7 +112,7 @@ public class RequireJarTest extends RequireTest {
         return getSandboxedRequire(cx, cx.initStandardObjects(), true);
     }
 
-    private Require getSandboxedRequire(Context cx, Scriptable scope, boolean sandboxed)
+    private Require getSandboxedRequire(Context cx, VarScope scope, boolean sandboxed)
             throws URISyntaxException {
         return new Require(
                 cx,

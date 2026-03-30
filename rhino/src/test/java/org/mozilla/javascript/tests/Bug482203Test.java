@@ -24,7 +24,7 @@ public class Bug482203Test {
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
             TopLevel scope = cx.initStandardObjects();
-            script.exec(cx, scope, scope);
+            script.exec(cx, scope, scope.getGlobalThis());
             int counter = 0;
             for (; ; ) {
                 Object cont = ScriptableObject.getProperty(scope, "c");
@@ -32,7 +32,7 @@ public class Bug482203Test {
                     break;
                 }
                 counter++;
-                ((Callable) cont).call(cx, scope, scope, new Object[] {null});
+                ((Callable) cont).call(cx, scope, scope.getGlobalThis(), new Object[] {null});
             }
             assertEquals(5, counter);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));

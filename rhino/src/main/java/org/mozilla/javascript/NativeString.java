@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 import static org.mozilla.javascript.ScriptRuntime.rangeError;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.mozilla.javascript.AbstractEcmaStringOperations.ReplacementOperation;
+import org.mozilla.javascript.ClassDescriptor.BuiltInJSCodeExec;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 
 /**
@@ -39,145 +42,132 @@ final class NativeString extends ScriptableObject {
 
     private final CharSequence string;
 
-    static void init(Scriptable scope, boolean sealed) {
-        LambdaConstructor c =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        1,
-                        NativeString::js_constructorFunc,
-                        NativeString::js_constructor);
-        c.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-        c.setPrototypeScriptable(new NativeString(""));
+    private static final ClassDescriptor DESCRIPTOR;
 
-        defConsMethod(c, scope, "fromCharCode", 1, NativeString::js_fromCharCode);
-        defConsMethod(c, scope, "fromCodePoint", 1, NativeString::js_fromCodePoint);
-        defConsMethod(c, scope, "raw", 1, NativeString::js_raw);
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                1,
+                                NativeString::js_constructorFunc,
+                                NativeString::js_constructor)
+                        .withMethod(CTOR, "fromCharCode", 1, NativeString::js_fromCharCode)
+                        .withMethod(CTOR, "fromCodePoint", 1, NativeString::js_fromCodePoint)
+                        .withMethod(CTOR, "raw", 1, NativeString::js_raw)
 
-        /*
-         * All of the methods below are on the constructor for compatibility with ancient Rhino
-         * versions. They are no longer part of ECMAScript. The "wrapConstructor" method is a
-         * technique used in the past in Rhino to adapt the instance functions so that they
-         * may be called on the constructor directly.
-         */
-        defConsMethod(c, scope, "charAt", 1, wrapConstructor(NativeString::js_charAt));
-        defConsMethod(c, scope, "charCodeAt", 1, wrapConstructor(NativeString::js_charCodeAt));
-        defConsMethod(c, scope, "indexOf", 2, wrapConstructor(NativeString::js_indexOf));
-        defConsMethod(c, scope, "lastIndexOf", 2, wrapConstructor(NativeString::js_lastIndexOf));
-        defConsMethod(c, scope, "split", 3, wrapConstructor(NativeString::js_split));
-        defConsMethod(c, scope, "substring", 3, wrapConstructor(NativeString::js_substring));
-        defConsMethod(c, scope, "toLowerCase", 1, wrapConstructor(NativeString::js_toLowerCase));
-        defConsMethod(c, scope, "toUpperCase", 1, wrapConstructor(NativeString::js_toUpperCase));
-        defConsMethod(c, scope, "substr", 3, wrapConstructor(NativeString::js_substr));
-        defConsMethod(c, scope, "concat", 2, wrapConstructor(NativeString::js_concat));
-        defConsMethod(c, scope, "slice", 3, wrapConstructor(NativeString::js_slice));
-        defConsMethod(
-                c,
-                scope,
-                "equalsIgnoreCase",
-                2,
-                wrapConstructor(NativeString::js_equalsIgnoreCase));
-        defConsMethod(c, scope, "match", 2, wrapConstructor(NativeString::js_match));
-        defConsMethod(c, scope, "search", 2, wrapConstructor(NativeString::js_search));
-        defConsMethod(c, scope, "replace", 2, wrapConstructor(NativeString::js_replace));
-        defConsMethod(c, scope, "replaceAll", 2, wrapConstructor(NativeString::js_replaceAll));
-        defConsMethod(
-                c, scope, "localeCompare", 2, wrapConstructor(NativeString::js_localeCompare));
-        defConsMethod(
-                c,
-                scope,
-                "toLocaleLowerCase",
-                1,
-                wrapConstructor(NativeString::js_toLocaleLowerCase));
+                        /*
+                         * All of the methods below are on the constructor for compatibility with ancient Rhino
+                         * versions. They are no longer part of ECMAScript. The "wrapConstructor" method is a
+                         * technique used in the past in Rhino to adapt the instance functions so that they
+                         * may be called on the constructor directly.
+                         */
+                        .withMethod(CTOR, "charAt", 1, forCtor(NativeString::js_charAt))
+                        .withMethod(CTOR, "charCodeAt", 1, forCtor(NativeString::js_charCodeAt))
+                        .withMethod(CTOR, "indexOf", 2, forCtor(NativeString::js_indexOf))
+                        .withMethod(CTOR, "lastIndexOf", 2, forCtor(NativeString::js_lastIndexOf))
+                        .withMethod(CTOR, "split", 3, forCtor(NativeString::js_split))
+                        .withMethod(CTOR, "substring", 3, forCtor(NativeString::js_substring))
+                        .withMethod(CTOR, "toLowerCase", 1, forCtor(NativeString::js_toLowerCase))
+                        .withMethod(CTOR, "toUpperCase", 1, forCtor(NativeString::js_toUpperCase))
+                        .withMethod(CTOR, "substr", 3, forCtor(NativeString::js_substr))
+                        .withMethod(CTOR, "concat", 2, forCtor(NativeString::js_concat))
+                        .withMethod(CTOR, "slice", 3, forCtor(NativeString::js_slice))
+                        .withMethod(
+                                CTOR,
+                                "equalsIgnoreCase",
+                                2,
+                                forCtor(NativeString::js_equalsIgnoreCase))
+                        .withMethod(CTOR, "match", 2, forCtor(NativeString::js_match))
+                        .withMethod(CTOR, "search", 2, forCtor(NativeString::js_search))
+                        .withMethod(CTOR, "replace", 2, forCtor(NativeString::js_replace))
+                        .withMethod(CTOR, "replaceAll", 2, forCtor(NativeString::js_replaceAll))
+                        .withMethod(
+                                CTOR, "localeCompare", 2, forCtor(NativeString::js_localeCompare))
+                        .withMethod(
+                                CTOR,
+                                "toLocaleLowerCase",
+                                1,
+                                forCtor(NativeString::js_toLocaleLowerCase))
 
-        /* Back to prototype methods -- these are all part of ECMAScript */
-        defProtoMethod(c, scope, SymbolKey.ITERATOR, 0, NativeString::js_iterator);
-        defProtoMethod(c, scope, "toString", 0, NativeString::js_toString);
-        defProtoMethod(c, scope, "toSource", 0, NativeString::js_toSource);
-        defProtoMethod(c, scope, "valueOf", 0, NativeString::js_toString);
-        defProtoMethod(c, scope, "charAt", 1, NativeString::js_charAt);
-        defProtoMethod(c, scope, "charCodeAt", 1, NativeString::js_charCodeAt);
-        defProtoMethod(c, scope, "indexOf", 1, NativeString::js_indexOf);
-        defProtoMethod(c, scope, "lastIndexOf", 1, NativeString::js_lastIndexOf);
-        defProtoMethod(c, scope, "split", 2, NativeString::js_split);
-        defProtoMethod(c, scope, "substring", 2, NativeString::js_substring);
-        defProtoMethod(c, scope, "toLowerCase", 0, NativeString::js_toLowerCase);
-        defProtoMethod(c, scope, "toUpperCase", 0, NativeString::js_toUpperCase);
-        defProtoMethod(c, scope, "substr", 2, NativeString::js_substr);
-        defProtoMethod(c, scope, "concat", 1, NativeString::js_concat);
-        defProtoMethod(c, scope, "slice", 2, NativeString::js_slice);
-        defProtoMethod(c, scope, "bold", 0, NativeString::js_bold);
-        defProtoMethod(c, scope, "italics", 0, NativeString::js_italics);
-        defProtoMethod(c, scope, "fixed", 0, NativeString::js_fixed);
-        defProtoMethod(c, scope, "strike", 0, NativeString::js_strike);
-        defProtoMethod(c, scope, "small", 0, NativeString::js_small);
-        defProtoMethod(c, scope, "big", 0, NativeString::js_big);
-        defProtoMethod(c, scope, "blink", 0, NativeString::js_blink);
-        defProtoMethod(c, scope, "sup", 0, NativeString::js_sup);
-        defProtoMethod(c, scope, "sub", 0, NativeString::js_sub);
-        defProtoMethod(c, scope, "fontsize", 0, NativeString::js_fontsize);
-        defProtoMethod(c, scope, "fontcolor", 0, NativeString::js_fontcolor);
-        defProtoMethod(c, scope, "link", 0, NativeString::js_link);
-        defProtoMethod(c, scope, "anchor", 0, NativeString::js_anchor);
-        defProtoMethod(c, scope, "equals", 1, NativeString::js_equals);
-        defProtoMethod(c, scope, "equalsIgnoreCase", 1, NativeString::js_equalsIgnoreCase);
-        defProtoMethod(c, scope, "match", 1, NativeString::js_match);
-        defProtoMethod(c, scope, "matchAll", 1, NativeString::js_matchAll);
-        defProtoMethod(c, scope, "search", 1, NativeString::js_search);
-        defProtoMethod(c, scope, "replace", 2, NativeString::js_replace);
-        defProtoMethod(c, scope, "replaceAll", 2, NativeString::js_replaceAll);
-        defProtoMethod(c, scope, "at", 1, NativeString::js_at);
-        defProtoMethod(c, scope, "localeCompare", 1, NativeString::js_localeCompare);
-        defProtoMethod(c, scope, "toLocaleLowerCase", 0, NativeString::js_toLocaleLowerCase);
-        defProtoMethod(c, scope, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase);
-        defProtoMethod(c, scope, "trim", 0, NativeString::js_trim);
-        defProtoMethod(c, scope, "trimLeft", 0, NativeString::js_trimLeft);
-        defProtoMethod(c, scope, "trimStart", 0, NativeString::js_trimLeft);
-        defProtoMethod(c, scope, "trimRight", 0, NativeString::js_trimRight);
-        defProtoMethod(c, scope, "trimEnd", 0, NativeString::js_trimRight);
-        defProtoMethod(c, scope, "includes", 1, NativeString::js_includes);
-        defProtoMethod(c, scope, "startsWith", 1, NativeString::js_startsWith);
-        defProtoMethod(c, scope, "endsWith", 1, NativeString::js_endsWith);
-        defProtoMethod(c, scope, "normalize", 0, NativeString::js_normalize);
-        defProtoMethod(c, scope, "repeat", 1, NativeString::js_repeat);
-        defProtoMethod(c, scope, "codePointAt", 1, NativeString::js_codePointAt);
-        defProtoMethod(c, scope, "padStart", 1, NativeString::js_padStart);
-        defProtoMethod(c, scope, "padEnd", 1, NativeString::js_padEnd);
-        defProtoMethod(c, scope, "isWellFormed", 0, NativeString::js_isWellFormed);
-        defProtoMethod(c, scope, "toWellFormed", 0, NativeString::js_toWellFormed);
+                        /* Back to prototype methods -- these are all part of ECMAScript */
 
-        if (sealed) {
-            c.sealObject();
-            ((NativeString) c.getPrototypeProperty()).sealObject();
-        }
-        ScriptableObject.defineProperty(scope, CLASS_NAME, c, DONTENUM);
+                        .withMethod(PROTO, SymbolKey.ITERATOR, 0, NativeString::js_iterator)
+                        .withMethod(PROTO, "toString", 0, NativeString::js_toString)
+                        .withMethod(PROTO, "toSource", 0, NativeString::js_toSource)
+                        .withMethod(PROTO, "valueOf", 0, NativeString::js_toString)
+                        .withMethod(PROTO, "charAt", 1, NativeString::js_charAt)
+                        .withMethod(PROTO, "charCodeAt", 1, NativeString::js_charCodeAt)
+                        .withMethod(PROTO, "indexOf", 1, NativeString::js_indexOf)
+                        .withMethod(PROTO, "lastIndexOf", 1, NativeString::js_lastIndexOf)
+                        .withMethod(PROTO, "split", 2, NativeString::js_split)
+                        .withMethod(PROTO, "substring", 2, NativeString::js_substring)
+                        .withMethod(PROTO, "toLowerCase", 0, NativeString::js_toLowerCase)
+                        .withMethod(PROTO, "toUpperCase", 0, NativeString::js_toUpperCase)
+                        .withMethod(PROTO, "substr", 2, NativeString::js_substr)
+                        .withMethod(PROTO, "concat", 1, NativeString::js_concat)
+                        .withMethod(PROTO, "slice", 2, NativeString::js_slice)
+                        .withMethod(PROTO, "bold", 0, NativeString::js_bold)
+                        .withMethod(PROTO, "italics", 0, NativeString::js_italics)
+                        .withMethod(PROTO, "fixed", 0, NativeString::js_fixed)
+                        .withMethod(PROTO, "strike", 0, NativeString::js_strike)
+                        .withMethod(PROTO, "small", 0, NativeString::js_small)
+                        .withMethod(PROTO, "big", 0, NativeString::js_big)
+                        .withMethod(PROTO, "blink", 0, NativeString::js_blink)
+                        .withMethod(PROTO, "sup", 0, NativeString::js_sup)
+                        .withMethod(PROTO, "sub", 0, NativeString::js_sub)
+                        .withMethod(PROTO, "fontsize", 0, NativeString::js_fontsize)
+                        .withMethod(PROTO, "fontcolor", 0, NativeString::js_fontcolor)
+                        .withMethod(PROTO, "link", 0, NativeString::js_link)
+                        .withMethod(PROTO, "anchor", 0, NativeString::js_anchor)
+                        .withMethod(PROTO, "equals", 1, NativeString::js_equals)
+                        .withMethod(PROTO, "equalsIgnoreCase", 1, NativeString::js_equalsIgnoreCase)
+                        .withMethod(PROTO, "match", 1, NativeString::js_match)
+                        .withMethod(PROTO, "matchAll", 1, NativeString::js_matchAll)
+                        .withMethod(PROTO, "search", 1, NativeString::js_search)
+                        .withMethod(PROTO, "replace", 2, NativeString::js_replace)
+                        .withMethod(PROTO, "replaceAll", 2, NativeString::js_replaceAll)
+                        .withMethod(PROTO, "at", 1, NativeString::js_at)
+                        .withMethod(PROTO, "localeCompare", 1, NativeString::js_localeCompare)
+                        .withMethod(
+                                PROTO, "toLocaleLowerCase", 0, NativeString::js_toLocaleLowerCase)
+                        .withMethod(
+                                PROTO, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase)
+                        .withMethod(PROTO, "trim", 0, NativeString::js_trim)
+                        .withMethod(PROTO, "trimLeft", 0, NativeString::js_trimLeft)
+                        .withMethod(PROTO, "trimStart", 0, NativeString::js_trimLeft)
+                        .withMethod(PROTO, "trimRight", 0, NativeString::js_trimRight)
+                        .withMethod(PROTO, "trimEnd", 0, NativeString::js_trimRight)
+                        .withMethod(PROTO, "includes", 1, NativeString::js_includes)
+                        .withMethod(PROTO, "startsWith", 1, NativeString::js_startsWith)
+                        .withMethod(PROTO, "endsWith", 1, NativeString::js_endsWith)
+                        .withMethod(PROTO, "normalize", 0, NativeString::js_normalize)
+                        .withMethod(PROTO, "repeat", 1, NativeString::js_repeat)
+                        .withMethod(PROTO, "codePointAt", 1, NativeString::js_codePointAt)
+                        .withMethod(PROTO, "padStart", 1, NativeString::js_padStart)
+                        .withMethod(PROTO, "padEnd", 1, NativeString::js_padEnd)
+                        .withMethod(PROTO, "isWellFormed", 0, NativeString::js_isWellFormed)
+                        .withMethod(PROTO, "toWellFormed", 0, NativeString::js_toWellFormed)
+                        .build();
     }
 
-    private static void defConsMethod(
-            LambdaConstructor c,
-            Scriptable scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        c.defineConstructorMethod(scope, name, length, target);
+    private static BuiltInJSCodeExec<JSFunction> forCtor(BuiltInJSCodeExec<JSFunction> code) {
+        return (cx, f, nt, s, thisObj, args) -> {
+            Object[] realArgs;
+            Object realThis;
+            if (args.length > 0) {
+                realThis = ScriptRuntime.toObject(cx, s, ScriptRuntime.toCharSequence(args[0]));
+                realArgs = new Object[args.length - 1];
+                System.arraycopy(args, 1, realArgs, 0, realArgs.length);
+            } else {
+                realThis = ScriptRuntime.toObject(cx, s, ScriptRuntime.toCharSequence(thisObj));
+                realArgs = args;
+            }
+            return code.execute(cx, f, nt, s, realThis, realArgs);
+        };
     }
 
-    private static void defProtoMethod(
-            LambdaConstructor c,
-            Scriptable scope,
-            SymbolKey key,
-            int length,
-            SerializableCallable target) {
-        c.definePrototypeMethod(scope, key, length, target);
-    }
-
-    private static void defProtoMethod(
-            LambdaConstructor c,
-            Scriptable scope,
-            String name,
-            int length,
-            SerializableCallable target) {
-        c.definePrototypeMethod(scope, name, length, target);
+    static void init(Context cx, VarScope scope, boolean sealed) {
+        DESCRIPTOR.buildConstructor(cx, scope, new NativeString(""), sealed);
     }
 
     NativeString(CharSequence s) {
@@ -192,52 +182,38 @@ final class NativeString extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static SerializableCallable wrapConstructor(SerializableCallable target) {
-        return (Context cx, Scriptable scope, Scriptable origThis, Object[] origArgs) -> {
-            Scriptable thisObj;
-            Object[] newArgs;
-            if (origArgs.length > 0) {
-                thisObj =
-                        ScriptRuntime.toObject(
-                                cx, scope, ScriptRuntime.toCharSequence(origArgs[0]));
-                newArgs = new Object[origArgs.length - 1];
-                System.arraycopy(origArgs, 1, newArgs, 0, newArgs.length);
-            } else {
-                thisObj = ScriptRuntime.toObject(cx, scope, ScriptRuntime.toCharSequence(origThis));
-                newArgs = origArgs;
-            }
-            return target.call(cx, scope, thisObj, newArgs);
-        };
-    }
-
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
-        CharSequence s;
+    private static Scriptable js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        CharSequence str;
         if (args.length == 0) {
-            s = "";
+            str = "";
         } else {
-            s = ScriptRuntime.toCharSequence(args[0]);
+            str = ScriptRuntime.toCharSequence(args[0]);
         }
-        return new NativeString(s);
+        var res = new NativeString(str);
+        res.setPrototype((Scriptable) f.getPrototypeProperty());
+        res.setParentScope(f.getDeclarationScope());
+        return res;
     }
 
     private static Object js_constructorFunc(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        CharSequence s;
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        CharSequence str;
         if (args.length == 0) {
-            s = "";
+            str = "";
         } else if (ScriptRuntime.isSymbol(args[0])) {
             // 19.4.3.2 et.al. Convert a symbol to a string with String() but not
             // new String()
-            s = args[0].toString();
+            str = args[0].toString();
         } else {
-            s = ScriptRuntime.toCharSequence(args[0]);
+            str = ScriptRuntime.toCharSequence(args[0]);
         }
         // String(val) converts val to a string value.
-        return s instanceof String ? s : s.toString();
+        return str instanceof String ? str : str.toString();
     }
 
     private static Object js_fromCharCode(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         int n = args.length;
         if (n < 1) {
             return "";
@@ -250,7 +226,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_fromCodePoint(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         int n = args.length;
         if (n < 1) {
             return "";
@@ -269,16 +245,16 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_charAt(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return charAt(cx, thisObj, args, false);
     }
 
     private static Object js_charCodeAt(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return charAt(cx, thisObj, args, true);
     }
 
-    private static Object charAt(Context cx, Scriptable thisObj, Object[] args, boolean getCode) {
+    private static Object charAt(Context cx, Object thisObj, Object[] args, boolean getCode) {
         // See ECMA 15.5.4.[4,5]
         CharSequence target =
                 ScriptRuntime.toCharSequence(
@@ -294,7 +270,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_indexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "indexOf"));
         String searchStr = ScriptRuntime.toString(args, 0);
@@ -311,7 +287,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_startsWith(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "startsWith"));
@@ -324,7 +300,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_endsWith(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "endsWith"));
         checkValidRegex(cx, args, 0, "endsWith");
@@ -339,7 +315,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_includes(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "includes"));
         String searchStr = ScriptRuntime.toString(args, 0);
@@ -365,20 +341,20 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_split(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.23
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "split");
 
         if (cx.getLanguageVersion() <= Context.VERSION_1_8) {
             // Use old algorithm for backward compatibility
             return ScriptRuntime.checkRegExpProxy(cx)
-                    .js_split(cx, scope, ScriptRuntime.toString(o), args);
+                    .js_split(cx, s, ScriptRuntime.toString(o), args);
         }
 
         Object separator = args.length > 0 ? args[0] : Undefined.instance;
         Object limit = args.length > 1 ? args[1] : Undefined.instance;
         if (!Undefined.isUndefined(separator) && separator != null) {
-            Object splitter = ScriptRuntime.getObjectElem(separator, SymbolKey.SPLIT, cx, scope);
+            Object splitter = ScriptRuntime.getObjectElem(separator, SymbolKey.SPLIT, cx, s);
             // If method is not undefined, it should be a Callable
             if (splitter != null && !Undefined.isUndefined(splitter)) {
                 if (!(splitter instanceof Callable)) {
@@ -388,8 +364,8 @@ final class NativeString extends ScriptableObject {
                 return ((Callable) splitter)
                         .call(
                                 cx,
-                                scope,
-                                ScriptRuntime.toObject(scope, separator),
+                                s,
+                                ScriptRuntime.toObject(s, separator),
                                 new Object[] {
                                     o instanceof NativeString ? ((NativeString) o).string : o,
                                     limit,
@@ -397,7 +373,7 @@ final class NativeString extends ScriptableObject {
             }
         }
 
-        String s = ScriptRuntime.toString(o);
+        String str = ScriptRuntime.toString(o);
         long lim;
         if (Undefined.isUndefined(limit)) {
             lim = Integer.MAX_VALUE;
@@ -406,17 +382,17 @@ final class NativeString extends ScriptableObject {
         }
         String r = ScriptRuntime.toString(separator);
         if (lim == 0) {
-            return cx.newArray(scope, 0);
+            return cx.newArray(s, 0);
         }
         if (Undefined.isUndefined(separator)) {
-            return cx.newArray(scope, new Object[] {s});
+            return cx.newArray(s, new Object[] {str});
         }
 
         int separatorLength = r.length();
         if (separatorLength == 0) {
-            int strLen = s.length();
+            int strLen = str.length();
             int outLen = ScriptRuntime.clamp((int) lim, 0, strLen);
-            String head = s.substring(0, outLen);
+            String head = str.substring(0, outLen);
 
             List<Object> codeUnits = new ArrayList<>();
             for (int i = 0; i < head.length(); ) {
@@ -424,52 +400,53 @@ final class NativeString extends ScriptableObject {
                 codeUnits.add(Character.toString(c));
                 i += Character.charCount(c);
             }
-            return cx.newArray(scope, codeUnits.toArray());
+            return cx.newArray(s, codeUnits.toArray());
         }
 
-        if (s.isEmpty()) {
-            return cx.newArray(scope, new Object[] {s});
+        if (str.isEmpty()) {
+            return cx.newArray(s, new Object[] {str});
         }
 
         List<String> substrings = new ArrayList<>();
         int i = 0;
-        int j = s.indexOf(r);
+        int j = str.indexOf(r);
         while (j != -1) {
-            String t = s.substring(i, j);
+            String t = str.substring(i, j);
             substrings.add(t);
             if (substrings.size() >= lim) {
-                return cx.newArray(scope, substrings.toArray());
+                return cx.newArray(s, substrings.toArray());
             }
             i = j + separatorLength;
-            j = s.indexOf(r, i);
+            j = str.indexOf(r, i);
         }
-        String t = s.substring(i);
+        String t = str.substring(i);
         substrings.add(t);
 
-        return cx.newArray(scope, substrings.toArray());
+        return cx.newArray(s, substrings.toArray());
     }
 
-    private static NativeString realThis(Scriptable thisObj) {
+    private static NativeString realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeString.class);
     }
 
     private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return new NativeStringIterator(
-                scope, requireObjectCoercible(cx, thisObj, CLASS_NAME, "[Symbol.iterator]"));
+                f.getDeclarationScope(),
+                requireObjectCoercible(cx, thisObj, CLASS_NAME, "[Symbol.iterator]"));
     }
 
     private static Object js_toString(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // ECMA 15.5.4.2: the toString function is not generic.
         CharSequence cs = realThis(thisObj).string;
         return cs instanceof String ? cs : cs.toString();
     }
 
     private static Object js_toSource(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        CharSequence s = realThis(thisObj).string;
-        return "(new String(\"" + ScriptRuntime.escapeString(s.toString()) + "\"))";
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        CharSequence str = realThis(thisObj).string;
+        return "(new String(\"" + ScriptRuntime.escapeString(str.toString()) + "\"))";
     }
 
     /*
@@ -477,7 +454,7 @@ final class NativeString extends ScriptableObject {
      */
     private static String tagify(
             Context cx,
-            Scriptable thisObj,
+            Object thisObj,
             String functionName,
             String tag,
             String attribute,
@@ -587,12 +564,12 @@ final class NativeString extends ScriptableObject {
      *
      */
     private static Object js_match(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "match");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
         RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         if (regexp != null && !Undefined.isUndefined(regexp)) {
-            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.MATCH, cx, scope);
+            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.MATCH, cx, s);
             // If method is not undefined, it should be a Callable
             if (matcher != null && !Undefined.isUndefined(matcher)) {
                 if (!(matcher instanceof Callable)) {
@@ -600,11 +577,11 @@ final class NativeString extends ScriptableObject {
                             regexp, matcher, SymbolKey.MATCH.getName());
                 }
                 return ((Callable) matcher)
-                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+                        .call(cx, s, ScriptRuntime.toObject(s, regexp), new Object[] {o});
             }
         }
 
-        String s = ScriptRuntime.toString(o);
+        String str = ScriptRuntime.toString(o);
         String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
 
         String flags = null;
@@ -615,13 +592,13 @@ final class NativeString extends ScriptableObject {
         }
 
         Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, flags);
-        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+        Scriptable rx = regExpProxy.wrapRegExp(cx, s, compiledRegExp);
 
-        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.MATCH, cx, scope);
+        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.MATCH, cx, s);
         if (!(method instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.MATCH.getName());
         }
-        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+        return ((Callable) method).call(cx, s, rx, new Object[] {str});
     }
 
     /*
@@ -630,7 +607,7 @@ final class NativeString extends ScriptableObject {
      *
      */
     private static Object js_lastIndexOf(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "lastIndexOf"));
@@ -647,7 +624,7 @@ final class NativeString extends ScriptableObject {
      * See ECMA 15.5.4.15
      */
     private static Object js_substring(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "substring"));
@@ -676,7 +653,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toLowerCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // See ECMA 15.5.4.11
         String thisStr =
                 ScriptRuntime.toString(
@@ -685,7 +662,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toUpperCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // See ECMA 15.5.4.12
         String thisStr =
                 ScriptRuntime.toString(
@@ -701,7 +678,7 @@ final class NativeString extends ScriptableObject {
      * Non-ECMA methods.
      */
     private static CharSequence js_substr(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "substr"));
@@ -743,7 +720,7 @@ final class NativeString extends ScriptableObject {
      * Python-esque sequence operations.
      */
     private static String js_concat(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String target =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "concat"));
         int N = args.length;
@@ -759,9 +736,9 @@ final class NativeString extends ScriptableObject {
         int size = target.length();
         String[] argsAsStrings = new String[N];
         for (int i = 0; i != N; ++i) {
-            String s = ScriptRuntime.toString(args[i]);
-            argsAsStrings[i] = s;
-            size += s.length();
+            String str = ScriptRuntime.toString(args[i]);
+            argsAsStrings[i] = str;
+            size += str.length();
         }
 
         StringBuilder result = new StringBuilder(size);
@@ -773,7 +750,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_slice(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         CharSequence target =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "slice"));
@@ -802,7 +779,8 @@ final class NativeString extends ScriptableObject {
         return target.subSequence((int) begin, (int) end);
     }
 
-    private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_at(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "at"));
         Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
         int len = str.length();
@@ -818,26 +796,26 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_equals(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String s1 = ScriptRuntime.toString(thisObj);
         String s2 = ScriptRuntime.toString(args, 0);
         return s1.equals(s2);
     }
 
     private static Object js_equalsIgnoreCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String s1 = ScriptRuntime.toString(thisObj);
         String s2 = ScriptRuntime.toString(args, 0);
         return s1.equalsIgnoreCase(s2);
     }
 
     private static Object js_search(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "search");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
         RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         if (regexp != null && !Undefined.isUndefined(regexp)) {
-            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.SEARCH, cx, scope);
+            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.SEARCH, cx, s);
             // If method is not undefined, it should be a Callable
             if (matcher != null && !Undefined.isUndefined(matcher)) {
                 if (!(matcher instanceof Callable)) {
@@ -845,11 +823,11 @@ final class NativeString extends ScriptableObject {
                             regexp, matcher, SymbolKey.SEARCH.getName());
                 }
                 return ((Callable) matcher)
-                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+                        .call(cx, s, ScriptRuntime.toObject(s, regexp), new Object[] {o});
             }
         }
 
-        String s = ScriptRuntime.toString(o);
+        String str = ScriptRuntime.toString(o);
         String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
 
         String flags = null;
@@ -859,24 +837,24 @@ final class NativeString extends ScriptableObject {
         }
 
         Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, flags);
-        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+        Scriptable rx = regExpProxy.wrapRegExp(cx, s, compiledRegExp);
 
-        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.SEARCH, cx, scope);
+        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.SEARCH, cx, s);
         if (!(method instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.SEARCH.getName());
         }
-        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+        return ((Callable) method).call(cx, s, rx, new Object[] {str});
     }
 
     private static Object js_replace(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.19
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replace");
 
         if (cx.getLanguageVersion() <= Context.VERSION_1_8) {
             // Use old algorithm for backward compatibility
             return ScriptRuntime.checkRegExpProxy(cx)
-                    .action(cx, scope, thisObj, args, RegExpProxy.RA_REPLACE);
+                    .action(cx, s, thisObj, args, RegExpProxy.RA_REPLACE);
         }
 
         // Spec-compliant algorithm
@@ -885,8 +863,7 @@ final class NativeString extends ScriptableObject {
         Object replaceValue = args.length > 1 ? args[1] : Undefined.instance;
 
         if (!Undefined.isUndefined(searchValue) && searchValue != null) {
-            Object replacer =
-                    ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, scope);
+            Object replacer = ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, s);
             // If method is not undefined, it should be a Callable
             if (replacer != null && !Undefined.isUndefined(replacer)) {
                 if (!(replacer instanceof Callable)) {
@@ -896,8 +873,8 @@ final class NativeString extends ScriptableObject {
                 return ((Callable) replacer)
                         .call(
                                 cx,
-                                scope,
-                                ScriptRuntime.toObject(scope, searchValue),
+                                s,
+                                ScriptRuntime.toObject(s, searchValue),
                                 new Object[] {
                                     o instanceof NativeString ? ((NativeString) o).string : o,
                                     replaceValue
@@ -928,13 +905,13 @@ final class NativeString extends ScriptableObject {
         String replacement;
         if (functionalReplace) {
             Scriptable callThis =
-                    ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, (Function) replaceValue);
+                    ScriptRuntime.getApplyOrCallThis(cx, s, null, 0, (Function) replaceValue);
 
             Object replacementObj =
                     ((Callable) replaceValue)
                             .call(
                                     cx,
-                                    scope,
+                                    s,
                                     callThis,
                                     new Object[] {
                                         searchString, position, string,
@@ -945,7 +922,7 @@ final class NativeString extends ScriptableObject {
             replacement =
                     AbstractEcmaStringOperations.getSubstitution(
                             cx,
-                            scope,
+                            s,
                             searchString,
                             string,
                             position,
@@ -957,7 +934,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_replaceAll(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.20
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "replaceAll");
 
@@ -967,9 +944,9 @@ final class NativeString extends ScriptableObject {
         if (searchValue != null && !Undefined.isUndefined(searchValue)) {
             boolean isRegExp =
                     searchValue instanceof Scriptable
-                            && AbstractEcmaObjectOperations.isRegExp(cx, scope, searchValue);
+                            && AbstractEcmaObjectOperations.isRegExp(cx, s, searchValue);
             if (isRegExp) {
-                Object flags = ScriptRuntime.getObjectProp(searchValue, "flags", cx, scope);
+                Object flags = ScriptRuntime.getObjectProp(searchValue, "flags", cx, s);
                 requireObjectCoercible(cx, flags, CLASS_NAME, "replaceAll");
                 String flagsStr = ScriptRuntime.toString(flags);
                 if (!flagsStr.contains("g")) {
@@ -977,7 +954,7 @@ final class NativeString extends ScriptableObject {
                 }
             }
 
-            Object matcher = ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, scope);
+            Object matcher = ScriptRuntime.getObjectElem(searchValue, SymbolKey.REPLACE, cx, s);
             // If method is not undefined, it should be a Callable
             if (matcher != null && !Undefined.isUndefined(matcher)) {
                 if (!(matcher instanceof Callable)) {
@@ -987,8 +964,8 @@ final class NativeString extends ScriptableObject {
                 return ((Callable) matcher)
                         .call(
                                 cx,
-                                scope,
-                                ScriptRuntime.toObject(scope, searchValue),
+                                s,
+                                ScriptRuntime.toObject(s, searchValue),
                                 new Object[] {o, replaceValue});
             }
         }
@@ -1024,14 +1001,13 @@ final class NativeString extends ScriptableObject {
             String replacement;
             if (functionalReplace) {
                 Scriptable callThis =
-                        ScriptRuntime.getApplyOrCallThis(
-                                cx, scope, null, 0, (Function) replaceValue);
+                        ScriptRuntime.getApplyOrCallThis(cx, s, null, 0, (Function) replaceValue);
 
                 Object replacementObj =
                         ((Callable) replaceValue)
                                 .call(
                                         cx,
-                                        scope,
+                                        s,
                                         callThis,
                                         new Object[] {
                                             searchString, p, string,
@@ -1042,7 +1018,7 @@ final class NativeString extends ScriptableObject {
                 replacement =
                         AbstractEcmaStringOperations.getSubstitution(
                                 cx,
-                                scope,
+                                s,
                                 searchString,
                                 string,
                                 p,
@@ -1061,14 +1037,14 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_matchAll(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // See ECMAScript spec 22.1.3.14
         Object o = requireObjectCoercible(cx, thisObj, CLASS_NAME, "matchAll");
         Object regexp = args.length > 0 ? args[0] : Undefined.instance;
         if (regexp != null && !Undefined.isUndefined(regexp)) {
-            boolean isRegExp = AbstractEcmaObjectOperations.isRegExp(cx, scope, regexp);
+            boolean isRegExp = AbstractEcmaObjectOperations.isRegExp(cx, s, regexp);
             if (isRegExp) {
-                Object flags = ScriptRuntime.getObjectProp(regexp, "flags", cx, scope);
+                Object flags = ScriptRuntime.getObjectProp(regexp, "flags", cx, s);
                 requireObjectCoercible(cx, flags, CLASS_NAME, "matchAll");
                 String flagsStr = ScriptRuntime.toString(flags);
                 if (!flagsStr.contains("g")) {
@@ -1076,7 +1052,7 @@ final class NativeString extends ScriptableObject {
                 }
             }
 
-            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.MATCH_ALL, cx, scope);
+            Object matcher = ScriptRuntime.getObjectElem(regexp, SymbolKey.MATCH_ALL, cx, s);
             // If method is not undefined, it should be a Callable
             if (matcher != null && !Undefined.isUndefined(matcher)) {
                 if (!(matcher instanceof Callable)) {
@@ -1084,25 +1060,25 @@ final class NativeString extends ScriptableObject {
                             regexp, matcher, SymbolKey.MATCH_ALL.getName());
                 }
                 return ((Callable) matcher)
-                        .call(cx, scope, ScriptRuntime.toObject(scope, regexp), new Object[] {o});
+                        .call(cx, s, ScriptRuntime.toObject(s, regexp), new Object[] {o});
             }
         }
 
-        String s = ScriptRuntime.toString(o);
+        String str = ScriptRuntime.toString(o);
         String regexpToString = Undefined.isUndefined(regexp) ? "" : ScriptRuntime.toString(regexp);
         RegExpProxy regExpProxy = ScriptRuntime.checkRegExpProxy(cx);
         Object compiledRegExp = regExpProxy.compileRegExp(cx, regexpToString, "g");
-        Scriptable rx = regExpProxy.wrapRegExp(cx, scope, compiledRegExp);
+        Scriptable rx = regExpProxy.wrapRegExp(cx, s, compiledRegExp);
 
-        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.MATCH_ALL, cx, scope);
+        Object method = ScriptRuntime.getObjectElem(rx, SymbolKey.MATCH_ALL, cx, s);
         if (!(method instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(rx, method, SymbolKey.MATCH_ALL.getName());
         }
-        return ((Callable) method).call(cx, scope, rx, new Object[] {s});
+        return ((Callable) method).call(cx, s, rx, new Object[] {str});
     }
 
     private static Object js_localeCompare(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // For now, create and configure a collator instance. I can't
         // actually imagine that this'd be slower than caching them
         // a la ClassCache, so we aren't trying to outsmart ourselves
@@ -1117,7 +1093,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toLocaleLowerCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String thisStr =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toLocaleLowerCase"));
@@ -1134,7 +1110,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toLocaleUpperCase(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String thisStr =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toLocaleUpperCase"));
@@ -1150,7 +1126,8 @@ final class NativeString extends ScriptableObject {
         return thisStr.toUpperCase(locale);
     }
 
-    private static Object js_trim(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_trim(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "trim"));
         char[] chars = str.toCharArray();
@@ -1168,7 +1145,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_trimLeft(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "trimLeft"));
         char[] chars = str.toCharArray();
@@ -1183,7 +1160,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_trimRight(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "trimRight"));
@@ -1200,7 +1177,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_normalize(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length == 0 || Undefined.isUndefined(args[0])) {
             return Normalizer.normalize(
                     ScriptRuntime.toString(
@@ -1226,7 +1203,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static String js_repeat(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, CLASS_NAME, "repeat"));
         double cnt = ScriptRuntime.toInteger(args, 0);
@@ -1262,7 +1239,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_codePointAt(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String str =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "codePointAt"));
@@ -1279,7 +1256,7 @@ final class NativeString extends ScriptableObject {
      *     fillString])</a>
      */
     private static String pad(
-            Context cx, Scriptable thisObj, String functionName, Object[] args, boolean atStart) {
+            Context cx, Object thisObj, String functionName, Object[] args, boolean atStart) {
         String pad =
                 ScriptRuntime.toString(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, functionName));
@@ -1312,12 +1289,12 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_padStart(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return pad(cx, thisObj, "padStart", args, true);
     }
 
     private static Object js_padEnd(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return pad(cx, thisObj, "padEnd", args, false);
     }
 
@@ -1328,13 +1305,14 @@ final class NativeString extends ScriptableObject {
      *
      * <p>22.1.2.4 String.raw [Draft ECMA-262 / April 28, 2021]
      */
-    private static Object js_raw(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_raw(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         /* step 1-2 */
         Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
-        Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
+        Scriptable cooked = ScriptRuntime.toObject(cx, s, arg0);
         /* step 3 */
         Object rawValue = ScriptRuntime.getObjectProp(cooked, "raw", cx);
-        Scriptable raw = ScriptRuntime.toObject(cx, scope, rawValue);
+        Scriptable raw = ScriptRuntime.toObject(cx, s, rawValue);
         /* step 4-5 */
         long rawLength = NativeArray.getLengthProperty(cx, raw);
         if (rawLength > Integer.MAX_VALUE) {
@@ -1366,7 +1344,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_isWellFormed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         CharSequence str =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "isWellFormed"));
@@ -1392,7 +1370,7 @@ final class NativeString extends ScriptableObject {
     }
 
     private static Object js_toWellFormed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         CharSequence str =
                 ScriptRuntime.toCharSequence(
                         requireObjectCoercible(cx, thisObj, CLASS_NAME, "toWellFormed"));
@@ -1438,63 +1416,68 @@ final class NativeString extends ScriptableObject {
         return sb.toString();
     }
 
-    private static Object js_bold(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_bold(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "bold", "b", null, args);
     }
 
     private static Object js_italics(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "italics", "i", null, args);
     }
 
     private static Object js_fixed(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "fixed", "tt", null, args);
     }
 
     private static Object js_strike(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "strike", "strike", null, args);
     }
 
     private static Object js_small(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "small", "small", null, args);
     }
 
-    private static Object js_big(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_big(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "big", "big", null, args);
     }
 
     private static Object js_blink(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "blink", "blink", null, args);
     }
 
-    private static Object js_sup(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_sup(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "sup", "sup", null, args);
     }
 
-    private static Object js_sub(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_sub(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "sub", "sub", null, args);
     }
 
     private static Object js_fontsize(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "fontsize", "font", "size", args);
     }
 
     private static Object js_fontcolor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "fontcolor", "font", "color", args);
     }
 
-    private static Object js_link(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_link(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "link", "a", "href", args);
     }
 
     private static Object js_anchor(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return tagify(cx, thisObj, "anchor", "a", "name", args);
     }
 }

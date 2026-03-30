@@ -37,6 +37,7 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.ModuleScope;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.config.RhinoConfig;
@@ -207,8 +208,8 @@ public class Main {
         try {
             Script script = cx.compileString(scriptText, "<command>", 1, null);
             if (script != null) {
-                Scriptable scope = getShellScope();
-                script.exec(cx, scope, scope);
+                VarScope scope = getShellScope();
+                script.exec(cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
             }
         } catch (RhinoException rex) {
             ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
@@ -226,11 +227,11 @@ public class Main {
         return global;
     }
 
-    static Scriptable getShellScope() {
+    static VarScope getShellScope() {
         return getScope(null);
     }
 
-    static Scriptable getScope(String path) {
+    static VarScope getScope(String path) {
         if (useRequire) {
             // If CommonJS modules are enabled use a module scope that resolves
             // relative ids relative to the current URL, file or working directory.
@@ -443,7 +444,7 @@ public class Main {
      */
     public static void processSource(Context cx, String filename) throws IOException {
         if (filename == null || filename.equals("-")) {
-            Scriptable scope = getShellScope();
+            VarScope scope = getShellScope();
             Charset cs;
             String charEnc = shellContextFactory.getCharacterEncoding();
             if (charEnc != null) {
@@ -489,7 +490,11 @@ public class Main {
                     String finalSource = source.toString();
                     Script script = cx.compileString(finalSource, "<stdin>", lineno, null);
                     if (script != null) {
-                        Object result = script.exec(cx, scope, scope);
+                        Object result =
+                                script.exec(
+                                        cx,
+                                        scope,
+                                        ScriptableObject.getTopLevelScope(scope).getGlobalThis());
                         // Avoid printing out undefined or function definitions.
                         if (result != Context.getUndefinedValue()
                                 && !(result instanceof Function
@@ -525,7 +530,7 @@ public class Main {
         }
     }
 
-    public static void processFileNoThrow(Context cx, Scriptable scope, String filename) {
+    public static void processFileNoThrow(Context cx, VarScope scope, String filename) {
         try {
             processFile(cx, scope, filename);
         } catch (IOException ioex) {
@@ -545,16 +550,15 @@ public class Main {
         }
     }
 
-    public static void processFile(Context cx, Scriptable scope, String filename)
-            throws IOException {
+    public static void processFile(Context cx, VarScope scope, String filename) throws IOException {
         if (securityImpl == null) {
-            processFileSecure(cx, scope, filename, null);
+            processFileSecure(cx, (VarScope) scope, filename, null);
         } else {
             securityImpl.callProcessFileSecure(cx, scope, filename);
         }
     }
 
-    static void processFileSecure(Context cx, Scriptable scope, String path, Object securityDomain)
+    static void processFileSecure(Context cx, VarScope scope, String path, Object securityDomain)
             throws IOException {
 
         boolean isClass = path.endsWith(".class");
@@ -588,7 +592,8 @@ public class Main {
         }
 
         if (script != null) {
-            script.exec(cx, scope, scope);
+            Scriptable global = ScriptableObject.getTopLevelScope(scope).getGlobalThis();
+            script.exec(cx, scope, global);
         }
     }
 

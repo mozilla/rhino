@@ -15,6 +15,7 @@ import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.SymbolScriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -203,7 +204,7 @@ public class IterableTest {
         }
 
         @Override
-        public Scriptable getParentScope() {
+        public VarScope getParentScope() {
             return scope;
         }
 
@@ -266,7 +267,7 @@ public class IterableTest {
         }
 
         @Override
-        public void setParentScope(Scriptable parent) {
+        public void setParentScope(VarScope parent) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
