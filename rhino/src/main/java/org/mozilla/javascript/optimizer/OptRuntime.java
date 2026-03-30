@@ -18,19 +18,21 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 public final class OptRuntime extends ScriptRuntime {
     public static final Integer oneObj = Integer.valueOf(1);
     public static final Integer minusOneObj = Integer.valueOf(-1);
 
     /** Implement ....() call shrinking optimizer code. */
-    public static Object call0(Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
+    public static Object call0(Callable fun, Scriptable thisObj, Context cx, VarScope scope) {
         return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     public static Object call0Optional(
-            Callable fun, Scriptable thisObj, Context cx, Scriptable scope) {
+            Callable fun, Scriptable thisObj, Context cx, VarScope scope) {
         if (fun == null) {
             return Undefined.instance;
         }
@@ -39,7 +41,7 @@ public final class OptRuntime extends ScriptRuntime {
 
     /** Implement ....(arg) call shrinking optimizer code. */
     public static Object call1(
-            Callable fun, Scriptable thisObj, Object arg0, Context cx, Scriptable scope) {
+            Callable fun, Scriptable thisObj, Object arg0, Context cx, VarScope scope) {
         return fun.call(cx, scope, thisObj, new Object[] {arg0});
     }
 
@@ -50,20 +52,20 @@ public final class OptRuntime extends ScriptRuntime {
             Object arg0,
             Object arg1,
             Context cx,
-            Scriptable scope) {
+            VarScope scope) {
         return fun.call(cx, scope, thisObj, new Object[] {arg0, arg1});
     }
 
     /** Implement ....(arg0, arg1, ...) call shrinking optimizer code. */
     public static Object callN(
-            Callable fun, Scriptable thisObj, Object[] args, Context cx, Scriptable scope) {
+            Callable fun, Scriptable thisObj, Object[] args, Context cx, VarScope scope) {
         return fun.call(cx, scope, thisObj, args);
     }
 
     /** Implement name(args) call shrinking optimizer code. */
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    public static Object callName(Object[] args, String name, Context cx, Scriptable scope) {
+    public static Object callName(Object[] args, String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, args);
@@ -72,7 +74,7 @@ public final class OptRuntime extends ScriptRuntime {
     /** Implement name() call shrinking optimizer code. */
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    public static Object callName0(String name, Context cx, Scriptable scope) {
+    public static Object callName0(String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
@@ -80,7 +82,7 @@ public final class OptRuntime extends ScriptRuntime {
 
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    public static Object callName0Optional(String name, Context cx, Scriptable scope) {
+    public static Object callName0Optional(String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThisOptional(name, cx, scope);
         if (f == null) {
             return Undefined.instance;
@@ -92,7 +94,7 @@ public final class OptRuntime extends ScriptRuntime {
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
     /** Implement x.property() call shrinking optimizer code. */
-    public static Object callProp0(Object value, String property, Context cx, Scriptable scope) {
+    public static Object callProp0(Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
@@ -101,7 +103,7 @@ public final class OptRuntime extends ScriptRuntime {
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
     public static Object callProp0Optional(
-            Object value, String property, Context cx, Scriptable scope) {
+            Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThisOptional(value, property, cx, scope);
         if (f == null) {
             return Undefined.instance;
@@ -131,7 +133,7 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     /**
-     * @deprecated Use {@link #elemIncrDecr(Object, double, Context, Scriptable, int)} instead
+     * @deprecated Use {@link #elemIncrDecr(Object, double, Context, VarScope, int)} instead
      */
     @Deprecated
     public static Object elemIncrDecr(Object obj, double index, Context cx, int incrDecrMask) {
@@ -139,7 +141,7 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static Object elemIncrDecr(
-            Object obj, double index, Context cx, Scriptable scope, int incrDecrMask) {
+            Object obj, double index, Context cx, VarScope scope, int incrDecrMask) {
         return ScriptRuntime.elemIncrDecr(obj, Double.valueOf(index), cx, scope, incrDecrMask);
     }
 
@@ -149,7 +151,7 @@ public final class OptRuntime extends ScriptRuntime {
         return result;
     }
 
-    public static void initFunction(JSFunction fn, int functionType, Scriptable scope, Context cx) {
+    public static void initFunction(JSFunction fn, int functionType, VarScope scope, Context cx) {
         ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
     }
 
@@ -158,7 +160,7 @@ public final class OptRuntime extends ScriptRuntime {
             Callable fun,
             Scriptable thisObj,
             Object[] args,
-            Scriptable scope,
+            VarScope scope,
             Scriptable callerThis,
             int callType,
             String fileName,
@@ -181,7 +183,7 @@ public final class OptRuntime extends ScriptRuntime {
             Context cx,
             Object fun,
             Object[] args,
-            Scriptable scope,
+            VarScope scope,
             Scriptable callerThis,
             int callType) {
         return ScriptRuntime.newSpecial(cx, fun, args, scope, callType);
@@ -229,7 +231,7 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static Scriptable newArrayLiteral(
-            Object[] objects, String encodedInts, int skipCount, Context cx, Scriptable scope) {
+            Object[] objects, String encodedInts, int skipCount, Context cx, VarScope scope) {
         int[] skipIndexes = decodeIntArray(encodedInts, skipCount);
         return newArrayLiteral(objects, skipIndexes, cx, scope);
     }
@@ -245,7 +247,7 @@ public final class OptRuntime extends ScriptRuntime {
         ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            ScriptableObject global = getGlobal(cx);
+                            TopLevel global = getGlobal(cx);
 
                             // get the command line arguments and define "arguments"
                             // array in the top-level object
@@ -253,7 +255,7 @@ public final class OptRuntime extends ScriptRuntime {
                             System.arraycopy(args, 0, argsCopy, 0, args.length);
                             Scriptable argsObj = cx.newArray(global, argsCopy);
                             global.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
-                            script.exec(cx, global, global);
+                            script.exec(cx, global, global.getGlobalThis());
                             return null;
                         });
     }
@@ -262,14 +264,14 @@ public final class OptRuntime extends ScriptRuntime {
         Object value = getGeneratorReturnValue(genState);
         Object si =
                 (value == Undefined.instance)
-                        ? NativeIterator.getStopIterationObject((Scriptable) scope)
+                        ? NativeIterator.getStopIterationObject((VarScope) scope)
                         : new NativeIterator.StopIteration(value);
         throw new JavaScriptException(si, "", 0);
     }
 
     public static Scriptable createNativeGenerator(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             JSFunction funObj,
             int maxLocals,
@@ -310,7 +312,7 @@ public final class OptRuntime extends ScriptRuntime {
 
     public static void spread(
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             NewLiteralStorage store,
             Object source,
             int sourcePosition) {
@@ -331,10 +333,10 @@ public final class OptRuntime extends ScriptRuntime {
         public final Scriptable thisObj;
 
         @SuppressWarnings("unused")
-        public final Scriptable activationFrame;
+        public final VarScope activationFrame;
 
         static final String activationFrame_NAME = "activationFrame";
-        static final String activationFrame_TYPE = "Lorg/mozilla/javascript/Scriptable;";
+        static final String activationFrame_TYPE = "Lorg/mozilla/javascript/VarScope;";
         static final String thisObj_NAME = "thisObj";
         static final String thisObj_TYPE = "Lorg/mozilla/javascript/Scriptable;";
 
@@ -344,8 +346,7 @@ public final class OptRuntime extends ScriptRuntime {
         int maxStack;
         Object returnValue;
 
-        GeneratorState(
-                Scriptable activationFrame, Scriptable thisObj, int maxLocals, int maxStack) {
+        GeneratorState(VarScope activationFrame, Scriptable thisObj, int maxLocals, int maxStack) {
             this.activationFrame = activationFrame;
             this.thisObj = thisObj;
             this.maxLocals = maxLocals;

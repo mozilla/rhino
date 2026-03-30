@@ -44,6 +44,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -51,6 +52,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -209,11 +211,11 @@ public class Test262SuiteTest {
             super();
         }
 
-        $262(Scriptable scope, Scriptable prototype) {
+        $262(VarScope scope, Scriptable prototype) {
             super(scope, prototype);
         }
 
-        static $262 init(Context cx, Scriptable scope) {
+        static $262 init(Context cx, VarScope scope) {
             $262 proto = new $262();
             proto.setPrototype(getObjectPrototype(scope));
             proto.setParentScope(scope);
@@ -232,7 +234,7 @@ public class Test262SuiteTest {
             return proto;
         }
 
-        static $262 install(ScriptableObject scope, Scriptable parentScope) {
+        static $262 install(ScopeObject scope, Scriptable parentScope) {
             $262 instance = new $262(scope, parentScope);
 
             scope.put("$262", scope, instance);
@@ -241,13 +243,13 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object gc(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             System.gc();
             return Undefined.instance;
         }
 
         public static Object evalScript(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             if (args.length == 0) {
                 throw ScriptRuntime.throwError(cx, scope, "not enough args");
             }
@@ -260,13 +262,13 @@ public class Test262SuiteTest {
         }
 
         public static $262 createRealm(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             TopLevel realm = cx.initSafeStandardObjects(new TopLevel());
             return install(realm, thisObj.getPrototype());
         }
 
         public static Object detachArrayBuffer(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             Scriptable buf = ScriptRuntime.toObject(scope, args[0]);
             if (buf instanceof NativeArrayBuffer) {
                 ((NativeArrayBuffer) buf).detach();

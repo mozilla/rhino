@@ -98,7 +98,7 @@ public class EqualObjectGraphsTest {
                             },
                     cx,
                     top,
-                    top,
+                    top.getGlobalThis(),
                     null,
                     false);
         }

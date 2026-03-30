@@ -270,14 +270,14 @@ public interface Scriptable extends PropHolder<Scriptable> {
      *
      * @return the parent scope
      */
-    public Scriptable getParentScope();
+    public VarScope getParentScope();
 
     /**
      * Set the parent scope of the object.
      *
      * @param parent the parent scope to set
      */
-    public void setParentScope(Scriptable parent);
+    public void setParentScope(VarScope parent);
 
     /**
      * Get an array of property ids.
@@ -288,6 +288,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @return an array of Objects. Each entry in the array is either a java.lang.String or a
      *     java.lang.Number
      */
+    @Override
     public Object[] getIds();
 
     /**

@@ -60,11 +60,11 @@ public final class ES6Generator extends ScriptableObject {
     /** Only for constructing the prototype object. */
     private ES6Generator() {}
 
-    public ES6Generator(Scriptable scope, JSFunction function, Object savedState) {
+    public ES6Generator(VarScope scope, JSFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties.
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         // Per ES6 spec, generator instance's [[Prototype]] should be
         // the generator function's .prototype property.
@@ -86,12 +86,11 @@ public final class ES6Generator extends ScriptableObject {
         return "Generator";
     }
 
-    private static ES6Generator realThis(Scriptable thisObj) {
+    private static ES6Generator realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, ES6Generator.class);
     }
 
-    private static Object js_return(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_return(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
         if (generator.delegee == null) {
@@ -100,7 +99,7 @@ public final class ES6Generator extends ScriptableObject {
         return generator.resumeDelegeeReturn(cx, scope, value);
     }
 
-    private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_next(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
         if (generator.delegee == null) {
@@ -109,8 +108,7 @@ public final class ES6Generator extends ScriptableObject {
         return generator.resumeDelegee(cx, scope, value);
     }
 
-    private static Object js_throw(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_throw(Context cx, VarScope scope, Object thisObj, Object[] args) {
         ES6Generator generator = realThis(thisObj);
         Object value = args.length >= 1 ? args[0] : Undefined.instance;
         if (generator.delegee == null) {
@@ -119,12 +117,11 @@ public final class ES6Generator extends ScriptableObject {
         return generator.resumeDelegeeThrow(cx, scope, value);
     }
 
-    private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_iterator(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return thisObj;
     }
 
-    private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegee(Context cx, VarScope scope, Object value) {
         try {
             // Be super-careful and only pass an arg to next if it expects one
             Object[] nextArgs =
@@ -154,7 +151,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegeeThrow(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegeeThrow(Context cx, VarScope scope, Object value) {
         boolean returnCalled = false;
         try {
             // Delegate to "throw" method. If it's not defined we'll get an error here.
@@ -196,7 +193,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegeeReturn(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeDelegeeReturn(Context cx, VarScope scope, Object value) {
         try {
             // Call "return" but don't throw if it can't be found
             Object retResult = callReturnOptionally(cx, scope, value);
@@ -233,7 +230,7 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
-    private Scriptable resumeLocal(Context cx, Scriptable scope, Object value) {
+    private Scriptable resumeLocal(Context cx, VarScope scope, Object value) {
         if (state == State.COMPLETED) {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
@@ -247,7 +244,11 @@ public final class ES6Generator extends ScriptableObject {
         try {
             Object r =
                     function.resumeGenerator(
-                            cx, scope, NativeGenerator.GENERATOR_SEND, savedState, value);
+                            cx,
+                            (VarScope) scope,
+                            NativeGenerator.GENERATOR_SEND,
+                            savedState,
+                            value);
 
             if (r instanceof YieldStarResult) {
                 // This special result tells us that we are executing a "yield *"
@@ -307,7 +308,7 @@ public final class ES6Generator extends ScriptableObject {
         return result;
     }
 
-    private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value) {
+    private Scriptable resumeAbruptLocal(Context cx, VarScope scope, int op, Object value) {
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }
@@ -342,7 +343,7 @@ public final class ES6Generator extends ScriptableObject {
         }
 
         try {
-            Object r = function.resumeGenerator(cx, scope, op, savedState, throwValue);
+            Object r = function.resumeGenerator(cx, (VarScope) scope, op, savedState, throwValue);
             ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, r);
             // If we get here without an exception we can still run.
             state = State.SUSPENDED_YIELD;
@@ -381,7 +382,7 @@ public final class ES6Generator extends ScriptableObject {
         return result;
     }
 
-    private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
+    private Object callReturnOptionally(Context cx, VarScope scope, Object value) {
         Object[] retArgs =
                 Undefined.isUndefined(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
         // Delegate to "return" method. If it's not defined we ignore it

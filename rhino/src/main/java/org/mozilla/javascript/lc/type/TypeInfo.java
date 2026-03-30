@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.mozilla.javascript.FunctionObject;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.lc.ByteAsBool;
 import org.mozilla.javascript.lc.type.impl.ArrayTypeInfo;
 import org.mozilla.javascript.lc.type.impl.BasicClassTypeInfo;
@@ -315,6 +316,8 @@ public interface TypeInfo {
             return FunctionObject.JAVA_DOUBLE_TYPE;
         } else if (Scriptable.class.isAssignableFrom(asClass())) {
             return FunctionObject.JAVA_SCRIPTABLE_TYPE;
+        } else if (VarScope.class.isAssignableFrom(asClass())) {
+            return FunctionObject.JAVA_VARSCOPE_TYPE;
         } else if (isObjectExact()) {
             return FunctionObject.JAVA_OBJECT_TYPE;
         }

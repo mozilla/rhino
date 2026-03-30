@@ -36,17 +36,17 @@ final class MemberBox implements Serializable {
     transient Function asSetterFunction;
     transient Object delegateTo;
 
-    final Scriptable scope;
+    final VarScope scope;
 
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Scriptable scope, Method method) {
+    MemberBox(VarScope scope, Method method) {
         this.scope = scope;
         init(method);
     }
 
-    MemberBox(Scriptable scope, Constructor<?> constructor) {
+    MemberBox(VarScope scope, Constructor<?> constructor) {
         this.scope = scope;
         init(constructor);
     }
@@ -170,7 +170,7 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
+                                VarScope callScope,
                                 Scriptable thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
@@ -203,7 +203,7 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
+                                VarScope callScope,
                                 Scriptable thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
@@ -211,7 +211,7 @@ final class MemberBox implements Serializable {
                                     originalArgs.length > 0
                                             ? FunctionObject.convertArg(
                                                     cx,
-                                                    thisObj,
+                                                    callScope,
                                                     originalArgs[0],
                                                     setterTypeTag,
                                                     nativeSetter.getArgNullability().isNullable(0))

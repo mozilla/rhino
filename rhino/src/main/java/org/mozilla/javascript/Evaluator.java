@@ -39,7 +39,7 @@ public interface Evaluator {
      * @return Function object that can be called
      */
     public Function createFunctionObject(
-            Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain);
+            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain);
 
     /**
      * Create a script object.
