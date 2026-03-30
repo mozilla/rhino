@@ -81,7 +81,7 @@ public final class Interpreter extends Icode implements Evaluator {
         int pc;
         int pcPrevBranch;
         int pcSourceLineStart;
-        Scriptable scope;
+        VarScope scope;
 
         int savedStackTop;
         int savedCallOp;
@@ -247,7 +247,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         void initializeArgs(
                 Context cx,
-                Scriptable callerScope,
+                VarScope callerScope,
                 Object[] args,
                 double[] argsDbl,
                 Object[] boundArgs,
@@ -564,7 +564,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public Scriptable getParentScope() {
+        public VarScope getParentScope() {
             return frame.scope;
         }
 
@@ -1154,7 +1154,7 @@ public final class Interpreter extends Icode implements Evaluator {
             ScriptOrFn ifun,
             InterpreterData idata,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
@@ -3138,7 +3138,8 @@ public final class Interpreter extends Icode implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             Ref ref = (Ref) stack[state.stackTop];
-            stack[state.stackTop] = ScriptRuntime.refGet(ref, cx);
+            var res = ScriptRuntime.refGet(ref, cx);
+            stack[state.stackTop] = res;
             return null;
         }
     }
@@ -4267,7 +4268,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.indexReg += frame.idata.itsMaxVars;
-            frame.scope = (Scriptable) frame.stack[state.indexReg];
+            frame.scope = (VarScope) frame.stack[state.indexReg];
             return null;
         }
     }
@@ -4914,7 +4915,7 @@ public final class Interpreter extends Icode implements Evaluator {
             int localShift = frame.idata.itsMaxVars;
             int scopeLocal = localShift + table[indexReg + EXCEPTION_SCOPE_SLOT];
             int exLocal = localShift + table[indexReg + EXCEPTION_LOCAL_SLOT];
-            frame.scope = (Scriptable) frame.stack[scopeLocal];
+            frame.scope = (VarScope) frame.stack[scopeLocal];
             frame.stack[exLocal] = throwable;
 
             throwable = null;
@@ -5005,7 +5006,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static CallFrame initFrame(
             Context cx,
-            Scriptable callerScope,
+            VarScope callerScope,
             Scriptable thisObj,
             Scriptable homeObj,
             Object[] args,
@@ -5045,12 +5046,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 // found. Normally, frame.scope is a NativeCall when called
                 // from initFrame() for a debugged or activatable function.
                 // However, when called from interpretLoop() as part of
-                // restarting a continuation, it can also be a NativeWith if
+                // restarting a continuation, it can also be a WIthScope if
                 // the continuation was captured within a "with" or "catch"
                 // block ("catch" implicitly uses NativeWith to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
-                    if (scope instanceof NativeWith) {
+                    if (scope instanceof WithScope) {
                         scope = scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null

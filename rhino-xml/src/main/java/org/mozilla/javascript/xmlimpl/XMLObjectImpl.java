@@ -13,7 +13,6 @@ import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
@@ -21,6 +20,8 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolScriptable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.WithScope;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -123,7 +124,7 @@ abstract class XMLObjectImpl extends XMLObject {
                         0);
     }
 
-    protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    protected XMLObjectImpl(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         initialize(lib, scope, prototype);
     }
 
@@ -456,12 +457,12 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public NativeWith enterWith(Scriptable scope) {
+    public WithScope enterWith(VarScope scope) {
         return new XMLWithScope(lib, scope, this);
     }
 
     @Override
-    public NativeWith enterDotQuery(Scriptable scope) {
+    public WithScope enterDotQuery(VarScope scope) {
         XMLWithScope xws = new XMLWithScope(lib, scope, this);
         xws.initAsDotQuery();
         return xws;

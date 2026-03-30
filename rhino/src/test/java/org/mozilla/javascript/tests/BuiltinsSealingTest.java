@@ -78,7 +78,6 @@ class BuiltinsSealingTest {
     @Test
     public void rhinoNonStandard() {
         assertIsSealed("With");
-        assertIsSealed("Call");
         assertIsSealed("CallSite");
         assertIsSealed("Iterator");
         assertIsSealed("Continuation");

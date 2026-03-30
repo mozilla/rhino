@@ -91,7 +91,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
 
         // It's safe to downcast here since initStandardObjects takes
         // a ScriptableObject.
-        ScriptableObject global = (ScriptableObject) scope;
+        ScopeObject global = (ScopeObject) scope;
 
         if (sealed) {
             getClass.sealObject();

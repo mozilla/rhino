@@ -13,11 +13,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.ScopeObject;
 
 public class ObjectToStringNullUndefinedTest {
     private Context cx;
-    private ScriptableObject scope;
+    private ScopeObject scope;
 
     @Before
     public void setUp() {

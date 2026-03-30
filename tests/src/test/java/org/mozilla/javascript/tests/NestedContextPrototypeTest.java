@@ -103,7 +103,7 @@ public class NestedContextPrototypeTest {
                                     scope = global;
                                     break;
                                 case NESTED:
-                                    scope = context.newObject(global);
+                                    scope = context.newVarEnv(global);
                                     break;
                                 case SEALED:
                                     scope = TopLevel.createIsolate(global);
