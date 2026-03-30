@@ -103,10 +103,10 @@ final class NativeDate extends ScriptableObject {
                         .build();
     }
 
-    static void init(Context cx, Scriptable scope, boolean sealed) {
+    static void init(Context cx, VarScope scope, boolean sealed) {
         DESCRIPTOR.buildConstructor(
                 cx,
-                scope,
+                (VarScope) scope,
                 cx.getLanguageVersion() >= Context.VERSION_ES6
                         ? new NativeObject()
                         : new NativeDate(Double.NaN),
@@ -135,23 +135,23 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_now(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return ScriptRuntime.wrapNumber(now());
     }
 
     private static Object js_parse(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         String dataStr = ScriptRuntime.toString(args, 0);
         return ScriptRuntime.wrapNumber(date_parseString(cx, dataStr));
     }
 
     private static Object js_UTC(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return ScriptRuntime.wrapNumber(jsStaticFunction_UTC(args));
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var res = jsConstructor(cx, args);
         ScriptRuntime.setBuiltinProtoAndParent(res, f, nt, s, TopLevel.Builtins.Date);
 
@@ -159,12 +159,12 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_constructorFunc(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return date_format(cx, now(), Id_toString);
     }
 
     private static Object js_toJSON(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         final String toISOString = "toISOString";
 
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
@@ -187,7 +187,7 @@ final class NativeDate extends ScriptableObject {
                     ScriptRuntime.toString(o),
                     ScriptRuntime.toString(toISO));
         }
-        Object result = ((Callable) toISO).call(cx, s, o, ScriptRuntime.emptyArgs);
+        Object result = ((Callable) toISO).call(cx, (VarScope) s, o, ScriptRuntime.emptyArgs);
         if (!ScriptRuntime.isPrimitive(result)) {
             throw ScriptRuntime.typeErrorById(
                     "msg.toisostring.must.return.primitive", ScriptRuntime.toString(result));
@@ -196,7 +196,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toPrimitive(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
         final Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
         final String hint = (arg0 instanceof CharSequence) ? arg0.toString() : null;
@@ -215,7 +215,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -226,7 +226,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toTimeString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -237,7 +237,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toDateString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -248,7 +248,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toLocaleString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -259,7 +259,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toLocaleDateString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -270,7 +270,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toLocaleTimeString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -281,7 +281,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toUTCString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -292,7 +292,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -300,7 +300,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_valueOf(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -308,7 +308,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getTime(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -316,7 +316,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getYear(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -329,7 +329,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getFullYear(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -341,7 +341,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCFullYear(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -352,7 +352,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getMonth(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -364,7 +364,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCMonth(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -375,7 +375,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getDate(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -387,7 +387,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCDate(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -398,7 +398,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getDay(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -410,7 +410,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCDay(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -421,7 +421,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getHours(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -433,7 +433,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCHours(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -444,7 +444,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getMinutes(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -456,7 +456,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCMinutes(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -467,7 +467,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getSeconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -479,7 +479,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCSeconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -490,7 +490,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getMilliseconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -502,7 +502,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getUTCMilliseconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -513,7 +513,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_getTimezoneOffset(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -524,7 +524,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setTime(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -534,7 +534,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setMilliseconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -544,7 +544,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCMilliseconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -554,7 +554,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setSeconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -564,7 +564,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCSeconds(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -574,7 +574,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setMinutes(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -584,7 +584,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCMinutes(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -594,7 +594,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setHours(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -604,7 +604,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCHours(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -614,7 +614,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setDate(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -624,7 +624,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCDate(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -634,7 +634,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setMonth(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -644,7 +644,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCMonth(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -654,7 +654,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setFullYear(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -664,7 +664,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setUTCFullYear(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -674,7 +674,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_setYear(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 
@@ -701,7 +701,7 @@ final class NativeDate extends ScriptableObject {
     }
 
     private static Object js_toISOString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var realThis = realThis(thisObj);
         double t = realThis.date;
 

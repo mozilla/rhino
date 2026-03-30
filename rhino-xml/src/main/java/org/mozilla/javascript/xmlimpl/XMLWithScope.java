@@ -6,11 +6,12 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.WithScope;
 import org.mozilla.javascript.xml.XMLObject;
 
-final class XMLWithScope extends NativeWith {
+final class XMLWithScope extends WithScope {
     private static final long serialVersionUID = -696429282095170887L;
 
     private XMLLibImpl lib;
@@ -18,13 +19,13 @@ final class XMLWithScope extends NativeWith {
     private XMLList _xmlList;
     private XMLObject _dqPrototype;
 
-    XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype) {
+    XMLWithScope(XMLLibImpl lib, VarScope parent, XMLObject prototype) {
         super(parent, prototype);
         this.lib = lib;
     }
 
     void initAsDotQuery() {
-        XMLObject prototype = (XMLObject) getPrototype();
+        XMLObject prototype = (XMLObject) getObject();
         // XMLWithScope also handles the .(xxx) DotQuery for XML
         // basically DotQuery is a for/in/with statement and in
         // the following 3 statements we setup to signal it's
@@ -37,7 +38,7 @@ final class XMLWithScope extends NativeWith {
         if (prototype instanceof XMLList) {
             XMLList xl = (XMLList) prototype;
             if (xl.length() > 0) {
-                setPrototype((Scriptable) xl.get(0, null));
+                setObject((Scriptable) xl.get(0, null));
             }
         }
         // Always return the outer-most type of XML lValue of
@@ -70,7 +71,7 @@ final class XMLWithScope extends NativeWith {
                 // reset the expression to run with this object as
                 // the WITH selector.
                 _currIndex = idx;
-                setPrototype((Scriptable) orgXmlL.get(idx, null));
+                setObject((Scriptable) orgXmlL.get(idx, null));
 
                 // continue looping
                 return null;

@@ -15,6 +15,7 @@ import org.mozilla.javascript.Delegator;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
@@ -24,7 +25,7 @@ import org.mozilla.javascript.annotations.JSSetter;
 public class DelegatorTest {
 
     private Context cx;
-    private Scriptable root;
+    private TopLevel root;
 
     @Before
     public void init() throws Exception {

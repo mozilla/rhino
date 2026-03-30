@@ -12,8 +12,8 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Utility class, that search for testcases in "assets/tests".
@@ -55,14 +55,14 @@ public abstract class TestCase {
     public String run() {
         Context cx = factory.enterContext();
         try {
-            Scriptable scope = TopLevel.createIsolate(global);
+            TopLevel scope = TopLevel.createIsolate(global);
             return ScriptRuntime.toString(runTest(cx, scope));
         } finally {
             Context.exit();
         }
     }
 
-    protected abstract Object runTest(Context cx, Scriptable scope);
+    protected abstract Object runTest(Context cx, VarScope scope);
 
     @Override
     public String toString() {
@@ -78,7 +78,7 @@ public abstract class TestCase {
         }
 
         @Override
-        protected Object runTest(Context cx, Scriptable scope) {
+        protected Object runTest(Context cx, VarScope scope) {
             try (InputStream in = assetManager.open("tests/" + name);
                     Reader rdr = new InputStreamReader(in, StandardCharsets.UTF_8)) {
                 return cx.evaluateReader(scope, rdr, name, 1, null);

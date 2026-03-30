@@ -101,7 +101,7 @@ public class ImportClassTest {
         return contextFactory.call(
                 context -> {
                     Script script = context.compileString(scriptSourceText, "", 1, null);
-                    Object exec = script.exec(context, global, global);
+                    Object exec = script.exec(context, global, global.getGlobalThis());
                     return exec;
                 });
     }

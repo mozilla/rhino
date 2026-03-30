@@ -66,7 +66,7 @@ public class DebuggerTest {
         }
 
         @Override
-        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) {
+        public void onEnter(Context cx, VarScope activation, Object thisObj, Object[] args) {
             var names = new HashSet<String>();
             for (var id : activation.getIds()) {
                 names.add(id.toString());
@@ -87,7 +87,7 @@ public class DebuggerTest {
             cx.setGeneratingDebug(true);
             cx.setInterpretedMode(true);
             Script script = cx.compileString(TEST_SCRIPT, "this-klass", 0, null);
-            Object res = script.exec(cx, scope, scope);
+            Object res = script.exec(cx, scope, scope.getGlobalThis());
             Assert.assertNotNull(res);
             System.err.println(res.toString());
             Assert.assertEquals(

@@ -33,11 +33,12 @@ public class LambdaFunction extends BaseFunction {
      * @param defaultPrototype set up a prototype on the new function
      */
     public LambdaFunction(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             SerializableCallable target,
             boolean defaultPrototype) {
+        super(scope);
         this.target = target;
         this.name = name;
         this.length = length;
@@ -57,7 +58,7 @@ public class LambdaFunction extends BaseFunction {
      * @param target an object that implements the function in Java. Since Callable is a
      *     single-function interface this will typically be implemented as a lambda.
      */
-    public LambdaFunction(Scriptable scope, String name, int length, SerializableCallable target) {
+    public LambdaFunction(VarScope scope, String name, int length, SerializableCallable target) {
         this(scope, name, length, target, true);
     }
 
@@ -73,11 +74,12 @@ public class LambdaFunction extends BaseFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaFunction(
-            Scriptable scope,
+            VarScope scope,
             String name,
             int length,
             Object prototype,
             SerializableCallable target) {
+        super(scope);
         this.target = target;
         this.name = name;
         this.length = length;
@@ -86,7 +88,8 @@ public class LambdaFunction extends BaseFunction {
     }
 
     /** Create a new built-in function, with no name, and no default prototype. */
-    public LambdaFunction(Scriptable scope, int length, SerializableCallable target) {
+    public LambdaFunction(VarScope scope, int length, SerializableCallable target) {
+        super(scope);
         this.target = target;
         this.length = length;
         this.name = "";
@@ -94,12 +97,12 @@ public class LambdaFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return target.call(cx, getDeclarationScope(), thisObj, args);
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.no.new", getFunctionName());
     }
 

@@ -15,5 +15,9 @@ public interface Constructable {
      * @param args the array of arguments
      * @return the allocated object
      */
-    Scriptable construct(Context cx, Scriptable scope, Object[] args);
+    Scriptable construct(Context cx, VarScope scope, Object[] args);
+
+    default Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return construct(cx, s, args);
+    }
 }

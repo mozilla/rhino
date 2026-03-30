@@ -6,12 +6,17 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
+import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.LambdaConstructor;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntimeES6;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * An array view that stores 16-bit quantities and implements the JavaScript "Uint16Array"
@@ -22,6 +27,21 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
 
     private static final String CLASS_NAME = "Uint16Array";
     private static final int BYTES_PER_ELEMENT = 2;
+
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                3,
+                                NativeTypedArrayView::typeError,
+                                NativeUint16Array::js_constructor)
+                        .withProp(CTOR, "BYTES_PER_ELEMENT", value(2))
+                        .withProp(PROTO, "BYTES_PER_ELEMENT", value(2))
+                        .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
+                        .build();
+    }
 
     public NativeUint16Array() {}
 
@@ -38,33 +58,8 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
         return CLASS_NAME;
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        3,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
-                                NativeTypedArrayView.js_constructor(
-                                        lcx,
-                                        lscope,
-                                        args,
-                                        NativeUint16Array::new,
-                                        BYTES_PER_ELEMENT));
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-        NativeTypedArrayView.init(cx, scope, constructor, NativeUint16Array::realThis);
-        constructor.defineProperty(
-                "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
-        constructor.definePrototypeProperty(
-                "BYTES_PER_ELEMENT", BYTES_PER_ELEMENT, DONTENUM | READONLY | PERMANENT);
-
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
-        }
-        return constructor;
+    public static JSFunction init(Context cx, VarScope scope, boolean sealed) {
+        return NativeTypedArrayView.initSubClass(cx, scope, DESCRIPTOR, sealed);
     }
 
     @Override
@@ -72,8 +67,10 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
         return BYTES_PER_ELEMENT;
     }
 
-    private static NativeUint16Array realThis(Scriptable thisObj) {
-        return LambdaConstructor.convertThisObject(thisObj, NativeUint16Array.class);
+    private static Object js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return NativeTypedArrayView.js_constructor(
+                cx, f, nt, s, thisObj, args, NativeUint16Array::new, 2);
     }
 
     @Override

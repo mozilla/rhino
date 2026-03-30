@@ -20,7 +20,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaMethod;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -229,7 +229,7 @@ public class NativeJavaMapTest {
         return getContextFactory(enableJavaMapAccess)
                 .call(
                         context -> {
-                            Scriptable scope = context.newObject(global);
+                            VarScope scope = context.newVarEnv(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
                                     context.evaluateString(scope, scriptSourceText, "", 1, null));
@@ -240,7 +240,7 @@ public class NativeJavaMapTest {
         return getContextFactory(false)
                 .call(
                         context -> {
-                            Scriptable scope = context.newObject(global);
+                            VarScope scope = context.newVarEnv(global);
                             context.setLanguageVersion(Context.VERSION_ES6);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return context.evaluateString(scope, scriptSourceText, "", 1, null);

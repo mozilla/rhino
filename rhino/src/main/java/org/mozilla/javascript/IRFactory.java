@@ -18,6 +18,7 @@ import org.mozilla.javascript.ast.ArrayLiteral;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.AwaitExpression;
 import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
@@ -198,6 +199,7 @@ public final class IRFactory {
             case Token.NULL:
             case Token.UNDEFINED:
             case Token.DEBUGGER:
+            case Token.NEW_TARGET:
                 return transformLiteral(node);
             case Token.SUPER:
                 parser.setRequiresActivation();
@@ -235,6 +237,8 @@ public final class IRFactory {
             case Token.YIELD:
             case Token.YIELD_STAR:
                 return transformYield((Yield) node);
+            case Token.AWAIT:
+                return transformAwait((AwaitExpression) node);
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);
@@ -649,6 +653,14 @@ public final class IRFactory {
             // function parsing, we should lump it all into a helper class.
             Node destructuring = (Node) fn.getProp(Node.DESTRUCTURING_PARAMS);
             fn.removeProp(Node.DESTRUCTURING_PARAMS);
+
+            // Async non-generator functions use generator machinery internally to implement
+            // await: each await expression becomes a yield point. Mark the function as a
+            // generator now so that default-parameter and return-statement handling below
+            // uses the correct (generator) code paths.
+            if (fn.isAsync() && !fn.isES6Generator()) {
+                fn.setIsGenerator();
+            }
 
             int lineno = fn.getBody().getLineno(), column = fn.getBody().getColumn();
             ++parser.nestingOfFunction; // only for body, not params
@@ -1384,6 +1396,12 @@ public final class IRFactory {
         return new Node(node.getType(), node.getLineno(), node.getColumn());
     }
 
+    private Node transformAwait(AwaitExpression node) {
+        Node kid = node.getValue() == null ? null : transform(node.getValue());
+        if (kid != null) return new Node(Token.AWAIT, kid, node.getLineno(), node.getColumn());
+        return new Node(Token.AWAIT, node.getLineno(), node.getColumn());
+    }
+
     private Node transformSpread(Spread node) {
         Node kid = transform(node.getExpression());
         return new Node(node.getType(), kid, node.getLineno(), node.getColumn());
@@ -1892,7 +1910,7 @@ public final class IRFactory {
                 // but prefix it with LEAVEWITH since try..catch produces
                 // "with"code in order to limit the scope of the exception
                 // object.
-                catchStatement.addChildToBack(new Node(Token.LEAVEWITH));
+                catchStatement.addChildToBack(new Node(Token.LEAVE_SCOPE));
                 catchStatement.addChildToBack(makeJump(Token.GOTO, endCatch));
 
                 // Create condition "if" when present
@@ -1911,13 +1929,9 @@ public final class IRFactory {
                 catchScope.putIntProp(Node.CATCH_SCOPE_PROP, scopeIndex);
                 catchScopeBlock.addChildToBack(catchScope);
 
-                // Add with statement based on catch scope object
-                catchScopeBlock.addChildToBack(
-                        createWith(
-                                createUseLocal(catchScopeBlock),
-                                condStmt,
-                                catchLineno,
-                                catchColumn));
+                parser.setRequiresActivation();
+                catchScopeBlock.addChildToBack(condStmt);
+                catchScopeBlock.addChildToBack(new Node(Token.LEAVE_SCOPE));
 
                 // move to next cb
                 cb = cb.getNext();
@@ -1962,7 +1976,7 @@ public final class IRFactory {
         result.addChildToBack(new Node(Token.ENTERWITH, obj));
         Node bodyNode = new Node(Token.WITH, body, lineno, column);
         result.addChildrenToBack(bodyNode);
-        result.addChildToBack(new Node(Token.LEAVEWITH));
+        result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         return result;
     }
 
@@ -2096,8 +2110,6 @@ public final class IRFactory {
             String name = child.getString();
             if ("eval".equals(name)) {
                 type = Node.SPECIALCALL_EVAL;
-            } else if ("With".equals(name)) {
-                type = Node.SPECIALCALL_WITH;
             }
         }
         Node node = new Node(nodeType, child);

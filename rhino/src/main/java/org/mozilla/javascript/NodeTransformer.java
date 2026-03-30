@@ -118,7 +118,18 @@ public class NodeTransformer {
                     {
                         loops.push(node);
                         Node leave = node.getNext();
-                        if (leave.getType() != Token.LEAVEWITH) {
+                        if (leave.getType() != Token.LEAVE_SCOPE) {
+                            Kit.codeBug();
+                        }
+                        loopEnds.push(leave);
+                        break;
+                    }
+
+                case Token.SCOPE_BLOCK:
+                    {
+                        loops.push(node);
+                        Node leave = node.getNext();
+                        if (leave.getType() != Token.LEAVE_SCOPE) {
                             Kit.codeBug();
                         }
                         loopEnds.push(leave);
@@ -138,7 +149,7 @@ public class NodeTransformer {
                     }
 
                 case Token.TARGET:
-                case Token.LEAVEWITH:
+                case Token.LEAVE_SCOPE:
                     if (!loopEnds.isEmpty() && loopEnds.peek() == node) {
                         loopEnds.pop();
                         loops.pop();
@@ -147,6 +158,7 @@ public class NodeTransformer {
 
                 case Token.YIELD:
                 case Token.YIELD_STAR:
+                case Token.AWAIT:
                     ((FunctionNode) tree).addResumptionPoint(node);
                     break;
 
@@ -170,14 +182,16 @@ public class NodeTransformer {
                         // Iterate from the top of the stack (most recently inserted) and down
                         for (Node n : loops) {
                             int elemtype = n.getType();
-                            if (elemtype == Token.TRY || elemtype == Token.WITH) {
+                            if (elemtype == Token.TRY
+                                    || elemtype == Token.WITH
+                                    || elemtype == Token.SCOPE_BLOCK) {
                                 Node unwind;
                                 if (elemtype == Token.TRY) {
                                     Jump jsrnode = new Jump(Token.JSR);
                                     jsrnode.target = ((Jump) n).getFinally();
                                     unwind = jsrnode;
                                 } else {
-                                    unwind = new Node(Token.LEAVEWITH);
+                                    unwind = new Node(Token.LEAVE_SCOPE);
                                 }
                                 if (unwindBlock == null) {
                                     unwindBlock = new Node(Token.BLOCK);
@@ -227,8 +241,10 @@ public class NodeTransformer {
                             }
 
                             int elemtype = n.getType();
-                            if (elemtype == Token.WITH) {
-                                Node leave = new Node(Token.LEAVEWITH);
+                            if (elemtype == Token.WITH
+                                    || elemtype == Token.SCOPEEXPR
+                                    || elemtype == Token.SCOPE_BLOCK) {
+                                Node leave = new Node(Token.LEAVE_SCOPE);
                                 previous = addBeforeCurrent(parent, previous, node, leave);
                             } else if (elemtype == Token.TRY) {
                                 Jump tryNode = (Jump) n;
@@ -432,19 +448,18 @@ public class NodeTransformer {
 
     protected void visitCall(Node node, ScriptNode tree) {}
 
-    protected Node visitLet(boolean createWith, Node parent, Node previous, Node scopeNode) {
+    protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();
         Node body = vars.getNext();
         scopeNode.removeChild(vars);
         scopeNode.removeChild(body);
         boolean isExpression = scopeNode.getType() == Token.LETEXPR;
         Node result;
-        Node newVars;
-        if (createWith) {
-            result = new Node(isExpression ? Token.WITHEXPR : Token.BLOCK);
+        Node newVars = new Node(Token.ENTER_SCOPE);
+        if (createScope) {
+            result = new Node(isExpression ? Token.SCOPEEXPR : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
-            Node objectLiteral = new Node(Token.OBJECTLIT);
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
                 if (current.getType() == Token.LETEXPR) {
@@ -464,7 +479,7 @@ public class NodeTransformer {
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
                         for (int i = 0; i < destructuringNames.size(); i++) {
-                            objectLiteral.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
+                            newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
                     // Process all NAME children of the inner LET node (not just the first)
@@ -477,7 +492,7 @@ public class NodeTransformer {
                         if (init == null) {
                             init = new Node(Token.VOID, Node.newNumber(0.0));
                         }
-                        objectLiteral.addChildToBack(init);
+                        newVars.addChildToBack(init);
                     }
                     continue; // Already processed all children, move to next sibling of LETEXPR
                 }
@@ -487,13 +502,12 @@ public class NodeTransformer {
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 }
-                objectLiteral.addChildToBack(init);
+                newVars.addChildToBack(init);
             }
-            objectLiteral.putProp(Node.OBJECT_IDS_PROP, list.toArray());
-            newVars = new Node(Token.ENTERWITH, objectLiteral);
+            newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
             result.addChildToBack(newVars);
-            result.addChildToBack(new Node(Token.WITH, body));
-            result.addChildToBack(new Node(Token.LEAVEWITH));
+            result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
+            result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         } else {
             result = new Node(isExpression ? Token.COMMA : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
