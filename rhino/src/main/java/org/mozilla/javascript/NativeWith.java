@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
     private static final long serialVersionUID = 1L;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(TopLevel scope, boolean sealed) {
         NativeWith obj = new NativeWith();
 
         obj.setParentScope(scope);
@@ -31,7 +31,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     private NativeWith() {}
 
-    protected NativeWith(Scriptable parent, Scriptable prototype) {
+    protected NativeWith(VarScope parent, Scriptable prototype) {
         this.parent = parent;
         this.prototype = prototype;
     }
@@ -136,12 +136,12 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     }
 
     @Override
-    public Scriptable getParentScope() {
+    public VarScope getParentScope() {
         return parent;
     }
 
     @Override
-    public void setParentScope(Scriptable parent) {
+    public void setParentScope(VarScope parent) {
         this.parent = parent;
     }
 
@@ -168,7 +168,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_constructor) {
                 throw Context.reportRuntimeErrorById("msg.cant.call.indirect", "With");
@@ -185,16 +185,15 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
         return false;
     }
 
-    static Object newWithSpecial(Context cx, Scriptable scope, Object[] args) {
+    static Object newWithSpecial(Context cx, VarScope scope, Object[] args) {
         ScriptRuntime.checkDeprecated(cx, "With");
-        scope = ScriptableObject.getTopLevelScope(scope);
-        NativeWith thisObj = new NativeWith();
-        thisObj.setPrototype(
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        var obj =
                 args.length == 0
                         ? ScriptableObject.getObjectPrototype(scope)
-                        : ScriptRuntime.toObject(cx, scope, args[0]));
-        thisObj.setParentScope(scope);
-        return thisObj;
+                        : ScriptRuntime.toObject(cx, scope, args[0]);
+        var newWith = new WithScope(top, obj);
+        return newWith;
     }
 
     private static final Object FTAG = "With";
@@ -202,5 +201,5 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
     private static final int Id_constructor = 1;
 
     protected Scriptable prototype;
-    protected Scriptable parent;
+    protected VarScope parent;
 }

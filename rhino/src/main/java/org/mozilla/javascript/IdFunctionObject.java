@@ -23,7 +23,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     public IdFunctionObject(
-            IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
+            IdFunctionCall idcall, Object tag, int id, String name, int arity, VarScope scope) {
         super(scope, null);
 
         if (arity < 0) throw new IllegalArgumentException();
@@ -36,7 +36,7 @@ public class IdFunctionObject extends BaseFunction {
         this.functionName = name;
     }
 
-    public void initFunction(String name, Scriptable scope) {
+    public void initFunction(String name, VarScope scope) {
         if (name == null) throw new IllegalArgumentException();
         if (scope == null) throw new IllegalArgumentException();
         this.functionName = name;
@@ -60,7 +60,7 @@ public class IdFunctionObject extends BaseFunction {
         setImmunePrototypeProperty(prototypeProperty);
     }
 
-    public final void addAsProperty(Scriptable target) {
+    public final <T extends PropHolder<T>> void addAsProperty(T target) {
         ScriptableObject.defineProperty(target, functionName, this, ScriptableObject.DONTENUM);
     }
 
@@ -81,7 +81,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         // We need to do some sneakiness here for constructors...
         return idcall.execIdCall(this, cx, scope, getThisObj(thisObj), args);
     }
@@ -96,7 +96,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6 && this.getHomeObject() != null) {
             // Only methods have home objects associated with them
             throw ScriptRuntime.typeErrorById("msg.not.ctor", getFunctionName());
@@ -122,10 +122,8 @@ public class IdFunctionObject extends BaseFunction {
                 }
             }
             if (result.getParentScope() == null) {
-                Scriptable parent = getParentScope();
-                if (result != parent) {
-                    result.setParentScope(parent);
-                }
+                VarScope parent = getParentScope();
+                result.setParentScope(parent);
             }
         } else {
             Object val = call(cx, scope, result, args);
@@ -137,7 +135,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, VarScope scope) {
         if (useCallAsConstructor) {
             return null;
         }

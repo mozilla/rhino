@@ -19,6 +19,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.xml.XMLObject;
 
 class XMLList extends XMLObjectImpl implements Function {
@@ -43,10 +44,10 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     public static void init(
-            Context cx, Scriptable scope, XMLObjectImpl proto, boolean sealdd, XMLLibImpl lib) {
+            Context cx, VarScope scope, XMLObjectImpl proto, boolean sealdd, XMLLibImpl lib) {
         DESCRIPTOR.buildConstructor(
                 cx,
-                scope,
+                (VarScope) scope,
                 proto,
                 sealdd,
                 (ctx, ctor) -> {
@@ -55,7 +56,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
         if (args.length == 0) {
             return lib.newXMLList();
@@ -65,7 +66,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private static Object js_constructorCall(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
         if (args.length == 0) {
             return lib.newXMLList();
@@ -79,7 +80,7 @@ class XMLList extends XMLObjectImpl implements Function {
         }
     }
 
-    XMLList(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    XMLList(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         super(lib, scope, prototype);
         _annos = new XmlNode.InternalList();
     }
@@ -764,7 +765,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     private Object applyOrCall(
-            boolean isApply, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         String methodName = isApply ? "apply" : "call";
         if (!(thisObj instanceof XMLList) || ((XMLList) thisObj).targetProperty == null)
             throw ScriptRuntime.typeErrorById("msg.isnt.function", methodName);
@@ -796,7 +797,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         // This XMLList is being called as a Function.
         // Let's find the real Function object.
         if (targetProperty == null) throw ScriptRuntime.notFunctionError(this);
@@ -835,7 +836,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
     }
 }

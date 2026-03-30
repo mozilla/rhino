@@ -70,7 +70,7 @@ public class NativeGlobal implements Serializable {
                 continue;
             }
             String name = error.name();
-            Scriptable topLevelScope = ScriptableObject.getTopLevelScope(scope);
+            TopLevel topLevelScope = ScriptableObject.getTopLevelScope(scope);
             Function builtinErrorCtor =
                     TopLevel.getBuiltinCtor(cx, topLevelScope, TopLevel.Builtins.Error);
             ScriptableObject errorProto = NativeError.makeProto(topLevelScope, builtinErrorCtor);
@@ -90,7 +90,7 @@ public class NativeGlobal implements Serializable {
 
                             @Override
                             public Scriptable construct(
-                                    Context callCx, Scriptable callScope, Object[] args) {
+                                    Context callCx, VarScope callScope, Object[] args) {
                                 return NativeError.makeAggregate(
                                         callCx, callScope, lateBoundCtor, args);
                             }
@@ -101,7 +101,7 @@ public class NativeGlobal implements Serializable {
                             // built-ins/NativeErrors/AggregateError/newtarget-proto-custom.js work
                             // correctly
                             @Override
-                            public Scriptable createObject(Context cx, Scriptable scope) {
+                            public Scriptable createObject(Context cx, VarScope scope) {
                                 return null;
                             }
                         };
@@ -113,7 +113,7 @@ public class NativeGlobal implements Serializable {
 
                             @Override
                             public Scriptable construct(
-                                    Context callCx, Scriptable callScope, Object[] args) {
+                                    Context callCx, VarScope callScope, Object[] args) {
                                 return NativeError.make(callCx, callScope, lateBoundCtor, args);
                             }
                         };
@@ -138,7 +138,7 @@ public class NativeGlobal implements Serializable {
     }
 
     private static void defineGlobalFunction(
-            Scriptable scope,
+            VarScope scope,
             boolean sealed,
             String name,
             int length,
@@ -148,7 +148,7 @@ public class NativeGlobal implements Serializable {
     }
 
     private static void registerGlobalFunction(
-            Scriptable scope, boolean sealed, String name, LambdaFunction fun) {
+            VarScope scope, boolean sealed, String name, LambdaFunction fun) {
         ScriptableObject.defineProperty(scope, name, fun, DONTENUM);
         if (sealed) {
             fun.sealObject();
@@ -156,7 +156,7 @@ public class NativeGlobal implements Serializable {
     }
 
     // Eval is special because we need to "recognize" it in isEvalFunction
-    private static void defineGlobalFunctionEval(Scriptable scope, boolean sealed) {
+    private static void defineGlobalFunctionEval(VarScope scope, boolean sealed) {
         LambdaFunction evalFun = new EvalLambdaFunction(scope);
         registerGlobalFunction(scope, sealed, "eval", evalFun);
     }
@@ -165,21 +165,18 @@ public class NativeGlobal implements Serializable {
         return functionObj instanceof EvalLambdaFunction;
     }
 
-    private static String js_uneval(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_uneval(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object value = (args.length != 0) ? args[0] : Undefined.instance;
         return ScriptRuntime.uneval(cx, scope, value);
     }
 
-    private static Boolean js_isXMLName(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Boolean js_isXMLName(Context cx, VarScope scope, Object thisObj, Object[] args) {
         Object name = (args.length == 0) ? Undefined.instance : args[0];
         XMLLib xmlLib = XMLLib.extractFromScope(scope);
         return xmlLib.isXMLName(cx, name);
     }
 
-    private static Boolean js_isNaN(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Boolean js_isNaN(Context cx, VarScope scope, Object thisObj, Object[] args) {
         // The global method isNaN, as per ECMA-262 15.1.2.6.
         if (args.length < 1) {
             return true;
@@ -189,40 +186,37 @@ public class NativeGlobal implements Serializable {
         }
     }
 
-    private static Object js_isFinite(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_isFinite(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (args.length < 1) {
             return Boolean.FALSE;
         }
         return NativeNumber.isFinite(args[0]);
     }
 
-    private static String js_decodeURI(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_decodeURI(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return decode(str, true);
     }
 
     private static String js_decodeURIComponent(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return decode(str, false);
     }
 
-    private static String js_encodeURI(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static String js_encodeURI(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return encode(str, true);
     }
 
     private static String js_encodeURIComponent(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx, VarScope scope, Object thisObj, Object[] args) {
         String str = ScriptRuntime.toString(args, 0);
         return encode(str, false);
     }
 
     /** The global method parseInt, as per ECMA-262 15.1.2.2. */
-    static Object js_parseInt(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    static Object js_parseInt(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String s = ScriptRuntime.toString(args, 0);
         int radix = ScriptRuntime.toInt32(args, 1);
 
@@ -275,7 +269,7 @@ public class NativeGlobal implements Serializable {
      *
      * @param args the arguments to parseFloat, ignoring args[>=1]
      */
-    static Object js_parseFloat(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    static Object js_parseFloat(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (args.length < 1) return ScriptRuntime.NaNobj;
 
         String s = ScriptRuntime.toString(args[0]);
@@ -385,8 +379,7 @@ public class NativeGlobal implements Serializable {
      * <p>Includes code for the 'mask' argument supported by the C escape method, which used to be
      * part of the browser embedding. Blame for the strange constant names should be directed there.
      */
-    private static Object js_escape(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_escape(Context cx, VarScope scope, Object thisObj, Object[] args) {
         final int URL_XALPHAS = 1, URL_XPALPHAS = 2, URL_PATH = 4;
 
         String s = ScriptRuntime.toString(args, 0);
@@ -451,8 +444,7 @@ public class NativeGlobal implements Serializable {
     }
 
     /** The global unescape method, as per ECMA-262 15.1.2.5. */
-    private static Object js_unescape(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object js_unescape(Context cx, VarScope scope, Object thisObj, Object[] args) {
         String s = ScriptRuntime.toString(args, 0);
         int firstEscapePos = s.indexOf('%');
         if (firstEscapePos >= 0) {
@@ -494,9 +486,9 @@ public class NativeGlobal implements Serializable {
      * This is an indirect call to eval, and thus uses the global environment. Direct calls are
      * executed via ScriptRuntime.callSpecial().
      */
-    private static Object js_eval(Context cx, Scriptable scope, Object[] args) {
-        Scriptable global = ScriptableObject.getTopLevelScope(scope);
-        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
+    private static Object js_eval(Context cx, VarScope scope, Object[] args) {
+        TopLevel global = ScriptableObject.getTopLevelScope(scope);
+        return ScriptRuntime.evalSpecial(cx, global, global.getGlobalThis(), args, "eval code", 1);
     }
 
     /**
@@ -754,7 +746,7 @@ public class NativeGlobal implements Serializable {
      * in {@link NativeGlobal#isEvalFunction}
      */
     private static class EvalLambdaFunction extends LambdaFunction {
-        public EvalLambdaFunction(Scriptable scope) {
+        public EvalLambdaFunction(VarScope scope) {
             super(
                     scope,
                     "eval",

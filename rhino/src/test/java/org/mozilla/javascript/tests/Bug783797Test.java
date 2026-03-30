@@ -11,8 +11,9 @@ import static org.mozilla.javascript.testutils.Utils.runWithAllModes;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScopeWrapper;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * @author André Bargull
@@ -36,7 +37,7 @@ public class Bug783797Test {
         };
     }
 
-    private static Object eval(Context cx, Scriptable scope, String source) {
+    private static Object eval(Context cx, VarScope scope, String source) {
         return cx.evaluateString(scope, source, "<eval>", 1, null);
     }
 
@@ -477,11 +478,21 @@ public class Bug783797Test {
                         new Action() {
                             @Override
                             public void run(Context cx, TopLevel scope1, TopLevel scope2) {
-                                assertSame(scope2, eval(cx, scope2, "test.__parent__"));
-                                assertSame(scope2, eval(cx, scope1, "scope2.test.__parent__"));
-                                assertSame(
-                                        scope2,
-                                        eval(cx, scope1, "var t=scope2.test; t.__parent__"));
+                                Object parent = eval(cx, scope2, "test.__parent__");
+                                if (parent instanceof ScopeWrapper) {
+                                    parent = ((ScopeWrapper) parent).getScope();
+                                }
+                                assertSame(scope2, parent);
+                                parent = eval(cx, scope1, "scope2.test.__parent__");
+                                if (parent instanceof ScopeWrapper) {
+                                    parent = ((ScopeWrapper) parent).getScope();
+                                }
+                                assertSame(scope2, parent);
+                                parent = eval(cx, scope1, "var t=scope2.test; t.__parent__");
+                                if (parent instanceof ScopeWrapper) {
+                                    parent = ((ScopeWrapper) parent).getScope();
+                                }
+                                assertSame(scope2, parent);
                             }
                         }));
     }

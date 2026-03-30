@@ -45,7 +45,9 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Synchronizer;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
@@ -322,7 +324,7 @@ public class Global extends ImporterTopLevel {
             throw reportRuntimeError("msg.must.implement.Script");
         }
         Script script = (Script) clazz.getDeclaredConstructor().newInstance();
-        script.exec(cx, thisObj, thisObj);
+        script.exec(cx, funObj.getDeclarationScope(), thisObj);
     }
 
     private static Class<?> getClass(Object[] args) {
@@ -352,7 +354,7 @@ public class Global extends ImporterTopLevel {
         Object obj = args[0];
         String filename = Context.toString(args[1]);
         FileOutputStream fos = new FileOutputStream(filename);
-        Scriptable scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
+        TopLevel scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
         try (ScriptableOutputStream out = new ScriptableOutputStream(fos, scope)) {
             out.writeObject(obj);
         }
@@ -365,7 +367,7 @@ public class Global extends ImporterTopLevel {
         }
         String filename = Context.toString(args[0]);
         try (FileInputStream fis = new FileInputStream(filename)) {
-            Scriptable scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
+            VarScope scope = ScriptableObject.getTopLevelScope(funObj.getDeclarationScope());
             try (ObjectInputStream in = new ScriptableInputStream(fis, scope)) {
                 Object deserialized = in.readObject();
                 return Context.toObject(deserialized, scope);
@@ -410,7 +412,7 @@ public class Global extends ImporterTopLevel {
 
     @SuppressWarnings("AndroidJdkLibsChecker")
     public int runDoctest(
-            Context cx, Scriptable scope, String session, String sourceName, int lineNumber) {
+            Context cx, VarScope scope, String session, String sourceName, int lineNumber) {
         doctestCanonicalizations = new HashMap<String, String>();
         String[] lines = session.split("\r\n?|\n", -1);
         String prompt0 = prompts[0].trim();
@@ -539,7 +541,7 @@ public class Global extends ImporterTopLevel {
      * </pre>
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Scriptable scope = funObj.getParentScope();
+        VarScope scope = funObj.getParentScope();
         ContextAction<?> action = getAsyncAction(cx, args, scope);
         ContextFactory factory = cx.getFactory();
         Thread thread = new Thread(() -> factory.call(action));
@@ -547,19 +549,19 @@ public class Global extends ImporterTopLevel {
         return cx.getWrapFactory().wrap(cx, scope, thread, Thread.class);
     }
 
-    private static ContextAction<Object> getAsyncAction(
-            Context cx, Object[] args, Scriptable scope) {
+    private static ContextAction<Object> getAsyncAction(Context cx, Object[] args, VarScope scope) {
         ContextAction<Object> action;
+        Scriptable thisObj = ScriptableObject.getTopLevelScope(scope).getGlobalThis();
         if (args.length != 0 && args[0] instanceof Function) {
             Function f = (Function) args[0];
             Object[] newArgs =
                     args.length > 1 && args[1] instanceof Scriptable
                             ? cx.getElements((Scriptable) args[1])
                             : ScriptRuntime.emptyArgs;
-            action = cx2 -> f.call(cx2, scope, scope, newArgs);
+            action = cx2 -> f.call(cx2, scope, thisObj, newArgs);
         } else if (args.length != 0 && args[0] instanceof Script) {
             Script s = (Script) args[0];
-            action = cx2 -> s.exec(cx2, scope, scope);
+            action = cx2 -> s.exec(cx2, scope, thisObj);
         } else {
             throw reportRuntimeError("msg.spawn.args");
         }
@@ -786,7 +788,7 @@ public class Global extends ImporterTopLevel {
     }
 
     private static Global getInstance(Function function) {
-        Scriptable scope = function.getParentScope();
+        VarScope scope = function.getParentScope();
         if (!(scope instanceof Global))
             throw reportRuntimeError("msg.bad.shell.function.scope", String.valueOf(scope));
         return (Global) scope;

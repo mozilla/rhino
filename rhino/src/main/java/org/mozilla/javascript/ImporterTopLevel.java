@@ -138,16 +138,11 @@ public class ImporterTopLevel extends TopLevel {
         topScopeFlag = true;
     }
 
-    @Override
-    public String getClassName() {
-        return topScopeFlag ? "global" : "JavaImporter";
-    }
-
-    public static void init(Context cx, Scriptable scope, boolean sealed) {
+    public static void init(Context cx, VarScope scope, boolean sealed) {
         init(cx, scope, sealed, false);
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed, boolean isTopScope) {
+    public static void init(Context cx, VarScope scope, boolean sealed, boolean isTopScope) {
         var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
         var proto = (Scriptable) ctor.getPrototypeProperty();
 
@@ -201,7 +196,7 @@ public class ImporterTopLevel extends TopLevel {
     // than a scope, and then we need to work out to how make the
     // import work on the correct thing.
     private static Scriptable js_construct(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         ImporterGlobalThis result = new ImporterGlobalThis(false);
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
@@ -225,7 +220,7 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     private static Object js_importClass(
-            Context cx, Function f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, Function f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (Undefined.isUndefined(thisObj)) {
             thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
         }
@@ -240,7 +235,7 @@ public class ImporterTopLevel extends TopLevel {
     }
 
     private static Object js_importPackage(
-            Context cx, Function f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, Function f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (Undefined.isUndefined(thisObj)) {
             thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
         }

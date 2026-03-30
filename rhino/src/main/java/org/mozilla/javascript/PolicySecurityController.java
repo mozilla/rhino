@@ -84,10 +84,10 @@ public class PolicySecurityController extends SecurityController {
 
     @Override
     public Object callWithDomain(
-            final Object securityDomain,
-            final Context cx,
+            Object securityDomain,
+            Context cx,
             Callable callable,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             Object[] args) {
         // Run in doPrivileged as we might be checked for "getClassLoader"
@@ -145,7 +145,7 @@ public class PolicySecurityController extends SecurityController {
 
     public abstract static class SecureCaller {
         public abstract Object call(
-                Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args);
+                Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args);
     }
 
     private static byte[] loadBytecode() {

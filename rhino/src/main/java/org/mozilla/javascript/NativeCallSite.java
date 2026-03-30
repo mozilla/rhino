@@ -15,12 +15,12 @@ public class NativeCallSite extends IdScriptableObject {
     private static final String CALLSITE_TAG = "CallSite";
     private ScriptStackElement element;
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(VarScope scope, boolean sealed) {
         NativeCallSite cs = new NativeCallSite();
         cs.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    static NativeCallSite make(Scriptable scope, Scriptable ctorObj) {
+    static NativeCallSite make(VarScope scope, Scriptable ctorObj) {
         NativeCallSite cs = new NativeCallSite();
         Scriptable proto = (Scriptable) ctorObj.get("prototype", ctorObj);
         cs.setParentScope(scope);
@@ -112,7 +112,7 @@ public class NativeCallSite extends IdScriptableObject {
 
     @Override
     public Object execIdCall(
-            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            IdFunctionObject f, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (!f.hasTag(CALLSITE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }

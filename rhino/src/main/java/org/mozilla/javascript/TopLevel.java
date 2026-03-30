@@ -32,7 +32,7 @@ import java.util.EnumMap;
  * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(boolean)} to initialize
  * the class cache for each top-level scope.
  */
-public class TopLevel extends ScriptableObject {
+public class TopLevel extends ScopeObject {
 
     private static final long serialVersionUID = -4648046356662472260L;
 
@@ -129,6 +129,7 @@ public class TopLevel extends ScriptableObject {
     }
 
     public TopLevel(ScriptableObject customGlobal) {
+        super(null);
         globalThis = customGlobal;
     }
 
@@ -232,7 +233,7 @@ public class TopLevel extends ScriptableObject {
      * @param type the built-in type
      * @return the built-in constructor
      */
-    public static Function getBuiltinCtor(Context cx, Scriptable scope, Builtins type) {
+    public static Function getBuiltinCtor(Context cx, VarScope scope, Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
@@ -264,7 +265,7 @@ public class TopLevel extends ScriptableObject {
      * @param type the native error type
      * @return the native error constructor
      */
-    static Function getNativeErrorCtor(Context cx, Scriptable scope, NativeErrors type) {
+    static Function getNativeErrorCtor(Context cx, VarScope scope, NativeErrors type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
@@ -426,5 +427,10 @@ public class TopLevel extends ScriptableObject {
     @Override
     public void defineConst(String name, Scriptable start) {
         globalThis.defineConst(name, globalThis);
+    }
+
+    public void defineFunctionProperties(
+            VarScope scope, String[] names, Class<?> clazz, int attributes) {
+        getGlobalThis().defineFunctionProperties(scope, names, clazz, attributes);
     }
 }

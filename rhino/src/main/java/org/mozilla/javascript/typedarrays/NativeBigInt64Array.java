@@ -14,6 +14,7 @@ import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array"
@@ -40,14 +41,14 @@ public class NativeBigInt64Array extends NativeBigIntArrayView {
         return CLASS_NAME;
     }
 
-    public static Object init(Context cx, Scriptable scope, boolean sealed) {
+    public static Object init(Context cx, VarScope scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
                         CLASS_NAME,
                         3,
                         LambdaConstructor.CONSTRUCTOR_NEW,
-                        (Context lcx, Scriptable lscope, Object[] args) ->
+                        (Context lcx, VarScope lscope, Object[] args) ->
                                 NativeTypedArrayView.js_constructor(
                                         lcx,
                                         lscope,

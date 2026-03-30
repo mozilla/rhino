@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
 import java.io.PrintStream;
@@ -81,7 +83,7 @@ public final class Interpreter extends Icode implements Evaluator {
         int pc;
         int pcPrevBranch;
         int pcSourceLineStart;
-        Scriptable scope;
+        VarScope scope;
 
         int savedStackTop;
         int savedCallOp;
@@ -247,7 +249,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         void initializeArgs(
                 Context cx,
-                Scriptable callerScope,
+                VarScope callerScope,
                 Object[] args,
                 double[] argsDbl,
                 Object[] boundArgs,
@@ -395,13 +397,14 @@ public final class Interpreter extends Icode implements Evaluator {
                     if (ScriptRuntime.hasTopCall(cx)) {
                         return equalsInTopScope(other).booleanValue();
                     }
-                    final Scriptable top = ScriptableObject.getTopLevelScope(scope);
+                    TopLevel top = ScriptableObject.getTopLevelScope(scope);
+                    Scriptable global = top.getGlobalThis();
                     return ((Boolean)
                                     ScriptRuntime.doTopCall(
                                             (c, scope, thisObj) -> equalsInTopScope(other),
                                             cx,
                                             top,
-                                            top,
+                                            global,
                                             isStrictTopFrame()))
                             .booleanValue();
                 }
@@ -499,7 +502,7 @@ public final class Interpreter extends Icode implements Evaluator {
      * common than inspection by the debugger) and it reduces the chance that programs might
      * evexcute differently in debug mode.
      */
-    private static class DebugScope implements Scriptable {
+    private static class DebugScope implements VarScope {
         private final CallFrame frame;
         private volatile Map<String, Integer> offsets;
 
@@ -564,7 +567,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public Scriptable getParentScope() {
+        public VarScope getParentScope() {
             return frame.scope;
         }
 
@@ -602,13 +605,36 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public void setParentScope(Scriptable parent) {
+        public void setParentScope(VarScope parent) {
             // Do nothing.
         }
 
         @Override
         public void setPrototype(Scriptable prototype) {
             // Do nothing.
+        }
+
+        @Override
+        public void defineConst(String name, Scriptable start) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public boolean isConst(String name) {
+            int offset = getOffsets().getOrDefault(name, -1);
+            if (offset >= 0) {
+                return (frame.stackAttributes[offset] & (PERMANENT | READONLY))
+                        == (PERMANENT | READONLY);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void putConst(String name, Scriptable start, Object value) {
+            // TODO Auto-generated method stub
+
         }
     }
 
@@ -734,7 +760,7 @@ public final class Interpreter extends Icode implements Evaluator {
     @Override
     @SuppressWarnings("unchecked")
     public Function createFunctionObject(
-            Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain) {
+            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain) {
         var compilerResult = (CompilationResult<JSFunction>) bytecode;
         return JSFunction.createFunction(
                 cx,
@@ -1143,7 +1169,7 @@ public final class Interpreter extends Icode implements Evaluator {
         return desc.getRawSource();
     }
 
-    private static void initFunction(Context cx, Scriptable scope, JSDescriptor parent, int index) {
+    private static void initFunction(Context cx, VarScope scope, JSDescriptor parent, int index) {
         JSFunction fn;
         fn = JSFunction.createFunction(cx, scope, parent, index, null);
         var desc = fn.getDescriptor();
@@ -1154,7 +1180,7 @@ public final class Interpreter extends Icode implements Evaluator {
             ScriptOrFn ifun,
             InterpreterData idata,
             Context cx,
-            Scriptable scope,
+            VarScope scope,
             Scriptable thisObj,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
@@ -1249,7 +1275,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     public static Object restartContinuation(
-            NativeContinuation c, Context cx, Scriptable scope, Object[] args) {
+            NativeContinuation c, Context cx, VarScope scope, Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isStrictMode());
         }
@@ -2845,7 +2871,7 @@ public final class Interpreter extends Icode implements Evaluator {
             final double[] sDbl = frame.sDbl;
             Object rhs = stack[state.stackTop];
             if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            Scriptable lhs = (Scriptable) stack[state.stackTop - 1];
+            VarScope lhs = (VarScope) stack[state.stackTop - 1];
             stack[state.stackTop - 1] =
                     op == Token.SETNAME
                             ? ScriptRuntime.setName(lhs, rhs, cx, frame.scope, state.stringReg)
@@ -2882,7 +2908,7 @@ public final class Interpreter extends Icode implements Evaluator {
             final double[] sDbl = frame.sDbl;
             Object rhs = stack[state.stackTop];
             if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            Scriptable lhs = (Scriptable) stack[state.stackTop - 1];
+            VarScope lhs = (VarScope) stack[state.stackTop - 1];
             stack[state.stackTop - 1] = ScriptRuntime.setConst(lhs, rhs, cx, state.stringReg);
             --state.stackTop;
             return null;
@@ -3138,7 +3164,8 @@ public final class Interpreter extends Icode implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             Ref ref = (Ref) stack[state.stackTop];
-            stack[state.stackTop] = ScriptRuntime.refGet(ref, cx);
+            var res = ScriptRuntime.refGet(ref, cx);
+            stack[state.stackTop] = res;
             return null;
         }
     }
@@ -3413,7 +3440,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                 outArgs, cx);
                 return null;
             }
-            Scriptable callerScope = frame.scope;
+            VarScope callerScope = frame.scope;
             // Iteratively reduce known function types: arrows, lambdas,
             // bound functions, call/apply, and no-such-method-handler in
             // order to make a best-effort to keep them in this interpreter
@@ -4267,7 +4294,7 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.indexReg += frame.idata.itsMaxVars;
-            frame.scope = (Scriptable) frame.stack[state.indexReg];
+            frame.scope = (VarScope) frame.stack[state.indexReg];
             return null;
         }
     }
@@ -4914,7 +4941,7 @@ public final class Interpreter extends Icode implements Evaluator {
             int localShift = frame.idata.itsMaxVars;
             int scopeLocal = localShift + table[indexReg + EXCEPTION_SCOPE_SLOT];
             int exLocal = localShift + table[indexReg + EXCEPTION_LOCAL_SLOT];
-            frame.scope = (Scriptable) frame.stack[scopeLocal];
+            frame.scope = (VarScope) frame.stack[scopeLocal];
             frame.stack[exLocal] = throwable;
 
             throwable = null;
@@ -5005,7 +5032,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static CallFrame initFrame(
             Context cx,
-            Scriptable callerScope,
+            VarScope callerScope,
             Scriptable thisObj,
             Scriptable homeObj,
             Object[] args,
@@ -5037,7 +5064,7 @@ public final class Interpreter extends Icode implements Evaluator {
         boolean usesActivation = frame.fnOrScript.getDescriptor().requiresActivationFrame();
         boolean isDebugged = frame.debuggerFrame != null;
         if (usesActivation) {
-            Scriptable scope = frame.scope;
+            VarScope scope = frame.scope;
             if (scope == null) {
                 Kit.codeBug();
             } else if (continuationRestart) {
@@ -5045,12 +5072,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 // found. Normally, frame.scope is a NativeCall when called
                 // from initFrame() for a debugged or activatable function.
                 // However, when called from interpretLoop() as part of
-                // restarting a continuation, it can also be a NativeWith if
+                // restarting a continuation, it can also be a WIthScope if
                 // the continuation was captured within a "with" or "catch"
                 // block ("catch" implicitly uses NativeWith to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
-                    if (scope instanceof NativeWith) {
+                    if (scope instanceof WithScope) {
                         scope = scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null

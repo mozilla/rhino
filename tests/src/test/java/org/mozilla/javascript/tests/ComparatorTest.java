@@ -11,6 +11,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class ComparatorTest {
@@ -75,7 +76,7 @@ public class ComparatorTest {
     public void customComparator() throws IOException {
         try (Context cx = Context.enter()) {
             Global global = new Global(cx);
-            Scriptable root = cx.newObject(global);
+            VarScope root = cx.newVarEnv(global);
             FileReader fr = new FileReader("testsrc/jstests/extensions/custom-comparators.js");
 
             cx.evaluateReader(root, fr, "custom-comparators.js", 1, null);

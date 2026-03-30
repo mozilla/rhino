@@ -18,6 +18,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Implements the require() function as defined by <a
@@ -38,7 +39,7 @@ import org.mozilla.javascript.Undefined;
  * <p>&lt;h1&gt;Making it available&lt;/h1&gt;
  *
  * <p>In order to make the require() function available to your JavaScript program, you need to
- * invoke either {@link #install(Scriptable)} or {@link #requireMain(Context, String)}.
+ * invoke either {@link #install(VarScope)} or {@link #requireMain(Context, String)}.
  *
  * @author Attila Szegedi
  * @version $Id: Require.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
@@ -64,7 +65,7 @@ public class Require extends BaseFunction {
 
     /**
      * Creates a new instance of the require() function. Upon constructing it, you will either want
-     * to install it in the global (or some other) scope using {@link #install(Scriptable)}, or
+     * to install it in the global (or some other) scope using {@link #install(VarScope)}, or
      * alternatively, you can load the program's main module using {@link #requireMain(Context,
      * String)} and then act on the main module's exports.
      *
@@ -168,12 +169,12 @@ public class Require extends BaseFunction {
      *
      * @param scope the scope where the require() function is to be installed.
      */
-    public void install(Scriptable scope) {
+    public void install(VarScope scope) {
         ScriptableObject.putProperty(scope, "require", this);
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
         if (args == null || args.length < 1) {
             throw ScriptRuntime.throwError(cx, scope, "require() needs one argument");
         }
@@ -223,7 +224,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.throwError(cx, scope, "require() can not be invoked as a constructor");
     }
 
@@ -320,7 +321,7 @@ public class Require extends BaseFunction {
         if (!sandboxed) {
             defineReadOnlyProperty(moduleObject, "uri", uri.toString());
         }
-        final Scriptable executionScope = ModuleScope.createModuleScope(nativeScope, uri, base);
+        VarScope executionScope = ModuleScope.createModuleScope(nativeScope, uri, base);
         // Set this so it can access the global JS environment objects.
         // This means we're currently using the "MGN" approach (ModuleScript
         // with Global Natives) as specified here:
@@ -340,7 +341,7 @@ public class Require extends BaseFunction {
     }
 
     private static void executeOptionalScript(
-            Script script, Context cx, Scriptable executionScope, Scriptable thisObj) {
+            Script script, Context cx, VarScope executionScope, Scriptable thisObj) {
         if (script != null) {
             script.exec(cx, executionScope, thisObj);
         }
