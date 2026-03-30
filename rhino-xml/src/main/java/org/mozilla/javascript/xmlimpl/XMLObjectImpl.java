@@ -13,7 +13,6 @@ import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Ref;
 import org.mozilla.javascript.ScriptRuntime;
@@ -21,6 +20,8 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolScriptable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.WithScope;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
@@ -123,11 +124,11 @@ abstract class XMLObjectImpl extends XMLObject {
                         0);
     }
 
-    protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    protected XMLObjectImpl(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         initialize(lib, scope, prototype);
     }
 
-    final void initialize(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+    final void initialize(XMLLibImpl lib, VarScope scope, XMLObject prototype) {
         setParentScope(scope);
         setPrototype(prototype);
         prototypeFlag = (prototype == null);
@@ -456,12 +457,12 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public NativeWith enterWith(Scriptable scope) {
+    public WithScope enterWith(VarScope scope) {
         return new XMLWithScope(lib, scope, this);
     }
 
     @Override
-    public NativeWith enterDotQuery(Scriptable scope) {
+    public WithScope enterDotQuery(VarScope scope) {
         XMLWithScope xws = new XMLWithScope(lib, scope, this);
         xws.initAsDotQuery();
         return xws;
@@ -501,7 +502,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_appendChild(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -510,7 +511,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_addNamespace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -520,7 +521,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_childIndex(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -529,7 +530,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_inScopeNamespaces(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -538,7 +539,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_insertChildAfter(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -551,7 +552,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_insertChildBefore(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -564,7 +565,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_localName(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -573,7 +574,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_name(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -582,7 +583,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_namespace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -597,7 +598,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_namespaceDeclarations(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -607,7 +608,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_nodeKind(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -616,7 +617,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_prependChild(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -625,7 +626,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_removeNamespace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -635,7 +636,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_replace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -652,7 +653,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_setChildren(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -661,7 +662,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_setLocalName(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -678,7 +679,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_setName(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -690,7 +691,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_setNamespace(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -701,7 +702,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_attribute(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XML xml = realThis.getXML();
@@ -711,13 +712,13 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_attributes(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.getMatches(XMLName.create(XmlNode.QName.create(null, null), true, false));
     }
 
     private static Object js_child(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
 
         XMLName xmlName = realThis.lib.toXMLNameOrIndex(cx, arg(args, 0));
@@ -731,31 +732,31 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_children(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.children();
     }
 
     private static Object js_comments(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.comments();
     }
 
     private static Object js_contains(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return ScriptRuntime.wrapBoolean(realThis.contains(arg(args, 0)));
     }
 
     private static Object js_copy(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.copy();
     }
 
     private static Object js_descendants(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         XmlNode.QName qname =
                 (args.length == 0)
@@ -765,7 +766,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_elements(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         XMLName xmlName =
                 (args.length == 0) ? XMLName.formStar() : realThis.lib.toXMLName(cx, args[0]);
@@ -773,7 +774,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_hasOwnProperty(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         if (realThis.prototypeFlag) {
             return realThis.has((String) args[0], realThis);
@@ -783,38 +784,38 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_hasComplexContent(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return ScriptRuntime.wrapBoolean(realThis.hasComplexContent());
     }
 
     private static Object js_hasSimpleContent(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return ScriptRuntime.wrapBoolean(realThis.hasSimpleContent());
     }
 
     private static Object js_length(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return ScriptRuntime.wrapInt(realThis.length());
     }
 
     private static Object js_normalize(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         realThis.normalize();
         return Undefined.instance;
     }
 
     private static Object js_parent(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.parent();
     }
 
     private static Object js_processingInstructions(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         XMLName xmlName =
                 (args.length > 0) ? realThis.lib.toXMLName(cx, args[0]) : XMLName.formStar();
@@ -822,38 +823,38 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_propertyIsEnumerable(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return ScriptRuntime.wrapBoolean(realThis.propertyIsEnumerable(arg(args, 0)));
     }
 
     private static Object js_text(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.text();
     }
 
     private static Object js_toString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.toString();
     }
 
     private static Object js_toSource(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         int indent = ScriptRuntime.toInt32(args, 0);
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.toSource(indent);
     }
 
     private static Object js_toXMLString(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.toXMLString();
     }
 
     private static Object js_valueOf(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLObjectImpl realThis = realThis(thisObj, f.getFunctionName());
         return realThis.valueOf();
     }
@@ -964,7 +965,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_defaultSettings(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         getLib(thisObj).getProcessor().setDefault();
         var res = cx.newObject(s);
         writeSetting(thisObj, res);
@@ -972,14 +973,14 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     private static Object js_settings(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var res = cx.newObject(s);
         writeSetting(thisObj, res);
         return res;
     }
 
     private static Object js_setSettings(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             getLib(thisObj).getProcessor().setDefault();
         } else if (args[0] instanceof Scriptable) {

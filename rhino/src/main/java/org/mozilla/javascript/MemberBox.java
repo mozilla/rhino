@@ -36,17 +36,17 @@ final class MemberBox implements Serializable {
     transient Function asSetterFunction;
     transient Object delegateTo;
 
-    final Scriptable scope;
+    final VarScope scope;
 
     private static final NullabilityDetector nullDetector =
             ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
 
-    MemberBox(Scriptable scope, Method method) {
+    MemberBox(VarScope scope, Method method) {
         this.scope = scope;
         init(method);
     }
 
-    MemberBox(Scriptable scope, Constructor<?> constructor) {
+    MemberBox(VarScope scope, Constructor<?> constructor) {
         this.scope = scope;
         init(constructor);
     }
@@ -170,8 +170,8 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
-                                Scriptable thisObj,
+                                VarScope callScope,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
                             if (nativeGetter.delegateTo == null) {
@@ -203,15 +203,15 @@ final class MemberBox implements Serializable {
                         @Override
                         public Object call(
                                 Context cx,
-                                Scriptable callScope,
-                                Scriptable thisObj,
+                                VarScope callScope,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
                             Object value =
                                     originalArgs.length > 0
                                             ? FunctionObject.convertArg(
                                                     cx,
-                                                    thisObj,
+                                                    callScope,
                                                     originalArgs[0],
                                                     setterTypeTag,
                                                     nativeSetter.getArgNullability().isNullable(0))

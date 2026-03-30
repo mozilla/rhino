@@ -10,7 +10,9 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.annotations.*;
 import org.openjdk.jmh.annotations.*;
 
@@ -56,7 +58,7 @@ public class BuiltinBenchmark {
         }
 
         Context cx;
-        Scriptable scope;
+        TopLevel scope;
         Script testScript;
     }
 
@@ -74,7 +76,7 @@ public class BuiltinBenchmark {
 
     @Benchmark
     public Object annotatedClassMethods(AnnotatedClassState state) {
-        return state.testScript.exec(state.cx, state.scope, state.scope);
+        return state.testScript.exec(state.cx, state.scope, state.scope.getGlobalThis());
     }
 
     public static class AnnotatedClass extends ScriptableObject {
@@ -138,14 +140,14 @@ public class BuiltinBenchmark {
 
     @Benchmark
     public Object idClassMethods(IdClassState state) {
-        return state.testScript.exec(state.cx, state.scope, state.scope);
+        return state.testScript.exec(state.cx, state.scope, state.scope.getGlobalThis());
     }
 
     public static class IdClass extends IdScriptableObject {
 
         private static final String TAG = "IdClass";
 
-        public static void init(Scriptable scope) {
+        public static void init(TopLevel scope) {
             IdClass idc = new IdClass();
             idc.exportAsJSClass(MAX_ID, scope, false);
         }
@@ -217,11 +219,7 @@ public class BuiltinBenchmark {
 
         @Override
         public Object execIdCall(
-                IdFunctionObject f,
-                Context cx,
-                Scriptable scope,
-                Scriptable thisObj,
-                Object[] args) {
+                IdFunctionObject f, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             if (!f.hasTag(TAG)) {
                 return super.execIdCall(f, cx, scope, thisObj, args);
             }
@@ -331,18 +329,17 @@ public class BuiltinBenchmark {
 
     @Benchmark
     public Object dumbLambdaClassMethods(DumbLambdaState state) {
-        return state.testScript.exec(state.cx, state.scope, state.scope);
+        return state.testScript.exec(state.cx, state.scope, state.scope.getGlobalThis());
     }
 
     private static class DumbLambdaClass extends ScriptableObject {
 
-        private static Object noop(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object noop(Context cx, VarScope scope, Object thisObj, Object[] args) {
             return Undefined.instance;
         }
 
         private static Object setValue(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (args.length < 1) {
                 throw ScriptRuntime.throwError(cx, scope, "Not enough args");
             }
@@ -353,19 +350,19 @@ public class BuiltinBenchmark {
         }
 
         private static Object getValue(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Object thisObj, Object[] args) {
             DumbLambdaClass self =
                     LambdaConstructor.convertThisObject(thisObj, DumbLambdaClass.class);
             return self.value;
         }
 
-        public static void init(Scriptable scope) {
+        public static void init(VarScope scope) {
             LambdaConstructor cons =
                     new LambdaConstructor(
                             scope,
                             "DumbLambdaClass",
                             0,
-                            (Context cx, Scriptable s, Object[] args) -> new DumbLambdaClass());
+                            (Context cx, VarScope s, Object[] args) -> new DumbLambdaClass());
             cons.definePrototypeMethod(scope, "one", 0, DumbLambdaClass::noop);
             cons.definePrototypeMethod(scope, "two", 0, DumbLambdaClass::noop);
             cons.definePrototypeMethod(scope, "three", 0, DumbLambdaClass::noop);

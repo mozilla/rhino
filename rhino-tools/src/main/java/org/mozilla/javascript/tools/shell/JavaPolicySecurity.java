@@ -23,7 +23,7 @@ import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 
 public class JavaPolicySecurity extends SecurityProxy {
 
@@ -125,8 +125,7 @@ public class JavaPolicySecurity extends SecurityProxy {
     }
 
     @Override
-    protected void callProcessFileSecure(
-            final Context cx, final Scriptable scope, final String filename) {
+    protected void callProcessFileSecure(Context cx, VarScope scope, String filename) {
         AccessController.doPrivileged(
                 new PrivilegedAction<Object>() {
                     @Override
@@ -134,7 +133,8 @@ public class JavaPolicySecurity extends SecurityProxy {
                         URL url = getUrlObj(filename);
                         ProtectionDomain staticDomain = getUrlDomain(url);
                         try {
-                            Main.processFileSecure(cx, scope, url.toExternalForm(), staticDomain);
+                            Main.processFileSecure(
+                                    cx, (VarScope) scope, url.toExternalForm(), staticDomain);
                         } catch (IOException ioex) {
                             throw new RuntimeException(ioex);
                         }
@@ -201,22 +201,22 @@ public class JavaPolicySecurity extends SecurityProxy {
     @Override
     public Object callWithDomain(
             Object securityDomain,
-            final Context cx,
-            final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            Context cx,
+            Callable callable,
+            VarScope scope,
+            Object thisObj,
+            Object[] args) {
         return doAction(securityDomain, () -> callable.call(cx, scope, thisObj, args));
     }
 
     @Override
     public Object callWithDomain(
             Object securityDomain,
-            final Context cx,
-            final Script script,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            Context cx,
+            Script script,
+            VarScope scope,
+            Object thisObj,
+            Object[] args) {
         return doAction(securityDomain, () -> script.exec(cx, scope, thisObj));
     }
 

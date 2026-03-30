@@ -30,12 +30,12 @@ public class NativeJavaMap extends NativeJavaObject {
     private final TypeInfo keyType;
     private final TypeInfo valueType;
 
-    static void init(TopLevel scope, boolean sealed) {
-        NativeJavaMapIterator.init(scope, sealed);
+    static void init(Context cx, TopLevel scope, boolean sealed) {
+        NativeJavaMapIterator.init(cx, scope, sealed);
     }
 
     @SuppressWarnings("unchecked")
-    public NativeJavaMap(Scriptable scope, Object map, TypeInfo staticType) {
+    public NativeJavaMap(VarScope scope, Object map, TypeInfo staticType) {
         super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
@@ -86,7 +86,7 @@ public class NativeJavaMap extends NativeJavaObject {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
-                return cx.getWrapFactory().wrap(cx, this, map.get(name), valueType);
+                return cx.getWrapFactory().wrap(cx, parent, map.get(name), valueType);
             }
         }
         return super.get(name, start);
@@ -98,7 +98,7 @@ public class NativeJavaMap extends NativeJavaObject {
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             var key = Integer.valueOf(index);
             if (map.containsKey(key)) {
-                return cx.getWrapFactory().wrap(cx, this, map.get(key), valueType);
+                return cx.getWrapFactory().wrap(cx, parent, map.get(key), valueType);
             }
         }
         return super.get(index, start);
@@ -160,7 +160,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     private static Callable symbol_iterator =
-            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+            (cx, scope, thisObj, args) -> {
                 if (!(thisObj instanceof NativeJavaMap)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
@@ -171,8 +171,17 @@ public class NativeJavaMap extends NativeJavaObject {
         private static final long serialVersionUID = 1L;
         private static final String ITERATOR_TAG = "JavaMapIterator";
 
-        static void init(TopLevel scope, boolean sealed) {
-            ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
+        private static final ClassDescriptor DESCRIPTOR =
+                ES6Iterator.makeDescriptor(ITERATOR_TAG, "Java Map Iterator");
+
+        static void init(Context cx, VarScope scope, boolean sealed) {
+            ES6Iterator.initialize(
+                    DESCRIPTOR,
+                    cx,
+                    (TopLevel) scope,
+                    new NativeJavaMapIterator(),
+                    sealed,
+                    ITERATOR_TAG);
         }
 
         /** Only for constructing the prototype object. */
@@ -180,7 +189,7 @@ public class NativeJavaMap extends NativeJavaObject {
             super();
         }
 
-        NativeJavaMapIterator(Scriptable scope, NativeJavaMap map) {
+        NativeJavaMapIterator(VarScope scope, NativeJavaMap map) {
             super(scope, ITERATOR_TAG);
             this.iterator = map.map.entrySet().iterator();
             this.keyType = map.keyType;
@@ -193,12 +202,12 @@ public class NativeJavaMap extends NativeJavaObject {
         }
 
         @Override
-        protected boolean isDone(Context cx, Scriptable scope) {
+        protected boolean isDone(Context cx, VarScope scope) {
             return !iterator.hasNext();
         }
 
         @Override
-        protected Object nextValue(Context cx, Scriptable scope) {
+        protected Object nextValue(Context cx, VarScope scope) {
             if (!iterator.hasNext()) {
                 return cx.newArray(scope, new Object[] {Undefined.instance, Undefined.instance});
             }
@@ -206,8 +215,8 @@ public class NativeJavaMap extends NativeJavaObject {
             Object key = e.getKey();
             Object value = e.getValue();
             WrapFactory wrapFactory = cx.getWrapFactory();
-            key = wrapFactory.wrap(cx, this, key, keyType);
-            value = wrapFactory.wrap(cx, this, value, valueType);
+            key = wrapFactory.wrap(cx, scope, key, keyType);
+            value = wrapFactory.wrap(cx, scope, value, valueType);
 
             return cx.newArray(scope, new Object[] {key, value});
         }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -57,7 +58,7 @@ public class NativeJavaMethodTest {
                 });
     }
 
-    private static ScriptableObject initContext(Context cx, MethodDummy methodDummy) {
+    private static ScopeObject initContext(Context cx, MethodDummy methodDummy) {
         cx.setLanguageVersion(Context.VERSION_ES6);
         final var scope = cx.initStandardObjects();
         ScriptableObject.putProperty(scope, "d", Context.javaToJS(methodDummy, scope));
