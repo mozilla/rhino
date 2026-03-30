@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -32,7 +34,7 @@ import java.util.EnumMap;
  * dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(boolean)} to initialize
  * the class cache for each top-level scope.
  */
-public class TopLevel extends ScriptableObject {
+public class TopLevel extends ScopeObject {
 
     private static final long serialVersionUID = -4648046356662472260L;
 
@@ -129,6 +131,7 @@ public class TopLevel extends ScriptableObject {
     }
 
     public TopLevel(ScriptableObject customGlobal) {
+        super(null);
         globalThis = customGlobal;
     }
 
@@ -169,11 +172,6 @@ public class TopLevel extends ScriptableObject {
         return isolate;
     }
 
-    @Override
-    public String getClassName() {
-        return "topLevel";
-    }
-
     /**
      * Cache the built-in ECMAScript objects to protect them against modifications by the script.
      * This method is called automatically by {@link ScriptRuntime#initStandardObjects
@@ -199,7 +197,10 @@ public class TopLevel extends ScriptableObject {
                 // Handle weird situation of "GeneratorFunction" being a real constructor
                 // which is never registered in the top-level scope
                 ctors.put(
-                        builtin, (BaseFunction) BaseFunction.initAsGeneratorFunction(this, sealed));
+                        builtin,
+                        (BaseFunction)
+                                BaseFunction.initAsGeneratorFunction(
+                                        Context.getCurrentContext(), this, sealed));
             }
         }
         errors = new EnumMap<>(NativeErrors.class);
@@ -232,7 +233,7 @@ public class TopLevel extends ScriptableObject {
      * @param type the built-in type
      * @return the built-in constructor
      */
-    public static Function getBuiltinCtor(Context cx, Scriptable scope, Builtins type) {
+    public static Function getBuiltinCtor(Context cx, VarScope scope, Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
@@ -242,7 +243,7 @@ public class TopLevel extends ScriptableObject {
             }
         }
         // fall back to normal constructor lookup
-        String typeName;
+        Object typeName;
         if (type == Builtins.GeneratorFunction) {
             // GeneratorFunction isn't stored in scope with that name, but in case
             // we end up falling back to this value then we have to
@@ -251,7 +252,11 @@ public class TopLevel extends ScriptableObject {
         } else {
             typeName = type.name();
         }
-        return ScriptRuntime.getExistingCtor(cx, scope, typeName);
+        if (typeName instanceof String) {
+            return ScriptRuntime.getExistingCtor(cx, scope, (String) typeName);
+        } else {
+            return ScriptRuntime.getExistingCtor(cx, scope, (SymbolKey) typeName);
+        }
     }
 
     /**
@@ -264,7 +269,7 @@ public class TopLevel extends ScriptableObject {
      * @param type the native error type
      * @return the native error constructor
      */
-    static Function getNativeErrorCtor(Context cx, Scriptable scope, NativeErrors type) {
+    static Function getNativeErrorCtor(Context cx, VarScope scope, NativeErrors type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
@@ -293,8 +298,7 @@ public class TopLevel extends ScriptableObject {
             return result;
         }
 
-        // fall back to normal prototype lookup
-        String typeName;
+        Object typeName;
         if (type == Builtins.GeneratorFunction) {
             // GeneratorFunction isn't stored in scope with that name, but in case
             // we end up falling back to this value then we have to
@@ -303,7 +307,11 @@ public class TopLevel extends ScriptableObject {
         } else {
             typeName = type.name();
         }
-        return ScriptableObject.getClassPrototype(scope, typeName);
+        if (typeName instanceof String) {
+            return ScriptableObject.getClassPrototype(scope, (String) typeName);
+        } else {
+            return ScriptableObject.getClassPrototype(scope, (SymbolKey) typeName);
+        }
     }
 
     /**
@@ -346,7 +354,7 @@ public class TopLevel extends ScriptableObject {
     }
 
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, VarScope start) {
         var res = super.get(name, start);
         if (res != NOT_FOUND) {
             return res;
@@ -355,12 +363,12 @@ public class TopLevel extends ScriptableObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, VarScope start, Object value) {
         ScriptableObject.putProperty(globalThis, name, value);
     }
 
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, VarScope start) {
         return super.has(name, start) || ScriptableObject.hasProperty(globalThis, name);
     }
 
@@ -381,7 +389,8 @@ public class TopLevel extends ScriptableObject {
     }
 
     @Override
-    void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
+    void addLazilyInitializedValue(
+            String name, int index, LazilyLoadedCtor<VarScope> init, int attributes) {
         globalThis.addLazilyInitializedValue(name, index, init, attributes);
     }
 
@@ -419,12 +428,17 @@ public class TopLevel extends ScriptableObject {
     }
 
     @Override
-    public void putConst(String name, Scriptable start, Object value) {
+    public void putConst(String name, VarScope start, Object value) {
         globalThis.putConst(name, globalThis, value);
     }
 
     @Override
-    public void defineConst(String name, Scriptable start) {
+    public void defineConst(String name, VarScope start) {
         globalThis.defineConst(name, globalThis);
+    }
+
+    public void defineFunctionProperties(
+            VarScope scope, String[] names, Class<?> clazz, int attributes) {
+        getGlobalThis().defineFunctionProperties(scope, names, clazz, attributes);
     }
 }

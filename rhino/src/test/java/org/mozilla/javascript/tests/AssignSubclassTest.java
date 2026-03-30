@@ -50,6 +50,7 @@ public class AssignSubclassTest {
                     try {
                         ScriptableObject.defineClass(scope, MySubclass.class);
                     } catch (Exception e) {
+                        e.printStackTrace();
                         fail(e);
                     }
                     Object result =

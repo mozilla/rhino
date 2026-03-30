@@ -26,7 +26,7 @@ public class ClassCache implements Serializable {
     private transient volatile Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient volatile Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
-    private Scriptable associatedScope;
+    private VarScope associatedScope;
 
     /**
      * CacheKey is a combination of class and securityContext. This is required when classes are
@@ -72,13 +72,13 @@ public class ClassCache implements Serializable {
      *     ClassCache, and cannot have ClassCache associated due to the top scope not being a {@link
      *     ScriptableObject}
      */
-    public static ClassCache get(Scriptable scope) {
+    public static ClassCache get(VarScope scope) {
         ClassCache cache = (ClassCache) ScriptableObject.getTopScopeValue(scope, AKEY);
         if (cache == null) {
             // we expect this to not happen frequently, so computing top scope twice is acceptable
             var topScope = ScriptableObject.getTopLevelScope(scope);
             cache = new ClassCache();
-            cache.associate(((ScriptableObject) topScope));
+            cache.associate(topScope);
         }
         return cache;
     }
@@ -92,7 +92,7 @@ public class ClassCache implements Serializable {
      *     ClassCache were successfully associated or false otherwise.
      * @see #get(Scriptable scope)
      */
-    public boolean associate(ScriptableObject topScope) {
+    public boolean associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {
             // Can only associate cache with top level scope
             throw new IllegalArgumentException();
@@ -205,7 +205,7 @@ public class ClassCache implements Serializable {
         }
     }
 
-    Scriptable getAssociatedScope() {
+    VarScope getAssociatedScope() {
         return associatedScope;
     }
 }

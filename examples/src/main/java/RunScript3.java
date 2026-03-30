@@ -96,7 +96,7 @@ public class RunScript3 {
             } else {
                 Object functionArgs[] = {"my arg"};
                 Function f = (Function) fObj;
-                Object result = f.call(cx, scope, scope, functionArgs);
+                Object result = f.call(cx, scope, scope.getGlobalThis(), functionArgs);
                 String report = "f('my args') = " + Context.toString(result);
                 System.out.println(report);
             }

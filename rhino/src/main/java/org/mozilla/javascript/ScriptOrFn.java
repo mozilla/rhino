@@ -15,7 +15,7 @@ public interface ScriptOrFn<T extends ScriptOrFn<T>> {
         return null;
     }
 
-    public default Scriptable getDeclarationScope() {
+    public default VarScope getDeclarationScope() {
         return null;
     }
 }

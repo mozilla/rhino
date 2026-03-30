@@ -28,7 +28,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Deprecated
-    public static NativeJavaArray wrap(Scriptable scope, Object array) {
+    public static NativeJavaArray wrap(VarScope scope, Object array) {
         return new NativeJavaArray(scope, array);
     }
 
@@ -37,11 +37,11 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         return array;
     }
 
-    public NativeJavaArray(Scriptable scope, Object array) {
+    public NativeJavaArray(VarScope scope, Object array) {
         this(scope, array, TypeInfoFactory.GLOBAL.create(array.getClass()));
     }
 
-    public NativeJavaArray(Scriptable scope, Object array, TypeInfo staticType) {
+    public NativeJavaArray(VarScope scope, Object array, TypeInfo staticType) {
         super(scope, null, staticType);
         if (!staticType.isArray() || !array.getClass().isArray()) {
             throw new RuntimeException("Array expected");
@@ -82,7 +82,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         if (0 <= index && index < length) {
             Context cx = Context.getContext();
             Object obj = Array.get(array, index);
-            return cx.getWrapFactory().wrap(cx, this, obj, componentType);
+            return cx.getWrapFactory().wrap(cx, parent, obj, componentType);
         }
         return Undefined.instance;
     }

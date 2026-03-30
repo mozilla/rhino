@@ -51,6 +51,7 @@ public class Shell extends ScriptableObject {
             // This must be done before scripts can be executed.
             Shell shell = new Shell();
             TopLevel topLevel = new TopLevel(shell);
+            shell.scope = topLevel;
             cx.initStandardObjects(topLevel);
 
             // Define some global functions particular to the shell. Note
@@ -70,7 +71,7 @@ public class Shell extends ScriptableObject {
                 array = new Object[length];
                 System.arraycopy(args, 1, array, 0, length);
             }
-            Scriptable argsObj = cx.newArray(shell, array);
+            Scriptable argsObj = cx.newArray(topLevel, array);
             shell.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
 
             shell.processSource(cx, args.length == 0 ? null : args[0]);
@@ -204,7 +205,7 @@ public class Shell extends ScriptableObject {
      * @param funObj the function object of the invoked JavaScript function
      */
     public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
-        Shell shell = (Shell) getTopLevelScope(thisObj).getGlobalThis();
+        Shell shell = (Shell) getTopLevelScope(funObj.getDeclarationScope()).getGlobalThis();
         for (int i = 0; i < args.length; i++) {
             shell.processSource(cx, Context.toString(args[i]));
         }
@@ -246,7 +247,8 @@ public class Shell extends ScriptableObject {
                         // resolved by appending more source.
                         if (cx.stringIsCompilableUnit(source)) break;
                     }
-                    Object result = cx.evaluateString(this, source, sourceName, startline, null);
+                    Object result =
+                            cx.evaluateString(this.scope, source, sourceName, startline, null);
                     if (result != Context.getUndefinedValue()) {
                         System.err.println(Context.toString(result));
                     }
@@ -283,7 +285,7 @@ public class Shell extends ScriptableObject {
                 // Here we evalute the entire contents of the file as
                 // a script. Text is printed only if the print() function
                 // is called.
-                cx.evaluateReader(this, in, filename, 1, null);
+                cx.evaluateReader(this.scope, in, filename, 1, null);
             } catch (WrappedException we) {
                 System.err.println(we.getWrappedException().toString());
                 we.printStackTrace();
@@ -314,4 +316,6 @@ public class Shell extends ScriptableObject {
     private Shell() {
         // Utility class - prevent instantiation
     }
+
+    private TopLevel scope;
 }
