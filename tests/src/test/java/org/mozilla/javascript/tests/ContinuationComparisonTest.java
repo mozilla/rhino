@@ -53,7 +53,7 @@ public class ContinuationComparisonTest {
                         cx.compileReader(r, "ContinuationComparisonTest.js", 1, null), global);
             }
             // Make the global standard again
-            ScriptableObject.deleteProperty(global, "capture");
+            global.delete("capture");
 
             return captured.get();
         }

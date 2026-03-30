@@ -118,7 +118,7 @@ public class NodeTransformer {
                     {
                         loops.push(node);
                         Node leave = node.getNext();
-                        if (leave.getType() != Token.LEAVEWITH) {
+                        if (leave.getType() != Token.LEAVE_SCOPE) {
                             Kit.codeBug();
                         }
                         loopEnds.push(leave);
@@ -138,7 +138,7 @@ public class NodeTransformer {
                     }
 
                 case Token.TARGET:
-                case Token.LEAVEWITH:
+                case Token.LEAVE_SCOPE:
                     if (!loopEnds.isEmpty() && loopEnds.peek() == node) {
                         loopEnds.pop();
                         loops.pop();
@@ -147,6 +147,7 @@ public class NodeTransformer {
 
                 case Token.YIELD:
                 case Token.YIELD_STAR:
+                case Token.AWAIT:
                     ((FunctionNode) tree).addResumptionPoint(node);
                     break;
 
@@ -177,7 +178,7 @@ public class NodeTransformer {
                                     jsrnode.target = ((Jump) n).getFinally();
                                     unwind = jsrnode;
                                 } else {
-                                    unwind = new Node(Token.LEAVEWITH);
+                                    unwind = new Node(Token.LEAVE_SCOPE);
                                 }
                                 if (unwindBlock == null) {
                                     unwindBlock = new Node(Token.BLOCK);
@@ -228,7 +229,7 @@ public class NodeTransformer {
 
                             int elemtype = n.getType();
                             if (elemtype == Token.WITH) {
-                                Node leave = new Node(Token.LEAVEWITH);
+                                Node leave = new Node(Token.LEAVE_SCOPE);
                                 previous = addBeforeCurrent(parent, previous, node, leave);
                             } else if (elemtype == Token.TRY) {
                                 Jump tryNode = (Jump) n;
@@ -493,7 +494,7 @@ public class NodeTransformer {
             newVars = new Node(Token.ENTERWITH, objectLiteral);
             result.addChildToBack(newVars);
             result.addChildToBack(new Node(Token.WITH, body));
-            result.addChildToBack(new Node(Token.LEAVEWITH));
+            result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         } else {
             result = new Node(isExpression ? Token.COMMA : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);

@@ -10,8 +10,8 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -36,7 +36,7 @@ public class StackTraceExtensionMozillaTest {
             cx.setGeneratingDebug(true);
 
             Global global = new Global(cx);
-            Scriptable root = cx.newObject(global);
+            VarScope root = cx.newVarEnv(global);
 
             try (FileReader rdr =
                     new FileReader("testsrc/jstests/extensions/stack-traces-mozilla.js")) {

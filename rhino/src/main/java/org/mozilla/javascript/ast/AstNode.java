@@ -400,7 +400,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.INC:
             case Token.JSR:
             case Token.LABEL:
-            case Token.LEAVEWITH:
+            case Token.LEAVE_SCOPE:
             case Token.LET:
             case Token.LETEXPR:
             case Token.LOCAL_BLOCK:

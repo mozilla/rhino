@@ -78,8 +78,7 @@ public class Node implements Iterable<Node> {
     public static final int BOTH = 0, LEFT = 1, RIGHT = 2;
     public static final int // values for SPECIALCALL_PROP
             NON_SPECIALCALL = 0,
-            SPECIALCALL_EVAL = 1,
-            SPECIALCALL_WITH = 2;
+            SPECIALCALL_EVAL = 1;
     public static final int // flags for INCRDECR_PROP
             DECR_FLAG = 0x1,
             POST_FLAG = 0x2;
@@ -605,14 +604,20 @@ public class Node implements Iterable<Node> {
     }
 
     public final int labelId() {
-        if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
+        if ((type != Token.TARGET)
+                && (type != Token.YIELD)
+                && (type != Token.YIELD_STAR)
+                && (type != Token.AWAIT)) {
             Kit.codeBug();
         }
         return getIntProp(LABEL_ID_PROP, -1);
     }
 
     public void labelId(int labelId) {
-        if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
+        if ((type != Token.TARGET)
+                && (type != Token.YIELD)
+                && (type != Token.YIELD_STAR)
+                && (type != Token.AWAIT)) {
             Kit.codeBug();
         }
         putIntProp(LABEL_ID_PROP, labelId);
@@ -969,7 +974,7 @@ public class Node implements Iterable<Node> {
             case Token.ASSIGN_EXP:
             case Token.ASSIGN_NULLISH:
             case Token.ENTERWITH:
-            case Token.LEAVEWITH:
+            case Token.LEAVE_SCOPE:
             case Token.RETURN:
             case Token.GOTO:
             case Token.IFEQ:
@@ -1185,9 +1190,6 @@ public class Node implements Iterable<Node> {
                         switch (x.intValue) {
                             case SPECIALCALL_EVAL:
                                 sb.append("eval");
-                                break;
-                            case SPECIALCALL_WITH:
-                                sb.append("with");
                                 break;
                             default:
                                 // NON_SPECIALCALL should not be stored

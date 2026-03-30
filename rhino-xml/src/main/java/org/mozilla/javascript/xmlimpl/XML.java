@@ -17,6 +17,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.xml.XMLObject;
 
 class XML extends XMLObjectImpl {
@@ -37,11 +38,7 @@ class XML extends XMLObjectImpl {
     }
 
     public static void init(
-            Context cx,
-            ScriptableObject scope,
-            XMLObjectImpl proto,
-            boolean sealed,
-            XMLLibImpl lib) {
+            Context cx, VarScope scope, XMLObjectImpl proto, boolean sealed, XMLLibImpl lib) {
         DESCRIPTOR.buildConstructor(
                 cx,
                 scope,
@@ -53,7 +50,7 @@ class XML extends XMLObjectImpl {
     }
 
     private static Object js_constructor(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             args = new Object[] {""};
@@ -64,7 +61,7 @@ class XML extends XMLObjectImpl {
     }
 
     private static Object js_constructorCall(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         XMLLibImpl lib = (XMLLibImpl) f.get(LIB_KEY, f);
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             args = new Object[] {""};
@@ -75,7 +72,7 @@ class XML extends XMLObjectImpl {
     }
 
     static Object js_hasInstance(
-            Context cx, JSFunction f, Object nt, Scriptable s, Object thisObj, Object[] args) {
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length == 0 || !(args[0] instanceof Scriptable)) {
             Object v = args.length == 0 ? null : args[0];
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(v));
@@ -114,7 +111,7 @@ class XML extends XMLObjectImpl {
         return false;
     }
 
-    XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
+    XML(XMLLibImpl lib, VarScope scope, XMLObject prototype, XmlNode node) {
         super(lib, scope, prototype);
         initialize(node);
     }
