@@ -5472,6 +5472,13 @@ public class ScriptRuntime {
                 }
                 scope.put(name, scope, function);
             }
+        } else if (type == FunctionNode.FUNCTION_BLOCK_SCOPED) {
+            String name = function.getFunctionName();
+            if (name != null && name.length() != 0) {
+                // Block-scoped function in strict mode: bind in the current
+                // (block) scope only, do not walk up to the activation object.
+                scope.put(name, scope, function);
+            }
         } else {
             throw Kit.codeBug();
         }
