@@ -63,6 +63,7 @@ public class FunctionNode extends ScriptNode {
     public static final int FUNCTION_EXPRESSION = 2;
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
     public static final int ARROW_FUNCTION = 4;
+    public static final int FUNCTION_BLOCK_SCOPED = 5;
 
     public static enum Form {
         FUNCTION,
