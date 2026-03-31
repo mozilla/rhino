@@ -95,4 +95,43 @@ class ConstLetScopingTest {
         Utils.assertEvaluatorException_1_8(
                 "redeclaration of const x", "const x = 1; { const x = 2; }");
     }
+
+    // --- block-scoped function declarations in strict mode ---
+
+    @Test
+    void blockScopedFunctionInStrictModeNotVisibleOutside() {
+        // In strict mode, a function declared inside a block should not be visible outside it
+        Utils.assertWithAllModes_ES6(
+                "undefined", "'use strict'; { function f() { return 1; } } typeof f;");
+    }
+
+    @Test
+    void blockScopedFunctionInStrictModeVisibleInside() {
+        // In strict mode, a function declared inside a block should be callable within the block
+        Utils.assertWithAllModes_ES6(
+                1.0,
+                "'use strict'; var result; { function f() { return 1; } result = f(); } result;");
+    }
+
+    @Test
+    void topLevelFunctionInStrictModeStillHoists() {
+        // Top-level function declarations in strict mode should still hoist normally
+        Utils.assertWithAllModes_ES6(1.0, "'use strict'; function f() { return 1; } f();");
+    }
+
+    @Test
+    void blockScopedFunctionShadowsOuterInStrictMode() {
+        // A block-scoped function should shadow an outer function within the block
+        Utils.assertWithAllModes_ES6(
+                2.0,
+                "'use strict'; function f() { return 1; } var result; { function f() { return 2; } result = f(); } result;");
+    }
+
+    @Test
+    void outerFunctionUnchangedAfterBlockInStrictMode() {
+        // The outer function should be unaffected after the block exits
+        Utils.assertWithAllModes_ES6(
+                1.0,
+                "'use strict'; function f() { return 1; } { function f() { return 2; } } f();");
+    }
 }

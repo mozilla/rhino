@@ -149,7 +149,12 @@ public class Parser {
     private boolean inForInit; // bound temporarily during forStatement()
     private boolean
             inSingleStatementContext; // true when parsing a single-statement body (if/while/for
-    // without braces)
+    private boolean
+            inSingleStatementDeclContext; // true when parsing a
+                                          // single-statement body
+                                          // that allows lexical
+                                          // declarations.  without
+                                          // braces)
     private Map<String, LabeledStatement> labelSet;
     private List<Loop> loopSet;
     private List<Jump> loopAndSwitchSet;
@@ -994,8 +999,13 @@ public class Parser {
         if (syntheticType != FunctionNode.FUNCTION_EXPRESSION
                 && name != null
                 && name.length() > 0) {
-            // Function statements define a symbol in the enclosing scope
-            defineSymbol(Token.FUNCTION, name.getIdentifier());
+            if (type == FunctionNode.FUNCTION_BLOCK_SCOPED) {
+                // Block-scoped function in strict mode: define as let-like binding
+                defineSymbol(Token.LET, name.getIdentifier());
+            } else {
+                // Function statements define a symbol in the enclosing scope
+                defineSymbol(Token.FUNCTION, name.getIdentifier());
+            }
         }
 
         FunctionNode fnNode = new FunctionNode(functionSourceStart, name);
@@ -1465,6 +1475,10 @@ public class Parser {
 
             case Token.FUNCTION:
                 consumeToken();
+                if (inUseStrictDirective
+                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    return function(FunctionNode.FUNCTION_BLOCK_SCOPED);
+                }
                 return function(FunctionNode.FUNCTION_EXPRESSION_STATEMENT);
 
             case Token.DEFAULT:
@@ -1531,6 +1545,7 @@ public class Parser {
         boolean isES6 = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
         boolean savedInSingleStatementContext = inSingleStatementContext;
         inSingleStatementContext = isES6;
+        inSingleStatementDeclContext = inSingleStatementContext;
         AstNode ifTrue = getNextStatementAfterInlineComments(pn), ifFalse = null;
         if (matchToken(Token.ELSE, true)) {
             int tt = peekToken();
@@ -1540,9 +1555,11 @@ public class Parser {
             }
             elsePos = ts.tokenBeg - pos;
             inSingleStatementContext = isES6;
+            inSingleStatementDeclContext = inSingleStatementContext;
             ifFalse = statement();
         }
         inSingleStatementContext = savedInSingleStatementContext;
+        inSingleStatementDeclContext = savedInSingleStatementContext;
         int end = getNodeEnd(ifFalse != null ? ifFalse : ifTrue);
         pn.setLength(end - pos);
         pn.setCondition(data.condition);
@@ -1655,9 +1672,12 @@ public class Parser {
             pn.setCondition(data.condition);
             pn.setParens(data.lp - pos, data.rp - pos);
             boolean savedInSingleStatementContext = inSingleStatementContext;
+            boolean savedInSingleStatementDeclContext = inSingleStatementDeclContext;
             inSingleStatementContext = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+            inSingleStatementDeclContext = false;
             AstNode body = getNextStatementAfterInlineComments(pn);
             inSingleStatementContext = savedInSingleStatementContext;
+            inSingleStatementDeclContext = savedInSingleStatementDeclContext;
             pn.setLength(getNodeEnd(body) - pos);
             restoreRelativeLoopPosition(pn);
             pn.setBody(body);
@@ -1676,9 +1696,12 @@ public class Parser {
         enterLoop(pn);
         try {
             boolean savedInSingleStatementContext = inSingleStatementContext;
+            boolean savedInSingleStatementDeclContext = inSingleStatementDeclContext;
             inSingleStatementContext = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+            inSingleStatementDeclContext = false;
             AstNode body = getNextStatementAfterInlineComments(pn);
             inSingleStatementContext = savedInSingleStatementContext;
+            inSingleStatementDeclContext = savedInSingleStatementDeclContext;
             mustMatchToken(Token.WHILE, "msg.no.while.do", true);
             pn.setWhilePosition(ts.tokenBeg - pos);
             ConditionData data = condition();
@@ -1843,9 +1866,12 @@ public class Parser {
             enterLoop(pn);
             try {
                 boolean savedInSingleStatementContext = inSingleStatementContext;
+                boolean savedInSingleStatementDeclContext = inSingleStatementDeclContext;
                 inSingleStatementContext = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+                inSingleStatementDeclContext = false;
                 AstNode body = getNextStatementAfterInlineComments(pn);
                 inSingleStatementContext = savedInSingleStatementContext;
+                inSingleStatementDeclContext = savedInSingleStatementDeclContext;
                 pn.setLength(getNodeEnd(body) - forPos);
                 restoreRelativeLoopPosition(pn);
                 pn.setBody(body);
@@ -2304,7 +2330,9 @@ public class Parser {
         block.setLineColumnNumber(lineNumber(), columnNumber());
         pushScope(block);
         boolean savedInSingleStatementContext = inSingleStatementContext;
+        boolean savedInSingleStatementDeclContext = inSingleStatementDeclContext;
         inSingleStatementContext = false;
+        inSingleStatementDeclContext = false;
         try {
             statements(block);
             mustMatchToken(Token.RC, "msg.no.brace.block", true);
@@ -2313,6 +2341,7 @@ public class Parser {
         } finally {
             popScope();
             inSingleStatementContext = savedInSingleStatementContext;
+            inSingleStatementDeclContext = savedInSingleStatementDeclContext;
         }
     }
 
@@ -2623,11 +2652,20 @@ public class Parser {
                     currentScope.putSymbol(new Symbol(declType, name));
                     return;
                 }
-            // fall through for pre-ES6: const is function-scoped like var
-            case Token.VAR:
+                // fall through for pre-ES6: const is function-scoped like var
             case Token.FUNCTION:
+                if (isES6) {
+                    if (!ignoreNotInBlock
+                            && !inSingleStatementDeclContext
+                            && (inSingleStatementContext || currentScope instanceof Loop)) {
+                        addError("msg.function.decl.not.in.block");
+                        return;
+                    }
+                }
+            case Token.VAR:
                 if (symbol != null) {
-                    if (symDeclType == Token.VAR) addStrictWarning("msg.var.redecl", name);
+                    if (symDeclType == Token.VAR)
+                        addStrictWarning("msg.var.redecl", name);
                     else if (symDeclType == Token.LP) {
                         addStrictWarning("msg.var.hides.arg", name);
                     }

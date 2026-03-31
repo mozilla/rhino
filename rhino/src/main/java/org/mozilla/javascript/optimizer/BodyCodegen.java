@@ -706,7 +706,8 @@ class BodyCodegen {
                     int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
                     OptFunctionNode ofn = OptFunctionNode.get(scriptOrFn, fnIndex);
                     int t = ofn.fnode.getFunctionType();
-                    if (t == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
+                    if (t == FunctionNode.FUNCTION_EXPRESSION_STATEMENT
+                            || t == FunctionNode.FUNCTION_BLOCK_SCOPED) {
                         visitFunction(ofn, t);
                     } else {
                         if (t != FunctionNode.FUNCTION_STATEMENT) {
