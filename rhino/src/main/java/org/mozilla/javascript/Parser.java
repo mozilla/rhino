@@ -2590,6 +2590,82 @@ public class Parser {
     }
 
     void defineSymbol(int declType, String name, boolean ignoreNotInBlock) {
+        boolean isES6 = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+
+        if (isES6) {
+            defineSymbolES6(declType, name, ignoreNotInBlock);
+        } else {
+            defineSymbolLegacy(declType, name, ignoreNotInBlock);
+        }
+    }
+
+    void defineSymbolLegacy(int declType, String name, boolean ignoreNotInBlock) {
+        if (name == null) {
+            if (compilerEnv.isIdeMode()) { // be robust in IDE-mode
+                return;
+            }
+            codeBug();
+        } else if ("undefined".equals(name)) {
+            hasUndefinedBeenRedefined = true;
+        }
+        Scope definingScope = currentScope.getDefiningScope(name);
+        Symbol symbol = definingScope != null ? definingScope.getSymbol(name) : null;
+        int symDeclType = symbol != null ? symbol.getDeclType() : -1;
+        if (symbol != null
+                && (symDeclType == Token.CONST
+                        || declType == Token.CONST
+                        || (definingScope == currentScope && symDeclType == Token.LET))) {
+            addError(
+                    symDeclType == Token.CONST
+                            ? "msg.const.redecl"
+                            : symDeclType == Token.LET
+                                    ? "msg.let.redecl"
+                                    : symDeclType == Token.VAR
+                                            ? "msg.var.redecl"
+                                            : symDeclType == Token.FUNCTION
+                                                    ? "msg.fn.redecl"
+                                                    : "msg.parm.redecl",
+                    name);
+            return;
+        }
+        switch (declType) {
+            case Token.LET:
+                if (!ignoreNotInBlock
+                        && ((currentScope.getType() == Token.IF) || currentScope instanceof Loop)) {
+                    addError("msg.let.decl.not.in.block");
+                    return;
+                }
+                currentScope.putSymbol(new Symbol(declType, name));
+                return;
+
+            case Token.VAR:
+            case Token.CONST:
+            case Token.FUNCTION:
+                if (symbol != null) {
+                    if (symDeclType == Token.VAR) addStrictWarning("msg.var.redecl", name);
+                    else if (symDeclType == Token.LP) {
+                        addStrictWarning("msg.var.hides.arg", name);
+                    }
+                } else {
+                    currentScriptOrFn.putSymbol(new Symbol(declType, name));
+                }
+                return;
+
+            case Token.LP:
+                if (symbol != null) {
+                    // must be duplicate parameter. Second parameter hides the
+                    // first, so go ahead and add the second parameter
+                    addWarning("msg.dup.parms", name);
+                }
+                currentScriptOrFn.putSymbol(new Symbol(declType, name));
+                return;
+
+            default:
+                throw codeBug();
+        }
+    }
+
+    void defineSymbolES6(int declType, String name, boolean ignoreNotInBlock) {
         if (name == null) {
             if (compilerEnv.isIdeMode()) { // be robust in IDE-mode
                 return;
@@ -2602,23 +2678,13 @@ public class Parser {
         Symbol symbol = definingScope != null ? definingScope.getSymbol(name) : null;
         Symbol varSymbol = currentScope.getVarSymbol(name);
         int symDeclType = symbol != null ? symbol.getDeclType() : -1;
-        boolean isES6 = compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
-        if ((isES6
-                        && !isValidES6Redeclaration(
+        if (!isValidES6Redeclaration(
                                 declType,
                                 symDeclType,
                                 symbol,
                                 varSymbol,
                                 currentScope,
-                                definingScope))
-                || (!isES6
-                        && !isValidLegacyRedeclaration(
-                                declType,
-                                symDeclType,
-                                symbol,
-                                varSymbol,
-                                currentScope,
-                                definingScope))) {
+                                definingScope)) {
             addError(
                     symDeclType == Token.CONST
                             ? "msg.const.redecl"
@@ -2643,24 +2709,20 @@ public class Parser {
                 return;
 
             case Token.CONST:
-                if (isES6) {
-                    if (!ignoreNotInBlock
-                            && (inSingleStatementContext || currentScope instanceof Loop)) {
-                        addError("msg.const.decl.not.in.block");
-                        return;
-                    }
-                    currentScope.putSymbol(new Symbol(declType, name));
+                if (!ignoreNotInBlock
+                        && (inSingleStatementContext || currentScope instanceof Loop)) {
+                    addError("msg.const.decl.not.in.block");
                     return;
                 }
-                // fall through for pre-ES6: const is function-scoped like var
+                currentScope.putSymbol(new Symbol(declType, name));
+                return;
+            // fall through for pre-ES6: const is function-scoped like var
             case Token.FUNCTION:
-                if (isES6) {
-                    if (!ignoreNotInBlock
-                            && !inSingleStatementDeclContext
-                            && (inSingleStatementContext || currentScope instanceof Loop)) {
-                        addError("msg.function.decl.not.in.block");
-                        return;
-                    }
+                if (!ignoreNotInBlock
+                        && !inSingleStatementDeclContext
+                        && (inSingleStatementContext || currentScope instanceof Loop)) {
+                    addError("msg.function.decl.not.in.block");
+                    return;
                 }
             case Token.VAR:
                 if (symbol != null) {
