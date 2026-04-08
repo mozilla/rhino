@@ -670,6 +670,22 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 }
                 break;
 
+            case Token.CLASS:
+                {
+                    // child 0: superclass expression
+                    // child 1: constructor FUNCTION node
+                    Node superClassExpr = child;
+                    Node constructorFn = child.getNext();
+                    int fnIndex = constructorFn.getExistingIntProp(Node.FUNCTION_PROP);
+                    // Evaluate the superclass expression
+                    visitExpression(superClassExpr, 0);
+                    // Create the constructor function with the superclass as homeObject
+                    // stack: ... superClass -> ... constructorFunction
+                    addIndexOp(Icode_CLASS_EXPR, fnIndex);
+                    // stack doesn't change: superClass consumed, function pushed
+                }
+                break;
+
             case Token.LOCAL_LOAD:
                 {
                     int localIndex = getLocalBlockRef(node);
@@ -775,6 +791,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
                         addUint16(lineNumber & 0xFFFF);
+                    } else if (node.getIntProp(Node.SUPER_CONSTRUCTOR_CALL, 0) == 1) {
+                        addIndexOp(Icode_CONSTRUCT_SUPER, argCount);
                     } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                         addIndexOp(Icode_CALL_ON_SUPER, argCount);
                     } else {

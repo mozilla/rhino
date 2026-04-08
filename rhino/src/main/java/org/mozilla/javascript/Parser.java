@@ -26,6 +26,7 @@ import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassNode;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
@@ -1086,6 +1087,108 @@ public class Parser {
         return fnNode;
     }
 
+    private ClassNode parseClass(boolean isStatement) throws IOException {
+        int pos = ts.tokenBeg;
+        int lineno = lineNumber();
+        int column = columnNumber();
+
+        ClassNode classNode = new ClassNode(pos);
+        classNode.setLineColumnNumber(lineno, column);
+        classNode.setIsStatement(isStatement);
+
+        // Parse optional class name (required for declarations)
+        Name className = null;
+        if (matchToken(Token.NAME, true)) {
+            className = createNameNode(true, Token.NAME);
+            classNode.setClassName(className);
+        } else if (isStatement) {
+            reportError("msg.unnamed.class.stmt");
+        }
+
+        // Parse optional extends clause
+        if (matchToken(Token.EXTENDS, true)) {
+            classNode.setSuperClass(assignExpr());
+        }
+
+        mustMatchToken(Token.LC, "msg.no.brace.class", true);
+
+        // Parse class body - always strict mode
+        boolean savedStrict = inUseStrictDirective;
+        inUseStrictDirective = true;
+
+        FunctionNode constructor = null;
+
+        // Look for constructor in the class body
+        while (peekToken() != Token.RC && peekToken() != Token.EOF) {
+            if (peekToken() == Token.SEMI) {
+                consumeToken();
+                continue;
+            }
+
+            // Consume the name token to check if it's "constructor"
+            if (peekToken() != Token.NAME) {
+                reportError("msg.unexpected.token");
+                consumeToken();
+                continue;
+            }
+            consumeToken();
+            String methodName = ts.getString();
+
+            if ("constructor".equals(methodName) && peekToken() == Token.LP) {
+                if (constructor != null) {
+                    reportError("msg.dup.ctor");
+                }
+                // Parse constructor as method: function() already expects LP consumed or not
+                // We need LP to follow, which function() will match
+                constructor = function(FunctionNode.FUNCTION_EXPRESSION, true);
+                constructor.setIsClassConstructor(true);
+            } else {
+                reportError("msg.unexpected.token");
+            }
+        }
+
+        mustMatchToken(Token.RC, "msg.no.brace.class", true);
+
+        inUseStrictDirective = savedStrict;
+
+        // Synthesize a default constructor if none was provided
+        if (constructor == null) {
+            constructor = createDefaultConstructor(pos, classNode.getSuperClass() != null);
+            constructor.setIsClassConstructor(true);
+        }
+
+        classNode.setConstructor(constructor);
+
+        // For class declarations, define the name as a let-like binding
+        if (isStatement && className != null) {
+            defineSymbol(Token.LET, className.getIdentifier());
+        }
+
+        int end = ts.tokenEnd;
+        classNode.setLength(end - pos);
+
+        return classNode;
+    }
+
+    private FunctionNode createDefaultConstructor(int pos, boolean isDerived) {
+        FunctionNode fn = new FunctionNode(pos);
+        fn.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
+        fn.setMethodDefinition(true);
+        fn.setIsClassConstructor(true);
+
+        if (isDerived) {
+            // Derived default constructor: constructor(...args) { super(...args); }
+            fn.setHasRestParameter(true);
+        }
+
+        // Create an empty body for now - IRFactory will handle the default constructor semantics
+        Block body = new Block(pos);
+        fn.setBody(body);
+        fn.setLength(0);
+
+        return fn;
+    }
+
     private ParenthesizedExpression callArgsToArrowParams(FunctionCall call) {
         int absoluteLp = call.getPosition() + call.getLp();
         int absoluteRp = call.getPosition() + call.getRp();
@@ -1523,6 +1626,10 @@ public class Parser {
                     return function(FunctionNode.FUNCTION_BLOCK_SCOPED);
                 }
                 return function(FunctionNode.FUNCTION_EXPRESSION_STATEMENT);
+
+            case Token.CLASS:
+                consumeToken();
+                return parseClass(true);
 
             case Token.DEFAULT:
                 pn = defaultXmlNamespace();
@@ -3832,6 +3939,10 @@ public class Parser {
             case Token.FUNCTION:
                 consumeToken();
                 return function(FunctionNode.FUNCTION_EXPRESSION);
+
+            case Token.CLASS:
+                consumeToken();
+                return parseClass(false);
 
             case Token.LB:
                 consumeToken();

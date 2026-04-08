@@ -1047,6 +1047,40 @@ class BodyCodegen {
                 }
                 break;
 
+            case Token.CLASS:
+                {
+                    // child 0: superclass expression
+                    // child 1: constructor FUNCTION node
+                    Node superClassExpr = child;
+                    Node constructorFn = child.getNext();
+                    int fnIndex = constructorFn.getExistingIntProp(Node.FUNCTION_PROP);
+                    OptFunctionNode ofn = OptFunctionNode.get(scriptOrFn, fnIndex);
+                    // Generate superclass expression - push on stack
+                    generateExpression(superClassExpr, node);
+                    // Store superclass in a temp local for visitFunction to use
+                    int prevHomeLocal = savedHomeObjectLocal;
+                    savedHomeObjectLocal = getNewWordLocal();
+                    cfw.addAStore(savedHomeObjectLocal);
+                    // Visit the function (which will use savedHomeObjectLocal as homeObject
+                    // since it's a method definition)
+                    visitFunction(ofn, FunctionNode.FUNCTION_EXPRESSION);
+                    // Stack: constructor function
+                    // Now set up prototype chain
+                    cfw.add(ByteCode.DUP);
+                    cfw.addALoad(savedHomeObjectLocal);
+                    cfw.addALoad(variableObjectLocal);
+                    cfw.addInvoke(
+                            ByteCode.INVOKESTATIC,
+                            "org/mozilla/javascript/ScriptRuntime",
+                            "setupClassPrototypeChain",
+                            "(Lorg/mozilla/javascript/BaseFunction;"
+                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;)V");
+                    releaseWordLocal(savedHomeObjectLocal);
+                    savedHomeObjectLocal = prevHomeLocal;
+                }
+                break;
+
             case Token.NAME:
                 {
                     cfw.addALoad(variableObjectLocal);
@@ -1106,6 +1140,10 @@ class BodyCodegen {
             case Token.CALL:
             case Token.NEW:
                 {
+                    if (node.getIntProp(Node.SUPER_CONSTRUCTOR_CALL, 0) == 1) {
+                        visitSuperConstructorCall(node, child);
+                        break;
+                    }
                     int specialType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (specialType == Node.NON_SPECIALCALL) {
                         OptFunctionNode target;
@@ -2921,6 +2959,27 @@ class BodyCodegen {
                         + ")Ljava/lang/Object;");
 
         cfw.markLabel(afterLabel);
+    }
+
+    private void visitSuperConstructorCall(Node node, Node child) {
+        // super() call in derived class constructor.
+        // child is Token.THISFN, skip it. Get args from subsequent children.
+        Node firstArgChild = child.getNext();
+        // Call ScriptRuntime.superConstructorCall(funObj, cx, scope, args) -> Object
+        cfw.addALoad(funObjLocal);
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        generateCallArgArray(node, firstArgChild, false);
+        addScriptRuntimeInvoke(
+                "superConstructorCall",
+                "(Lorg/mozilla/javascript/BaseFunction;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/VarScope;"
+                        + "[Ljava/lang/Object;"
+                        + ")Lorg/mozilla/javascript/Scriptable;");
+        // The result is the new 'this' - store it in thisObjLocal
+        cfw.add(ByteCode.DUP);
+        cfw.addAStore(thisObjLocal);
     }
 
     private void visitStandardCall(Node node, Node child) {

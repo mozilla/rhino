@@ -71,6 +71,7 @@ public class Node implements Iterable<Node> {
             SUPER_PROPERTY_ACCESS = 31,
             NUMBER_OF_SPREAD = 32,
             OBJECT_REST_PROP = 33, // marks a CALL node as object rest operation
+            SUPER_CONSTRUCTOR_CALL = 34, // marks a CALL as super() in derived constructor
             LITERAL_INDEX_PROP = 35, // int index into the shared literals table
             LAST_PROP = LITERAL_INDEX_PROP,
             FIRST_PROP = FUNCTION_PROP;

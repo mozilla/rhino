@@ -45,6 +45,14 @@ public class CodeGenUtils {
             }
         }
 
+        // Class constructors: always strict, always constructable, always have prototype
+        if (fn.isClassConstructor()) {
+            builder.isClassConstructor = true;
+            builder.isStrict = true;
+            builder.hasPrototype = true;
+            builder.constructor = builder.code;
+        }
+
         fillInForFunction(builder, fn);
     }
 
@@ -132,6 +140,11 @@ public class CodeGenUtils {
             JSDescriptor.Builder<T> builder, ScriptNode scriptOrFn) {
         if (scriptOrFn instanceof FunctionNode) {
             FunctionNode f = (FunctionNode) scriptOrFn;
+            // Class constructors are always constructable, even if marked as method definitions
+            if (f.isClassConstructor()) {
+                builder.constructor = builder.code;
+                return;
+            }
             boolean isArrow = f.getFunctionType() == FunctionNode.ARROW_FUNCTION;
             boolean isAsyncNonGenerator = f.isAsync() && !f.isES6Generator();
             if (isArrow || f.isMethodDefinition() || f.isGenerator() || isAsyncNonGenerator) {

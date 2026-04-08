@@ -263,7 +263,9 @@ public class Token {
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
             AWAIT = OBJECT_REST + 1, // ES2017 await expression
-            LAST_TOKEN = AWAIT + 1;
+            CLASS = AWAIT + 1, // ES6 class declaration/expression
+            EXTENDS = CLASS + 1, // ES6 extends clause
+            LAST_TOKEN = EXTENDS + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -634,6 +636,10 @@ public class Token {
                 return "ENUM_ASYNC_NEXT";
             case ENUM_ASYNC_STEP:
                 return "ENUM_ASYNC_STEP";
+            case CLASS:
+                return "CLASS";
+            case EXTENDS:
+                return "EXTENDS";
             case GET:
                 return "GET";
             case SET:
@@ -773,6 +779,10 @@ public class Token {
                 return "throw";
             case Token.TRY:
                 return "try";
+            case Token.CLASS:
+                return "class";
+            case Token.EXTENDS:
+                return "extends";
             default:
                 return null;
         }

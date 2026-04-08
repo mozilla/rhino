@@ -32,6 +32,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private static final int DECLARED_AS_FUNCTION_EXPRESSION_FLAG = 1 << 12;
     private static final int DERIVED_CONSTRUCTOR_FLAG = 1 << 13;
     private static final int IS_ASYNC_FLAG = 1 << 14;
+    private static final int IS_CLASS_CONSTRUCTOR_FLAG = 1 << 15;
 
     private final JSCode<T> code;
     private final JSCode<T> constructor;
@@ -84,6 +85,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             boolean declaredAsFunctionExpression,
             boolean derivedConstructor,
             boolean isAsync,
+            boolean isClassConstructor,
             SecurityController securityController,
             Object securityDomain,
             int functionType,
@@ -110,6 +112,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         flags = flags | (declaredAsFunctionExpression ? DECLARED_AS_FUNCTION_EXPRESSION_FLAG : 0);
         flags = flags | (derivedConstructor ? DERIVED_CONSTRUCTOR_FLAG : 0);
         flags = flags | (isAsync ? IS_ASYNC_FLAG : 0);
+        flags = flags | (isClassConstructor ? IS_CLASS_CONSTRUCTOR_FLAG : 0);
         this.flags = flags;
 
         this.sourceFile = sourceFile;
@@ -175,6 +178,10 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
 
     public boolean isShorthand() {
         return (flags & IS_SHORTHAND_FLAG) != 0;
+    }
+
+    public boolean isClassConstructor() {
+        return (flags & IS_CLASS_CONSTRUCTOR_FLAG) != 0;
     }
 
     public boolean hasPrototype() {
@@ -337,6 +344,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public boolean requiresActivationFrame;
         public boolean requiresArgumentObject;
         public boolean declaredAsFunctionExpression;
+        public boolean isClassConstructor;
         public SecurityController securityController;
         public Object securityDomain;
         public int functionType;
@@ -410,6 +418,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             declaredAsFunctionExpression,
                             false,
                             isAsync,
+                            isClassConstructor,
                             securityController,
                             securityDomain,
                             functionType,
