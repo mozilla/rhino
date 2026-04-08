@@ -5592,6 +5592,37 @@ public class ScriptRuntime {
         }
     }
 
+    public static Scriptable superConstructorCall(
+            BaseFunction thisFn, Context cx, VarScope scope, Object[] args) {
+        Scriptable homeObject = thisFn.getHomeObject();
+        if (homeObject == null || !(homeObject instanceof Constructable)) {
+            throw typeErrorById("msg.extends.not.ctor");
+        }
+        if (homeObject instanceof JSFunction) {
+            // Pass new.target (the original constructor) through so the correct
+            // prototype is used for the new object.
+            return ((JSFunction) homeObject).construct(cx, thisFn, scope, null, args);
+        }
+        return ((Constructable) homeObject).construct(cx, scope, args);
+    }
+
+    public static void setupClassPrototypeChain(
+            BaseFunction constructor, Scriptable superClass, VarScope scope) {
+        if (superClass == null) {
+            return;
+        }
+        // Set constructor.__proto__ = superClass
+        // This enables static method inheritance (future) and super() resolution
+        constructor.setPrototype(superClass);
+
+        // Set constructor.prototype.__proto__ = superClass.prototype
+        Object superProto = superClass.get("prototype", superClass);
+        Object constructorProto = constructor.getPrototypeProperty();
+        if (constructorProto instanceof ScriptableObject && superProto instanceof Scriptable) {
+            ((ScriptableObject) constructorProto).setPrototype((Scriptable) superProto);
+        }
+    }
+
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {
         // Compared with function it always sets the scope to top scope
         scope = ScriptableObject.getTopLevelScope(scope);

@@ -75,7 +75,7 @@ public final class Interpreter extends Icode implements Evaluator {
         final boolean useActivation;
         boolean isContinuationsTopFrame;
 
-        final Object thisObj;
+        Object thisObj;
         final Object newTarget;
 
         // The values that change during interpretation
@@ -1492,6 +1492,8 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_CALLSPECIAL_OPTIONAL] = new DoCallSpecial();
         instructionObjs[base + Token.CALL] = new DoCallByteCode();
         instructionObjs[base + Icode_CALL_ON_SUPER] = new DoCallByteCode();
+        instructionObjs[base + Icode_CONSTRUCT_SUPER] = new DoConstructSuper();
+        instructionObjs[base + Icode_CLASS_EXPR] = new DoClassExpr();
         instructionObjs[base + Icode_TAIL_CALL] = new DoCallByteCode();
         instructionObjs[base + Token.REF_CALL] = new DoCallByteCode();
         instructionObjs[base + Token.NEW] = new DoNew();
@@ -3568,6 +3570,10 @@ public final class Interpreter extends Icode implements Evaluator {
                 JSFunction ifun = (JSFunction) fun;
 
                 JSDescriptor<JSFunction> desc = ifun.getDescriptor();
+                if (desc.isClassConstructor()) {
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.class.not.called.with.new", ifun.getFunctionName());
+                }
                 var idata = (InterpreterData<JSFunction>) desc.getCode();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
@@ -3692,9 +3698,11 @@ public final class Interpreter extends Icode implements Evaluator {
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6
-                            && f.getHomeObject() != null) {
+                            && f.getHomeObject() != null
+                            && !desc.isClassConstructor()) {
                         // Only methods have home objects associated with
-                        // them
+                        // them - class constructors also have home objects
+                        // (the superclass) but they ARE constructors.
                         throw ScriptRuntime.typeErrorById("msg.not.ctor", f.getFunctionName());
                     }
 
@@ -3740,6 +3748,47 @@ public final class Interpreter extends Icode implements Evaluator {
             Object[] outArgs =
                     getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
             frame.stack[state.stackTop] = ctor.construct(cx, frame.scope, outArgs);
+            return null;
+        }
+
+        @Override
+        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
+            ctx.out.println(tname + " " + ctx.indexReg);
+        }
+    }
+
+    private static class DoConstructSuper extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (state.instructionCounting) {
+                cx.instructionCount += INVOCATION_COST;
+            }
+            // stack layout: lookup_result arg0 .. argN -> result
+            // The lookup_result came from VALUE_AND_THIS on THISFN.
+            // We get the homeObject (superclass) from the current function.
+            state.stackTop -= state.indexReg;
+
+            // The homeObject on the current function is the parent class
+            Scriptable homeObject = frame.fnOrScript.getHomeObject();
+            if (homeObject == null || !(homeObject instanceof Constructable)) {
+                throw ScriptRuntime.typeErrorById("msg.extends.not.ctor");
+            }
+
+            Object[] outArgs =
+                    getArgsArray(
+                            frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
+            // Pass new.target through the super() call so the correct prototype is used
+            Object constructed;
+            if (homeObject instanceof JSFunction) {
+                constructed =
+                        ((JSFunction) homeObject)
+                                .construct(cx, frame.newTarget, frame.scope, null, outArgs);
+            } else {
+                constructed = ((Constructable) homeObject).construct(cx, frame.scope, outArgs);
+            }
+            // The result of super() becomes 'this' for the derived constructor.
+            frame.thisObj = constructed;
+            frame.stack[state.stackTop] = constructed;
             return null;
         }
 
@@ -4382,6 +4431,38 @@ public final class Interpreter extends Icode implements Evaluator {
             frame.stack[state.stackTop] =
                     ScriptRuntime.nameRef(ns, name, cx, frame.scope, state.indexReg);
             return null;
+        }
+    }
+
+    private static class DoClassExpr extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // stack: ... superClass -> ... constructorFunction
+            Object superClassObj = frame.stack[state.stackTop];
+            Scriptable superClass = null;
+            if (superClassObj != null
+                    && !Undefined.isUndefined(superClassObj)
+                    && superClassObj != UniqueTag.NULL_VALUE) {
+                if (!(superClassObj instanceof Scriptable)) {
+                    throw ScriptRuntime.typeErrorById("msg.extends.not.ctor");
+                }
+                superClass = (Scriptable) superClassObj;
+            }
+
+            // Create the constructor function with superClass as homeObject
+            JSFunction fn = createMethod(cx, frame, state.indexReg, superClass);
+
+            // Set up prototype chain
+            ScriptRuntime.setupClassPrototypeChain(fn, superClass, frame.scope);
+
+            // Replace superClass on stack with the constructor function
+            frame.stack[state.stackTop] = fn;
+            return null;
+        }
+
+        @Override
+        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
+            ctx.out.println(tname + " #" + ctx.indexReg);
         }
     }
 

@@ -162,8 +162,19 @@ abstract class Icode {
             // delete super.prop
             Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
 
+            // Call super() in a derived class constructor
+            Icode_CONSTRUCT_SUPER = Icode_DELPROP_SUPER - 1,
+
+            // Class declaration with extends: stack has superclass, creates constructor with
+            // homeObject
+            Icode_CLASS_STMT = Icode_CONSTRUCT_SUPER - 1,
+
+            // Class expression with extends: stack has superclass, creates constructor with
+            // homeObject
+            Icode_CLASS_EXPR = Icode_CLASS_STMT - 1,
+
             // spread
-            Icode_SPREAD = Icode_DELPROP_SUPER - 1,
+            Icode_SPREAD = Icode_CLASS_EXPR - 1,
 
             // object rest - create object excluding extracted keys
             Icode_OBJECT_REST = Icode_SPREAD - 1,
@@ -363,6 +374,12 @@ abstract class Icode {
                 return "CALL_ON_SUPER";
             case Icode_DELPROP_SUPER:
                 return "DELPROP_SUPER";
+            case Icode_CONSTRUCT_SUPER:
+                return "CONSTRUCT_SUPER";
+            case Icode_CLASS_STMT:
+                return "CLASS_STMT";
+            case Icode_CLASS_EXPR:
+                return "CLASS_EXPR";
             case Icode_SPREAD:
                 return "SPREAD";
             case Icode_OBJECT_REST:

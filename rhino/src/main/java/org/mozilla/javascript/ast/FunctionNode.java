@@ -136,6 +136,7 @@ public class FunctionNode extends ScriptNode {
     private Map<Node, int[]> liveLocals;
     private Node generatorParamInitBlock; // IR block for default parameters init in generators
     private AstNode memberExprNode;
+    private boolean isClassConstructor;
 
     {
         type = Token.FUNCTION;
@@ -371,6 +372,14 @@ public class FunctionNode extends ScriptNode {
 
     public void setIsShorthand() {
         isShorthand = true;
+    }
+
+    public boolean isClassConstructor() {
+        return isClassConstructor;
+    }
+
+    public void setIsClassConstructor(boolean isClassConstructor) {
+        this.isClassConstructor = isClassConstructor;
     }
 
     public void addResumptionPoint(Node target) {

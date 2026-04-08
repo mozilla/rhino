@@ -23,6 +23,7 @@ import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassNode;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
 import org.mozilla.javascript.ast.ContinueStatement;
@@ -101,6 +102,7 @@ public final class IRFactory {
     private Parser parser;
     private AstNodePosition astNodePos;
     private boolean outerScopeIsStrict;
+    private boolean insideClassConstructor;
 
     public IRFactory(CompilerEnvirons env, String sourceString) {
         this(env, null, sourceString, env.getErrorReporter());
@@ -174,6 +176,8 @@ public final class IRFactory {
                     return transformForInLoop((ForInLoop) node);
                 }
                 return transformForLoop((ForLoop) node);
+            case Token.CLASS:
+                return transformClass((ClassNode) node);
             case Token.FUNCTION:
                 return transformFunction((FunctionNode) node);
             case Token.GENEXPR:
@@ -650,6 +654,90 @@ public final class IRFactory {
         }
     }
 
+    private Node transformClass(ClassNode classNode) {
+        FunctionNode constructor = classNode.getConstructor();
+        boolean isStatement = classNode.isStatement();
+        boolean hasSuperClass = classNode.getSuperClass() != null;
+        Name className = classNode.getClassName();
+
+        // Class bodies are always strict
+        constructor.setInStrictMode(true);
+
+        // Always use FUNCTION_EXPRESSION for the constructor function itself.
+        // For class declarations, we wrap the result in a SETNAME to bind
+        // the name in the enclosing scope (like a let binding).
+        constructor.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
+
+        // Set the class name on the constructor
+        if (className != null) {
+            constructor.setFunctionName(className);
+        }
+
+        // For derived classes (has extends), keep the method definition flag
+        // so the CodeGenerator knows to use the homeObject mechanism.
+        // For base classes, clear it so the constructor can be constructed normally.
+        if (!hasSuperClass) {
+            constructor.setMethodDefinition(false);
+        }
+
+        // Transform the constructor as a regular function
+        boolean savedInsideClassConstructor = insideClassConstructor;
+        insideClassConstructor = hasSuperClass;
+        Node constructorNode;
+        try {
+            constructorNode = transformFunction(constructor);
+        } finally {
+            insideClassConstructor = savedInsideClassConstructor;
+        }
+
+        if (hasSuperClass) {
+            // Wrap in a COMMA expression:
+            //   superClassExpr, constructorFunction
+            // The superclass value is pushed on the stack first.
+            // Icode_METHOD_EXPR (emitted by CodeGenerator for method definitions)
+            // will pick it up as the homeObject.
+            // Then we call ScriptRuntime.setupClassPrototypeChain to wire prototypes.
+            Node superClassNode = transform(classNode.getSuperClass());
+            // We need to store the superclass, create the function, then set up prototypes.
+            // Use a COMMA node: (superClass, constructor) where the CodeGenerator
+            // will see the superclass on the stack when creating the method.
+            // But actually, the CodeGenerator handles FUNCTION in visitExpression,
+            // and METHOD_EXPR takes stack[stackTop-1] as homeObject.
+            // So we need the superclass to be below on the stack.
+            //
+            // The approach: wrap in a special node that the CodeGenerator can handle.
+            // Use Token.CLASS to signal this.
+            Node classSetup = new Node(Token.CLASS, superClassNode, constructorNode);
+            classSetup.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
+
+            if (isStatement && className != null) {
+                // For class declarations: bind as a let-like variable
+                Node setName =
+                        new Node(
+                                Token.EXPR_VOID,
+                                createAssignment(
+                                        Token.ASSIGN,
+                                        parser.createName(className.getIdentifier()),
+                                        classSetup));
+                return setName;
+            }
+            return classSetup;
+        }
+
+        // No superclass - simple case
+        if (isStatement && className != null) {
+            Node setName =
+                    new Node(
+                            Token.EXPR_VOID,
+                            createAssignment(
+                                    Token.ASSIGN,
+                                    parser.createName(className.getIdentifier()),
+                                    constructorNode));
+            return setName;
+        }
+        return constructorNode;
+    }
+
     private Node transformFunction(FunctionNode fn) {
         Node mexpr = decompileFunctionHeader(fn);
         int index = parser.currentScriptOrFn.addFunction(fn);
@@ -774,7 +862,23 @@ public final class IRFactory {
     private Node transformFunctionCall(FunctionCall node) {
         astNodePos.push(node);
         try {
-            Node transformedTarget = transform(node.getTarget());
+            AstNode target = node.getTarget();
+            Node transformedTarget = transform(target);
+
+            // super() in a derived class constructor
+            if (target.getType() == Token.SUPER && insideClassConstructor) {
+                // Replace the super keyword with THISFN so the interpreter can
+                // get the homeObject (superclass) from the current function.
+                Node call = createCallOrNew(Token.CALL, new Node(Token.THISFN));
+                call.setLineColumnNumber(node.getLineno(), node.getColumn());
+                List<AstNode> args = node.getArguments();
+                for (int i = 0; i < args.size(); i++) {
+                    call.addChildToBack(transform(args.get(i)));
+                }
+                call.putIntProp(Node.SUPER_CONSTRUCTOR_CALL, 1);
+                return call;
+            }
+
             Node call = createCallOrNew(Token.CALL, transformedTarget);
             call.setLineColumnNumber(node.getLineno(), node.getColumn());
             List<AstNode> args = node.getArguments();
@@ -986,10 +1090,12 @@ public final class IRFactory {
 
     private Node transformLiteral(AstNode node) {
         // Trying to call super as a function. See 15.4.2 Static Semantics: HasDirectSuper
-        // Note that this will need to change when classes are implemented, because in a class
-        // constructor calling "super()" _is_ allowed.
-        if (node.getParent() instanceof FunctionCall && node.getType() == Token.SUPER)
+        // In a class constructor calling "super()" is allowed.
+        if (node.getParent() instanceof FunctionCall
+                && node.getType() == Token.SUPER
+                && !insideClassConstructor) {
             parser.reportError("msg.super.shorthand.function");
+        }
         return node;
     }
 
@@ -1623,7 +1729,14 @@ public final class IRFactory {
         // Add return to end if needed.
         Node lastStmt = statements.getLastChild();
         if (lastStmt == null || lastStmt.getType() != Token.RETURN) {
-            statements.addChildToBack(new Node(Token.RETURN));
+            if (fnNode.isClassConstructor()) {
+                // Class constructors should return 'this' implicitly.
+                // For derived constructors, 'this' was set by super().
+                statements.addChildToBack(
+                        new Node(Token.RETURN, new Node(Token.THIS)));
+            } else {
+                statements.addChildToBack(new Node(Token.RETURN));
+            }
         }
 
         Node result = Node.newString(Token.FUNCTION, fnNode.getName());
