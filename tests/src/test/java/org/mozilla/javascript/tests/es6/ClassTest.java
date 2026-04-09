@@ -34,21 +34,14 @@ public class ClassTest {
     @Test
     public void namedClassExpression() {
         Utils.assertWithAllModes_ES6(
-                "Bar",
-                "var Foo = class Bar {\n"
-                        + "  constructor() {}\n"
-                        + "};\n"
-                        + "Foo.name\n");
+                "Bar", "var Foo = class Bar {\n" + "  constructor() {}\n" + "};\n" + "Foo.name\n");
     }
 
     @Test
     public void classInstanceof() {
         Utils.assertWithAllModes_ES6(
                 Boolean.TRUE,
-                "class Foo {\n"
-                        + "  constructor() {}\n"
-                        + "}\n"
-                        + "new Foo() instanceof Foo\n");
+                "class Foo {\n" + "  constructor() {}\n" + "}\n" + "new Foo() instanceof Foo\n");
     }
 
     @Test
@@ -63,9 +56,7 @@ public class ClassTest {
 
     @Test
     public void defaultConstructor() {
-        Utils.assertWithAllModes_ES6(
-                Boolean.TRUE,
-                "class Foo {}\n" + "new Foo() instanceof Foo\n");
+        Utils.assertWithAllModes_ES6(Boolean.TRUE, "class Foo {}\n" + "new Foo() instanceof Foo\n");
     }
 
     @Test
@@ -103,10 +94,7 @@ public class ClassTest {
     public void classToString() {
         Utils.assertWithAllModes_ES6(
                 "class Foo {\n  constructor() {}\n}",
-                "class Foo {\n"
-                        + "  constructor() {}\n"
-                        + "}\n"
-                        + "Foo.toString()\n");
+                "class Foo {\n" + "  constructor() {}\n" + "}\n" + "Foo.toString()\n");
     }
 
     @Test
@@ -123,17 +111,12 @@ public class ClassTest {
     public void classExpressionToString() {
         Utils.assertWithAllModes_ES6(
                 "class Foo {\n  constructor() {}\n}",
-                "var Foo = class Foo {\n"
-                        + "  constructor() {}\n"
-                        + "};\n"
-                        + "Foo.toString()\n");
+                "var Foo = class Foo {\n" + "  constructor() {}\n" + "};\n" + "Foo.toString()\n");
     }
 
     @Test
     public void defaultConstructorToString() {
-        Utils.assertWithAllModes_ES6(
-                "class Foo {}",
-                "class Foo {}\n" + "Foo.toString()\n");
+        Utils.assertWithAllModes_ES6("class Foo {}", "class Foo {}\n" + "Foo.toString()\n");
     }
 
     @Test
@@ -146,5 +129,100 @@ public class ClassTest {
                         + "  }\n"
                         + "}\n"
                         + "new Foo().result\n");
+    }
+
+    @Test
+    public void instanceMethodBasic() {
+        Utils.assertWithAllModes_ES6(
+                "hello",
+                "class Foo {\n"
+                        + "  greet() { return 'hello'; }\n"
+                        + "}\n"
+                        + "new Foo().greet()\n");
+    }
+
+    @Test
+    public void instanceMethodMultiple() {
+        Utils.assertWithAllModes_ES6(
+                "3-6",
+                "class Calc {\n"
+                        + "  add(a, b) { return a + b; }\n"
+                        + "  mul(a, b) { return a * b; }\n"
+                        + "}\n"
+                        + "var c = new Calc();\n"
+                        + "c.add(1, 2) + '-' + c.mul(2, 3)\n");
+    }
+
+    @Test
+    public void instanceMethodAccessThis() {
+        Utils.assertWithAllModes_ES6(
+                "hello world",
+                "class Greeter {\n"
+                        + "  constructor(name) { this.name = name; }\n"
+                        + "  greet() { return 'hello ' + this.name; }\n"
+                        + "}\n"
+                        + "new Greeter('world').greet()\n");
+    }
+
+    @Test
+    public void instanceMethodOnPrototype() {
+        Utils.assertWithAllModes_ES6(
+                Boolean.TRUE,
+                "class Foo {\n" + "  bar() {}\n" + "}\n" + "Foo.prototype.hasOwnProperty('bar')\n");
+    }
+
+    @Test
+    public void instanceMethodNonEnumerable() {
+        Utils.assertWithAllModes_ES6(
+                0,
+                "class Foo {\n"
+                        + "  bar() {}\n"
+                        + "  baz() {}\n"
+                        + "}\n"
+                        + "Object.keys(Foo.prototype).length\n");
+    }
+
+    @Test
+    public void instanceMethodInherited() {
+        Utils.assertWithAllModes_ES6(
+                "hello",
+                "class Base {\n"
+                        + "  greet() { return 'hello'; }\n"
+                        + "}\n"
+                        + "class Child extends Base {\n"
+                        + "  constructor() { super(); }\n"
+                        + "}\n"
+                        + "new Child().greet()\n");
+    }
+
+    @Test
+    public void instanceMethodOverride() {
+        Utils.assertWithAllModes_ES6(
+                "child",
+                "class Base {\n"
+                        + "  who() { return 'base'; }\n"
+                        + "}\n"
+                        + "class Child extends Base {\n"
+                        + "  constructor() { super(); }\n"
+                        + "  who() { return 'child'; }\n"
+                        + "}\n"
+                        + "new Child().who()\n");
+    }
+
+    @Test
+    public void classExpressionWithMethod() {
+        Utils.assertWithAllModes_ES6(
+                42,
+                "var Foo = class {\n"
+                        + "  getValue() { return 42; }\n"
+                        + "};\n"
+                        + "new Foo().getValue()\n");
+    }
+
+    @Test
+    public void defaultConstructorWithMethods() {
+        Utils.assertWithAllModes_ES6(
+                "ok",
+                "class Foo {\n" + "  check() { return 'ok'; }\n" + "}\n" + "new Foo().check()\n");
     }
 }

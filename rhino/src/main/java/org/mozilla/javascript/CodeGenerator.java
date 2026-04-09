@@ -672,8 +672,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.CLASS:
                 {
-                    // child 0: superclass expression
+                    // child 0: superclass expression (or Token.NULL for base classes
+                    // with methods)
                     // child 1: constructor FUNCTION node
+                    // child 2..N: method FUNCTION nodes (optional)
                     Node superClassExpr = child;
                     Node constructorFn = child.getNext();
                     int fnIndex = constructorFn.getExistingIntProp(Node.FUNCTION_PROP);
@@ -683,6 +685,20 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     // stack: ... superClass -> ... constructorFunction
                     addIndexOp(Icode_CLASS_EXPR, fnIndex);
                     // stack doesn't change: superClass consumed, function pushed
+
+                    // Define instance methods on constructor.prototype
+                    String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
+                    if (methodNames != null) {
+                        Node methodNode = constructorFn.getNext();
+                        for (int i = 0; i < methodNames.length; i++) {
+                            int methodFnIndex = methodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            addStringPrefix(methodNames[i]);
+                            addIndexPrefix(methodFnIndex);
+                            addIcode(Icode_DEFINE_CLASS_METHOD);
+                            // No stack change: constructor stays on top
+                            methodNode = methodNode.getNext();
+                        }
+                    }
                 }
                 break;
 

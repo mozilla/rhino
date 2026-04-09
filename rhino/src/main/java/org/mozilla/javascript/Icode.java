@@ -183,8 +183,11 @@ abstract class Icode {
             // driver can distinguish await from yield).
             Icode_WRAP_AWAIT = Icode_OBJECT_REST - 1,
 
+            // Define a method on a class prototype
+            Icode_DEFINE_CLASS_METHOD = Icode_WRAP_AWAIT - 1,
+
             // Last icode
-            MIN_ICODE = Icode_WRAP_AWAIT;
+            MIN_ICODE = Icode_DEFINE_CLASS_METHOD;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -386,6 +389,8 @@ abstract class Icode {
                 return "OBJECT_REST";
             case Icode_WRAP_AWAIT:
                 return "WRAP_AWAIT";
+            case Icode_DEFINE_CLASS_METHOD:
+                return "DEFINE_CLASS_METHOD";
         }
 
         // icode without name

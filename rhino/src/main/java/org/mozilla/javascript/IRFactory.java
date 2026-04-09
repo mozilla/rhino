@@ -658,6 +658,7 @@ public final class IRFactory {
         FunctionNode constructor = classNode.getConstructor();
         boolean isStatement = classNode.isStatement();
         boolean hasSuperClass = classNode.getSuperClass() != null;
+        boolean hasMethods = classNode.getMethodCount() > 0;
         Name className = classNode.getClassName();
 
         // Class bodies are always strict
@@ -690,28 +691,33 @@ public final class IRFactory {
             insideClassConstructor = savedInsideClassConstructor;
         }
 
-        if (hasSuperClass) {
-            // Wrap in a COMMA expression:
-            //   superClassExpr, constructorFunction
-            // The superclass value is pushed on the stack first.
-            // Icode_METHOD_EXPR (emitted by CodeGenerator for method definitions)
-            // will pick it up as the homeObject.
-            // Then we call ScriptRuntime.setupClassPrototypeChain to wire prototypes.
-            Node superClassNode = transform(classNode.getSuperClass());
-            // We need to store the superclass, create the function, then set up prototypes.
-            // Use a COMMA node: (superClass, constructor) where the CodeGenerator
-            // will see the superclass on the stack when creating the method.
-            // But actually, the CodeGenerator handles FUNCTION in visitExpression,
-            // and METHOD_EXPR takes stack[stackTop-1] as homeObject.
-            // So we need the superclass to be below on the stack.
-            //
-            // The approach: wrap in a special node that the CodeGenerator can handle.
-            // Use Token.CLASS to signal this.
+        // Transform method functions
+        java.util.List<Node> methodNodes = new java.util.ArrayList<>();
+        if (hasMethods) {
+            for (FunctionNode methodFn : classNode.getMethods()) {
+                methodFn.setInStrictMode(true);
+                methodNodes.add(transformFunction(methodFn));
+            }
+        }
+
+        if (hasSuperClass || hasMethods) {
+            // Use Token.CLASS node for classes with extends and/or methods.
+            // For base classes with methods but no superclass, use Token.NULL as sentinel.
+            Node superClassNode =
+                    hasSuperClass ? transform(classNode.getSuperClass()) : new Node(Token.NULL);
             Node classSetup = new Node(Token.CLASS, superClassNode, constructorNode);
             classSetup.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
+            // Add method nodes as additional children
+            for (Node methodNode : methodNodes) {
+                classSetup.addChildToBack(methodNode);
+            }
+            if (hasMethods) {
+                classSetup.putProp(
+                        Node.CLASS_METHODS_PROP, classNode.getMethodNames().toArray(new String[0]));
+            }
+
             if (isStatement && className != null) {
-                // For class declarations: bind as a let-like variable
                 Node setName =
                         new Node(
                                 Token.EXPR_VOID,
@@ -724,7 +730,7 @@ public final class IRFactory {
             return classSetup;
         }
 
-        // No superclass - simple case
+        // No superclass and no methods - simple case
         if (isStatement && className != null) {
             Node setName =
                     new Node(
@@ -1732,8 +1738,7 @@ public final class IRFactory {
             if (fnNode.isClassConstructor()) {
                 // Class constructors should return 'this' implicitly.
                 // For derived constructors, 'this' was set by super().
-                statements.addChildToBack(
-                        new Node(Token.RETURN, new Node(Token.THIS)));
+                statements.addChildToBack(new Node(Token.RETURN, new Node(Token.THIS)));
             } else {
                 statements.addChildToBack(new Node(Token.RETURN));
             }

@@ -5611,6 +5611,10 @@ public class ScriptRuntime {
         if (superClass == null) {
             return;
         }
+
+        if (!(superClass instanceof ScriptableObject)) {
+            throw typeError("Super class must be an object");
+        }
         // Set constructor.__proto__ = superClass
         // This enables static method inheritance (future) and super() resolution
         constructor.setPrototype(superClass);
@@ -5620,6 +5624,14 @@ public class ScriptRuntime {
         Object constructorProto = constructor.getPrototypeProperty();
         if (constructorProto instanceof ScriptableObject && superProto instanceof Scriptable) {
             ((ScriptableObject) constructorProto).setPrototype((Scriptable) superProto);
+        }
+    }
+
+    public static void defineClassMethod(BaseFunction constructor, String name, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            // ES6 14.5.14: methods are {writable: true, enumerable: false, configurable: true}
+            ((ScriptableObject) protoObj).defineProperty(name, methodFn, ScriptableObject.DONTENUM);
         }
     }
 
