@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.mozilla.javascript.Token;
 
 /**
@@ -26,6 +29,8 @@ public class ClassNode extends AstNode {
     private AstNode superClass;
     private FunctionNode constructor;
     private boolean isStatement;
+    private List<String> methodNames;
+    private List<FunctionNode> methods;
 
     {
         type = Token.CLASS;
@@ -82,6 +87,28 @@ public class ClassNode extends AstNode {
         this.isStatement = isStatement;
     }
 
+    public void addMethod(String name, FunctionNode fn) {
+        if (methodNames == null) {
+            methodNames = new ArrayList<>();
+            methods = new ArrayList<>();
+        }
+        methodNames.add(name);
+        methods.add(fn);
+        fn.setParent(this);
+    }
+
+    public int getMethodCount() {
+        return methodNames == null ? 0 : methodNames.size();
+    }
+
+    public List<String> getMethodNames() {
+        return methodNames == null ? Collections.emptyList() : methodNames;
+    }
+
+    public List<FunctionNode> getMethods() {
+        return methods == null ? Collections.emptyList() : methods;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -102,6 +129,15 @@ public class ClassNode extends AstNode {
             sb.append(constructor.toSource(0).substring(constructor.toSource(0).indexOf('(')));
             sb.append("\n");
         }
+        if (methodNames != null) {
+            for (int i = 0; i < methodNames.size(); i++) {
+                sb.append(makeIndent(depth + 1));
+                sb.append(methodNames.get(i));
+                String fnSrc = methods.get(i).toSource(0);
+                sb.append(fnSrc.substring(fnSrc.indexOf('(')));
+                sb.append("\n");
+            }
+        }
         sb.append(makeIndent(depth));
         sb.append("}");
         return sb.toString();
@@ -118,6 +154,11 @@ public class ClassNode extends AstNode {
             }
             if (constructor != null) {
                 constructor.visit(v);
+            }
+            if (methods != null) {
+                for (FunctionNode method : methods) {
+                    method.visit(v);
+                }
             }
         }
     }

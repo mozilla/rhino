@@ -1049,8 +1049,9 @@ class BodyCodegen {
 
             case Token.CLASS:
                 {
-                    // child 0: superclass expression
+                    // child 0: superclass expression (or Token.NULL sentinel)
                     // child 1: constructor FUNCTION node
+                    // child 2..N: method FUNCTION nodes (optional)
                     Node superClassExpr = child;
                     Node constructorFn = child.getNext();
                     int fnIndex = constructorFn.getExistingIntProp(Node.FUNCTION_PROP);
@@ -1076,6 +1077,47 @@ class BodyCodegen {
                             "(Lorg/mozilla/javascript/BaseFunction;"
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/VarScope;)V");
+
+                    // Define instance methods on constructor.prototype
+                    String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
+                    if (methodNames != null && methodNames.length > 0) {
+                        // Get constructor.prototype for use as homeObject
+                        cfw.add(ByteCode.DUP);
+                        cfw.addInvoke(
+                                ByteCode.INVOKEVIRTUAL,
+                                "org/mozilla/javascript/BaseFunction",
+                                "getPrototypeProperty",
+                                "()Ljava/lang/Object;");
+                        int protoLocal = getNewWordLocal();
+                        cfw.addAStore(protoLocal);
+
+                        int prevHomeLocal2 = savedHomeObjectLocal;
+                        savedHomeObjectLocal = protoLocal;
+
+                        Node methodNode = constructorFn.getNext();
+                        for (int i = 0; i < methodNames.length; i++) {
+                            int mFnIndex = methodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            OptFunctionNode mOfn = OptFunctionNode.get(scriptOrFn, mFnIndex);
+
+                            // Stack: constructor
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(methodNames[i]);
+                            visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
+                            cfw.addInvoke(
+                                    ByteCode.INVOKESTATIC,
+                                    "org/mozilla/javascript/ScriptRuntime",
+                                    "defineClassMethod",
+                                    "(Lorg/mozilla/javascript/BaseFunction;"
+                                            + "Ljava/lang/String;"
+                                            + "Ljava/lang/Object;)V");
+
+                            methodNode = methodNode.getNext();
+                        }
+
+                        savedHomeObjectLocal = prevHomeLocal2;
+                        releaseWordLocal(protoLocal);
+                    }
+
                     releaseWordLocal(savedHomeObjectLocal);
                     savedHomeObjectLocal = prevHomeLocal;
                 }

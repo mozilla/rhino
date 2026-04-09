@@ -1549,6 +1549,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
         instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
         instructionObjs[base + Icode_WRAP_AWAIT] = new DoWrapAwait();
+        instructionObjs[base + Icode_DEFINE_CLASS_METHOD] = new DoDefineClassMethod();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -3775,8 +3776,7 @@ public final class Interpreter extends Icode implements Evaluator {
             }
 
             Object[] outArgs =
-                    getArgsArray(
-                            frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
+                    getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
             // Pass new.target through the super() call so the correct prototype is used
             Object constructed;
             if (homeObject instanceof JSFunction) {
@@ -4463,6 +4463,20 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             ctx.out.println(tname + " #" + ctx.indexReg);
+        }
+    }
+
+    private static class DoDefineClassMethod extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Constructor is on the stack top (peeked, not popped)
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            Object protoObj = constructor.getPrototypeProperty();
+            Scriptable prototype = (protoObj instanceof Scriptable) ? (Scriptable) protoObj : null;
+            // Create method with homeObject = prototype (for super support)
+            JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
+            ScriptRuntime.defineClassMethod(constructor, state.stringReg, method);
+            return null;
         }
     }
 

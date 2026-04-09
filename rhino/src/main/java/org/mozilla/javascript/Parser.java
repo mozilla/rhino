@@ -1142,6 +1142,10 @@ public class Parser {
                 // We need LP to follow, which function() will match
                 constructor = function(FunctionNode.FUNCTION_EXPRESSION, true);
                 constructor.setIsClassConstructor(true);
+            } else if (peekToken() == Token.LP) {
+                // Instance method definition
+                FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
+                classNode.addMethod(methodName, method);
             } else {
                 reportError("msg.unexpected.token");
             }
