@@ -100,6 +100,43 @@ public class ClassTest {
     }
 
     @Test
+    public void classToString() {
+        Utils.assertWithAllModes_ES6(
+                "class Foo {\n  constructor() {}\n}",
+                "class Foo {\n"
+                        + "  constructor() {}\n"
+                        + "}\n"
+                        + "Foo.toString()\n");
+    }
+
+    @Test
+    public void classToStringWithBody() {
+        Utils.assertWithAllModes_ES6(
+                "class Foo {\n  constructor(x) { this.x = x; }\n}",
+                "class Foo {\n"
+                        + "  constructor(x) { this.x = x; }\n"
+                        + "}\n"
+                        + "Foo.toString()\n");
+    }
+
+    @Test
+    public void classExpressionToString() {
+        Utils.assertWithAllModes_ES6(
+                "class Foo {\n  constructor() {}\n}",
+                "var Foo = class Foo {\n"
+                        + "  constructor() {}\n"
+                        + "};\n"
+                        + "Foo.toString()\n");
+    }
+
+    @Test
+    public void defaultConstructorToString() {
+        Utils.assertWithAllModes_ES6(
+                "class Foo {}",
+                "class Foo {}\n" + "Foo.toString()\n");
+    }
+
+    @Test
     public void classStrictMode() {
         Utils.assertWithAllModes_ES6(
                 "TypeError",

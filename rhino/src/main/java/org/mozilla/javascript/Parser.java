@@ -1167,6 +1167,10 @@ public class Parser {
         int end = ts.tokenEnd;
         classNode.setLength(end - pos);
 
+        // Set the constructor's raw source bounds to cover the entire class declaration,
+        // so that toString() on the constructor returns the class source per the ES spec.
+        constructor.setRawSourceBounds(pos, end);
+
         return classNode;
     }
 
