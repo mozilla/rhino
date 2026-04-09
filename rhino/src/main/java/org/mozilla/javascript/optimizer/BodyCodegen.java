@@ -1078,6 +1078,9 @@ class BodyCodegen {
                                     + "Lorg/mozilla/javascript/Scriptable;"
                                     + "Lorg/mozilla/javascript/VarScope;)V");
 
+                    // Track the next child node (after constructor) for iterating
+                    Node nextMethodNode = constructorFn.getNext();
+
                     // Define instance methods on constructor.prototype
                     String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
                     if (methodNames != null && methodNames.length > 0) {
@@ -1094,12 +1097,10 @@ class BodyCodegen {
                         int prevHomeLocal2 = savedHomeObjectLocal;
                         savedHomeObjectLocal = protoLocal;
 
-                        Node methodNode = constructorFn.getNext();
                         for (int i = 0; i < methodNames.length; i++) {
-                            int mFnIndex = methodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            int mFnIndex = nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
                             OptFunctionNode mOfn = OptFunctionNode.get(scriptOrFn, mFnIndex);
 
-                            // Stack: constructor
                             cfw.add(ByteCode.DUP);
                             cfw.addPush(methodNames[i]);
                             visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
@@ -1111,11 +1112,46 @@ class BodyCodegen {
                                             + "Ljava/lang/String;"
                                             + "Ljava/lang/Object;)V");
 
-                            methodNode = methodNode.getNext();
+                            nextMethodNode = nextMethodNode.getNext();
                         }
 
                         savedHomeObjectLocal = prevHomeLocal2;
                         releaseWordLocal(protoLocal);
+                    }
+
+                    // Define static methods on the constructor itself
+                    String[] staticMethodNames =
+                            (String[]) node.getProp(Node.CLASS_STATIC_METHODS_PROP);
+                    if (staticMethodNames != null && staticMethodNames.length > 0) {
+                        // For static methods, homeObject is the constructor
+                        // Store constructor in a local for use as homeObject
+                        int constructorLocal = getNewWordLocal();
+                        cfw.add(ByteCode.DUP);
+                        cfw.addAStore(constructorLocal);
+
+                        int prevHomeLocal2 = savedHomeObjectLocal;
+                        savedHomeObjectLocal = constructorLocal;
+
+                        for (int i = 0; i < staticMethodNames.length; i++) {
+                            int mFnIndex = nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            OptFunctionNode mOfn = OptFunctionNode.get(scriptOrFn, mFnIndex);
+
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(staticMethodNames[i]);
+                            visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
+                            cfw.addInvoke(
+                                    ByteCode.INVOKESTATIC,
+                                    "org/mozilla/javascript/ScriptRuntime",
+                                    "defineStaticClassMethod",
+                                    "(Lorg/mozilla/javascript/BaseFunction;"
+                                            + "Ljava/lang/String;"
+                                            + "Ljava/lang/Object;)V");
+
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+
+                        savedHomeObjectLocal = prevHomeLocal2;
+                        releaseWordLocal(constructorLocal);
                     }
 
                     releaseWordLocal(savedHomeObjectLocal);

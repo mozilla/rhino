@@ -225,4 +225,72 @@ public class ClassTest {
                 "ok",
                 "class Foo {\n" + "  check() { return 'ok'; }\n" + "}\n" + "new Foo().check()\n");
     }
+
+    @Test
+    public void staticMethodBasic() {
+        Utils.assertWithAllModes_ES6(
+                42,
+                "class Foo {\n" + "  static create() { return 42; }\n" + "}\n" + "Foo.create()\n");
+    }
+
+    @Test
+    public void staticMethodMultiple() {
+        Utils.assertWithAllModes_ES6(
+                "a-b",
+                "class Foo {\n"
+                        + "  static a() { return 'a'; }\n"
+                        + "  static b() { return 'b'; }\n"
+                        + "}\n"
+                        + "Foo.a() + '-' + Foo.b()\n");
+    }
+
+    @Test
+    public void staticMethodNotOnInstance() {
+        Utils.assertWithAllModes_ES6(
+                "undefined",
+                "class Foo {\n"
+                        + "  static bar() { return 1; }\n"
+                        + "}\n"
+                        + "typeof new Foo().bar\n");
+    }
+
+    @Test
+    public void staticMethodNonEnumerable() {
+        Utils.assertWithAllModes_ES6(
+                0, "class Foo {\n" + "  static bar() {}\n" + "}\n" + "Object.keys(Foo).length\n");
+    }
+
+    @Test
+    public void staticAndInstanceMethods() {
+        Utils.assertWithAllModes_ES6(
+                "static-instance",
+                "class Foo {\n"
+                        + "  static s() { return 'static'; }\n"
+                        + "  i() { return 'instance'; }\n"
+                        + "}\n"
+                        + "Foo.s() + '-' + new Foo().i()\n");
+    }
+
+    @Test
+    public void staticMethodInherited() {
+        Utils.assertWithAllModes_ES6(
+                "hello",
+                "class Base {\n"
+                        + "  static greet() { return 'hello'; }\n"
+                        + "}\n"
+                        + "class Child extends Base {\n"
+                        + "  constructor() { super(); }\n"
+                        + "}\n"
+                        + "Child.greet()\n");
+    }
+
+    @Test
+    public void staticMethodOnClassExpression() {
+        Utils.assertWithAllModes_ES6(
+                "ok",
+                "var Foo = class {\n"
+                        + "  static check() { return 'ok'; }\n"
+                        + "};\n"
+                        + "Foo.check()\n");
+    }
 }

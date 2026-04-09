@@ -31,6 +31,8 @@ public class ClassNode extends AstNode {
     private boolean isStatement;
     private List<String> methodNames;
     private List<FunctionNode> methods;
+    private List<String> staticMethodNames;
+    private List<FunctionNode> staticMethods;
 
     {
         type = Token.CLASS;
@@ -109,6 +111,28 @@ public class ClassNode extends AstNode {
         return methods == null ? Collections.emptyList() : methods;
     }
 
+    public void addStaticMethod(String name, FunctionNode fn) {
+        if (staticMethodNames == null) {
+            staticMethodNames = new ArrayList<>();
+            staticMethods = new ArrayList<>();
+        }
+        staticMethodNames.add(name);
+        staticMethods.add(fn);
+        fn.setParent(this);
+    }
+
+    public int getStaticMethodCount() {
+        return staticMethodNames == null ? 0 : staticMethodNames.size();
+    }
+
+    public List<String> getStaticMethodNames() {
+        return staticMethodNames == null ? Collections.emptyList() : staticMethodNames;
+    }
+
+    public List<FunctionNode> getStaticMethods() {
+        return staticMethods == null ? Collections.emptyList() : staticMethods;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -138,6 +162,16 @@ public class ClassNode extends AstNode {
                 sb.append("\n");
             }
         }
+        if (staticMethodNames != null) {
+            for (int i = 0; i < staticMethodNames.size(); i++) {
+                sb.append(makeIndent(depth + 1));
+                sb.append("static ");
+                sb.append(staticMethodNames.get(i));
+                String fnSrc = staticMethods.get(i).toSource(0);
+                sb.append(fnSrc.substring(fnSrc.indexOf('(')));
+                sb.append("\n");
+            }
+        }
         sb.append(makeIndent(depth));
         sb.append("}");
         return sb.toString();
@@ -157,6 +191,11 @@ public class ClassNode extends AstNode {
             }
             if (methods != null) {
                 for (FunctionNode method : methods) {
+                    method.visit(v);
+                }
+            }
+            if (staticMethods != null) {
+                for (FunctionNode method : staticMethods) {
                     method.visit(v);
                 }
             }

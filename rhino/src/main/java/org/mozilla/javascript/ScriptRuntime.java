@@ -5635,6 +5635,12 @@ public class ScriptRuntime {
         }
     }
 
+    public static void defineStaticClassMethod(
+            BaseFunction constructor, String name, Object methodFn) {
+        // Static methods are non-enumerable properties on the constructor itself
+        constructor.defineProperty(name, methodFn, ScriptableObject.DONTENUM);
+    }
+
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {
         // Compared with function it always sets the scope to top scope
         scope = ScriptableObject.getTopLevelScope(scope);
