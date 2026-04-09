@@ -186,8 +186,11 @@ abstract class Icode {
             // Define a method on a class prototype
             Icode_DEFINE_CLASS_METHOD = Icode_WRAP_AWAIT - 1,
 
+            // Define a static method on a class constructor
+            Icode_DEFINE_STATIC_CLASS_METHOD = Icode_DEFINE_CLASS_METHOD - 1,
+
             // Last icode
-            MIN_ICODE = Icode_DEFINE_CLASS_METHOD;
+            MIN_ICODE = Icode_DEFINE_STATIC_CLASS_METHOD;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -391,6 +394,8 @@ abstract class Icode {
                 return "WRAP_AWAIT";
             case Icode_DEFINE_CLASS_METHOD:
                 return "DEFINE_CLASS_METHOD";
+            case Icode_DEFINE_STATIC_CLASS_METHOD:
+                return "DEFINE_STATIC_CLASS_METHOD";
         }
 
         // icode without name

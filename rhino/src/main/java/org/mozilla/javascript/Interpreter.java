@@ -1550,6 +1550,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
         instructionObjs[base + Icode_WRAP_AWAIT] = new DoWrapAwait();
         instructionObjs[base + Icode_DEFINE_CLASS_METHOD] = new DoDefineClassMethod();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_METHOD] = new DoDefineStaticClassMethod();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -4476,6 +4477,18 @@ public final class Interpreter extends Icode implements Evaluator {
             // Create method with homeObject = prototype (for super support)
             JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
             ScriptRuntime.defineClassMethod(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassMethod extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Constructor is on the stack top (peeked, not popped)
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            // Create static method with homeObject = constructor (for super support)
+            JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
+            ScriptRuntime.defineStaticClassMethod(constructor, state.stringReg, method);
             return null;
         }
     }

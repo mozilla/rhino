@@ -688,15 +688,30 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                     // Define instance methods on constructor.prototype
                     String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
+                    // Track the node after the constructor for iterating method children
+                    Node nextMethodNode = constructorFn.getNext();
                     if (methodNames != null) {
-                        Node methodNode = constructorFn.getNext();
                         for (int i = 0; i < methodNames.length; i++) {
-                            int methodFnIndex = methodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            int methodFnIndex =
+                                    nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
                             addStringPrefix(methodNames[i]);
                             addIndexPrefix(methodFnIndex);
                             addIcode(Icode_DEFINE_CLASS_METHOD);
-                            // No stack change: constructor stays on top
-                            methodNode = methodNode.getNext();
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                    }
+
+                    // Define static methods on the constructor itself
+                    String[] staticMethodNames =
+                            (String[]) node.getProp(Node.CLASS_STATIC_METHODS_PROP);
+                    if (staticMethodNames != null) {
+                        for (int i = 0; i < staticMethodNames.length; i++) {
+                            int methodFnIndex =
+                                    nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            addStringPrefix(staticMethodNames[i]);
+                            addIndexPrefix(methodFnIndex);
+                            addIcode(Icode_DEFINE_STATIC_CLASS_METHOD);
+                            nextMethodNode = nextMethodNode.getNext();
                         }
                     }
                 }

@@ -1125,6 +1125,24 @@ public class Parser {
                 continue;
             }
 
+            // Check for 'static' keyword (Token.RESERVED in strict mode)
+            boolean isStatic = false;
+            if (peekToken() == Token.RESERVED) {
+                consumeToken();
+                if ("static".equals(ts.getString()) && peekToken() == Token.NAME) {
+                    isStatic = true;
+                    // Fall through to parse the method name below
+                } else if ("static".equals(ts.getString()) && peekToken() == Token.LP) {
+                    // 'static' used as an instance method name: static() {}
+                    FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
+                    classNode.addMethod("static", method);
+                    continue;
+                } else {
+                    reportError("msg.unexpected.token");
+                    continue;
+                }
+            }
+
             // Consume the name token to check if it's "constructor"
             if (peekToken() != Token.NAME) {
                 reportError("msg.unexpected.token");
@@ -1134,7 +1152,7 @@ public class Parser {
             consumeToken();
             String methodName = ts.getString();
 
-            if ("constructor".equals(methodName) && peekToken() == Token.LP) {
+            if (!isStatic && "constructor".equals(methodName) && peekToken() == Token.LP) {
                 if (constructor != null) {
                     reportError("msg.dup.ctor");
                 }
@@ -1143,9 +1161,15 @@ public class Parser {
                 constructor = function(FunctionNode.FUNCTION_EXPRESSION, true);
                 constructor.setIsClassConstructor(true);
             } else if (peekToken() == Token.LP) {
-                // Instance method definition
+                if (isStatic && "prototype".equals(methodName)) {
+                    reportError("msg.unexpected.token");
+                }
                 FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
-                classNode.addMethod(methodName, method);
+                if (isStatic) {
+                    classNode.addStaticMethod(methodName, method);
+                } else {
+                    classNode.addMethod(methodName, method);
+                }
             } else {
                 reportError("msg.unexpected.token");
             }
