@@ -1132,68 +1132,126 @@ public class Parser {
             boolean isStatic = false;
             if (peekToken() == Token.RESERVED) {
                 consumeToken();
-                if ("static".equals(ts.getString()) && peekToken() == Token.NAME) {
-                    isStatic = true;
-                    // Fall through to parse the method name below
-                } else if ("static".equals(ts.getString()) && peekToken() == Token.LP) {
-                    // 'static' used as an instance method name: static() {}
-                    FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
-                    classNode.addMethod("static", method);
-                    continue;
+                if ("static".equals(ts.getString())) {
+                    int nextTt = peekToken();
+                    if (nextTt == Token.LP) {
+                        // 'static' used as an instance method name: static() {}
+                        FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
+                        classNode.addMethod("static", method);
+                        continue;
+                    } else if (nextTt == Token.NAME
+                            || nextTt == Token.STRING
+                            || nextTt == Token.NUMBER
+                            || nextTt == Token.BIGINT
+                            || nextTt == Token.LB) {
+                        isStatic = true;
+                    } else {
+                        reportError("msg.unexpected.token");
+                        continue;
+                    }
                 } else {
                     reportError("msg.unexpected.token");
                     continue;
                 }
             }
 
-            // Consume the name token to check if it's "constructor"
-            if (peekToken() != Token.NAME) {
+            // Parse the member name: identifier, string, number, or [computed]
+            String memberName = null;
+            boolean isComputed = false;
+            boolean isStringOrNumericName = false;
+            AstNode computedKeyExpr = null;
+            int tt = peekToken();
+
+            if (tt == Token.NAME) {
+                consumeToken();
+                memberName = ts.getString();
+            } else if (tt == Token.STRING) {
+                consumeToken();
+                memberName = ts.getString();
+                isStringOrNumericName = true;
+            } else if (tt == Token.NUMBER || tt == Token.BIGINT) {
+                consumeToken();
+                memberName = ts.getString();
+                isStringOrNumericName = true;
+            } else if (tt == Token.LB) {
+                // Computed property: [expression]
+                isComputed = true;
+                consumeToken();
+                computedKeyExpr = assignExpr();
+                mustMatchToken(Token.RB, "msg.no.bracket.index", true);
+            } else {
                 reportError("msg.unexpected.token");
                 consumeToken();
                 continue;
             }
-            consumeToken();
-            String methodName = ts.getString();
 
             // Check for 'async' modifier before method name
             boolean isAsync = false;
-            if ("async".equals(methodName) && peekToken() == Token.NAME) {
-                isAsync = true;
-                consumeToken();
-                methodName = ts.getString();
+            if (!isComputed && "async".equals(memberName)) {
+                int nextTt = peekToken();
+                if (nextTt == Token.NAME
+                        || nextTt == Token.STRING
+                        || nextTt == Token.NUMBER
+                        || nextTt == Token.BIGINT
+                        || nextTt == Token.LB) {
+                    isAsync = true;
+                    isStringOrNumericName = false;
+                    // Re-parse the actual member name
+                    tt = peekToken();
+                    if (tt == Token.NAME) {
+                        consumeToken();
+                        memberName = ts.getString();
+                    } else if (tt == Token.STRING) {
+                        consumeToken();
+                        memberName = ts.getString();
+                        isStringOrNumericName = true;
+                    } else if (tt == Token.NUMBER || tt == Token.BIGINT) {
+                        consumeToken();
+                        memberName = ts.getString();
+                        isStringOrNumericName = true;
+                    } else if (tt == Token.LB) {
+                        isComputed = true;
+                        memberName = null;
+                        consumeToken();
+                        computedKeyExpr = assignExpr();
+                        mustMatchToken(Token.RB, "msg.no.bracket.index", true);
+                    }
+                }
             }
 
             // Check for forbidden property names:
             // - non-static properties named "constructor" (except the actual constructor)
             // - static properties named "prototype"
-            if (isStatic && "prototype".equals(methodName)) {
+            if (!isComputed && isStatic && "prototype".equals(memberName)) {
                 reportError("msg.unexpected.token");
             }
 
-            if (!isStatic
+            if (!isComputed
+                    && !isStatic
                     && !isAsync
-                    && "constructor".equals(methodName)
+                    && "constructor".equals(memberName)
                     && peekToken() == Token.LP) {
                 if (constructor != null) {
                     reportError("msg.dup.ctor");
                 }
-                // Parse constructor as method: function() already expects LP consumed or not
-                // We need LP to follow, which function() will match
                 constructor = function(FunctionNode.FUNCTION_EXPRESSION, true);
                 constructor.setIsClassConstructor(true);
             } else if (peekToken() == Token.LP) {
-                if (!isStatic && "constructor".equals(methodName)) {
+                if (!isComputed && !isStatic && "constructor".equals(memberName)) {
                     reportError("msg.unexpected.token");
                 }
                 FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
-                if (isStatic) {
-                    classNode.addStaticMethod(methodName, method);
+                if (isComputed) {
+                    // TODO: computed method names need additional support in ClassNode/IRFactory
+                    reportError("msg.unexpected.token");
+                } else if (isStatic) {
+                    classNode.addStaticMethod(memberName, method);
                 } else {
-                    classNode.addMethod(methodName, method);
+                    classNode.addMethod(memberName, method);
                 }
             } else {
                 // Field declaration: name = expr; or name;
-                if (!isStatic && "constructor".equals(methodName)) {
+                if (!isComputed && !isStatic && "constructor".equals(memberName)) {
                     reportError("msg.unexpected.token");
                 }
                 AstNode initializer = null;
@@ -1204,7 +1262,16 @@ public class Parser {
                 if (peekToken() == Token.SEMI) {
                     consumeToken();
                 }
-                classNode.addField(methodName, initializer);
+                if (isComputed) {
+                    classNode.addComputedField(computedKeyExpr, initializer);
+                } else if (isStringOrNumericName) {
+                    // String/number property names use ElementGet (this["name"])
+                    StringLiteral keyLiteral = new StringLiteral();
+                    keyLiteral.setValue(memberName);
+                    classNode.addComputedField(keyLiteral, initializer);
+                } else {
+                    classNode.addField(memberName, initializer);
+                }
             }
         }
 
