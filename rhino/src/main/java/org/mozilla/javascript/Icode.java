@@ -189,8 +189,14 @@ abstract class Icode {
             // Define a static method on a class constructor
             Icode_DEFINE_STATIC_CLASS_METHOD = Icode_DEFINE_CLASS_METHOD - 1,
 
+            // Define a static named field on a class constructor (value on stack)
+            Icode_DEFINE_STATIC_CLASS_FIELD = Icode_DEFINE_STATIC_CLASS_METHOD - 1,
+
+            // Define a static computed field on a class constructor (key and value on stack)
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD = Icode_DEFINE_STATIC_CLASS_FIELD - 1,
+
             // Last icode
-            MIN_ICODE = Icode_DEFINE_STATIC_CLASS_METHOD;
+            MIN_ICODE = Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -396,6 +402,10 @@ abstract class Icode {
                 return "DEFINE_CLASS_METHOD";
             case Icode_DEFINE_STATIC_CLASS_METHOD:
                 return "DEFINE_STATIC_CLASS_METHOD";
+            case Icode_DEFINE_STATIC_CLASS_FIELD:
+                return "DEFINE_STATIC_CLASS_FIELD";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD:
+                return "DEFINE_STATIC_CLASS_COMPUTED_FIELD";
         }
 
         // icode without name

@@ -37,6 +37,10 @@ public class ClassNode extends AstNode {
     private List<AstNode> fieldInitializers;
     private List<AstNode> computedFieldKeys;
     private List<AstNode> computedFieldInitializers;
+    private List<String> staticFieldNames;
+    private List<AstNode> staticFieldInitializers;
+    private List<AstNode> staticComputedFieldKeys;
+    private List<AstNode> staticComputedFieldInitializers;
 
     {
         type = Token.CLASS;
@@ -186,6 +190,57 @@ public class ClassNode extends AstNode {
         return computedFieldInitializers == null
                 ? Collections.emptyList()
                 : computedFieldInitializers;
+    }
+
+    public void addStaticField(String name, AstNode initializer) {
+        if (staticFieldNames == null) {
+            staticFieldNames = new ArrayList<>();
+            staticFieldInitializers = new ArrayList<>();
+        }
+        staticFieldNames.add(name);
+        staticFieldInitializers.add(initializer);
+        if (initializer != null) {
+            initializer.setParent(this);
+        }
+    }
+
+    public int getStaticFieldCount() {
+        return staticFieldNames == null ? 0 : staticFieldNames.size();
+    }
+
+    public List<String> getStaticFieldNames() {
+        return staticFieldNames == null ? Collections.emptyList() : staticFieldNames;
+    }
+
+    public List<AstNode> getStaticFieldInitializers() {
+        return staticFieldInitializers == null ? Collections.emptyList() : staticFieldInitializers;
+    }
+
+    public void addStaticComputedField(AstNode keyExpr, AstNode initializer) {
+        if (staticComputedFieldKeys == null) {
+            staticComputedFieldKeys = new ArrayList<>();
+            staticComputedFieldInitializers = new ArrayList<>();
+        }
+        staticComputedFieldKeys.add(keyExpr);
+        staticComputedFieldInitializers.add(initializer);
+        keyExpr.setParent(this);
+        if (initializer != null) {
+            initializer.setParent(this);
+        }
+    }
+
+    public int getStaticComputedFieldCount() {
+        return staticComputedFieldKeys == null ? 0 : staticComputedFieldKeys.size();
+    }
+
+    public List<AstNode> getStaticComputedFieldKeys() {
+        return staticComputedFieldKeys == null ? Collections.emptyList() : staticComputedFieldKeys;
+    }
+
+    public List<AstNode> getStaticComputedFieldInitializers() {
+        return staticComputedFieldInitializers == null
+                ? Collections.emptyList()
+                : staticComputedFieldInitializers;
     }
 
     @Override

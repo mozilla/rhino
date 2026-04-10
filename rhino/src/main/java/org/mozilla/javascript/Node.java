@@ -75,7 +75,9 @@ public class Node implements Iterable<Node> {
             LITERAL_INDEX_PROP = 35, // int index into the shared literals table
             CLASS_METHODS_PROP = 36, // String[] of method names for class definitions
             CLASS_STATIC_METHODS_PROP = 36, // String[] of static method names
-            LAST_PROP = CLASS_STATIC_METHODS_PROP,
+            CLASS_STATIC_FIELDS_PROP = 37, // String[] of static field names
+            CLASS_STATIC_COMPUTED_FIELDS_COUNT = 38, // int count of static computed fields
+            LAST_PROP = CLASS_STATIC_COMPUTED_FIELDS_COUNT,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify

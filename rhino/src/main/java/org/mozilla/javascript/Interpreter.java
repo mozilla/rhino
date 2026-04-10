@@ -1551,6 +1551,9 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_WRAP_AWAIT] = new DoWrapAwait();
         instructionObjs[base + Icode_DEFINE_CLASS_METHOD] = new DoDefineClassMethod();
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_METHOD] = new DoDefineStaticClassMethod();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_FIELD] = new DoDefineStaticClassField();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD] =
+                new DoDefineStaticClassComputedField();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -4489,6 +4492,35 @@ public final class Interpreter extends Icode implements Evaluator {
             // Create static method with homeObject = constructor (for super support)
             JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
             ScriptRuntime.defineStaticClassMethod(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassField extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack: ... constructor value -> ... constructor
+            Object value = frame.stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            ScriptRuntime.defineStaticClassField(constructor, state.stringReg, value);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassComputedField extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack: ... constructor key value -> ... constructor
+            Object value = frame.stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            ScriptRuntime.defineStaticClassComputedField(constructor, key, value);
             return null;
         }
     }

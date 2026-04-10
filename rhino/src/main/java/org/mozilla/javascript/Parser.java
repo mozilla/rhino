@@ -1262,15 +1262,26 @@ public class Parser {
                 if (peekToken() == Token.SEMI) {
                     consumeToken();
                 }
-                if (isComputed) {
-                    classNode.addComputedField(computedKeyExpr, initializer);
-                } else if (isStringOrNumericName) {
-                    // String/number property names use ElementGet (this["name"])
-                    StringLiteral keyLiteral = new StringLiteral();
-                    keyLiteral.setValue(memberName);
-                    classNode.addComputedField(keyLiteral, initializer);
+                if (isStatic) {
+                    if (isComputed) {
+                        classNode.addStaticComputedField(computedKeyExpr, initializer);
+                    } else if (isStringOrNumericName) {
+                        StringLiteral keyLiteral = new StringLiteral();
+                        keyLiteral.setValue(memberName);
+                        classNode.addStaticComputedField(keyLiteral, initializer);
+                    } else {
+                        classNode.addStaticField(memberName, initializer);
+                    }
                 } else {
-                    classNode.addField(memberName, initializer);
+                    if (isComputed) {
+                        classNode.addComputedField(computedKeyExpr, initializer);
+                    } else if (isStringOrNumericName) {
+                        StringLiteral keyLiteral = new StringLiteral();
+                        keyLiteral.setValue(memberName);
+                        classNode.addComputedField(keyLiteral, initializer);
+                    } else {
+                        classNode.addField(memberName, initializer);
+                    }
                 }
             }
         }

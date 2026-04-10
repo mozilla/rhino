@@ -714,6 +714,31 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                             nextMethodNode = nextMethodNode.getNext();
                         }
                     }
+
+                    // Define static named fields on the constructor
+                    String[] staticFieldNames =
+                            (String[]) node.getProp(Node.CLASS_STATIC_FIELDS_PROP);
+                    if (staticFieldNames != null) {
+                        for (int i = 0; i < staticFieldNames.length; i++) {
+                            visitExpression(nextMethodNode, 0);
+                            addStringPrefix(staticFieldNames[i]);
+                            addIcode(Icode_DEFINE_STATIC_CLASS_FIELD);
+                            stackChange(-1);
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                    }
+
+                    // Define static computed fields on the constructor
+                    int staticComputedFieldCount =
+                            node.getIntProp(Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT, 0);
+                    for (int i = 0; i < staticComputedFieldCount; i++) {
+                        visitExpression(nextMethodNode, 0); // key
+                        nextMethodNode = nextMethodNode.getNext();
+                        visitExpression(nextMethodNode, 0); // value
+                        addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD);
+                        stackChange(-2);
+                        nextMethodNode = nextMethodNode.getNext();
+                    }
                 }
                 break;
 

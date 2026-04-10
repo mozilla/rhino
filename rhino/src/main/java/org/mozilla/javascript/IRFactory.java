@@ -660,6 +660,8 @@ public final class IRFactory {
         boolean hasSuperClass = classNode.getSuperClass() != null;
         boolean hasMethods = classNode.getMethodCount() > 0;
         boolean hasStaticMethods = classNode.getStaticMethodCount() > 0;
+        boolean hasStaticFields = classNode.getStaticFieldCount() > 0;
+        boolean hasStaticComputedFields = classNode.getStaticComputedFieldCount() > 0;
         Name className = classNode.getClassName();
 
         // Class bodies are always strict
@@ -715,9 +717,13 @@ public final class IRFactory {
             }
         }
 
-        if (hasSuperClass || hasMethods || hasStaticMethods) {
-            // Use Token.CLASS node for classes with extends and/or methods.
-            // For base classes with methods but no superclass, use Token.NULL as sentinel.
+        if (hasSuperClass
+                || hasMethods
+                || hasStaticMethods
+                || hasStaticFields
+                || hasStaticComputedFields) {
+            // Use Token.CLASS node for classes with extends, methods, or static fields.
+            // For base classes without superclass, use Token.NULL as sentinel.
             Node superClassNode =
                     hasSuperClass ? transform(classNode.getSuperClass()) : new Node(Token.NULL);
             Node classSetup = new Node(Token.CLASS, superClassNode, constructorNode);
@@ -740,6 +746,39 @@ public final class IRFactory {
                 classSetup.putProp(
                         Node.CLASS_STATIC_METHODS_PROP,
                         classNode.getStaticMethodNames().toArray(new String[0]));
+            }
+
+            // Add static named field value expressions as children
+            if (hasStaticFields) {
+                java.util.List<AstNode> sfInits = classNode.getStaticFieldInitializers();
+                for (AstNode init : sfInits) {
+                    if (init != null) {
+                        classSetup.addChildToBack(transform(init));
+                    } else {
+                        classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
+                    }
+                }
+                classSetup.putProp(
+                        Node.CLASS_STATIC_FIELDS_PROP,
+                        classNode.getStaticFieldNames().toArray(new String[0]));
+            }
+
+            // Add static computed field key+value expressions as children (alternating)
+            if (hasStaticComputedFields) {
+                java.util.List<AstNode> scKeys = classNode.getStaticComputedFieldKeys();
+                java.util.List<AstNode> scInits = classNode.getStaticComputedFieldInitializers();
+                for (int i = 0; i < scKeys.size(); i++) {
+                    classSetup.addChildToBack(transform(scKeys.get(i)));
+                    AstNode init = scInits.get(i);
+                    if (init != null) {
+                        classSetup.addChildToBack(transform(init));
+                    } else {
+                        classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
+                    }
+                }
+                classSetup.putIntProp(
+                        Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT,
+                        classNode.getStaticComputedFieldCount());
             }
 
             if (isStatement && className != null) {

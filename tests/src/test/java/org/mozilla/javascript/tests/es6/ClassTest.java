@@ -468,4 +468,57 @@ public class ClassTest {
         Utils.assertWithAllModes_ES6(
                 "ok", "class Foo { static 'bar'() { return 'ok'; } } Foo.bar()");
     }
+
+    @Test
+    public void staticField() {
+        Utils.assertWithAllModes_ES6(42, "class Foo { static x = 42; } Foo.x");
+    }
+
+    @Test
+    public void staticFieldExpression() {
+        Utils.assertWithAllModes_ES6(15, "class Foo { static x = 10 + 5; } Foo.x");
+    }
+
+    @Test
+    public void staticFieldNoInitializer() {
+        Utils.assertWithAllModes_ES6("undefined", "class Foo { static x; } typeof Foo.x");
+    }
+
+    @Test
+    public void multipleStaticFields() {
+        Utils.assertWithAllModes_ES6(
+                "1-2-3",
+                "class Foo {\n"
+                        + "  static a = 1;\n"
+                        + "  static b = 2;\n"
+                        + "  static c = 3;\n"
+                        + "}\n"
+                        + "Foo.a + '-' + Foo.b + '-' + Foo.c\n");
+    }
+
+    @Test
+    public void staticAndInstanceFields() {
+        Utils.assertWithAllModes_ES6(
+                "static-instance",
+                "class Foo {\n"
+                        + "  static s = 'static';\n"
+                        + "  i = 'instance';\n"
+                        + "}\n"
+                        + "Foo.s + '-' + new Foo().i\n");
+    }
+
+    @Test
+    public void staticFieldNotOnInstance() {
+        Utils.assertWithAllModes_ES6("undefined", "class Foo { static x = 1; } typeof new Foo().x");
+    }
+
+    @Test
+    public void staticComputedField() {
+        Utils.assertWithAllModes_ES6(99, "class Foo { static [1 + 2] = 99; } Foo[3]");
+    }
+
+    @Test
+    public void staticStringField() {
+        Utils.assertWithAllModes_ES6(7, "class Foo { static 'x' = 7; } Foo.x");
+    }
 }
