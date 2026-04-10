@@ -682,6 +682,11 @@ public final class IRFactory {
             constructor.setMethodDefinition(false);
         }
 
+        // Inject field initialization into the constructor body
+        if (classNode.getFieldCount() > 0) {
+            injectFieldInitializers(classNode, constructor, hasSuperClass);
+        }
+
         // Transform the constructor as a regular function
         boolean savedInsideClassConstructor = insideClassConstructor;
         insideClassConstructor = hasSuperClass;
@@ -762,6 +767,66 @@ public final class IRFactory {
             return setName;
         }
         return constructorNode;
+    }
+
+    private void injectFieldInitializers(
+            ClassNode classNode, FunctionNode constructor, boolean hasSuperClass) {
+        java.util.List<String> names = classNode.getFieldNames();
+        java.util.List<AstNode> initializers = classNode.getFieldInitializers();
+        AstNode body = constructor.getBody();
+
+        // Create field init statements: this.fieldName = initializer
+        java.util.List<AstNode> initStmts = new java.util.ArrayList<>();
+        for (int i = 0; i < names.size(); i++) {
+            KeywordLiteral thisNode = new KeywordLiteral();
+            thisNode.setType(Token.THIS);
+            Name propName = new Name(0, names.get(i));
+            PropertyGet propGet = new PropertyGet(thisNode, propName);
+
+            AstNode value = initializers.get(i);
+            if (value == null) {
+                // No initializer — use void 0 (undefined)
+                value = new KeywordLiteral();
+                value.setType(Token.UNDEFINED);
+            }
+
+            Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
+            ExpressionStatement stmt = new ExpressionStatement(assign);
+            initStmts.add(stmt);
+        }
+
+        if (!hasSuperClass) {
+            // Base class: prepend field init statements to constructor body
+            for (int i = initStmts.size() - 1; i >= 0; i--) {
+                body.addChildToFront(initStmts.get(i));
+            }
+        } else {
+            // Derived class: find super() call and insert field inits after it
+            Node insertAfter = findSuperCall(body);
+            if (insertAfter != null) {
+                for (AstNode stmt : initStmts) {
+                    body.addChildAfter(stmt, insertAfter);
+                    insertAfter = stmt;
+                }
+            }
+        }
+    }
+
+    private static Node findSuperCall(AstNode body) {
+        // Walk the body's direct children to find the ExpressionStatement
+        // containing a super() call
+        for (Node child = body.getFirstChild(); child != null; child = child.getNext()) {
+            if (child instanceof ExpressionStatement) {
+                AstNode expr = ((ExpressionStatement) child).getExpression();
+                if (expr instanceof FunctionCall) {
+                    AstNode target = ((FunctionCall) expr).getTarget();
+                    if (target instanceof KeywordLiteral && target.getType() == Token.SUPER) {
+                        return child;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private Node transformFunction(FunctionNode fn) {

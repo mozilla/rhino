@@ -908,6 +908,9 @@ public class Parser {
                                 addError("msg.dup.param.strict", paramName);
                             paramNames.add(paramName);
                         }
+                        if ("await".equals(paramName) && fnNode.isAsync()) {
+                            reportError("msg.reserved.id", "await");
+                        }
 
                         if (matchToken(Token.ASSIGN, true)) {
                             if (wasRest) {
@@ -1152,7 +1155,25 @@ public class Parser {
             consumeToken();
             String methodName = ts.getString();
 
-            if (!isStatic && "constructor".equals(methodName) && peekToken() == Token.LP) {
+            // Check for 'async' modifier before method name
+            boolean isAsync = false;
+            if ("async".equals(methodName) && peekToken() == Token.NAME) {
+                isAsync = true;
+                consumeToken();
+                methodName = ts.getString();
+            }
+
+            // Check for forbidden property names:
+            // - non-static properties named "constructor" (except the actual constructor)
+            // - static properties named "prototype"
+            if (isStatic && "prototype".equals(methodName)) {
+                reportError("msg.unexpected.token");
+            }
+
+            if (!isStatic
+                    && !isAsync
+                    && "constructor".equals(methodName)
+                    && peekToken() == Token.LP) {
                 if (constructor != null) {
                     reportError("msg.dup.ctor");
                 }
@@ -1161,17 +1182,29 @@ public class Parser {
                 constructor = function(FunctionNode.FUNCTION_EXPRESSION, true);
                 constructor.setIsClassConstructor(true);
             } else if (peekToken() == Token.LP) {
-                if (isStatic && "prototype".equals(methodName)) {
+                if (!isStatic && "constructor".equals(methodName)) {
                     reportError("msg.unexpected.token");
                 }
-                FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
+                FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
                 if (isStatic) {
                     classNode.addStaticMethod(methodName, method);
                 } else {
                     classNode.addMethod(methodName, method);
                 }
             } else {
-                reportError("msg.unexpected.token");
+                // Field declaration: name = expr; or name;
+                if (!isStatic && "constructor".equals(methodName)) {
+                    reportError("msg.unexpected.token");
+                }
+                AstNode initializer = null;
+                if (peekToken() == Token.ASSIGN) {
+                    consumeToken();
+                    initializer = assignExpr();
+                }
+                if (peekToken() == Token.SEMI) {
+                    consumeToken();
+                }
+                classNode.addField(methodName, initializer);
             }
         }
 
@@ -2728,6 +2761,9 @@ public class Parser {
                         reportError("msg.bad.id.strict", id);
                     }
                 }
+                if ("await".equals(ts.getString()) && insideAsyncFunction()) {
+                    reportError("msg.reserved.id", "await");
+                }
                 defineSymbol(declType, ts.getString(), inForInit);
             }
 
@@ -4172,6 +4208,9 @@ public class Parser {
         if (0 != (ttFlagged & TI_CHECK_LABEL) && peekToken() == Token.COLON) {
             // Do not consume colon.  It is used as an unwind indicator
             // to return to statementHelper.
+            if ("await".equals(nameString) && insideAsyncFunction()) {
+                reportError("msg.reserved.id", "await");
+            }
             Label label = new Label(namePos, ts.tokenEnd - namePos);
             label.setName(nameString);
             label.setLineColumnNumber(lineNumber(), columnNumber());
@@ -4180,6 +4219,9 @@ public class Parser {
         // Not a label.  Unfortunately peeking the next token to check for
         // a colon has biffed ts.tokenBeg, ts.tokenEnd.  We store the name's
         // bounds in instance vars and createNameNode uses them.
+        if ("await".equals(nameString) && insideAsyncFunction()) {
+            reportError("msg.reserved.id", "await");
+        }
         saveNameTokenData(namePos, nameString, nameLineno, nameColumn);
 
         if (compilerEnv.isXmlAvailable()) {
