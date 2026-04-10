@@ -5654,6 +5654,29 @@ public class ScriptRuntime {
         }
     }
 
+    public static void defineStaticClassField(BaseFunction constructor, String name, Object value) {
+        StringIdOrIndex s = toStringIdOrIndex(name);
+        if (s.stringId != null) {
+            constructor.put(s.stringId, constructor, value);
+        } else {
+            constructor.put(s.index, constructor, value);
+        }
+    }
+
+    public static void defineStaticClassComputedField(
+            BaseFunction constructor, Object key, Object value) {
+        if (key instanceof Symbol) {
+            ((SymbolScriptable) constructor).put((Symbol) key, constructor, value);
+        } else {
+            StringIdOrIndex s = toStringIdOrIndex(key);
+            if (s.stringId != null) {
+                constructor.put(s.stringId, constructor, value);
+            } else {
+                constructor.put(s.index, constructor, value);
+            }
+        }
+    }
+
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {
         // Compared with function it always sets the scope to top scope
         scope = ScriptableObject.getTopLevelScope(scope);

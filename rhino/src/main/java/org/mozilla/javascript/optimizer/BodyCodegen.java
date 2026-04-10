@@ -1154,6 +1154,45 @@ class BodyCodegen {
                         releaseWordLocal(constructorLocal);
                     }
 
+                    // Define static named fields on the constructor
+                    String[] staticFieldNames =
+                            (String[]) node.getProp(Node.CLASS_STATIC_FIELDS_PROP);
+                    if (staticFieldNames != null && staticFieldNames.length > 0) {
+                        for (int i = 0; i < staticFieldNames.length; i++) {
+                            // Stack: constructor
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(staticFieldNames[i]);
+                            generateExpression(nextMethodNode, node);
+                            cfw.addInvoke(
+                                    ByteCode.INVOKESTATIC,
+                                    "org/mozilla/javascript/ScriptRuntime",
+                                    "defineStaticClassField",
+                                    "(Lorg/mozilla/javascript/BaseFunction;"
+                                            + "Ljava/lang/String;"
+                                            + "Ljava/lang/Object;)V");
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                    }
+
+                    // Define static computed fields on the constructor
+                    int staticComputedFieldCount =
+                            node.getIntProp(Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT, 0);
+                    for (int i = 0; i < staticComputedFieldCount; i++) {
+                        // Stack: constructor
+                        cfw.add(ByteCode.DUP);
+                        generateExpression(nextMethodNode, node); // key
+                        nextMethodNode = nextMethodNode.getNext();
+                        generateExpression(nextMethodNode, node); // value
+                        cfw.addInvoke(
+                                ByteCode.INVOKESTATIC,
+                                "org/mozilla/javascript/ScriptRuntime",
+                                "defineStaticClassComputedField",
+                                "(Lorg/mozilla/javascript/BaseFunction;"
+                                        + "Ljava/lang/Object;"
+                                        + "Ljava/lang/Object;)V");
+                        nextMethodNode = nextMethodNode.getNext();
+                    }
+
                     releaseWordLocal(savedHomeObjectLocal);
                     savedHomeObjectLocal = prevHomeLocal;
                 }
