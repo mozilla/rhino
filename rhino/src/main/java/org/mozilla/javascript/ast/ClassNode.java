@@ -33,6 +33,8 @@ public class ClassNode extends AstNode {
     private List<FunctionNode> methods;
     private List<String> staticMethodNames;
     private List<FunctionNode> staticMethods;
+    private List<String> fieldNames;
+    private List<AstNode> fieldInitializers;
 
     {
         type = Token.CLASS;
@@ -133,6 +135,30 @@ public class ClassNode extends AstNode {
         return staticMethods == null ? Collections.emptyList() : staticMethods;
     }
 
+    public void addField(String name, AstNode initializer) {
+        if (fieldNames == null) {
+            fieldNames = new ArrayList<>();
+            fieldInitializers = new ArrayList<>();
+        }
+        fieldNames.add(name);
+        fieldInitializers.add(initializer);
+        if (initializer != null) {
+            initializer.setParent(this);
+        }
+    }
+
+    public int getFieldCount() {
+        return fieldNames == null ? 0 : fieldNames.size();
+    }
+
+    public List<String> getFieldNames() {
+        return fieldNames == null ? Collections.emptyList() : fieldNames;
+    }
+
+    public List<AstNode> getFieldInitializers() {
+        return fieldInitializers == null ? Collections.emptyList() : fieldInitializers;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -147,6 +173,18 @@ public class ClassNode extends AstNode {
             sb.append(superClass.toSource(0));
         }
         sb.append(" {\n");
+        if (fieldNames != null) {
+            for (int i = 0; i < fieldNames.size(); i++) {
+                sb.append(makeIndent(depth + 1));
+                sb.append(fieldNames.get(i));
+                AstNode init = fieldInitializers.get(i);
+                if (init != null) {
+                    sb.append(" = ");
+                    sb.append(init.toSource(0));
+                }
+                sb.append(";\n");
+            }
+        }
         if (constructor != null) {
             sb.append(makeIndent(depth + 1));
             sb.append("constructor");
@@ -185,6 +223,13 @@ public class ClassNode extends AstNode {
             }
             if (superClass != null) {
                 superClass.visit(v);
+            }
+            if (fieldInitializers != null) {
+                for (AstNode init : fieldInitializers) {
+                    if (init != null) {
+                        init.visit(v);
+                    }
+                }
             }
             if (constructor != null) {
                 constructor.visit(v);

@@ -293,4 +293,134 @@ public class ClassTest {
                         + "};\n"
                         + "Foo.check()\n");
     }
+
+    @Test
+    public void fieldWithInitializer() {
+        Utils.assertWithAllModes_ES6(42, "class Foo {\n" + "  x = 42;\n" + "}\n" + "new Foo().x\n");
+    }
+
+    @Test
+    public void fieldWithoutInitializer() {
+        Utils.assertWithAllModes_ES6(
+                "undefined", "class Foo {\n" + "  x;\n" + "}\n" + "typeof new Foo().x\n");
+    }
+
+    @Test
+    public void multipleFields() {
+        Utils.assertWithAllModes_ES6(
+                "1-2-3",
+                "class Foo {\n"
+                        + "  a = 1;\n"
+                        + "  b = 2;\n"
+                        + "  c = 3;\n"
+                        + "}\n"
+                        + "var f = new Foo();\n"
+                        + "f.a + '-' + f.b + '-' + f.c\n");
+    }
+
+    @Test
+    public void fieldBeforeConstructorCode() {
+        Utils.assertWithAllModes_ES6(
+                "10-20",
+                "class Foo {\n"
+                        + "  x = 10;\n"
+                        + "  constructor() {\n"
+                        + "    this.y = this.x * 2;\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "var f = new Foo();\n"
+                        + "f.x + '-' + f.y\n");
+    }
+
+    @Test
+    public void fieldWithConstructorArgs() {
+        Utils.assertWithAllModes_ES6(
+                "default-custom",
+                "class Foo {\n"
+                        + "  x = 'default';\n"
+                        + "  constructor(y) { this.y = y; }\n"
+                        + "}\n"
+                        + "var f = new Foo('custom');\n"
+                        + "f.x + '-' + f.y\n");
+    }
+
+    @Test
+    public void fieldWithExpressionInitializer() {
+        Utils.assertWithAllModes_ES6(
+                15, "class Foo {\n" + "  x = 10 + 5;\n" + "}\n" + "new Foo().x\n");
+    }
+
+    @Test
+    public void fieldsAndMethods() {
+        Utils.assertWithAllModes_ES6(
+                "42-hello",
+                "class Foo {\n"
+                        + "  x = 42;\n"
+                        + "  greet() { return 'hello'; }\n"
+                        + "}\n"
+                        + "var f = new Foo();\n"
+                        + "f.x + '-' + f.greet()\n");
+    }
+
+    @Test
+    public void fieldInDerivedClassAfterSuper() {
+        Utils.assertWithAllModes_ES6(
+                "base-derived",
+                "class Base {\n"
+                        + "  constructor() { this.x = 'base'; }\n"
+                        + "}\n"
+                        + "class Child extends Base {\n"
+                        + "  y = 'derived';\n"
+                        + "  constructor() { super(); }\n"
+                        + "}\n"
+                        + "var c = new Child();\n"
+                        + "c.x + '-' + c.y\n");
+    }
+
+    @Test
+    public void fieldPerInstance() {
+        Utils.assertWithAllModes_ES6(
+                "1-2",
+                "class Foo {\n"
+                        + "  x = 0;\n"
+                        + "}\n"
+                        + "var a = new Foo(); a.x = 1;\n"
+                        + "var b = new Foo(); b.x = 2;\n"
+                        + "a.x + '-' + b.x\n");
+    }
+
+    @Test
+    public void staticPrototypeMethodError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static prototype() {} }");
+    }
+
+    @Test
+    public void staticPrototypeFieldError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static prototype = 1; }");
+    }
+
+    @Test
+    public void instanceConstructorMethodError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { async constructor() {} }");
+    }
+
+    @Test
+    public void instanceConstructorFieldError() {
+        Utils.assertEvaluatorExceptionES6("Unexpected token", "class Foo { constructor = 1; }");
+    }
+
+    @Test
+    public void staticConstructorMethodOk() {
+        Utils.assertWithAllModes_ES6(
+                42, "class Foo { static constructor() { return 42; } } Foo.constructor()");
+    }
+
+    @Test
+    public void staticPrototypeAsyncMethodError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static async prototype() {} }");
+    }
 }
