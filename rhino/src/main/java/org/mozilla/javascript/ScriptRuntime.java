@@ -5631,14 +5631,27 @@ public class ScriptRuntime {
         Object protoObj = constructor.getPrototypeProperty();
         if (protoObj instanceof ScriptableObject) {
             // ES6 14.5.14: methods are {writable: true, enumerable: false, configurable: true}
-            ((ScriptableObject) protoObj).defineProperty(name, methodFn, ScriptableObject.DONTENUM);
+            ScriptableObject proto = (ScriptableObject) protoObj;
+            StringIdOrIndex s = toStringIdOrIndex(name);
+            if (s.stringId != null) {
+                proto.defineProperty(s.stringId, methodFn, ScriptableObject.DONTENUM);
+            } else {
+                proto.put(s.index, proto, methodFn);
+                proto.setAttributes(s.index, ScriptableObject.DONTENUM);
+            }
         }
     }
 
     public static void defineStaticClassMethod(
             BaseFunction constructor, String name, Object methodFn) {
         // Static methods are non-enumerable properties on the constructor itself
-        constructor.defineProperty(name, methodFn, ScriptableObject.DONTENUM);
+        StringIdOrIndex s = toStringIdOrIndex(name);
+        if (s.stringId != null) {
+            constructor.defineProperty(s.stringId, methodFn, ScriptableObject.DONTENUM);
+        } else {
+            constructor.put(s.index, constructor, methodFn);
+            constructor.setAttributes(s.index, ScriptableObject.DONTENUM);
+        }
     }
 
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {

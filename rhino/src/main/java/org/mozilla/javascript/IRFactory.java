@@ -683,7 +683,7 @@ public final class IRFactory {
         }
 
         // Inject field initialization into the constructor body
-        if (classNode.getFieldCount() > 0) {
+        if (classNode.getFieldCount() > 0 || classNode.getComputedFieldCount() > 0) {
             injectFieldInitializers(classNode, constructor, hasSuperClass);
         }
 
@@ -771,12 +771,14 @@ public final class IRFactory {
 
     private void injectFieldInitializers(
             ClassNode classNode, FunctionNode constructor, boolean hasSuperClass) {
-        java.util.List<String> names = classNode.getFieldNames();
-        java.util.List<AstNode> initializers = classNode.getFieldInitializers();
         AstNode body = constructor.getBody();
 
-        // Create field init statements: this.fieldName = initializer
+        // Create field init statements
         java.util.List<AstNode> initStmts = new java.util.ArrayList<>();
+
+        // Named fields: this.fieldName = initializer
+        java.util.List<String> names = classNode.getFieldNames();
+        java.util.List<AstNode> initializers = classNode.getFieldInitializers();
         for (int i = 0; i < names.size(); i++) {
             KeywordLiteral thisNode = new KeywordLiteral();
             thisNode.setType(Token.THIS);
@@ -785,14 +787,30 @@ public final class IRFactory {
 
             AstNode value = initializers.get(i);
             if (value == null) {
-                // No initializer — use void 0 (undefined)
                 value = new KeywordLiteral();
                 value.setType(Token.UNDEFINED);
             }
 
             Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
-            ExpressionStatement stmt = new ExpressionStatement(assign);
-            initStmts.add(stmt);
+            initStmts.add(new ExpressionStatement(assign));
+        }
+
+        // Computed fields: this[keyExpr] = initializer
+        java.util.List<AstNode> computedKeys = classNode.getComputedFieldKeys();
+        java.util.List<AstNode> computedInits = classNode.getComputedFieldInitializers();
+        for (int i = 0; i < computedKeys.size(); i++) {
+            KeywordLiteral thisNode = new KeywordLiteral();
+            thisNode.setType(Token.THIS);
+            ElementGet elemGet = new ElementGet(thisNode, computedKeys.get(i));
+
+            AstNode value = computedInits.get(i);
+            if (value == null) {
+                value = new KeywordLiteral();
+                value.setType(Token.UNDEFINED);
+            }
+
+            Assignment assign = new Assignment(Token.ASSIGN, elemGet, value, 0);
+            initStmts.add(new ExpressionStatement(assign));
         }
 
         if (!hasSuperClass) {

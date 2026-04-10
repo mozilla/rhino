@@ -35,6 +35,8 @@ public class ClassNode extends AstNode {
     private List<FunctionNode> staticMethods;
     private List<String> fieldNames;
     private List<AstNode> fieldInitializers;
+    private List<AstNode> computedFieldKeys;
+    private List<AstNode> computedFieldInitializers;
 
     {
         type = Token.CLASS;
@@ -159,6 +161,33 @@ public class ClassNode extends AstNode {
         return fieldInitializers == null ? Collections.emptyList() : fieldInitializers;
     }
 
+    public void addComputedField(AstNode keyExpr, AstNode initializer) {
+        if (computedFieldKeys == null) {
+            computedFieldKeys = new ArrayList<>();
+            computedFieldInitializers = new ArrayList<>();
+        }
+        computedFieldKeys.add(keyExpr);
+        computedFieldInitializers.add(initializer);
+        keyExpr.setParent(this);
+        if (initializer != null) {
+            initializer.setParent(this);
+        }
+    }
+
+    public int getComputedFieldCount() {
+        return computedFieldKeys == null ? 0 : computedFieldKeys.size();
+    }
+
+    public List<AstNode> getComputedFieldKeys() {
+        return computedFieldKeys == null ? Collections.emptyList() : computedFieldKeys;
+    }
+
+    public List<AstNode> getComputedFieldInitializers() {
+        return computedFieldInitializers == null
+                ? Collections.emptyList()
+                : computedFieldInitializers;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -178,6 +207,20 @@ public class ClassNode extends AstNode {
                 sb.append(makeIndent(depth + 1));
                 sb.append(fieldNames.get(i));
                 AstNode init = fieldInitializers.get(i);
+                if (init != null) {
+                    sb.append(" = ");
+                    sb.append(init.toSource(0));
+                }
+                sb.append(";\n");
+            }
+        }
+        if (computedFieldKeys != null) {
+            for (int i = 0; i < computedFieldKeys.size(); i++) {
+                sb.append(makeIndent(depth + 1));
+                sb.append("[");
+                sb.append(computedFieldKeys.get(i).toSource(0));
+                sb.append("]");
+                AstNode init = computedFieldInitializers.get(i);
                 if (init != null) {
                     sb.append(" = ");
                     sb.append(init.toSource(0));
@@ -226,6 +269,15 @@ public class ClassNode extends AstNode {
             }
             if (fieldInitializers != null) {
                 for (AstNode init : fieldInitializers) {
+                    if (init != null) {
+                        init.visit(v);
+                    }
+                }
+            }
+            if (computedFieldKeys != null) {
+                for (int i = 0; i < computedFieldKeys.size(); i++) {
+                    computedFieldKeys.get(i).visit(v);
+                    AstNode init = computedFieldInitializers.get(i);
                     if (init != null) {
                         init.visit(v);
                     }

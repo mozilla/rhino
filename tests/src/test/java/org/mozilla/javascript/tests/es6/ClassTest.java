@@ -423,4 +423,49 @@ public class ClassTest {
         Utils.assertEvaluatorExceptionES6(
                 "Unexpected token", "class Foo { static async prototype() {} }");
     }
+
+    @Test
+    public void stringPropertyField() {
+        Utils.assertWithAllModes_ES6(1, "class Foo { 'foo' = 1; } new Foo()['foo']");
+    }
+
+    @Test
+    public void numericPropertyField() {
+        Utils.assertWithAllModes_ES6(2, "class Foo { 0 = 2; } new Foo()[0]");
+    }
+
+    @Test
+    public void computedPropertyField() {
+        Utils.assertWithAllModes_ES6(3, "class Foo { [1 + 2] = 3; } new Foo()[3]");
+    }
+
+    @Test
+    public void stringPropertyMethod() {
+        Utils.assertWithAllModes_ES6(
+                "hi", "class Foo { 'greet'() { return 'hi'; } } new Foo().greet()");
+    }
+
+    @Test
+    public void numericPropertyMethod() {
+        Utils.assertWithAllModes_ES6(42, "class Foo { 0() { return 42; } } new Foo()[0]()");
+    }
+
+    @Test
+    public void mixedPropertyNames() {
+        Utils.assertWithAllModes_ES6(
+                "1-2-3",
+                "class Foo {\n"
+                        + "  'a' = 1;\n"
+                        + "  0 = 2;\n"
+                        + "  [1 + 2] = 3;\n"
+                        + "}\n"
+                        + "var f = new Foo();\n"
+                        + "f.a + '-' + f[0] + '-' + f[3]\n");
+    }
+
+    @Test
+    public void staticStringMethod() {
+        Utils.assertWithAllModes_ES6(
+                "ok", "class Foo { static 'bar'() { return 'ok'; } } Foo.bar()");
+    }
 }
