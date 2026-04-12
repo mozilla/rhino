@@ -1143,7 +1143,8 @@ public class Parser {
                             || nextTt == Token.STRING
                             || nextTt == Token.NUMBER
                             || nextTt == Token.BIGINT
-                            || nextTt == Token.LB) {
+                            || nextTt == Token.LB
+                            || nextTt == Token.MUL) {
                         isStatic = true;
                     } else {
                         reportError("msg.unexpected.token");
@@ -1153,6 +1154,13 @@ public class Parser {
                     reportError("msg.unexpected.token");
                     continue;
                 }
+            }
+
+            // Check for generator modifier '*'
+            boolean isGenerator = false;
+            if (peekToken() == Token.MUL) {
+                consumeToken();
+                isGenerator = true;
             }
 
             // Parse the member name: identifier, string, number, or [computed]
@@ -1193,9 +1201,15 @@ public class Parser {
                         || nextTt == Token.STRING
                         || nextTt == Token.NUMBER
                         || nextTt == Token.BIGINT
-                        || nextTt == Token.LB) {
+                        || nextTt == Token.LB
+                        || nextTt == Token.MUL) {
                     isAsync = true;
                     isStringOrNumericName = false;
+                    // Check for async generator: async *method()
+                    if (peekToken() == Token.MUL) {
+                        consumeToken();
+                        isGenerator = true;
+                    }
                     // Re-parse the actual member name
                     tt = peekToken();
                     if (tt == Token.NAME) {
@@ -1229,6 +1243,7 @@ public class Parser {
             if (!isComputed
                     && !isStatic
                     && !isAsync
+                    && !isGenerator
                     && "constructor".equals(memberName)
                     && peekToken() == Token.LP) {
                 if (constructor != null) {
@@ -1241,6 +1256,9 @@ public class Parser {
                     reportError("msg.unexpected.token");
                 }
                 FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
+                if (isGenerator) {
+                    method.setIsES6Generator();
+                }
                 if (isComputed) {
                     // TODO: computed method names need additional support in ClassNode/IRFactory
                     reportError("msg.unexpected.token");
