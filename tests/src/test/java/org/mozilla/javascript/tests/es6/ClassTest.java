@@ -521,4 +521,24 @@ public class ClassTest {
     public void staticStringField() {
         Utils.assertWithAllModes_ES6(7, "class Foo { static 'x' = 7; } Foo.x");
     }
+
+    @Test
+    public void generatorMethod() {
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "class Foo {\n"
+                        + "  *gen() { yield 1; yield 2; yield 3; }\n"
+                        + "}\n"
+                        + "Array.from(new Foo().gen()).join(',')\n");
+    }
+
+    @Test
+    public void staticGeneratorMethod() {
+        Utils.assertWithAllModes_ES6(
+                "a,b",
+                "class Foo {\n"
+                        + "  static *gen() { yield 'a'; yield 'b'; }\n"
+                        + "}\n"
+                        + "Array.from(Foo.gen()).join(',')\n");
+    }
 }
