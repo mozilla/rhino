@@ -1,5 +1,5 @@
 plugins {
-    id 'rhino.library-conventions'
+    id 'rhino.publishing-conventions'
     id 'biz.aQute.bnd.builder'
     id 'org.jetbrains.kotlin.jvm'
 }
@@ -28,16 +28,7 @@ jar {
 }
 
 kotlin {
-    jvmToolchain(11)
-}
-
-tasks.compileJava {
-    // Kotlin explicitly runs with an older Java version which does not work
-    // with the current ErrorProne.
-    options.errorprone.enabled = false;
-}
-tasks.compileTestJava {
-    options.errorprone.enabled = false;
+    jvmToolchain(17)
 }
 
 publishing {

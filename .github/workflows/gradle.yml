@@ -13,7 +13,7 @@ env:
   GRADLE_OPTS: "--enable-native-access=ALL-UNNAMED"
 
 jobs:
-  # First, "official" test: Build on Java 25, test on Java 11, compare test262.properties
+  # First, "official" test: Build on Java 25, test on Java 17, compare test262.properties
   # to see if tests are passing that are currently disabled.
   test:
     runs-on: ubuntu-latest
@@ -27,16 +27,16 @@ jobs:
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: |
-            11
+            17
             25
           distribution: 'adopt'
       - name: Check current state of test262.properties
         id: hashBefore
         run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
       - name: Run test262 tests
-        # Currently Java 11 is required to have a reproducible result
+        # Currently Java 17 is required to have a reproducible result
         env:
-          RHINO_TEST_JAVA_VERSION: "11"
+          RHINO_TEST_JAVA_VERSION: "17"
         run: >-
           ./gradlew check -DupdateTest262properties
       - name: Upload results
@@ -78,10 +78,6 @@ jobs:
             test-java-version: "25"
             name: "Java 25 Multithreaded"
             multithread: true
-          - java-version: "25"
-            test-java-version: "17"
-            name: "Java 25 Build, Java 17 Test"
-            multithread: false
     name: ${{ matrix.name }}
     steps:
     - name: Check out Rhino

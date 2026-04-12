@@ -1,36 +1,17 @@
-// This file inherits from "java-conventions" and adds additional error
-// checks and publishing data for modules that will be published to
+// This file inherits from "publishing-conventions" and adds additional error
+// checks for modules that will be published to
 // Maven Central. It should only be used for those modules that will
 // be published and used by other projects.
+// It is separate from publishing-conventions because some modules
+// are not compatible with Errorprone.
 
 plugins {
-    id 'rhino.java-conventions'
-    id 'maven-publish'
-    id 'signing'
-    id 'jacoco'
+    id 'rhino.publishing-conventions'
     id 'net.ltgt.errorprone'
-    id 'de.obqo.decycle'
 }
 
 dependencies {
     errorprone libs.errorprone.core
-}
-
-version = project.version
-
-tasks.named('compileJava') {
-    options.javaModuleVersion = provider { version }
-}
-
-tasks.withType(Jar).configureEach {
-    manifest {
-        attributes (
-            "Implementation-Version": project.version,
-            "Implementation-Title":  "Mozilla Rhino",
-            "Implementation-Vendor": "Mozilla Foundation",
-            "Implementation-URL": "http://github.com/mozilla/rhino",
-        )
-    }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -51,6 +32,7 @@ tasks.withType(JavaCompile).configureEach {
                 "DuplicateBranches",
                 "PatternMatchingInstanceof",
                 "RedundantControlFlow",
+                "StatementSwitchToExpressionSwitch",
                 // JavaDoc stuff -- not going to fix unless we do a big JavaDoc update
                 "AlmostJavadoc",
                 "EmptyBlockTag",
@@ -77,77 +59,5 @@ tasks.withType(JavaCompile).configureEach {
                 "RemoveUnusedImports",
                 "WildcardImport")
         options.errorprone.excludedPaths = '.+/src/test/java/.+'
-    }
-}
-
-tasks.withType(Javadoc) {
-      failOnError = false
-      options.addStringOption('Xdoclint:all,-missing', '-quiet')
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = false
-        csv.required = false
-        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
-    }
-}
-
-task javadocJar(type: Jar) {
-    archiveClassifier = 'javadoc'
-    from javadoc
-}
-
-task sourceJar(type: Jar) {
-    from sourceSets.main.allJava
-    archiveClassifier = 'sources'
-    from ('LICENSE.txt') {
-        into 'META-INF'
-    }
-    from ('NOTICE.txt') {
-        into 'META-INF'
-    }
-    from ('NOTICE-tools.txt') {
-        into 'META-INF'
-    }
-}
-
-signing {
-    if (project.hasProperty('SIGNINGKEY')) {
-        // Check for ORG_GRADLE_PROJECT_SIGNINGKEY environment variable for use in CI system.
-        // Otherwise, do not sign.
-        def signingKey = getProperty('SIGNINGKEY')
-        def signingPassword = getProperty('SIGNINGPASSWORD')
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign publishing.publications
-    }
-}
-
-
-publishing {
-    if (project.hasProperty("mavenPassword")) {
-        repositories {
-            maven {
-                credentials {
-                    username = mavenUser
-                    password = mavenPassword
-                }
-                if (project.version.endsWith('-SNAPSHOT')) {
-                    url = mavenSnapshotRepo
-                } else {
-                    url = mavenReleaseRepo
-                }
-            }
-        }
-    } else if (System.getenv("GITHUB_TOKEN") != null) {
-        repositories {
-            maven {
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
-                url = githubPackagesRepo
-            }
-        }
     }
 }
