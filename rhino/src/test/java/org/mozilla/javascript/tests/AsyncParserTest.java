@@ -63,7 +63,7 @@ public class AsyncParserTest {
     @Test
     public void asyncFunctionDeclarationIsAsync() {
         FunctionNode fn = parseAndExtractFirstFn("async function foo() {}");
-        assertTrue(fn.isAsync(),"Expected async");
+        assertTrue(fn.isAsync(), "Expected async");
         assertFalse(fn.isES6Generator(), "Expected not generator");
         assertEquals("foo", fn.getFunctionName().getIdentifier());
         assertEquals(FunctionNode.FUNCTION_EXPRESSION_STATEMENT, fn.getFunctionType());
