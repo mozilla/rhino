@@ -150,12 +150,11 @@ public class Parser {
     private boolean inForInit; // bound temporarily during forStatement()
     private boolean
             inSingleStatementContext; // true when parsing a single-statement body (if/while/for
-    private boolean
-            inSingleStatementDeclContext; // true when parsing a
-                                          // single-statement body
-                                          // that allows lexical
-                                          // declarations.  without
-                                          // braces)
+    private boolean inSingleStatementDeclContext; // true when parsing a
+    // single-statement body
+    // that allows lexical
+    // declarations.  without
+    // braces)
     private Map<String, LabeledStatement> labelSet;
     private List<Loop> loopSet;
     private List<Jump> loopAndSwitchSet;
@@ -910,7 +909,9 @@ public class Parser {
                         }
 
                         if (matchToken(Token.ASSIGN, true)) {
-                            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            if (wasRest) {
+                                reportError("msg.rest.default.value");
+                            } else if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                                 fnNode.putDefaultParams(paramName, assignExpr());
                             } else {
                                 reportError("msg.default.args");
@@ -1267,7 +1268,10 @@ public class Parser {
             }
             fnNode.setHasRestParameter(true);
             AstNode restParam = ((Spread) params).getExpression();
-            if (restParam instanceof Name) {
+            if (restParam instanceof Assignment) {
+                reportError("msg.rest.default.value");
+                fnNode.addParam(makeErrorNode());
+            } else if (restParam instanceof Name) {
                 fnNode.addParam(restParam);
                 String paramName = ((Name) restParam).getIdentifier();
                 defineSymbol(Token.LP, paramName);
@@ -2743,12 +2747,7 @@ public class Parser {
         Symbol varSymbol = currentScope.getVarSymbol(name);
         int symDeclType = symbol != null ? symbol.getDeclType() : -1;
         if (!isValidES6Redeclaration(
-                                declType,
-                                symDeclType,
-                                symbol,
-                                varSymbol,
-                                currentScope,
-                                definingScope)) {
+                declType, symDeclType, symbol, varSymbol, currentScope, definingScope)) {
             addError(
                     symDeclType == Token.CONST
                             ? "msg.const.redecl"
@@ -2790,8 +2789,7 @@ public class Parser {
                 }
             case Token.VAR:
                 if (symbol != null) {
-                    if (symDeclType == Token.VAR)
-                        addStrictWarning("msg.var.redecl", name);
+                    if (symDeclType == Token.VAR) addStrictWarning("msg.var.redecl", name);
                     else if (symDeclType == Token.LP) {
                         addStrictWarning("msg.var.hides.arg", name);
                     }

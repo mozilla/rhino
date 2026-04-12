@@ -464,6 +464,18 @@ public class DefaultParametersTest {
                 "Default values are only supported in version >= 200", script + "()");
     }
 
+    @Test
+    public void restParameterWithDefaultThrowsSyntaxError() throws Exception {
+        Utils.assertEvaluatorExceptionES6(
+                "rest parameter may not have a default value", "function f(...x = []) { }");
+    }
+
+    @Test
+    public void restParameterWithDefaultThrowsSyntaxErrorArrow() throws Exception {
+        Utils.assertEvaluatorExceptionES6(
+                "rest parameter may not have a default value", "(...x = []) => {}");
+    }
+
     // Test that length property reflects the number of parameters without defaults
     @Test
     public void arrowFunctionLengthSimple() throws Exception {
