@@ -110,10 +110,15 @@ public class FunctionNode extends ScriptNode {
 
     @Override
     public void putDestructuringRvalues(Node left, Node right) {
+        putDestructuringRvalues(left, right, null);
+    }
+
+    @Override
+    public void putDestructuringRvalues(Node left, Node right, Name name) {
         if (destructuringRvalues == null) {
             destructuringRvalues = new ArrayList<>();
         }
-        destructuringRvalues.add(new Node[] {left, right});
+        destructuringRvalues.add(new Node[] {left, right, name});
     }
 
     ArrayList<Object> defaultParams;

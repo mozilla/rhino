@@ -515,4 +515,24 @@ public class DefaultParametersTest {
         Utils.assertWithAllModes_ES6(2, "function f(a, b, c=1, d=2) {}; f.length");
         Utils.assertWithAllModes_ES6(0, "function f(a=1, b=2, c=3) {}; f.length");
     }
+
+    @Test
+    public void defaultParameterFunctionName() throws Exception {
+        Utils.assertWithAllModes_ES6(
+                "arrow", "function f(arrow = () => {}) { return arrow; } f().name");
+        Utils.assertWithAllModes_ES6(
+                "fn", "function f(fn = function() {}) { return fn; } f().name");
+        Utils.assertWithAllModes_ES6(
+                "gen", "function f(gen = function*() {}) { return gen; } f().name");
+    }
+
+    @Test
+    public void destructuringDefaultParameterFunctionName() throws Exception {
+        Utils.assertWithAllModes_ES6(
+                "arrow", "function f([arrow = () => {}]) { return arrow; } f([]).name");
+        Utils.assertWithAllModes_ES6(
+                "fn", "function f([fn = function() {}]) { return fn; } f([]).name");
+        Utils.assertWithAllModes_ES6(
+                "arrow", "function f({arrow = () => {}}) { return arrow; } f({}).name");
+    }
 }
