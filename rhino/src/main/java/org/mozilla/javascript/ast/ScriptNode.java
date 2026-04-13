@@ -267,6 +267,8 @@ public class ScriptNode extends Scope {
     // Overridden in FunctionNode
     public void putDestructuringRvalues(Node left, Node right) {}
 
+    public void putDestructuringRvalues(Node left, Node right, Name name) {}
+
     void addSymbol(Symbol symbol) {
         if (variableNames != null) codeBug();
         if (symbol.getDeclType() == Token.LP) {

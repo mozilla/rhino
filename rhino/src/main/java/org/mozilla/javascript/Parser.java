@@ -5589,7 +5589,7 @@ public class Parser {
 
             // store it to be transformed later
             if (transformer == null) {
-                currentScriptOrFn.putDestructuringRvalues(cond_inner, right);
+                currentScriptOrFn.putDestructuringRvalues(cond_inner, right, new Name(0, name));
             }
 
             parent.addChildToBack(new Node(setOp, createName(Token.BINDNAME, name, null), cond));

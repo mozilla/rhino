@@ -684,6 +684,8 @@ public final class IRFactory {
                             && defaultParams.get(i - 1) instanceof String) {
                         AstNode rhs = (AstNode) defaultParams.get(i);
                         String name = (String) defaultParams.get(i - 1);
+                        Node transformedRhs = transform(rhs);
+                        inferNameIfMissing(new Name(0, name), transformedRhs, null);
                         Node paramInit =
                                 createIf(
                                         createBinary(
@@ -695,7 +697,7 @@ public final class IRFactory {
                                                 createAssignment(
                                                         Token.ASSIGN,
                                                         parser.createName(name),
-                                                        transform(rhs)),
+                                                        transformedRhs),
                                                 body.getLineno(),
                                                 body.getColumn()),
                                         null,
@@ -724,7 +726,11 @@ public final class IRFactory {
                     Node a = i[0];
                     if (i[1] instanceof AstNode) {
                         AstNode b = (AstNode) i[1];
-                        a.replaceChild(b, transform(b));
+                        Node transformed = transform(b);
+                        if (i.length > 2 && i[2] instanceof Name) {
+                            inferNameIfMissing(i[2], transformed, null);
+                        }
+                        a.replaceChild(b, transformed);
                     }
                 }
             }
