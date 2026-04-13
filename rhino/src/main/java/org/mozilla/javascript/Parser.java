@@ -5189,62 +5189,7 @@ public class Parser {
                 continue;
             }
 
-            Node rightElem;
-
-            // Generate code to get element
-            if (isFunctionParameter && iteratorName != null) {
-                // ES6+: Call iterator.next() and store the full result to check done later
-                Node getNextProp =
-                        new Node(Token.GETPROP, createName(iteratorName), Node.newString("next"));
-                Node callNext = new Node(Token.CALL, getNextProp);
-                Node storeResult =
-                        new Node(
-                                Token.SETNAME,
-                                createName(Token.BINDNAME, lastResultName, null),
-                                callNext);
-                parent.addChildToBack(storeResult);
-                // Extract .value from the result
-                String elemTempName = currentScriptOrFn.getNextTempName();
-                // Define the element temp variable for strict mode
-                defineSymbol(Token.LET, elemTempName, true);
-                Node getValue =
-                        new Node(
-                                Token.GETPROP, createName(lastResultName), Node.newString("value"));
-                Node storeElem =
-                        new Node(
-                                Token.SETNAME,
-                                createName(Token.BINDNAME, elemTempName, null),
-                                getValue);
-                parent.addChildToBack(storeElem);
-                // Use the temp variable for element access
-                rightElem = createName(elemTempName);
-                empty = false;
-            } else {
-                // Regular index-based access for var/let/const
-                rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
-            }
-
-            if (n.getType() == Token.NAME) {
-                /* [x] = [1] */
-                String name = n.getString();
-                parent.addChildToBack(
-                        new Node(setOp, createName(Token.BINDNAME, name, null), rightElem));
-                if (variableType != -1) {
-                    defineSymbol(variableType, name, true);
-                    destructuringNames.add(name);
-                }
-            } else if (n.getType() == Token.ASSIGN) {
-                /* [x = 1] = [2] */
-                processDestructuringDefaults(
-                        variableType,
-                        parent,
-                        destructuringNames,
-                        (Assignment) n,
-                        rightElem,
-                        setOp,
-                        transformer,
-                        isFunctionParameter);
-            } else if (n instanceof Spread) {
+            if (n instanceof Spread) {
                 // [...rest] = [1, 2, 3]
                 // rest element should be the last
                 if (index < array.getElements().size() - 1) {
@@ -5253,22 +5198,43 @@ public class Parser {
 
                 AstNode restTarget = ((Spread) n).getExpression();
 
-                // call array.slice(index) to collect remaining elements
-                Node sliceCall =
-                        new Node(
-                                Token.CALL,
-                                new Node(
-                                        Token.GETPROP,
-                                        createName(tempName),
-                                        Node.newString("slice")));
-                sliceCall.addChildToBack(createNumber(index));
+                Node restValue;
+                if (isFunctionParameter && iteratorName != null) {
+                    // When using the iterator protocol, collect remaining
+                    // elements via Array.from(iterator). The iterator has
+                    // not been advanced past this point, so Array.from
+                    // collects exactly the remaining elements. Array.from
+                    // also properly closes the iterator when done, so we
+                    // clear the iterator tracking to skip the manual
+                    // closing code generated after the loop.
+                    restValue =
+                            new Node(
+                                    Token.CALL,
+                                    new Node(
+                                            Token.GETPROP,
+                                            createName("Array"),
+                                            Node.newString("from")));
+                    restValue.addChildToBack(createName(iteratorName));
+                    iteratorName = null;
+                    lastResultName = null;
+                } else {
+                    // call array.slice(index) to collect remaining elements
+                    restValue =
+                            new Node(
+                                    Token.CALL,
+                                    new Node(
+                                            Token.GETPROP,
+                                            createName(tempName),
+                                            Node.newString("slice")));
+                    restValue.addChildToBack(createNumber(index));
+                }
 
                 if (restTarget.getType() == Token.NAME) {
                     // [...rest]
                     String name = restTarget.getString();
 
                     parent.addChildToBack(
-                            new Node(setOp, createName(Token.BINDNAME, name, null), sliceCall));
+                            new Node(setOp, createName(Token.BINDNAME, name, null), restValue));
 
                     if (variableType != -1) {
                         defineSymbol(variableType, name, true);
@@ -5280,22 +5246,86 @@ public class Parser {
                             destructuringAssignmentHelper(
                                     variableType,
                                     restTarget,
-                                    sliceCall,
+                                    restValue,
                                     currentScriptOrFn.getNextTempName(),
                                     null,
                                     transformer,
                                     isFunctionParameter));
                 }
+                empty = false;
             } else {
-                parent.addChildToBack(
-                        destructuringAssignmentHelper(
-                                variableType,
-                                n,
-                                rightElem,
-                                currentScriptOrFn.getNextTempName(),
-                                null,
-                                transformer,
-                                isFunctionParameter));
+                Node rightElem;
+
+                // Generate code to get element (not needed for Spread,
+                // which collects remaining elements separately above)
+                if (isFunctionParameter && iteratorName != null) {
+                    // ES6+: Call iterator.next() and store the full result
+                    Node getNextProp =
+                            new Node(
+                                    Token.GETPROP,
+                                    createName(iteratorName),
+                                    Node.newString("next"));
+                    Node callNext = new Node(Token.CALL, getNextProp);
+                    Node storeResult =
+                            new Node(
+                                    Token.SETNAME,
+                                    createName(Token.BINDNAME, lastResultName, null),
+                                    callNext);
+                    parent.addChildToBack(storeResult);
+                    // Extract .value from the result
+                    String elemTempName = currentScriptOrFn.getNextTempName();
+                    // Define the element temp variable for strict mode
+                    defineSymbol(Token.LET, elemTempName, true);
+                    Node getValue =
+                            new Node(
+                                    Token.GETPROP,
+                                    createName(lastResultName),
+                                    Node.newString("value"));
+                    Node storeElem =
+                            new Node(
+                                    Token.SETNAME,
+                                    createName(Token.BINDNAME, elemTempName, null),
+                                    getValue);
+                    parent.addChildToBack(storeElem);
+                    // Use the temp variable for element access
+                    rightElem = createName(elemTempName);
+                    empty = false;
+                } else {
+                    // Regular index-based access for var/let/const
+                    rightElem = new Node(Token.GETELEM, createName(tempName), createNumber(index));
+                }
+
+                if (n.getType() == Token.NAME) {
+                    /* [x] = [1] */
+                    String name = n.getString();
+                    parent.addChildToBack(
+                            new Node(setOp, createName(Token.BINDNAME, name, null), rightElem));
+                    if (variableType != -1) {
+                        defineSymbol(variableType, name, true);
+                        destructuringNames.add(name);
+                    }
+                } else if (n.getType() == Token.ASSIGN) {
+                    /* [x = 1] = [2] */
+                    processDestructuringDefaults(
+                            variableType,
+                            parent,
+                            destructuringNames,
+                            (Assignment) n,
+                            rightElem,
+                            setOp,
+                            transformer,
+                            isFunctionParameter);
+                } else {
+                    parent.addChildToBack(
+                            destructuringAssignmentHelper(
+                                    variableType,
+                                    n,
+                                    rightElem,
+                                    currentScriptOrFn.getNextTempName(),
+                                    null,
+                                    transformer,
+                                    isFunctionParameter));
+                }
             }
             index++;
             empty = false;
