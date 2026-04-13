@@ -404,6 +404,56 @@ public class ArrayDestructuringTest {
                 });
     }
 
+    /** Test that elision in array destructuring advances the iterator. */
+    @Test
+    public void arrayDestructuringElisionAdvancesIterator() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "function* g() {\n"
+                                    + "  yield 'a';\n"
+                                    + "  yield 'b';\n"
+                                    + "  yield 'c';\n"
+                                    + "}\n"
+                                    + "function f([a,,b]) {\n"
+                                    + "  return a + ',' + b;\n"
+                                    + "}\n"
+                                    + "var result = f(g());\n"
+                                    + "if (result !== 'a,c') throw new Error('Expected a,c, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /** Test that leading elision in array destructuring advances the iterator. */
+    @Test
+    public void arrayDestructuringLeadingElisionAdvancesIterator() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "function* g() {\n"
+                                    + "  yield 'a';\n"
+                                    + "  yield 'b';\n"
+                                    + "  yield 'c';\n"
+                                    + "}\n"
+                                    + "function f([,,a]) {\n"
+                                    + "  return a;\n"
+                                    + "}\n"
+                                    + "var result = f(g());\n"
+                                    + "if (result !== 'c') throw new Error('Expected c, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
     /**
      * Test that array destructuring works in pre-ES6 (JavaScript 1.8) using index-based access.
      * Should NOT use Symbol.iterator.

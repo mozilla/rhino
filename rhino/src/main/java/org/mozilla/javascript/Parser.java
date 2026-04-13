@@ -5133,13 +5133,6 @@ public class Parser {
         String lastResultName = null;
 
         for (AstNode n : array.getElements()) {
-            if (n.getType() == Token.EMPTY) {
-                index++;
-                continue;
-            }
-
-            Node rightElem;
-
             if (defaultValue != null && !defaultValuesSetup) {
                 setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
                 defaultValuesSetup = true;
@@ -5174,6 +5167,29 @@ public class Parser {
                 iteratorSetup = true;
                 empty = false;
             }
+
+            if (n.getType() == Token.EMPTY) {
+                // If using iterator protocol, advance the iterator past this position
+                if (isFunctionParameter && iteratorName != null) {
+                    Node getNextProp =
+                            new Node(
+                                    Token.GETPROP,
+                                    createName(iteratorName),
+                                    Node.newString("next"));
+                    Node callNext = new Node(Token.CALL, getNextProp);
+                    Node storeResult =
+                            new Node(
+                                    Token.SETNAME,
+                                    createName(Token.BINDNAME, lastResultName, null),
+                                    callNext);
+                    parent.addChildToBack(storeResult);
+                    empty = false;
+                }
+                index++;
+                continue;
+            }
+
+            Node rightElem;
 
             // Generate code to get element
             if (isFunctionParameter && iteratorName != null) {
