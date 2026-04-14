@@ -28,6 +28,7 @@ import java.util.ResourceBundle;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.dtoa.DoubleFormatter;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -5645,22 +5646,13 @@ public class ScriptRuntime {
     public static void defineStaticClassMethod(
             BaseFunction constructor, String name, Object methodFn) {
         // Static methods are non-enumerable properties on the constructor itself
-        StringIdOrIndex s = toStringIdOrIndex(name);
-        if (s.stringId != null) {
-            constructor.defineProperty(s.stringId, methodFn, ScriptableObject.DONTENUM);
-        } else {
-            constructor.put(s.index, constructor, methodFn);
-            constructor.setAttributes(s.index, ScriptableObject.DONTENUM);
-        }
+        constructor.defineOwnProperty(
+                Context.getCurrentContext(), name, new DescriptorInfo(methodFn, DONTENUM, true));
     }
 
     public static void defineStaticClassField(BaseFunction constructor, String name, Object value) {
-        StringIdOrIndex s = toStringIdOrIndex(name);
-        if (s.stringId != null) {
-            constructor.put(s.stringId, constructor, value);
-        } else {
-            constructor.put(s.index, constructor, value);
-        }
+        constructor.defineOwnProperty(
+                Context.getCurrentContext(), name, new DescriptorInfo(value, 0, true));
     }
 
     public static void defineStaticClassComputedField(
