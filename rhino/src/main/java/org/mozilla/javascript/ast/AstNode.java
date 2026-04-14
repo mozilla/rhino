@@ -391,6 +391,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.CALL:
             case Token.CATCH:
             case Token.CATCH_SCOPE:
+            case Token.CLASS:
             case Token.CONST:
             case Token.CONTINUE:
             case Token.DEC:
