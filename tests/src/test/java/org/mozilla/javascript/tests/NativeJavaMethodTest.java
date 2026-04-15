@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
@@ -41,6 +42,14 @@ public class NativeJavaMethodTest {
 
         public void fN(String s1, String s2, String... sN) {
             captured.add("N." + sN.length);
+        }
+
+        public void f3(Map<String, String> m, String... sN) {
+            captured.add("3.N");
+        }
+
+        public void f3(Map<String, String> m, Class<?> c, String... sN) {
+            captured.add("3.C.N");
         }
     }
 
@@ -105,6 +114,14 @@ public class NativeJavaMethodTest {
                 "d.f1('x', 'y');",
                 "d.f1('x', 3);",
                 "d.f1('x', '3');");
+    }
+
+    @Test
+    void overloadClass() {
+        expect(
+                Arrays.asList("3.N", "3.C.N"),
+                "d.f3({'foo':'bar'}, 'baz');",
+                "d.f3({'foo':'bar'}, java.lang.String, 'baz');");
     }
 
     @Test
