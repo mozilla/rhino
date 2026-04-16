@@ -5005,101 +5005,131 @@ public class Parser {
         try {
             pushScope(result);
             defineSymbol(Token.LET, tempName, true);
+            Node comma = new Node(Token.COMMA);
+            result.addChildToBack(comma);
+            List<String> destructuringNames = new ArrayList<>();
+            boolean empty = true;
+            String iteratorName = null;
+            String lastResultName = null;
+            if (left instanceof ArrayLiteral) {
+                DestructuringArrayResult arrayResult =
+                        destructuringArray(
+                                (ArrayLiteral) left,
+                                variableType,
+                                tempName,
+                                comma,
+                                destructuringNames,
+                                defaultValue,
+                                transformer,
+                                isFunctionParameter);
+                empty = arrayResult.empty;
+                iteratorName = arrayResult.iteratorName;
+                lastResultName = arrayResult.lastResultName;
+                if (iteratorName != null) {
+                    letNode.addChildToBack(createName(Token.NAME, iteratorName, null));
+                }
+                if (lastResultName != null) {
+                    letNode.addChildToBack(createName(Token.NAME, lastResultName, null));
+                }
+                for (var name : arrayResult.tempResultName) {
+                    letNode.addChildToBack(createName(Token.NAME, name, null));
+                }
+            } else if (left instanceof ObjectLiteral) {
+                empty =
+                        destructuringObject(
+                                (ObjectLiteral) left,
+                                variableType,
+                                tempName,
+                                comma,
+                                destructuringNames,
+                                defaultValue,
+                                transformer,
+                                isFunctionParameter,
+                                letNode,
+                                result);
+            } else if (left.getType() == Token.GETPROP || left.getType() == Token.GETELEM) {
+                switch (variableType) {
+                    case Token.CONST:
+                    case Token.LET:
+                    case Token.VAR:
+                        reportError("msg.bad.assign.left");
+                }
+                comma.addChildToBack(simpleAssignment(left, createName(tempName), transformer));
+            } else {
+                reportError("msg.bad.assign.left");
+            }
+            if (empty) {
+                // Don't want a COMMA node with no children. Just add a zero.
+                comma.addChildToBack(createNumber(0));
+            }
+
+            // Add iterator closing to the comma sequence if needed
+            // Generate: !lastResult.done ? ((f = iterator.return) !== undefined ? f.call(iterator)
+            // :
+            // undefined) : undefined
+            if (iteratorName != null && lastResultName != null) {
+                // Allocate temp for return method
+                String returnMethodName = currentScriptOrFn.getNextTempName();
+                defineSymbol(Token.LET, returnMethodName, true);
+                letNode.addChildToBack(createName(Token.NAME, returnMethodName, null));
+
+                // Check if iterator is done: !lastResult.done
+                Node getDone =
+                        new Node(Token.GETPROP, createName(lastResultName), Node.newString("done"));
+                Node notDone = new Node(Token.NOT, getDone);
+
+                // Get iterator.return and store: f = iterator.return
+                Node getReturn =
+                        new Node(Token.GETPROP, createName(iteratorName), Node.newString("return"));
+                Node assignReturn =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, returnMethodName, null),
+                                getReturn);
+
+                // Check if return method is not undefined: (f = iterator.return) !== undefined
+                Node notUndefined = new Node(Token.NE, assignReturn, new Node(Token.UNDEFINED));
+
+                // Call return method: f.call(iterator)
+                Node getCall =
+                        new Node(
+                                Token.GETPROP,
+                                createName(returnMethodName),
+                                Node.newString("call"));
+                Node callReturn = new Node(Token.CALL, getCall);
+                callReturn.addChildToBack(createName(iteratorName)); // 'this' argument
+
+                // Inner ternary: (f = iterator.return) !== undefined ? f.call(iterator) : undefined
+                Node innerTernary =
+                        new Node(Token.HOOK, notUndefined, callReturn, new Node(Token.UNDEFINED));
+
+                // Outer ternary: !lastResult.done ? innerTernary : undefined
+                Node outerTernary =
+                        new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
+
+                comma.addChildToBack(outerTernary);
+            }
+
+            result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
+
+            // For let/const declarations, the user-visible destructured variables must
+            // live in the enclosing scope, not in any LETEXPR scope. Walk past all
+            // intermediate LETEXPR scopes (from nested destructuring) to find the
+            // real enclosing scope where the declaration lives.
+            if (variableType == Token.LET || variableType == Token.CONST) {
+                Scope targetScope = result.getParentScope();
+                while (targetScope != null && targetScope.getType() == Token.LETEXPR) {
+                    targetScope = targetScope.getParentScope();
+                }
+                if (targetScope != null) {
+                    for (String name : destructuringNames) {
+                        result.moveSymbol(name, targetScope);
+                    }
+                }
+            }
         } finally {
             popScope();
         }
-        Node comma = new Node(Token.COMMA);
-        result.addChildToBack(comma);
-        List<String> destructuringNames = new ArrayList<>();
-        boolean empty = true;
-        String iteratorName = null;
-        String lastResultName = null;
-        if (left instanceof ArrayLiteral) {
-            DestructuringArrayResult arrayResult =
-                    destructuringArray(
-                            (ArrayLiteral) left,
-                            variableType,
-                            tempName,
-                            comma,
-                            destructuringNames,
-                            defaultValue,
-                            transformer,
-                            isFunctionParameter);
-            empty = arrayResult.empty;
-            iteratorName = arrayResult.iteratorName;
-            lastResultName = arrayResult.lastResultName;
-        } else if (left instanceof ObjectLiteral) {
-            empty =
-                    destructuringObject(
-                            (ObjectLiteral) left,
-                            variableType,
-                            tempName,
-                            comma,
-                            destructuringNames,
-                            defaultValue,
-                            transformer,
-                            isFunctionParameter,
-                            letNode,
-                            result);
-        } else if (left.getType() == Token.GETPROP || left.getType() == Token.GETELEM) {
-            switch (variableType) {
-                case Token.CONST:
-                case Token.LET:
-                case Token.VAR:
-                    reportError("msg.bad.assign.left");
-            }
-            comma.addChildToBack(simpleAssignment(left, createName(tempName), transformer));
-        } else {
-            reportError("msg.bad.assign.left");
-        }
-        if (empty) {
-            // Don't want a COMMA node with no children. Just add a zero.
-            comma.addChildToBack(createNumber(0));
-        }
-
-        // Add iterator closing to the comma sequence if needed
-        // Generate: !lastResult.done ? ((f = iterator.return) !== undefined ? f.call(iterator) :
-        // undefined) : undefined
-        if (isFunctionParameter && iteratorName != null && lastResultName != null) {
-            // Allocate temp for return method
-            String returnMethodName = currentScriptOrFn.getNextTempName();
-            defineSymbol(Token.LET, returnMethodName, true);
-
-            // Check if iterator is done: !lastResult.done
-            Node getDone =
-                    new Node(Token.GETPROP, createName(lastResultName), Node.newString("done"));
-            Node notDone = new Node(Token.NOT, getDone);
-
-            // Get iterator.return and store: f = iterator.return
-            Node getReturn =
-                    new Node(Token.GETPROP, createName(iteratorName), Node.newString("return"));
-            Node assignReturn =
-                    new Node(
-                            Token.SETNAME,
-                            createName(Token.BINDNAME, returnMethodName, null),
-                            getReturn);
-
-            // Check if return method is not undefined: (f = iterator.return) !== undefined
-            Node notUndefined = new Node(Token.NE, assignReturn, new Node(Token.UNDEFINED));
-
-            // Call return method: f.call(iterator)
-            Node getCall =
-                    new Node(Token.GETPROP, createName(returnMethodName), Node.newString("call"));
-            Node callReturn = new Node(Token.CALL, getCall);
-            callReturn.addChildToBack(createName(iteratorName)); // 'this' argument
-
-            // Inner ternary: (f = iterator.return) !== undefined ? f.call(iterator) : undefined
-            Node innerTernary =
-                    new Node(Token.HOOK, notUndefined, callReturn, new Node(Token.UNDEFINED));
-
-            // Outer ternary: !lastResult.done ? innerTernary : undefined
-            Node outerTernary =
-                    new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
-
-            comma.addChildToBack(outerTernary);
-        }
-
-        result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
         return result;
     }
 
@@ -5107,11 +5137,17 @@ public class Parser {
         boolean empty;
         String iteratorName;
         String lastResultName;
+        List<String> tempResultName;
 
-        DestructuringArrayResult(boolean empty, String iteratorName, String lastResultName) {
+        DestructuringArrayResult(
+                boolean empty,
+                String iteratorName,
+                String lastResultName,
+                List<String> tempResultName) {
             this.empty = empty;
             this.iteratorName = iteratorName;
             this.lastResultName = lastResultName;
+            this.tempResultName = tempResultName;
         }
     }
 
@@ -5131,6 +5167,7 @@ public class Parser {
         boolean iteratorSetup = false;
         String iteratorName = null;
         String lastResultName = null;
+        List<String> elemTempNames = new ArrayList<>();
 
         for (AstNode n : array.getElements()) {
             if (defaultValue != null && !defaultValuesSetup) {
@@ -5138,17 +5175,13 @@ public class Parser {
                 defaultValuesSetup = true;
             }
 
-            // Set up iterator for function parameters (after default value is applied)
+            // Set up iterator for array destructuring (after default value is applied)
             // Only use iterator protocol in ES6+; older versions use index-based access
-            if (isFunctionParameter
-                    && !iteratorSetup
-                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+            if (!iteratorSetup && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                 // Allocate temp names for iterator tracking
                 iteratorName = currentScriptOrFn.getNextTempName();
-                lastResultName = currentScriptOrFn.getNextTempName();
                 // Define the iterator temp variables for strict mode
                 defineSymbol(Token.LET, iteratorName, true);
-                defineSymbol(Token.LET, lastResultName, true);
 
                 // Generate: iterator = tempName[Symbol.iterator]()
                 // Pure AST: CALL(GETELEM(tempName, GETPROP(NAME("Symbol"), "iterator")))
@@ -5170,7 +5203,11 @@ public class Parser {
 
             if (n.getType() == Token.EMPTY) {
                 // If using iterator protocol, advance the iterator past this position
-                if (isFunctionParameter && iteratorName != null) {
+                if (iteratorName != null) {
+                    if (lastResultName == null) {
+                        lastResultName = currentScriptOrFn.getNextTempName();
+                        defineSymbol(Token.LET, lastResultName, true);
+                    }
                     Node getNextProp =
                             new Node(
                                     Token.GETPROP,
@@ -5199,7 +5236,7 @@ public class Parser {
                 AstNode restTarget = ((Spread) n).getExpression();
 
                 Node restValue;
-                if (isFunctionParameter && iteratorName != null) {
+                if (iteratorName != null) {
                     // When using the iterator protocol, collect remaining
                     // elements via Array.from(iterator). The iterator has
                     // not been advanced past this point, so Array.from
@@ -5215,8 +5252,6 @@ public class Parser {
                                             createName("Array"),
                                             Node.newString("from")));
                     restValue.addChildToBack(createName(iteratorName));
-                    iteratorName = null;
-                    lastResultName = null;
                 } else {
                     // call array.slice(index) to collect remaining elements
                     restValue =
@@ -5258,7 +5293,11 @@ public class Parser {
 
                 // Generate code to get element (not needed for Spread,
                 // which collects remaining elements separately above)
-                if (isFunctionParameter && iteratorName != null) {
+                if (iteratorName != null) {
+                    if (lastResultName == null) {
+                        lastResultName = currentScriptOrFn.getNextTempName();
+                        defineSymbol(Token.LET, lastResultName, true);
+                    }
                     // ES6+: Call iterator.next() and store the full result
                     Node getNextProp =
                             new Node(
@@ -5274,6 +5313,7 @@ public class Parser {
                     parent.addChildToBack(storeResult);
                     // Extract .value from the result
                     String elemTempName = currentScriptOrFn.getNextTempName();
+                    elemTempNames.add(elemTempName);
                     // Define the element temp variable for strict mode
                     defineSymbol(Token.LET, elemTempName, true);
                     Node getValue =
@@ -5331,7 +5371,7 @@ public class Parser {
             empty = false;
         }
 
-        return new DestructuringArrayResult(empty, iteratorName, lastResultName);
+        return new DestructuringArrayResult(empty, iteratorName, lastResultName, elemTempNames);
     }
 
     private void processDestructuringDefaults(
@@ -5588,12 +5628,7 @@ public class Parser {
                 letNode.addChildToBack(tempVar);
 
                 // define the computed property temp
-                pushScope(letExprScope);
-                try {
-                    defineSymbol(Token.LET, keyTempName, true);
-                } finally {
-                    popScope();
-                }
+                defineSymbol(Token.LET, keyTempName, true);
 
                 Node keyRef = createName(keyTempName);
                 extractedKeys.add(keyRef);

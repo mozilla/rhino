@@ -146,6 +146,36 @@ public class ArrayDestructuringTest {
                 });
     }
 
+    /** Destructured let variables must be visible after the declaration. */
+    @Test
+    public void letArrayDestructuringVisibleAfterDeclaration() {
+        Utils.assertWithAllModes_ES6(7, "function f() { let [x] = [7]; return x; } f()");
+    }
+
+    /** Destructured const variables must be visible after the declaration. */
+    @Test
+    public void constArrayDestructuringVisibleAfterDeclaration() {
+        Utils.assertWithAllModes_ES6(7, "function f() { const [x] = [7]; return x; } f()");
+    }
+
+    /** Multiple let-destructured variables visible after the declaration. */
+    @Test
+    public void letArrayDestructuringMultipleVariables() {
+        Utils.assertWithAllModes_ES6(3, "function f() { let [a, b] = [1, 2]; return a + b; } f()");
+    }
+
+    /** Nested array destructuring with default in a let declaration. */
+    @Test
+    public void letNestedArrayDestructuringWithDefault() {
+        Utils.assertWithAllModes_ES6(7, "function f() { let [[x] = [7]] = []; return x; } f()");
+    }
+
+    /** Object destructuring with let should also be visible after the declaration. */
+    @Test
+    public void letObjectDestructuringVisibleAfterDeclaration() {
+        Utils.assertWithAllModes_ES6(7, "function f() { let {x} = {x: 7}; return x; } f()");
+    }
+
     /** Test that array destructuring of non-iterable objects throws TypeError. */
     @Test
     public void arrayDestructuringNonIterableThrows() {
