@@ -5676,6 +5676,17 @@ public class Parser {
             empty = false;
             elementIndex++;
         }
+
+        // RequireObjectCoercible: throw TypeError if the value is null or undefined.
+        // This must happen after default values are applied (setupDefaultValues above)
+        // so that e.g. function({} = {}) {} called with no arguments uses the default
+        // rather than throwing.
+        if (defaultValue != null && !defaultValuesSetup) {
+            setupDefaultValues(tempName, parent, defaultValue, setOp, transformer);
+        }
+        parent.addChildToBack(new Node(Token.TO_OBJECT_COERCIBLE, createName(tempName)));
+        empty = false;
+
         return empty;
     }
 

@@ -891,6 +891,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.BITNOT:
             case Token.TYPEOF:
             case Token.VOID:
+            case Token.TO_OBJECT_COERCIBLE:
                 visitExpression(child, 0);
                 if (type == Token.VOID) {
                     addIcode(Icode_POP);
