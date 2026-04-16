@@ -62,7 +62,7 @@ public final class NativeArrayIterator extends ES6Iterator {
             return Integer.valueOf(index++);
         }
 
-        Object value = arrayLike.get(index, arrayLike);
+        Object value = ScriptableObject.getProperty(arrayLike, index);
         if (value == Scriptable.NOT_FOUND) {
             value = Undefined.instance;
         }
