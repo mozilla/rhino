@@ -176,6 +176,44 @@ public class ArrayDestructuringTest {
         Utils.assertWithAllModes_ES6(7, "function f() { let {x} = {x: 7}; return x; } f()");
     }
 
+    /** Empty object destructuring of null must throw TypeError. */
+    @Test
+    public void emptyObjectDestructuringNullThrows() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "var threw = false;\n"
+                                    + "try { (function() { const {} = null; })(); }\n"
+                                    + "catch (e) { if (e instanceof TypeError) threw = true; }\n"
+                                    + "if (!threw) throw new Error('Expected TypeError');";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /** Empty object destructuring of undefined must throw TypeError. */
+    @Test
+    public void emptyObjectDestructuringUndefinedThrows() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "var threw = false;\n"
+                                    + "try { (function() { const {} = undefined; })(); }\n"
+                                    + "catch (e) { if (e instanceof TypeError) threw = true; }\n"
+                                    + "if (!threw) throw new Error('Expected TypeError');";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
     /** Test that array destructuring of non-iterable objects throws TypeError. */
     @Test
     public void arrayDestructuringNonIterableThrows() {

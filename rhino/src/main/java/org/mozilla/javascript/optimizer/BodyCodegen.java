@@ -1353,6 +1353,18 @@ class BodyCodegen {
                 addScriptRuntimeInvoke("typeof", "(Ljava/lang/Object;" + ")Ljava/lang/String;");
                 break;
 
+            case Token.TO_OBJECT_COERCIBLE:
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                generateExpression(child, node);
+                addScriptRuntimeInvoke(
+                        "toObject",
+                        "(Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/VarScope;"
+                                + "Ljava/lang/Object;"
+                                + ")Lorg/mozilla/javascript/Scriptable;");
+                break;
+
             case Token.TYPEOFNAME:
                 visitTypeofname(node);
                 break;
