@@ -450,7 +450,7 @@ class InterpreterBytecodeDumpTest {
     void objectRestIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 35",
+                        "ICode dump, for null, length = 39",
                         "MaxStack = 3",
                         " [0] LINE : 1",
                         " [3] ENTER_SCOPE",
@@ -481,9 +481,13 @@ class InterpreterBytecodeDumpTest {
                         " [29] POP",
                         " [30] REG_STR_C1 \"$0\"",
                         " [31] NAME",
-                        " [32] LEAVE_SCOPE",
+                        " [32] TO_OBJECT_COERCIBLE",
                         " [33] POP",
-                        " [34] RETURN_RESULT",
+                        " [34] REG_STR_C1 \"$0\"",
+                        " [35] NAME",
+                        " [36] LEAVE_SCOPE",
+                        " [37] POP",
+                        " [38] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("var {a, ...rest} = obj"));
     }

@@ -46,6 +46,7 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
         // Create all the predefined symbols and bind them to the scope.
         createStandardSymbol(scope, ctor, "iterator", SymbolKey.ITERATOR);
+        createStandardSymbol(scope, ctor, "asyncIterator", SymbolKey.ASYNC_ITERATOR);
         createStandardSymbol(scope, ctor, "species", SymbolKey.SPECIES);
         createStandardSymbol(scope, ctor, "toStringTag", SymbolKey.TO_STRING_TAG);
         createStandardSymbol(scope, ctor, "hasInstance", SymbolKey.HAS_INSTANCE);

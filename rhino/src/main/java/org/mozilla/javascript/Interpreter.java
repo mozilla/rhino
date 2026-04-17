@@ -1531,8 +1531,11 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.ENUM_INIT_ARRAY] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES_IN_ORDER] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES_IN_ORDER] = new DoEnumInit();
+        instructionObjs[base + Token.ENUM_INIT_ASYNC_ITERATOR] = new DoEnumInitAsyncIterator();
         instructionObjs[base + Token.ENUM_NEXT] = new DoEnumOp();
         instructionObjs[base + Token.ENUM_ID] = new DoEnumOp();
+        instructionObjs[base + Token.ENUM_ASYNC_NEXT] = new DoEnumAsyncNext();
+        instructionObjs[base + Token.ENUM_ASYNC_STEP] = new DoEnumAsyncStep();
         instructionObjs[base + Token.REF_SPECIAL] = new DoRefSpecial();
         instructionObjs[base + Token.REF_MEMBER] = new DoRefMember();
         instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
@@ -4251,6 +4254,42 @@ public final class Interpreter extends Icode implements Evaluator {
                     (op == Token.ENUM_NEXT)
                             ? ScriptRuntime.enumNext(val, cx)
                             : ScriptRuntime.enumId(val, cx);
+            return null;
+        }
+    }
+
+    private static class DoEnumInitAsyncIterator extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object lhs = frame.stack[state.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            state.indexReg += frame.idata.itsMaxVars;
+            frame.stack[state.indexReg] = ScriptRuntime.enumInitAsyncIterator(lhs, cx, frame.scope);
+            --state.stackTop;
+            return null;
+        }
+    }
+
+    private static class DoEnumAsyncNext extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg += frame.idata.itsMaxVars;
+            Object enumObj = frame.stack[state.indexReg];
+            frame.stack[++state.stackTop] = ScriptRuntime.enumAsyncNext(enumObj, cx);
+            return null;
+        }
+    }
+
+    private static class DoEnumAsyncStep extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            state.indexReg += frame.idata.itsMaxVars;
+            Object enumObj = frame.stack[state.indexReg];
+            Object awaited = frame.stack[state.stackTop];
+            if (awaited == DOUBLE_MARK) {
+                awaited = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            }
+            frame.stack[state.stackTop] = ScriptRuntime.enumAsyncStep(enumObj, awaited, cx);
             return null;
         }
     }

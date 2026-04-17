@@ -2678,6 +2678,7 @@ public class ScriptRuntime {
         boolean enumNumbers;
 
         Scriptable iterator;
+        boolean isAsyncIteration;
     }
 
     public static Scriptable toIterator(Context cx, Scriptable obj, boolean keyOnly) {
@@ -2714,6 +2715,7 @@ public class ScriptRuntime {
     public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
     public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
     public static final int ENUMERATE_VALUES_IN_ORDER = 6;
+    public static final int ENUMERATE_VALUES_IN_ORDER_ASYNC = 7;
 
     /**
      * @deprecated Use {@link #enumInit(Object, Context, VarScope, int)} instead
@@ -2908,6 +2910,83 @@ public class ScriptRuntime {
         }
 
         return result;
+    }
+
+    /**
+     * Initialise async iteration for a for-await-of loop. Looks up {@code [Symbol.asyncIterator]}
+     * on the operand and falls back to {@code [Symbol.iterator]} when absent (per the spec's
+     * CreateAsyncFromSyncIterator coercion, simplified: the sync iterator's results will flow
+     * through the existing await machinery unchanged).
+     */
+    public static Object enumInitAsyncIterator(Object value, Context cx, VarScope scope) {
+        IdEnumeration x = new IdEnumeration();
+        x.obj = toObjectOrNull(cx, value, scope);
+        if (x.obj == null || !(x.obj instanceof SymbolScriptable)) {
+            throw typeErrorById("msg.not.iterable", toString(value));
+        }
+        x.enumType = ENUMERATE_VALUES_IN_ORDER_ASYNC;
+        x.isAsyncIteration = true;
+
+        Object iteratorFn = Scriptable.NOT_FOUND;
+        if (ScriptableObject.hasProperty(x.obj, SymbolKey.ASYNC_ITERATOR)) {
+            iteratorFn = ScriptableObject.getProperty(x.obj, SymbolKey.ASYNC_ITERATOR);
+        }
+        if (iteratorFn == Scriptable.NOT_FOUND
+                || iteratorFn == null
+                || Undefined.isUndefined(iteratorFn)) {
+            if (!ScriptableObject.hasProperty(x.obj, SymbolKey.ITERATOR)) {
+                throw typeErrorById("msg.not.iterable", toString(value));
+            }
+            iteratorFn = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
+        }
+        if (!(iteratorFn instanceof Callable)) {
+            throw typeErrorById("msg.not.iterable", toString(value));
+        }
+        Callable f = (Callable) iteratorFn;
+        VarScope callScope =
+                (f instanceof Function) ? ((Function) f).getDeclarationScope() : cx.topCallScope;
+        Object v = f.call(cx, callScope, x.obj, emptyArgs);
+        if (!(v instanceof Scriptable)) {
+            throw typeErrorById("msg.not.iterable", toString(value));
+        }
+        x.iterator = (Scriptable) v;
+        return x;
+    }
+
+    /**
+     * Invoke {@code iterator.next()} on an async-iteration enumeration and return the raw result
+     * (which is typically a Promise of an IteratorResult, but may be a plain IteratorResult when
+     * the underlying iterator is a sync iterator coerced to async). The caller is expected to
+     * {@code await} this value and then pass the resolved IteratorResult to {@link
+     * #enumAsyncStep(Object, Object, Context)}.
+     */
+    public static Object enumAsyncNext(Object enumObj, Context cx) {
+        IdEnumeration x = (IdEnumeration) enumObj;
+        Object nextFn = ScriptableObject.getProperty(x.iterator, ES6Iterator.NEXT_METHOD);
+        if (!(nextFn instanceof Callable)) {
+            throw notFunctionError(x.iterator, ES6Iterator.NEXT_METHOD);
+        }
+        Callable f = (Callable) nextFn;
+        VarScope callScope =
+                (f instanceof Function) ? ((Function) f).getDeclarationScope() : cx.topCallScope;
+        return f.call(cx, callScope, x.iterator, emptyArgs);
+    }
+
+    /**
+     * After the async-iteration result has been awaited, process it: store the {@code .value} on
+     * the enumeration so a subsequent {@code ENUM_ID} reads it, and return {@code Boolean.TRUE} if
+     * iteration should continue (i.e. {@code !done}), else {@code Boolean.FALSE}.
+     */
+    public static Boolean enumAsyncStep(Object enumObj, Object awaitedResult, Context cx) {
+        IdEnumeration x = (IdEnumeration) enumObj;
+        Scriptable resultObj = toObject(cx, cx.topCallScope, awaitedResult);
+        Object done = ScriptableObject.getProperty(resultObj, ES6Iterator.DONE_PROPERTY);
+        if (done != Scriptable.NOT_FOUND && toBoolean(done)) {
+            x.currentId = Undefined.instance;
+            return Boolean.FALSE;
+        }
+        x.currentId = ScriptableObject.getProperty(resultObj, ES6Iterator.VALUE_PROPERTY);
+        return Boolean.TRUE;
     }
 
     private static void enumChangeObject(IdEnumeration x) {
