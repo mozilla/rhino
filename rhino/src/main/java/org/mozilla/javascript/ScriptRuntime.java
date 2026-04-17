@@ -2913,6 +2913,28 @@ public class ScriptRuntime {
     }
 
     /**
+     * Internal marker that wraps the operand of an {@code await} inside an async-generator body, so
+     * the driver can tell a yield point that is an {@code await} (resume generator with the
+     * resolved value) from a plain {@code yield} (resolve the consumer's pending request).
+     */
+    public static final class AwaitMarker {
+        private final Object value;
+
+        public AwaitMarker(Object value) {
+            this.value = value;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+    }
+
+    /** Wrap {@code v} in an {@link AwaitMarker}. Invoked from generated code for {@code await}. */
+    public static Object wrapAwait(Object v) {
+        return new AwaitMarker(v);
+    }
+
+    /**
      * Initialise async iteration for a for-await-of loop. Looks up {@code [Symbol.asyncIterator]}
      * on the operand and falls back to {@code [Symbol.iterator]} when absent (per the spec's
      * CreateAsyncFromSyncIterator coercion, simplified: the sync iterator's results will flow

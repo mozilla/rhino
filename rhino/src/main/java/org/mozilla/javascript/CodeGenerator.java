@@ -1202,8 +1202,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 if (type == Token.YIELD_STAR) {
                     addIcode(Icode_YIELD_STAR);
                 } else {
-                    // Token.YIELD and Token.AWAIT both use the same yield opcode;
-                    // the async Promise runner drives the generator for await.
+                    // Inside an async generator we need to tell yield and await apart at the
+                    // driver level. Wrap the value of an await in an AwaitMarker; a plain yield
+                    // yields the raw value.
+                    if (type == Token.AWAIT
+                            && scriptOrFn instanceof FunctionNode
+                            && ((FunctionNode) scriptOrFn).isAsyncGenerator()) {
+                        addIcode(Icode_WRAP_AWAIT);
+                    }
+                    // Token.YIELD and Token.AWAIT both use the same yield opcode; the async
+                    // Promise runner drives the generator for await.
                     addToken(Token.YIELD);
                 }
                 addUint16(node.getLineno() & 0xFFFF);

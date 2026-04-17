@@ -50,6 +50,7 @@ public final class NativeIterator extends ScriptableObject {
             // JS1.7 Iterator() ctor, which is no longer installed at ES6+.
             ES6Iterator.initIteratorConstructor(cx, scope, sealed);
             ES6Generator.init(cx, scope, sealed);
+            ES6AsyncGenerator.init(cx, scope, sealed);
         } else {
             NativeObject proto = new NativeObject();
             DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);

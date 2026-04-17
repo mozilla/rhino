@@ -180,9 +180,20 @@ class BodyCodegen {
                 (scriptOrFn instanceof FunctionNode)
                         && ((FunctionNode) scriptOrFn).isAsync()
                         && !((FunctionNode) scriptOrFn).isES6Generator();
+        boolean isAsyncGenerator =
+                (scriptOrFn instanceof FunctionNode)
+                        && ((FunctionNode) scriptOrFn).isAsyncGenerator();
         if (isAsyncNonGenerator) {
             addOptRuntimeInvoke(
                     "createAsyncFunction",
+                    "(Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/VarScope;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/JSFunction;II"
+                            + ")Ljava/lang/Object;");
+        } else if (isAsyncGenerator) {
+            addOptRuntimeInvoke(
+                    "createAsyncGenerator",
                     "(Lorg/mozilla/javascript/Context;"
                             + "Lorg/mozilla/javascript/VarScope;"
                             + "Lorg/mozilla/javascript/Scriptable;"
@@ -2038,6 +2049,14 @@ class BodyCodegen {
         Node child = node.getFirstChild();
         if (child != null) generateExpression(child, node);
         else Codegen.pushUndefined(cfw);
+
+        // Inside an async generator, wrap awaited values so the driver can tell them apart
+        // from plain yielded values.
+        if (node.getType() == Token.AWAIT
+                && scriptOrFn instanceof FunctionNode
+                && ((FunctionNode) scriptOrFn).isAsyncGenerator()) {
+            addScriptRuntimeInvoke("wrapAwait", "(Ljava/lang/Object;)Ljava/lang/Object;");
+        }
 
         if (node.getType() == Token.YIELD_STAR) {
             // We will replace the result with one that signifies we should have a generator

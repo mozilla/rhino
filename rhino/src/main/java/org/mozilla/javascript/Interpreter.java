@@ -1545,6 +1545,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
         instructionObjs[base + Icode_SPREAD] = new DoSpread();
         instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
+        instructionObjs[base + Icode_WRAP_AWAIT] = new DoWrapAwait();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -1955,7 +1956,11 @@ public final class Interpreter extends Icode implements Evaluator {
             if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                 JSFunction fn = (JSFunction) generatorFrame.fnOrScript;
                 ES6Generator gen = new ES6Generator(frame.scope, fn, generatorFrame);
-                if (fn.isAsync() && !fn.isGeneratorFunction()) {
+                if (fn.isAsync() && fn.isGeneratorFunction()) {
+                    // Async generator function: wrap the underlying generator in an async
+                    // generator object that drives requests through a FIFO queue.
+                    frame.result = new ES6AsyncGenerator(frame.scope, gen);
+                } else if (fn.isAsync() && !fn.isGeneratorFunction()) {
                     // Async non-generator function: drive via Promise runner.
                     // isGeneratorFunction() returns descriptor.isES6Generator(), which is
                     // false for async non-generators (we only called setIsGenerator(), not
@@ -4276,6 +4281,16 @@ public final class Interpreter extends Icode implements Evaluator {
             state.indexReg += frame.idata.itsMaxVars;
             Object enumObj = frame.stack[state.indexReg];
             frame.stack[++state.stackTop] = ScriptRuntime.enumAsyncNext(enumObj, cx);
+            return null;
+        }
+    }
+
+    private static class DoWrapAwait extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object v = frame.stack[state.stackTop];
+            if (v == DOUBLE_MARK) v = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            frame.stack[state.stackTop] = ScriptRuntime.wrapAwait(v);
             return null;
         }
     }
