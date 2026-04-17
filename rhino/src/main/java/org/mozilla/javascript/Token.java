@@ -139,10 +139,12 @@ public class Token {
             // Async iteration support (for-await-of)
             ENUM_INIT_ASYNC_ITERATOR = TO_OBJECT_COERCIBLE + 1,
             ENUM_ASYNC_NEXT = ENUM_INIT_ASYNC_ITERATOR + 1,
-            ENUM_ASYNC_STEP = ENUM_ASYNC_NEXT + 1;
+            ENUM_ASYNC_STEP = ENUM_ASYNC_NEXT + 1,
+            // Push a constant value stored in the shared literals table
+            LOAD_LITERAL = ENUM_ASYNC_STEP + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = ENUM_ASYNC_STEP,
+    public static final int LAST_BYTECODE_TOKEN = LOAD_LITERAL,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -395,6 +397,8 @@ public class Token {
                 return "SHNE";
             case REGEXP:
                 return "REGEXP";
+            case LOAD_LITERAL:
+                return "LOAD_LITERAL";
             case BINDNAME:
                 return "BINDNAME";
             case THROW:

@@ -26,8 +26,7 @@ public class ScriptNode extends Scope {
     private int endLineno = -1;
 
     private List<FunctionNode> functions;
-    private List<RegExpLiteral> regexps;
-    private List<TemplateLiteral> templateLiterals;
+    private List<Object> literals;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
     private List<Symbol> symbols = new ArrayList<>(4);
@@ -174,40 +173,40 @@ public class ScriptNode extends Scope {
         return functions.size() - 1;
     }
 
-    public int getRegexpCount() {
-        return regexps == null ? 0 : regexps.size();
+    public int getLiteralCount() {
+        return literals == null ? 0 : literals.size();
     }
 
-    public String getRegexpString(int index) {
-        return regexps.get(index).getValue();
+    public Object getLiteral(int index) {
+        return literals.get(index);
     }
 
-    public String getRegexpFlags(int index) {
-        return regexps.get(index).getFlags();
+    /**
+     * Called by IRFactory to add a regexp or template literal to the shared literal table. The node
+     * is tagged with {@link Node#REGEXP_PROP} or {@link Node#TEMPLATE_LITERAL_PROP} holding its
+     * index so bytecode emission can recover it.
+     */
+    public void addLiteral(AstNode literal) {
+        if (literal == null) codeBug();
+        int index = addLiteral((Object) literal);
+        if (literal instanceof RegExpLiteral) {
+            literal.putIntProp(REGEXP_PROP, index);
+        } else if (literal instanceof TemplateLiteral) {
+            literal.putIntProp(TEMPLATE_LITERAL_PROP, index);
+        } else {
+            codeBug();
+        }
     }
 
-    /** Called by IRFactory to add a RegExp to the regexp table. */
-    public void addRegExp(RegExpLiteral re) {
-        if (re == null) codeBug();
-        if (regexps == null) regexps = new ArrayList<>();
-        regexps.add(re);
-        re.putIntProp(REGEXP_PROP, regexps.size() - 1);
-    }
-
-    public int getTemplateLiteralCount() {
-        return templateLiterals == null ? 0 : templateLiterals.size();
-    }
-
-    public List<TemplateCharacters> getTemplateLiteralStrings(int index) {
-        return templateLiterals.get(index).getTemplateStrings();
-    }
-
-    /** Called by IRFactory to add a Template Literal to the templateLiterals table. */
-    public void addTemplateLiteral(TemplateLiteral templateLiteral) {
-        if (templateLiteral == null) codeBug();
-        if (templateLiterals == null) templateLiterals = new ArrayList<>();
-        templateLiterals.add(templateLiteral);
-        templateLiteral.putIntProp(TEMPLATE_LITERAL_PROP, templateLiterals.size() - 1);
+    /**
+     * Adds an arbitrary value (such as a {@link org.mozilla.javascript.SymbolKey}) to the shared
+     * literal table and returns its index, for use with {@link org.mozilla.javascript.Token#LOAD_LITERAL}.
+     */
+    public int addLiteral(Object literal) {
+        if (literal == null) codeBug();
+        if (literals == null) literals = new ArrayList<>();
+        literals.add(literal);
+        return literals.size() - 1;
     }
 
     public int getIndexForNameNode(Node nameNode) {

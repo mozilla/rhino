@@ -328,6 +328,7 @@ public class ClassCompiler {
         cfw.add(ByteCode.ACONST_NULL);
         cfw.add(ByteCode.ACONST_NULL);
         cfw.addLoadConstant(builder.functionType);
+        pushLiterals(cfw, builder);
         // Call the constructor
         var type =
                 MethodType.methodType(
@@ -410,6 +411,40 @@ public class ClassCompiler {
     private int functionId(JSDescriptor.Builder builder) {
         var code = (OptJSCode.Builder) builder.code;
         return code.index;
+    }
+
+    private static void pushLiterals(ClassFileWriter cfw, JSDescriptor.Builder builder) {
+        Object[] literals = builder.literals;
+        if (literals == null || literals.length == 0) {
+            cfw.add(ByteCode.ACONST_NULL);
+            return;
+        }
+        cfw.addLoadConstant(literals.length);
+        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+        for (int i = 0; i < literals.length; i++) {
+            Object value = literals[i];
+            if (!(value instanceof String[])) {
+                throw new UnsupportedOperationException(
+                        "AOT compilation of scripts containing regular expression literals is not"
+                                + " currently supported");
+            }
+            String[] vals = (String[]) value;
+            cfw.add(ByteCode.DUP);
+            cfw.addLoadConstant(i);
+            cfw.addLoadConstant(vals.length);
+            cfw.add(ByteCode.ANEWARRAY, "java/lang/String");
+            for (int j = 0; j < vals.length; j++) {
+                cfw.add(ByteCode.DUP);
+                cfw.addLoadConstant(j);
+                if (vals[j] == null) {
+                    cfw.add(ByteCode.ACONST_NULL);
+                } else {
+                    cfw.addLoadConstant(vals[j]);
+                }
+                cfw.add(ByteCode.AASTORE);
+            }
+            cfw.add(ByteCode.AASTORE);
+        }
     }
 
     private String mainMethodClassName;
