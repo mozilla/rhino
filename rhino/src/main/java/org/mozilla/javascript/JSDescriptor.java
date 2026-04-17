@@ -52,6 +52,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private final SecurityController securityController;
     private final Object securityDomain;
     private final int functionType;
+    private final Object[] literals;
 
     public JSDescriptor(
             JSCode<T> code,
@@ -85,7 +86,8 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             boolean isAsync,
             SecurityController securityController,
             Object securityDomain,
-            int functionType) {
+            int functionType,
+            Object[] literals) {
         this.code = code;
         this.constructor = constructor;
         this.parent = parent;
@@ -122,6 +124,15 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         this.securityController = securityController;
         this.securityDomain = securityDomain;
         this.functionType = functionType;
+        this.literals = literals;
+    }
+
+    public Object[] getLiterals() {
+        return literals;
+    }
+
+    public Object getLiteral(int index) {
+        return literals[index];
     }
 
     public JSCode<T> getCode() {
@@ -329,6 +340,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public SecurityController securityController;
         public Object securityDomain;
         public int functionType;
+        public Object[] literals;
 
         public Builder() {}
 
@@ -400,7 +412,8 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             isAsync,
                             securityController,
                             securityDomain,
-                            functionType);
+                            functionType,
+                            literals);
             consumer.accept(result);
             result.nestedFunctions =
                     Collections.unmodifiableList(

@@ -16,8 +16,6 @@ public abstract class OptJSCode<T extends ScriptOrFn<T>> extends JSCode<T> {
      * method implementation once it has been built.
      */
     public static class BuilderEnv {
-        boolean hasRegExpLiterals;
-        boolean hasTemplateLiterals;
         Class<?> compiledClass;
         final String className;
 

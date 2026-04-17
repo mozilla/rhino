@@ -1118,12 +1118,12 @@ public final class IRFactory {
                 call.addChildToBack(transform(elem));
             }
         }
-        parser.currentScriptOrFn.addTemplateLiteral(templateLiteral);
+        parser.currentScriptOrFn.addLiteral(templateLiteral);
         return call;
     }
 
     private Node transformRegExp(RegExpLiteral node) {
-        parser.currentScriptOrFn.addRegExp(node);
+        parser.currentScriptOrFn.addLiteral(node);
         return node;
     }
 

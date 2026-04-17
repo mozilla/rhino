@@ -5195,12 +5195,14 @@ public class Parser {
                 defineSymbol(Token.LET, iteratorName, true);
 
                 // Generate: iterator = tempName[Symbol.iterator]()
-                // Pure AST: CALL(GETELEM(tempName, GETPROP(NAME("Symbol"), "iterator")))
-                Node symbolName = createName("Symbol");
-                Node getIteratorProp =
-                        new Node(Token.GETPROP, symbolName, Node.newString("iterator"));
-                Node getIteratorMethod = new Node(Token.GETELEM, createName(tempName));
-                getIteratorMethod.addChildToBack(getIteratorProp);
+                // Load SymbolKey.ITERATOR directly from the shared literal table
+                // instead of evaluating the two-step Symbol.iterator name lookup.
+                Node symbolIterator = new Node(Token.LOAD_LITERAL);
+                symbolIterator.putIntProp(
+                        Node.LITERAL_INDEX_PROP,
+                        currentScriptOrFn.addLiteral(SymbolKey.ITERATOR));
+                Node getIteratorMethod =
+                        new Node(Token.GETELEM, createName(tempName), symbolIterator);
                 Node callIterator = new Node(Token.CALL, getIteratorMethod);
                 Node iteratorAssign =
                         new Node(

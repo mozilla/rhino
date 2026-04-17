@@ -402,37 +402,32 @@ public class ArrayDestructuringTest {
     }
 
     /**
-     * Test that shadowing Symbol breaks array destructuring (expected behavior). If user shadows
-     * Symbol, destructuring should behave like manually written obj[Symbol.iterator]() code.
+     * Test that shadowing Symbol does not affect array destructuring. Per spec, GetIterator uses
+     * the well-known @@iterator symbol directly, not the user-visible {@code Symbol.iterator}
+     * lookup, so a local {@code Symbol} binding must not change destructuring behavior.
      */
     @Test
-    public void arrayDestructuringShadowedSymbolFails() {
+    public void arrayDestructuringIgnoresShadowedSymbol() {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
                     TopLevel scope = cx.initStandardObjects();
 
-                    // Shadow Symbol with a plain object - should cause iterator access to fail
                     String script =
                             "let Symbol = { iterator: 'not a symbol' };\n"
                                     + "var f = ([x, y]) => x + y;\n"
-                                    + "var errorThrown = false;\n"
-                                    + "try {\n"
-                                    + "  f([1, 2]);\n"
-                                    + "} catch (e) {\n"
-                                    + "  errorThrown = true;\n"
-                                    + "}\n"
-                                    + "if (!errorThrown) throw new Error('Expected error when Symbol is shadowed');"
+                                    + "var result = f([1, 2]);\n"
+                                    + "if (result !== 3) throw new Error('Expected 3, got ' + result);\n"
                                     + "\n"
-                                    + "// Verify that manually written code also fails with shadowed Symbol\n"
-                                    + "errorThrown = false;\n"
+                                    + "// Manually written code still uses the shadowed Symbol binding\n"
+                                    + "var errorThrown = false;\n"
                                     + "try {\n"
                                     + "  var arr = [1, 2];\n"
                                     + "  var iter = arr[Symbol.iterator]();\n"
                                     + "} catch (e) {\n"
                                     + "  errorThrown = true;\n"
                                     + "}\n"
-                                    + "if (!errorThrown) throw new Error('Manual code should also fail with shadowed Symbol');"
+                                    + "if (!errorThrown) throw new Error('Manual code should fail with shadowed Symbol');"
                                     + "";
 
                     cx.evaluateString(scope, script, "test", 1, null);
