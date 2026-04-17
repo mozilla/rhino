@@ -8,6 +8,7 @@ import java.util.List;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ES6AsyncGenerator;
 import org.mozilla.javascript.ES6Generator;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JavaScriptException;
@@ -295,6 +296,18 @@ public final class OptRuntime extends ScriptRuntime {
         GeneratorState gs = new GeneratorState(scope, thisObj, maxLocals, maxStack);
         ES6Generator gen = new ES6Generator(scope, funObj, gs);
         return NativePromise.createAsyncFunctionPromise(cx, scope, gen);
+    }
+
+    public static Object createAsyncGenerator(
+            Context cx,
+            VarScope scope,
+            Scriptable thisObj,
+            JSFunction funObj,
+            int maxLocals,
+            int maxStack) {
+        GeneratorState gs = new GeneratorState(scope, thisObj, maxLocals, maxStack);
+        ES6Generator gen = new ES6Generator(scope, funObj, gs);
+        return new ES6AsyncGenerator(scope, gen);
     }
 
     public static Object[] getGeneratorStackState(Object obj) {

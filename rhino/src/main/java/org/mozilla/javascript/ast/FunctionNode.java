@@ -344,6 +344,11 @@ public class FunctionNode extends ScriptNode {
         needsActivation = true;
     }
 
+    /** Returns whether this is an {@code async function*} (async generator). */
+    public boolean isAsyncGenerator() {
+        return isAsync && isES6Generator;
+    }
+
     @Override
     public boolean hasRestParameter() {
         return hasRestParameter;
