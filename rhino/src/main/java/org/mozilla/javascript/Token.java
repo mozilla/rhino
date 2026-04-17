@@ -135,10 +135,14 @@ public class Token {
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
             BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
             NEW_TARGET = BIGINT + 1, // new.target meta-property
-            TO_OBJECT_COERCIBLE = NEW_TARGET + 1; // ES6 RequireObjectCoercible
+            TO_OBJECT_COERCIBLE = NEW_TARGET + 1, // ES6 RequireObjectCoercible
+            // Async iteration support (for-await-of)
+            ENUM_INIT_ASYNC_ITERATOR = TO_OBJECT_COERCIBLE + 1,
+            ENUM_ASYNC_NEXT = ENUM_INIT_ASYNC_ITERATOR + 1,
+            ENUM_ASYNC_STEP = ENUM_ASYNC_NEXT + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = TO_OBJECT_COERCIBLE,
+    public static final int LAST_BYTECODE_TOKEN = ENUM_ASYNC_STEP,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -613,6 +617,12 @@ public class Token {
                 return "AWAIT";
             case TO_OBJECT_COERCIBLE:
                 return "TO_OBJECT_COERCIBLE";
+            case ENUM_INIT_ASYNC_ITERATOR:
+                return "ENUM_INIT_ASYNC_ITERATOR";
+            case ENUM_ASYNC_NEXT:
+                return "ENUM_ASYNC_NEXT";
+            case ENUM_ASYNC_STEP:
+                return "ENUM_ASYNC_STEP";
             case GET:
                 return "GET";
             case SET:

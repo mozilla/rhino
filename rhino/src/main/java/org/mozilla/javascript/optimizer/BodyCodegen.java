@@ -908,6 +908,19 @@ class BodyCodegen {
                 cfw.addAStore(getLocalBlockRegister(node));
                 break;
 
+            case Token.ENUM_INIT_ASYNC_ITERATOR:
+                generateExpression(child, node);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                        "enumInitAsyncIterator",
+                        "(Ljava/lang/Object;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/VarScope;"
+                                + ")Ljava/lang/Object;");
+                cfw.addAStore(getLocalBlockRegister(node));
+                break;
+
             case Token.EXPR_VOID:
                 if (child.getType() == Token.SETVAR) {
                     /* special case this so as to avoid unnecessary
@@ -1306,6 +1319,34 @@ class BodyCodegen {
                                         + "Lorg/mozilla/javascript/Context;"
                                         + ")Ljava/lang/Object;");
                     }
+                    break;
+                }
+
+            case Token.ENUM_ASYNC_NEXT:
+                {
+                    int local = getLocalBlockRegister(node);
+                    cfw.addALoad(local);
+                    cfw.addALoad(contextLocal);
+                    addScriptRuntimeInvoke(
+                            "enumAsyncNext",
+                            "(Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + ")Ljava/lang/Object;");
+                    break;
+                }
+
+            case Token.ENUM_ASYNC_STEP:
+                {
+                    int local = getLocalBlockRegister(node);
+                    cfw.addALoad(local); // push enumObj
+                    generateExpression(child, node); // push awaited IteratorResult
+                    cfw.addALoad(contextLocal);
+                    addScriptRuntimeInvoke(
+                            "enumAsyncStep",
+                            "(Ljava/lang/Object;"
+                                    + "Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + ")Ljava/lang/Boolean;");
                     break;
                 }
 

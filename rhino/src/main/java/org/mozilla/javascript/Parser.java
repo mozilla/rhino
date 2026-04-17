@@ -1803,7 +1803,7 @@ public class Parser {
         if (currentToken != Token.FOR) codeBug();
         consumeToken();
         int forPos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
-        boolean isForEach = false, isForIn = false, isForOf = false;
+        boolean isForEach = false, isForIn = false, isForOf = false, isForAwaitOf = false;
         int eachPos = -1, inPos = -1, lp = -1, rp = -1;
         AstNode init = null; // init is also foo in 'foo in object'
         AstNode cond = null; // cond is also object in 'foo in object'
@@ -1813,8 +1813,15 @@ public class Parser {
         Scope tempScope = new Scope();
         pushScope(tempScope); // decide below what AST class to use
         try {
-            // See if this is a for each () instead of just a for ()
-            if (matchToken(Token.NAME, true)) {
+            // See if this is a for-await-of loop: only allowed inside an async function
+            if (peekToken() == Token.NAME && "await".equals(ts.getString())) {
+                if (!insideAsyncFunction()) {
+                    reportError("msg.bad.await");
+                }
+                consumeToken();
+                isForAwaitOf = true;
+            } else if (matchToken(Token.NAME, true)) {
+                // See if this is a for each () instead of just a for ()
                 if ("each".equals(ts.getString())) {
                     isForEach = true;
                     eachPos = ts.tokenBeg - forPos;
@@ -1884,12 +1891,16 @@ public class Parser {
                 if (isForOf && isForEach) {
                     reportError("msg.invalid.for.each");
                 }
+                if (isForAwaitOf && !isForOf) {
+                    reportError("msg.bad.for.await");
+                }
                 fis.setIterator(init);
                 fis.setIteratedObject(cond);
                 fis.setInPosition(inPos);
                 fis.setIsForEach(isForEach);
                 fis.setEachPosition(eachPos);
                 fis.setIsForOf(isForOf);
+                fis.setIsForAwaitOf(isForAwaitOf);
                 pn = fis;
             } else {
                 ForLoop fl = new ForLoop(forPos);

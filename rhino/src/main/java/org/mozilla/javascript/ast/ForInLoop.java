@@ -29,6 +29,7 @@ public class ForInLoop extends Loop {
     protected int eachPosition = -1;
     protected boolean isForEach;
     protected boolean isForOf;
+    protected boolean isForAwaitOf;
 
     {
         type = Token.FOR;
@@ -97,6 +98,19 @@ public class ForInLoop extends Loop {
         this.isForOf = isForOf;
     }
 
+    /** Returns whether the loop is a for-await-of loop */
+    public boolean isForAwaitOf() {
+        return isForAwaitOf;
+    }
+
+    /**
+     * Sets whether the loop is a for-await-of loop. A for-await-of loop implies {@link #isForOf()}
+     * is also true.
+     */
+    public void setIsForAwaitOf(boolean isForAwaitOf) {
+        this.isForAwaitOf = isForAwaitOf;
+    }
+
     /** Returns position of "in" or "of" keyword */
     public int getInPosition() {
         return inPosition;
@@ -131,7 +145,9 @@ public class ForInLoop extends Loop {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append("for ");
-        if (isForEach()) {
+        if (isForAwaitOf()) {
+            sb.append("await ");
+        } else if (isForEach()) {
             sb.append("each ");
         }
         sb.append("(");

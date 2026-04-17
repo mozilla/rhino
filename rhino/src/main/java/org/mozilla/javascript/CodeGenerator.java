@@ -542,6 +542,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.ENUM_INIT_VALUES:
             case Token.ENUM_INIT_ARRAY:
             case Token.ENUM_INIT_VALUES_IN_ORDER:
+            case Token.ENUM_INIT_ASYNC_ITERATOR:
                 visitExpression(child, 0);
                 addIndexOp(type, getLocalBlockRef(node));
                 stackChange(-1);
@@ -1092,8 +1093,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.ENUM_NEXT:
             case Token.ENUM_ID:
+            case Token.ENUM_ASYNC_NEXT:
                 addIndexOp(type, getLocalBlockRef(node));
                 stackChange(1);
+                break;
+
+            case Token.ENUM_ASYNC_STEP:
+                // Child is the expression that evaluates to the awaited IteratorResult.
+                visitExpression(child, 0);
+                addIndexOp(type, getLocalBlockRef(node));
+                // opcode pops the result and pushes the boolean: net zero on top of the child.
                 break;
 
             case Token.BIGINT:
