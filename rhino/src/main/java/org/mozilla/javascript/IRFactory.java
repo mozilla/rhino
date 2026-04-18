@@ -686,6 +686,7 @@ public final class IRFactory {
         boolean hasStaticMethods = classNode.getStaticMethodCount() > 0;
         boolean hasStaticFields = classNode.getStaticFieldCount() > 0;
         boolean hasStaticComputedFields = classNode.getStaticComputedFieldCount() > 0;
+        boolean hasStaticPrivateFields = classNode.getStaticPrivateFieldCount() > 0;
         boolean hasPrivateFields = classNode.getPrivateFieldCount() > 0;
         Name className = classNode.getClassName();
 
@@ -763,7 +764,8 @@ public final class IRFactory {
                 || hasMethods
                 || hasStaticMethods
                 || hasStaticFields
-                || hasStaticComputedFields) {
+                || hasStaticComputedFields
+                || hasStaticPrivateFields) {
             // Use Token.CLASS node for classes with extends, methods, or static fields.
             // For base classes without superclass, use Token.NULL as sentinel.
             Node superClassNode =
@@ -805,7 +807,11 @@ public final class IRFactory {
                         classNode.getStaticFieldNames().toArray(new String[0]));
             }
 
-            // Add static computed field key+value expressions as children (alternating)
+            // Add static computed field key+value expressions as children (alternating).
+            // Static private fields are emitted here too, with a LOAD_LITERAL pushing the
+            // shared SymbolKey as the key. The runtime detects the private-name SymbolKey
+            // and sets the PRIVATE attribute on the slot it creates.
+            int computedFieldPairs = 0;
             if (hasStaticComputedFields) {
                 java.util.List<AstNode> scKeys = classNode.getStaticComputedFieldKeys();
                 java.util.List<AstNode> scInits = classNode.getStaticComputedFieldInitializers();
@@ -818,9 +824,39 @@ public final class IRFactory {
                         classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
                     }
                 }
-                classSetup.putIntProp(
-                        Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT,
-                        classNode.getStaticComputedFieldCount());
+                computedFieldPairs += classNode.getStaticComputedFieldCount();
+            }
+            if (hasStaticPrivateFields) {
+                java.util.List<String> spNames = classNode.getStaticPrivateFieldNames();
+                java.util.List<AstNode> spInits = classNode.getStaticPrivateFieldInitializers();
+                // Make private names visible while transforming initializers, since
+                // an initializer may read from other private names declared on the class.
+                if (pushedPrivateScope) {
+                    privateSymbolScopes.push(privateSymbols);
+                }
+                try {
+                    for (int i = 0; i < spNames.size(); i++) {
+                        SymbolKey key = classNode.getOrCreatePrivateSymbol(spNames.get(i));
+                        Node keyLoad = new Node(Token.LOAD_LITERAL);
+                        keyLoad.putIntProp(
+                                Node.LITERAL_INDEX_PROP, parser.currentScriptOrFn.addLiteral(key));
+                        classSetup.addChildToBack(keyLoad);
+                        AstNode init = spInits.get(i);
+                        if (init != null) {
+                            classSetup.addChildToBack(transform(init));
+                        } else {
+                            classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
+                        }
+                    }
+                } finally {
+                    if (pushedPrivateScope) {
+                        privateSymbolScopes.pop();
+                    }
+                }
+                computedFieldPairs += classNode.getStaticPrivateFieldCount();
+            }
+            if (computedFieldPairs > 0) {
+                classSetup.putIntProp(Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT, computedFieldPairs);
             }
 
             if (isStatement && className != null) {

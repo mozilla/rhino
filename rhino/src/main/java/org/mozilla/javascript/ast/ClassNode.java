@@ -47,6 +47,8 @@ public class ClassNode extends AstNode {
     private List<AstNode> staticComputedFieldInitializers;
     private List<String> privateFieldNames;
     private List<AstNode> privateFieldInitializers;
+    private List<String> staticPrivateFieldNames;
+    private List<AstNode> staticPrivateFieldInitializers;
 
     /** Shared SymbolKey for each private name declared in this class. */
     private Map<String, SymbolKey> privateSymbols;
@@ -279,9 +281,44 @@ public class ClassNode extends AstNode {
                 : privateFieldInitializers;
     }
 
+    public void addStaticPrivateField(String name, AstNode initializer) {
+        if (staticPrivateFieldNames == null) {
+            staticPrivateFieldNames = new ArrayList<>();
+            staticPrivateFieldInitializers = new ArrayList<>();
+        }
+        staticPrivateFieldNames.add(name);
+        staticPrivateFieldInitializers.add(initializer);
+        if (initializer != null) {
+            initializer.setParent(this);
+        }
+        getOrCreatePrivateSymbol(name);
+    }
+
+    public int getStaticPrivateFieldCount() {
+        return staticPrivateFieldNames == null ? 0 : staticPrivateFieldNames.size();
+    }
+
+    public List<String> getStaticPrivateFieldNames() {
+        return staticPrivateFieldNames == null ? Collections.emptyList() : staticPrivateFieldNames;
+    }
+
+    public List<AstNode> getStaticPrivateFieldInitializers() {
+        return staticPrivateFieldInitializers == null
+                ? Collections.emptyList()
+                : staticPrivateFieldInitializers;
+    }
+
     /** Returns the (possibly empty) map of private-name -> shared SymbolKey. */
     public Map<String, SymbolKey> getPrivateSymbols() {
         return privateSymbols == null ? Collections.emptyMap() : privateSymbols;
+    }
+
+    /**
+     * Returns true if the given private name (including the leading {@code #}) has already been
+     * declared as any kind of private member of this class.
+     */
+    public boolean hasPrivateName(String name) {
+        return privateSymbols != null && privateSymbols.containsKey(name);
     }
 
     /**

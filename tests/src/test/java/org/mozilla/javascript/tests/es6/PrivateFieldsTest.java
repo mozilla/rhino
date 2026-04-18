@@ -80,6 +80,29 @@ public class PrivateFieldsTest {
     }
 
     @Test
+    public void privateMethodCallable() {
+        Utils.assertWithAllModes_ES6(
+                "baz",
+                "class B {\n"
+                        + "  foo() { return this.#bar(); }\n"
+                        + "  #bar() { return 'baz'; }\n"
+                        + "}\n"
+                        + "new B().foo()\n");
+    }
+
+    @Test
+    public void privateMethodAccessThis() {
+        Utils.assertWithAllModes_ES6(
+                3,
+                "class C {\n"
+                        + "  #x = 3;\n"
+                        + "  getVal() { return this.#get(); }\n"
+                        + "  #get() { return this.#x; }\n"
+                        + "}\n"
+                        + "new C().getVal()\n");
+    }
+
+    @Test
     public void privateNameNotInOwnPropertySymbols() {
         Utils.assertWithAllModes_ES6(
                 0, "class Foo { #x = 1; }\n" + "Object.getOwnPropertySymbols(new Foo()).length\n");
@@ -97,6 +120,144 @@ public class PrivateFieldsTest {
                         + "class B { #x = 2; getB() { return this.#x; } }\n"
                         + "var a = new A(), b = new B();\n"
                         + "a.getA() + '-' + b.getB()\n");
+    }
+
+    @Test
+    public void duplicatePrivateFieldIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class F { #x; #x; }'); 'no error'; }\n" + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void duplicatePrivateMethodIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class F { #m() {} #m() {} }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void duplicatePrivateFieldAndMethodIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class F { #x; #x() {} }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void deletePrivateFieldIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { #x; del() { delete this.#x; } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void deletePrivateMethodIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { #m() {} del() { delete this.#m; } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void deleteParenthesizedPrivateFieldIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { #x; del() { delete (this.#x); } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void staticPrivateFieldReadWrite() {
+        Utils.assertWithAllModes_ES6(
+                "bob",
+                "class C {\n"
+                        + "  static #f;\n"
+                        + "  getF() { return C.#f; }\n"
+                        + "  setF(f) { C.#f = f; }\n"
+                        + "}\n"
+                        + "var c = new C();\n"
+                        + "c.setF('bob');\n"
+                        + "c.getF()\n");
+    }
+
+    @Test
+    public void staticPrivateFieldWithInitializer() {
+        Utils.assertWithAllModes_ES6(
+                42,
+                "class C {\n"
+                        + "  static #f = 42;\n"
+                        + "  static getF() { return C.#f; }\n"
+                        + "}\n"
+                        + "C.getF()\n");
+    }
+
+    @Test
+    public void staticPrivateFieldHiddenFromGetOwnPropertySymbols() {
+        Utils.assertWithAllModes_ES6(
+                0, "class C { static #f = 1; }\n" + "Object.getOwnPropertySymbols(C).length\n");
+    }
+
+    @Test
+    public void duplicateStaticAndInstancePrivateFieldIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { #x; static #x; }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void superPrivateNameAccessIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C extends Object { #m() {} test() { return super.#m; } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void superPrivateMethodCallIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C extends Object { #m() {} test() { return super.#m(); } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void superCallInMethodIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C extends Object { foo() { super(); } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void superCallInConstructorIsValid() {
+        // Positive case: super() is valid inside a derived class constructor.
+        Utils.assertWithAllModes_ES6(
+                "ok",
+                "class Base { constructor() { this.tag = 'ok'; } }\n"
+                        + "class D extends Base { constructor() { super(); } }\n"
+                        + "new D().tag\n");
+    }
+
+    @Test
+    public void superCallInArrowInsideConstructorParses() {
+        // An arrow function inside a constructor inherits super semantics, so the
+        // call should parse without a syntax error.
+        Utils.assertWithAllModes_ES6(
+                "no error",
+                "try { eval('class Base {} class D extends Base { constructor() { (() => super())(); } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void awaitLabelInPrivateAsyncGeneratorIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { async *#gen() { await: ; } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
     }
 
     @Test
