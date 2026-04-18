@@ -1097,6 +1097,18 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 }
                 break;
 
+            case Token.DEFINE_FIELD:
+                // Children: target, key, value. Pushes all three, pops all three, leaves value
+                // on stack as the expression result.
+                visitExpression(child, 0); // target
+                child = child.getNext();
+                visitExpression(child, 0); // key (a symbol-valued Node.LOAD_LITERAL)
+                child = child.getNext();
+                visitExpression(child, 0); // value
+                addIcode(Icode_DEFINE_PRIVATE_FIELD);
+                stackChange(-2); // three pushed, one left (value)
+                break;
+
             case Token.SETELEM:
             case Token.SETELEM_OP:
                 visitExpression(child, 0);

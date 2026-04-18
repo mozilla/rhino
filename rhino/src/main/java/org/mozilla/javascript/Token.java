@@ -146,10 +146,12 @@ public class Token {
             // Produces undefined on the stack. Used inside the finally branch of destructuring
             // (and similar) lowerings so the iterator is closed even on exception /
             // generator-return.
-            ITERATOR_CLOSE_ABRUPT = LOAD_LITERAL + 1;
+            ITERATOR_CLOSE_ABRUPT = LOAD_LITERAL + 1,
+            // Define a new private field: stack has target, key, value -> ...
+            DEFINE_FIELD = ITERATOR_CLOSE_ABRUPT + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = ITERATOR_CLOSE_ABRUPT,
+    public static final int LAST_BYTECODE_TOKEN = DEFINE_FIELD,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -265,7 +267,8 @@ public class Token {
             AWAIT = OBJECT_REST + 1, // ES2017 await expression
             CLASS = AWAIT + 1, // ES6 class declaration/expression
             EXTENDS = CLASS + 1, // ES6 extends clause
-            LAST_TOKEN = EXTENDS + 1;
+            PRIVATE_NAME = EXTENDS + 1, // ES2022 private class member name: #foo
+            LAST_TOKEN = PRIVATE_NAME + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -406,6 +409,8 @@ public class Token {
                 return "REGEXP";
             case LOAD_LITERAL:
                 return "LOAD_LITERAL";
+            case DEFINE_FIELD:
+                return "DEFINE_FIELD";
             case BINDNAME:
                 return "BINDNAME";
             case THROW:
@@ -640,6 +645,8 @@ public class Token {
                 return "CLASS";
             case EXTENDS:
                 return "EXTENDS";
+            case PRIVATE_NAME:
+                return "PRIVATE_NAME";
             case GET:
                 return "GET";
             case SET:

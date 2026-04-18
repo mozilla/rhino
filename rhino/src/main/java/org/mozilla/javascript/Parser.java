@@ -1163,16 +1163,21 @@ public class Parser {
                 isGenerator = true;
             }
 
-            // Parse the member name: identifier, string, number, or [computed]
+            // Parse the member name: identifier, private #name, string, number, or [computed]
             String memberName = null;
             boolean isComputed = false;
             boolean isStringOrNumericName = false;
+            boolean isPrivateName = false;
             AstNode computedKeyExpr = null;
             int tt = peekToken();
 
             if (tt == Token.NAME) {
                 consumeToken();
                 memberName = ts.getString();
+            } else if (tt == Token.PRIVATE_NAME) {
+                consumeToken();
+                memberName = ts.getString();
+                isPrivateName = true;
             } else if (tt == Token.STRING) {
                 consumeToken();
                 memberName = ts.getString();
@@ -1244,6 +1249,7 @@ public class Parser {
                     && !isStatic
                     && !isAsync
                     && !isGenerator
+                    && !isPrivateName
                     && "constructor".equals(memberName)
                     && peekToken() == Token.LP) {
                 if (constructor != null) {
@@ -1261,6 +1267,9 @@ public class Parser {
                 }
                 if (isComputed) {
                     // TODO: computed method names need additional support in ClassNode/IRFactory
+                    reportError("msg.unexpected.token");
+                } else if (isPrivateName) {
+                    // TODO: private methods not yet supported
                     reportError("msg.unexpected.token");
                 } else if (isStatic) {
                     classNode.addStaticMethod(memberName, method);
@@ -1280,7 +1289,14 @@ public class Parser {
                 if (peekToken() == Token.SEMI) {
                     consumeToken();
                 }
-                if (isStatic) {
+                if (isPrivateName) {
+                    if (isStatic) {
+                        // TODO: static private fields not yet supported
+                        reportError("msg.unexpected.token");
+                    } else {
+                        classNode.addPrivateField(memberName, initializer);
+                    }
+                } else if (isStatic) {
                     if (isComputed) {
                         classNode.addStaticComputedField(computedKeyExpr, initializer);
                     } else if (isStringOrNumericName) {
@@ -3843,6 +3859,12 @@ public class Parser {
                 ref = propertyName(-1, memberTypeFlags);
                 break;
 
+            case Token.PRIVATE_NAME:
+                // handles: #name (private field access). The Name identifier keeps the leading '#'
+                // so IRFactory can rewrite the access to a symbol-keyed element access.
+                ref = propertyName(-1, memberTypeFlags);
+                break;
+
             case Token.MUL:
                 if (compilerEnv.isXmlAvailable()) {
                     // handles: *, *::name, *::*, *::[expr]
@@ -4774,6 +4796,11 @@ public class Parser {
                 pname = createNameNode();
                 break;
 
+            case Token.PRIVATE_NAME:
+                // Private names (#foo) are only valid as class members, never in object literals.
+                reportError("msg.bad.prop");
+                return null;
+
             case Token.STRING:
                 pname = createStringLiteral();
                 break;
@@ -4828,7 +4855,10 @@ public class Parser {
                     int lineno = lineNumber();
                     int column = columnNumber();
                     pname = objliteralProperty();
-
+                    if (pname == null) {
+                        // Inner parse already reported the error; just abort this property.
+                        return null;
+                    }
                     pname = new GeneratorMethodDefinition(pos, ts.tokenEnd - pos, pname);
                     pname.setLineColumnNumber(lineno, column);
                 } else {

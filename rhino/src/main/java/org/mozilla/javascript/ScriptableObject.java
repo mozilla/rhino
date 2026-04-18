@@ -102,6 +102,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public static final int UNINITIALIZED_CONST = 0x08;
 
+    public static final int PRIVATE = 0x10;
+
+    public static final int INTERNAL = 0x20;
+
     public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
 
     /** The prototype of this object. */
@@ -138,7 +142,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static void checkValidAttributes(int attributes) {
-        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST;
+        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST | PRIVATE;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -2934,6 +2938,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
         int c = externalLen;
         for (var slot : map) {
+            if ((slot.getAttributes() & PRIVATE) != 0) continue;
             if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
                     && (getSymbols || !(slot.name instanceof Symbol))) {
                 if (c == externalLen) {

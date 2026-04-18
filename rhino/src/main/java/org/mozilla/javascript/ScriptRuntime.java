@@ -5669,6 +5669,30 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * Initialize a private class field on {@code target} keyed by the given {@link Symbol}, with
+     * attribute {@link ScriptableObject#PRIVATE} so the slot is hidden from enumeration and {@code
+     * Object.getOwnPropertySymbols}.
+     */
+    public static void definePrivateField(
+            Object target, Symbol key, Object value, Context cx, VarScope scope) {
+        Scriptable obj = toObjectOrNull(cx, target, scope);
+        if (obj == null) {
+            throw undefReadError(target, String.valueOf(key));
+        }
+        SymbolScriptable sObj = (obj instanceof SymbolScriptable) ? (SymbolScriptable) obj : null;
+        if (sObj == null) {
+            throw typeErrorById("msg.ctor.not.found", String.valueOf(key));
+        }
+        sObj.put(key, obj, value);
+        if (obj instanceof ScriptableObject) {
+            ((ScriptableObject) obj)
+                    .setAttributes(
+                            key,
+                            ((ScriptableObject) obj).getAttributes(key) | ScriptableObject.PRIVATE);
+        }
+    }
+
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {
         // Compared with function it always sets the scope to top scope
         scope = ScriptableObject.getTopLevelScope(scope);

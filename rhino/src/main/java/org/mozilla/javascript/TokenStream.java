@@ -65,6 +65,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 case Token.STRING:
                 case Token.REGEXP:
                 case Token.NAME:
+                case Token.PRIVATE_NAME:
                     return name + " `" + this.string + "'";
 
                 case Token.NUMBER:
@@ -1154,6 +1155,30 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 // #! hashbang: only on the first line of a Script, no leading whitespace
                 skipLine();
                 return Token.COMMENT;
+            }
+
+            if (c == '#') {
+                int peek = peekChar();
+                if (Character.isUnicodeIdentifierStart(peek) || peek == '$' || peek == '_') {
+                    stringBufferTop = 0;
+                    addToString('#');
+                    for (; ; ) {
+                        int pc = peekChar();
+                        if (pc == EOF_CHAR
+                                || pc == BYTE_ORDER_MARK
+                                || !(Character.isUnicodeIdentifierPart(pc) || pc == '$')) {
+                            break;
+                        }
+                        addToString(getChar());
+                    }
+                    String str = getStringFromBuffer();
+                    this.string = internString(str);
+                    cursor = sourceCursor;
+                    tokenEnd = cursor;
+                    return Token.PRIVATE_NAME;
+                }
+                parser.addError("msg.illegal.character", c);
+                return Token.ERROR;
             }
 
             switch (c) {

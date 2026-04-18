@@ -74,10 +74,11 @@ public class Node implements Iterable<Node> {
             SUPER_CONSTRUCTOR_CALL = 34, // marks a CALL as super() in derived constructor
             LITERAL_INDEX_PROP = 35, // int index into the shared literals table
             CLASS_METHODS_PROP = 36, // String[] of method names for class definitions
-            CLASS_STATIC_METHODS_PROP = 36, // String[] of static method names
-            CLASS_STATIC_FIELDS_PROP = 37, // String[] of static field names
-            CLASS_STATIC_COMPUTED_FIELDS_COUNT = 38, // int count of static computed fields
-            LAST_PROP = CLASS_STATIC_COMPUTED_FIELDS_COUNT,
+            CLASS_STATIC_METHODS_PROP = 37, // String[] of static method names
+            CLASS_STATIC_FIELDS_PROP = 38, // String[] of static field names
+            CLASS_STATIC_COMPUTED_FIELDS_COUNT = 39, // int count of static computed fields
+            PRIVATE_FIELD_INIT_PROP = 40, // marks a synthesized init of a class private field
+            LAST_PROP = PRIVATE_FIELD_INIT_PROP,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
@@ -468,6 +469,8 @@ public class Node implements Iterable<Node> {
                 return "object_rest_prop";
             case LITERAL_INDEX_PROP:
                 return "literal_index_prop";
+            case PRIVATE_FIELD_INIT_PROP:
+                return "private_field_init_prop";
 
             default:
                 Kit.codeBug();
