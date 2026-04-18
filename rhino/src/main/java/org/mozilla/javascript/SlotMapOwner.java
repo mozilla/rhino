@@ -1,6 +1,7 @@
 package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.PRIVATE;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -822,6 +823,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         Object[] a = new Object[map.dirtySize()];
 
         for (var slot : map) {
+            if ((slot.getAttributes() & PRIVATE) != 0) continue;
             if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
                     && (getSymbols || !(slot.name instanceof Symbol))) {
                 a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);

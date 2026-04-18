@@ -8,7 +8,9 @@ package org.mozilla.javascript;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import org.mozilla.javascript.ast.AbstractObjectProperty;
@@ -103,6 +105,11 @@ public final class IRFactory {
     private AstNodePosition astNodePos;
     private boolean outerScopeIsStrict;
     private boolean insideClassConstructor;
+
+    /**
+     * Stack of enclosing classes' {@code #name -> SymbolKey} maps, used to resolve private names.
+     */
+    private final Deque<Map<String, SymbolKey>> privateSymbolScopes = new ArrayDeque<>();
 
     public IRFactory(CompilerEnvirons env, String sourceString) {
         this(env, null, sourceString, env.getErrorReporter());
@@ -477,6 +484,23 @@ public final class IRFactory {
                 (originalLeft == left); // If we removed parens, we won't try to infer name
         left = transformAssignmentLeft(node, left, right);
 
+        // Private field initialization: the synthesized Assignment is marked so that the first
+        // write creates the slot with attribute PRIVATE instead of following normal SETELEM
+        // semantics.
+        if (node.getIntProp(Node.PRIVATE_FIELD_INIT_PROP, 0) == 1 && left instanceof PropertyGet) {
+            PropertyGet pg = (PropertyGet) left;
+            String privateName = pg.getProperty().getIdentifier();
+            Node targetNode = transform(pg.getTarget());
+            Node loadSymbol = loadPrivateSymbolLiteral(privateName);
+            astNodePos.push(left);
+            try {
+                Node transformedRight = transform(right);
+                return new Node(Token.DEFINE_FIELD, targetNode, loadSymbol, transformedRight);
+            } finally {
+                astNodePos.pop();
+            }
+        }
+
         Node target = null;
         if (isDestructuring(left)) {
             target = left;
@@ -662,6 +686,7 @@ public final class IRFactory {
         boolean hasStaticMethods = classNode.getStaticMethodCount() > 0;
         boolean hasStaticFields = classNode.getStaticFieldCount() > 0;
         boolean hasStaticComputedFields = classNode.getStaticComputedFieldCount() > 0;
+        boolean hasPrivateFields = classNode.getPrivateFieldCount() > 0;
         Name className = classNode.getClassName();
 
         // Class bodies are always strict
@@ -685,35 +710,52 @@ public final class IRFactory {
         }
 
         // Inject field initialization into the constructor body
-        if (classNode.getFieldCount() > 0 || classNode.getComputedFieldCount() > 0) {
+        if (classNode.getFieldCount() > 0
+                || classNode.getComputedFieldCount() > 0
+                || hasPrivateFields) {
             injectFieldInitializers(classNode, constructor, hasSuperClass);
         }
 
-        // Transform the constructor as a regular function
-        boolean savedInsideClassConstructor = insideClassConstructor;
-        insideClassConstructor = hasSuperClass;
+        // Make the class's private names visible to its constructor and all methods during IR
+        // transformation.
+        Map<String, SymbolKey> privateSymbols = classNode.getPrivateSymbols();
+        boolean pushedPrivateScope = !privateSymbols.isEmpty();
+        if (pushedPrivateScope) {
+            privateSymbolScopes.push(privateSymbols);
+        }
         Node constructorNode;
+        java.util.List<Node> methodNodes;
+        java.util.List<Node> staticMethodNodes;
         try {
-            constructorNode = transformFunction(constructor);
-        } finally {
-            insideClassConstructor = savedInsideClassConstructor;
-        }
-
-        // Transform instance method functions
-        java.util.List<Node> methodNodes = new java.util.ArrayList<>();
-        if (hasMethods) {
-            for (FunctionNode methodFn : classNode.getMethods()) {
-                methodFn.setInStrictMode(true);
-                methodNodes.add(transformFunction(methodFn));
+            // Transform the constructor as a regular function
+            boolean savedInsideClassConstructor = insideClassConstructor;
+            insideClassConstructor = hasSuperClass;
+            try {
+                constructorNode = transformFunction(constructor);
+            } finally {
+                insideClassConstructor = savedInsideClassConstructor;
             }
-        }
 
-        // Transform static method functions
-        java.util.List<Node> staticMethodNodes = new java.util.ArrayList<>();
-        if (hasStaticMethods) {
-            for (FunctionNode methodFn : classNode.getStaticMethods()) {
-                methodFn.setInStrictMode(true);
-                staticMethodNodes.add(transformFunction(methodFn));
+            // Transform instance method functions
+            methodNodes = new java.util.ArrayList<>();
+            if (hasMethods) {
+                for (FunctionNode methodFn : classNode.getMethods()) {
+                    methodFn.setInStrictMode(true);
+                    methodNodes.add(transformFunction(methodFn));
+                }
+            }
+
+            // Transform static method functions
+            staticMethodNodes = new java.util.ArrayList<>();
+            if (hasStaticMethods) {
+                for (FunctionNode methodFn : classNode.getStaticMethods()) {
+                    methodFn.setInStrictMode(true);
+                    staticMethodNodes.add(transformFunction(methodFn));
+                }
+            }
+        } finally {
+            if (pushedPrivateScope) {
+                privateSymbolScopes.pop();
             }
         }
 
@@ -849,6 +891,27 @@ public final class IRFactory {
             }
 
             Assignment assign = new Assignment(Token.ASSIGN, elemGet, value, 0);
+            initStmts.add(new ExpressionStatement(assign));
+        }
+
+        // Private fields: this.#name = initializer, marked so the assignment becomes a
+        // DEFINE_FIELD that establishes the slot with attribute PRIVATE.
+        java.util.List<String> privateNames = classNode.getPrivateFieldNames();
+        java.util.List<AstNode> privateInits = classNode.getPrivateFieldInitializers();
+        for (int i = 0; i < privateNames.size(); i++) {
+            KeywordLiteral thisNode = new KeywordLiteral();
+            thisNode.setType(Token.THIS);
+            Name propName = new Name(0, privateNames.get(i));
+            PropertyGet propGet = new PropertyGet(thisNode, propName);
+
+            AstNode value = privateInits.get(i);
+            if (value == null) {
+                value = new KeywordLiteral();
+                value.setType(Token.UNDEFINED);
+            }
+
+            Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
+            assign.putIntProp(Node.PRIVATE_FIELD_INIT_PROP, 1);
             initStmts.add(new ExpressionStatement(assign));
         }
 
@@ -1351,7 +1414,43 @@ public final class IRFactory {
     private Node transformPropertyGet(PropertyGet node) {
         Node target = transform(node.getTarget());
         String name = node.getProperty().getIdentifier();
+        if (isPrivateName(name)) {
+            Node loadSymbol = loadPrivateSymbolLiteral(name);
+            Node elemGet = new Node(Token.GETELEM, target, loadSymbol);
+            if (node.type == Token.QUESTION_DOT) {
+                elemGet.putIntProp(Node.OPTIONAL_CHAINING, 1);
+            }
+            return elemGet;
+        }
         return createPropertyGet(target, null, name, 0, node.type);
+    }
+
+    private static boolean isPrivateName(String name) {
+        return name != null && !name.isEmpty() && name.charAt(0) == '#';
+    }
+
+    /**
+     * Build a {@code LOAD_LITERAL} IR node that pushes the {@link SymbolKey} for the given private
+     * name (e.g., {@code #foo}) at runtime. The key is shared across all functions of the enclosing
+     * class; each function gets its own literal-table entry pointing to the same key instance.
+     */
+    private Node loadPrivateSymbolLiteral(String privateName) {
+        SymbolKey key = null;
+        for (Map<String, SymbolKey> scope : privateSymbolScopes) {
+            SymbolKey candidate = scope.get(privateName);
+            if (candidate != null) {
+                key = candidate;
+                break;
+            }
+        }
+        if (key == null) {
+            parser.reportError("msg.undeclared.private.name", privateName);
+            // Fall back to a locally-created key so IR construction proceeds.
+            key = new SymbolKey(privateName, org.mozilla.javascript.Symbol.Kind.REGULAR);
+        }
+        Node load = new Node(Token.LOAD_LITERAL);
+        load.putIntProp(Node.LITERAL_INDEX_PROP, parser.currentScriptOrFn.addLiteral(key));
+        return load;
     }
 
     private Node transformTemplateLiteral(TemplateLiteral node) {

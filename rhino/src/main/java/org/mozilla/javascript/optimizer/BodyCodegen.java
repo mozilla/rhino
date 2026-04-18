@@ -1830,6 +1830,30 @@ class BodyCodegen {
                 visitSetElem(type, node, child);
                 break;
 
+            case Token.DEFINE_FIELD:
+                {
+                    // Children: target, symbol-keyed LOAD_LITERAL, value. Push all three, call
+                    // ScriptRuntime.definePrivateField which leaves value on the stack.
+                    generateExpression(child, node); // target
+                    child = child.getNext();
+                    generateExpression(child, node); // key (symbol)
+                    cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Symbol");
+                    child = child.getNext();
+                    generateExpression(child, node); // value
+                    cfw.add(ByteCode.DUP_X2); // keep a copy of value under target/key
+                    cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
+                    addScriptRuntimeInvoke(
+                            "definePrivateField",
+                            "(Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Symbol;"
+                                    + "Ljava/lang/Object;"
+                                    + "Lorg/mozilla/javascript/Context;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
+                                    + ")V");
+                }
+                break;
+
             case Token.SET_REF:
             case Token.SET_REF_OP:
                 {

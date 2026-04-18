@@ -1554,6 +1554,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_FIELD] = new DoDefineStaticClassField();
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD] =
                 new DoDefineStaticClassComputedField();
+        instructionObjs[base + Icode_DEFINE_PRIVATE_FIELD] = new DoDefinePrivateField();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -4521,6 +4522,25 @@ public final class Interpreter extends Icode implements Evaluator {
             --state.stackTop;
             BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
             ScriptRuntime.defineStaticClassComputedField(constructor, key, value);
+            return null;
+        }
+    }
+
+    private static class DoDefinePrivateField extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack: ... target key value -> ... value
+            Object value = frame.stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object target = frame.stack[state.stackTop];
+            if (target == DOUBLE_MARK)
+                target = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            ScriptRuntime.definePrivateField(target, (Symbol) key, value, cx, frame.scope);
+            frame.stack[state.stackTop] = value;
             return null;
         }
     }

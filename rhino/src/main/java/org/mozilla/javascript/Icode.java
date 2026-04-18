@@ -195,8 +195,11 @@ abstract class Icode {
             // Define a static computed field on a class constructor (key and value on stack)
             Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD = Icode_DEFINE_STATIC_CLASS_FIELD - 1,
 
+            // Define a class private field: stack has target, symbol key, value -> ...
+            Icode_DEFINE_PRIVATE_FIELD = Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD - 1,
+
             // Last icode
-            MIN_ICODE = Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD;
+            MIN_ICODE = Icode_DEFINE_PRIVATE_FIELD;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -406,6 +409,8 @@ abstract class Icode {
                 return "DEFINE_STATIC_CLASS_FIELD";
             case Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD:
                 return "DEFINE_STATIC_CLASS_COMPUTED_FIELD";
+            case Icode_DEFINE_PRIVATE_FIELD:
+                return "DEFINE_PRIVATE_FIELD";
         }
 
         // icode without name

@@ -8,7 +8,11 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import org.mozilla.javascript.Symbol;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Token;
 
 /**
@@ -41,6 +45,11 @@ public class ClassNode extends AstNode {
     private List<AstNode> staticFieldInitializers;
     private List<AstNode> staticComputedFieldKeys;
     private List<AstNode> staticComputedFieldInitializers;
+    private List<String> privateFieldNames;
+    private List<AstNode> privateFieldInitializers;
+
+    /** Shared SymbolKey for each private name declared in this class. */
+    private Map<String, SymbolKey> privateSymbols;
 
     {
         type = Token.CLASS;
@@ -243,6 +252,49 @@ public class ClassNode extends AstNode {
                 : staticComputedFieldInitializers;
     }
 
+    public void addPrivateField(String name, AstNode initializer) {
+        if (privateFieldNames == null) {
+            privateFieldNames = new ArrayList<>();
+            privateFieldInitializers = new ArrayList<>();
+        }
+        privateFieldNames.add(name);
+        privateFieldInitializers.add(initializer);
+        if (initializer != null) {
+            initializer.setParent(this);
+        }
+        getOrCreatePrivateSymbol(name);
+    }
+
+    public int getPrivateFieldCount() {
+        return privateFieldNames == null ? 0 : privateFieldNames.size();
+    }
+
+    public List<String> getPrivateFieldNames() {
+        return privateFieldNames == null ? Collections.emptyList() : privateFieldNames;
+    }
+
+    public List<AstNode> getPrivateFieldInitializers() {
+        return privateFieldInitializers == null
+                ? Collections.emptyList()
+                : privateFieldInitializers;
+    }
+
+    /** Returns the (possibly empty) map of private-name -> shared SymbolKey. */
+    public Map<String, SymbolKey> getPrivateSymbols() {
+        return privateSymbols == null ? Collections.emptyMap() : privateSymbols;
+    }
+
+    /**
+     * Returns the shared {@link SymbolKey} for the given private name, creating it on first use.
+     * Names include the leading {@code #}.
+     */
+    public SymbolKey getOrCreatePrivateSymbol(String name) {
+        if (privateSymbols == null) {
+            privateSymbols = new LinkedHashMap<>();
+        }
+        return privateSymbols.computeIfAbsent(name, n -> new SymbolKey(n, Symbol.Kind.REGULAR));
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -262,6 +314,18 @@ public class ClassNode extends AstNode {
                 sb.append(makeIndent(depth + 1));
                 sb.append(fieldNames.get(i));
                 AstNode init = fieldInitializers.get(i);
+                if (init != null) {
+                    sb.append(" = ");
+                    sb.append(init.toSource(0));
+                }
+                sb.append(";\n");
+            }
+        }
+        if (privateFieldNames != null) {
+            for (int i = 0; i < privateFieldNames.size(); i++) {
+                sb.append(makeIndent(depth + 1));
+                sb.append(privateFieldNames.get(i));
+                AstNode init = privateFieldInitializers.get(i);
                 if (init != null) {
                     sb.append(" = ");
                     sb.append(init.toSource(0));
@@ -324,6 +388,13 @@ public class ClassNode extends AstNode {
             }
             if (fieldInitializers != null) {
                 for (AstNode init : fieldInitializers) {
+                    if (init != null) {
+                        init.visit(v);
+                    }
+                }
+            }
+            if (privateFieldInitializers != null) {
+                for (AstNode init : privateFieldInitializers) {
                     if (init != null) {
                         init.visit(v);
                     }
