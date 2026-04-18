@@ -5658,7 +5658,15 @@ public class ScriptRuntime {
     public static void defineStaticClassComputedField(
             BaseFunction constructor, Object key, Object value) {
         if (key instanceof Symbol) {
-            ((SymbolScriptable) constructor).put((Symbol) key, constructor, value);
+            Symbol sym = (Symbol) key;
+            ((SymbolScriptable) constructor).put(sym, constructor, value);
+            // Private-name SymbolKeys identify static private fields, which must be
+            // hidden from Object.getOwnPropertySymbols just like instance private fields.
+            String name = sym.getName();
+            if (name != null && !name.isEmpty() && name.charAt(0) == '#') {
+                constructor.setAttributes(
+                        sym, constructor.getAttributes(sym) | ScriptableObject.PRIVATE);
+            }
         } else {
             StringIdOrIndex s = toStringIdOrIndex(key);
             if (s.stringId != null) {

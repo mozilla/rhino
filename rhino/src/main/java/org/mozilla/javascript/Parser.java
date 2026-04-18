@@ -146,6 +146,7 @@ public class Parser {
     // during function parsing.  See PerFunctionVariables class below.
     ScriptNode currentScriptOrFn;
     private boolean insideMethod;
+    private boolean insideClassConstructor;
     Scope currentScope;
     private int endFlags;
     private boolean inForInit; // bound temporarily during forStatement()
@@ -964,6 +965,12 @@ public class Parser {
 
     private FunctionNode function(int type, boolean isMethodDefiniton, boolean isAsync)
             throws IOException {
+        return function(type, isMethodDefiniton, isAsync, false);
+    }
+
+    private FunctionNode function(
+            int type, boolean isMethodDefiniton, boolean isAsync, boolean isClassConstructor)
+            throws IOException {
         boolean isGenerator = false;
         int syntheticType = type;
         int baseLineno = lineNumber(); // line number where source starts
@@ -1034,6 +1041,9 @@ public class Parser {
         if (isAsync) {
             fnNode.setIsAsync();
         }
+        if (isClassConstructor) {
+            fnNode.setIsClassConstructor(true);
+        }
         if (lpPos != -1) fnNode.setLp(lpPos - functionSourceStart);
 
         fnNode.setJsDocNode(getAndResetJsDoc());
@@ -1041,6 +1051,8 @@ public class Parser {
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         boolean wasInsideMethod = insideMethod;
         insideMethod = isMethodDefiniton;
+        boolean wasInsideClassConstructor = insideClassConstructor;
+        insideClassConstructor = isClassConstructor;
         try {
             parseFunctionParams(fnNode);
             AstNode body = parseFunctionBody(type, fnNode);
@@ -1059,6 +1071,7 @@ public class Parser {
         } finally {
             savedVars.restore();
             insideMethod = wasInsideMethod;
+            insideClassConstructor = wasInsideClassConstructor;
         }
 
         if (memberExprNode != null) {
@@ -1140,6 +1153,7 @@ public class Parser {
                         classNode.addMethod("static", method);
                         continue;
                     } else if (nextTt == Token.NAME
+                            || nextTt == Token.PRIVATE_NAME
                             || nextTt == Token.STRING
                             || nextTt == Token.NUMBER
                             || nextTt == Token.BIGINT
@@ -1203,6 +1217,7 @@ public class Parser {
             if (!isComputed && "async".equals(memberName)) {
                 int nextTt = peekToken();
                 if (nextTt == Token.NAME
+                        || nextTt == Token.PRIVATE_NAME
                         || nextTt == Token.STRING
                         || nextTt == Token.NUMBER
                         || nextTt == Token.BIGINT
@@ -1220,6 +1235,10 @@ public class Parser {
                     if (tt == Token.NAME) {
                         consumeToken();
                         memberName = ts.getString();
+                    } else if (tt == Token.PRIVATE_NAME) {
+                        consumeToken();
+                        memberName = ts.getString();
+                        isPrivateName = true;
                     } else if (tt == Token.STRING) {
                         consumeToken();
                         memberName = ts.getString();
@@ -1255,8 +1274,7 @@ public class Parser {
                 if (constructor != null) {
                     reportError("msg.dup.ctor");
                 }
-                constructor = function(FunctionNode.FUNCTION_EXPRESSION, true);
-                constructor.setIsClassConstructor(true);
+                constructor = function(FunctionNode.FUNCTION_EXPRESSION, true, false, true);
             } else if (peekToken() == Token.LP) {
                 if (!isComputed && !isStatic && "constructor".equals(memberName)) {
                     reportError("msg.unexpected.token");
@@ -1269,8 +1287,13 @@ public class Parser {
                     // TODO: computed method names need additional support in ClassNode/IRFactory
                     reportError("msg.unexpected.token");
                 } else if (isPrivateName) {
-                    // TODO: private methods not yet supported
-                    reportError("msg.unexpected.token");
+                    if (isStatic) {
+                        reportError("msg.unexpected.token");
+                    } else if (classNode.hasPrivateName(memberName)) {
+                        reportError("msg.dup.private.name", memberName);
+                    } else {
+                        classNode.addPrivateField(memberName, method);
+                    }
                 } else if (isStatic) {
                     classNode.addStaticMethod(memberName, method);
                 } else {
@@ -1290,9 +1313,10 @@ public class Parser {
                     consumeToken();
                 }
                 if (isPrivateName) {
-                    if (isStatic) {
-                        // TODO: static private fields not yet supported
-                        reportError("msg.unexpected.token");
+                    if (classNode.hasPrivateName(memberName)) {
+                        reportError("msg.dup.private.name", memberName);
+                    } else if (isStatic) {
+                        classNode.addStaticPrivateField(memberName, initializer);
                     } else {
                         classNode.addPrivateField(memberName, initializer);
                     }
@@ -3547,7 +3571,16 @@ public class Parser {
                 consumeToken();
                 line = lineNumber();
                 column = columnNumber();
-                node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
+                AstNode delOperand = unaryExpr();
+                AstNode unwrappedDelOperand = removeParens(delOperand);
+                if (unwrappedDelOperand instanceof PropertyGet) {
+                    String propName =
+                            ((PropertyGet) unwrappedDelOperand).getProperty().getIdentifier();
+                    if (propName != null && !propName.isEmpty() && propName.charAt(0) == '#') {
+                        reportError("msg.delete.private.name");
+                    }
+                }
+                node = new UnaryExpression(tt, ts.tokenBeg, delOperand);
                 node.setLineColumnNumber(line, column);
                 return node;
 
@@ -3796,6 +3829,9 @@ public class Parser {
             throws IOException {
         consumeToken();
         checkCallRequiresActivation(pn);
+        if (pn.getType() == Token.SUPER && !insideClassConstructor) {
+            reportError("msg.super.call.not.in.ctor");
+        }
         FunctionCall f = new FunctionCall(pos);
         f.setTarget(pn);
         f.setLp(ts.tokenBeg - pos);
@@ -3862,6 +3898,9 @@ public class Parser {
             case Token.PRIVATE_NAME:
                 // handles: #name (private field access). The Name identifier keeps the leading '#'
                 // so IRFactory can rewrite the access to a symbol-keyed element access.
+                if (pn.getType() == Token.SUPER) {
+                    reportError("msg.super.private.name");
+                }
                 ref = propertyName(-1, memberTypeFlags);
                 break;
 
