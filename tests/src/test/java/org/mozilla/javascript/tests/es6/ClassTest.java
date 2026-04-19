@@ -518,6 +518,31 @@ public class ClassTest {
     }
 
     @Test
+    public void staticFieldNameWithBraceUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(1, "class A { static \\u{64} = 1; } A.d");
+    }
+
+    @Test
+    public void staticFieldNameWith4DigitUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(1, "class A { static \\u0064 = 1; } A.d");
+    }
+
+    @Test
+    public void instanceFieldNameWithBraceUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(1, "class A { \\u{64} = 1; } new A().d");
+    }
+
+    @Test
+    public void methodNameWithBraceUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(1, "class A { \\u{64}oor() { return 1; } } new A().door()");
+    }
+
+    @Test
+    public void staticMethodNameWithBraceUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(1, "class A { static \\u{64}oor() { return 1; } } A.door()");
+    }
+
+    @Test
     public void staticStringField() {
         Utils.assertWithAllModes_ES6(7, "class Foo { static 'x' = 7; } Foo.x");
     }

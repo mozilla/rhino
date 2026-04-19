@@ -1159,19 +1159,58 @@ class TokenStream implements Parser.CurrentPositionReporter {
 
             if (c == '#') {
                 int peek = peekChar();
-                if (Character.isUnicodeIdentifierStart(peek) || peek == '$' || peek == '_') {
+                boolean startIsEscape = false;
+                if (peek == '\\') {
+                    getChar(); // consume '\\'
+                    if (peekChar() == 'u') {
+                        getChar(); // consume 'u'
+                        startIsEscape = true;
+                    } else {
+                        ungetChar('\\');
+                    }
+                }
+                if (startIsEscape
+                        || Character.isUnicodeIdentifierStart(peek)
+                        || peek == '$'
+                        || peek == '_') {
                     stringBufferTop = 0;
                     addToString('#');
+                    boolean inEscape = startIsEscape;
+                    boolean containsEscape = startIsEscape;
                     for (; ; ) {
-                        int pc = peekChar();
-                        if (pc == EOF_CHAR
-                                || pc == BYTE_ORDER_MARK
-                                || !(Character.isUnicodeIdentifierPart(pc) || pc == '$')) {
-                            break;
+                        if (inEscape) {
+                            int escapeVal = readIdentifierUnicodeEscape();
+                            if (escapeVal < 0) {
+                                return Token.ERROR;
+                            }
+                            addToString(escapeVal);
+                            inEscape = false;
+                        } else {
+                            int pc = peekChar();
+                            if (pc == '\\') {
+                                getChar(); // consume '\\'
+                                if (peekChar() == 'u') {
+                                    getChar(); // consume 'u'
+                                    inEscape = true;
+                                    containsEscape = true;
+                                } else {
+                                    parser.addError("msg.illegal.character", '\\');
+                                    return Token.ERROR;
+                                }
+                            } else if (pc == EOF_CHAR
+                                    || pc == BYTE_ORDER_MARK
+                                    || !(Character.isUnicodeIdentifierPart(pc) || pc == '$')) {
+                                break;
+                            } else {
+                                addToString(getChar());
+                            }
                         }
-                        addToString(getChar());
                     }
                     String str = getStringFromBuffer();
+                    if (containsEscape && !isValidIdentifierName(str.substring(1))) {
+                        parser.reportError("msg.invalid.escape");
+                        return Token.ERROR;
+                    }
                     this.string = internString(str);
                     cursor = sourceCursor;
                     tokenEnd = cursor;
@@ -2186,6 +2225,40 @@ class TokenStream implements Parser.CurrentPositionReporter {
         if (ungetCursor != 0 && ungetBuffer[ungetCursor - 1] == '\n') Kit.codeBug();
         ungetBuffer[ungetCursor++] = c;
         cursor--;
+    }
+
+    // Read a unicode escape with the leading \\u already consumed. Supports both
+    // \\uXXXX and \\u{...} forms. Returns the code point (0 to 0x10FFFF) or -1
+    // on error, in which case the error has already been reported.
+    private int readIdentifierUnicodeEscape() throws IOException {
+        int escapeVal = 0;
+        if (matchChar('{')) {
+            for (; ; ) {
+                int c = getChar();
+                if (c == '}') {
+                    break;
+                }
+                escapeVal = Kit.xDigitToInt(c, escapeVal);
+                if (escapeVal < 0) {
+                    parser.reportError("msg.invalid.escape");
+                    return -1;
+                }
+            }
+            if (escapeVal > 0x10FFFF) {
+                parser.reportError("msg.invalid.escape");
+                return -1;
+            }
+            return escapeVal;
+        }
+        for (int i = 0; i != 4; ++i) {
+            int c = getChar();
+            escapeVal = Kit.xDigitToInt(c, escapeVal);
+            if (escapeVal < 0) {
+                parser.reportError("msg.invalid.escape");
+                return -1;
+            }
+        }
+        return escapeVal;
     }
 
     private boolean matchChar(int test) throws IOException {
