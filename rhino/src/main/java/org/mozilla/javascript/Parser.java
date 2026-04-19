@@ -1287,10 +1287,10 @@ public class Parser {
                     // TODO: computed method names need additional support in ClassNode/IRFactory
                     reportError("msg.unexpected.token");
                 } else if (isPrivateName) {
-                    if (isStatic) {
-                        reportError("msg.unexpected.token");
-                    } else if (classNode.hasPrivateName(memberName)) {
+                    if (classNode.hasPrivateName(memberName)) {
                         reportError("msg.dup.private.name", memberName);
+                    } else if (isStatic) {
+                        classNode.addStaticPrivateField(memberName, method);
                     } else {
                         classNode.addPrivateField(memberName, method);
                     }

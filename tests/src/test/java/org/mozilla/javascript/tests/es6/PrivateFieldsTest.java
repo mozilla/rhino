@@ -201,6 +201,111 @@ public class PrivateFieldsTest {
     }
 
     @Test
+    public void staticPrivateMethodCallable() {
+        Utils.assertWithAllModes_ES6(
+                42,
+                "class C {\n"
+                        + "  static #helper(x) { return x * 2; }\n"
+                        + "  static compute(x) { return C.#helper(x); }\n"
+                        + "}\n"
+                        + "C.compute(21)\n");
+    }
+
+    @Test
+    public void staticPrivateMethodCanReadStaticPrivateField() {
+        Utils.assertWithAllModes_ES6(
+                10,
+                "class C {\n"
+                        + "  static #f = 7;\n"
+                        + "  static #add(x) { return x + C.#f; }\n"
+                        + "  static run(x) { return C.#add(x); }\n"
+                        + "}\n"
+                        + "C.run(3)\n");
+    }
+
+    @Test
+    public void staticPrivateMethodHiddenFromGetOwnPropertySymbols() {
+        Utils.assertWithAllModes_ES6(
+                0, "class C { static #m() {} }\n" + "Object.getOwnPropertySymbols(C).length\n");
+    }
+
+    @Test
+    public void duplicateStaticPrivateMethodIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { static #m() {} static #m() {} }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void duplicateStaticPrivateFieldAndMethodIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { static #x; static #x() {} }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateNameWithUnicodeEscape4Digit() {
+        Utils.assertWithAllModes_ES6(
+                7,
+                "class C {\n"
+                        + "  #\\u0064oor = 7;\n"
+                        + "  get() { return this.#door; }\n"
+                        + "}\n"
+                        + "new C().get()\n");
+    }
+
+    @Test
+    public void privateNameWithUnicodeEscapeBraced() {
+        Utils.assertWithAllModes_ES6(
+                7,
+                "class C {\n"
+                        + "  #\\u{64}oor = 7;\n"
+                        + "  get() { return this.#door; }\n"
+                        + "}\n"
+                        + "new C().get()\n");
+    }
+
+    @Test
+    public void privateNameReferencedWithUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(
+                7,
+                "class C {\n"
+                        + "  #door = 7;\n"
+                        + "  get() { return this.#\\u{64}oor; }\n"
+                        + "}\n"
+                        + "new C().get()\n");
+    }
+
+    @Test
+    public void privateMethodWithUnicodeEscape() {
+        Utils.assertWithAllModes_ES6(
+                "hi",
+                "class C {\n"
+                        + "  #\\u{67}reet() { return 'hi'; }\n"
+                        + "  run() { return this.#greet(); }\n"
+                        + "}\n"
+                        + "new C().run()\n");
+    }
+
+    @Test
+    public void privateNameInvalidEscapeCodePointIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { #\\\\u{110000} = 1; }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateNameEscapeDecodingToNonIdentifierIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class C { #a\\\\u0020b = 1; }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
     public void duplicateStaticAndInstancePrivateFieldIsSyntaxError() {
         Utils.assertWithAllModes_ES6(
                 "SyntaxError",
