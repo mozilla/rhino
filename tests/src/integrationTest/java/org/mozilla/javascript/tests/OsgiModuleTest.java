@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.Bundle;
@@ -17,19 +19,12 @@ import org.osgi.framework.launch.FrameworkFactory;
 
 /**
  * Tests that Rhino bundles work correctly in an OSGi environment by embedding an Apache Felix
- * framework, installing the built JARs as bundles, and verifying real behavior.
+ * framework, installing the built JARs as bundles, and verifying real behavior. The Apache Aries
+ * SPI Fly "dynamic" bundle is installed and started first so that {@code ServiceLoader.load} calls
+ * inside the Rhino bundles resolve against the bundle's own {@code osgi.serviceloader} providers
+ * rather than failing due to thread-context-classloader visibility.
  */
 public class OsgiModuleTest {
-
-    /**
-     * Provide osgi.serviceloader capabilities via framework properties so bundles resolve without
-     * requiring SPI Fly. Also provide osgi.serviceloader for services that bundles require.
-     */
-    private static final String EXTRA_CAPABILITIES =
-            String.join(
-                    ",",
-                    "osgi.extender;osgi.extender=osgi.serviceloader.processor;version:Version=1.0",
-                    "osgi.extender;osgi.extender=osgi.serviceloader.registrar;version:Version=1.0");
 
     @Test
     void rhinoBundleResolvesAndStarts() throws Exception {
@@ -50,6 +45,18 @@ public class OsgiModuleTest {
 
                     Object result = evaluateInBundle(rhino, "1 + 2");
                     assertEquals(3, ((Number) result).intValue());
+                });
+    }
+
+    @Test
+    void rhinoExecutesRegExpJavaScriptInOsgi() throws Exception {
+        withFramework(
+                ctx -> {
+                    Bundle rhino = installBundle(ctx, "rhino");
+                    rhino.start();
+
+                    Object result = evaluateInBundle(rhino, "/foo/.test('foo')");
+                    assertTrue((Boolean) result);
                 });
     }
 
@@ -143,33 +150,26 @@ public class OsgiModuleTest {
     }
 
     /**
-     * Evaluates a JavaScript expression using Rhino classes loaded from the given bundle. Sets the
-     * thread context classloader to the bundle's classloader to ensure ServiceLoader resolves
-     * services from the OSGi environment, not the test classpath.
+     * Evaluates a JavaScript expression using Rhino classes loaded from the given bundle. The
+     * thread context classloader is left untouched; SPI Fly's weaver rewrites {@code
+     * ServiceLoader.load} calls inside the Rhino bundle to use the bundle's own {@code
+     * osgi.serviceloader} providers.
      */
     private Object evaluateInBundle(Bundle bundle, String script) throws Exception {
-        ClassLoader bundleClassLoader =
-                bundle.adapt(org.osgi.framework.wiring.BundleWiring.class).getClassLoader();
-        ClassLoader original = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(bundleClassLoader);
+        Class<?> ctxClass = bundle.loadClass("org.mozilla.javascript.Context");
+        Object cx = ctxClass.getMethod("enter").invoke(null);
         try {
-            Class<?> ctxClass = bundle.loadClass("org.mozilla.javascript.Context");
-            Object cx = ctxClass.getMethod("enter").invoke(null);
-            try {
-                Object scope = ctxClass.getMethod("initStandardObjects").invoke(cx);
-                return ctxClass.getMethod(
-                                "evaluateString",
-                                bundle.loadClass("org.mozilla.javascript.VarScope"),
-                                String.class,
-                                String.class,
-                                int.class,
-                                Object.class)
-                        .invoke(cx, scope, script, "test", 1, null);
-            } finally {
-                ctxClass.getMethod("exit").invoke(null);
-            }
+            Object scope = ctxClass.getMethod("initStandardObjects").invoke(cx);
+            return ctxClass.getMethod(
+                            "evaluateString",
+                            bundle.loadClass("org.mozilla.javascript.VarScope"),
+                            String.class,
+                            String.class,
+                            int.class,
+                            Object.class)
+                    .invoke(cx, scope, script, "test", 1, null);
         } finally {
-            Thread.currentThread().setContextClassLoader(original);
+            ctxClass.getMethod("exit").invoke(null);
         }
     }
 
@@ -181,7 +181,6 @@ public class OsgiModuleTest {
         config.put(Constants.FRAMEWORK_STORAGE, storageDir.toString());
         config.put(
                 Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-        config.put(Constants.FRAMEWORK_SYSTEMCAPABILITIES_EXTRA, EXTRA_CAPABILITIES);
         // Boot-delegate jdk.dynalink so bundles can access it without importing
         config.put(Constants.FRAMEWORK_BOOTDELEGATION, "jdk.dynalink,jdk.dynalink.*");
 
@@ -194,10 +193,31 @@ public class OsgiModuleTest {
         Framework framework = factory.newFramework(config);
         framework.start();
         try {
-            action.accept(framework.getBundleContext());
+            BundleContext ctx = framework.getBundleContext();
+            // Install and start the extra OSGi integration bundles (SPI Fly + ASM) first so the
+            // Service Loader Mediator weaving hook is active before any Rhino bundle class is
+            // loaded.
+            installOsgiIntegrationBundles(ctx);
+            action.accept(ctx);
         } finally {
             framework.stop();
             framework.waitForStop(10_000);
+        }
+    }
+
+    private void installOsgiIntegrationBundles(BundleContext ctx) throws Exception {
+        String jars = System.getProperty("osgi.integration.bundles");
+        assertTrue(
+                jars != null && !jars.isEmpty(),
+                "System property 'osgi.integration.bundles' not set. Run tests via Gradle.");
+        List<Bundle> installed = new ArrayList<>();
+        for (String jar : jars.split(",")) {
+            installed.add(ctx.installBundle("file:" + jar));
+        }
+        for (Bundle b : installed) {
+            if (b.getHeaders().get(Constants.FRAGMENT_HOST) == null) {
+                b.start();
+            }
         }
     }
 
