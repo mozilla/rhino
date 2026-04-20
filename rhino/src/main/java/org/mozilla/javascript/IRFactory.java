@@ -730,7 +730,18 @@ public final class IRFactory {
             }
 
             if (destructuring != null) {
-                body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno, column));
+                Node destructuringStmt =
+                        new Node(Token.EXPR_VOID, destructuring, lineno, column);
+                if (fn.isGenerator()) {
+                    Node paramInitBlock = fn.getGeneratorParamInitBlock();
+                    if (paramInitBlock == null) {
+                        paramInitBlock = new Node(Token.BLOCK);
+                        fn.setGeneratorParamInitBlock(paramInitBlock);
+                    }
+                    paramInitBlock.addChildToFront(destructuringStmt);
+                } else {
+                    body.addChildToFront(destructuringStmt);
+                }
             }
 
             int syntheticType = fn.getFunctionType();

@@ -1929,16 +1929,8 @@ public final class Interpreter extends Icode implements Evaluator {
             if (!frame.frozen) {
                 // First time encountering this opcode: create new generator
                 // object and return
-                generatorCreate(cx, frame);
+                generatorCreate(cx, frame, state);
                 return BREAK_LOOP;
-            }
-            /* This is both where we yield from and re-enter the
-             * generator.
-             */
-            if (!frame.frozen) {
-                return new YieldResult(
-                        freezeGenerator(
-                                cx, frame, state, state.generatorState, op == Icode_YIELD_STAR));
             }
             Object obj = thawGenerator(frame, state, state.generatorState, op);
             if (obj != Scriptable.NOT_FOUND) {
@@ -1948,10 +1940,11 @@ public final class Interpreter extends Icode implements Evaluator {
             return null;
         }
 
-        private static void generatorCreate(Context cx, CallFrame frame) {
+        private static void generatorCreate(Context cx, CallFrame frame, InterpreterState state) {
             // First time encountering this opcode: create new generator
             // object and return
             frame.pc--; // we want to come back here when we resume
+            frame.savedStackTop = state.stackTop;
             CallFrame generatorFrame = captureFrameForGenerator(frame);
             generatorFrame.frozen = true;
             if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
