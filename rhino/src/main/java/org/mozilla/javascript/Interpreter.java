@@ -1555,6 +1555,8 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD] =
                 new DoDefineStaticClassComputedField();
         instructionObjs[base + Icode_DEFINE_PRIVATE_FIELD] = new DoDefinePrivateField();
+        instructionObjs[base + Icode_STORE_CLASS_COMPUTED_KEYS] = new DoStoreClassComputedKeys();
+        instructionObjs[base + Icode_GET_CLASS_COMPUTED_KEY] = new DoGetClassComputedKey();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
         instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
         instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
@@ -4522,6 +4524,33 @@ public final class Interpreter extends Icode implements Evaluator {
             --state.stackTop;
             BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
             ScriptRuntime.defineStaticClassComputedField(constructor, key, value);
+            return null;
+        }
+    }
+
+    private static class DoStoreClassComputedKeys extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            int count = state.indexReg;
+            Object[] keys = new Object[count];
+            for (int i = count - 1; i >= 0; i--) {
+                Object key = frame.stack[state.stackTop];
+                if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                keys[i] = key;
+                --state.stackTop;
+            }
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            ScriptRuntime.storeClassComputedFieldKeys(constructor, keys);
+            return null;
+        }
+    }
+
+    private static class DoGetClassComputedKey extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key =
+                    ScriptRuntime.getClassComputedFieldKey(frame.fnOrScript, state.indexReg);
+            frame.stack[++state.stackTop] = key;
             return null;
         }
     }

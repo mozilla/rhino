@@ -268,7 +268,9 @@ public class Token {
             CLASS = AWAIT + 1, // ES6 class declaration/expression
             EXTENDS = CLASS + 1, // ES6 extends clause
             PRIVATE_NAME = EXTENDS + 1, // ES2022 private class member name: #foo
-            LAST_TOKEN = PRIVATE_NAME + 1;
+            GET_CLASS_COMPUTED_KEY =
+                    PRIVATE_NAME + 1, // retrieve a pre-evaluated class computed-field key
+            LAST_TOKEN = GET_CLASS_COMPUTED_KEY + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -647,6 +649,8 @@ public class Token {
                 return "EXTENDS";
             case PRIVATE_NAME:
                 return "PRIVATE_NAME";
+            case GET_CLASS_COMPUTED_KEY:
+                return "GET_CLASS_COMPUTED_KEY";
             case GET:
                 return "GET";
             case SET:

@@ -5655,6 +5655,28 @@ public class ScriptRuntime {
                 Context.getCurrentContext(), name, new DescriptorInfo(value, 0, true));
     }
 
+    /** Associated-value key used to stash pre-evaluated instance computed field keys. */
+    private static final Object CLASS_COMPUTED_KEYS_ASSOC = new Object();
+
+    /**
+     * Store the pre-evaluated instance computed-field keys on the class constructor so the
+     * constructor can retrieve them at instance creation time. Called at class declaration time.
+     */
+    public static void storeClassComputedFieldKeys(BaseFunction constructor, Object[] keys) {
+        constructor.associateValue(CLASS_COMPUTED_KEYS_ASSOC, keys);
+    }
+
+    /** Retrieve the i-th pre-evaluated instance computed-field key stored on {@code fn}. */
+    public static Object getClassComputedFieldKey(ScriptOrFn<?> fn, int index) {
+        if (fn instanceof BaseFunction) {
+            Object stored = ((BaseFunction) fn).getAssociatedValue(CLASS_COMPUTED_KEYS_ASSOC);
+            if (stored instanceof Object[]) {
+                return ((Object[]) stored)[index];
+            }
+        }
+        throw Kit.codeBug();
+    }
+
     public static void defineStaticClassComputedField(
             BaseFunction constructor, Object key, Object value) {
         if (key instanceof Symbol) {

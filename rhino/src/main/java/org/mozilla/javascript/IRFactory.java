@@ -25,6 +25,7 @@ import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassComputedKeyRef;
 import org.mozilla.javascript.ast.ClassNode;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
@@ -250,6 +251,8 @@ public final class IRFactory {
                 return transformYield((Yield) node);
             case Token.AWAIT:
                 return transformAwait((AwaitExpression) node);
+            case Token.GET_CLASS_COMPUTED_KEY:
+                return node;
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);
@@ -688,6 +691,7 @@ public final class IRFactory {
         boolean hasStaticComputedFields = classNode.getStaticComputedFieldCount() > 0;
         boolean hasStaticPrivateFields = classNode.getStaticPrivateFieldCount() > 0;
         boolean hasPrivateFields = classNode.getPrivateFieldCount() > 0;
+        boolean hasComputedFields = classNode.getComputedFieldCount() > 0;
         Name className = classNode.getClassName();
 
         // Class bodies are always strict
@@ -765,7 +769,8 @@ public final class IRFactory {
                 || hasStaticMethods
                 || hasStaticFields
                 || hasStaticComputedFields
-                || hasStaticPrivateFields) {
+                || hasStaticPrivateFields
+                || hasComputedFields) {
             // Use Token.CLASS node for classes with extends, methods, or static fields.
             // For base classes without superclass, use Token.NULL as sentinel.
             Node superClassNode =
@@ -859,6 +864,26 @@ public final class IRFactory {
                 classSetup.putIntProp(Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT, computedFieldPairs);
             }
 
+            // Instance computed field keys must be evaluated at class declaration time and then
+            // stored on the constructor so each instance can look them up by index when the
+            // injected field initializers run.
+            if (hasComputedFields) {
+                java.util.List<AstNode> cKeys = classNode.getComputedFieldKeys();
+                if (pushedPrivateScope) {
+                    privateSymbolScopes.push(privateSymbols);
+                }
+                try {
+                    for (AstNode keyExpr : cKeys) {
+                        classSetup.addChildToBack(transform(keyExpr));
+                    }
+                } finally {
+                    if (pushedPrivateScope) {
+                        privateSymbolScopes.pop();
+                    }
+                }
+                classSetup.putIntProp(Node.CLASS_COMPUTED_FIELD_KEYS_COUNT, cKeys.size());
+            }
+
             if (isStatement && className != null) {
                 Node setName =
                         new Node(
@@ -912,13 +937,16 @@ public final class IRFactory {
             initStmts.add(new ExpressionStatement(assign));
         }
 
-        // Computed fields: this[keyExpr] = initializer
+        // Computed fields: this[<pre-evaluated key>] = initializer.
+        // The actual key expressions are evaluated once at class declaration time (as
+        // children of the CLASS setup node) and stashed on the constructor; here we only
+        // emit a reference that will load the i-th stored key at instance creation time.
         java.util.List<AstNode> computedKeys = classNode.getComputedFieldKeys();
         java.util.List<AstNode> computedInits = classNode.getComputedFieldInitializers();
         for (int i = 0; i < computedKeys.size(); i++) {
             KeywordLiteral thisNode = new KeywordLiteral();
             thisNode.setType(Token.THIS);
-            ElementGet elemGet = new ElementGet(thisNode, computedKeys.get(i));
+            ElementGet elemGet = new ElementGet(thisNode, new ClassComputedKeyRef(i));
 
             AstNode value = computedInits.get(i);
             if (value == null) {
