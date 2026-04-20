@@ -5590,6 +5590,8 @@ public class Parser {
             // store it to be transformed later
             if (transformer == null) {
                 currentScriptOrFn.putDestructuringRvalues(cond_inner, right, new Name(0, name));
+            } else {
+                inferFunctionName(name, right);
             }
 
             parent.addChildToBack(new Node(setOp, createName(Token.BINDNAME, name, null), cond));
@@ -5628,6 +5630,23 @@ public class Parser {
             } else {
                 reportError("msg.bad.assign.left");
             }
+        }
+    }
+
+    private void inferFunctionName(String name, Node right) {
+        if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
+            return;
+        }
+        if (right == null || right.getType() != Token.FUNCTION) {
+            return;
+        }
+        if (NativeObject.PROTO_PROPERTY.equals(name)) {
+            return;
+        }
+        int fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
+        FunctionNode functionNode = currentScriptOrFn.getFunctionNode(fnIndex);
+        if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
+            functionNode.setFunctionName(new Name(0, name));
         }
     }
 
