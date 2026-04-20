@@ -1301,7 +1301,9 @@ public class Parser {
                 }
             } else {
                 // Field declaration: name = expr; or name;
-                if (!isComputed && !isStatic && "constructor".equals(memberName)) {
+                // Non-static and static fields both forbid PropName "constructor"
+                // (ES spec: early error for FieldDefinition with PropName "constructor").
+                if (!isComputed && "constructor".equals(memberName)) {
                     reportError("msg.unexpected.token");
                 }
                 AstNode initializer = null;

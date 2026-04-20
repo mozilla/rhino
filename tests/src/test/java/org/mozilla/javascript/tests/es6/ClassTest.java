@@ -419,6 +419,30 @@ public class ClassTest {
     }
 
     @Test
+    public void staticConstructorFieldError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static constructor; }");
+    }
+
+    @Test
+    public void staticConstructorFieldWithInitializerError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static constructor = 1; }");
+    }
+
+    @Test
+    public void staticStringConstructorFieldError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static 'constructor'; }");
+    }
+
+    @Test
+    public void staticComputedConstructorFieldOk() {
+        Utils.assertWithAllModes_ES6(
+                42, "class Foo { static ['constructor'] = 42; } Foo['constructor']");
+    }
+
+    @Test
     public void staticPrototypeAsyncMethodError() {
         Utils.assertEvaluatorExceptionES6(
                 "Unexpected token", "class Foo { static async prototype() {} }");
