@@ -318,6 +318,38 @@ public class ArrayDestructuringTest {
     }
 
     /**
+     * When iterator.return() returns null/undefined, the result must be coerced to an Object, which
+     * throws a TypeError.
+     */
+    @Test
+    public void arrayDestructuringIteratorReturnNullThrows() {
+        Utils.assertEcmaErrorES6(
+                "TypeError: Cannot convert null to an object.",
+                "var iter = {};"
+                        + "iter[Symbol.iterator] = function() {"
+                        + "  return {"
+                        + "    next: function() { return { value: 1, done: false }; },"
+                        + "    return: function() { return null; }"
+                        + "  };"
+                        + "};"
+                        + "var [a] = iter;");
+    }
+
+    @Test
+    public void arrayDestructuringIteratorReturnUndefinedThrows() {
+        Utils.assertEcmaErrorES6(
+                "TypeError: Cannot convert undefined to an object.",
+                "var iter = {};"
+                        + "iter[Symbol.iterator] = function() {"
+                        + "  return {"
+                        + "    next: function() { return { value: 1, done: false }; },"
+                        + "    return: function() { return undefined; }"
+                        + "  };"
+                        + "};"
+                        + "var [a] = iter;");
+    }
+
+    /**
      * Test that iterator return() is NOT called when iterator is exhausted normally. Based on
      * test262: language/expressions/arrow-function/dstr/ary-init-iter-no-close.js
      */

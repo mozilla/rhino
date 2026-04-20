@@ -5110,9 +5110,17 @@ public class Parser {
                 Node callReturn = new Node(Token.CALL, getCall);
                 callReturn.addChildToBack(createName(iteratorName)); // 'this' argument
 
+                // Per spec (IteratorClose), the return() result is coerced to an Object,
+                // throwing a TypeError if it is null or undefined.
+                Node checkedCallReturn = new Node(Token.TO_OBJECT_COERCIBLE, callReturn);
+
                 // Inner ternary: (f = iterator.return) !== undefined ? f.call(iterator) : undefined
                 Node innerTernary =
-                        new Node(Token.HOOK, notUndefined, callReturn, new Node(Token.UNDEFINED));
+                        new Node(
+                                Token.HOOK,
+                                notUndefined,
+                                checkedCallReturn,
+                                new Node(Token.UNDEFINED));
 
                 // Outer ternary: !lastResult.done ? innerTernary : undefined
                 Node outerTernary =
