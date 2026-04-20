@@ -62,6 +62,18 @@ public class NodeTransformer {
         // uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode);
+
+        // Generator parameter init block (default parameters and destructuring
+        // for generator / async functions) lives outside the main tree, but
+        // still needs the same transformations (e.g. lowering destructuring
+        // LETEXPR nodes into SCOPEEXPR / COMMA form).
+        if (tree instanceof FunctionNode) {
+            Node paramInitBlock = ((FunctionNode) tree).getGeneratorParamInitBlock();
+            if (paramInitBlock != null) {
+                transformCompilationUnit_r(
+                        tree, paramInitBlock, tree, createScopeObjects, inStrictMode);
+            }
+        }
     }
 
     private void transformCompilationUnit_r(

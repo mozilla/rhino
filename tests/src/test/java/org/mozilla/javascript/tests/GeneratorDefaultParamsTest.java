@@ -42,4 +42,43 @@ public class GeneratorDefaultParamsTest {
                 "Error:",
                 "var g = function*(_ = (function() { throw new Error('test'); }())) {};" + "g();");
     }
+
+    @Test
+    public void testDestructuringParamExceptionFunction() {
+        // Destructuring of generator parameters must happen _before_ the
+        // generator object is created, so iterator failures propagate at
+        // call time rather than on the first .next().
+        Utils.assertJavaScriptException_ES6(
+                "Error:",
+                "var iter = {};"
+                        + "iter[Symbol.iterator] = function() {"
+                        + "  throw new Error('should fail at call');"
+                        + "};"
+                        + "var g = function*([x]) {};"
+                        + "g(iter);");
+    }
+
+    @Test
+    public void testDestructuringParamExceptionMethod() {
+        // Same as above, but for a generator defined as a class method.
+        Utils.assertJavaScriptException_ES6(
+                "Error:",
+                "var iter = {};"
+                        + "iter[Symbol.iterator] = function() {"
+                        + "  throw new Error('should fail at call');"
+                        + "};"
+                        + "class C { *method([x]) {} };"
+                        + "var method = C.prototype.method;"
+                        + "method(iter);");
+    }
+
+    @Test
+    public void testDestructuringParamObjectException() {
+        // Destructuring an undefined argument against an object pattern
+        // throws a TypeError at call time, before the generator object
+        // is created.
+        Utils.assertEcmaErrorES6(
+                "TypeError: Cannot read property \"x\" from undefined",
+                "var g = function*({x}) {}; g();");
+    }
 }
