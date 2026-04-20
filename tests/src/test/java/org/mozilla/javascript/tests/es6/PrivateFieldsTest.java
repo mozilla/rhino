@@ -397,4 +397,61 @@ public class PrivateFieldsTest {
                 "SyntaxError",
                 "try { eval('var o = { *#m() {} };'); 'no error'; }\n" + "catch (e) { e.name; }\n");
     }
+
+    @Test
+    public void readPrivateFieldFromForeignObjectThrowsTypeError() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class C { #x = 1; read(o) { return o.#x; } }\n"
+                        + "try { new C().read({}); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void readPrivateMethodFromForeignObjectThrowsTypeError() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class C { #m() { return 1; } run(o) { return o.#m(); } }\n"
+                        + "try { new C().run({}); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void writePrivateFieldToForeignObjectThrowsTypeError() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class C { #x = 1; write(o) { o.#x = 2; } }\n"
+                        + "try { new C().write({}); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void compoundAssignPrivateFieldToForeignObjectThrowsTypeError() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class C { #x = 1; bump(o) { o.#x += 1; } }\n"
+                        + "try { new C().bump({}); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void readPrivateFieldFromSiblingClassInstanceThrowsTypeError() {
+        // Two classes declare #x, but their SymbolKeys are distinct identities, so
+        // an A method reading b.#x should fail even though B has an own #x slot.
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class A { #x = 1; read(o) { return o.#x; } }\n"
+                        + "class B { #x = 2; }\n"
+                        + "try { new A().read(new B()); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void staticPrivateFieldReadFromForeignObjectThrowsTypeError() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class C { static #f = 1; static read(o) { return o.#f; } }\n"
+                        + "try { C.read({}); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
 }

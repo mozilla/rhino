@@ -329,7 +329,7 @@ public class ClassNode extends AstNode {
         if (privateSymbols == null) {
             privateSymbols = new LinkedHashMap<>();
         }
-        return privateSymbols.computeIfAbsent(name, n -> new SymbolKey(n, Symbol.Kind.REGULAR));
+        return privateSymbols.computeIfAbsent(name, n -> new SymbolKey(n, Symbol.Kind.PRIVATE));
     }
 
     @Override

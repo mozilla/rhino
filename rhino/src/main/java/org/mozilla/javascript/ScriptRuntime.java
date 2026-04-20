@@ -1870,6 +1870,9 @@ public class ScriptRuntime {
         }
 
         if (result == Scriptable.NOT_FOUND) {
+            if (isPrivateSymbol(elem)) {
+                throw typeErrorById("msg.private.not.on.object", ((Symbol) elem).getName());
+            }
             result = Undefined.instance;
         }
         return result;
@@ -1904,6 +1907,9 @@ public class ScriptRuntime {
         }
 
         if (result == Scriptable.NOT_FOUND) {
+            if (isPrivateSymbol(elem)) {
+                throw typeErrorById("msg.private.not.on.object", ((Symbol) elem).getName());
+            }
             result = Undefined.instance;
         }
         return result;
@@ -2076,7 +2082,11 @@ public class ScriptRuntime {
         if (obj instanceof XMLObject) {
             ((XMLObject) obj).put(cx, elem, value);
         } else if (isSymbol(elem)) {
-            ScriptableObject.putProperty(obj, (Symbol) elem, value);
+            Symbol sym = (Symbol) elem;
+            if (isPrivateSymbol(sym) && !ScriptableObject.hasProperty(obj, sym)) {
+                throw typeErrorById("msg.private.write.not.on.object", sym.getName());
+            }
+            ScriptableObject.putProperty(obj, sym, value);
         } else {
             StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
@@ -2112,8 +2122,11 @@ public class ScriptRuntime {
             Context cx) {
         // No XML support for super
         if (isSymbol(elem)) {
-            ScriptableObject.putSuperProperty(
-                    superScriptable, thisScriptable, (Symbol) elem, value);
+            Symbol sym = (Symbol) elem;
+            if (isPrivateSymbol(sym) && !ScriptableObject.hasProperty(thisScriptable, sym)) {
+                throw typeErrorById("msg.private.write.not.on.object", sym.getName());
+            }
+            ScriptableObject.putSuperProperty(superScriptable, thisScriptable, sym, value);
         } else {
             StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
@@ -6464,6 +6477,14 @@ public class ScriptRuntime {
     public static boolean isSymbol(Object obj) {
         return ((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol())
                 || (obj instanceof SymbolKey);
+    }
+
+    /**
+     * Returns whether {@code obj} is a {@link Symbol} that is the identity key of a JavaScript
+     * class private field or method.
+     */
+    public static boolean isPrivateSymbol(Object obj) {
+        return isSymbol(obj) && ((Symbol) obj).getKind() == Symbol.Kind.PRIVATE;
     }
 
     /**

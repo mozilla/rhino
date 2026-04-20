@@ -1510,7 +1510,7 @@ public final class IRFactory {
         if (key == null) {
             parser.reportError("msg.undeclared.private.name", privateName);
             // Fall back to a locally-created key so IR construction proceeds.
-            key = new SymbolKey(privateName, org.mozilla.javascript.Symbol.Kind.REGULAR);
+            key = new SymbolKey(privateName, org.mozilla.javascript.Symbol.Kind.PRIVATE);
         }
         Node load = new Node(Token.LOAD_LITERAL);
         load.putIntProp(Node.LITERAL_INDEX_PROP, parser.currentScriptOrFn.addLiteral(key));
