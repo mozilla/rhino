@@ -1193,8 +1193,45 @@ class BodyCodegen {
                         nextMethodNode = nextMethodNode.getNext();
                     }
 
+                    // Evaluate instance computed field keys at class declaration time and
+                    // stash them on the constructor.
+                    int computedFieldKeysCount =
+                            node.getIntProp(Node.CLASS_COMPUTED_FIELD_KEYS_COUNT, 0);
+                    if (computedFieldKeysCount > 0) {
+                        // Stack: constructor
+                        cfw.add(ByteCode.DUP);
+                        cfw.addPush(computedFieldKeysCount);
+                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                        for (int i = 0; i < computedFieldKeysCount; i++) {
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(i);
+                            generateExpression(nextMethodNode, node);
+                            cfw.add(ByteCode.AASTORE);
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                        cfw.addInvoke(
+                                ByteCode.INVOKESTATIC,
+                                "org/mozilla/javascript/ScriptRuntime",
+                                "storeClassComputedFieldKeys",
+                                "(Lorg/mozilla/javascript/BaseFunction;"
+                                        + "[Ljava/lang/Object;)V");
+                    }
+
                     releaseWordLocal(savedHomeObjectLocal);
                     savedHomeObjectLocal = prevHomeLocal;
+                }
+                break;
+
+            case Token.GET_CLASS_COMPUTED_KEY:
+                {
+                    int index = node.getExistingIntProp(Node.LITERAL_INDEX_PROP);
+                    cfw.addALoad(funObjLocal);
+                    cfw.addPush(index);
+                    cfw.addInvoke(
+                            ByteCode.INVOKESTATIC,
+                            "org/mozilla/javascript/ScriptRuntime",
+                            "getClassComputedFieldKey",
+                            "(Lorg/mozilla/javascript/ScriptOrFn;I)Ljava/lang/Object;");
                 }
                 break;
 

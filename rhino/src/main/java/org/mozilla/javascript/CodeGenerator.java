@@ -739,6 +739,27 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         stackChange(-2);
                         nextMethodNode = nextMethodNode.getNext();
                     }
+
+                    // Evaluate instance computed field keys at class declaration time and
+                    // stash them on the constructor for later use by field initializers.
+                    int computedFieldKeysCount =
+                            node.getIntProp(Node.CLASS_COMPUTED_FIELD_KEYS_COUNT, 0);
+                    if (computedFieldKeysCount > 0) {
+                        for (int i = 0; i < computedFieldKeysCount; i++) {
+                            visitExpression(nextMethodNode, 0);
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                        addIndexOp(Icode_STORE_CLASS_COMPUTED_KEYS, computedFieldKeysCount);
+                        stackChange(-computedFieldKeysCount);
+                    }
+                }
+                break;
+
+            case Token.GET_CLASS_COMPUTED_KEY:
+                {
+                    int index = node.getExistingIntProp(Node.LITERAL_INDEX_PROP);
+                    addIndexOp(Icode_GET_CLASS_COMPUTED_KEY, index);
+                    stackChange(1);
                 }
                 break;
 
