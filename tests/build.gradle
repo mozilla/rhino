@@ -4,6 +4,17 @@ plugins {
     id 'jacoco-report-aggregation'
 }
 
+sourceSets {
+    integrationTest {
+        java.srcDir 'src/integrationTest/java'
+    }
+}
+
+configurations {
+    // Extra OSGi bundles the integration test installs alongside the rhino module bundles
+    osgiIntegrationBundles
+}
+
 dependencies {
     implementation project(':rhino-engine')
     implementation project(':examples')
@@ -12,13 +23,21 @@ dependencies {
     implementation project(':rhino-xml')
 
     testImplementation project(':testutils')
-    testImplementation("com.tngtech.archunit:archunit-junit4:1.4.1") {
+    testImplementation(libs.archunit.get()) {
         exclude group: 'junit'
     }
     testImplementation("org.slf4j:slf4j-simple:2.0.17")
-    testImplementation "org.yaml:snakeyaml:2.5"
+    testImplementation "org.yaml:snakeyaml:2.6"
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     testImplementation "javax.activation:javax.activation-api:1.2.0"
+
+    integrationTestImplementation platform(libs.junit.platform.get())
+    integrationTestImplementation "org.junit.jupiter:junit-jupiter"
+    integrationTestRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    integrationTestImplementation "org.apache.felix:org.apache.felix.framework:7.0.5"
+
+    osgiIntegrationBundles platform("org.ow2.asm:asm-bom:9.9.1")
+    osgiIntegrationBundles "org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:1.3.7"
 }
 
 tasks.withType(JavaCompile) {
@@ -28,6 +47,26 @@ tasks.withType(JavaCompile) {
             '-Xlint:-deprecation,unchecked'
     ]
 }
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs JPMS and OSGi integration tests against the built JARs.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+
+    dependsOn ':rhino:jar', ':rhino-engine:jar', ':rhino-tools:jar', ':rhino-xml:jar', ':rhino-kotlin:jar'
+
+    [':rhino', ':rhino-engine', ':rhino-tools', ':rhino-xml', ':rhino-kotlin'].each { proj ->
+        systemProperty "${proj.substring(1)}.jar", project(proj).jar.archiveFile.get().asFile.path
+    }
+
+    systemProperty "osgi.integration.bundles",
+            configurations.osgiIntegrationBundles.files.collect { it.path }.join(",")
+}
+
+check.dependsOn integrationTest
 
 test {
     maxHeapSize = "1g"
