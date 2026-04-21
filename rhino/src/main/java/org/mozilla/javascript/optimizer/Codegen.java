@@ -402,19 +402,7 @@ public class Codegen implements Evaluator {
         for (int i = 0; i != count; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
 
-            BodyCodegen bodygen = new BodyCodegen();
-            bodygen.cfw = cfw;
-            bodygen.codegen = this;
-            bodygen.compilerEnv = compilerEnv;
-            bodygen.scriptOrFn = n;
-            bodygen.scriptOrFnIndex = i;
-            if (n instanceof FunctionNode) {
-                bodygen.scriptOrFnType = "Lorg/mozilla/javascript/JSFunction;";
-                bodygen.scriptOrFnClass = "org.mozilla.javascript.JSFunction";
-            } else {
-                bodygen.scriptOrFnType = "Lorg/mozilla/javascript/JSScript;";
-                bodygen.scriptOrFnClass = "org.mozilla.javascript.JSScript";
-            }
+            BodyCodegen bodygen = new BodyCodegen(cfw, this, compilerEnv, n, i);
 
             bodygen.generateBodyCode();
 

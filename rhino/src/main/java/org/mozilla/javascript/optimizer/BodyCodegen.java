@@ -25,6 +25,34 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
 
 class BodyCodegen {
+
+    BodyCodegen(BodyCodegen other) {
+        this.cfw = other.cfw;
+        this.codegen = other.codegen;
+        this.compilerEnv = other.compilerEnv;
+        this.scriptOrFn = other.scriptOrFn;
+        this.scriptOrFnIndex = other.scriptOrFnIndex;
+        this.scriptOrFnType = other.scriptOrFnType;
+        this.scriptOrFnClass = other.scriptOrFnClass;
+        this.literals = other.literals;
+    }
+
+    BodyCodegen(ClassFileWriter cfw, Codegen codegen, CompilerEnvirons compilerEnv, ScriptNode scriptOrFn, int index) {
+        this.cfw = cfw;
+        this.codegen = codegen;
+        this.compilerEnv = compilerEnv;
+        this.scriptOrFn = scriptOrFn;
+        this.scriptOrFnIndex = index;
+        if (scriptOrFn instanceof FunctionNode) {
+            scriptOrFnType = "Lorg/mozilla/javascript/JSFunction;";
+            scriptOrFnClass = "org.mozilla.javascript.JSFunction";
+        } else {
+            scriptOrFnType = "Lorg/mozilla/javascript/JSScript;";
+            scriptOrFnClass = "org.mozilla.javascript.JSScript";
+        }
+
+    }
+
     void generateBodyCode() {
         isGenerator = Codegen.isGenerator(scriptOrFn);
 
@@ -60,7 +88,7 @@ class BodyCodegen {
         if (isGenerator) {
             // generate the user visible method which when invoked will
             // return a generator object
-            generateGenerator();
+            new BodyCodegen(this).generateGenerator(maxLocals, maxStack);
         }
 
         if (literals != null) {
@@ -70,10 +98,10 @@ class BodyCodegen {
                 int type = node.getType();
                 switch (type) {
                     case Token.OBJECTLIT:
-                        generateObjectLiteralFactory(node, i + 1);
+                        new BodyCodegen(this).generateObjectLiteralFactory(node, i + 1);
                         break;
                     case Token.ARRAYLIT:
-                        generateArrayLiteralFactory(node, i + 1);
+                        new BodyCodegen(this).generateArrayLiteralFactory(node, i + 1);
                         break;
                     default:
                         Kit.codeBug(Token.typeToName(type));
@@ -84,7 +112,7 @@ class BodyCodegen {
 
     // This creates a user-facing function that returns a NativeGenerator
     // object.
-    private void generateGenerator() {
+    private void generateGenerator(int mainMaxLocals, int mainMaxStack) {
         cfw.startMethod(
                 codegen.getBodyMethodName(scriptOrFn),
                 codegen.getBodyMethodSignature(scriptOrFn),
@@ -146,8 +174,8 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
         cfw.addALoad(funObjLocal);
-        cfw.addLoadConstant(maxLocals);
-        cfw.addLoadConstant(maxStack);
+        cfw.addLoadConstant(mainMaxLocals);
+        cfw.addLoadConstant(mainMaxStack);
         boolean isAsyncNonGenerator =
                 (scriptOrFn instanceof FunctionNode)
                         && ((FunctionNode) scriptOrFn).isAsync()
@@ -4959,13 +4987,13 @@ class BodyCodegen {
     static final int GENERATOR_START = 0;
     static final int GENERATOR_YIELD_START = 1;
 
-    ClassFileWriter cfw;
-    Codegen codegen;
-    CompilerEnvirons compilerEnv;
-    ScriptNode scriptOrFn;
-    String scriptOrFnType;
-    String scriptOrFnClass;
-    public int scriptOrFnIndex;
+    final private ClassFileWriter cfw;
+    final private Codegen codegen;
+    final private CompilerEnvirons compilerEnv;
+    final private ScriptNode scriptOrFn;
+    final private String scriptOrFnType;
+    final private String scriptOrFnClass;
+    final private int scriptOrFnIndex;
     private int savedCodeOffset;
 
     private OptFunctionNode fnCurrent;
