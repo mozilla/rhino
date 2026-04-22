@@ -5269,8 +5269,12 @@ public final class Interpreter extends Icode implements Evaluator {
             // If construct returns scriptable,
             // then it replaces on stack top saved original instance
             // of the object.
-            if (callResult instanceof Scriptable) {
-                frame.stack[frame.savedStackTop] = callResult;
+            if (!Undefined.isUndefined(callResult)) {
+                if (callResult instanceof Scriptable) {
+                    frame.stack[frame.savedStackTop] = callResult;
+                } else {
+                    throw ScriptRuntime.typeErrorById("msg.ctor.res.not.object");
+                }
             }
         } else {
             Kit.codeBug();
