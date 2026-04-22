@@ -5137,7 +5137,7 @@ public class Parser {
                 Node normalClose =
                         new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
 
-                wrapIteratorUseInTryFinally(
+                wrapIteratorUseInTryCatch(
                         comma,
                         iteratorAssignNode,
                         iteratorName,
@@ -5194,16 +5194,18 @@ public class Parser {
 
     /**
      * Restructures a destructuring {@code comma} body so the iterator-using portion (starting
-     * with {@code iteratorAssignNode}) runs inside a try/finally. The finally invokes
-     * IteratorClose's abrupt-completion branch when the {@code needsCloseName} sentinel is still
-     * set, ensuring iter.return() is called on exceptions and generator {@code .return()}.
+     * with {@code iteratorAssignNode}) runs inside a try/catch. Two copies of the abrupt-close
+     * cleanup are emitted: one at the end of the try body (for the non-exceptional path) and one
+     * in the catch (for the exceptional path, followed by a rethrow). This avoids Rhino's
+     * JSR-based finally machinery, whose stack bookkeeping is fragile for this kind of
+     * expression-level wrapping.
      *
      * <p>Emitted structure (appended to {@code comma}, after any pre-iterator children that were
      * left in place, e.g. default-value setup):
      *
      * <pre>
      *   LOCAL_BLOCK {
-     *     TRY {
+     *     TRY (target = catchTarget) {
      *       BLOCK {
      *         iteratorAssign;        // iter = rhs[Symbol.iterator]()
      *         needsClose = true;     // mark open
@@ -5211,14 +5213,20 @@ public class Parser {
      *         needsClose = false;    // clear before normal close so a throw from return()
      *                                // doesn't trigger a redundant abrupt close
      *         normalClose;           // spec IteratorClose normal-completion path
+     *         needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined;  // copy 1 (no-op on
+     *                                                                 // success: sentinel is
+     *                                                                 // false)
      *       }
-     *     } FINALLY {
-     *       needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined;
+     *       GOTO endCatch;
+     *       catchTarget:
+     *         needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined;  // copy 2
+     *         RETHROW;
+     *       endCatch:
      *     }
      *   }
      * </pre>
      */
-    private void wrapIteratorUseInTryFinally(
+    private void wrapIteratorUseInTryCatch(
             Node comma,
             Node iteratorAssignNode,
             String iteratorName,
@@ -5259,41 +5267,39 @@ public class Parser {
         // Normal-path IteratorClose (HOOK already built by the caller).
         tryBody.addChildToBack(new Node(Token.EXPR_VOID, normalClose));
 
-        // Finally body: needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined
-        Node abruptClose =
-                new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
-        Node finallyExpr =
-                new Node(
-                        Token.HOOK,
-                        createName(needsCloseName),
-                        abruptClose,
-                        new Node(Token.UNDEFINED));
-        Node finallyBody = new Node(Token.BLOCK);
-        finallyBody.addChildToBack(new Node(Token.EXPR_VOID, finallyExpr));
+        // Copy 1 of the abrupt-close cleanup: runs at the end of the try body on the normal
+        // path. Since the sentinel was just cleared this is effectively a no-op, but keeping it
+        // keeps the try body and catch block symmetrical.
+        tryBody.addChildToBack(new Node(Token.EXPR_VOID, buildAbruptCloseHook(iteratorName, needsCloseName)));
 
-        // Build the try/finally IR (mirrors IRFactory.createTryCatchFinally's finally-only path).
+        // Build the try/catch IR. Mirrors the catch-only path of IRFactory.createTryCatchFinally
+        // but omits CATCH_SCOPE because we don't need to expose the thrown value as a JS binding;
+        // RETHROW reads the exception directly from the handler block's register.
         Node handlerBlock = new Node(Token.LOCAL_BLOCK);
         Jump tryJump = new Jump(Token.TRY, tryBody);
         tryJump.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
 
-        Node finallyTarget = Node.newTarget();
-        tryJump.setFinally(finallyTarget);
+        // Jump around the catch on the normal path.
+        Node endCatch = Node.newTarget();
+        Jump gotoEndCatch = new Jump(Token.GOTO);
+        gotoEndCatch.target = endCatch;
+        tryJump.addChildToBack(gotoEndCatch);
 
-        Jump jsrToFinally = new Jump(Token.JSR);
-        jsrToFinally.target = finallyTarget;
-        tryJump.addChildToBack(jsrToFinally);
+        // Catch entry target.
+        Node catchTarget = Node.newTarget();
+        tryJump.target = catchTarget;
+        tryJump.addChildToBack(catchTarget);
 
-        Node finallyEnd = Node.newTarget();
-        Jump gotoEnd = new Jump(Token.GOTO);
-        gotoEnd.target = finallyEnd;
-        tryJump.addChildToBack(gotoEnd);
+        // Copy 2 of the abrupt-close cleanup: runs in the exceptional path.
+        tryJump.addChildToBack(
+                new Node(Token.EXPR_VOID, buildAbruptCloseHook(iteratorName, needsCloseName)));
 
-        tryJump.addChildToBack(finallyTarget);
-        Node finallyNode = new Node(Token.FINALLY, finallyBody);
-        finallyNode.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
-        tryJump.addChildToBack(finallyNode);
+        // Rethrow the caught exception (stored in handlerBlock's register by the runtime).
+        Node rethrow = new Node(Token.RETHROW);
+        rethrow.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
+        tryJump.addChildToBack(rethrow);
 
-        tryJump.addChildToBack(finallyEnd);
+        tryJump.addChildToBack(endCatch);
 
         handlerBlock.addChildToBack(tryJump);
 
@@ -5308,6 +5314,16 @@ public class Parser {
         // an expression. The value is either discarded (inner destructuring used only for
         // side-effects) or overwritten by the outer caller's tempName reference.
         comma.addChildToBack(new Node(Token.UNDEFINED));
+    }
+
+    private Node buildAbruptCloseHook(String iteratorName, String needsCloseName) {
+        Node abruptClose =
+                new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
+        return new Node(
+                Token.HOOK,
+                createName(needsCloseName),
+                abruptClose,
+                new Node(Token.UNDEFINED));
     }
 
     DestructuringArrayResult destructuringArray(
