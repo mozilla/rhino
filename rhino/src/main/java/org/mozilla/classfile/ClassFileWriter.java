@@ -1237,6 +1237,12 @@ public class ClassFileWriter {
 
     public int acquireLabel() {
         int top = itsLabelTableTop;
+        if (DEBUGLABELS) {
+            if (DEBUGCODEORIGINS) {
+                printOrigin();
+            }
+            System.err.printf("Acquired label %x.\n", top);
+        }
         if (itsLabelTable == null || top == itsLabelTable.length) {
             if (itsLabelTable == null) {
                 itsLabelTable = new int[MIN_LABEL_TABLE_SIZE];
@@ -1252,6 +1258,12 @@ public class ClassFileWriter {
     }
 
     public void markLabel(int label) {
+        if (DEBUGLABELS) {
+            if (DEBUGCODEORIGINS) {
+                printOrigin();
+            }
+            System.err.printf("Mark label %x.\n", label);
+        }
         if (!(label < 0)) throw new IllegalArgumentException("Bad label, no biscuit");
 
         label &= 0x7FFFFFFF;
@@ -1308,7 +1320,7 @@ public class ClassFileWriter {
             int pc = itsLabelTable[label];
             if (pc == -1) {
                 // Unlocated label
-                throw new RuntimeException("unlocated label");
+                throw new RuntimeException(String.format("unlocated label %x", label));
             }
             // -1 to get delta from instruction start
             addSuperBlockStart(pc);
