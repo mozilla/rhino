@@ -193,8 +193,12 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         // Pass `this` in as new.target for now. This can change when
         // the public `construct` signature changes.
         var res = descriptor.getConstructor().execute(cx, this, nt, s, thisObj, args);
-        if (res instanceof Scriptable) {
-            thisObj = (Scriptable) res;
+        if (!Undefined.isUndefined(res)) {
+            if (res instanceof Scriptable) {
+                thisObj = (Scriptable) res;
+            } else {
+                throw ScriptRuntime.typeErrorById("msg.ctor.res.not.object");
+            }
         }
         return (Scriptable) thisObj;
     }
