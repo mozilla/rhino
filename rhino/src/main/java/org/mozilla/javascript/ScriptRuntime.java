@@ -3518,6 +3518,32 @@ public class ScriptRuntime {
     }
 
     /**
+     * Implements the abrupt-completion branch of the ECMAScript IteratorClose abstract operation.
+     * Called from destructuring (and similar) code during unwinding so the original abrupt
+     * completion is preserved: any exception thrown by iterator.return is swallowed, and a
+     * non-object return value does NOT raise a TypeError. If {@code iterator} is null or not a
+     * Scriptable (e.g. it was never opened) this is a no-op.
+     */
+    public static void closeIteratorAbrupt(Object iterator, Context cx, VarScope scope) {
+        if (!(iterator instanceof Scriptable)) {
+            return;
+        }
+        Scriptable iter = (Scriptable) iterator;
+        try {
+            Object ret = ScriptableObject.getProperty(iter, "return");
+            if (ret == Scriptable.NOT_FOUND || ret == Undefined.instance || ret == null) {
+                return;
+            }
+            if (!(ret instanceof Callable)) {
+                return;
+            }
+            ((Callable) ret).call(cx, scope, iter, ScriptRuntime.emptyArgs);
+        } catch (RuntimeException ignored) {
+            // Per spec: on abrupt completion, errors from return() are discarded.
+        }
+    }
+
+    /**
      * Given an iterator result, return true if and only if there is a "done" property that's true.
      */
     public static boolean isIteratorDone(Context cx, Object result) {

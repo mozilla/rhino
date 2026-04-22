@@ -1497,6 +1497,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.NEW] = new DoNew();
         instructionObjs[base + Token.TYPEOF] = new DoTypeOf();
         instructionObjs[base + Token.TO_OBJECT_COERCIBLE] = new DoToObjectCoercible();
+        instructionObjs[base + Token.ITERATOR_CLOSE_ABRUPT] = new DoIteratorCloseAbrupt();
         instructionObjs[base + Icode_TYPEOFNAME] = new DoTypeOfName();
         instructionObjs[base + Token.STRING] = new DoString();
         instructionObjs[base + Icode_SHORTNUMBER] = new DoShortNumber();
@@ -3768,6 +3769,19 @@ public final class Interpreter extends Icode implements Evaluator {
             Object lhs = stack[state.stackTop];
             if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
             stack[state.stackTop] = ScriptRuntime.toObject(cx, frame.scope, lhs);
+            return null;
+        }
+    }
+
+    private static class DoIteratorCloseAbrupt extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object[] stack = frame.stack;
+            double[] sDbl = frame.sDbl;
+            Object iter = stack[state.stackTop];
+            if (iter == DOUBLE_MARK) iter = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            ScriptRuntime.closeIteratorAbrupt(iter, cx, frame.scope);
+            stack[state.stackTop] = Undefined.instance;
             return null;
         }
     }
