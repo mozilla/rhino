@@ -3385,6 +3385,13 @@ class BodyCodegen {
         // XXX OPT Maybe instead do syntactic transforms to associate
         // each 'with' with a try/finally block that does the exitwith.
 
+        // A try/catch may appear inside an expression (for example the
+        // iterator-close try/catch synthesised for array destructuring)
+        // where the outer expression has already left values on the stack.
+        // Capture the entry depth so we can keep the stack tracker in sync
+        // with the real stack state on every path out of the try.
+        short entryStack = (short) cfw.getStackTop();
+
         short savedVariableObject = getNewWordLocal();
         cfw.addALoad(variableObjectLocal);
         cfw.addAStore(savedVariableObject);
@@ -3395,7 +3402,7 @@ class BodyCodegen {
          * javascript catch and finally clauses.  */
 
         int startLabel = cfw.acquireLabel();
-        cfw.markLabel(startLabel, 0);
+        cfw.markLabel(startLabel);
 
         Node catchTarget = node.target;
         Node finallyTarget = node.getFinally();
@@ -3530,7 +3537,11 @@ class BodyCodegen {
             }
         }
         releaseWordLocal(savedVariableObject);
-        cfw.markLabel(realEnd);
+        // realEnd is only reached from the normal-path GOTO above; the
+        // catch/finally handlers rethrow or jump elsewhere. Restore the
+        // tracker to the entry depth so code after the try/catch sees the
+        // same stack the caller had when we were invoked.
+        cfw.markLabel(realEnd, entryStack);
 
         if (!isGenerator) {
             exceptionManager.popExceptionInfo();
