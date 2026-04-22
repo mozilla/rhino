@@ -1317,8 +1317,15 @@ class BodyCodegen {
                 {
                     Node next = child.getNext();
                     while (next != null) {
-                        generateExpression(child, node);
-                        cfw.add(ByteCode.POP);
+                        if (child.getType() == Token.LOCAL_BLOCK) {
+                            // Embedded statement-level side-effect (e.g. try/finally for
+                            // iterator cleanup in destructuring). Evaluate as a statement;
+                            // it produces no value and thus no POP is needed.
+                            generateStatement(child);
+                        } else {
+                            generateExpression(child, node);
+                            cfw.add(ByteCode.POP);
+                        }
                         child = next;
                         next = next.getNext();
                     }
@@ -1430,6 +1437,19 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/VarScope;"
                                 + "Ljava/lang/Object;"
                                 + ")Lorg/mozilla/javascript/Scriptable;");
+                break;
+
+            case Token.ITERATOR_CLOSE_ABRUPT:
+                generateExpression(child, node);
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                        "closeIteratorAbrupt",
+                        "(Ljava/lang/Object;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Lorg/mozilla/javascript/VarScope;"
+                                + ")V");
+                Codegen.pushUndefined(cfw);
                 break;
 
             case Token.TYPEOFNAME:

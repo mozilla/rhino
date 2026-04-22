@@ -612,9 +612,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 {
                     Node lastChild = node.getLastChild();
                     while (child != lastChild) {
-                        visitExpression(child, 0);
-                        addIcode(Icode_POP);
-                        stackChange(-1);
+                        if (child.getType() == Token.LOCAL_BLOCK) {
+                            // Embedded statement-level side-effect (e.g. try/finally for
+                            // iterator cleanup in destructuring). Produces no value, so no POP.
+                            visitStatement(child, stackDepth);
+                        } else {
+                            visitExpression(child, 0);
+                            addIcode(Icode_POP);
+                            stackChange(-1);
+                        }
                         child = child.getNext();
                     }
                     // Preserve tail context flag if any
@@ -891,6 +897,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.TYPEOF:
             case Token.VOID:
             case Token.TO_OBJECT_COERCIBLE:
+            case Token.ITERATOR_CLOSE_ABRUPT:
                 visitExpression(child, 0);
                 if (type == Token.VOID) {
                     addIcode(Icode_POP);

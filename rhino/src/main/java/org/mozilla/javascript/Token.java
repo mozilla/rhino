@@ -141,10 +141,14 @@ public class Token {
             ENUM_ASYNC_NEXT = ENUM_INIT_ASYNC_ITERATOR + 1,
             ENUM_ASYNC_STEP = ENUM_ASYNC_NEXT + 1,
             // Push a constant value stored in the shared literals table
-            LOAD_LITERAL = ENUM_ASYNC_STEP + 1;
+            LOAD_LITERAL = ENUM_ASYNC_STEP + 1,
+            // Abrupt-completion IteratorClose: calls iterator.return, swallowing errors.
+            // Produces undefined on the stack. Used inside the finally branch of destructuring
+            // (and similar) lowerings so the iterator is closed even on exception / generator-return.
+            ITERATOR_CLOSE_ABRUPT = LOAD_LITERAL + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = LOAD_LITERAL,
+    public static final int LAST_BYTECODE_TOKEN = ITERATOR_CLOSE_ABRUPT,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -621,6 +625,8 @@ public class Token {
                 return "AWAIT";
             case TO_OBJECT_COERCIBLE:
                 return "TO_OBJECT_COERCIBLE";
+            case ITERATOR_CLOSE_ABRUPT:
+                return "ITERATOR_CLOSE_ABRUPT";
             case ENUM_INIT_ASYNC_ITERATOR:
                 return "ENUM_INIT_ASYNC_ITERATOR";
             case ENUM_ASYNC_NEXT:

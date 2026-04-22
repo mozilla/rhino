@@ -5022,6 +5022,7 @@ public class Parser {
             boolean empty = true;
             String iteratorName = null;
             String lastResultName = null;
+            Node iteratorAssignNode = null;
             if (left instanceof ArrayLiteral) {
                 DestructuringArrayResult arrayResult =
                         destructuringArray(
@@ -5036,6 +5037,7 @@ public class Parser {
                 empty = arrayResult.empty;
                 iteratorName = arrayResult.iteratorName;
                 lastResultName = arrayResult.lastResultName;
+                iteratorAssignNode = arrayResult.iteratorAssignNode;
                 if (iteratorName != null) {
                     letNode.addChildToBack(createName(Token.NAME, iteratorName, null));
                 }
@@ -5074,15 +5076,24 @@ public class Parser {
                 comma.addChildToBack(createNumber(0));
             }
 
-            // Add iterator closing to the comma sequence if needed
-            // Generate: !lastResult.done ? ((f = iterator.return) !== undefined ? f.call(iterator)
-            // :
-            // undefined) : undefined
+            // Close the iterator on normal completion, and via a finally block on abrupt
+            // completion (thrown exception or generator .return()). The try/finally ensures
+            // iter.return() is invoked even when the destructuring is interrupted by a yield
+            // inside it whose generator is subsequently closed.
             if (iteratorName != null && lastResultName != null) {
-                // Allocate temp for return method
+                // Allocate temp for return method used by the normal-path close
                 String returnMethodName = currentScriptOrFn.getNextTempName();
                 defineSymbol(Token.LET, returnMethodName, true);
                 letNode.addChildToBack(createName(Token.NAME, returnMethodName, null));
+
+                // Allocate sentinel: set to true once the iterator is open, cleared after
+                // the normal-path close completes. The finally only runs the abrupt close
+                // when this is still set, so (a) a throw during iterator setup, (b) a throw
+                // during the normal-path close, and (c) successful normal completion all
+                // avoid an unwanted second call to return().
+                String needsCloseName = currentScriptOrFn.getNextTempName();
+                defineSymbol(Token.LET, needsCloseName, true);
+                letNode.addChildToBack(createName(Token.NAME, needsCloseName, null));
 
                 // Check if iterator is done: !lastResult.done
                 Node getDone =
@@ -5123,10 +5134,15 @@ public class Parser {
                                 new Node(Token.UNDEFINED));
 
                 // Outer ternary: !lastResult.done ? innerTernary : undefined
-                Node outerTernary =
+                Node normalClose =
                         new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
 
-                comma.addChildToBack(outerTernary);
+                wrapIteratorUseInTryFinally(
+                        comma,
+                        iteratorAssignNode,
+                        iteratorName,
+                        needsCloseName,
+                        normalClose);
             }
 
             result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
@@ -5157,17 +5173,141 @@ public class Parser {
         String iteratorName;
         String lastResultName;
         List<String> tempResultName;
+        // First iterator-related node added to `parent` (the SETNAME opening the iterator).
+        // Serves as the split point for wrapping iterator work in a try/finally. Null when
+        // the destructuring doesn't use the iterator protocol (pre-ES6, object destructuring).
+        Node iteratorAssignNode;
 
         DestructuringArrayResult(
                 boolean empty,
                 String iteratorName,
                 String lastResultName,
-                List<String> tempResultName) {
+                List<String> tempResultName,
+                Node iteratorAssignNode) {
             this.empty = empty;
             this.iteratorName = iteratorName;
             this.lastResultName = lastResultName;
             this.tempResultName = tempResultName;
+            this.iteratorAssignNode = iteratorAssignNode;
         }
+    }
+
+    /**
+     * Restructures a destructuring {@code comma} body so the iterator-using portion (starting
+     * with {@code iteratorAssignNode}) runs inside a try/finally. The finally invokes
+     * IteratorClose's abrupt-completion branch when the {@code needsCloseName} sentinel is still
+     * set, ensuring iter.return() is called on exceptions and generator {@code .return()}.
+     *
+     * <p>Emitted structure (appended to {@code comma}, after any pre-iterator children that were
+     * left in place, e.g. default-value setup):
+     *
+     * <pre>
+     *   LOCAL_BLOCK {
+     *     TRY {
+     *       BLOCK {
+     *         iteratorAssign;        // iter = rhs[Symbol.iterator]()
+     *         needsClose = true;     // mark open
+     *         ...original iterator-using children...
+     *         needsClose = false;    // clear before normal close so a throw from return()
+     *                                // doesn't trigger a redundant abrupt close
+     *         normalClose;           // spec IteratorClose normal-completion path
+     *       }
+     *     } FINALLY {
+     *       needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined;
+     *     }
+     *   }
+     * </pre>
+     */
+    private void wrapIteratorUseInTryFinally(
+            Node comma,
+            Node iteratorAssignNode,
+            String iteratorName,
+            String needsCloseName,
+            Node normalClose) {
+        // Move iteratorAssignNode and everything after it from `comma` into a BLOCK that
+        // will become the try body. Each moved expression is wrapped in EXPR_VOID so it
+        // evaluates as a statement in the BLOCK context.
+        Node tryBody = new Node(Token.BLOCK);
+        Node cursor = iteratorAssignNode;
+        boolean insertedSentinelSet = false;
+        while (cursor != null) {
+            Node next = cursor.getNext();
+            comma.removeChild(cursor);
+            tryBody.addChildToBack(new Node(Token.EXPR_VOID, cursor));
+            if (!insertedSentinelSet) {
+                // Right after the iterator is obtained, mark it as needing close.
+                Node setSentinelTrue =
+                        new Node(
+                                Token.SETNAME,
+                                createName(Token.BINDNAME, needsCloseName, null),
+                                new Node(Token.TRUE));
+                tryBody.addChildToBack(new Node(Token.EXPR_VOID, setSentinelTrue));
+                insertedSentinelSet = true;
+            }
+            cursor = next;
+        }
+
+        // Clear the sentinel before the normal-path close runs; a throw from return() on the
+        // normal path should propagate as-is rather than trigger a redundant abrupt close.
+        Node clearSentinel =
+                new Node(
+                        Token.SETNAME,
+                        createName(Token.BINDNAME, needsCloseName, null),
+                        new Node(Token.FALSE));
+        tryBody.addChildToBack(new Node(Token.EXPR_VOID, clearSentinel));
+
+        // Normal-path IteratorClose (HOOK already built by the caller).
+        tryBody.addChildToBack(new Node(Token.EXPR_VOID, normalClose));
+
+        // Finally body: needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined
+        Node abruptClose =
+                new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
+        Node finallyExpr =
+                new Node(
+                        Token.HOOK,
+                        createName(needsCloseName),
+                        abruptClose,
+                        new Node(Token.UNDEFINED));
+        Node finallyBody = new Node(Token.BLOCK);
+        finallyBody.addChildToBack(new Node(Token.EXPR_VOID, finallyExpr));
+
+        // Build the try/finally IR (mirrors IRFactory.createTryCatchFinally's finally-only path).
+        Node handlerBlock = new Node(Token.LOCAL_BLOCK);
+        Jump tryJump = new Jump(Token.TRY, tryBody);
+        tryJump.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
+
+        Node finallyTarget = Node.newTarget();
+        tryJump.setFinally(finallyTarget);
+
+        Jump jsrToFinally = new Jump(Token.JSR);
+        jsrToFinally.target = finallyTarget;
+        tryJump.addChildToBack(jsrToFinally);
+
+        Node finallyEnd = Node.newTarget();
+        Jump gotoEnd = new Jump(Token.GOTO);
+        gotoEnd.target = finallyEnd;
+        tryJump.addChildToBack(gotoEnd);
+
+        tryJump.addChildToBack(finallyTarget);
+        Node finallyNode = new Node(Token.FINALLY, finallyBody);
+        finallyNode.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
+        tryJump.addChildToBack(finallyNode);
+
+        tryJump.addChildToBack(finallyEnd);
+
+        handlerBlock.addChildToBack(tryJump);
+
+        // Re-attach as a statement-level child of the outer COMMA. COMMA handling in the
+        // backends recognizes LOCAL_BLOCK children and generates them as statements.
+        comma.addChildToBack(handlerBlock);
+
+        // Append a trailing expression so LOCAL_BLOCK is never the final child of COMMA.
+        // createDestructuringAssignment appends {@code createName(tempName)} after this helper
+        // returns for the outer case; inner/nested calls don't, so without this placeholder the
+        // inner COMMA would end with LOCAL_BLOCK, which COMMA's last-child handling evaluates as
+        // an expression. The value is either discarded (inner destructuring used only for
+        // side-effects) or overwritten by the outer caller's tempName reference.
+        comma.addChildToBack(new Node(Token.UNDEFINED));
     }
 
     DestructuringArrayResult destructuringArray(
@@ -5186,6 +5326,7 @@ public class Parser {
         boolean iteratorSetup = false;
         String iteratorName = null;
         String lastResultName = null;
+        Node iteratorAssignNode = null;
         List<String> elemTempNames = new ArrayList<>();
 
         for (AstNode n : array.getElements()) {
@@ -5218,6 +5359,7 @@ public class Parser {
                                 createName(Token.BINDNAME, iteratorName, null),
                                 callIterator);
                 parent.addChildToBack(iteratorAssign);
+                iteratorAssignNode = iteratorAssign;
                 iteratorSetup = true;
                 empty = false;
             }
@@ -5392,7 +5534,8 @@ public class Parser {
             empty = false;
         }
 
-        return new DestructuringArrayResult(empty, iteratorName, lastResultName, elemTempNames);
+        return new DestructuringArrayResult(
+                empty, iteratorName, lastResultName, elemTempNames, iteratorAssignNode);
     }
 
     private void processDestructuringDefaults(
