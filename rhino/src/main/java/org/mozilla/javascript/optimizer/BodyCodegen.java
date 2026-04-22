@@ -199,6 +199,7 @@ class BodyCodegen {
         }
 
         cfw.add(ByteCode.ARETURN);
+        generateFinalizers();
         cfw.stopMethod((short) (localsMax + 1));
     }
 
@@ -597,26 +598,7 @@ class BodyCodegen {
             }
 
             // generate dispatch tables for finally
-            if (finallys != null) {
-                for (Map.Entry<Node, FinallyReturnPoint> e : finallys.entrySet()) {
-                    if (e.getKey().getType() == Token.FINALLY) {
-                        FinallyReturnPoint ret = e.getValue();
-                        // the finally will jump here
-                        cfw.markLabel(ret.tableLabel, 1);
-
-                        // start generating a dispatch table
-                        int startSwitch = cfw.addTableSwitch(0, ret.jsrPoints.size() - 1);
-                        int c = 0;
-                        cfw.markTableSwitchDefault(startSwitch);
-                        for (int i = 0; i < ret.jsrPoints.size(); i++) {
-                            // generate gotos back to the JSR location
-                            cfw.markTableSwitchCase(startSwitch, c);
-                            cfw.add(ByteCode.GOTO, ret.jsrPoints.get(i).intValue());
-                            c++;
-                        }
-                    }
-                }
-            }
+            generateFinalizers();
         }
 
         if (epilogueLabel != -1) {
@@ -672,6 +654,29 @@ class BodyCodegen {
             // mark the handler
             cfw.addExceptionHandler(
                     enterAreaStartLabel, epilogueLabel, finallyHandler, null); // catch any
+        }
+    }
+
+    private void generateFinalizers() {
+        if (finallys != null) {
+            for (var e : finallys.entrySet()) {
+                if (e.getKey().getType() == Token.FINALLY) {
+                    FinallyReturnPoint ret = e.getValue();
+                    // the finally will jump here
+                    cfw.markLabel(ret.getTableLebel(cfw), 1);
+
+                    // start generating a dispatch table
+                    int startSwitch = cfw.addTableSwitch(0, ret.jsrPoints.size() - 1);
+                    int c = 0;
+                    cfw.markTableSwitchDefault(startSwitch);
+                    for (int i = 0; i < ret.jsrPoints.size(); i++) {
+                        // generate gotos back to the JSR location
+                        cfw.markTableSwitchCase(startSwitch, c);
+                        cfw.add(ByteCode.GOTO, ret.jsrPoints.get(i).intValue());
+                        c++;
+                    }
+                }
+            }
         }
     }
 
@@ -983,8 +988,7 @@ class BodyCodegen {
                     cfw.add(ByteCode.CHECKCAST, "java/lang/Integer");
                     generateIntegerUnwrap();
                     FinallyReturnPoint ret = finallys.get(node);
-                    ret.tableLabel = cfw.acquireLabel();
-                    cfw.add(ByteCode.GOTO, ret.tableLabel);
+                    cfw.add(ByteCode.GOTO, ret.getTableLebel(cfw));
 
                     // After this GOTO we expect stack to be empty again!
                     cfw.setStackTop((short) 0);
@@ -5039,7 +5043,16 @@ class BodyCodegen {
 
     static class FinallyReturnPoint {
         public List<Integer> jsrPoints = new ArrayList<>();
-        public int tableLabel = 0;
+        private int tableLabelInt = 0;
+
+        public int getTableLebel(ClassFileWriter cfw) {
+            if (tableLabelInt != 0) {
+                return tableLabelInt;
+            } else {
+                tableLabelInt = cfw.acquireLabel();
+                return tableLabelInt;
+            }
+        }
     }
 
     private int unnestedYieldCount = 0;
