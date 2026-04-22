@@ -753,11 +753,6 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     @Override
-    public void setEvalScriptFlag(Script script) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public Function createFunctionObject(
             Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain) {

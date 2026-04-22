@@ -67,11 +67,6 @@ public class Codegen implements Evaluator {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public void setEvalScriptFlag(Script script) {
-        throw new UnsupportedOperationException();
-    }
-
     private static class CompilationResult<T extends ScriptOrFn<T>> {
         final JSDescriptor.Builder<T> builder;
         final String className;
