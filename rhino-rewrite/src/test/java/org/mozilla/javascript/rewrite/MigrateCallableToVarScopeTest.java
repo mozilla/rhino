@@ -31,6 +31,7 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateCallableToVarScope())
+                .typeValidationOptions(TypeValidation.none())
                 .parser(
                         JavaParser.fromJavaVersion()
                                 .classpathFromResources(new InMemoryExecutionContext(), "rhino"));
@@ -178,6 +179,140 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + " Scriptable thisObj, Object[] args) {\n"
                                 + "        return callable.call(cx, (VarScope) scope, thisObj, args);\n"
                                 + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesCallableLambdaExplicitlyTyped() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Callable c = (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> null;\n"
+                                + "}",
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Callable c = (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> null;\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesConstructableLambdaExplicitlyTyped() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Constructable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Constructable c = (Context cx, Scriptable scope, Object[] args) -> null;\n"
+                                + "}",
+                        "import org.mozilla.javascript.Constructable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Constructable c = (Context cx, VarScope scope, Object[] args) -> null;\n"
+                                + "}"));
+    }
+
+    @Test
+    void ignoresImplicitlyTypedCallableLambda() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Callable c = (cx, scope, thisObj, args) -> null;\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesLambdaFunctionTarget() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.LambdaFunction;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    public void make(Scriptable parent) {\n"
+                                + "        new LambdaFunction(parent, \"foo\", 1, (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> null);\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.LambdaFunction;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    public void make(Scriptable parent) {\n"
+                                + "        new LambdaFunction(parent, \"foo\", 1, (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> null);\n"
+                                + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesLambdaConstructorTarget() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.LambdaConstructor;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    public void make(Scriptable parent) {\n"
+                                + "        new LambdaConstructor(parent, \"foo\", 1, (Context cx, Scriptable scope, Object[] args) -> null);\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.LambdaConstructor;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    public void make(Scriptable parent) {\n"
+                                + "        new LambdaConstructor(parent, \"foo\", 1, (Context cx, VarScope scope, Object[] args) -> null);\n"
+                                + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesAnonymousClass() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Callable c = new Callable() {\n"
+                                + "        @Override\n"
+                                + "        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {\n"
+                                + "            return null;\n"
+                                + "        }\n"
+                                + "    };\n"
+                                + "}",
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    Callable c = new Callable() {\n"
+                                + "        @Override\n"
+                                + "        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {\n"
+                                + "            return null;\n"
+                                + "        }\n"
+                                + "    };\n"
                                 + "}"));
     }
 }

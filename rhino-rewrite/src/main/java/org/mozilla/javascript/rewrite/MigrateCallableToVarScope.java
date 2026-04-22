@@ -79,6 +79,119 @@ public class MigrateCallableToVarScope extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
 
+            private J.VariableDeclarations updateScopeParameter(J.VariableDeclarations vd) {
+                if (!TypeUtils.isOfClassType(vd.getType(), OLD_TYPE)) {
+                    return null; // Already VarScope or something else -- no change needed
+                }
+
+                // Build the new fully-qualified type
+                JavaType.FullyQualified newFqType = JavaType.ShallowClass.build(NEW_TYPE);
+
+                // Replace the type expression (the "Scriptable" identifier) with "VarScope"
+                J.VariableDeclarations updatedVd = vd.withType(newFqType);
+                if (vd.getTypeExpression() != null) {
+                    if (vd.getTypeExpression() instanceof J.Identifier) {
+                        J.Identifier identifier = (J.Identifier) vd.getTypeExpression();
+                        updatedVd =
+                                updatedVd.withTypeExpression(
+                                        identifier.withSimpleName("VarScope").withType(newFqType));
+                        maybeAddImport(NEW_TYPE);
+                    } else if (vd.getTypeExpression() instanceof J.FieldAccess) {
+                        J.FieldAccess fieldAccess = (J.FieldAccess) vd.getTypeExpression();
+                        updatedVd =
+                                updatedVd.withTypeExpression(
+                                        fieldAccess
+                                                .withName(
+                                                        fieldAccess
+                                                                .getName()
+                                                                .withSimpleName("VarScope")
+                                                                .withType(newFqType))
+                                                .withType(newFqType));
+                        maybeAddImport(NEW_TYPE);
+                    }
+                }
+
+                // Also update the JavaType stored on each named variable inside the declaration
+                updatedVd =
+                        updatedVd.withVariables(
+                                ListUtils.map(
+                                        updatedVd.getVariables(),
+                                        v ->
+                                                v.withName(v.getName().withType(newFqType))
+                                                        .withType(newFqType)));
+                return updatedVd;
+            }
+
+            private int getScopeParamIndex(JavaType type, int paramCount) {
+                if (TypeUtils.isAssignableTo("org.mozilla.javascript.Callable", type)) {
+                    return 1;
+                } else if (TypeUtils.isAssignableTo("org.mozilla.javascript.Constructable", type)) {
+                    return 1;
+                } else if (TypeUtils.isAssignableTo(
+                        "org.mozilla.javascript.IdFunctionCall", type)) {
+                    return 2;
+                } else if (type == null || type instanceof JavaType.Unknown) {
+                    if (paramCount == 4) return 1;
+                    if (paramCount == 3) return 1;
+                    if (paramCount == 5) return 2;
+                }
+                return -1;
+            }
+
+            @Override
+            public J.Lambda visitLambda(J.Lambda lambda, ExecutionContext ctx) {
+                J.Lambda l = super.visitLambda(lambda, ctx);
+                int scopeParamIndex =
+                        getScopeParamIndex(l.getType(), l.getParameters().getParameters().size());
+
+                if (scopeParamIndex < 0
+                        || l.getParameters().getParameters().size() <= scopeParamIndex) {
+                    return l;
+                }
+
+                Object raw = l.getParameters().getParameters().get(scopeParamIndex);
+                if (!(raw instanceof J.VariableDeclarations)) {
+                    return l;
+                }
+
+                J.VariableDeclarations updatedVd =
+                        updateScopeParameter((J.VariableDeclarations) raw);
+                if (updatedVd != null) {
+                    final int idx = scopeParamIndex;
+                    l =
+                            l.withParameters(
+                                    l.getParameters()
+                                            .withParameters(
+                                                    ListUtils.map(
+                                                            l.getParameters().getParameters(),
+                                                            (i, p) -> i == idx ? updatedVd : p)));
+                }
+                return l;
+            }
+
+            @Override
+            public J.MemberReference visitMemberReference(
+                    J.MemberReference memberReference, ExecutionContext ctx) {
+                J.MemberReference m = super.visitMemberReference(memberReference, ctx);
+                JavaType type = m.getType();
+                if (type == null || type instanceof JavaType.Unknown) {
+                    return m;
+                }
+
+                int scopeParamIndex = getScopeParamIndex(type, -1);
+                if (scopeParamIndex < 0) {
+                    return m;
+                }
+
+                // Note: Method references don't have parameters in the reference itself.
+                // The target method's declaration must be migrated.
+                // visitMethodDeclaration handles this if the target method is an override
+                // of a Rhino interface method. If it's a non-override matching signature,
+                // we'd need to match its name/signature elsewhere.
+
+                return m;
+            }
+
             @Override
             public J.MethodDeclaration visitMethodDeclaration(
                     J.MethodDeclaration method, ExecutionContext ctx) {
@@ -88,7 +201,7 @@ public class MigrateCallableToVarScope extends Recipe {
                 // Determine which parameter index holds the `scope` (VarScope target).
                 // For call() and construct() it is index 1.
                 // For execIdCall() it is index 2 (after IdFunctionObject and Context).
-                int scopeParamIndex;
+                int scopeParamIndex = -1;
                 J.ClassDeclaration enclosingClass =
                         getCursor().firstEnclosingOrThrow(J.ClassDeclaration.class);
 
@@ -99,7 +212,22 @@ public class MigrateCallableToVarScope extends Recipe {
                 } else if (EXEC_ID_CALL_MATCHER.matches(m, enclosingClass)) {
                     scopeParamIndex = 2;
                 } else {
-                    return m; // Not a Rhino method -- leave untouched
+                    // Fallback for cases where strict signature matching fails (common if currently
+                    // using Scriptable)
+                    // but it's clearly intended to be one of these methods.
+                    String name = m.getSimpleName();
+                    int paramCount = m.getParameters().size();
+                    if ("call".equals(name) && paramCount == 4) {
+                        scopeParamIndex = 1;
+                    } else if ("construct".equals(name) && paramCount == 3) {
+                        scopeParamIndex = 1;
+                    } else if ("execIdCall".equals(name) && paramCount == 5) {
+                        scopeParamIndex = 2;
+                    }
+                }
+
+                if (scopeParamIndex < 0) {
+                    return m;
                 }
 
                 // Guard: only update if the parameter list is long enough
@@ -113,51 +241,15 @@ public class MigrateCallableToVarScope extends Recipe {
                     return m;
                 }
 
-                J.VariableDeclarations vd = (J.VariableDeclarations) raw;
-                if (!TypeUtils.isOfClassType(vd.getType(), OLD_TYPE)) {
-                    return m; // Already VarScope or something else -- no change needed
+                J.VariableDeclarations updatedVd =
+                        updateScopeParameter((J.VariableDeclarations) raw);
+                if (updatedVd != null) {
+                    final int idx = scopeParamIndex;
+                    m =
+                            m.withParameters(
+                                    ListUtils.map(
+                                            m.getParameters(), (i, p) -> i == idx ? updatedVd : p));
                 }
-
-                // Build the new fully-qualified type
-                JavaType.FullyQualified newFqType = JavaType.ShallowClass.build(NEW_TYPE);
-
-                // Replace the type expression (the "Scriptable" identifier) with "VarScope"
-                J.VariableDeclarations updatedVd = vd.withType(newFqType);
-                if (vd.getTypeExpression() instanceof J.Identifier) {
-                    J.Identifier identifier = (J.Identifier) vd.getTypeExpression();
-                    updatedVd =
-                            updatedVd.withTypeExpression(
-                                    identifier.withSimpleName("VarScope").withType(newFqType));
-                } else if (vd.getTypeExpression() instanceof J.FieldAccess) {
-                    J.FieldAccess fieldAccess = (J.FieldAccess) vd.getTypeExpression();
-                    updatedVd =
-                            updatedVd.withTypeExpression(
-                                    fieldAccess
-                                            .withName(
-                                                    fieldAccess
-                                                            .getName()
-                                                            .withSimpleName("VarScope")
-                                                            .withType(newFqType))
-                                            .withType(newFqType));
-                }
-
-                // Also update the JavaType stored on each named variable inside the declaration
-                updatedVd =
-                        updatedVd.withVariables(
-                                ListUtils.map(
-                                        updatedVd.getVariables(),
-                                        v -> v.withName(v.getName().withType(newFqType))));
-
-                // Replace the parameter at scopeParamIndex in the method
-                final int idx = scopeParamIndex;
-                final J.VariableDeclarations finalVd = updatedVd;
-                m =
-                        m.withParameters(
-                                ListUtils.map(m.getParameters(), (i, p) -> i == idx ? finalVd : p));
-
-                // Ensure VarScope is imported.
-                // (Scriptable is still used for thisObj, so we do NOT remove it.)
-                maybeAddImport(NEW_TYPE);
 
                 return m;
             }
@@ -230,8 +322,10 @@ public class MigrateCallableToVarScope extends Recipe {
                     return 2;
                 }
 
-                // Fallback for parse-error scenarios where invocation method type attribution is
-                // missing (common in pre-migration code that no longer compiles against Rhino 2.0).
+                // Fallback for parse-error scenarios where invocation method type attribution
+                // is
+                // missing (common in pre-migration code that no longer compiles against Rhino
+                // 2.0).
                 String name = inv.getSimpleName();
                 int argCount = inv.getArguments().size();
                 if ("call".equals(name) && argCount == 4) {

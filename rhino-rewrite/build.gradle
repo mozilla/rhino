@@ -8,7 +8,6 @@ dependencies {
     testImplementation project(':rhino')
     testImplementation libs.openrewrite.test
     testImplementation libs.openrewrite.java17
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 java {
@@ -19,13 +18,12 @@ java {
 
 // Copy the rhino JAR into the expected location for OpenRewrite's classpathFromResources().
 // That method scans the classpath for JARs at "META-INF/rewrite/classpath/<name>.jar".
+def generatedTestResourcesDir = layout.buildDirectory.dir('generated-test-resources')
 def copyRhinoJar = tasks.register('copyRhinoJarToRewriteClasspath', Copy) {
     dependsOn ':rhino:jar'
     from project(':rhino').tasks.named('jar', Jar).flatMap { it.archiveFile }
-    into layout.buildDirectory.dir('generated-test-resources/META-INF/rewrite/classpath')
+    into generatedTestResourcesDir.map { it.dir('META-INF/rewrite/classpath') }
     rename { 'rhino.jar' }
 }
-sourceSets.test.resources.srcDir(
-    tasks.named('copyRhinoJarToRewriteClasspath').map { it.destinationDir.parentFile.parentFile.parentFile }
-)
+sourceSets.test.resources.srcDir(generatedTestResourcesDir)
 processTestResources.dependsOn copyRhinoJar
