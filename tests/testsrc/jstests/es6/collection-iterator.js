@@ -19,7 +19,7 @@ test(function TestSetIterator() {
 
   var SetIteratorPrototype = iter.__proto__;
   assertFalse(SetIteratorPrototype.hasOwnProperty('constructor'));
-  assertEquals(SetIteratorPrototype.__proto__, Object.prototype);
+  assertEquals(SetIteratorPrototype.__proto__, Iterator.prototype);
 
   var propertyNames = Object.getOwnPropertyNames(SetIteratorPrototype);
   assertArrayEquals(['next'], propertyNames);
@@ -163,7 +163,7 @@ test(function TestMapIterator() {
 
   var MapIteratorPrototype = iter.__proto__;
   assertFalse(MapIteratorPrototype.hasOwnProperty('constructor'));
-  assertEquals(MapIteratorPrototype.__proto__, Object.prototype);
+  assertEquals(MapIteratorPrototype.__proto__, Iterator.prototype);
 
   var propertyNames = Object.getOwnPropertyNames(MapIteratorPrototype);
   assertArrayEquals(['next'], propertyNames);
