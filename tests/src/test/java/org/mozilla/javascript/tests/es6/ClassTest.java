@@ -4,7 +4,11 @@
 
 package org.mozilla.javascript.tests.es6;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Tests for basic ES6 class support. */
@@ -663,17 +667,27 @@ public class ClassTest {
     @Test
     public void reservedWordAsField() {
         Utils.assertWithAllModes_ES6(
-                "r,if", "class A { return = 'r'; if = 'if'; } var a = new A(); a.return + ',' + a.if");
+                "r,if",
+                "class A { return = 'r'; if = 'if'; } var a = new A(); a.return + ',' + a.if");
     }
 
     @Test
     public void asyncReservedWordMethod() {
-        Utils.assertWithAllModes_ES6(
-                "ar",
+        // Microtasks (and thus the .then callback) run after the script's
+        // last expression has been captured, so we read `result` from the
+        // scope after evaluation instead of relying on its value inside the script.
+        String script =
                 "var result;\n"
                         + "class A { async return() { return 'ar'; } }\n"
-                        + "new A().return().then(r => { result = r; });\n"
-                        + "result\n");
+                        + "new A().return().then(r => { result = r; });\n";
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    cx.evaluateString(scope, script, "test.js", 1, null);
+                    assertEquals("ar", scope.get("result", scope));
+                    return null;
+                });
     }
 
     @Test
@@ -748,8 +762,7 @@ public class ClassTest {
 
     @Test
     public void staticGetter() {
-        Utils.assertWithAllModes_ES6(
-                7, "class A { static get x() { return 7; } }\n" + "A.x\n");
+        Utils.assertWithAllModes_ES6(7, "class A { static get x() { return 7; } }\n" + "A.x\n");
     }
 
     @Test
@@ -764,26 +777,22 @@ public class ClassTest {
 
     @Test
     public void getAsMethodName() {
-        Utils.assertWithAllModes_ES6(
-                1, "class A { get() { return 1; } }\n" + "new A().get()\n");
+        Utils.assertWithAllModes_ES6(1, "class A { get() { return 1; } }\n" + "new A().get()\n");
     }
 
     @Test
     public void setAsMethodName() {
-        Utils.assertWithAllModes_ES6(
-                2, "class A { set() { return 2; } }\n" + "new A().set()\n");
+        Utils.assertWithAllModes_ES6(2, "class A { set() { return 2; } }\n" + "new A().set()\n");
     }
 
     @Test
     public void getAsFieldName() {
-        Utils.assertWithAllModes_ES6(
-                3, "class A { get = 3; }\n" + "new A().get\n");
+        Utils.assertWithAllModes_ES6(3, "class A { get = 3; }\n" + "new A().get\n");
     }
 
     @Test
     public void getterOnConstructorError() {
-        Utils.assertEvaluatorExceptionES6(
-                "Unexpected token", "class Foo { get constructor() {} }");
+        Utils.assertEvaluatorExceptionES6("Unexpected token", "class Foo { get constructor() {} }");
     }
 
     @Test
@@ -832,7 +841,6 @@ public class ClassTest {
     @Test
     public void functionNamedReturnStillErrors() {
         Utils.assertEvaluatorExceptionES6(
-                "missing ( before function parameters.",
-                "function return() { return 'Hello!'; }");
+                "missing ( before function parameters.", "function return() { return 'Hello!'; }");
     }
 }
