@@ -295,6 +295,52 @@ public class ArrayDestructuringTest {
                 });
     }
 
+    /**
+     * Destructuring assignment with defaults into pre-existing variables must always apply the
+     * default when the source value is undefined, regardless of the variables' prior values. See
+     * for-of case below and issue around pre-existing lvalues keeping stale values.
+     */
+    @Test
+    public void destructuringAssignmentWithDefaultsForOfLoop() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "var x, y;\n"
+                                    + "x = 'foo';\n"
+                                    + "y = 'bar';\n"
+                                    + "var results = [];\n"
+                                    + "var counter = 0;\n"
+                                    + "for ([x = 4, y = 5] of [[]]) {\n"
+                                    + "  results.push(x);\n"
+                                    + "  results.push(y);\n"
+                                    + "  counter += 1;\n"
+                                    + "}\n"
+                                    + "for ([x = 4, y = 5] of [[7, 3]]) {\n"
+                                    + "  results.push(x);\n"
+                                    + "  results.push(y);\n"
+                                    + "  counter += 1;\n"
+                                    + "}\n"
+                                    + "results.push(x);\n"
+                                    + "results.push(y);\n"
+                                    + "results.push(counter);\n"
+                                    + "var expected = [4, 5, 7, 3, 7, 3, 2];\n"
+                                    + "if (results.length !== expected.length)"
+                                    + " throw new Error('Length mismatch: ' + results.join(','));\n"
+                                    + "for (var i = 0; i < expected.length; i++) {\n"
+                                    + "  if (results[i] !== expected[i])"
+                                    + "    throw new Error('At ' + i + ' expected ' + expected[i]"
+                                    + "                    + ' got ' + results[i]"
+                                    + "                    + ' (results=' + results.join(',') + ')');\n"
+                                    + "}\n";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
     /** Test destructuring with defaults in for loop initialization. */
     @Test
     public void destructuringWithDefaultsInForLoop() {

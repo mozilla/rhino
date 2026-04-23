@@ -5559,11 +5559,7 @@ public class Parser {
         Node right = null;
         if (left.getType() == Token.NAME) {
             String name = left.getString();
-            // x = (x == undefined) ?
-            //          (($1[0] == undefined) ?
-            //              1
-            //              : $1[0])
-            //          : x
+            // x = ($1[0] === undefined) ? defaultValue : $1[0]
 
             right = (transformer != null) ? transformer.transform(n.getRight()) : n.getRight();
 
@@ -5577,16 +5573,6 @@ public class Parser {
                             right,
                             rightElem);
 
-            Node cond =
-                    new Node(
-                            Token.HOOK,
-                            new Node(
-                                    Token.SHEQ,
-                                    new KeywordLiteral().setType(Token.UNDEFINED),
-                                    createName(name)),
-                            cond_inner,
-                            left);
-
             // store it to be transformed later
             if (transformer == null) {
                 currentScriptOrFn.putDestructuringRvalues(cond_inner, right, new Name(0, name));
@@ -5594,7 +5580,8 @@ public class Parser {
                 inferFunctionName(name, right);
             }
 
-            parent.addChildToBack(new Node(setOp, createName(Token.BINDNAME, name, null), cond));
+            parent.addChildToBack(
+                    new Node(setOp, createName(Token.BINDNAME, name, null), cond_inner));
             if (variableType != -1) {
                 defineSymbol(variableType, name, true);
                 destructuringNames.add(name);
