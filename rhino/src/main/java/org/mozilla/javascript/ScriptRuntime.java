@@ -5663,6 +5663,46 @@ public class ScriptRuntime {
                 Context.getCurrentContext(), name, new DescriptorInfo(methodFn, DONTENUM, true));
     }
 
+    private static void defineAccessorOn(
+            ScriptableObject target, String name, Object fn, boolean isSetter) {
+        StringIdOrIndex s = toStringIdOrIndex(name);
+        if (fn instanceof Callable) {
+            if (s.stringId != null) {
+                target.setGetterOrSetter(s.stringId, 0, (Callable) fn, isSetter);
+                target.setAttributes(
+                        s.stringId, (target.getAttributes(s.stringId) | DONTENUM) & ~READONLY);
+            } else {
+                target.setGetterOrSetter(null, s.index, (Callable) fn, isSetter);
+                target.setAttributes(
+                        s.index, (target.getAttributes(s.index) | DONTENUM) & ~READONLY);
+            }
+        }
+    }
+
+    public static void defineClassGetter(BaseFunction constructor, String name, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineAccessorOn((ScriptableObject) protoObj, name, methodFn, false);
+        }
+    }
+
+    public static void defineClassSetter(BaseFunction constructor, String name, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineAccessorOn((ScriptableObject) protoObj, name, methodFn, true);
+        }
+    }
+
+    public static void defineStaticClassGetter(
+            BaseFunction constructor, String name, Object methodFn) {
+        defineAccessorOn(constructor, name, methodFn, false);
+    }
+
+    public static void defineStaticClassSetter(
+            BaseFunction constructor, String name, Object methodFn) {
+        defineAccessorOn(constructor, name, methodFn, true);
+    }
+
     public static void defineStaticClassField(BaseFunction constructor, String name, Object value) {
         constructor.defineOwnProperty(
                 Context.getCurrentContext(), name, new DescriptorInfo(value, 0, true));

@@ -29,14 +29,23 @@ import org.mozilla.javascript.Token;
  */
 public class ClassNode extends AstNode {
 
+    /** Kind of a class member that is a function: normal method, getter, or setter. */
+    public enum MethodKind {
+        METHOD,
+        GETTER,
+        SETTER
+    }
+
     private Name className;
     private AstNode superClass;
     private FunctionNode constructor;
     private boolean isStatement;
     private List<String> methodNames;
     private List<FunctionNode> methods;
+    private List<MethodKind> methodKinds;
     private List<String> staticMethodNames;
     private List<FunctionNode> staticMethods;
+    private List<MethodKind> staticMethodKinds;
     private List<String> fieldNames;
     private List<AstNode> fieldInitializers;
     private List<AstNode> computedFieldKeys;
@@ -109,12 +118,18 @@ public class ClassNode extends AstNode {
     }
 
     public void addMethod(String name, FunctionNode fn) {
+        addMethod(name, fn, MethodKind.METHOD);
+    }
+
+    public void addMethod(String name, FunctionNode fn, MethodKind kind) {
         if (methodNames == null) {
             methodNames = new ArrayList<>();
             methods = new ArrayList<>();
+            methodKinds = new ArrayList<>();
         }
         methodNames.add(name);
         methods.add(fn);
+        methodKinds.add(kind);
         fn.setParent(this);
     }
 
@@ -130,13 +145,23 @@ public class ClassNode extends AstNode {
         return methods == null ? Collections.emptyList() : methods;
     }
 
+    public List<MethodKind> getMethodKinds() {
+        return methodKinds == null ? Collections.emptyList() : methodKinds;
+    }
+
     public void addStaticMethod(String name, FunctionNode fn) {
+        addStaticMethod(name, fn, MethodKind.METHOD);
+    }
+
+    public void addStaticMethod(String name, FunctionNode fn, MethodKind kind) {
         if (staticMethodNames == null) {
             staticMethodNames = new ArrayList<>();
             staticMethods = new ArrayList<>();
+            staticMethodKinds = new ArrayList<>();
         }
         staticMethodNames.add(name);
         staticMethods.add(fn);
+        staticMethodKinds.add(kind);
         fn.setParent(this);
     }
 
@@ -150,6 +175,10 @@ public class ClassNode extends AstNode {
 
     public List<FunctionNode> getStaticMethods() {
         return staticMethods == null ? Collections.emptyList() : staticMethods;
+    }
+
+    public List<MethodKind> getStaticMethodKinds() {
+        return staticMethodKinds == null ? Collections.emptyList() : staticMethodKinds;
     }
 
     public void addField(String name, AstNode initializer) {
@@ -393,6 +422,12 @@ public class ClassNode extends AstNode {
         if (methodNames != null) {
             for (int i = 0; i < methodNames.size(); i++) {
                 sb.append(makeIndent(depth + 1));
+                MethodKind kind = methodKinds.get(i);
+                if (kind == MethodKind.GETTER) {
+                    sb.append("get ");
+                } else if (kind == MethodKind.SETTER) {
+                    sb.append("set ");
+                }
                 sb.append(methodNames.get(i));
                 String fnSrc = methods.get(i).toSource(0);
                 sb.append(fnSrc.substring(fnSrc.indexOf('(')));
@@ -403,6 +438,12 @@ public class ClassNode extends AstNode {
             for (int i = 0; i < staticMethodNames.size(); i++) {
                 sb.append(makeIndent(depth + 1));
                 sb.append("static ");
+                MethodKind kind = staticMethodKinds.get(i);
+                if (kind == MethodKind.GETTER) {
+                    sb.append("get ");
+                } else if (kind == MethodKind.SETTER) {
+                    sb.append("set ");
+                }
                 sb.append(staticMethodNames.get(i));
                 String fnSrc = staticMethods.get(i).toSource(0);
                 sb.append(fnSrc.substring(fnSrc.indexOf('(')));

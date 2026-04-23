@@ -1264,6 +1264,56 @@ public class Parser {
                 }
             }
 
+            // Check for 'get' or 'set' accessor modifier before method name
+            ClassNode.MethodKind accessorKind = ClassNode.MethodKind.METHOD;
+            if (!isComputed
+                    && !isAsync
+                    && !isGenerator
+                    && !isPrivateName
+                    && ("get".equals(memberName) || "set".equals(memberName))) {
+                int nextTt = peekToken();
+                if (nextTt == Token.NAME
+                        || nextTt == Token.PRIVATE_NAME
+                        || nextTt == Token.STRING
+                        || nextTt == Token.NUMBER
+                        || nextTt == Token.BIGINT
+                        || nextTt == Token.LB
+                        || isKeywordAsIdentifierName(nextTt)) {
+                    accessorKind =
+                            "get".equals(memberName)
+                                    ? ClassNode.MethodKind.GETTER
+                                    : ClassNode.MethodKind.SETTER;
+                    isStringOrNumericName = false;
+                    // Re-parse the actual member name
+                    tt = nextTt;
+                    if (tt == Token.NAME) {
+                        consumeToken();
+                        memberName = ts.getString();
+                    } else if (tt == Token.PRIVATE_NAME) {
+                        consumeToken();
+                        memberName = ts.getString();
+                        isPrivateName = true;
+                    } else if (tt == Token.STRING) {
+                        consumeToken();
+                        memberName = ts.getString();
+                        isStringOrNumericName = true;
+                    } else if (tt == Token.NUMBER || tt == Token.BIGINT) {
+                        consumeToken();
+                        memberName = ts.getString();
+                        isStringOrNumericName = true;
+                    } else if (tt == Token.LB) {
+                        isComputed = true;
+                        memberName = null;
+                        consumeToken();
+                        computedKeyExpr = assignExpr();
+                        mustMatchToken(Token.RB, "msg.no.bracket.index", true);
+                    } else if (isKeywordAsIdentifierName(tt)) {
+                        consumeToken();
+                        memberName = ts.getString();
+                    }
+                }
+            }
+
             // Check for forbidden property names:
             // - non-static properties named "constructor" (except the actual constructor)
             // - static properties named "prototype"
@@ -1276,6 +1326,7 @@ public class Parser {
                     && !isAsync
                     && !isGenerator
                     && !isPrivateName
+                    && accessorKind == ClassNode.MethodKind.METHOD
                     && "constructor".equals(memberName)
                     && peekToken() == Token.LP) {
                 if (constructor != null) {
@@ -1283,18 +1334,41 @@ public class Parser {
                 }
                 constructor = function(FunctionNode.FUNCTION_EXPRESSION, true, false, true);
             } else if (peekToken() == Token.LP) {
-                if (!isComputed && !isStatic && "constructor".equals(memberName)) {
+                if (!isComputed && "constructor".equals(memberName)) {
+                    // `constructor` cannot be a method name if it has modifiers
+                    // (get/set/async/*), and never allowed as a data-method
+                    // name apart from the real constructor handled above.
                     reportError("msg.unexpected.token");
                 }
                 FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
                 if (isGenerator) {
                     method.setIsES6Generator();
                 }
+                if (accessorKind == ClassNode.MethodKind.GETTER) {
+                    if (isAsync || isGenerator) {
+                        reportError("msg.unexpected.token");
+                    }
+                    if (method.getParamCount() != 0) {
+                        reportError("msg.getter.no.parms");
+                    }
+                    method.setFunctionIsGetterMethod();
+                } else if (accessorKind == ClassNode.MethodKind.SETTER) {
+                    if (isAsync || isGenerator) {
+                        reportError("msg.unexpected.token");
+                    }
+                    if (method.getParamCount() != 1 || method.hasRestParameter()) {
+                        reportError("msg.setter.one.parm");
+                    }
+                    method.setFunctionIsSetterMethod();
+                }
                 if (isComputed) {
                     // TODO: computed method names need additional support in ClassNode/IRFactory
                     reportError("msg.unexpected.token");
                 } else if (isPrivateName) {
-                    if (classNode.hasPrivateName(memberName)) {
+                    if (accessorKind != ClassNode.MethodKind.METHOD) {
+                        // TODO: private accessors not yet supported
+                        reportError("msg.unexpected.token");
+                    } else if (classNode.hasPrivateName(memberName)) {
                         reportError("msg.dup.private.name", memberName);
                     } else if (isStatic) {
                         classNode.addStaticPrivateField(memberName, method);
@@ -1302,9 +1376,9 @@ public class Parser {
                         classNode.addPrivateField(memberName, method);
                     }
                 } else if (isStatic) {
-                    classNode.addStaticMethod(memberName, method);
+                    classNode.addStaticMethod(memberName, method, accessorKind);
                 } else {
-                    classNode.addMethod(memberName, method);
+                    classNode.addMethod(memberName, method, accessorKind);
                 }
             } else {
                 // Field declaration: name = expr; or name;

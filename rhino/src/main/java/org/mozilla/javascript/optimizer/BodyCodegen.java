@@ -1083,6 +1083,7 @@ class BodyCodegen {
 
                     // Define instance methods on constructor.prototype
                     String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
+                    int[] methodKinds = (int[]) node.getProp(Node.CLASS_METHOD_KINDS_PROP);
                     if (methodNames != null && methodNames.length > 0) {
                         // Get constructor.prototype for use as homeObject
                         cfw.add(ByteCode.DUP);
@@ -1104,10 +1105,17 @@ class BodyCodegen {
                             cfw.add(ByteCode.DUP);
                             cfw.addPush(methodNames[i]);
                             visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
+                            int kind = methodKinds == null ? 0 : methodKinds[i];
+                            String runtimeMethod =
+                                    (kind == 1)
+                                            ? "defineClassGetter"
+                                            : (kind == 2)
+                                                    ? "defineClassSetter"
+                                                    : "defineClassMethod";
                             cfw.addInvoke(
                                     ByteCode.INVOKESTATIC,
                                     "org/mozilla/javascript/ScriptRuntime",
-                                    "defineClassMethod",
+                                    runtimeMethod,
                                     "(Lorg/mozilla/javascript/BaseFunction;"
                                             + "Ljava/lang/String;"
                                             + "Ljava/lang/Object;)V");
@@ -1122,6 +1130,8 @@ class BodyCodegen {
                     // Define static methods on the constructor itself
                     String[] staticMethodNames =
                             (String[]) node.getProp(Node.CLASS_STATIC_METHODS_PROP);
+                    int[] staticMethodKinds =
+                            (int[]) node.getProp(Node.CLASS_STATIC_METHOD_KINDS_PROP);
                     if (staticMethodNames != null && staticMethodNames.length > 0) {
                         // For static methods, homeObject is the constructor
                         // Store constructor in a local for use as homeObject
@@ -1139,10 +1149,17 @@ class BodyCodegen {
                             cfw.add(ByteCode.DUP);
                             cfw.addPush(staticMethodNames[i]);
                             visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
+                            int kind = staticMethodKinds == null ? 0 : staticMethodKinds[i];
+                            String runtimeMethod =
+                                    (kind == 1)
+                                            ? "defineStaticClassGetter"
+                                            : (kind == 2)
+                                                    ? "defineStaticClassSetter"
+                                                    : "defineStaticClassMethod";
                             cfw.addInvoke(
                                     ByteCode.INVOKESTATIC,
                                     "org/mozilla/javascript/ScriptRuntime",
-                                    "defineStaticClassMethod",
+                                    runtimeMethod,
                                     "(Lorg/mozilla/javascript/BaseFunction;"
                                             + "Ljava/lang/String;"
                                             + "Ljava/lang/Object;)V");

@@ -1551,7 +1551,11 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
         instructionObjs[base + Icode_WRAP_AWAIT] = new DoWrapAwait();
         instructionObjs[base + Icode_DEFINE_CLASS_METHOD] = new DoDefineClassMethod();
+        instructionObjs[base + Icode_DEFINE_CLASS_GETTER] = new DoDefineClassGetter();
+        instructionObjs[base + Icode_DEFINE_CLASS_SETTER] = new DoDefineClassSetter();
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_METHOD] = new DoDefineStaticClassMethod();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_GETTER] = new DoDefineStaticClassGetter();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_SETTER] = new DoDefineStaticClassSetter();
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_FIELD] = new DoDefineStaticClassField();
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD] =
                 new DoDefineStaticClassComputedField();
@@ -4528,6 +4532,50 @@ public final class Interpreter extends Icode implements Evaluator {
             // Create static method with homeObject = constructor (for super support)
             JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
             ScriptRuntime.defineStaticClassMethod(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineClassGetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            Object protoObj = constructor.getPrototypeProperty();
+            Scriptable prototype = (protoObj instanceof Scriptable) ? (Scriptable) protoObj : null;
+            JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
+            ScriptRuntime.defineClassGetter(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineClassSetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            Object protoObj = constructor.getPrototypeProperty();
+            Scriptable prototype = (protoObj instanceof Scriptable) ? (Scriptable) protoObj : null;
+            JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
+            ScriptRuntime.defineClassSetter(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassGetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
+            ScriptRuntime.defineStaticClassGetter(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassSetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
+            ScriptRuntime.defineStaticClassSetter(constructor, state.stringReg, method);
             return null;
         }
     }

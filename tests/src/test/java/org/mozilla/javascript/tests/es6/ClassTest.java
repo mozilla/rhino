@@ -685,6 +685,151 @@ public class ClassTest {
     }
 
     @Test
+    public void instanceGetter() {
+        Utils.assertWithAllModes_ES6(
+                1,
+                "class A {\n"
+                        + "  bar_;\n"
+                        + "  get bar() { return this.bar_; }\n"
+                        + "  foo(v) { this.bar_ = v; return this.bar; }\n"
+                        + "}\n"
+                        + "new A().foo(1)\n");
+    }
+
+    @Test
+    public void instanceGetterAndSetter() {
+        Utils.assertWithAllModes_ES6(
+                "42!",
+                "class A {\n"
+                        + "  _x = '';\n"
+                        + "  get x() { return this._x; }\n"
+                        + "  set x(v) { this._x = v + '!'; }\n"
+                        + "}\n"
+                        + "var a = new A();\n"
+                        + "a.x = 42;\n"
+                        + "a.x\n");
+    }
+
+    @Test
+    public void instanceSetterOnly() {
+        Utils.assertWithAllModes_ES6(
+                "hit",
+                "var log = '';\n"
+                        + "class A { set x(v) { log = 'hit'; } }\n"
+                        + "new A().x = 1;\n"
+                        + "log\n");
+    }
+
+    @Test
+    public void getterIsOnPrototypeNonEnumerable() {
+        Utils.assertWithAllModes_ES6(
+                "false",
+                "class A { get x() { return 1; } }\n"
+                        + "var d = Object.getOwnPropertyDescriptor(A.prototype, 'x');\n"
+                        + "String(d.enumerable)\n");
+    }
+
+    @Test
+    public void getterIsConfigurable() {
+        Utils.assertWithAllModes_ES6(
+                "true",
+                "class A { get x() { return 1; } }\n"
+                        + "var d = Object.getOwnPropertyDescriptor(A.prototype, 'x');\n"
+                        + "String(d.configurable)\n");
+    }
+
+    @Test
+    public void getterNotOnInstance() {
+        Utils.assertWithAllModes_ES6(
+                "true",
+                "class A { get x() { return 1; } }\n"
+                        + "String(Object.getOwnPropertyDescriptor(new A(), 'x') === undefined)\n");
+    }
+
+    @Test
+    public void staticGetter() {
+        Utils.assertWithAllModes_ES6(
+                7, "class A { static get x() { return 7; } }\n" + "A.x\n");
+    }
+
+    @Test
+    public void staticSetter() {
+        Utils.assertWithAllModes_ES6(
+                "v=9",
+                "var log = '';\n"
+                        + "class A { static set x(v) { log = 'v=' + v; } }\n"
+                        + "A.x = 9;\n"
+                        + "log\n");
+    }
+
+    @Test
+    public void getAsMethodName() {
+        Utils.assertWithAllModes_ES6(
+                1, "class A { get() { return 1; } }\n" + "new A().get()\n");
+    }
+
+    @Test
+    public void setAsMethodName() {
+        Utils.assertWithAllModes_ES6(
+                2, "class A { set() { return 2; } }\n" + "new A().set()\n");
+    }
+
+    @Test
+    public void getAsFieldName() {
+        Utils.assertWithAllModes_ES6(
+                3, "class A { get = 3; }\n" + "new A().get\n");
+    }
+
+    @Test
+    public void getterOnConstructorError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { get constructor() {} }");
+    }
+
+    @Test
+    public void staticGetterOnPrototypeError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Unexpected token", "class Foo { static get prototype() {} }");
+    }
+
+    @Test
+    public void getterWithParameterError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Getter must not take any parameters.", "class Foo { get x(a) {} }");
+    }
+
+    @Test
+    public void setterWithNoParameterError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Setter must take exactly one parameter.", "class Foo { set x() {} }");
+    }
+
+    @Test
+    public void setterWithTwoParameterError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Setter must take exactly one parameter.", "class Foo { set x(a, b) {} }");
+    }
+
+    @Test
+    public void setterWithRestParameterError() {
+        Utils.assertEvaluatorExceptionES6(
+                "Setter must take exactly one parameter.", "class Foo { set x(...r) {} }");
+    }
+
+    @Test
+    public void getterWithSuperAccess() {
+        Utils.assertWithAllModes_ES6(
+                "base-derived",
+                "class Base {\n"
+                        + "  get name() { return 'base'; }\n"
+                        + "}\n"
+                        + "class Child extends Base {\n"
+                        + "  get name() { return super.name + '-derived'; }\n"
+                        + "}\n"
+                        + "new Child().name\n");
+    }
+
+    @Test
     public void functionNamedReturnStillErrors() {
         Utils.assertEvaluatorExceptionES6(
                 "missing ( before function parameters.",

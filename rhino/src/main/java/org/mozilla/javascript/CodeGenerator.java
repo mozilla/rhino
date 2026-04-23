@@ -688,6 +688,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                     // Define instance methods on constructor.prototype
                     String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
+                    int[] methodKinds = (int[]) node.getProp(Node.CLASS_METHOD_KINDS_PROP);
                     // Track the node after the constructor for iterating method children
                     Node nextMethodNode = constructorFn.getNext();
                     if (methodNames != null) {
@@ -696,7 +697,14 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                                     nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
                             addStringPrefix(methodNames[i]);
                             addIndexPrefix(methodFnIndex);
-                            addIcode(Icode_DEFINE_CLASS_METHOD);
+                            int kind = methodKinds == null ? 0 : methodKinds[i];
+                            if (kind == 1) {
+                                addIcode(Icode_DEFINE_CLASS_GETTER);
+                            } else if (kind == 2) {
+                                addIcode(Icode_DEFINE_CLASS_SETTER);
+                            } else {
+                                addIcode(Icode_DEFINE_CLASS_METHOD);
+                            }
                             nextMethodNode = nextMethodNode.getNext();
                         }
                     }
@@ -704,13 +712,22 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     // Define static methods on the constructor itself
                     String[] staticMethodNames =
                             (String[]) node.getProp(Node.CLASS_STATIC_METHODS_PROP);
+                    int[] staticMethodKinds =
+                            (int[]) node.getProp(Node.CLASS_STATIC_METHOD_KINDS_PROP);
                     if (staticMethodNames != null) {
                         for (int i = 0; i < staticMethodNames.length; i++) {
                             int methodFnIndex =
                                     nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
                             addStringPrefix(staticMethodNames[i]);
                             addIndexPrefix(methodFnIndex);
-                            addIcode(Icode_DEFINE_STATIC_CLASS_METHOD);
+                            int kind = staticMethodKinds == null ? 0 : staticMethodKinds[i];
+                            if (kind == 1) {
+                                addIcode(Icode_DEFINE_STATIC_CLASS_GETTER);
+                            } else if (kind == 2) {
+                                addIcode(Icode_DEFINE_STATIC_CLASS_SETTER);
+                            } else {
+                                addIcode(Icode_DEFINE_STATIC_CLASS_METHOD);
+                            }
                             nextMethodNode = nextMethodNode.getNext();
                         }
                     }
