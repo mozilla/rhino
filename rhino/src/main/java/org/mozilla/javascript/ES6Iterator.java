@@ -278,13 +278,7 @@ public abstract class ES6Iterator extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.iterator.abstract");
         }
         NativeObject obj = new NativeObject();
-        obj.setParentScope(s);
-        if (nt instanceof Scriptable) {
-            Object proto = ScriptableObject.getProperty((Scriptable) nt, "prototype");
-            if (proto instanceof Scriptable) {
-                obj.setPrototype((Scriptable) proto);
-            }
-        }
+        ScriptRuntime.setBuiltinProtoAndParent(obj, f, nt, s, TopLevel.Builtins.Iterator);
         return obj;
     }
 
