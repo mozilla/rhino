@@ -82,7 +82,8 @@ public class Node implements Iterable<Node> {
             SUPER_CONSTRUCTOR_SPREAD_CALL = 42, // super() whose single argument is a spread
             CLASS_METHOD_KINDS_PROP = 43, // int[] per-method kind: 0=method,1=getter,2=setter
             CLASS_STATIC_METHOD_KINDS_PROP = 44, // int[] per-static-method kind
-            LAST_PROP = CLASS_STATIC_METHOD_KINDS_PROP,
+            FIELD_KIND_PROP = 45, // 0=value, 1=getter, 2=setter (for DEFINE_FIELD)
+            LAST_PROP = FIELD_KIND_PROP,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
@@ -483,6 +484,8 @@ public class Node implements Iterable<Node> {
                 return "class_method_kinds_prop";
             case CLASS_STATIC_METHOD_KINDS_PROP:
                 return "class_static_method_kinds_prop";
+            case FIELD_KIND_PROP:
+                return "field_kind_prop";
 
             default:
                 Kit.codeBug();

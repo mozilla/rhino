@@ -5776,6 +5776,25 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * Install a private getter or setter on {@code target} keyed by the given {@link Symbol}. Marks
+     * the slot with {@link ScriptableObject#PRIVATE} so it's hidden from enumeration.
+     */
+    public static void definePrivateAccessor(
+            Object target, Symbol key, Object fn, boolean isSetter, Context cx, VarScope scope) {
+        Scriptable obj = toObjectOrNull(cx, target, scope);
+        if (obj == null) {
+            throw undefReadError(target, String.valueOf(key));
+        }
+        if (!(obj instanceof ScriptableObject)) {
+            throw typeErrorById("msg.ctor.not.found", String.valueOf(key));
+        }
+        ScriptableObject so = (ScriptableObject) obj;
+        Callable accessor = (fn instanceof Callable) ? (Callable) fn : null;
+        so.setGetterOrSetter(key, 0, accessor, isSetter);
+        so.setAttributes(key, so.getAttributes(key) | ScriptableObject.PRIVATE);
+    }
+
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {
         // Compared with function it always sets the scope to top scope
         scope = ScriptableObject.getTopLevelScope(scope);

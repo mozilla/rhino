@@ -1886,8 +1886,10 @@ class BodyCodegen {
 
             case Token.DEFINE_FIELD:
                 {
-                    // Children: target, symbol-keyed LOAD_LITERAL, value. Push all three, call
-                    // ScriptRuntime.definePrivateField which leaves value on the stack.
+                    // Children: target, symbol-keyed LOAD_LITERAL, value. Push all three and
+                    // call the runtime helper that installs the value (or getter/setter, per
+                    // FIELD_KIND_PROP) on a private slot, leaving the value on the stack.
+                    int fieldKind = node.getIntProp(Node.FIELD_KIND_PROP, 0);
                     generateExpression(child, node); // target
                     child = child.getNext();
                     generateExpression(child, node); // key (symbol)
@@ -1895,16 +1897,31 @@ class BodyCodegen {
                     child = child.getNext();
                     generateExpression(child, node); // value
                     cfw.add(ByteCode.DUP_X2); // keep a copy of value under target/key
-                    cfw.addALoad(contextLocal);
-                    cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                            "definePrivateField",
-                            "(Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Symbol;"
-                                    + "Ljava/lang/Object;"
-                                    + "Lorg/mozilla/javascript/Context;"
-                                    + "Lorg/mozilla/javascript/VarScope;"
-                                    + ")V");
+                    if (fieldKind == 0) {
+                        cfw.addALoad(contextLocal);
+                        cfw.addALoad(variableObjectLocal);
+                        addScriptRuntimeInvoke(
+                                "definePrivateField",
+                                "(Ljava/lang/Object;"
+                                        + "Lorg/mozilla/javascript/Symbol;"
+                                        + "Ljava/lang/Object;"
+                                        + "Lorg/mozilla/javascript/Context;"
+                                        + "Lorg/mozilla/javascript/VarScope;"
+                                        + ")V");
+                    } else {
+                        cfw.addPush(fieldKind == 2);
+                        cfw.addALoad(contextLocal);
+                        cfw.addALoad(variableObjectLocal);
+                        addScriptRuntimeInvoke(
+                                "definePrivateAccessor",
+                                "(Ljava/lang/Object;"
+                                        + "Lorg/mozilla/javascript/Symbol;"
+                                        + "Ljava/lang/Object;"
+                                        + "Z"
+                                        + "Lorg/mozilla/javascript/Context;"
+                                        + "Lorg/mozilla/javascript/VarScope;"
+                                        + ")V");
+                    }
                 }
                 break;
 

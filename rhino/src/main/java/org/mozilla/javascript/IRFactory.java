@@ -498,7 +498,13 @@ public final class IRFactory {
             astNodePos.push(left);
             try {
                 Node transformedRight = transform(right);
-                return new Node(Token.DEFINE_FIELD, targetNode, loadSymbol, transformedRight);
+                Node defineField =
+                        new Node(Token.DEFINE_FIELD, targetNode, loadSymbol, transformedRight);
+                int kind = node.getIntProp(Node.FIELD_KIND_PROP, 0);
+                if (kind != 0) {
+                    defineField.putIntProp(Node.FIELD_KIND_PROP, kind);
+                }
+                return defineField;
             } finally {
                 astNodePos.pop();
             }
@@ -972,9 +978,12 @@ public final class IRFactory {
         }
 
         // Private fields: this.#name = initializer, marked so the assignment becomes a
-        // DEFINE_FIELD that establishes the slot with attribute PRIVATE.
+        // DEFINE_FIELD that establishes the slot with attribute PRIVATE. Private accessors
+        // (get/set #name) are marked with FIELD_KIND_PROP so DEFINE_FIELD installs a
+        // getter/setter on the slot instead of storing a value.
         java.util.List<String> privateNames = classNode.getPrivateFieldNames();
         java.util.List<AstNode> privateInits = classNode.getPrivateFieldInitializers();
+        java.util.List<ClassNode.MethodKind> privateKinds = classNode.getPrivateFieldKinds();
         for (int i = 0; i < privateNames.size(); i++) {
             KeywordLiteral thisNode = new KeywordLiteral();
             thisNode.setType(Token.THIS);
@@ -989,6 +998,12 @@ public final class IRFactory {
 
             Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
             assign.putIntProp(Node.PRIVATE_FIELD_INIT_PROP, 1);
+            ClassNode.MethodKind kind = privateKinds.get(i);
+            if (kind == ClassNode.MethodKind.GETTER) {
+                assign.putIntProp(Node.FIELD_KIND_PROP, 1);
+            } else if (kind == ClassNode.MethodKind.SETTER) {
+                assign.putIntProp(Node.FIELD_KIND_PROP, 2);
+            }
             initStmts.add(new ExpressionStatement(assign));
         }
 

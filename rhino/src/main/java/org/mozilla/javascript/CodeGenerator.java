@@ -1141,13 +1141,23 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.DEFINE_FIELD:
                 // Children: target, key, value. Pushes all three, pops all three, leaves value
-                // on stack as the expression result.
+                // on stack as the expression result. FIELD_KIND_PROP selects between storing
+                // a value (0), a getter (1), or a setter (2) on the private slot.
                 visitExpression(child, 0); // target
                 child = child.getNext();
                 visitExpression(child, 0); // key (a symbol-valued Node.LOAD_LITERAL)
                 child = child.getNext();
-                visitExpression(child, 0); // value
-                addIcode(Icode_DEFINE_PRIVATE_FIELD);
+                visitExpression(child, 0); // value (or accessor fn)
+                {
+                    int fieldKind = node.getIntProp(Node.FIELD_KIND_PROP, 0);
+                    if (fieldKind == 1) {
+                        addIcode(Icode_DEFINE_PRIVATE_GETTER);
+                    } else if (fieldKind == 2) {
+                        addIcode(Icode_DEFINE_PRIVATE_SETTER);
+                    } else {
+                        addIcode(Icode_DEFINE_PRIVATE_FIELD);
+                    }
+                }
                 stackChange(-2); // three pushed, one left (value)
                 break;
 

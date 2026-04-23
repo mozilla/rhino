@@ -56,8 +56,10 @@ public class ClassNode extends AstNode {
     private List<AstNode> staticComputedFieldInitializers;
     private List<String> privateFieldNames;
     private List<AstNode> privateFieldInitializers;
+    private List<MethodKind> privateFieldKinds;
     private List<String> staticPrivateFieldNames;
     private List<AstNode> staticPrivateFieldInitializers;
+    private List<MethodKind> staticPrivateFieldKinds;
 
     /** Shared SymbolKey for each private name declared in this class. */
     private Map<String, SymbolKey> privateSymbols;
@@ -284,12 +286,18 @@ public class ClassNode extends AstNode {
     }
 
     public void addPrivateField(String name, AstNode initializer) {
+        addPrivateMember(name, initializer, MethodKind.METHOD);
+    }
+
+    public void addPrivateMember(String name, AstNode initializer, MethodKind kind) {
         if (privateFieldNames == null) {
             privateFieldNames = new ArrayList<>();
             privateFieldInitializers = new ArrayList<>();
+            privateFieldKinds = new ArrayList<>();
         }
         privateFieldNames.add(name);
         privateFieldInitializers.add(initializer);
+        privateFieldKinds.add(kind);
         if (initializer != null) {
             initializer.setParent(this);
         }
@@ -310,13 +318,23 @@ public class ClassNode extends AstNode {
                 : privateFieldInitializers;
     }
 
+    public List<MethodKind> getPrivateFieldKinds() {
+        return privateFieldKinds == null ? Collections.emptyList() : privateFieldKinds;
+    }
+
     public void addStaticPrivateField(String name, AstNode initializer) {
+        addStaticPrivateMember(name, initializer, MethodKind.METHOD);
+    }
+
+    public void addStaticPrivateMember(String name, AstNode initializer, MethodKind kind) {
         if (staticPrivateFieldNames == null) {
             staticPrivateFieldNames = new ArrayList<>();
             staticPrivateFieldInitializers = new ArrayList<>();
+            staticPrivateFieldKinds = new ArrayList<>();
         }
         staticPrivateFieldNames.add(name);
         staticPrivateFieldInitializers.add(initializer);
+        staticPrivateFieldKinds.add(kind);
         if (initializer != null) {
             initializer.setParent(this);
         }
@@ -335,6 +353,54 @@ public class ClassNode extends AstNode {
         return staticPrivateFieldInitializers == null
                 ? Collections.emptyList()
                 : staticPrivateFieldInitializers;
+    }
+
+    public List<MethodKind> getStaticPrivateFieldKinds() {
+        return staticPrivateFieldKinds == null ? Collections.emptyList() : staticPrivateFieldKinds;
+    }
+
+    /**
+     * Check whether adding a private member of the given kind with the given name would be a
+     * duplicate. Private getters and setters may share a name with each other within the same
+     * static/instance bucket, but any other combination (including instance vs static overlap) is a
+     * duplicate.
+     */
+    public boolean isDuplicatePrivateMember(String name, MethodKind kind, boolean isStatic) {
+        // Any use of this name in the opposite bucket (instance vs static) is a duplicate.
+        List<String> otherNames = isStatic ? privateFieldNames : staticPrivateFieldNames;
+        if (otherNames != null && otherNames.contains(name)) {
+            return true;
+        }
+        List<String> names = isStatic ? staticPrivateFieldNames : privateFieldNames;
+        List<MethodKind> kinds = isStatic ? staticPrivateFieldKinds : privateFieldKinds;
+        if (names == null) {
+            return false;
+        }
+        boolean sawGetter = false;
+        boolean sawSetter = false;
+        for (int i = 0; i < names.size(); i++) {
+            if (!name.equals(names.get(i))) {
+                continue;
+            }
+            MethodKind existing = kinds.get(i);
+            if (existing == MethodKind.GETTER) {
+                sawGetter = true;
+            } else if (existing == MethodKind.SETTER) {
+                sawSetter = true;
+            } else {
+                return true;
+            }
+        }
+        if (!sawGetter && !sawSetter) {
+            return false;
+        }
+        if (kind == MethodKind.GETTER) {
+            return sawGetter;
+        }
+        if (kind == MethodKind.SETTER) {
+            return sawSetter;
+        }
+        return true;
     }
 
     /** Returns the (possibly empty) map of private-name -> shared SymbolKey. */

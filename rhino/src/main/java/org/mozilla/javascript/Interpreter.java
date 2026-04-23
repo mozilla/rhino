@@ -1560,6 +1560,8 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD] =
                 new DoDefineStaticClassComputedField();
         instructionObjs[base + Icode_DEFINE_PRIVATE_FIELD] = new DoDefinePrivateField();
+        instructionObjs[base + Icode_DEFINE_PRIVATE_GETTER] = new DoDefinePrivateAccessor(false);
+        instructionObjs[base + Icode_DEFINE_PRIVATE_SETTER] = new DoDefinePrivateAccessor(true);
         instructionObjs[base + Icode_STORE_CLASS_COMPUTED_KEYS] = new DoStoreClassComputedKeys();
         instructionObjs[base + Icode_GET_CLASS_COMPUTED_KEY] = new DoGetClassComputedKey();
         instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
@@ -4651,6 +4653,32 @@ public final class Interpreter extends Icode implements Evaluator {
                 target = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             ScriptRuntime.definePrivateField(target, (Symbol) key, value, cx, frame.scope);
             frame.stack[state.stackTop] = value;
+            return null;
+        }
+    }
+
+    private static class DoDefinePrivateAccessor extends InstructionClass {
+        private final boolean isSetter;
+
+        DoDefinePrivateAccessor(boolean isSetter) {
+            this.isSetter = isSetter;
+        }
+
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack: ... target key fn -> ... fn
+            Object fn = frame.stack[state.stackTop];
+            if (fn == DOUBLE_MARK) fn = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            Object target = frame.stack[state.stackTop];
+            if (target == DOUBLE_MARK)
+                target = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            ScriptRuntime.definePrivateAccessor(
+                    target, (Symbol) key, fn, isSetter, cx, frame.scope);
+            frame.stack[state.stackTop] = fn;
             return null;
         }
     }
