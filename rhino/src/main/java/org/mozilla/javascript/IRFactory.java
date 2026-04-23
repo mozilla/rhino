@@ -1147,8 +1147,15 @@ public final class IRFactory {
                 Node call = createCallOrNew(Token.CALL, new Node(Token.THISFN));
                 call.setLineColumnNumber(node.getLineno(), node.getColumn());
                 List<AstNode> args = node.getArguments();
-                for (int i = 0; i < args.size(); i++) {
-                    call.addChildToBack(transform(args.get(i)));
+                if (args.size() == 1 && args.get(0) instanceof Spread) {
+                    // super(...expr): evaluate expr and spread its elements at runtime.
+                    Spread spread = (Spread) args.get(0);
+                    call.addChildToBack(transform(spread.getExpression()));
+                    call.putIntProp(Node.SUPER_CONSTRUCTOR_SPREAD_CALL, 1);
+                } else {
+                    for (int i = 0; i < args.size(); i++) {
+                        call.addChildToBack(transform(args.get(i)));
+                    }
                 }
                 call.putIntProp(Node.SUPER_CONSTRUCTOR_CALL, 1);
                 return call;

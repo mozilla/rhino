@@ -3147,7 +3147,19 @@ class BodyCodegen {
         cfw.addALoad(funObjLocal);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        generateCallArgArray(node, firstArgChild, false);
+        if (node.getIntProp(Node.SUPER_CONSTRUCTOR_SPREAD_CALL, 0) == 1) {
+            // super(...expr): the single child produces an array-like whose elements are
+            // spread as the super constructor arguments.
+            cfw.addALoad(contextLocal);
+            generateExpression(firstArgChild, node);
+            addScriptRuntimeInvoke(
+                    "getApplyArguments",
+                    "(Lorg/mozilla/javascript/Context;"
+                            + "Ljava/lang/Object;"
+                            + ")[Ljava/lang/Object;");
+        } else {
+            generateCallArgArray(node, firstArgChild, false);
+        }
         addScriptRuntimeInvoke(
                 "superConstructorCall",
                 "(Lorg/mozilla/javascript/BaseFunction;"

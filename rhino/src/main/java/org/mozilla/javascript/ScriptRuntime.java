@@ -3759,7 +3759,7 @@ public class ScriptRuntime {
                         || ScriptableObject.hasProperty(obj, "length"));
     }
 
-    static Object[] getApplyArguments(Context cx, Object arg1) {
+    public static Object[] getApplyArguments(Context cx, Object arg1) {
         if (arg1 == null || Undefined.isUndefined(arg1)) {
             return ScriptRuntime.emptyArgs;
         } else if (arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1)) {

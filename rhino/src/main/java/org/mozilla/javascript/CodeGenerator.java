@@ -869,7 +869,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         addUint8(type == Token.NEW ? 1 : 0);
                         addUint16(lineNumber & 0xFFFF);
                     } else if (node.getIntProp(Node.SUPER_CONSTRUCTOR_CALL, 0) == 1) {
-                        addIndexOp(Icode_CONSTRUCT_SUPER, argCount);
+                        if (node.getIntProp(Node.SUPER_CONSTRUCTOR_SPREAD_CALL, 0) == 1) {
+                            addIcode(Icode_CONSTRUCT_SUPER_SPREAD);
+                        } else {
+                            addIndexOp(Icode_CONSTRUCT_SUPER, argCount);
+                        }
                     } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                         addIndexOp(Icode_CALL_ON_SUPER, argCount);
                     } else {

@@ -60,6 +60,42 @@ public class ClassTest {
     }
 
     @Test
+    public void defaultDerivedConstructorCallsSuper() {
+        Utils.assertWithAllModes_ES6(
+                "called",
+                "var result = '';\n"
+                        + "class Base {\n"
+                        + "  constructor() { result = 'called'; }\n"
+                        + "}\n"
+                        + "class Child extends Base {}\n"
+                        + "new Child();\n"
+                        + "result\n");
+    }
+
+    @Test
+    public void defaultDerivedConstructorForwardsArguments() {
+        Utils.assertWithAllModes_ES6(
+                "1-2-3",
+                "class Base {\n"
+                        + "  constructor(a, b, c) { this.x = a + '-' + b + '-' + c; }\n"
+                        + "}\n"
+                        + "class Child extends Base {}\n"
+                        + "new Child(1, 2, 3).x\n");
+    }
+
+    @Test
+    public void defaultDerivedConstructorInstanceOf() {
+        Utils.assertWithAllModes_ES6(
+                "true-true",
+                "class Base {\n"
+                        + "  constructor() {}\n"
+                        + "}\n"
+                        + "class Child extends Base {}\n"
+                        + "var c = new Child();\n"
+                        + "(c instanceof Child) + '-' + (c instanceof Base)\n");
+    }
+
+    @Test
     public void classExtendsBasic() {
         Utils.assertWithAllModes_ES6(
                 "1-2",

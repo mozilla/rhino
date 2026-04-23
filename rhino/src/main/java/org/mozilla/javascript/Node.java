@@ -79,7 +79,8 @@ public class Node implements Iterable<Node> {
             CLASS_STATIC_COMPUTED_FIELDS_COUNT = 39, // int count of static computed fields
             PRIVATE_FIELD_INIT_PROP = 40, // marks a synthesized init of a class private field
             CLASS_COMPUTED_FIELD_KEYS_COUNT = 41, // int count of instance computed field keys
-            LAST_PROP = CLASS_COMPUTED_FIELD_KEYS_COUNT,
+            SUPER_CONSTRUCTOR_SPREAD_CALL = 42, // super() whose single argument is a spread
+            LAST_PROP = SUPER_CONSTRUCTOR_SPREAD_CALL,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
@@ -474,6 +475,8 @@ public class Node implements Iterable<Node> {
                 return "private_field_init_prop";
             case CLASS_COMPUTED_FIELD_KEYS_COUNT:
                 return "class_computed_field_keys_count";
+            case SUPER_CONSTRUCTOR_SPREAD_CALL:
+                return "super_constructor_spread_call";
 
             default:
                 Kit.codeBug();
