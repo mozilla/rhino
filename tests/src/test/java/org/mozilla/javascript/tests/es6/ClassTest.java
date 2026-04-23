@@ -626,4 +626,68 @@ public class ClassTest {
                         + "}\n"
                         + "Array.from(Foo.gen()).join(',')\n");
     }
+
+    @Test
+    public void reservedWordAsMethodName() {
+        Utils.assertWithAllModes_ES6(
+                "Hello!", "class A { return() { return 'Hello!'; } } new A().return()");
+    }
+
+    @Test
+    public void severalReservedWordsAsMethodNames() {
+        Utils.assertWithAllModes_ES6(
+                "r,if,w,t,n",
+                "class A {\n"
+                        + "  return() { return 'r'; }\n"
+                        + "  if() { return 'if'; }\n"
+                        + "  while() { return 'w'; }\n"
+                        + "  true() { return 't'; }\n"
+                        + "  null() { return 'n'; }\n"
+                        + "}\n"
+                        + "var a = new A();\n"
+                        + "[a.return(), a.if(), a.while(), a.true(), a.null()].join(',')\n");
+    }
+
+    @Test
+    public void strictReservedWordAsMethodName() {
+        Utils.assertWithAllModes_ES6(
+                "p", "class A { private() { return 'p'; } } new A().private()");
+    }
+
+    @Test
+    public void staticReservedWordMethod() {
+        Utils.assertWithAllModes_ES6(
+                "sr", "class A { static return() { return 'sr'; } } A.return()");
+    }
+
+    @Test
+    public void reservedWordAsField() {
+        Utils.assertWithAllModes_ES6(
+                "r,if", "class A { return = 'r'; if = 'if'; } var a = new A(); a.return + ',' + a.if");
+    }
+
+    @Test
+    public void asyncReservedWordMethod() {
+        Utils.assertWithAllModes_ES6(
+                "ar",
+                "var result;\n"
+                        + "class A { async return() { return 'ar'; } }\n"
+                        + "new A().return().then(r => { result = r; });\n"
+                        + "result\n");
+    }
+
+    @Test
+    public void generatorReservedWordMethod() {
+        Utils.assertWithAllModes_ES6(
+                "y1,y2",
+                "class A { *yield() { yield 'y1'; yield 'y2'; } }\n"
+                        + "Array.from(new A().yield()).join(',')\n");
+    }
+
+    @Test
+    public void functionNamedReturnStillErrors() {
+        Utils.assertEvaluatorExceptionES6(
+                "missing ( before function parameters.",
+                "function return() { return 'Hello!'; }");
+    }
 }
