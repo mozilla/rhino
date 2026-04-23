@@ -1379,13 +1379,30 @@ public class Parser {
         fn.setMethodDefinition(true);
         fn.setIsClassConstructor(true);
 
+        Block body = new Block(pos);
+
         if (isDerived) {
             // Derived default constructor: constructor(...args) { super(...args); }
             fn.setHasRestParameter(true);
+            Name argsParam = new Name(pos, "args");
+            fn.addParam(argsParam);
+            fn.putSymbol(new Symbol(Token.LP, "args"));
+
+            KeywordLiteral superTarget = new KeywordLiteral(pos, 0);
+            superTarget.setType(Token.SUPER);
+
+            Spread spread = new Spread(pos, 0);
+            spread.setExpression(new Name(pos, "args"));
+
+            FunctionCall superCall = new FunctionCall(pos);
+            superCall.setTarget(superTarget);
+            List<AstNode> callArgs = new ArrayList<>(1);
+            callArgs.add(spread);
+            superCall.setArguments(callArgs);
+
+            body.addStatement(new ExpressionStatement(superCall));
         }
 
-        // Create an empty body for now - IRFactory will handle the default constructor semantics
-        Block body = new Block(pos);
         fn.setBody(body);
         fn.setLength(0);
 

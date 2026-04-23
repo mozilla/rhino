@@ -1493,6 +1493,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.CALL] = new DoCallByteCode();
         instructionObjs[base + Icode_CALL_ON_SUPER] = new DoCallByteCode();
         instructionObjs[base + Icode_CONSTRUCT_SUPER] = new DoConstructSuper();
+        instructionObjs[base + Icode_CONSTRUCT_SUPER_SPREAD] = new DoConstructSuperSpread();
         instructionObjs[base + Icode_CLASS_EXPR] = new DoClassExpr();
         instructionObjs[base + Icode_TAIL_CALL] = new DoCallByteCode();
         instructionObjs[base + Token.REF_CALL] = new DoCallByteCode();
@@ -3802,6 +3803,38 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             ctx.out.println(tname + " " + ctx.indexReg);
+        }
+    }
+
+    private static class DoConstructSuperSpread extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (state.instructionCounting) {
+                cx.instructionCount += INVOCATION_COST;
+            }
+            // stack layout: lookup_result arrayArg -> result
+            Object arrayArg = frame.stack[state.stackTop];
+            if (arrayArg == DOUBLE_MARK)
+                arrayArg = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            state.stackTop--;
+
+            Scriptable homeObject = frame.fnOrScript.getHomeObject();
+            if (homeObject == null || !(homeObject instanceof Constructable)) {
+                throw ScriptRuntime.typeErrorById("msg.extends.not.ctor");
+            }
+
+            Object[] outArgs = ScriptRuntime.getApplyArguments(cx, arrayArg);
+            Object constructed;
+            if (homeObject instanceof JSFunction) {
+                constructed =
+                        ((JSFunction) homeObject)
+                                .construct(cx, frame.newTarget, frame.scope, null, outArgs);
+            } else {
+                constructed = ((Constructable) homeObject).construct(cx, frame.scope, outArgs);
+            }
+            frame.thisObj = constructed;
+            frame.stack[state.stackTop] = constructed;
+            return null;
         }
     }
 

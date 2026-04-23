@@ -165,9 +165,13 @@ abstract class Icode {
             // Call super() in a derived class constructor
             Icode_CONSTRUCT_SUPER = Icode_DELPROP_SUPER - 1,
 
+            // Call super(...arr) in a derived class constructor. Top of stack is the
+            // array-like whose elements are spread as the super constructor arguments.
+            Icode_CONSTRUCT_SUPER_SPREAD = Icode_CONSTRUCT_SUPER - 1,
+
             // Class declaration with extends: stack has superclass, creates constructor with
             // homeObject
-            Icode_CLASS_STMT = Icode_CONSTRUCT_SUPER - 1,
+            Icode_CLASS_STMT = Icode_CONSTRUCT_SUPER_SPREAD - 1,
 
             // Class expression with extends: stack has superclass, creates constructor with
             // homeObject
@@ -400,6 +404,8 @@ abstract class Icode {
                 return "DELPROP_SUPER";
             case Icode_CONSTRUCT_SUPER:
                 return "CONSTRUCT_SUPER";
+            case Icode_CONSTRUCT_SUPER_SPREAD:
+                return "CONSTRUCT_SUPER_SPREAD";
             case Icode_CLASS_STMT:
                 return "CLASS_STMT";
             case Icode_CLASS_EXPR:
