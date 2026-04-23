@@ -1141,29 +1141,27 @@ public class Parser {
                 continue;
             }
 
-            // Check for 'static' keyword (Token.RESERVED in strict mode)
+            // Check for 'static' modifier. It is a Token.RESERVED in strict mode; other
+            // reserved words that reach this point are used as method/field names and are
+            // handled by the member name parsing below.
             boolean isStatic = false;
-            if (peekToken() == Token.RESERVED) {
+            if (peekToken() == Token.RESERVED && "static".equals(ts.getString())) {
                 consumeToken();
-                if ("static".equals(ts.getString())) {
-                    int nextTt = peekToken();
-                    if (nextTt == Token.LP) {
-                        // 'static' used as an instance method name: static() {}
-                        FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
-                        classNode.addMethod("static", method);
-                        continue;
-                    } else if (nextTt == Token.NAME
-                            || nextTt == Token.PRIVATE_NAME
-                            || nextTt == Token.STRING
-                            || nextTt == Token.NUMBER
-                            || nextTt == Token.BIGINT
-                            || nextTt == Token.LB
-                            || nextTt == Token.MUL) {
-                        isStatic = true;
-                    } else {
-                        reportError("msg.unexpected.token");
-                        continue;
-                    }
+                int nextTt = peekToken();
+                if (nextTt == Token.LP) {
+                    // 'static' used as an instance method name: static() {}
+                    FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true);
+                    classNode.addMethod("static", method);
+                    continue;
+                } else if (nextTt == Token.NAME
+                        || nextTt == Token.PRIVATE_NAME
+                        || nextTt == Token.STRING
+                        || nextTt == Token.NUMBER
+                        || nextTt == Token.BIGINT
+                        || nextTt == Token.LB
+                        || nextTt == Token.MUL
+                        || isKeywordAsIdentifierName(nextTt)) {
+                    isStatic = true;
                 } else {
                     reportError("msg.unexpected.token");
                     continue;
@@ -1206,6 +1204,11 @@ public class Parser {
                 consumeToken();
                 computedKeyExpr = assignExpr();
                 mustMatchToken(Token.RB, "msg.no.bracket.index", true);
+            } else if (isKeywordAsIdentifierName(tt)) {
+                // Reserved words are valid IdentifierNames, so they can be used as
+                // method or field names (e.g., `class A { return() {} }`).
+                consumeToken();
+                memberName = ts.getString();
             } else {
                 reportError("msg.unexpected.token");
                 consumeToken();
@@ -1222,7 +1225,8 @@ public class Parser {
                         || nextTt == Token.NUMBER
                         || nextTt == Token.BIGINT
                         || nextTt == Token.LB
-                        || nextTt == Token.MUL) {
+                        || nextTt == Token.MUL
+                        || isKeywordAsIdentifierName(nextTt)) {
                     isAsync = true;
                     isStringOrNumericName = false;
                     // Check for async generator: async *method()
@@ -1253,6 +1257,9 @@ public class Parser {
                         consumeToken();
                         computedKeyExpr = assignExpr();
                         mustMatchToken(Token.RB, "msg.no.bracket.index", true);
+                    } else if (isKeywordAsIdentifierName(tt)) {
+                        consumeToken();
+                        memberName = ts.getString();
                     }
                 }
             }
@@ -3329,6 +3336,58 @@ public class Parser {
         if (pn.getType() == Token.GETPROP)
             return isNotValidSimpleAssignmentTarget(((PropertyGet) pn).getLeft());
         return pn.getType() == Token.QUESTION_DOT;
+    }
+
+    /**
+     * Returns true if the token type represents a keyword whose lexeme is a valid
+     * IdentifierName. Per the ES spec, class method/property names and object literal
+     * property names may be any IdentifierName, which includes all reserved words.
+     */
+    private static boolean isKeywordAsIdentifierName(int tt) {
+        switch (tt) {
+            case Token.BREAK:
+            case Token.CASE:
+            case Token.CATCH:
+            case Token.CLASS:
+            case Token.CONST:
+            case Token.CONTINUE:
+            case Token.DEBUGGER:
+            case Token.DEFAULT:
+            case Token.DELPROP:
+            case Token.DO:
+            case Token.ELSE:
+            case Token.EXPORT:
+            case Token.EXTENDS:
+            case Token.FALSE:
+            case Token.FINALLY:
+            case Token.FOR:
+            case Token.FUNCTION:
+            case Token.IF:
+            case Token.IMPORT:
+            case Token.IN:
+            case Token.INSTANCEOF:
+            case Token.LET:
+            case Token.NEW:
+            case Token.NULL:
+            case Token.RESERVED:
+            case Token.RETURN:
+            case Token.SUPER:
+            case Token.SWITCH:
+            case Token.THIS:
+            case Token.THROW:
+            case Token.TRUE:
+            case Token.TRY:
+            case Token.TYPEOF:
+            case Token.UNDEFINED:
+            case Token.VAR:
+            case Token.VOID:
+            case Token.WHILE:
+            case Token.WITH:
+            case Token.YIELD:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private AstNode condExpr() throws IOException {
