@@ -1334,10 +1334,10 @@ public class Parser {
                 }
                 constructor = function(FunctionNode.FUNCTION_EXPRESSION, true, false, true);
             } else if (peekToken() == Token.LP) {
-                if (!isComputed && "constructor".equals(memberName)) {
-                    // `constructor` cannot be a method name if it has modifiers
-                    // (get/set/async/*), and never allowed as a data-method
-                    // name apart from the real constructor handled above.
+                if (!isComputed && !isStatic && "constructor".equals(memberName)) {
+                    // Non-static `constructor` cannot be a method name if it has
+                    // modifiers (get/set/async/*); the real constructor is handled
+                    // above. Static methods named `constructor` are allowed.
                     reportError("msg.unexpected.token");
                 }
                 FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
@@ -3413,9 +3413,9 @@ public class Parser {
     }
 
     /**
-     * Returns true if the token type represents a keyword whose lexeme is a valid
-     * IdentifierName. Per the ES spec, class method/property names and object literal
-     * property names may be any IdentifierName, which includes all reserved words.
+     * Returns true if the token type represents a keyword whose lexeme is a valid IdentifierName.
+     * Per the ES spec, class method/property names and object literal property names may be any
+     * IdentifierName, which includes all reserved words.
      */
     private static boolean isKeywordAsIdentifierName(int tt) {
         switch (tt) {
