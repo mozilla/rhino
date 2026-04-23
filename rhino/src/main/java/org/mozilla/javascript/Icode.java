@@ -214,10 +214,16 @@ abstract class Icode {
             // Define a class private field: stack has target, symbol key, value -> ...
             Icode_DEFINE_PRIVATE_FIELD = Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD - 1,
 
+            // Define a class private getter: stack has target, symbol key, fn -> ... fn
+            Icode_DEFINE_PRIVATE_GETTER = Icode_DEFINE_PRIVATE_FIELD - 1,
+
+            // Define a class private setter: stack has target, symbol key, fn -> ... fn
+            Icode_DEFINE_PRIVATE_SETTER = Icode_DEFINE_PRIVATE_GETTER - 1,
+
             // Store instance computed field keys on a constructor.
             // Stack has constructor and `count` keys, with the constructor underneath.
             // indexReg holds `count`. After the op: ... constructor.
-            Icode_STORE_CLASS_COMPUTED_KEYS = Icode_DEFINE_PRIVATE_FIELD - 1,
+            Icode_STORE_CLASS_COMPUTED_KEYS = Icode_DEFINE_PRIVATE_SETTER - 1,
 
             // Push the i-th pre-evaluated instance computed field key of the currently
             // executing function onto the stack. indexReg holds the index.
@@ -446,6 +452,10 @@ abstract class Icode {
                 return "DEFINE_STATIC_CLASS_COMPUTED_FIELD";
             case Icode_DEFINE_PRIVATE_FIELD:
                 return "DEFINE_PRIVATE_FIELD";
+            case Icode_DEFINE_PRIVATE_GETTER:
+                return "DEFINE_PRIVATE_GETTER";
+            case Icode_DEFINE_PRIVATE_SETTER:
+                return "DEFINE_PRIVATE_SETTER";
             case Icode_STORE_CLASS_COMPUTED_KEYS:
                 return "STORE_CLASS_COMPUTED_KEYS";
             case Icode_GET_CLASS_COMPUTED_KEY:

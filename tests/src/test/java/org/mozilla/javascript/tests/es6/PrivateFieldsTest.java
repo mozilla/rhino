@@ -454,4 +454,111 @@ public class PrivateFieldsTest {
                         + "try { C.read({}); 'no error'; }\n"
                         + "catch (e) { e.name; }\n");
     }
+
+    @Test
+    public void privateGetter() {
+        Utils.assertWithAllModes_ES6(
+                42,
+                "class A {\n"
+                        + "  #bar_;\n"
+                        + "  get #bar() { return this.#bar_; }\n"
+                        + "  foo(v) { this.#bar_ = v; return this.#bar; }\n"
+                        + "}\n"
+                        + "new A().foo(42)\n");
+    }
+
+    @Test
+    public void privateSetter() {
+        Utils.assertWithAllModes_ES6(
+                20,
+                "class A {\n"
+                        + "  #raw = 0;\n"
+                        + "  set #x(v) { this.#raw = v * 2; }\n"
+                        + "  write(v) { this.#x = v; return this.#raw; }\n"
+                        + "}\n"
+                        + "new A().write(10)\n");
+    }
+
+    @Test
+    public void privateGetterAndSetterSameName() {
+        Utils.assertWithAllModes_ES6(
+                91,
+                "class C {\n"
+                        + "  #raw = 0;\n"
+                        + "  get #prop() { return this.#raw + 1; }\n"
+                        + "  set #prop(v) { this.#raw = v - 10; }\n"
+                        + "  ping(v) { this.#prop = v; return this.#prop; }\n"
+                        + "}\n"
+                        + "new C().ping(100)\n");
+    }
+
+    @Test
+    public void privateGetterReadsWithoutSetter() {
+        Utils.assertWithAllModes_ES6(
+                7,
+                "class A {\n"
+                        + "  get #g() { return 7; }\n"
+                        + "  peek() { return this.#g; }\n"
+                        + "}\n"
+                        + "new A().peek()\n");
+    }
+
+    @Test
+    public void writeToGetterOnlyPrivatePropertyThrowsInStrict() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class A { get #g() { return 7; } write() { this.#g = 99; } }\n"
+                        + "try { new A().write(); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateAccessorNotEnumerable() {
+        Utils.assertWithAllModes_ES6(
+                "",
+                "class A { get #x() { return 1; } }\n"
+                        + "var keys = Object.getOwnPropertySymbols(new A());\n"
+                        + "keys.join(',')\n");
+    }
+
+    @Test
+    public void duplicatePrivateGetterIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class Bad { get #x() {} get #x() {} }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateFieldAndGetterSameNameIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class Bad { #x; get #x() {} }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateGetterWithParamsIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class Bad { get #x(a) { return 1; } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateSetterWithNoParamsIsSyntaxError() {
+        Utils.assertWithAllModes_ES6(
+                "SyntaxError",
+                "try { eval('class Bad { set #x() { } }'); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
+
+    @Test
+    public void privateAccessorReadFromForeignObjectThrowsTypeError() {
+        Utils.assertWithAllModes_ES6(
+                "TypeError",
+                "class C { get #g() { return 1; } run(o) { return o.#g; } }\n"
+                        + "try { new C().run({}); 'no error'; }\n"
+                        + "catch (e) { e.name; }\n");
+    }
 }

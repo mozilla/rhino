@@ -1365,15 +1365,16 @@ public class Parser {
                     // TODO: computed method names need additional support in ClassNode/IRFactory
                     reportError("msg.unexpected.token");
                 } else if (isPrivateName) {
-                    if (accessorKind != ClassNode.MethodKind.METHOD) {
-                        // TODO: private accessors not yet supported
+                    if (isStatic && accessorKind != ClassNode.MethodKind.METHOD) {
+                        // TODO: static private accessors not yet supported
                         reportError("msg.unexpected.token");
-                    } else if (classNode.hasPrivateName(memberName)) {
+                    } else if (classNode.isDuplicatePrivateMember(
+                            memberName, accessorKind, isStatic)) {
                         reportError("msg.dup.private.name", memberName);
                     } else if (isStatic) {
-                        classNode.addStaticPrivateField(memberName, method);
+                        classNode.addStaticPrivateMember(memberName, method, accessorKind);
                     } else {
-                        classNode.addPrivateField(memberName, method);
+                        classNode.addPrivateMember(memberName, method, accessorKind);
                     }
                 } else if (isStatic) {
                     classNode.addStaticMethod(memberName, method, accessorKind);
@@ -1396,7 +1397,8 @@ public class Parser {
                     consumeToken();
                 }
                 if (isPrivateName) {
-                    if (classNode.hasPrivateName(memberName)) {
+                    if (classNode.isDuplicatePrivateMember(
+                            memberName, ClassNode.MethodKind.METHOD, isStatic)) {
                         reportError("msg.dup.private.name", memberName);
                     } else if (isStatic) {
                         classNode.addStaticPrivateField(memberName, initializer);
