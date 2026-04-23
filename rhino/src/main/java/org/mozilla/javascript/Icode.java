@@ -190,11 +190,23 @@ abstract class Icode {
             // Define a method on a class prototype
             Icode_DEFINE_CLASS_METHOD = Icode_WRAP_AWAIT - 1,
 
+            // Define a getter on a class prototype
+            Icode_DEFINE_CLASS_GETTER = Icode_DEFINE_CLASS_METHOD - 1,
+
+            // Define a setter on a class prototype
+            Icode_DEFINE_CLASS_SETTER = Icode_DEFINE_CLASS_GETTER - 1,
+
             // Define a static method on a class constructor
-            Icode_DEFINE_STATIC_CLASS_METHOD = Icode_DEFINE_CLASS_METHOD - 1,
+            Icode_DEFINE_STATIC_CLASS_METHOD = Icode_DEFINE_CLASS_SETTER - 1,
+
+            // Define a static getter on a class constructor
+            Icode_DEFINE_STATIC_CLASS_GETTER = Icode_DEFINE_STATIC_CLASS_METHOD - 1,
+
+            // Define a static setter on a class constructor
+            Icode_DEFINE_STATIC_CLASS_SETTER = Icode_DEFINE_STATIC_CLASS_GETTER - 1,
 
             // Define a static named field on a class constructor (value on stack)
-            Icode_DEFINE_STATIC_CLASS_FIELD = Icode_DEFINE_STATIC_CLASS_METHOD - 1,
+            Icode_DEFINE_STATIC_CLASS_FIELD = Icode_DEFINE_STATIC_CLASS_SETTER - 1,
 
             // Define a static computed field on a class constructor (key and value on stack)
             Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD = Icode_DEFINE_STATIC_CLASS_FIELD - 1,
@@ -418,8 +430,16 @@ abstract class Icode {
                 return "WRAP_AWAIT";
             case Icode_DEFINE_CLASS_METHOD:
                 return "DEFINE_CLASS_METHOD";
+            case Icode_DEFINE_CLASS_GETTER:
+                return "DEFINE_CLASS_GETTER";
+            case Icode_DEFINE_CLASS_SETTER:
+                return "DEFINE_CLASS_SETTER";
             case Icode_DEFINE_STATIC_CLASS_METHOD:
                 return "DEFINE_STATIC_CLASS_METHOD";
+            case Icode_DEFINE_STATIC_CLASS_GETTER:
+                return "DEFINE_STATIC_CLASS_GETTER";
+            case Icode_DEFINE_STATIC_CLASS_SETTER:
+                return "DEFINE_STATIC_CLASS_SETTER";
             case Icode_DEFINE_STATIC_CLASS_FIELD:
                 return "DEFINE_STATIC_CLASS_FIELD";
             case Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD:

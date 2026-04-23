@@ -785,6 +785,8 @@ public final class IRFactory {
             if (hasMethods) {
                 classSetup.putProp(
                         Node.CLASS_METHODS_PROP, classNode.getMethodNames().toArray(new String[0]));
+                classSetup.putProp(
+                        Node.CLASS_METHOD_KINDS_PROP, toKindInts(classNode.getMethodKinds()));
             }
 
             // Add static method nodes as children (after instance methods)
@@ -795,6 +797,9 @@ public final class IRFactory {
                 classSetup.putProp(
                         Node.CLASS_STATIC_METHODS_PROP,
                         classNode.getStaticMethodNames().toArray(new String[0]));
+                classSetup.putProp(
+                        Node.CLASS_STATIC_METHOD_KINDS_PROP,
+                        toKindInts(classNode.getStaticMethodKinds()));
             }
 
             // Add static named field value expressions as children
@@ -909,6 +914,14 @@ public final class IRFactory {
             return setName;
         }
         return constructorNode;
+    }
+
+    private static int[] toKindInts(java.util.List<ClassNode.MethodKind> kinds) {
+        int[] out = new int[kinds.size()];
+        for (int i = 0; i < kinds.size(); i++) {
+            out[i] = kinds.get(i).ordinal();
+        }
+        return out;
     }
 
     private void injectFieldInitializers(
