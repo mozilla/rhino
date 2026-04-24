@@ -37,6 +37,15 @@ public final class ES6Generator extends ScriptableObject {
     private int lineNumber;
     private State state = State.SUSPENDED_START;
     private Object delegee;
+    private boolean delegeeIsAsync;
+    // When the async driver is awaiting a Promise returned by the async delegee (from
+    // next/throw/return), the next resumeLocal/resumeAbruptLocal call provides the awaited
+    // IteratorResult (or rejection reason) and must be routed back into the delegee state
+    // machine instead of into the inner generator body.
+    private boolean awaitingDelegeeStep;
+    // Op used to resume the inner generator once the delegee signals done=true while awaiting a
+    // step. GENERATOR_SEND for next()/throw(); GENERATOR_CLOSE for return().
+    private int delegeeDoneOp = NativeGenerator.GENERATOR_SEND;
 
     static ScriptableObject init(Context cx, TopLevel scope, boolean sealed) {
 
@@ -234,7 +243,163 @@ public final class ES6Generator extends ScriptableObject {
         }
     }
 
+    /**
+     * Call {@code next} on an async delegee. The delegee returns a Promise that the async driver
+     * awaits; control flow resumes in {@link #processAsyncDelegeeResult} with the resolved
+     * IteratorResult (or in {@link #resumeAbruptLocal} on rejection).
+     */
+    private Scriptable resumeAsyncDelegee(Context cx, VarScope scope, Object value) {
+        try {
+            Object[] nextArgs =
+                    Undefined.isUndefined(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
+            var nextFn = ScriptRuntime.getPropAndThis(delegee, ES6Iterator.NEXT_METHOD, cx, scope);
+            Object promise = nextFn.call(cx, scope, nextArgs);
+            return awaitDelegeeStep(cx, scope, promise, NativeGenerator.GENERATOR_SEND);
+        } catch (RhinoException re) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
+        }
+    }
+
+    private Scriptable resumeAsyncDelegeeThrow(Context cx, VarScope scope, Object value) {
+        Object throwFn;
+        try {
+            throwFn = ScriptableObject.getProperty((Scriptable) delegee, "throw");
+        } catch (RhinoException re) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
+        }
+        if (throwFn == Scriptable.NOT_FOUND || throwFn == null || Undefined.isUndefined(throwFn)) {
+            // No throw method: call return optionally, then throw original value into inner.
+            try {
+                callReturnOptionally(cx, scope, Undefined.instance);
+            } catch (RhinoException re2) {
+                delegee = null;
+                delegeeIsAsync = false;
+                return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re2);
+            }
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, value);
+        }
+        if (!(throwFn instanceof Callable)) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(
+                    cx,
+                    scope,
+                    NativeGenerator.GENERATOR_THROW,
+                    ScriptRuntime.notFunctionError((Scriptable) delegee, "throw"));
+        }
+        try {
+            Object promise =
+                    ((Callable) throwFn)
+                            .call(cx, scope, (Scriptable) delegee, new Object[] {value});
+            return awaitDelegeeStep(cx, scope, promise, NativeGenerator.GENERATOR_SEND);
+        } catch (RhinoException re) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
+        }
+    }
+
+    private Scriptable resumeAsyncDelegeeReturn(Context cx, VarScope scope, Object value) {
+        Object retFn;
+        try {
+            retFn =
+                    ScriptRuntime.getObjectPropNoWarn(
+                            delegee, ES6Iterator.RETURN_METHOD, cx, scope);
+        } catch (RhinoException re) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
+        }
+        if (retFn == null || Undefined.isUndefined(retFn)) {
+            // No "return" -- close the inner with the caller's value.
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
+        }
+        if (!(retFn instanceof Callable)) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(
+                    cx,
+                    scope,
+                    NativeGenerator.GENERATOR_THROW,
+                    ScriptRuntime.notFunctionError(
+                            (Scriptable) delegee, ES6Iterator.RETURN_METHOD));
+        }
+        Object[] retArgs =
+                Undefined.isUndefined(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
+        try {
+            Object promise = ((Callable) retFn).call(cx, scope, (Scriptable) delegee, retArgs);
+            return awaitDelegeeStep(cx, scope, promise, NativeGenerator.GENERATOR_CLOSE);
+        } catch (RhinoException re) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
+        }
+    }
+
+    /**
+     * Wrap a Promise returned by an async delegee method in an {@link ScriptRuntime.AwaitMarker} so
+     * the async driver awaits it. When the await settles the driver will call back into resumeLocal
+     * (on fulfilment) or resumeAbruptLocal (on rejection).
+     */
+    private Scriptable awaitDelegeeStep(Context cx, VarScope scope, Object promise, int doneOp) {
+        awaitingDelegeeStep = true;
+        delegeeDoneOp = doneOp;
+        Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
+        ScriptableObject.putProperty(
+                result, ES6Iterator.VALUE_PROPERTY, new ScriptRuntime.AwaitMarker(promise));
+        return result;
+    }
+
+    /**
+     * Process the IteratorResult that the driver produced by awaiting the Promise from an async
+     * delegee method. If the result signals {@code done}, resume the inner generator with the
+     * result's value (using SEND or CLOSE as recorded in {@link #delegeeDoneOp}); otherwise yield
+     * the value to the consumer.
+     */
+    private Scriptable processAsyncDelegeeResult(Context cx, VarScope scope, Object awaited) {
+        if (!(awaited instanceof Scriptable)) {
+            delegee = null;
+            delegeeIsAsync = false;
+            return resumeAbruptLocal(
+                    cx,
+                    scope,
+                    NativeGenerator.GENERATOR_THROW,
+                    ScriptRuntime.typeErrorById("msg.invalid.iterator"));
+        }
+        Scriptable ir = (Scriptable) awaited;
+        boolean done = ScriptRuntime.isIteratorDone(cx, ir);
+        Object value = ScriptableObject.getProperty(ir, ES6Iterator.VALUE_PROPERTY);
+        if (done) {
+            int op = delegeeDoneOp;
+            delegee = null;
+            delegeeIsAsync = false;
+            if (op == NativeGenerator.GENERATOR_CLOSE) {
+                return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
+            }
+            return resumeLocal(cx, scope, value);
+        }
+        return ir;
+    }
+
     Scriptable resumeLocal(Context cx, VarScope scope, Object value) {
+        if (delegee != null) {
+            if (awaitingDelegeeStep) {
+                awaitingDelegeeStep = false;
+                return processAsyncDelegeeResult(cx, scope, value);
+            }
+            if (delegeeIsAsync) {
+                return resumeAsyncDelegee(cx, scope, value);
+            }
+            return resumeDelegee(cx, scope, value);
+        }
         if (state == State.COMPLETED) {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
@@ -255,7 +420,17 @@ public final class ES6Generator extends ScriptableObject {
                 state = State.SUSPENDED_YIELD;
                 YieldStarResult ysResult = (YieldStarResult) r;
                 try {
-                    delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
+                    if (function.isAsync() && function.isGeneratorFunction()) {
+                        // In async generators, yield* first tries Symbol.asyncIterator and only
+                        // falls back to Symbol.iterator when that lookup does not yield a method.
+                        ScriptRuntime.AsyncIteratorResult ar =
+                                ScriptRuntime.callAsyncIterator(ysResult.getResult(), cx, scope);
+                        delegee = ar.getIterator();
+                        delegeeIsAsync = ar.isAsync();
+                    } else {
+                        delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
+                        delegeeIsAsync = false;
+                    }
                 } catch (RhinoException re) {
                     // Need to handle exceptions if the iterator cannot be called.
                     return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
@@ -265,7 +440,11 @@ public final class ES6Generator extends ScriptableObject {
                 try {
                     // Re-execute but update state in case we end up back here
                     // Value shall be Undefined based on the very complex spec!
-                    delResult = resumeDelegee(cx, scope, Undefined.instance);
+                    if (delegeeIsAsync) {
+                        delResult = resumeAsyncDelegee(cx, scope, Undefined.instance);
+                    } else {
+                        delResult = resumeDelegee(cx, scope, Undefined.instance);
+                    }
                 } finally {
                     state = State.EXECUTING;
                 }
@@ -309,6 +488,28 @@ public final class ES6Generator extends ScriptableObject {
     }
 
     Scriptable resumeAbruptLocal(Context cx, VarScope scope, int op, Object value) {
+        if (delegee != null) {
+            if (awaitingDelegeeStep) {
+                // We were awaiting a Promise from the delegee when the driver delivered a
+                // rejection (op==THROW) as part of that same request. Tear down the delegee and
+                // fall through to throw the rejection into the inner generator at the yield*.
+                awaitingDelegeeStep = false;
+                delegee = null;
+                delegeeIsAsync = false;
+            } else if (delegeeIsAsync) {
+                if (op == NativeGenerator.GENERATOR_CLOSE) {
+                    return resumeAsyncDelegeeReturn(cx, scope, value);
+                }
+                return resumeAsyncDelegeeThrow(cx, scope, value);
+            } else {
+                if (op == NativeGenerator.GENERATOR_THROW) {
+                    return resumeDelegeeThrow(cx, scope, value);
+                }
+                if (op == NativeGenerator.GENERATOR_CLOSE) {
+                    return resumeDelegeeReturn(cx, scope, value);
+                }
+            }
+        }
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }

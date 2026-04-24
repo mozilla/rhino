@@ -165,4 +165,130 @@ public class AsyncGeneratorTest {
         Utils.assertWithAllModes_ES6(
                 "AsyncGeneratorFunction", "(async function*(){}).constructor.name");
     }
+
+    @Test
+    public void yieldStarAsyncIterableDelegates() {
+        assertAsyncResult(
+                "1,2,3",
+                "var out = [];\n"
+                        + "async function* inner() { yield 1; yield 2; yield 3; }\n"
+                        + "async function* outer() { yield* inner(); }\n"
+                        + "async function consume() { for await (var v of outer()) out.push(v); }\n"
+                        + "consume();",
+                "out.join(',')");
+    }
+
+    @Test
+    public void yieldStarPrefersAsyncIteratorWhenBothPresent() {
+        assertAsyncResult(
+                "async-1,async-2,async-3",
+                "var out = [];\n"
+                        + "var iterable = {\n"
+                        + "  [Symbol.asyncIterator]() {\n"
+                        + "    var i = 0;\n"
+                        + "    return { next: () => Promise.resolve({ value: 'async-' + (++i),"
+                        + " done: i > 3 }) };\n"
+                        + "  },\n"
+                        + "  [Symbol.iterator]() {\n"
+                        + "    var i = 0;\n"
+                        + "    return { next: () => ({ value: 'sync-' + (++i), done: i > 3 }) };\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "async function* g() { yield* iterable; }\n"
+                        + "async function consume() { for await (var v of g()) out.push(v); }\n"
+                        + "consume();",
+                "out.join(',')");
+    }
+
+    @Test
+    public void yieldStarFallsBackToSymbolIterator() {
+        assertAsyncResult(
+                "sync-1,sync-2",
+                "var out = [];\n"
+                        + "var iterable = {\n"
+                        + "  [Symbol.iterator]() {\n"
+                        + "    var i = 0;\n"
+                        + "    return { next: () => ({ value: 'sync-' + (++i), done: i > 2 }) };\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "async function* g() { yield* iterable; }\n"
+                        + "async function consume() { for await (var v of g()) out.push(v); }\n"
+                        + "consume();",
+                "out.join(',')");
+    }
+
+    @Test
+    public void yieldStarFallsBackWhenAsyncIteratorIsUndefined() {
+        // Explicitly-undefined Symbol.asyncIterator should fall through to Symbol.iterator.
+        assertAsyncResult(
+                "a,b",
+                "var out = [];\n"
+                        + "var iterable = {\n"
+                        + "  [Symbol.asyncIterator]: undefined,\n"
+                        + "  [Symbol.iterator]() {\n"
+                        + "    var i = 0, vals = ['a', 'b'];\n"
+                        + "    return { next: () => ({ value: vals[i], done: i++ >= vals.length })"
+                        + " };\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "async function* g() { yield* iterable; }\n"
+                        + "async function consume() { for await (var v of g()) out.push(v); }\n"
+                        + "consume();",
+                "out.join(',')");
+    }
+
+    @Test
+    public void yieldStarRejectedPromiseThrowsIntoGenerator() {
+        assertAsyncResult(
+                "1,caught:boom",
+                "var out = [];\n"
+                        + "var iterable = {\n"
+                        + "  [Symbol.asyncIterator]() {\n"
+                        + "    var i = 0;\n"
+                        + "    return {\n"
+                        + "      next() {\n"
+                        + "        i++;\n"
+                        + "        if (i === 2) return Promise.reject('boom');\n"
+                        + "        return Promise.resolve({ value: i, done: false });\n"
+                        + "      }\n"
+                        + "    };\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "async function* g() {\n"
+                        + "  try { yield* iterable; }\n"
+                        + "  catch (e) { yield 'caught:' + e; }\n"
+                        + "}\n"
+                        + "async function consume() { for await (var v of g()) out.push(v); }\n"
+                        + "consume();",
+                "out.join(',')");
+    }
+
+    @Test
+    public void yieldStarReturnClosesAsyncDelegee() {
+        assertAsyncResult(
+                "a|done|true",
+                "var firstVal, retVal, retDone;\n"
+                        + "async function* delegatee() { yield 'a'; yield 'b'; }\n"
+                        + "async function* outer() { yield* delegatee(); }\n"
+                        + "var it = outer();\n"
+                        + "it.next().then(r => { firstVal = r.value; });\n"
+                        + "it.return('done').then(r => { retVal = r.value; retDone = r.done; });",
+                "firstVal + '|' + retVal + '|' + retDone");
+    }
+
+    @Test
+    public void yieldStarThrowForwardsToAsyncDelegee() {
+        assertAsyncResult(
+                "a|caught:boom",
+                "var firstVal, secondVal;\n"
+                        + "async function* delegatee() {\n"
+                        + "  try { yield 'a'; yield 'b'; }\n"
+                        + "  catch (e) { yield 'caught:' + e; }\n"
+                        + "}\n"
+                        + "async function* outer() { yield* delegatee(); }\n"
+                        + "var it = outer();\n"
+                        + "it.next().then(r => { firstVal = r.value; });\n"
+                        + "it.throw('boom').then(r => { secondVal = r.value; });",
+                "firstVal + '|' + secondVal");
+    }
 }

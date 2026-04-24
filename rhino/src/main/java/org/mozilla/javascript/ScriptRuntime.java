@@ -3517,6 +3517,55 @@ public class ScriptRuntime {
         return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
     }
 
+    /** Result of {@link #callAsyncIterator}: the iterator and whether it is async. */
+    public static final class AsyncIteratorResult {
+        private final Object iterator;
+        private final boolean isAsync;
+
+        AsyncIteratorResult(Object iterator, boolean isAsync) {
+            this.iterator = iterator;
+            this.isAsync = isAsync;
+        }
+
+        public Object getIterator() {
+            return iterator;
+        }
+
+        public boolean isAsync() {
+            return isAsync;
+        }
+    }
+
+    /**
+     * Get an async iterator for {@code obj} following the hint=async variant of GetIterator: try
+     * {@code [Symbol.asyncIterator]} first, and only fall back to {@code [Symbol.iterator]} when
+     * the async lookup does not produce a callable method. Used by {@code yield*} in async
+     * generator functions.
+     */
+    public static AsyncIteratorResult callAsyncIterator(Object obj, Context cx, VarScope scope) {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
+        if (sobj != null) {
+            Object asyncMethod = ScriptableObject.getProperty(sobj, SymbolKey.ASYNC_ITERATOR);
+            if (asyncMethod != Scriptable.NOT_FOUND
+                    && asyncMethod != null
+                    && !Undefined.isUndefined(asyncMethod)) {
+                if (!(asyncMethod instanceof Callable)) {
+                    throw notFunctionError(sobj, SymbolKey.ASYNC_ITERATOR);
+                }
+                Callable f = (Callable) asyncMethod;
+                VarScope callScope =
+                        (f instanceof Function)
+                                ? ((Function) f).getDeclarationScope()
+                                : cx.topCallScope;
+                Object iter = f.call(cx, callScope, sobj, emptyArgs);
+                return new AsyncIteratorResult(iter, true);
+            }
+        }
+        // Fall back to the sync iterator protocol.
+        Object iter = callIterator(obj, cx, scope);
+        return new AsyncIteratorResult(iter, false);
+    }
+
     /**
      * Implements the abrupt-completion branch of the ECMAScript IteratorClose abstract operation.
      * Called from destructuring (and similar) code during unwinding so the original abrupt
