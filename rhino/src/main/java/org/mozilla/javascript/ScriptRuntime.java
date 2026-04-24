@@ -5703,6 +5703,86 @@ public class ScriptRuntime {
         defineAccessorOn(constructor, name, methodFn, true);
     }
 
+    private static void defineMethodOn(
+            ScriptableObject target, Object key, Object methodFn, int attrs) {
+        if (key instanceof Symbol) {
+            ((SymbolScriptable) target).put((Symbol) key, target, methodFn);
+            target.setAttributes((Symbol) key, attrs);
+            return;
+        }
+        StringIdOrIndex s = toStringIdOrIndex(key);
+        if (s.stringId != null) {
+            target.defineProperty(s.stringId, methodFn, attrs);
+        } else {
+            target.put(s.index, target, methodFn);
+            target.setAttributes(s.index, attrs);
+        }
+    }
+
+    private static void defineComputedAccessorOn(
+            ScriptableObject target, Object key, Object fn, boolean isSetter) {
+        if (!(fn instanceof Callable)) {
+            return;
+        }
+        Callable callable = (Callable) fn;
+        if (key instanceof Symbol) {
+            target.setGetterOrSetter((Symbol) key, 0, callable, isSetter);
+            target.setAttributes(
+                    (Symbol) key, (target.getAttributes((Symbol) key) | DONTENUM) & ~READONLY);
+            return;
+        }
+        StringIdOrIndex s = toStringIdOrIndex(key);
+        if (s.stringId != null) {
+            target.setGetterOrSetter(s.stringId, 0, callable, isSetter);
+            target.setAttributes(
+                    s.stringId, (target.getAttributes(s.stringId) | DONTENUM) & ~READONLY);
+        } else {
+            target.setGetterOrSetter(null, s.index, callable, isSetter);
+            target.setAttributes(
+                    s.index, (target.getAttributes(s.index) | DONTENUM) & ~READONLY);
+        }
+    }
+
+    public static void defineClassComputedMethod(
+            BaseFunction constructor, Object key, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineMethodOn(
+                    (ScriptableObject) protoObj, key, methodFn, ScriptableObject.DONTENUM);
+        }
+    }
+
+    public static void defineStaticClassComputedMethod(
+            BaseFunction constructor, Object key, Object methodFn) {
+        defineMethodOn(constructor, key, methodFn, ScriptableObject.DONTENUM);
+    }
+
+    public static void defineClassComputedGetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineComputedAccessorOn((ScriptableObject) protoObj, key, methodFn, false);
+        }
+    }
+
+    public static void defineClassComputedSetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineComputedAccessorOn((ScriptableObject) protoObj, key, methodFn, true);
+        }
+    }
+
+    public static void defineStaticClassComputedGetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        defineComputedAccessorOn(constructor, key, methodFn, false);
+    }
+
+    public static void defineStaticClassComputedSetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        defineComputedAccessorOn(constructor, key, methodFn, true);
+    }
+
     public static void defineStaticClassField(BaseFunction constructor, String name, Object value) {
         constructor.defineOwnProperty(
                 Context.getCurrentContext(), name, new DescriptorInfo(value, 0, true));

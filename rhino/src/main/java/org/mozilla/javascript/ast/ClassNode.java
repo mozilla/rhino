@@ -43,9 +43,11 @@ public class ClassNode extends AstNode {
     private List<String> methodNames;
     private List<FunctionNode> methods;
     private List<MethodKind> methodKinds;
+    private List<AstNode> methodComputedKeys;
     private List<String> staticMethodNames;
     private List<FunctionNode> staticMethods;
     private List<MethodKind> staticMethodKinds;
+    private List<AstNode> staticMethodComputedKeys;
     private List<String> fieldNames;
     private List<AstNode> fieldInitializers;
     private List<AstNode> computedFieldKeys;
@@ -124,15 +126,33 @@ public class ClassNode extends AstNode {
     }
 
     public void addMethod(String name, FunctionNode fn, MethodKind kind) {
+        addMethodInternal(name, null, fn, kind);
+    }
+
+    /**
+     * Add an instance method whose property key is computed at runtime (e.g. {@code [expr]()}).
+     * The {@code name} is null; {@code keyExpr} holds the expression to evaluate.
+     */
+    public void addComputedMethod(AstNode keyExpr, FunctionNode fn, MethodKind kind) {
+        addMethodInternal(null, keyExpr, fn, kind);
+    }
+
+    private void addMethodInternal(
+            String name, AstNode keyExpr, FunctionNode fn, MethodKind kind) {
         if (methodNames == null) {
             methodNames = new ArrayList<>();
             methods = new ArrayList<>();
             methodKinds = new ArrayList<>();
+            methodComputedKeys = new ArrayList<>();
         }
         methodNames.add(name);
         methods.add(fn);
         methodKinds.add(kind);
+        methodComputedKeys.add(keyExpr);
         fn.setParent(this);
+        if (keyExpr != null) {
+            keyExpr.setParent(this);
+        }
     }
 
     public int getMethodCount() {
@@ -151,20 +171,42 @@ public class ClassNode extends AstNode {
         return methodKinds == null ? Collections.emptyList() : methodKinds;
     }
 
+    public List<AstNode> getMethodComputedKeys() {
+        return methodComputedKeys == null ? Collections.emptyList() : methodComputedKeys;
+    }
+
     public void addStaticMethod(String name, FunctionNode fn) {
         addStaticMethod(name, fn, MethodKind.METHOD);
     }
 
     public void addStaticMethod(String name, FunctionNode fn, MethodKind kind) {
+        addStaticMethodInternal(name, null, fn, kind);
+    }
+
+    /**
+     * Add a static method whose property key is computed at runtime (e.g. {@code static [expr]()}).
+     * The {@code name} is null; {@code keyExpr} holds the expression to evaluate.
+     */
+    public void addStaticComputedMethod(AstNode keyExpr, FunctionNode fn, MethodKind kind) {
+        addStaticMethodInternal(null, keyExpr, fn, kind);
+    }
+
+    private void addStaticMethodInternal(
+            String name, AstNode keyExpr, FunctionNode fn, MethodKind kind) {
         if (staticMethodNames == null) {
             staticMethodNames = new ArrayList<>();
             staticMethods = new ArrayList<>();
             staticMethodKinds = new ArrayList<>();
+            staticMethodComputedKeys = new ArrayList<>();
         }
         staticMethodNames.add(name);
         staticMethods.add(fn);
         staticMethodKinds.add(kind);
+        staticMethodComputedKeys.add(keyExpr);
         fn.setParent(this);
+        if (keyExpr != null) {
+            keyExpr.setParent(this);
+        }
     }
 
     public int getStaticMethodCount() {
@@ -181,6 +223,12 @@ public class ClassNode extends AstNode {
 
     public List<MethodKind> getStaticMethodKinds() {
         return staticMethodKinds == null ? Collections.emptyList() : staticMethodKinds;
+    }
+
+    public List<AstNode> getStaticMethodComputedKeys() {
+        return staticMethodComputedKeys == null
+                ? Collections.emptyList()
+                : staticMethodComputedKeys;
     }
 
     public void addField(String name, AstNode initializer) {
@@ -494,7 +542,14 @@ public class ClassNode extends AstNode {
                 } else if (kind == MethodKind.SETTER) {
                     sb.append("set ");
                 }
-                sb.append(methodNames.get(i));
+                String name = methodNames.get(i);
+                if (name == null) {
+                    sb.append("[");
+                    sb.append(methodComputedKeys.get(i).toSource(0));
+                    sb.append("]");
+                } else {
+                    sb.append(name);
+                }
                 String fnSrc = methods.get(i).toSource(0);
                 sb.append(fnSrc.substring(fnSrc.indexOf('(')));
                 sb.append("\n");
@@ -510,7 +565,14 @@ public class ClassNode extends AstNode {
                 } else if (kind == MethodKind.SETTER) {
                     sb.append("set ");
                 }
-                sb.append(staticMethodNames.get(i));
+                String name = staticMethodNames.get(i);
+                if (name == null) {
+                    sb.append("[");
+                    sb.append(staticMethodComputedKeys.get(i).toSource(0));
+                    sb.append("]");
+                } else {
+                    sb.append(name);
+                }
                 String fnSrc = staticMethods.get(i).toSource(0);
                 sb.append(fnSrc.substring(fnSrc.indexOf('(')));
                 sb.append("\n");
@@ -557,13 +619,20 @@ public class ClassNode extends AstNode {
                 constructor.visit(v);
             }
             if (methods != null) {
-                for (FunctionNode method : methods) {
-                    method.visit(v);
+                for (int i = 0; i < methods.size(); i++) {
+                    if (methodComputedKeys != null && methodComputedKeys.get(i) != null) {
+                        methodComputedKeys.get(i).visit(v);
+                    }
+                    methods.get(i).visit(v);
                 }
             }
             if (staticMethods != null) {
-                for (FunctionNode method : staticMethods) {
-                    method.visit(v);
+                for (int i = 0; i < staticMethods.size(); i++) {
+                    if (staticMethodComputedKeys != null
+                            && staticMethodComputedKeys.get(i) != null) {
+                        staticMethodComputedKeys.get(i).visit(v);
+                    }
+                    staticMethods.get(i).visit(v);
                 }
             }
         }

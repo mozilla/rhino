@@ -784,11 +784,18 @@ public final class IRFactory {
             Node classSetup = new Node(Token.CLASS, superClassNode, constructorNode);
             classSetup.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
-            // Add instance method nodes as children
-            for (Node methodNode : methodNodes) {
-                classSetup.addChildToBack(methodNode);
-            }
+            // Add instance method nodes as children. For methods with computed keys
+            // (name == null), emit the key expression child just before the function
+            // child so the CodeGenerator can evaluate the key at definition time.
             if (hasMethods) {
+                java.util.List<AstNode> methodKeys = classNode.getMethodComputedKeys();
+                for (int i = 0; i < methodNodes.size(); i++) {
+                    AstNode keyExpr = methodKeys.isEmpty() ? null : methodKeys.get(i);
+                    if (keyExpr != null) {
+                        classSetup.addChildToBack(transform(keyExpr));
+                    }
+                    classSetup.addChildToBack(methodNodes.get(i));
+                }
                 classSetup.putProp(
                         Node.CLASS_METHODS_PROP, classNode.getMethodNames().toArray(new String[0]));
                 classSetup.putProp(
@@ -796,10 +803,15 @@ public final class IRFactory {
             }
 
             // Add static method nodes as children (after instance methods)
-            for (Node staticMethodNode : staticMethodNodes) {
-                classSetup.addChildToBack(staticMethodNode);
-            }
             if (hasStaticMethods) {
+                java.util.List<AstNode> smKeys = classNode.getStaticMethodComputedKeys();
+                for (int i = 0; i < staticMethodNodes.size(); i++) {
+                    AstNode keyExpr = smKeys.isEmpty() ? null : smKeys.get(i);
+                    if (keyExpr != null) {
+                        classSetup.addChildToBack(transform(keyExpr));
+                    }
+                    classSetup.addChildToBack(staticMethodNodes.get(i));
+                }
                 classSetup.putProp(
                         Node.CLASS_STATIC_METHODS_PROP,
                         classNode.getStaticMethodNames().toArray(new String[0]));

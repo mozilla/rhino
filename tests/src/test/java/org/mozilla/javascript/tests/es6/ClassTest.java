@@ -839,6 +839,91 @@ public class ClassTest {
     }
 
     @Test
+    public void computedMethodName() {
+        Utils.assertWithAllModes_ES6(
+                "ok",
+                "class Foo { ['m' + 'ethod']() { return 'ok'; } }\n"
+                        + "new Foo().method()\n");
+    }
+
+    @Test
+    public void computedStaticMethodName() {
+        Utils.assertWithAllModes_ES6(
+                "sok",
+                "class Foo { static ['st' + 'atic']() { return 'sok'; } }\n" + "Foo.static()\n");
+    }
+
+    @Test
+    public void computedGetter() {
+        Utils.assertWithAllModes_ES6(
+                "get string",
+                "var C = class {\n"
+                        + "  get [_ = 'str' + 'ing']() { return 'get string'; }\n"
+                        + "};\n"
+                        + "new C().string\n");
+    }
+
+    @Test
+    public void computedSetter() {
+        Utils.assertWithAllModes_ES6(
+                "hi",
+                "var stringSet;\n"
+                        + "var C = class {\n"
+                        + "  set [_ = 'str' + 'ing'](p) { stringSet = p; }\n"
+                        + "};\n"
+                        + "new C().string = 'hi';\n"
+                        + "stringSet\n");
+    }
+
+    @Test
+    public void computedGetterAndSetterSameKey() {
+        Utils.assertWithAllModes_ES6(
+                "get string-hi",
+                "var stringSet;\n"
+                        + "var C = class {\n"
+                        + "  get [_ = 'str' + 'ing']() { return 'get string'; }\n"
+                        + "  set [_ = 'str' + 'ing'](param) { stringSet = param; }\n"
+                        + "};\n"
+                        + "var c = new C();\n"
+                        + "var r = c.string;\n"
+                        + "c.string = 'hi';\n"
+                        + "r + '-' + stringSet\n");
+    }
+
+    @Test
+    public void computedStaticGetter() {
+        Utils.assertWithAllModes_ES6(
+                "v",
+                "class C { static get ['s' + 'g']() { return 'v'; } }\n" + "C.sg\n");
+    }
+
+    @Test
+    public void computedStaticSetter() {
+        Utils.assertWithAllModes_ES6(
+                5,
+                "var got;\n"
+                        + "class C { static set ['s' + 's'](v) { got = v; } }\n"
+                        + "C.ss = 5;\n"
+                        + "got\n");
+    }
+
+    @Test
+    public void computedSymbolMethod() {
+        Utils.assertWithAllModes_ES6(
+                "via-symbol",
+                "var sym = Symbol('k');\n"
+                        + "class C { [sym]() { return 'via-symbol'; } }\n"
+                        + "new C()[sym]()\n");
+    }
+
+    @Test
+    public void computedNumericGetter() {
+        Utils.assertWithAllModes_ES6(
+                "two",
+                "class C { get [1 + 1]() { return 'two'; } }\n" + "new C()[2]\n");
+    }
+
+    @Test
     public void functionNamedReturnStillErrors() {
         Utils.assertEvaluatorExceptionES6(
                 "missing ( before function parameters.", "function return() { return 'Hello!'; }");
