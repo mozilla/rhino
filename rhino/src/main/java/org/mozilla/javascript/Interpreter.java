@@ -1559,6 +1559,18 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_FIELD] = new DoDefineStaticClassField();
         instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD] =
                 new DoDefineStaticClassComputedField();
+        instructionObjs[base + Icode_DEFINE_CLASS_COMPUTED_METHOD] =
+                new DoDefineClassComputedMethod();
+        instructionObjs[base + Icode_DEFINE_CLASS_COMPUTED_GETTER] =
+                new DoDefineClassComputedGetter();
+        instructionObjs[base + Icode_DEFINE_CLASS_COMPUTED_SETTER] =
+                new DoDefineClassComputedSetter();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD] =
+                new DoDefineStaticClassComputedMethod();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER] =
+                new DoDefineStaticClassComputedGetter();
+        instructionObjs[base + Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER] =
+                new DoDefineStaticClassComputedSetter();
         instructionObjs[base + Icode_DEFINE_PRIVATE_FIELD] = new DoDefinePrivateField();
         instructionObjs[base + Icode_DEFINE_PRIVATE_GETTER] = new DoDefinePrivateAccessor(false);
         instructionObjs[base + Icode_DEFINE_PRIVATE_SETTER] = new DoDefinePrivateAccessor(true);
@@ -4578,6 +4590,91 @@ public final class Interpreter extends Icode implements Evaluator {
             BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
             JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
             ScriptRuntime.defineStaticClassSetter(constructor, state.stringReg, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineClassComputedMethod extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack: ... constructor key -> ... constructor
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            Object protoObj = constructor.getPrototypeProperty();
+            Scriptable prototype = (protoObj instanceof Scriptable) ? (Scriptable) protoObj : null;
+            JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
+            ScriptRuntime.defineClassComputedMethod(constructor, key, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineClassComputedGetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            Object protoObj = constructor.getPrototypeProperty();
+            Scriptable prototype = (protoObj instanceof Scriptable) ? (Scriptable) protoObj : null;
+            JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
+            ScriptRuntime.defineClassComputedGetter(constructor, key, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineClassComputedSetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            Object protoObj = constructor.getPrototypeProperty();
+            Scriptable prototype = (protoObj instanceof Scriptable) ? (Scriptable) protoObj : null;
+            JSFunction method = createMethod(cx, frame, state.indexReg, prototype);
+            ScriptRuntime.defineClassComputedSetter(constructor, key, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassComputedMethod extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
+            ScriptRuntime.defineStaticClassComputedMethod(constructor, key, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassComputedGetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
+            ScriptRuntime.defineStaticClassComputedGetter(constructor, key, method);
+            return null;
+        }
+    }
+
+    private static class DoDefineStaticClassComputedSetter extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+            BaseFunction constructor = (BaseFunction) frame.stack[state.stackTop];
+            JSFunction method = createMethod(cx, frame, state.indexReg, constructor);
+            ScriptRuntime.defineStaticClassComputedSetter(constructor, key, method);
             return null;
         }
     }

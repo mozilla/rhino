@@ -1362,8 +1362,12 @@ public class Parser {
                     method.setFunctionIsSetterMethod();
                 }
                 if (isComputed) {
-                    // TODO: computed method names need additional support in ClassNode/IRFactory
-                    reportError("msg.unexpected.token");
+                    if (isStatic) {
+                        classNode.addStaticComputedMethod(
+                                computedKeyExpr, method, accessorKind);
+                    } else {
+                        classNode.addComputedMethod(computedKeyExpr, method, accessorKind);
+                    }
                 } else if (isPrivateName) {
                     if (isStatic && accessorKind != ClassNode.MethodKind.METHOD) {
                         // TODO: static private accessors not yet supported

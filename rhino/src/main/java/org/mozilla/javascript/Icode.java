@@ -229,8 +229,27 @@ abstract class Icode {
             // executing function onto the stack. indexReg holds the index.
             Icode_GET_CLASS_COMPUTED_KEY = Icode_STORE_CLASS_COMPUTED_KEYS - 1,
 
+            // Define a method on a class prototype with a computed key on the stack.
+            // Stack: ... constructor key -> ... constructor. indexReg holds the method fn index.
+            Icode_DEFINE_CLASS_COMPUTED_METHOD = Icode_GET_CLASS_COMPUTED_KEY - 1,
+
+            // Define a getter on a class prototype with a computed key on the stack.
+            Icode_DEFINE_CLASS_COMPUTED_GETTER = Icode_DEFINE_CLASS_COMPUTED_METHOD - 1,
+
+            // Define a setter on a class prototype with a computed key on the stack.
+            Icode_DEFINE_CLASS_COMPUTED_SETTER = Icode_DEFINE_CLASS_COMPUTED_GETTER - 1,
+
+            // Define a static method on a class constructor with a computed key on the stack.
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD = Icode_DEFINE_CLASS_COMPUTED_SETTER - 1,
+
+            // Define a static getter on a class constructor with a computed key on the stack.
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER = Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD - 1,
+
+            // Define a static setter on a class constructor with a computed key on the stack.
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER = Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER - 1,
+
             // Last icode
-            MIN_ICODE = Icode_GET_CLASS_COMPUTED_KEY;
+            MIN_ICODE = Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -460,6 +479,18 @@ abstract class Icode {
                 return "STORE_CLASS_COMPUTED_KEYS";
             case Icode_GET_CLASS_COMPUTED_KEY:
                 return "GET_CLASS_COMPUTED_KEY";
+            case Icode_DEFINE_CLASS_COMPUTED_METHOD:
+                return "DEFINE_CLASS_COMPUTED_METHOD";
+            case Icode_DEFINE_CLASS_COMPUTED_GETTER:
+                return "DEFINE_CLASS_COMPUTED_GETTER";
+            case Icode_DEFINE_CLASS_COMPUTED_SETTER:
+                return "DEFINE_CLASS_COMPUTED_SETTER";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD:
+                return "DEFINE_STATIC_CLASS_COMPUTED_METHOD";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER:
+                return "DEFINE_STATIC_CLASS_COMPUTED_GETTER";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER:
+                return "DEFINE_STATIC_CLASS_COMPUTED_SETTER";
         }
 
         // icode without name

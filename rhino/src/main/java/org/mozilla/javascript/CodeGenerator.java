@@ -693,17 +693,35 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     Node nextMethodNode = constructorFn.getNext();
                     if (methodNames != null) {
                         for (int i = 0; i < methodNames.length; i++) {
+                            boolean computed = methodNames[i] == null;
+                            if (computed) {
+                                // Evaluate the key expression; stack: ... constructor key
+                                visitExpression(nextMethodNode, 0);
+                                nextMethodNode = nextMethodNode.getNext();
+                            }
                             int methodFnIndex =
                                     nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
-                            addStringPrefix(methodNames[i]);
-                            addIndexPrefix(methodFnIndex);
                             int kind = methodKinds == null ? 0 : methodKinds[i];
-                            if (kind == 1) {
-                                addIcode(Icode_DEFINE_CLASS_GETTER);
-                            } else if (kind == 2) {
-                                addIcode(Icode_DEFINE_CLASS_SETTER);
+                            if (computed) {
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_CLASS_COMPUTED_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_CLASS_COMPUTED_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_CLASS_COMPUTED_METHOD);
+                                }
+                                stackChange(-1);
                             } else {
-                                addIcode(Icode_DEFINE_CLASS_METHOD);
+                                addStringPrefix(methodNames[i]);
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_CLASS_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_CLASS_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_CLASS_METHOD);
+                                }
                             }
                             nextMethodNode = nextMethodNode.getNext();
                         }
@@ -716,17 +734,34 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                             (int[]) node.getProp(Node.CLASS_STATIC_METHOD_KINDS_PROP);
                     if (staticMethodNames != null) {
                         for (int i = 0; i < staticMethodNames.length; i++) {
+                            boolean computed = staticMethodNames[i] == null;
+                            if (computed) {
+                                visitExpression(nextMethodNode, 0);
+                                nextMethodNode = nextMethodNode.getNext();
+                            }
                             int methodFnIndex =
                                     nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
-                            addStringPrefix(staticMethodNames[i]);
-                            addIndexPrefix(methodFnIndex);
                             int kind = staticMethodKinds == null ? 0 : staticMethodKinds[i];
-                            if (kind == 1) {
-                                addIcode(Icode_DEFINE_STATIC_CLASS_GETTER);
-                            } else if (kind == 2) {
-                                addIcode(Icode_DEFINE_STATIC_CLASS_SETTER);
+                            if (computed) {
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD);
+                                }
+                                stackChange(-1);
                             } else {
-                                addIcode(Icode_DEFINE_STATIC_CLASS_METHOD);
+                                addStringPrefix(staticMethodNames[i]);
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_METHOD);
+                                }
                             }
                             nextMethodNode = nextMethodNode.getNext();
                         }

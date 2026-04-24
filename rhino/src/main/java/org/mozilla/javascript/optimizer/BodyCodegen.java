@@ -1099,25 +1099,44 @@ class BodyCodegen {
                         savedHomeObjectLocal = protoLocal;
 
                         for (int i = 0; i < methodNames.length; i++) {
+                            boolean computed = methodNames[i] == null;
+                            cfw.add(ByteCode.DUP);
+                            if (computed) {
+                                // Evaluate the computed key expression before the function
+                                generateExpression(nextMethodNode, node);
+                                nextMethodNode = nextMethodNode.getNext();
+                            } else {
+                                cfw.addPush(methodNames[i]);
+                            }
                             int mFnIndex = nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
                             OptFunctionNode mOfn = OptFunctionNode.get(scriptOrFn, mFnIndex);
-
-                            cfw.add(ByteCode.DUP);
-                            cfw.addPush(methodNames[i]);
                             visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
                             int kind = methodKinds == null ? 0 : methodKinds[i];
-                            String runtimeMethod =
-                                    (kind == 1)
-                                            ? "defineClassGetter"
-                                            : (kind == 2)
-                                                    ? "defineClassSetter"
-                                                    : "defineClassMethod";
+                            String runtimeMethod;
+                            String keyType;
+                            if (computed) {
+                                keyType = "Ljava/lang/Object;";
+                                runtimeMethod =
+                                        (kind == 1)
+                                                ? "defineClassComputedGetter"
+                                                : (kind == 2)
+                                                        ? "defineClassComputedSetter"
+                                                        : "defineClassComputedMethod";
+                            } else {
+                                keyType = "Ljava/lang/String;";
+                                runtimeMethod =
+                                        (kind == 1)
+                                                ? "defineClassGetter"
+                                                : (kind == 2)
+                                                        ? "defineClassSetter"
+                                                        : "defineClassMethod";
+                            }
                             cfw.addInvoke(
                                     ByteCode.INVOKESTATIC,
                                     "org/mozilla/javascript/ScriptRuntime",
                                     runtimeMethod,
                                     "(Lorg/mozilla/javascript/BaseFunction;"
-                                            + "Ljava/lang/String;"
+                                            + keyType
                                             + "Ljava/lang/Object;)V");
 
                             nextMethodNode = nextMethodNode.getNext();
@@ -1143,25 +1162,43 @@ class BodyCodegen {
                         savedHomeObjectLocal = constructorLocal;
 
                         for (int i = 0; i < staticMethodNames.length; i++) {
+                            boolean computed = staticMethodNames[i] == null;
+                            cfw.add(ByteCode.DUP);
+                            if (computed) {
+                                generateExpression(nextMethodNode, node);
+                                nextMethodNode = nextMethodNode.getNext();
+                            } else {
+                                cfw.addPush(staticMethodNames[i]);
+                            }
                             int mFnIndex = nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
                             OptFunctionNode mOfn = OptFunctionNode.get(scriptOrFn, mFnIndex);
-
-                            cfw.add(ByteCode.DUP);
-                            cfw.addPush(staticMethodNames[i]);
                             visitFunction(mOfn, FunctionNode.FUNCTION_EXPRESSION);
                             int kind = staticMethodKinds == null ? 0 : staticMethodKinds[i];
-                            String runtimeMethod =
-                                    (kind == 1)
-                                            ? "defineStaticClassGetter"
-                                            : (kind == 2)
-                                                    ? "defineStaticClassSetter"
-                                                    : "defineStaticClassMethod";
+                            String runtimeMethod;
+                            String keyType;
+                            if (computed) {
+                                keyType = "Ljava/lang/Object;";
+                                runtimeMethod =
+                                        (kind == 1)
+                                                ? "defineStaticClassComputedGetter"
+                                                : (kind == 2)
+                                                        ? "defineStaticClassComputedSetter"
+                                                        : "defineStaticClassComputedMethod";
+                            } else {
+                                keyType = "Ljava/lang/String;";
+                                runtimeMethod =
+                                        (kind == 1)
+                                                ? "defineStaticClassGetter"
+                                                : (kind == 2)
+                                                        ? "defineStaticClassSetter"
+                                                        : "defineStaticClassMethod";
+                            }
                             cfw.addInvoke(
                                     ByteCode.INVOKESTATIC,
                                     "org/mozilla/javascript/ScriptRuntime",
                                     runtimeMethod,
                                     "(Lorg/mozilla/javascript/BaseFunction;"
-                                            + "Ljava/lang/String;"
+                                            + keyType
                                             + "Ljava/lang/Object;)V");
 
                             nextMethodNode = nextMethodNode.getNext();
