@@ -1105,6 +1105,9 @@ class BodyCodegen {
                                 // Evaluate the computed key expression before the function
                                 generateExpression(nextMethodNode, node);
                                 nextMethodNode = nextMethodNode.getNext();
+                                cfw.add(ByteCode.SWAP);
+                                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/BaseFunction");
+                                cfw.add(ByteCode.SWAP);
                             } else {
                                 cfw.addPush(methodNames[i]);
                             }
@@ -1167,6 +1170,9 @@ class BodyCodegen {
                             if (computed) {
                                 generateExpression(nextMethodNode, node);
                                 nextMethodNode = nextMethodNode.getNext();
+                                cfw.add(ByteCode.SWAP);
+                                cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/BaseFunction");
+                                cfw.add(ByteCode.SWAP);
                             } else {
                                 cfw.addPush(staticMethodNames[i]);
                             }
@@ -1215,8 +1221,12 @@ class BodyCodegen {
                         for (int i = 0; i < staticFieldNames.length; i++) {
                             // Stack: constructor
                             cfw.add(ByteCode.DUP);
-                            cfw.addPush(staticFieldNames[i]);
                             generateExpression(nextMethodNode, node);
+                            cfw.add(ByteCode.SWAP);
+                            cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/BaseFunction");
+                            cfw.add(ByteCode.SWAP);
+                            cfw.addPush(staticFieldNames[i]);
+                            cfw.add(ByteCode.SWAP);
                             cfw.addInvoke(
                                     ByteCode.INVOKESTATIC,
                                     "org/mozilla/javascript/ScriptRuntime",
@@ -1236,7 +1246,12 @@ class BodyCodegen {
                         cfw.add(ByteCode.DUP);
                         generateExpression(nextMethodNode, node); // key
                         nextMethodNode = nextMethodNode.getNext();
+                        cfw.add(ByteCode.SWAP);
                         generateExpression(nextMethodNode, node); // value
+                        cfw.add(ByteCode.SWAP);
+                        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/BaseFunction");
+                        cfw.add(ByteCode.DUP_X2);
+                        cfw.add(ByteCode.POP);
                         cfw.addInvoke(
                                 ByteCode.INVOKESTATIC,
                                 "org/mozilla/javascript/ScriptRuntime",
@@ -1253,16 +1268,35 @@ class BodyCodegen {
                             node.getIntProp(Node.CLASS_COMPUTED_FIELD_KEYS_COUNT, 0);
                     if (computedFieldKeysCount > 0) {
                         // Stack: constructor
-                        cfw.add(ByteCode.DUP);
-                        cfw.addPush(computedFieldKeysCount);
-                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
                         for (int i = 0; i < computedFieldKeysCount; i++) {
-                            cfw.add(ByteCode.DUP);
-                            cfw.addPush(i);
                             generateExpression(nextMethodNode, node);
-                            cfw.add(ByteCode.AASTORE);
                             nextMethodNode = nextMethodNode.getNext();
                         }
+                        // Stack: constructor, n-exprs
+                        cfw.addPush(computedFieldKeysCount);
+                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                        // Stack: constructor, n-exprs, array
+                        for (int i = computedFieldKeysCount - 1; i >= 0; i--) {
+                            cfw.add(ByteCode.DUP_X1);
+                            // Stack: constructor, n-1-exprs, array, expr, array
+                            cfw.add(ByteCode.SWAP);
+                            // Stack: constructor, n-1-exprs, array, array, expr
+                            cfw.addPush(i);
+                            // Stack: constructor, n-1-exprs, array, array, expr, index
+                            cfw.add(ByteCode.SWAP);
+                            // Stack: constructor, n-1-exprs, array, array, index, expr
+                            cfw.add(ByteCode.AASTORE);
+                            // Stack: constructor, n-1-exprs, array
+                        }
+                        // stack: constructor, array
+                        cfw.add(ByteCode.SWAP);
+                        // stack: array, constructor
+                        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/BaseFunction");
+                        cfw.add(ByteCode.DUP_X1);
+                        // stack: constructor, array, constructor
+                        cfw.add(ByteCode.SWAP);
+                        // stack: constructor, constructor, array
+
                         cfw.addInvoke(
                                 ByteCode.INVOKESTATIC,
                                 "org/mozilla/javascript/ScriptRuntime",
