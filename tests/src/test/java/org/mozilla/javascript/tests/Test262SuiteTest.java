@@ -54,6 +54,7 @@ import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
@@ -75,8 +76,8 @@ public class Test262SuiteTest {
     /** The test must be executed just once--in non-strict mode, only. */
     private static final String FLAG_NO_STRICT = "noStrict";
 
-    private static final File testDir = new File("test262/test");
-    private static final String testHarnessDir = "test262/harness/";
+    private static final File testDir;
+    private static final String testHarnessDir;
     private static final String testProperties;
 
     private static final boolean updateTest262Properties;
@@ -116,9 +117,17 @@ public class Test262SuiteTest {
                             "u180e"));
 
     static {
+        // For portability on all platforms, find the location of the test262 tree
+        // by starting with a well-known file and walking from there.
+        testHarnessDir = TestSource.resolveDirectory("test262/harness/assert.js");
+        var testBase = Path.of(testHarnessDir).getParent();
+        testDir = Path.of(testBase.toString(), "test").toFile();
+
         String propFile = System.getProperty("test262properties");
         testProperties =
-                propFile != null && !propFile.equals("") ? propFile : "testsrc/test262.properties";
+                propFile != null && !propFile.equals("")
+                        ? propFile
+                        : TestSource.resolve("testsrc/test262.properties");
 
         String updateProps = System.getProperty("updateTest262properties");
 
@@ -295,7 +304,7 @@ public class Test262SuiteTest {
                     HARNESS_SCRIPT_CACHE.computeIfAbsent(
                             harnessKey,
                             k -> {
-                                String harnessPath = testHarnessDir + harnessFile;
+                                String harnessPath = testHarnessDir + '/' + harnessFile;
                                 try (Reader reader = new FileReader(harnessPath)) {
                                     String script = Kit.readReader(reader);
 

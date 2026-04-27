@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,6 +11,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 
 public class LambdaPropertyTest {
     private Context cx;
@@ -18,7 +19,7 @@ public class LambdaPropertyTest {
 
     @BeforeEach
     public void init() throws IOException {
-        try (FileReader rdr = new FileReader("testsrc/assert.js")) {
+        try (FileReader rdr = new FileReader(TestSource.resolve("testsrc/assert.js"))) {
             cx = Context.enter();
             cx.setLanguageVersion(Context.VERSION_ES6);
             cx.setGeneratingDebug(true);

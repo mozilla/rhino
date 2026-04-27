@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.engine.RhinoScriptEngine;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
+import org.mozilla.javascript.testutils.TestSource;
 
 public class ScriptEngineTest {
 
@@ -82,7 +83,7 @@ public class ScriptEngineTest {
         engine.put("actuallyNull", null);
 
         // Ensure that stuff we just stuck in bindings made it to a global
-        engine.eval(new FileReader("../tests/testsrc/assert.js"));
+        engine.eval(new FileReader(TestSource.resolve("testsrc/assert.js")));
         engine.eval(
                 "assertEquals(string, 'Hello');\n"
                         + "assertEquals(integer, 123);\n"
@@ -109,7 +110,7 @@ public class ScriptEngineTest {
     public void engineScope() throws IOException, ScriptException {
         engine.put("string", "Hello");
         engine.put("integer", 123);
-        engine.eval(new FileReader("../tests/testsrc/assert.js"));
+        engine.eval(new FileReader(TestSource.resolve("testsrc/assert.js")));
         engine.eval("assertEquals(string, 'Hello');" + "assertEquals(integer, 123);");
 
         // Additional things added to the context but old stuff still there
@@ -137,7 +138,7 @@ public class ScriptEngineTest {
         gb.put("global", Boolean.TRUE);
         gb.put("level", 0);
 
-        engine.eval(new FileReader("../tests/testsrc/assert.js"), sc);
+        engine.eval(new FileReader(TestSource.resolve("testsrc/assert.js")), sc);
         engine.eval("assertTrue(engine);" + "assertTrue(global);" + "assertEquals(level, 2);", sc);
     }
 
@@ -155,7 +156,8 @@ public class ScriptEngineTest {
 
     @Test
     public void compiled() throws ScriptException, IOException {
-        CompiledScript asserts = cEngine.compile(new FileReader("../tests/testsrc/assert.js"));
+        CompiledScript asserts =
+                cEngine.compile(new FileReader(TestSource.resolve("testsrc/assert.js")));
         CompiledScript tests = cEngine.compile("assertEquals(compiled, true);");
 
         // Fails because asserts have not been loaded
@@ -171,7 +173,8 @@ public class ScriptEngineTest {
 
     @Test
     public void compiled2() throws ScriptException, IOException {
-        CompiledScript asserts = cEngine.compile(new FileReader("../tests/testsrc/assert.js"));
+        CompiledScript asserts =
+                cEngine.compile(new FileReader(TestSource.resolve("testsrc/assert.js")));
         CompiledScript init = cEngine.compile("value = 0;");
         CompiledScript tests =
                 cEngine.compile("assertEquals(value, expectedValue);" + "value += 1;");
@@ -261,7 +264,7 @@ public class ScriptEngineTest {
 
     @Test
     public void javaObject() throws ScriptException {
-        File f = new File("testsrc/assert.js");
+        File f = new File(TestSource.resolve("testsrc/assert.js"));
         String absVal = f.getAbsolutePath();
         engine.put("file", f);
         Object result = engine.eval("file.getAbsolutePath();");

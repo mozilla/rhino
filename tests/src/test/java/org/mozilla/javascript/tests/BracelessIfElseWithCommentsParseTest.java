@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.testutils.TestSource;
 
 /**
  * Tests that braceless if/else statements with inline comments parse correctly when {@code
@@ -29,7 +30,9 @@ public class BracelessIfElseWithCommentsParseTest {
         String source;
         try (BufferedReader reader =
                 new BufferedReader(
-                        new FileReader("testsrc/jstests/braceless-if-else-with-comments.js"))) {
+                        new FileReader(
+                                TestSource.resolve(
+                                        "testsrc/jstests/braceless-if-else-with-comments.js")))) {
             source = reader.lines().collect(Collectors.joining(System.lineSeparator()));
         }
 

@@ -1,6 +1,8 @@
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
@@ -8,12 +10,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Undefined;
-import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class UnhandledPromiseTest {
     private Context cx;
-    private VarScope scope;
+    private Global scope;
 
     @BeforeEach
     public void init() {
@@ -22,6 +24,7 @@ public class UnhandledPromiseTest {
         cx.setLanguageVersion(Context.VERSION_ES6);
         cx.setTrackUnhandledPromiseRejections(true);
         scope = new Global(cx);
+        scope.setFileLoadPrefix(TestSource.getPrefix());
     }
 
     @AfterEach

@@ -1,13 +1,15 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.config.RhinoProperties;
-import org.mozilla.javascript.config.RhinoPropertiesLoader;
+import org.mozilla.javascript.testutils.TestSource;
 
 /**
  * Testcase for various property loading mechanism. <br>
@@ -26,40 +28,6 @@ public class RhinoPropertiesTest {
         valueA,
         VALUEB,
         valuec
-    }
-
-    /** This loader is used for all tests in this maven module! */
-    public static class Loader implements RhinoPropertiesLoader {
-
-        /**
-         * this loader will add some explicitly typed values to the configuration. After that, it
-         * will also load the defaults.
-         */
-        @Override
-        public void load(RhinoProperties properties) {
-
-            properties.addConfig(Map.of("test.foo.bar", "baz1"));
-            properties.addConfig(
-                    Map.of(
-                            "test.foo.bar", "baz2",
-                            "test.foo.someBoolean1", "true",
-                            "test.foo.someBoolean2", "TRUE",
-                            "test.foo.someBoolean3", "1",
-                            "test.foo.someInteger1", "42",
-                            "test.foo.someInteger2", 42,
-                            "test.foo.someAValue", true,
-                            "TEST_FOO_SOME_BVALUE", 42,
-                            "TEST_FOO_ENUM1", "valuea"));
-            properties.addConfig(
-                    Map.of(
-                            "TEST_FOO_ENUM1", "valuea",
-                            "TEST_FOO_ENUM2", "VALUEA",
-                            "TEST_FOO_ENUM3", "VALUEB",
-                            "TEST_FOO_ENUM4", "VALUEC",
-                            "TEST_FOO_ENUM5", "VALUED"));
-            // also load defaults, so that users can use rhino-test.config here!
-            properties.loadDefaults();
-        }
     }
 
     /** Tests the loader initialization and all methods in RhinoConfig. */
@@ -114,7 +82,7 @@ public class RhinoPropertiesTest {
     @Test
     void testFileLoad() {
         RhinoProperties properties = new RhinoProperties();
-        properties.loadFromFile(new File("src/test/resources/rhino-explicit.config"));
+        properties.loadFromFile(new File(TestSource.resolve("testsrc/rhino-explicit.config")));
         assertEquals("value1", properties.get("test.config.foo"));
         assertEquals("value2", properties.get("test.config.bar"));
     }

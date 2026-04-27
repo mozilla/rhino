@@ -24,6 +24,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,6 +96,7 @@ public class Global extends ImporterTopLevel {
     private boolean sealedStdLib = false;
     boolean initialized;
     private QuitAction quitAction;
+    private String fileLoadPrefix;
     private static final String[] prompts = {"js> ", "  > "};
     private HashMap<String, String> doctestCanonicalizations;
 
@@ -125,6 +127,15 @@ public class Global extends ImporterTopLevel {
                     init(cx);
                     return null;
                 });
+    }
+
+    /**
+     * Set a path that should be prefixed to every "load" call from the script. This is used in our
+     * different test environments and tools so that we can write scripts that load files using a
+     * relative location (usually starting with "testsrc") and have them always find the file
+     */
+    public void setFileLoadPrefix(String prefix) {
+        this.fileLoadPrefix = prefix;
     }
 
     public void init(Context cx) {
@@ -264,6 +275,9 @@ public class Global extends ImporterTopLevel {
     public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         for (Object arg : args) {
             String file = Context.toString(arg);
+            if (getInstance(funObj).fileLoadPrefix != null) {
+                file = Path.of(getInstance(funObj).fileLoadPrefix, file).toString();
+            }
             try {
                 Main.processFile(cx, funObj.getDeclarationScope(), file);
             } catch (IOException ioex) {

@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -43,7 +44,9 @@ public class DoctestsTest {
 
     public static File[] getDoctestFiles() {
         return TestUtils.recursiveListFiles(
-                new File(baseDirectory),
+                // For most portability resolvedirectory needs to start with the name
+                // of a well-known file.
+                new File(TestSource.resolveDirectory("testsrc/doctests/arguments.doctest")),
                 new FileFilter() {
                     @Override
                     public boolean accept(File f) {
@@ -90,6 +93,7 @@ public class DoctestsTest {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setInterpretedMode(interpretedMode);
             Global global = new Global(cx);
+            global.setFileLoadPrefix(TestSource.getPrefix());
             // global.runDoctest throws an exception on any failure
             int testsPassed = global.runDoctest(cx, global, source, name, 1);
             assertTrue(testsPassed > 0);

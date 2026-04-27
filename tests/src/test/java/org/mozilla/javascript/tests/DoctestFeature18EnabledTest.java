@@ -11,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -20,7 +21,7 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
 
     public static Collection<Object[]> singleDoctest() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
-        File f = new File(DoctestsTest.baseDirectory, "feature18enabled.doctest");
+        File f = new File(TestSource.resolve("testsrc/doctests/feature18enabled.doctest"));
         String contents = DoctestsTest.loadFile(f);
         result.add(new Object[] {f.getName(), contents, false});
         return result;

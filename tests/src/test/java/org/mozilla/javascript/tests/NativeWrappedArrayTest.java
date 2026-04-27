@@ -16,8 +16,8 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -27,7 +27,7 @@ import org.mozilla.javascript.tools.shell.Global;
 public class NativeWrappedArrayTest {
 
     private Context cx;
-    private TopLevel global;
+    private Global global;
 
     @BeforeEach
     public void init() {
@@ -35,6 +35,7 @@ public class NativeWrappedArrayTest {
         cx.setLanguageVersion(Context.VERSION_ES6);
         cx.getWrapFactory().setJavaPrimitiveWrap(false);
         global = new Global(cx);
+        global.setFileLoadPrefix(TestSource.getPrefix());
     }
 
     @AfterEach
@@ -48,7 +49,9 @@ public class NativeWrappedArrayTest {
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
         try (InputStreamReader rdr =
-                new InputStreamReader(new FileInputStream("testsrc/jstests/wrapped-arrays.js"))) {
+                new InputStreamReader(
+                        new FileInputStream(
+                                TestSource.resolve("testsrc/jstests/wrapped-arrays.js")))) {
             Object ret = cx.evaluateReader(global, rdr, "wrapped-arrays.js", 1, null);
             assertEquals("success", ret);
         } catch (RhinoException re) {
@@ -62,7 +65,9 @@ public class NativeWrappedArrayTest {
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
         try (InputStreamReader rdr =
-                new InputStreamReader(new FileInputStream("testsrc/jstests/wrapped-arrays.js"))) {
+                new InputStreamReader(
+                        new FileInputStream(
+                                TestSource.resolve("testsrc/jstests/wrapped-arrays.js")))) {
             Object ret = cx.evaluateReader(global, rdr, "wrapped-arrays.js", 1, null);
             assertEquals("success", ret);
         } catch (RhinoException re) {
@@ -76,7 +81,9 @@ public class NativeWrappedArrayTest {
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
         try (InputStreamReader rdr =
-                new InputStreamReader(new FileInputStream("testsrc/jstests/wrapped-arrays.js"))) {
+                new InputStreamReader(
+                        new FileInputStream(
+                                TestSource.resolve("testsrc/jstests/wrapped-arrays.js")))) {
             Object ret = cx.evaluateReader(global, rdr, "wrapped-arrays.js", 1, null);
             assertEquals("success", ret);
         } catch (RhinoException re) {
@@ -94,7 +101,9 @@ public class NativeWrappedArrayTest {
         cx.evaluateString(global, setFunc, "setfunc.js", 1, null);
 
         try (InputStreamReader rdr =
-                new InputStreamReader(new FileInputStream("testsrc/jstests/wrapped-arrays.js"))) {
+                new InputStreamReader(
+                        new FileInputStream(
+                                TestSource.resolve("testsrc/jstests/wrapped-arrays.js")))) {
             Object ret = cx.evaluateReader(global, rdr, "wrapped-arrays.js", 1, null);
             assertEquals("success", ret);
         } catch (RhinoException re) {

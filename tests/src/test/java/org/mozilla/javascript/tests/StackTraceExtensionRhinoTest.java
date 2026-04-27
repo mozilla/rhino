@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -25,11 +26,14 @@ public class StackTraceExtensionRhinoTest {
             cx.setGeneratingDebug(debug);
 
             Global global = new Global(cx);
+            global.setFileLoadPrefix(TestSource.getPrefix());
             VarScope root = cx.newVarEnv(global);
             root.put("ExpectFileNames", global, interpretedMode || debug);
 
             try (FileReader rdr =
-                    new FileReader("testsrc/jstests/extensions/stack-traces-rhino.js")) {
+                    new FileReader(
+                            TestSource.resolve(
+                                    "testsrc/jstests/extensions/stack-traces-rhino.js"))) {
                 cx.evaluateReader(root, rdr, "stack-traces-rhino.js", 1, null);
             }
         } catch (IOException ioe) {

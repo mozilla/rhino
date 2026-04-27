@@ -12,6 +12,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.StackStyle;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -36,10 +37,13 @@ public class StackTraceExtensionMozillaLfTest {
             cx.setGeneratingDebug(true);
 
             Global global = new Global(cx);
+            global.setFileLoadPrefix(TestSource.getPrefix());
             VarScope root = cx.newVarEnv(global);
 
             try (FileReader rdr =
-                    new FileReader("testsrc/jstests/extensions/stack-traces-mozilla-lf.js")) {
+                    new FileReader(
+                            TestSource.resolve(
+                                    "testsrc/jstests/extensions/stack-traces-mozilla-lf.js"))) {
                 cx.evaluateReader(root, rdr, "stack-traces-mozilla-lf.js", 1, null);
             }
         } catch (IOException ioe) {

@@ -1,6 +1,6 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Timers;
@@ -19,7 +19,7 @@ import org.mozilla.javascript.tools.shell.Timers;
 public class ShellTimerTest {
     int optLevel;
     private Context cx;
-    private TopLevel global;
+    private Global global;
     private final Timers timers = new Timers();
 
     public void initShellTimerTest(int optLevel) {
@@ -31,6 +31,7 @@ public class ShellTimerTest {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
         global = new Global(cx);
+        global.setFileLoadPrefix(TestSource.getPrefix());
         timers.install(global);
         global.put("TestsComplete", global, false);
     }

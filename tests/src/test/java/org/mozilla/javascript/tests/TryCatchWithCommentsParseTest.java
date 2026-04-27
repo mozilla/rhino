@@ -10,6 +10,7 @@ import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Comment;
+import org.mozilla.javascript.testutils.TestSource;
 
 /**
  * Tests if comments between try/catch tokens or blocks makes the parsing go wrong. See {@link
@@ -27,7 +28,9 @@ public class TryCatchWithCommentsParseTest {
         Parser p = new Parser(compilerEnv);
         String testJs;
         try (BufferedReader scriptIn =
-                new BufferedReader(new FileReader("testsrc/jstests/trycatchwithcomments.js"))) {
+                new BufferedReader(
+                        new FileReader(
+                                TestSource.resolve("testsrc/jstests/trycatchwithcomments.js")))) {
             testJs = scriptIn.lines().collect(Collectors.joining(System.lineSeparator()));
         }
 

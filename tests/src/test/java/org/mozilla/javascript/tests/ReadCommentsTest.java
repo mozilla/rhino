@@ -11,6 +11,7 @@ import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.testutils.TestSource;
 
 public class ReadCommentsTest {
 
@@ -25,7 +26,8 @@ public class ReadCommentsTest {
         Parser p = new Parser(compilerEnv);
         String testJs;
         try (BufferedReader scriptIn =
-                new BufferedReader(new FileReader("testsrc/jstests/withcomments.js"))) {
+                new BufferedReader(
+                        new FileReader(TestSource.resolve("testsrc/jstests/withcomments.js")))) {
             testJs = scriptIn.lines().collect(Collectors.joining(System.lineSeparator()));
         }
         AstRoot ast = p.parse(testJs, "test", 1);

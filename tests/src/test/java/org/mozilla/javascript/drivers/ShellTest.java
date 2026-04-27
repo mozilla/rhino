@@ -22,6 +22,7 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -34,7 +35,7 @@ public class ShellTest {
     private static Script frameworkScript;
 
     public static void cacheFramework() {
-        frameworkFile = new File("testsrc/tests/shell.js");
+        frameworkFile = new File(TestSource.resolve("testsrc/tests/shell.js"));
         if (!frameworkFile.exists()) {
             throw new AssertionError("Can't find test framework file " + frameworkFile);
         }

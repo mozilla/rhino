@@ -16,6 +16,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 
 public class LambdaFunctionTest {
@@ -28,7 +29,7 @@ public class LambdaFunctionTest {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
         root = cx.initStandardObjects();
-        try (FileReader rdr = new FileReader("testsrc/assert.js")) {
+        try (FileReader rdr = new FileReader(TestSource.resolve("testsrc/assert.js"))) {
             cx.evaluateReader(root, rdr, "assert.js", 1, null);
         }
     }

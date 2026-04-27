@@ -22,6 +22,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
@@ -55,22 +56,25 @@ public class MozillaSuiteTest {
         if (System.getProperty("mozilla.js.tests") != null) {
             testDir = new File(System.getProperty("mozilla.js.tests"));
         } else {
-            URL url = JsTestsBase.class.getResource(".");
-            String path = url.getFile();
+            testDir = new File(TestSource.resolveDirectory("testsrc/tests/test.sh"));
+            if (!testDir.exists()) {
+                URL url = JsTestsBase.class.getResource(".");
+                String path = url.getFile();
 
-            // support running from eclipse
-            if (new File(path + "../../../../../testsrc/tests").exists()) {
-                testDir = new File(path + "../../../../../testsrc/tests").getCanonicalFile();
-            } else {
-                int jsIndex = path.lastIndexOf("/js");
-                if (jsIndex == -1) {
-                    throw new IllegalStateException(
-                            "You aren't running the tests "
-                                    + "from within the standard mozilla/js directory structure");
+                // support running from eclipse
+                if (new File(path + "../../../../../testsrc/tests").exists()) {
+                    testDir = new File(path + "../../../../../testsrc/tests").getCanonicalFile();
+                } else {
+                    int jsIndex = path.lastIndexOf("/js");
+                    if (jsIndex == -1) {
+                        throw new IllegalStateException(
+                                "You aren't running the tests "
+                                        + "from within the standard mozilla/js directory structure");
+                    }
+                    path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
+                    path = path.replace("%20", " ");
+                    testDir = new File(path, "tests");
                 }
-                path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
-                path = path.replace("%20", " ");
-                testDir = new File(path, "tests");
             }
         }
         if (!testDir.isDirectory()) {
