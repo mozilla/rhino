@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Token;
@@ -36,6 +38,34 @@ public class ClassNode extends AstNode {
         SETTER
     }
 
+    public static class ClassField {
+        public final String name;
+        public final AstNode computedName;
+        public final AstNode initializer;
+        public final ElementKind kind;
+
+        private ClassField(
+            String name, AstNode computedName, AstNode initializer, ElementKind kind) {
+            this.name = name;
+            this.computedName = computedName;
+            this.initializer = initializer;
+            this.kind = kind;
+        }
+
+        public static ClassField makeFIeld(String name, AstNode initializer) {
+            return new ClassField(name, null, initializer, null);
+        }
+    }
+
+    private List<ClassField> instanceFields = new ArrayList<>();
+    // private List<ClassField> instanceMethods;
+    // private List<ClassField> privateInstanceFields;
+    // private List<ClassField> privateInstanceMethods;
+    // private List<ClassField> staticFields;
+    // private List<ClassField> staticMethods;
+    // private List<ClassField> privateStaticFields;
+    // private List<ClassField> privateStaticMethods;
+
     private Name className;
     private AstNode superClass;
     private FunctionNode constructor;
@@ -48,8 +78,6 @@ public class ClassNode extends AstNode {
     private List<FunctionNode> staticMethods;
     private List<ElementKind> staticMethodKinds;
     private List<AstNode> staticMethodComputedKeys;
-    private List<String> fieldNames;
-    private List<AstNode> fieldInitializers;
     private List<AstNode> computedFieldKeys;
     private List<AstNode> computedFieldInitializers;
     private List<String> staticFieldNames;
@@ -232,27 +260,27 @@ public class ClassNode extends AstNode {
     }
 
     public void addField(String name, AstNode initializer) {
-        if (fieldNames == null) {
-            fieldNames = new ArrayList<>();
-            fieldInitializers = new ArrayList<>();
-        }
-        fieldNames.add(name);
-        fieldInitializers.add(initializer);
+        var elem = ClassField.makeFIeld(name, initializer);
         if (initializer != null) {
             initializer.setParent(this);
         }
+        instanceFields.add(elem);
     }
 
     public int getFieldCount() {
-        return fieldNames == null ? 0 : fieldNames.size();
+        return instanceFields.size();
+    }
+
+    public List<ClassField> getInstanceFields() {
+        return List.copyOf(instanceFields);
     }
 
     public List<String> getFieldNames() {
-        return fieldNames == null ? Collections.emptyList() : fieldNames;
+        return instanceFields.stream().map(e -> e.name).collect(Collectors.toList());
     }
 
     public List<AstNode> getFieldInitializers() {
-        return fieldInitializers == null ? Collections.emptyList() : fieldInitializers;
+        return instanceFields.stream().map(e -> e.initializer).collect(Collectors.toList());
     }
 
     public void addComputedField(AstNode keyExpr, AstNode initializer) {
@@ -489,17 +517,15 @@ public class ClassNode extends AstNode {
             sb.append(superClass.toSource(0));
         }
         sb.append(" {\n");
-        if (fieldNames != null) {
-            for (int i = 0; i < fieldNames.size(); i++) {
-                sb.append(makeIndent(depth + 1));
-                sb.append(fieldNames.get(i));
-                AstNode init = fieldInitializers.get(i);
-                if (init != null) {
-                    sb.append(" = ");
-                    sb.append(init.toSource(0));
-                }
-                sb.append(";\n");
+        for (var e : instanceFields) {
+            sb.append(makeIndent(depth + 1));
+            sb.append(e.name);
+            AstNode init = e.initializer;
+            if (init != null) {
+                sb.append(" = ");
+                sb.append(init.toSource(0));
             }
+            sb.append(";\n");
         }
         if (privateFieldNames != null) {
             for (int i = 0; i < privateFieldNames.size(); i++) {
@@ -592,11 +618,9 @@ public class ClassNode extends AstNode {
             if (superClass != null) {
                 superClass.visit(v);
             }
-            if (fieldInitializers != null) {
-                for (AstNode init : fieldInitializers) {
-                    if (init != null) {
-                        init.visit(v);
-                    }
+            for (var e : instanceFields) {
+                if (e.initializer != null) {
+                    e.initializer.visit(v);
                 }
             }
             if (privateFieldInitializers != null) {
