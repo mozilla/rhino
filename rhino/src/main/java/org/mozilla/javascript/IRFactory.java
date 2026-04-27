@@ -950,15 +950,14 @@ public final class IRFactory {
         java.util.List<AstNode> initStmts = new java.util.ArrayList<>();
 
         // Named fields: this.fieldName = initializer
-        java.util.List<String> names = classNode.getFieldNames();
-        java.util.List<AstNode> initializers = classNode.getFieldInitializers();
-        for (int i = 0; i < names.size(); i++) {
-            KeywordLiteral thisNode = new KeywordLiteral();
+        var instaceFields = classNode.getInstanceFields();
+        for (var e : instaceFields) {
+            var thisNode = new KeywordLiteral();
             thisNode.setType(Token.THIS);
-            Name propName = new Name(0, names.get(i));
+            Name propName = new Name(0, e.name);
             PropertyGet propGet = new PropertyGet(thisNode, propName);
 
-            AstNode value = initializers.get(i);
+            AstNode value = e.initializer;
             if (value == null) {
                 value = new KeywordLiteral();
                 value.setType(Token.UNDEFINED);
