@@ -89,6 +89,8 @@ import org.mozilla.javascript.ast.XmlPropRef;
 import org.mozilla.javascript.ast.XmlRef;
 import org.mozilla.javascript.ast.XmlString;
 import org.mozilla.javascript.ast.Yield;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /**
  * This class implements the JavaScript parser.
@@ -212,12 +214,8 @@ public class Parser {
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
         } else {
-            errorReporter.warning(
-                    message,
-                    sourceURI,
-                    currentPos.getLineno(),
-                    currentPos.getLine(),
-                    currentPos.getOffset());
+            MappedLocation loc = mapCurrentPos();
+            errorReporter.warning(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
     }
 
@@ -244,13 +242,15 @@ public class Parser {
         if (errorCollector != null) {
             errorCollector.error(message, sourceURI, position, length);
         } else {
-            errorReporter.error(
-                    message,
-                    sourceURI,
-                    currentPos.getLineno(),
-                    currentPos.getLine(),
-                    currentPos.getOffset());
+            MappedLocation loc = mapCurrentPos();
+            errorReporter.error(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
+    }
+
+    private record MappedLocation(int line, String lineSource, int offset) {}
+
+    private MappedLocation mapCurrentPos() {
+        return mapLocation(currentPos.getLineno(), currentPos.getLine(), currentPos.getOffset());
     }
 
     private void addStrictWarning(
@@ -280,7 +280,8 @@ public class Parser {
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
         } else {
-            errorReporter.warning(message, sourceURI, line, lineSource, lineOffset);
+            MappedLocation loc = mapLocation(line, lineSource, lineOffset);
+            errorReporter.warning(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
     }
 
@@ -297,8 +298,25 @@ public class Parser {
         if (errorCollector != null) {
             errorCollector.error(message, sourceURI, position, length);
         } else {
-            errorReporter.error(message, sourceURI, line, lineSource, lineOffset);
+            MappedLocation loc = mapLocation(line, lineSource, lineOffset);
+            errorReporter.error(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
+    }
+
+    private MappedLocation mapLocation(int line, String lineSource, int offset) {
+        SourceMapper mapper = compilerEnv.getSourceMapper();
+        if (mapper != null) {
+            Position mapped = mapper.mapPosition(line, offset);
+            if (mapped != null) {
+                line = mapped.line();
+                offset = mapped.column();
+                String mappedLine = mapper.getSourceLineText(line);
+                if (mappedLine != null) {
+                    lineSource = mappedLine;
+                }
+            }
+        }
+        return new MappedLocation(line, lineSource, offset);
     }
 
     String lookupMessage(String messageId) {

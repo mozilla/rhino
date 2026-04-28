@@ -31,6 +31,7 @@ jar {
                 'org.mozilla.javascript.lc.type',
                 'org.mozilla.javascript.optimizer',
                 'org.mozilla.javascript.serialize',
+                'org.mozilla.javascript.sourcemap',
                 'org.mozilla.javascript.typedarrays',
                 'org.mozilla.javascript.xml',
             ].join(','),

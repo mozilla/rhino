@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.util.Set;
 import org.mozilla.javascript.ast.ErrorCollector;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 public class CompilerEnvirons {
     public CompilerEnvirons() {
@@ -276,6 +277,14 @@ public class CompilerEnvirons {
         return securityDomain;
     }
 
+    public void setSourceMapper(SourceMapper sourceMapper) {
+        this.sourceMapper = sourceMapper;
+    }
+
+    public SourceMapper getSourceMapper() {
+        return sourceMapper;
+    }
+
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
      * features are enabled by default. The {@link ErrorReporter} is set to an {@link
@@ -318,4 +327,5 @@ public class CompilerEnvirons {
     private Scriptable homeObjecgt;
     private SecurityController securityController;
     private Object securityDomain;
+    private SourceMapper sourceMapper;
 }

@@ -16,6 +16,8 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
@@ -255,14 +257,20 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
-        if (lineno != lineNumber && lineno >= 0) {
-            if (itsData.firstLinePC < 0) {
-                itsData.firstLinePC = lineno;
-            }
-            lineNumber = lineno;
-            addIcode(Icode_LINE);
-            addUint16(lineno & 0xFFFF);
+        if (lineno < 0) return;
+        SourceMapper mapper = compilerEnv.getSourceMapper();
+        if (mapper != null) {
+            Position mapped = mapper.mapPosition(lineno, node.getColumn());
+            if (mapped == null) return;
+            lineno = mapped.line();
         }
+        if (lineno == lineNumber) return;
+        if (itsData.firstLinePC < 0) {
+            itsData.firstLinePC = lineno;
+        }
+        lineNumber = lineno;
+        addIcode(Icode_LINE);
+        addUint16(lineno & 0xFFFF);
     }
 
     private static RuntimeException badTree(Node node) {
