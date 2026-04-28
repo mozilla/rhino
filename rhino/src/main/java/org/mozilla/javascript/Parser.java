@@ -1265,7 +1265,7 @@ public class Parser {
             }
 
             // Check for 'get' or 'set' accessor modifier before method name
-            ClassNode.MethodKind accessorKind = ClassNode.MethodKind.METHOD;
+            ClassNode.ElementKind accessorKind = ClassNode.ElementKind.METHOD;
             if (!isComputed
                     && !isAsync
                     && !isGenerator
@@ -1281,8 +1281,8 @@ public class Parser {
                         || isKeywordAsIdentifierName(nextTt)) {
                     accessorKind =
                             "get".equals(memberName)
-                                    ? ClassNode.MethodKind.GETTER
-                                    : ClassNode.MethodKind.SETTER;
+                                    ? ClassNode.ElementKind.GETTER
+                                    : ClassNode.ElementKind.SETTER;
                     isStringOrNumericName = false;
                     // Re-parse the actual member name
                     tt = nextTt;
@@ -1326,7 +1326,7 @@ public class Parser {
                     && !isAsync
                     && !isGenerator
                     && !isPrivateName
-                    && accessorKind == ClassNode.MethodKind.METHOD
+                    && accessorKind == ClassNode.ElementKind.METHOD
                     && "constructor".equals(memberName)
                     && peekToken() == Token.LP) {
                 if (constructor != null) {
@@ -1344,7 +1344,7 @@ public class Parser {
                 if (isGenerator) {
                     method.setIsES6Generator();
                 }
-                if (accessorKind == ClassNode.MethodKind.GETTER) {
+                if (accessorKind == ClassNode.ElementKind.GETTER) {
                     if (isAsync || isGenerator) {
                         reportError("msg.unexpected.token");
                     }
@@ -1352,7 +1352,7 @@ public class Parser {
                         reportError("msg.getter.no.parms");
                     }
                     method.setFunctionIsGetterMethod();
-                } else if (accessorKind == ClassNode.MethodKind.SETTER) {
+                } else if (accessorKind == ClassNode.ElementKind.SETTER) {
                     if (isAsync || isGenerator) {
                         reportError("msg.unexpected.token");
                     }
@@ -1369,7 +1369,7 @@ public class Parser {
                         classNode.addComputedMethod(computedKeyExpr, method, accessorKind);
                     }
                 } else if (isPrivateName) {
-                    if (isStatic && accessorKind != ClassNode.MethodKind.METHOD) {
+                    if (isStatic && accessorKind != ClassNode.ElementKind.METHOD) {
                         // TODO: static private accessors not yet supported
                         reportError("msg.unexpected.token");
                     } else if (classNode.isDuplicatePrivateMember(
@@ -1402,7 +1402,7 @@ public class Parser {
                 }
                 if (isPrivateName) {
                     if (classNode.isDuplicatePrivateMember(
-                            memberName, ClassNode.MethodKind.METHOD, isStatic)) {
+                            memberName, ClassNode.ElementKind.METHOD, isStatic)) {
                         reportError("msg.dup.private.name", memberName);
                     } else if (isStatic) {
                         classNode.addStaticPrivateField(memberName, initializer);

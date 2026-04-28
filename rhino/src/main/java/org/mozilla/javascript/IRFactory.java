@@ -934,7 +934,7 @@ public final class IRFactory {
         return constructorNode;
     }
 
-    private static int[] toKindInts(java.util.List<ClassNode.MethodKind> kinds) {
+    private static int[] toKindInts(java.util.List<ClassNode.ElementKind> kinds) {
         int[] out = new int[kinds.size()];
         for (int i = 0; i < kinds.size(); i++) {
             out[i] = kinds.get(i).ordinal();
@@ -995,7 +995,7 @@ public final class IRFactory {
         // getter/setter on the slot instead of storing a value.
         java.util.List<String> privateNames = classNode.getPrivateFieldNames();
         java.util.List<AstNode> privateInits = classNode.getPrivateFieldInitializers();
-        java.util.List<ClassNode.MethodKind> privateKinds = classNode.getPrivateFieldKinds();
+        java.util.List<ClassNode.ElementKind> privateKinds = classNode.getPrivateFieldKinds();
         for (int i = 0; i < privateNames.size(); i++) {
             KeywordLiteral thisNode = new KeywordLiteral();
             thisNode.setType(Token.THIS);
@@ -1010,10 +1010,10 @@ public final class IRFactory {
 
             Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
             assign.putIntProp(Node.PRIVATE_FIELD_INIT_PROP, 1);
-            ClassNode.MethodKind kind = privateKinds.get(i);
-            if (kind == ClassNode.MethodKind.GETTER) {
+            ClassNode.ElementKind kind = privateKinds.get(i);
+            if (kind == ClassNode.ElementKind.GETTER) {
                 assign.putIntProp(Node.FIELD_KIND_PROP, 1);
-            } else if (kind == ClassNode.MethodKind.SETTER) {
+            } else if (kind == ClassNode.ElementKind.SETTER) {
                 assign.putIntProp(Node.FIELD_KIND_PROP, 2);
             }
             initStmts.add(new ExpressionStatement(assign));

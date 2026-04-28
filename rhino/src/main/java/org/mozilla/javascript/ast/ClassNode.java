@@ -30,7 +30,7 @@ import org.mozilla.javascript.Token;
 public class ClassNode extends AstNode {
 
     /** Kind of a class member that is a function: normal method, getter, or setter. */
-    public enum MethodKind {
+    public enum ElementKind {
         METHOD,
         GETTER,
         SETTER
@@ -42,11 +42,11 @@ public class ClassNode extends AstNode {
     private boolean isStatement;
     private List<String> methodNames;
     private List<FunctionNode> methods;
-    private List<MethodKind> methodKinds;
+    private List<ElementKind> methodKinds;
     private List<AstNode> methodComputedKeys;
     private List<String> staticMethodNames;
     private List<FunctionNode> staticMethods;
-    private List<MethodKind> staticMethodKinds;
+    private List<ElementKind> staticMethodKinds;
     private List<AstNode> staticMethodComputedKeys;
     private List<String> fieldNames;
     private List<AstNode> fieldInitializers;
@@ -58,10 +58,10 @@ public class ClassNode extends AstNode {
     private List<AstNode> staticComputedFieldInitializers;
     private List<String> privateFieldNames;
     private List<AstNode> privateFieldInitializers;
-    private List<MethodKind> privateFieldKinds;
+    private List<ElementKind> privateFieldKinds;
     private List<String> staticPrivateFieldNames;
     private List<AstNode> staticPrivateFieldInitializers;
-    private List<MethodKind> staticPrivateFieldKinds;
+    private List<ElementKind> staticPrivateFieldKinds;
 
     /** Shared SymbolKey for each private name declared in this class. */
     private Map<String, SymbolKey> privateSymbols;
@@ -122,10 +122,10 @@ public class ClassNode extends AstNode {
     }
 
     public void addMethod(String name, FunctionNode fn) {
-        addMethod(name, fn, MethodKind.METHOD);
+        addMethod(name, fn, ElementKind.METHOD);
     }
 
-    public void addMethod(String name, FunctionNode fn, MethodKind kind) {
+    public void addMethod(String name, FunctionNode fn, ElementKind kind) {
         addMethodInternal(name, null, fn, kind);
     }
 
@@ -133,12 +133,12 @@ public class ClassNode extends AstNode {
      * Add an instance method whose property key is computed at runtime (e.g. {@code [expr]()}).
      * The {@code name} is null; {@code keyExpr} holds the expression to evaluate.
      */
-    public void addComputedMethod(AstNode keyExpr, FunctionNode fn, MethodKind kind) {
+    public void addComputedMethod(AstNode keyExpr, FunctionNode fn, ElementKind kind) {
         addMethodInternal(null, keyExpr, fn, kind);
     }
 
     private void addMethodInternal(
-            String name, AstNode keyExpr, FunctionNode fn, MethodKind kind) {
+            String name, AstNode keyExpr, FunctionNode fn, ElementKind kind) {
         if (methodNames == null) {
             methodNames = new ArrayList<>();
             methods = new ArrayList<>();
@@ -167,7 +167,7 @@ public class ClassNode extends AstNode {
         return methods == null ? Collections.emptyList() : methods;
     }
 
-    public List<MethodKind> getMethodKinds() {
+    public List<ElementKind> getMethodKinds() {
         return methodKinds == null ? Collections.emptyList() : methodKinds;
     }
 
@@ -176,10 +176,10 @@ public class ClassNode extends AstNode {
     }
 
     public void addStaticMethod(String name, FunctionNode fn) {
-        addStaticMethod(name, fn, MethodKind.METHOD);
+        addStaticMethod(name, fn, ElementKind.METHOD);
     }
 
-    public void addStaticMethod(String name, FunctionNode fn, MethodKind kind) {
+    public void addStaticMethod(String name, FunctionNode fn, ElementKind kind) {
         addStaticMethodInternal(name, null, fn, kind);
     }
 
@@ -187,12 +187,12 @@ public class ClassNode extends AstNode {
      * Add a static method whose property key is computed at runtime (e.g. {@code static [expr]()}).
      * The {@code name} is null; {@code keyExpr} holds the expression to evaluate.
      */
-    public void addStaticComputedMethod(AstNode keyExpr, FunctionNode fn, MethodKind kind) {
+    public void addStaticComputedMethod(AstNode keyExpr, FunctionNode fn, ElementKind kind) {
         addStaticMethodInternal(null, keyExpr, fn, kind);
     }
 
     private void addStaticMethodInternal(
-            String name, AstNode keyExpr, FunctionNode fn, MethodKind kind) {
+            String name, AstNode keyExpr, FunctionNode fn, ElementKind kind) {
         if (staticMethodNames == null) {
             staticMethodNames = new ArrayList<>();
             staticMethods = new ArrayList<>();
@@ -221,7 +221,7 @@ public class ClassNode extends AstNode {
         return staticMethods == null ? Collections.emptyList() : staticMethods;
     }
 
-    public List<MethodKind> getStaticMethodKinds() {
+    public List<ElementKind> getStaticMethodKinds() {
         return staticMethodKinds == null ? Collections.emptyList() : staticMethodKinds;
     }
 
@@ -334,10 +334,10 @@ public class ClassNode extends AstNode {
     }
 
     public void addPrivateField(String name, AstNode initializer) {
-        addPrivateMember(name, initializer, MethodKind.METHOD);
+        addPrivateMember(name, initializer, ElementKind.METHOD);
     }
 
-    public void addPrivateMember(String name, AstNode initializer, MethodKind kind) {
+    public void addPrivateMember(String name, AstNode initializer, ElementKind kind) {
         if (privateFieldNames == null) {
             privateFieldNames = new ArrayList<>();
             privateFieldInitializers = new ArrayList<>();
@@ -366,15 +366,15 @@ public class ClassNode extends AstNode {
                 : privateFieldInitializers;
     }
 
-    public List<MethodKind> getPrivateFieldKinds() {
+    public List<ElementKind> getPrivateFieldKinds() {
         return privateFieldKinds == null ? Collections.emptyList() : privateFieldKinds;
     }
 
     public void addStaticPrivateField(String name, AstNode initializer) {
-        addStaticPrivateMember(name, initializer, MethodKind.METHOD);
+        addStaticPrivateMember(name, initializer, ElementKind.METHOD);
     }
 
-    public void addStaticPrivateMember(String name, AstNode initializer, MethodKind kind) {
+    public void addStaticPrivateMember(String name, AstNode initializer, ElementKind kind) {
         if (staticPrivateFieldNames == null) {
             staticPrivateFieldNames = new ArrayList<>();
             staticPrivateFieldInitializers = new ArrayList<>();
@@ -403,7 +403,7 @@ public class ClassNode extends AstNode {
                 : staticPrivateFieldInitializers;
     }
 
-    public List<MethodKind> getStaticPrivateFieldKinds() {
+    public List<ElementKind> getStaticPrivateFieldKinds() {
         return staticPrivateFieldKinds == null ? Collections.emptyList() : staticPrivateFieldKinds;
     }
 
@@ -413,14 +413,14 @@ public class ClassNode extends AstNode {
      * static/instance bucket, but any other combination (including instance vs static overlap) is a
      * duplicate.
      */
-    public boolean isDuplicatePrivateMember(String name, MethodKind kind, boolean isStatic) {
+    public boolean isDuplicatePrivateMember(String name, ElementKind kind, boolean isStatic) {
         // Any use of this name in the opposite bucket (instance vs static) is a duplicate.
         List<String> otherNames = isStatic ? privateFieldNames : staticPrivateFieldNames;
         if (otherNames != null && otherNames.contains(name)) {
             return true;
         }
         List<String> names = isStatic ? staticPrivateFieldNames : privateFieldNames;
-        List<MethodKind> kinds = isStatic ? staticPrivateFieldKinds : privateFieldKinds;
+        List<ElementKind> kinds = isStatic ? staticPrivateFieldKinds : privateFieldKinds;
         if (names == null) {
             return false;
         }
@@ -430,10 +430,10 @@ public class ClassNode extends AstNode {
             if (!name.equals(names.get(i))) {
                 continue;
             }
-            MethodKind existing = kinds.get(i);
-            if (existing == MethodKind.GETTER) {
+            ElementKind existing = kinds.get(i);
+            if (existing == ElementKind.GETTER) {
                 sawGetter = true;
-            } else if (existing == MethodKind.SETTER) {
+            } else if (existing == ElementKind.SETTER) {
                 sawSetter = true;
             } else {
                 return true;
@@ -442,10 +442,10 @@ public class ClassNode extends AstNode {
         if (!sawGetter && !sawSetter) {
             return false;
         }
-        if (kind == MethodKind.GETTER) {
+        if (kind == ElementKind.GETTER) {
             return sawGetter;
         }
-        if (kind == MethodKind.SETTER) {
+        if (kind == ElementKind.SETTER) {
             return sawSetter;
         }
         return true;
@@ -536,10 +536,10 @@ public class ClassNode extends AstNode {
         if (methodNames != null) {
             for (int i = 0; i < methodNames.size(); i++) {
                 sb.append(makeIndent(depth + 1));
-                MethodKind kind = methodKinds.get(i);
-                if (kind == MethodKind.GETTER) {
+                ElementKind kind = methodKinds.get(i);
+                if (kind == ElementKind.GETTER) {
                     sb.append("get ");
-                } else if (kind == MethodKind.SETTER) {
+                } else if (kind == ElementKind.SETTER) {
                     sb.append("set ");
                 }
                 String name = methodNames.get(i);
@@ -559,10 +559,10 @@ public class ClassNode extends AstNode {
             for (int i = 0; i < staticMethodNames.size(); i++) {
                 sb.append(makeIndent(depth + 1));
                 sb.append("static ");
-                MethodKind kind = staticMethodKinds.get(i);
-                if (kind == MethodKind.GETTER) {
+                ElementKind kind = staticMethodKinds.get(i);
+                if (kind == ElementKind.GETTER) {
                     sb.append("get ");
-                } else if (kind == MethodKind.SETTER) {
+                } else if (kind == ElementKind.SETTER) {
                     sb.append("set ");
                 }
                 String name = staticMethodNames.get(i);
