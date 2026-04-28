@@ -1,6 +1,6 @@
 # Rhino
 
-Rhino is an open source (MPL 2.0) JavaScript engine, implemented in Java 11. The build system used is gradle, via the
+Rhino is an open source (MPL 2.0) JavaScript engine, implemented in Java 17. The build system used is gradle, via the
 gradle wrapper (`./gradlew`). There are no external dependencies, except for JUnit for unit tests.
 
 ## Useful commands
