@@ -2412,7 +2412,8 @@ public class ScriptRuntime {
                     // in name context.
                     result = firstXMLObject.get(name, firstXMLObject);
                 }
-                // For top scope thisObj for functions is always scope itself.
+                // For top scope thisObj for functions is always the
+                // globalThis on that top level scope.
                 break;
             }
         }
