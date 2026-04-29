@@ -8,6 +8,7 @@ dependencies {
     testImplementation project(':rhino')
     testImplementation libs.openrewrite.test
     testImplementation libs.openrewrite.java17
+    testImplementation libs.openrewrite.java21
 }
 
 java {
