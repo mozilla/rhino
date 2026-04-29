@@ -16,7 +16,7 @@ import org.mozilla.javascript.VarScope;
 
 // See ECMAScript spec 22.2.9.1
 public final class NativeRegExpStringIterator extends ES6Iterator {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -1622794465605583044L;
     private static final String ITERATOR_TAG = "RegExpStringIterator";
 
     private Scriptable regexp;

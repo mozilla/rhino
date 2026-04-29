@@ -916,7 +916,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             };
 
     private static final class JavaIterableIterator extends ES6Iterator {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -2636492890037940863L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
         static void init(TopLevel scope, boolean sealed) {

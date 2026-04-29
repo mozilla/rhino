@@ -19,7 +19,7 @@ import org.mozilla.javascript.VarScope;
  * It also implements List&lt;Integer&gt; for direct manipulation in Java.
  */
 public class NativeUint8Array extends NativeTypedArrayView<Integer> {
-    private static final long serialVersionUID = -3349419704390398895L;
+    private static final long serialVersionUID = 4309679036296927829L;
 
     private static final String CLASS_NAME = "Uint8Array";
 

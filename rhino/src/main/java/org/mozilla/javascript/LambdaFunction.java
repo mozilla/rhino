@@ -13,7 +13,7 @@ package org.mozilla.javascript;
  */
 public class LambdaFunction extends BaseFunction {
 
-    private static final long serialVersionUID = -8388132362854748293L;
+    private static final long serialVersionUID = 6594410813947157220L;
 
     // The target is expected to be a lambda. Lambdas may be serialized, which
     // requires this special interface.

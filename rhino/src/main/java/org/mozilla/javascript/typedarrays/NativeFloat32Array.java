@@ -20,7 +20,7 @@ import org.mozilla.javascript.VarScope;
  * interface. It also implements List&lt;Float&gt; for direct manipulation in Java.
  */
 public class NativeFloat32Array extends NativeTypedArrayView<Float> {
-    private static final long serialVersionUID = -8963461831950499340L;
+    private static final long serialVersionUID = -1986336631829489295L;
 
     private static final String CLASS_NAME = "Float32Array";
     private static final int BYTES_PER_ELEMENT = 4;

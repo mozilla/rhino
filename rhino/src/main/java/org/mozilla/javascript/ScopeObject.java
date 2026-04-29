@@ -10,7 +10,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Serializable {
-    private static final long serialVersionUID = -7471457301304454454L;
+    private static final long serialVersionUID = 2283542168979106620L;
 
     private final VarScope parentScope;
 
