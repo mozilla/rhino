@@ -20,7 +20,7 @@ import org.mozilla.javascript.TopLevel;
  * @version $Id: RequireBuilder.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
 public class RequireBuilder implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 5244169608278369242L;
     private boolean sandboxed = true;
     private ModuleScriptProvider moduleScriptProvider;
     private Script preExec;

@@ -19,7 +19,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  */
 public class StrongCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -8435427841788350515L;
     private final Map<String, CachedModuleScript> modules =
             new ConcurrentHashMap<>(16, .75f, getConcurrencyLevel());
 

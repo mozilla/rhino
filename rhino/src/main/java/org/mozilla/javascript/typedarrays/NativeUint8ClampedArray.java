@@ -21,7 +21,7 @@ import org.mozilla.javascript.VarScope;
  * insertion.
  */
 public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
-    private static final long serialVersionUID = -3349419704390398895L;
+    private static final long serialVersionUID = -1383405116607004281L;
 
     private static final String CLASS_NAME = "Uint8ClampedArray";
 

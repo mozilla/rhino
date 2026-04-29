@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
-    private static final long serialVersionUID = -5332312783643935019L;
+    private static final long serialVersionUID = 8880062939740158370L;
 
     /**
      * Create a JavaScript function object from a Java method.
