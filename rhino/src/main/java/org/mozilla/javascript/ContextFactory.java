@@ -422,7 +422,7 @@ public class ContextFactory {
      * with the thread during call to {@link ContextAction#run(Context)}.
      *
      * @see ContextFactory#call(ContextAction)
-     * @see Context#call(ContextFactory factory, Callable callable, Scriptable scope, Scriptable
+     * @see Context#call(ContextFactory factory, Callable callable, VarScope scope, Scriptable
      *     thisObj, Object[] args)
      */
     public final <T> T call(ContextAction<T> action) {

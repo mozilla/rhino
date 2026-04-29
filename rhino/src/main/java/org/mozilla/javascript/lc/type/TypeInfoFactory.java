@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
@@ -348,7 +347,7 @@ public interface TypeInfoFactory extends Serializable {
      * @return {@code this} if no previous TypeInfoFactory object was associated with the scope and
      *     this TypeInfoFactory is successfully associated, or the old associated factory otherwise.
      * @throws IllegalArgumentException if provided scope is not top scope
-     * @see #get(Scriptable scope)
+     * @see #get(VarScope scope)
      */
     default TypeInfoFactory associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {
@@ -364,7 +363,7 @@ public interface TypeInfoFactory extends Serializable {
      * @return previously associated TypeInfoFactory object.
      * @throws IllegalArgumentException if the top scope of provided scope have no associated
      *     TypeInfoFactory.
-     * @see #associate(ScriptableObject topScope)
+     * @see #associate(TopLevel topScope)
      */
     static TypeInfoFactory get(VarScope scope) {
         var got = getOrElse(scope, null);
@@ -380,8 +379,8 @@ public interface TypeInfoFactory extends Serializable {
      *
      * @param scope scope to search for TypeInfoFactory object.
      * @return previously associated TypeInfoFactory object, or {@code fallback} if none was found
-     * @see #get(Scriptable)
-     * @see #associate(ScriptableObject topScope)
+     * @see #get(VarScope)
+     * @see #associate(TopLevel topScope)
      */
     static TypeInfoFactory getOrElse(VarScope scope, TypeInfoFactory fallback) {
         var got = (TypeInfoFactory) ScriptableObject.getTopScopeValue(scope, "TypeInfoFactory");

@@ -26,7 +26,7 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 public class WrapFactory {
     /**
-     * @see #wrap(Context, Scriptable, Object, TypeInfo)
+     * @see #wrap(Context, VarScope, Object, TypeInfo)
      */
     public final Object wrap(Context cx, VarScope scope, Object obj, Class<?> staticType) {
         return wrap(cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType));
@@ -100,7 +100,7 @@ public class WrapFactory {
     }
 
     /**
-     * @see #wrapAsJavaObject(Context, Scriptable, Object, TypeInfo)
+     * @see #wrapAsJavaObject(Context, VarScope, Object, TypeInfo)
      */
     public final Scriptable wrapAsJavaObject(
             Context cx, VarScope scope, Object javaObject, Class<?> staticType) {

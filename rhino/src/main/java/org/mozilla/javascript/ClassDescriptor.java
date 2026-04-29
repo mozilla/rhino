@@ -55,7 +55,7 @@ import org.mozilla.javascript.ScriptableObject.LambdaSetterFunction;
  * <p>Convenience methods are provided to create aliases of properties ({@link
  * Builder#aliss(String)}) and simple values which are truly independent of the context ({@link
  * Builder#value(Object)}), along with variants that also accept attribute flags. More complex cases
- * can be handled by methods similar to {@link NativeArray#makeUnscopables(Context, Scriptable,
+ * can be handled by methods similar to {@link NativeArray#makeUnscopables(Context, VarScope,
  * ScriptableObject)}.
  */
 public class ClassDescriptor {

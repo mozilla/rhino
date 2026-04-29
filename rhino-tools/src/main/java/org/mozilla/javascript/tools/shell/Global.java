@@ -304,7 +304,7 @@ public class Global extends ImporterTopLevel {
      * @exception InstantiationException if unable to instantiate the named class
      * @exception InvocationTargetException if an exception is thrown during execution of methods of
      *     the named class
-     * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable, Class)
+     * @see org.mozilla.javascript.ScriptableObject#defineClass(VarScope, Class)
      */
     @SuppressWarnings({"unchecked"})
     public static void defineClass(Context cx, Scriptable thisObj, Object[] args, Function funObj)

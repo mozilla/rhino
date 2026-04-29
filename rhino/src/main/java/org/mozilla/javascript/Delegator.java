@@ -45,7 +45,7 @@ public class Delegator implements Function, SymbolScriptable {
     /**
      * Crete new Delegator instance. The default implementation calls this.getClass().newInstance().
      *
-     * @see #construct(Context cx, Scriptable scope, Object[] args)
+     * @see #construct(Context cx, VarScope scope, Object[] args)
      */
     protected Delegator newInstance() {
         try {
@@ -267,7 +267,7 @@ public class Delegator implements Function, SymbolScriptable {
      *     closure.
      * @param args the array of arguments
      * @return the allocated object
-     * @see Constructable#construct(Context, Scriptable, Object[])
+     * @see Constructable#construct(Context, VarScope, Object[])
      */
     @Override
     public Scriptable construct(Context cx, VarScope scope, Object[] args) {

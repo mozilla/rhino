@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 /**
  * An annotation that marks a Java method as JavaScript constructor. This can be used as an
  * alternative to the {@code jsConstructor} naming convention described in {@link
- * org.mozilla.javascript.ScriptableObject#defineClass(org.mozilla.javascript.Scriptable,
+ * org.mozilla.javascript.ScriptableObject#defineClass(org.mozilla.javascript.VarScope,
  * java.lang.Class)}.
  */
 @Documented

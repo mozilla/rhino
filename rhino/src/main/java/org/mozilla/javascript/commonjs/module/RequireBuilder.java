@@ -7,7 +7,6 @@ package org.mozilla.javascript.commonjs.module;
 import java.io.Serializable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 
 /**
@@ -66,7 +65,7 @@ public class RequireBuilder implements Serializable {
 
     /**
      * Sets whether the created require() instances will be sandboxed. See {@link
-     * Require#Require(Context, Scriptable, ModuleScriptProvider, Script, Script, boolean)} for
+     * Require#Require(Context, TopLevel, ModuleScriptProvider, Script, Script, boolean)} for
      * explanation.
      *
      * @param sandboxed true if the created require() instances will be sandboxed.
@@ -79,7 +78,7 @@ public class RequireBuilder implements Serializable {
 
     /**
      * Creates a new require() function. You are still responsible for invoking either {@link
-     * Require#install(Scriptable)} or {@link Require#requireMain(Context, String)} to effectively
+     * Require#install(VarScope)} or {@link Require#requireMain(Context, String)} to effectively
      * make it available to its JavaScript program.
      *
      * @param cx the current context

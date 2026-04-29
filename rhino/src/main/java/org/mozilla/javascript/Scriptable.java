@@ -179,7 +179,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
-     * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
+     * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     @Override
     public void put(String name, Scriptable start, Object value);
@@ -198,7 +198,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see org.mozilla.javascript.Scriptable#has(int, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, int, Object)
-     * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
+     * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     @Override
     public void put(int index, Scriptable start, Object value);

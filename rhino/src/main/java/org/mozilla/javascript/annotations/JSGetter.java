@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 /**
  * An annotation that marks a Java method as JavaScript getter. This can be used as an alternative
  * to the {@code jsGet_} prefix described in {@link
- * org.mozilla.javascript.ScriptableObject#defineClass(org.mozilla.javascript.Scriptable,
+ * org.mozilla.javascript.ScriptableObject#defineClass(org.mozilla.javascript.VarScope,
  * java.lang.Class)}.
  */
 @Documented

@@ -60,14 +60,14 @@ public class ClassCache implements Serializable {
 
     /**
      * Search for ClassCache object in the given scope. The method first calls {@link
-     * ScriptableObject#getTopLevelScope(Scriptable scope)} to get the top most scope and then tries
-     * to locate associated ClassCache object in the prototype chain of the top scope. If none was
+     * ScriptableObject#getTopLevelScope(VarScope obj)} to get the top most scope and then tries to
+     * locate associated ClassCache object in the prototype chain of the top scope. If none was
      * found, it will try to associate a new ClassCache object to the top scope.
      *
      * @param scope scope to search for ClassCache object.
      * @return previously associated ClassCache object or a new instance of ClassCache if no
      *     ClassCache object was found.
-     * @see #associate(ScriptableObject topScope)
+     * @see #associate(TopLevel topScope)
      * @throws IllegalArgumentException if the top scope of provided scope have no associated
      *     ClassCache, and cannot have ClassCache associated due to the top scope not being a {@link
      *     ScriptableObject}
@@ -90,7 +90,7 @@ public class ClassCache implements Serializable {
      * @param topScope scope to associate this ClassCache object with.
      * @return true if no previous ClassCache objects were embedded into the scope and this
      *     ClassCache were successfully associated or false otherwise.
-     * @see #get(Scriptable scope)
+     * @see #get(VarScope scope)
      */
     public boolean associate(TopLevel topScope) {
         if (topScope.getParentScope() != null) {

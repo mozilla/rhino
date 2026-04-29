@@ -53,7 +53,7 @@ public interface ConstProperties<T extends PropHolder<T>> {
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
-     * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
+     * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     public void putConst(String name, T start, Object value);
 
