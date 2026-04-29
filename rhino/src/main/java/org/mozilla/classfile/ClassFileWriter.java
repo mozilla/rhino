@@ -34,7 +34,7 @@ public class ClassFileWriter {
 
         private static final long serialVersionUID = 1263998431033790599L;
 
-        ClassFileFormatException(String message) {
+        public ClassFileFormatException(String message) {
             super(message);
         }
     }

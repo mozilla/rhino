@@ -716,53 +716,54 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class CompilationResult<T extends ScriptOrFn<T>> {
+    private static class InterpreterCompilationResult<T extends ScriptOrFn<T>>
+            implements CompilationResult<T> {
         private final JSDescriptor<T> descriptor;
         private final Scriptable homeObject;
 
-        CompilationResult(JSDescriptor<T> descriptor, Scriptable homeObject) {
+        InterpreterCompilationResult(JSDescriptor<T> descriptor, Scriptable homeObject) {
             this.descriptor = descriptor;
             this.homeObject = homeObject;
+        }
+
+        @Override
+        public DebuggableScript getDebuggableScript() {
+            return descriptor;
         }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Object compile(
-            CompilerEnvirons compilerEnv,
-            ScriptNode tree,
-            String rawSource,
-            boolean returnFunction) {
-        CodeGenerator<?> cgen = new CodeGenerator<>();
-        var itsData = cgen.compile(compilerEnv, tree, rawSource, returnFunction);
-        return new CompilationResult(itsData, compilerEnv.homeObject());
+    public CompilationResult<JSScript> compileScript(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
+        CodeGenerator<JSScript> cgen = new CodeGenerator<>();
+        JSDescriptor<JSScript> itsData = cgen.compile(compilerEnv, tree, rawSource, false);
+        return new InterpreterCompilationResult<>(itsData, compilerEnv.homeObject());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public DebuggableScript getDebuggableScript(Object bytecode) {
-        return ((CompilationResult<?>) bytecode).descriptor;
+    public CompilationResult<JSFunction> compileFunction(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
+        CodeGenerator<JSFunction> cgen = new CodeGenerator<>();
+        JSDescriptor<JSFunction> itsData = cgen.compile(compilerEnv, tree, rawSource, true);
+        return new InterpreterCompilationResult<>(itsData, compilerEnv.homeObject());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Script createScriptObject(Object bytecode, Object staticSecurityDomain) {
-        var compilerResult = (CompilationResult<JSScript>) bytecode;
-        return JSFunction.createScript(
-                compilerResult.descriptor, compilerResult.homeObject, staticSecurityDomain);
+    public Script createScriptObject(
+            CompilationResult<JSScript> compiled, Object staticSecurityDomain) {
+        var result = (InterpreterCompilationResult<JSScript>) compiled;
+        return JSFunction.createScript(result.descriptor, result.homeObject, staticSecurityDomain);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Function createFunctionObject(
-            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain) {
-        var compilerResult = (CompilationResult<JSFunction>) bytecode;
+            Context cx,
+            VarScope scope,
+            CompilationResult<JSFunction> compiled,
+            Object staticSecurityDomain) {
+        var result = (InterpreterCompilationResult<JSFunction>) compiled;
         return JSFunction.createFunction(
-                cx,
-                scope,
-                compilerResult.descriptor,
-                compilerResult.homeObject,
-                staticSecurityDomain);
+                cx, scope, result.descriptor, result.homeObject, staticSecurityDomain);
     }
 
     private static int getShort(byte[] iCode, int pc) {
