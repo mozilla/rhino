@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 public final class ES6Generator extends ScriptableObject {
-    private static final long serialVersionUID = 1645892441041347273L;
+    private static final long serialVersionUID = -1617667918827493330L;
 
     static final Object GENERATOR_TAG = "Generator";
 

@@ -2635,7 +2635,7 @@ public class ScriptRuntime {
      * if a given property has already been enumerated.
      */
     private static class IdEnumeration implements Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -8685189816346084720L;
         Scriptable obj;
         Object[] ids;
         HashSet<Object> used;

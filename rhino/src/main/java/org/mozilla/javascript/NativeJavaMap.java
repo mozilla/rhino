@@ -168,7 +168,7 @@ public class NativeJavaMap extends NativeJavaObject {
             };
 
     private static final class NativeJavaMapIterator extends ES6Iterator {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -6354388021424261488L;
         private static final String ITERATOR_TAG = "JavaMapIterator";
 
         static void init(TopLevel scope, boolean sealed) {
