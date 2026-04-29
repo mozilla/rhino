@@ -20,7 +20,7 @@ import org.mozilla.javascript.VarScope;
  * interface. It also implements List&lt;Double&gt; for direct manipulation in Java.
  */
 public class NativeFloat64Array extends NativeTypedArrayView<Double> {
-    private static final long serialVersionUID = -1255405650050639335L;
+    private static final long serialVersionUID = -2289070055226752021L;
 
     private static final String CLASS_NAME = "Float64Array";
     private static final int BYTES_PER_ELEMENT = 8;

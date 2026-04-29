@@ -3,8 +3,6 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 
 public class WithScope implements VarScope {
-    private static final long serialVersionUID = -7471457301304454454L;
-
     // This cannot be final because XML dot queries mutate it!
     private Scriptable obj;
     private final VarScope parent;

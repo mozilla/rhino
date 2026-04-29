@@ -21,7 +21,7 @@ import org.mozilla.javascript.VarScope;
  * interface. It also implements List&lt;Double&gt; for direct manipulation in Java.
  */
 public class NativeBigUint64Array extends NativeBigIntArrayView {
-    private static final long serialVersionUID = -1255405650050639335L;
+    private static final long serialVersionUID = 6278562787625694949L;
 
     private static final String CLASS_NAME = "BigUint64Array";
     private static final int BYTES_PER_ELEMENT = 8;

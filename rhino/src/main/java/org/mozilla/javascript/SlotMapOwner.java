@@ -16,7 +16,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolder<T> {
-    private static final long serialVersionUID = 1L;
 
     /**
      * Maximum size of an {@link EmbeddedSlotMap} before it is promoted to a {@link HashSlotMap}.
