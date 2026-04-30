@@ -144,7 +144,8 @@ public class Token {
             LOAD_LITERAL = ENUM_ASYNC_STEP + 1,
             // Abrupt-completion IteratorClose: calls iterator.return, swallowing errors.
             // Produces undefined on the stack. Used inside the finally branch of destructuring
-            // (and similar) lowerings so the iterator is closed even on exception / generator-return.
+            // (and similar) lowerings so the iterator is closed even on exception /
+            // generator-return.
             ITERATOR_CLOSE_ABRUPT = LOAD_LITERAL + 1;
 
     // End of interpreter bytecodes
