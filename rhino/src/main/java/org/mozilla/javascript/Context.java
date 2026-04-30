@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
@@ -35,6 +36,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.regexp.RegExpLoaderImpl;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -387,8 +389,7 @@ public class Context implements Closeable {
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 
-    private static final RegExpLoader regExpLoader =
-            ScriptRuntime.loadOneServiceImplementation(RegExpLoader.class);
+    private static final RegExpLoader regExpLoader = new RegExpLoaderImpl();
 
     /**
      * Convenient value to use as zero-length array of objects.
@@ -553,6 +554,7 @@ public class Context implements Closeable {
         }
     }
 
+    @SuppressWarnings("ThreadLocalSetWithNull")
     private static void releaseContext(Context cx) {
         // do not use contextLocal.remove() here, as this might be much slower, when the same thread
         // creates a new context. See ContextThreadLocalBenchmark.
@@ -734,8 +736,8 @@ public class Context implements Closeable {
             firePropertyChangeImpl(
                     listeners,
                     languageVersionProperty,
-                    Integer.valueOf(this.version),
-                    Integer.valueOf(version));
+                    this.version,
+                    version);
         }
         this.version = version;
     }
@@ -1909,10 +1911,7 @@ public class Context implements Closeable {
      * @return javaToJSONConverter for this Context
      */
     public UnaryOperator<Object> getJavaToJSONConverter() {
-        if (javaToJSONConverter == null) {
-            return JavaToJSONConverters.STRING;
-        }
-        return javaToJSONConverter;
+        return Objects.requireNonNullElse(javaToJSONConverter, JavaToJSONConverters.STRING);
     }
 
     /**
@@ -1981,7 +1980,7 @@ public class Context implements Closeable {
     }
 
     /**
-     * Specify whether or not debug information should be generated.
+     * Specify whether debug information should be generated.
      *
      * @since 1.3
      */
@@ -2660,7 +2659,6 @@ public class Context implements Closeable {
             ScriptRuntime.androidApi > 0
                     ? null
                     : Kit.classOrNull("org.mozilla.javascript.optimizer.Codegen");
-    private static final Class<?> interpreterClass = Interpreter.class;
 
     private Evaluator createCompiler() {
         Evaluator result = null;
@@ -2674,7 +2672,7 @@ public class Context implements Closeable {
     }
 
     static Evaluator createInterpreter() {
-        return (Evaluator) Kit.newInstanceOrNull(interpreterClass);
+        return new Interpreter();
     }
 
     static String getSourcePositionFromStack(int[] linep) {
@@ -2682,7 +2680,7 @@ public class Context implements Closeable {
         if (cx == null) return null;
         if (cx.lastInterpreterFrame != null) {
             Evaluator evaluator = createInterpreter();
-            if (evaluator != null) return evaluator.getSourcePositionFromStack(cx, linep);
+            return evaluator.getSourcePositionFromStack(cx, linep);
         }
 
         return getSourcePositionFromJavaStack(linep);
@@ -2706,7 +2704,7 @@ public class Context implements Closeable {
     }
 
     RegExpProxy getRegExpProxy() {
-        if (regExpProxy == null && regExpLoader != null) {
+        if (regExpProxy == null) {
             regExpProxy = regExpLoader.newProxy();
         }
         return regExpProxy;

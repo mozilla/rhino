@@ -22,6 +22,7 @@ import java.util.Map;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
 import org.mozilla.javascript.lc.type.VariableTypeInfo;
+import org.mozilla.kotlin.KotlinNullabilityDetector;
 
 /**
  * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
@@ -42,8 +43,7 @@ final class MemberBox implements Serializable {
     transient Function asSetterFunction;
     transient Object delegateTo;
 
-    private static final NullabilityDetector nullDetector =
-            ScriptRuntime.loadOneServiceImplementation(NullabilityDetector.class);
+    private static final NullabilityDetector nullDetector = new KotlinNullabilityDetector();
 
     MemberBox(Method method, TypeInfoFactory factory) {
         init(method, factory, method.getDeclaringClass());
