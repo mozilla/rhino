@@ -7,9 +7,7 @@ import org.mozilla.javascript.lc.ByteAsBool;
 
 public class InterfaceTypeInfo extends ClassTypeInfo {
     /** Android device might not have {@link FunctionalInterface} class */
-    @SuppressWarnings("unchecked")
-    private static final Class<? extends Annotation> FN_INTERFACE =
-            (Class<? extends Annotation>) Kit.classOrNull("java.lang.FunctionalInterface");
+    private static final Class<? extends Annotation> FN_INTERFACE = FunctionalInterface.class;
 
     /** Not using nullable {@link Boolean} in an attempt of reducing object size. */
     private byte functional;

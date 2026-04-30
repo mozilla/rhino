@@ -984,21 +984,19 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     static {
         // Reflection in java is verbose
         Class<?>[] sig2 = new Class[2];
-        Class<?> cl = Kit.classOrNull("org.mozilla.javascript.JavaAdapter");
-        if (cl != null) {
-            try {
-                sig2[0] = ScriptRuntime.ObjectClass;
-                sig2[1] = Kit.classOrNull("java.io.ObjectOutputStream");
-                adapter_writeAdapterObject = cl.getMethod("writeAdapterObject", sig2);
+        Class<?> cl = JavaAdapter.class;
+        try {
+            sig2[0] = ScriptRuntime.ObjectClass;
+            sig2[1] = ObjectOutputStream.class;
+            adapter_writeAdapterObject = cl.getMethod("writeAdapterObject", sig2);
 
-                sig2[0] = ScriptRuntime.ScriptableClass;
-                sig2[1] = Kit.classOrNull("java.io.ObjectInputStream");
-                adapter_readAdapterObject = cl.getMethod("readAdapterObject", sig2);
+            sig2[0] = ScriptRuntime.ScriptableClass;
+            sig2[1] = ObjectInputStream.class;
+            adapter_readAdapterObject = cl.getMethod("readAdapterObject", sig2);
 
-            } catch (NoSuchMethodException e) {
-                adapter_writeAdapterObject = null;
-                adapter_readAdapterObject = null;
-            }
+        } catch (NoSuchMethodException e) {
+            adapter_writeAdapterObject = null;
+            adapter_readAdapterObject = null;
         }
     }
 

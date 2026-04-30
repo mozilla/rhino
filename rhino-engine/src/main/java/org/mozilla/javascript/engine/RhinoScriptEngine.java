@@ -275,16 +275,10 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         return factory;
     }
 
-    @SuppressWarnings("deprecation")
     private void configureContext(Context cx) throws ScriptException {
         Object lv = get(ScriptEngine.LANGUAGE_VERSION);
         if (lv != null) {
             cx.setLanguageVersion(parseInteger(lv));
-        }
-        Object ol = get(OPTIMIZATION_LEVEL);
-        if (ol != null) {
-            // Handle backwardly-compatible "optimization level".
-            cx.setOptimizationLevel(parseInteger(ol));
         }
         Object interpreted = get(INTERPRETED_MODE);
         if (interpreted != null) {

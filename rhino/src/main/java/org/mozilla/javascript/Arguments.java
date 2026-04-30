@@ -19,13 +19,7 @@ class Arguments extends ScriptableObject {
 
     private static final String CLASS_NAME = "Arguments";
 
-    // Fields to hold caller, callee and length properties,
-    // where NOT_FOUND value tags deleted properties.
-    // In addition, the 'caller' arguments is only available in JS <= 1.3 scripts
-    private Object calleeObj;
-    private Object lengthObj;
-
-    private NativeCall activation;
+    private final NativeCall activation;
 
     // Initially args holds activation.getOriginalArgs(), but any modification
     // of its elements triggers creation of a copy. If its element holds NOT_FOUND,
@@ -40,10 +34,12 @@ class Arguments extends ScriptableObject {
         setPrototype(ScriptableObject.getObjectPrototype(parent));
 
         args = activation.originalArgs;
-        lengthObj = Integer.valueOf(args.length);
+        Object lengthObj = args.length;
 
-        JSFunction f = activation.function;
-        calleeObj = f;
+        // Fields to hold caller, callee and length properties,
+        // where NOT_FOUND value tags deleted properties.
+        // In addition, the 'caller' arguments is only available in JS <= 1.3 scripts
+        Object calleeObj = activation.function;
 
         defineProperty(
                 SymbolKey.ITERATOR,

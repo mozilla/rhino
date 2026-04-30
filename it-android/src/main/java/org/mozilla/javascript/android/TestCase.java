@@ -42,7 +42,7 @@ public class TestCase {
                     Context cx = super.makeContext();
                     cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
                     cx.setGeneratingDebug(false);
-                    cx.setOptimizationLevel(-1);
+                    cx.setInterpretedMode(true);
                     // cx.seal(null);
                     return cx;
                 }

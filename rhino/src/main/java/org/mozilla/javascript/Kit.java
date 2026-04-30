@@ -30,7 +30,7 @@ public class Kit {
     public static Class<?> classOrNull(ClassLoader loader, String className) {
         try {
             return loader.loadClass(className);
-        } catch (ClassNotFoundException | LinkageError | SecurityException ex) {
+        } catch (ClassNotFoundException | LinkageError | SecurityException ignored) {
         } catch (IllegalArgumentException e) {
             // Can be thrown if name has characters that a class name
             // can not contain
@@ -46,7 +46,7 @@ public class Kit {
                 | InstantiationException
                 | IllegalAccessException
                 | NoSuchMethodException
-                | InvocationTargetException x) {
+                | InvocationTargetException ignored) {
         }
         return null;
     }
@@ -55,19 +55,16 @@ public class Kit {
     static boolean testIfCanLoadRhinoClasses(ClassLoader loader) {
         Class<?> testClass = ScriptRuntime.ContextFactoryClass;
         Class<?> x = Kit.classOrNull(loader, testClass.getName());
-        if (x != testClass) {
-            // The check covers the case when x == null =>
-            // loader does not know about testClass or the case
-            // when x != null && x != testClass =>
-            // loader loads a class unrelated to testClass
-            return false;
-        }
-        return true;
+        // The check covers the case when x == null =>
+        // loader does not know about testClass or the case
+        // when x != null && x != testClass =>
+        // loader loads a class unrelated to testClass
+        return x == testClass;
     }
 
     /**
      * If character {@code c} is a hexadecimal digit, return {@code accumulator} * 16 plus
-     * corresponding number. Otherwise return -1.
+     * corresponding number. Otherwise, return -1.
      */
     public static int xDigitToInt(int c, int accumulator) {
         check:
@@ -249,6 +246,7 @@ public class Kit {
         }
     }
 
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     static Object initHash(Map<Object, Object> h, Object key, Object initialValue) {
         synchronized (h) {
             Object current = h.get(key);
@@ -262,8 +260,8 @@ public class Kit {
     }
 
     private static final class ComplexKey {
-        private Object key1;
-        private Object key2;
+        private final Object key1;
+        private final Object key2;
         private int hash;
 
         ComplexKey(Object key1, Object key2) {

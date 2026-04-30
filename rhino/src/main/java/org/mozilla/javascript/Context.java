@@ -56,10 +56,10 @@ import org.mozilla.javascript.xml.XMLLib;
  * @author Brendan Eich
  */
 public class Context implements Closeable {
-    /**
-     * Language versions.
-     *
-     * <p>All integral values are reserved for future version numbers.
+    /*
+      Language versions.
+
+      <p>All integral values are reserved for future version numbers.
      */
 
     /**
@@ -495,7 +495,7 @@ public class Context implements Closeable {
         return enter(cx, ContextFactory.getGlobal());
     }
 
-    static final Context enter(Context cx, ContextFactory factory) {
+    static Context enter(Context cx, ContextFactory factory) {
         Context old = currentContext.get();
         if (old != null) {
             cx = old;
@@ -618,8 +618,7 @@ public class Context implements Closeable {
         String DBG = "org.mozilla.javascript.tools.debugger.Main";
         if (DBG.equals(listener.getClass().getName())) {
             Class<?> cl = listener.getClass();
-            Class<?> factoryClass = Kit.classOrNull("org.mozilla.javascript.ContextFactory");
-            Class<?>[] sig = {factoryClass};
+            Class<?>[] sig = {ContextFactory.class};
             Object[] args = {ContextFactory.getGlobal()};
             try {
                 Method m = cl.getMethod("attachTo", sig);
@@ -834,14 +833,11 @@ public class Context implements Closeable {
     /**
      * Set the current locale.
      *
-     * @return the old value of the locale
      * @see java.util.Locale
      */
-    public final Locale setLocale(Locale loc) {
+    public final void setLocale(Locale loc) {
         if (sealed) onSealedMutation();
-        Locale result = locale;
         locale = loc;
-        return result;
     }
 
     /**
@@ -860,11 +856,9 @@ public class Context implements Closeable {
      *
      * @see java.util.TimeZone
      */
-    public final TimeZone setTimeZone(TimeZone tz) {
+    public final void setTimeZone(TimeZone tz) {
         if (sealed) onSealedMutation();
-        TimeZone result = timezone;
         timezone = tz;
-        return result;
     }
 
     /**
@@ -1967,7 +1961,7 @@ public class Context implements Closeable {
         // special handling of Error so scripts would not catch them
         if (e instanceof Error) {
             Context cx = getContext();
-            if (cx == null || !cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
+            if (!cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
                 throw (Error) e;
             }
         }
@@ -2007,7 +2001,7 @@ public class Context implements Closeable {
     }
 
     /**
-     * Specify whether or not source information should be generated.
+     * Specify whether source information should be generated.
      *
      * <p>Without source information, evaluating the "toString" method on JavaScript functions
      * produces only "[native code]" for the body of the function. Note that code generated without
@@ -2040,21 +2034,6 @@ public class Context implements Closeable {
      */
     public final boolean isInterpretedMode() {
         return interpretedMode;
-    }
-
-    /**
-     * Set the current optimization level.
-     *
-     * <p>This function previously set multiple modes today. Any value less than zero sets up
-     * interpreted mode, and otherwise we run in compiled mode.
-     *
-     * @param optimizationLevel an integer indicating the level of optimization to perform
-     * @since 1.3
-     * @deprecated As of 1.8.0, use {@link #setInterpretedMode(boolean)} instead.
-     */
-    @Deprecated
-    public final void setOptimizationLevel(int optimizationLevel) {
-        setInterpretedMode(optimizationLevel < 0);
     }
 
     /**
@@ -2434,7 +2413,7 @@ public class Context implements Closeable {
      * @param instructionCount amount of script instruction executed since last call to {@code
      *     observeInstructionCount}
      * @throws Error to terminate the script
-     * @see #setOptimizationLevel(int)
+     * @see #setInterpretedMode(boolean)
      */
     protected void observeInstructionCount(int instructionCount) {
         ContextFactory f = getFactory();
@@ -2567,7 +2546,7 @@ public class Context implements Closeable {
         }
 
         // scope should be given if and only if compiling function
-        if (!(scope == null ^ returnFunction)) Kit.codeBug();
+        if ((scope == null) == returnFunction) Kit.codeBug();
 
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
@@ -2677,12 +2656,11 @@ public class Context implements Closeable {
         }
     }
 
-    private static Class<?> codegenClass =
+    private static final Class<?> codegenClass =
             ScriptRuntime.androidApi > 0
                     ? null
                     : Kit.classOrNull("org.mozilla.javascript.optimizer.Codegen");
-    private static Class<?> interpreterClass =
-            Kit.classOrNull("org.mozilla.javascript.Interpreter");
+    private static final Class<?> interpreterClass = Interpreter.class;
 
     private Evaluator createCompiler() {
         Evaluator result = null;

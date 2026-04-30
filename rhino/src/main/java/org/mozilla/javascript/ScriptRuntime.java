@@ -13,13 +13,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.ResourceBundle;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -149,24 +143,24 @@ public class ScriptRuntime {
      * 'standard' classes - especially those in java.lang, we can trust
      * that they won't cause problems by being loaded early.
      */
-    public static final Class<?> BooleanClass = Kit.classOrNull("java.lang.Boolean"),
-            ByteClass = Kit.classOrNull("java.lang.Byte"),
-            CharacterClass = Kit.classOrNull("java.lang.Character"),
-            ClassClass = Kit.classOrNull("java.lang.Class"),
-            DoubleClass = Kit.classOrNull("java.lang.Double"),
-            FloatClass = Kit.classOrNull("java.lang.Float"),
-            IntegerClass = Kit.classOrNull("java.lang.Integer"),
-            LongClass = Kit.classOrNull("java.lang.Long"),
-            NumberClass = Kit.classOrNull("java.lang.Number"),
-            ObjectClass = Kit.classOrNull("java.lang.Object"),
-            ShortClass = Kit.classOrNull("java.lang.Short"),
-            StringClass = Kit.classOrNull("java.lang.String"),
-            DateClass = Kit.classOrNull("java.util.Date"),
-            BigIntegerClass = Kit.classOrNull("java.math.BigInteger");
-    public static final Class<?> ContextClass = Kit.classOrNull("org.mozilla.javascript.Context"),
-            ContextFactoryClass = Kit.classOrNull("org.mozilla.javascript.ContextFactory"),
-            FunctionClass = Kit.classOrNull("org.mozilla.javascript.Function"),
-            ScriptableObjectClass = Kit.classOrNull("org.mozilla.javascript.ScriptableObject");
+    public static final Class<?> BooleanClass = Boolean.class,
+            ByteClass = Byte.class,
+            CharacterClass = Character.class,
+            ClassClass = Class.class,
+            DoubleClass = Double.class,
+            FloatClass = Float.class,
+            IntegerClass = Integer.class,
+            LongClass = Long.class,
+            NumberClass = Number.class,
+            ObjectClass = Object.class,
+            ShortClass = Short.class,
+            StringClass = String.class,
+            DateClass = Date.class,
+            BigIntegerClass = BigInteger.class;
+    public static final Class<?> ContextClass = Context.class,
+            ContextFactoryClass = ContextFactory.class,
+            FunctionClass = Function.class,
+            ScriptableObjectClass = ScriptableObject.class;
 
     public static final Class<Scriptable> ScriptableClass = Scriptable.class;
 

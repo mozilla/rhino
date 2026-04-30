@@ -328,10 +328,7 @@ public abstract class ShellConsole {
             if (readerClass != null) {
                 return getJLineShellConsoleV1(classLoader, readerClass, scope, cs);
             }
-        } catch (NoSuchMethodException e) {
-        } catch (IllegalAccessException e) {
-        } catch (InstantiationException e) {
-        } catch (InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
         }
         return null;
     }
