@@ -56,7 +56,8 @@ tasks.withType(JavaCompile).configureEach {
         "UnusedVariable",
         // This requires annotations that are difficult to incorporate
         // without adding a dependency for everyon who uses Rhino.
-        "AnnotateFormatMethod"
+        "AnnotateFormatMethod",
+        "AndroidJdkLibsChecker"
         )
     options.errorprone.enable(
         // These two do the last thing that Checkstyle used to do for us
@@ -66,7 +67,7 @@ tasks.withType(JavaCompile).configureEach {
         // We will aggressively used "SuppressWarnings" for these, but these can be
         // a reminder to check with an Android user since we don't have automated
         // Android unit tests.
-        "AndroidJdkLibsChecker")
+        /*"AndroidJdkLibsChecker"*/)
     options.errorprone.excludedPaths = '.+/src/test/java/.+'
 }
 

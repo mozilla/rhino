@@ -6,16 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.MathContext;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.dtoa.DoubleFormatter;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -37,6 +27,24 @@ import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.xml.XMLLib;
 import org.mozilla.javascript.xml.XMLLoader;
 import org.mozilla.javascript.xml.XMLObject;
+
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.ResourceBundle;
+import java.util.ServiceLoader;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * This is the class that implements the runtime.

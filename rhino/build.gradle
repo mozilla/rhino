@@ -1,9 +1,16 @@
 plugins {
     id 'rhino.library-conventions'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.21"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.21"
     testImplementation project(':testutils')
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 publishing {

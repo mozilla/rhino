@@ -14,6 +14,7 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.xml;
     exports org.mozilla.javascript.config;
     exports org.mozilla.javascript.lc.type;
+    exports org.mozilla.kotlin;
 
     uses org.mozilla.javascript.RegExpLoader;
     uses org.mozilla.javascript.xml.XMLLoader;
@@ -21,8 +22,12 @@ module org.mozilla.rhino {
 
     provides org.mozilla.javascript.RegExpLoader with
             org.mozilla.javascript.regexp.RegExpLoaderImpl;
+    provides org.mozilla.javascript.NullabilityDetector with
+            org.mozilla.kotlin.KotlinNullabilityDetector;
 
     requires java.compiler;
     requires jdk.dynalink;
+    requires kotlin.metadata.jvm;
+    requires kotlin.stdlib;
     requires transitive java.desktop;
 }

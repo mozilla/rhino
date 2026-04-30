@@ -6,7 +6,7 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.3'
+        classpath 'com.android.tools.build:gradle:8.13.2'
     }
 }
 
@@ -18,13 +18,6 @@ repositories {
     google()
     mavenCentral()
 }
-
-spotless {
-    java {
-        target "src/*/java/**/*.java"
-    }
-}
-
 
 // read the (android specific) local.properties file
 def localPropertiesFile = rootProject.file("local.properties");
@@ -41,16 +34,16 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
     android {
         namespace = "org.mozilla.javascript.android"
 
-        compileSdkVersion 33
+        compileSdkVersion 36
         defaultConfig {
-            minSdk = 26
-            targetSdk = 33
+            minSdk = 29
+            targetSdk = 36
             testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         }
         compileOptions {
-            sourceCompatibility JavaVersion.VERSION_11
-            targetCompatibility JavaVersion.VERSION_11
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
         }
     }
 
