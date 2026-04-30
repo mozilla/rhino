@@ -730,8 +730,7 @@ public final class IRFactory {
             }
 
             if (destructuring != null) {
-                Node destructuringStmt =
-                        new Node(Token.EXPR_VOID, destructuring, lineno, column);
+                Node destructuringStmt = new Node(Token.EXPR_VOID, destructuring, lineno, column);
                 if (fn.isGenerator()) {
                     Node paramInitBlock = fn.getGeneratorParamInitBlock();
                     if (paramInitBlock == null) {

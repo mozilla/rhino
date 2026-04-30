@@ -5138,11 +5138,7 @@ public class Parser {
                         new Node(Token.HOOK, notDone, innerTernary, new Node(Token.UNDEFINED));
 
                 wrapIteratorUseInTryCatch(
-                        comma,
-                        iteratorAssignNode,
-                        iteratorName,
-                        needsCloseName,
-                        normalClose);
+                        comma, iteratorAssignNode, iteratorName, needsCloseName, normalClose);
             }
 
             result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
@@ -5193,12 +5189,12 @@ public class Parser {
     }
 
     /**
-     * Restructures a destructuring {@code comma} body so the iterator-using portion (starting
-     * with {@code iteratorAssignNode}) runs inside a try/catch. Two copies of the abrupt-close
-     * cleanup are emitted: one at the end of the try body (for the non-exceptional path) and one
-     * in the catch (for the exceptional path, followed by a rethrow). This avoids Rhino's
-     * JSR-based finally machinery, whose stack bookkeeping is fragile for this kind of
-     * expression-level wrapping.
+     * Restructures a destructuring {@code comma} body so the iterator-using portion (starting with
+     * {@code iteratorAssignNode}) runs inside a try/catch. Two copies of the abrupt-close cleanup
+     * are emitted: one at the end of the try body (for the non-exceptional path) and one in the
+     * catch (for the exceptional path, followed by a rethrow). This avoids Rhino's JSR-based
+     * finally machinery, whose stack bookkeeping is fragile for this kind of expression-level
+     * wrapping.
      *
      * <p>Emitted structure (appended to {@code comma}, after any pre-iterator children that were
      * left in place, e.g. default-value setup):
@@ -5270,7 +5266,8 @@ public class Parser {
         // Copy 1 of the abrupt-close cleanup: runs at the end of the try body on the normal
         // path. Since the sentinel was just cleared this is effectively a no-op, but keeping it
         // keeps the try body and catch block symmetrical.
-        tryBody.addChildToBack(new Node(Token.EXPR_VOID, buildAbruptCloseHook(iteratorName, needsCloseName)));
+        tryBody.addChildToBack(
+                new Node(Token.EXPR_VOID, buildAbruptCloseHook(iteratorName, needsCloseName)));
 
         // Build the try/catch IR. Mirrors the catch-only path of IRFactory.createTryCatchFinally
         // but omits CATCH_SCOPE because we don't need to expose the thrown value as a JS binding;
@@ -5317,13 +5314,9 @@ public class Parser {
     }
 
     private Node buildAbruptCloseHook(String iteratorName, String needsCloseName) {
-        Node abruptClose =
-                new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
+        Node abruptClose = new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
         return new Node(
-                Token.HOOK,
-                createName(needsCloseName),
-                abruptClose,
-                new Node(Token.UNDEFINED));
+                Token.HOOK, createName(needsCloseName), abruptClose, new Node(Token.UNDEFINED));
     }
 
     DestructuringArrayResult destructuringArray(
@@ -5364,8 +5357,7 @@ public class Parser {
                 // instead of evaluating the two-step Symbol.iterator name lookup.
                 Node symbolIterator = new Node(Token.LOAD_LITERAL);
                 symbolIterator.putIntProp(
-                        Node.LITERAL_INDEX_PROP,
-                        currentScriptOrFn.addLiteral(SymbolKey.ITERATOR));
+                        Node.LITERAL_INDEX_PROP, currentScriptOrFn.addLiteral(SymbolKey.ITERATOR));
                 Node getIteratorMethod =
                         new Node(Token.GETELEM, createName(tempName), symbolIterator);
                 Node callIterator = new Node(Token.CALL, getIteratorMethod);

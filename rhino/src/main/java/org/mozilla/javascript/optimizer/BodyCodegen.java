@@ -37,7 +37,12 @@ class BodyCodegen {
         this.literals = other.literals;
     }
 
-    BodyCodegen(ClassFileWriter cfw, Codegen codegen, CompilerEnvirons compilerEnv, ScriptNode scriptOrFn, int index) {
+    BodyCodegen(
+            ClassFileWriter cfw,
+            Codegen codegen,
+            CompilerEnvirons compilerEnv,
+            ScriptNode scriptOrFn,
+            int index) {
         this.cfw = cfw;
         this.codegen = codegen;
         this.compilerEnv = compilerEnv;
@@ -50,7 +55,6 @@ class BodyCodegen {
             scriptOrFnType = "Lorg/mozilla/javascript/JSScript;";
             scriptOrFnClass = "org.mozilla.javascript.JSScript";
         }
-
     }
 
     void generateBodyCode() {
@@ -5104,13 +5108,13 @@ class BodyCodegen {
     static final int GENERATOR_START = 0;
     static final int GENERATOR_YIELD_START = 1;
 
-    final private ClassFileWriter cfw;
-    final private Codegen codegen;
-    final private CompilerEnvirons compilerEnv;
-    final private ScriptNode scriptOrFn;
-    final private String scriptOrFnType;
-    final private String scriptOrFnClass;
-    final private int scriptOrFnIndex;
+    private final ClassFileWriter cfw;
+    private final Codegen codegen;
+    private final CompilerEnvirons compilerEnv;
+    private final ScriptNode scriptOrFn;
+    private final String scriptOrFnType;
+    private final String scriptOrFnClass;
+    private final int scriptOrFnIndex;
     private int savedCodeOffset;
 
     private OptFunctionNode fnCurrent;

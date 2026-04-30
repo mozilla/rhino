@@ -200,7 +200,8 @@ public class ScriptNode extends Scope {
 
     /**
      * Adds an arbitrary value (such as a {@link org.mozilla.javascript.SymbolKey}) to the shared
-     * literal table and returns its index, for use with {@link org.mozilla.javascript.Token#LOAD_LITERAL}.
+     * literal table and returns its index, for use with {@link
+     * org.mozilla.javascript.Token#LOAD_LITERAL}.
      */
     public int addLiteral(Object literal) {
         if (literal == null) codeBug();
