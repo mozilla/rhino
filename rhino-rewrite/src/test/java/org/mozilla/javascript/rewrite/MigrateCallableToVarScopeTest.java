@@ -54,12 +54,11 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "}",
                         "import org.mozilla.javascript.Callable;\n"
                                 + "import org.mozilla.javascript.Context;\n"
-                                + "import org.mozilla.javascript.Scriptable;\n"
                                 + "import org.mozilla.javascript.VarScope;\n"
                                 + "\n"
                                 + "public class MyCallable implements Callable {\n"
                                 + "    @Override\n"
-                                + "    public Object call(Context cx, VarScope scope, Scriptable thisObj,"
+                                + "    public Object call(Context cx, VarScope scope, Object thisObj,"
                                 + " Object[] args) {\n"
                                 + "        return null;\n"
                                 + "    }\n"
@@ -116,7 +115,7 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "public class MyIdCall implements IdFunctionCall {\n"
                                 + "    @Override\n"
                                 + "    public Object execIdCall(IdFunctionObject f, Context cx,"
-                                + " VarScope scope, Scriptable thisObj, Object[] args) {\n"
+                                + " VarScope scope, Object thisObj, Object[] args) {\n"
                                 + "        return null;\n"
                                 + "    }\n"
                                 + "}"));
@@ -133,7 +132,18 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "\n"
                                 + "public class AlreadyMigrated implements Callable {\n"
                                 + "    @Override\n"
-                                + "    public Object call(Context cx, VarScope scope, Scriptable thisObj,"
+                                + "    public Object call(Context cx, VarScope scope, Object thisObj,"
+                                + " Object[] args) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class AlreadyMigrated implements Callable {\n"
+                                + "    @Override\n"
+                                + "    public Object call(Context cx, VarScope scope, Object thisObj,"
                                 + " Object[] args) {\n"
                                 + "        return null;\n"
                                 + "    }\n"
@@ -166,7 +176,7 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "public class CallSiteExample {\n"
                                 + "    public Object invoke(Callable callable, Context cx, VarScope scope,"
                                 + " Scriptable thisObj, Object[] args) {\n"
-                                + "        return callable.call(cx, (Scriptable) scope, thisObj, args);\n"
+                                + "        return callable.call(cx, (Scriptable) scope, (Scriptable) thisObj, args);\n"
                                 + "    }\n"
                                 + "}",
                         "import org.mozilla.javascript.Callable;\n"
@@ -177,7 +187,7 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "public class CallSiteExample {\n"
                                 + "    public Object invoke(Callable callable, Context cx, VarScope scope,"
                                 + " Scriptable thisObj, Object[] args) {\n"
-                                + "        return callable.call(cx, (VarScope) scope, thisObj, args);\n"
+                                + "        return callable.call(cx, (VarScope) scope, (Object) thisObj, args);\n"
                                 + "    }\n"
                                 + "}"));
     }
@@ -199,7 +209,7 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "import org.mozilla.javascript.VarScope;\n"
                                 + "\n"
                                 + "public class Test {\n"
-                                + "    Callable c = (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> null;\n"
+                                + "    Callable c = (Context cx, VarScope scope, Object thisObj, Object[] args) -> null;\n"
                                 + "}"));
     }
 
@@ -255,7 +265,7 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "\n"
                                 + "public class Test {\n"
                                 + "    public void make(Scriptable parent) {\n"
-                                + "        new LambdaFunction(parent, \"foo\", 1, (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> null);\n"
+                                + "        new LambdaFunction(parent, \"foo\", 1, (Context cx, VarScope scope, Object thisObj, Object[] args) -> null);\n"
                                 + "    }\n"
                                 + "}"));
     }
@@ -303,16 +313,151 @@ class MigrateCallableToVarScopeTest implements RewriteTest {
                                 + "}",
                         "import org.mozilla.javascript.Callable;\n"
                                 + "import org.mozilla.javascript.Context;\n"
-                                + "import org.mozilla.javascript.Scriptable;\n"
                                 + "import org.mozilla.javascript.VarScope;\n"
                                 + "\n"
                                 + "public class Test {\n"
                                 + "    Callable c = new Callable() {\n"
                                 + "        @Override\n"
-                                + "        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {\n"
+                                + "        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {\n"
                                 + "            return null;\n"
                                 + "        }\n"
                                 + "    };\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesScriptExec() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Script;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class MyScript implements Script {\n"
+                                + "    @Override\n"
+                                + "    public Object exec(Context cx, Scriptable scope, Scriptable thisObj) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Script;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class MyScript implements Script {\n"
+                                + "    @Override\n"
+                                + "    public Object exec(Context cx, VarScope scope, Object thisObj) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesScriptExec2Param() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Script;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class MyScript implements Script {\n"
+                                + "    @Override\n"
+                                + "    public Object exec(Context cx, Scriptable scope) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Script;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class MyScript implements Script {\n"
+                                + "    @Override\n"
+                                + "    public Object exec(Context cx, VarScope scope) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void migratesInitStandardObjectsResult() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    public void init() {\n"
+                                + "        Context cx = Context.enter();\n"
+                                + "        Scriptable scope = cx.initStandardObjects();\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class Test {\n"
+                                + "    public void init() {\n"
+                                + "        Context cx = Context.enter();\n"
+                                + "        VarScope scope = cx.initStandardObjects();\n"
+                                + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void updatesJavadoc() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class MyCallable implements Callable {\n"
+                                + "    /**\n"
+                                + "     * @param scope the Scriptable scope\n"
+                                + "     * @param thisObj the Scriptable thisObj\n"
+                                + "     */\n"
+                                + "    @Override\n"
+                                + "    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class MyCallable implements Callable {\n"
+                                + "    /**\n"
+                                + "     * @param scope the VarScope scope\n"
+                                + "     * @param thisObj the Object thisObj\n"
+                                + "     */\n"
+                                + "    @Override\n"
+                                + "    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}"));
+    }
+
+    @Test
+    void removesUnusedScriptableImport() {
+        rewriteRun(
+                java(
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.Scriptable;\n"
+                                + "\n"
+                                + "public class MyCallable implements Callable {\n"
+                                + "    @Override\n"
+                                + "    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
+                                + "}",
+                        "import org.mozilla.javascript.Callable;\n"
+                                + "import org.mozilla.javascript.Context;\n"
+                                + "import org.mozilla.javascript.VarScope;\n"
+                                + "\n"
+                                + "public class MyCallable implements Callable {\n"
+                                + "    @Override\n"
+                                + "    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {\n"
+                                + "        return null;\n"
+                                + "    }\n"
                                 + "}"));
     }
 }

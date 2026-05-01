@@ -12,4 +12,7 @@ tags:
   - javascript
   - migration
 recipeList:
-  - org.mozilla.javascript.rewrite.MigrateCallableToVarScope
+  - org.mozilla.javascript.rewrite.MigrateCallableToVarScope:
+      migrateScope: true
+      migrateThisObj: true
+      migrateScriptExec: true

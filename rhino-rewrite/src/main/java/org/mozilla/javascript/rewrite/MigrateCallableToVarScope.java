@@ -6,96 +6,152 @@
 
 package org.mozilla.javascript.rewrite;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.MethodMatcher;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.TypeTree;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.tree.*;
 
 /**
- * OpenRewrite recipe that migrates Rhino embedder code from 1.x to 2.0.
+ * OpenRewrite recipe to migrate Rhino 1.x scope parameters to Rhino 2.0.
  *
- * <p>In Rhino 2.0, the {@code scope} parameter in {@link org.mozilla.javascript.Callable#call},
- * {@link org.mozilla.javascript.Constructable#construct}, and {@link
- * org.mozilla.javascript.IdFunctionCall#execIdCall} changed from {@code Scriptable} to the new
- * {@code VarScope} interface.
- *
- * <p>This recipe finds any method declaration that overrides one of those Rhino interface methods
- * and still carries a {@code Scriptable} scope parameter, then updates the type to {@code VarScope}
- * and adds the import.
+ * <p>In Rhino 2.0, several key interfaces (Callable, Constructable, IdFunctionCall) have changed
+ * their 'scope' parameter from {@code Scriptable} to the new {@code VarScope} interface.
+ * Additionally, 'thisObj' may be migrated from {@code Scriptable} to {@code Object}.
  */
 public class MigrateCallableToVarScope extends Recipe {
 
-    private static final String OLD_TYPE = "org.mozilla.javascript.Scriptable";
-    private static final String NEW_TYPE = "org.mozilla.javascript.VarScope";
+    @Option(
+            displayName = "Migrate scope to VarScope",
+            description = "Whether to migrate the 'scope' parameter from Scriptable to VarScope.",
+            required = false)
+    private final boolean migrateScope;
 
-    // Matches the OLD (Rhino 1.x) signatures. The "true" flag enables
-    // override-aware matching: it will match subtype declarations too.
+    @Option(
+            displayName = "Migrate thisObj to Object",
+            description = "Whether to migrate the 'thisObj' parameter from Scriptable to Object.",
+            required = false)
+    private final boolean migrateThisObj;
+
+    @Option(
+            displayName = "Migrate Script.exec signatures",
+            description = "Whether to migrate Script.exec signatures.",
+            required = false)
+    private final boolean migrateScriptExec;
+
+    public MigrateCallableToVarScope() {
+        this.migrateScope = true;
+        this.migrateThisObj = true;
+        this.migrateScriptExec = true;
+    }
+
+    public MigrateCallableToVarScope(
+            boolean migrateScope, boolean migrateThisObj, boolean migrateScriptExec) {
+        this.migrateScope = migrateScope;
+        this.migrateThisObj = migrateThisObj;
+        this.migrateScriptExec = migrateScriptExec;
+    }
+
+    public boolean isMigrateScope() {
+        return migrateScope;
+    }
+
+    public boolean isMigrateThisObj() {
+        return migrateThisObj;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "Migrate to Rhino 2.0";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Migrates Rhino interfaces to 2.0 signatures.";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MigrateCallableToVarScope that = (MigrateCallableToVarScope) o;
+        return migrateScope == that.migrateScope
+                && migrateThisObj == that.migrateThisObj
+                && migrateScriptExec == that.migrateScriptExec;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (migrateScope ? 1 : 0);
+        result = 31 * result + (migrateThisObj ? 1 : 0);
+        result = 31 * result + (migrateScriptExec ? 1 : 0);
+        return result;
+    }
+
+    private static final String SCRIPTABLE = "org.mozilla.javascript.Scriptable";
+    private static final String VAR_SCOPE = "org.mozilla.javascript.VarScope";
+    private static final String OBJECT = "java.lang.Object";
+
+    // Matches the signatures in Rhino interfaces.
+    // We match against the OLD signatures (Rhino 1.x) to find candidates,
+    // but we also have fallbacks for already partially migrated code.
     private static final MethodMatcher CALL_MATCHER =
             new MethodMatcher(
                     "org.mozilla.javascript.Callable"
-                            + " call(org.mozilla.javascript.Context,"
-                            + " org.mozilla.javascript.Scriptable,"
-                            + " org.mozilla.javascript.Scriptable,"
-                            + " java.lang.Object[])",
+                            + " call(org.mozilla.javascript.Context, *, *, java.lang.Object[])",
                     true);
 
     private static final MethodMatcher CONSTRUCT_MATCHER =
             new MethodMatcher(
                     "org.mozilla.javascript.Constructable"
-                            + " construct(org.mozilla.javascript.Context,"
-                            + " org.mozilla.javascript.Scriptable,"
-                            + " java.lang.Object[])",
+                            + " construct(org.mozilla.javascript.Context, *, java.lang.Object[])",
                     true);
 
     private static final MethodMatcher EXEC_ID_CALL_MATCHER =
             new MethodMatcher(
                     "org.mozilla.javascript.IdFunctionCall"
-                            + " execIdCall(org.mozilla.javascript.IdFunctionObject,"
-                            + " org.mozilla.javascript.Context,"
-                            + " org.mozilla.javascript.Scriptable,"
-                            + " org.mozilla.javascript.Scriptable,"
-                            + " java.lang.Object[])",
+                            + " execIdCall(org.mozilla.javascript.IdFunctionObject, org.mozilla.javascript.Context, *, *, java.lang.Object[])",
                     true);
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate Rhino scope parameter from Scriptable to VarScope";
-    }
+    private static final MethodMatcher SCRIPT_EXEC_MATCHER =
+            new MethodMatcher(
+                    "org.mozilla.javascript.Script exec(org.mozilla.javascript.Context, *, *)",
+                    true);
 
-    @Override
-    public String getDescription() {
-        return "Updates overrides of Rhino's Callable.call(), Constructable.construct(), and "
-                + "IdFunctionCall.execIdCall() to use VarScope instead of Scriptable for the "
-                + "scope parameter, as required by Rhino 2.0.";
-    }
+    private static final MethodMatcher SCRIPT_EXEC_2_MATCHER =
+            new MethodMatcher(
+                    "org.mozilla.javascript.Script exec(org.mozilla.javascript.Context, *)", true);
+
+    private static final MethodMatcher INIT_STANDARD_OBJECTS_MATCHER =
+            new MethodMatcher("org.mozilla.javascript.Context initStandardObjects(..)", true);
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
 
-            private J.VariableDeclarations updateScopeParameter(J.VariableDeclarations vd) {
-                if (!TypeUtils.isOfClassType(vd.getType(), OLD_TYPE)) {
-                    return null; // Already VarScope or something else -- no change needed
+            private J.VariableDeclarations migrateParameterType(
+                    J.VariableDeclarations vd, String oldType, String newType) {
+                if (vd.getTypeExpression() == null) {
+                    return null;
+                }
+                if (vd.getType() != null && !TypeUtils.isOfClassType(vd.getType(), oldType)) {
+                    return null;
                 }
 
-                // Build the new fully-qualified type
-                JavaType.FullyQualified newFqType = JavaType.ShallowClass.build(NEW_TYPE);
-
-                // Replace the type expression (the "Scriptable" identifier) with "VarScope"
+                JavaType.FullyQualified newFqType = JavaType.ShallowClass.build(newType);
                 J.VariableDeclarations updatedVd = vd.withType(newFqType);
+
                 if (vd.getTypeExpression() != null) {
+                    String simpleName =
+                            newType.contains(".")
+                                    ? newType.substring(newType.lastIndexOf('.') + 1)
+                                    : newType;
                     if (vd.getTypeExpression() instanceof J.Identifier) {
                         J.Identifier identifier = (J.Identifier) vd.getTypeExpression();
                         updatedVd =
                                 updatedVd.withTypeExpression(
-                                        identifier.withSimpleName("VarScope").withType(newFqType));
-                        maybeAddImport(NEW_TYPE);
+                                        identifier.withSimpleName(simpleName).withType(newFqType));
+                        maybeAddImport(newType);
                     } else if (vd.getTypeExpression() instanceof J.FieldAccess) {
                         J.FieldAccess fieldAccess = (J.FieldAccess) vd.getTypeExpression();
                         updatedVd =
@@ -104,14 +160,13 @@ public class MigrateCallableToVarScope extends Recipe {
                                                 .withName(
                                                         fieldAccess
                                                                 .getName()
-                                                                .withSimpleName("VarScope")
+                                                                .withSimpleName(simpleName)
                                                                 .withType(newFqType))
                                                 .withType(newFqType));
-                        maybeAddImport(NEW_TYPE);
+                        maybeAddImport(newType);
                     }
                 }
 
-                // Also update the JavaType stored on each named variable inside the declaration
                 updatedVd =
                         updatedVd.withVariables(
                                 ListUtils.map(
@@ -122,51 +177,91 @@ public class MigrateCallableToVarScope extends Recipe {
                 return updatedVd;
             }
 
-            private int getScopeParamIndex(JavaType type, int paramCount) {
+            private java.util.Map<Integer, String> getTargetParameterTypes(
+                    JavaType type, int paramCount) {
+                java.util.Map<Integer, String> targets = new java.util.HashMap<>();
                 if (TypeUtils.isAssignableTo("org.mozilla.javascript.Callable", type)) {
-                    return 1;
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(2, OBJECT);
                 } else if (TypeUtils.isAssignableTo("org.mozilla.javascript.Constructable", type)) {
-                    return 1;
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
                 } else if (TypeUtils.isAssignableTo(
                         "org.mozilla.javascript.IdFunctionCall", type)) {
-                    return 2;
+                    if (migrateScope) targets.put(2, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(3, OBJECT);
+                } else if (TypeUtils.isAssignableTo("org.mozilla.javascript.Script", type)) {
+                    if (paramCount == 3) {
+                        if (migrateScriptExec) {
+                            if (migrateScope) targets.put(1, VAR_SCOPE);
+                            if (migrateThisObj) targets.put(2, OBJECT);
+                        }
+                    } else if (paramCount == 2) {
+                        if (migrateScriptExec) {
+                            if (migrateScope) targets.put(1, VAR_SCOPE);
+                        }
+                    }
                 } else if (type == null || type instanceof JavaType.Unknown) {
-                    if (paramCount == 4) return 1;
-                    if (paramCount == 3) return 1;
-                    if (paramCount == 5) return 2;
+                    // Fallback heuristics based on parameter counts for common Rhino interfaces
+                    if (paramCount == 4) { // Callable.call
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
+                        if (migrateThisObj) targets.put(2, OBJECT);
+                    } else if (paramCount == 3) { // Constructable.construct / Script.exec
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
+                    } else if (paramCount == 2) { // Script.exec
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
+                    } else if (paramCount == 5) { // IdFunctionCall.execIdCall
+                        if (migrateScope) targets.put(2, VAR_SCOPE);
+                        if (migrateThisObj) targets.put(3, OBJECT);
+                    }
                 }
-                return -1;
+                return targets;
             }
 
             @Override
             public J.Lambda visitLambda(J.Lambda lambda, ExecutionContext ctx) {
+                java.util.Map<Integer, String> targets =
+                        getTargetParameterTypes(
+                                lambda.getType(), lambda.getParameters().getParameters().size());
+
+                if (targets.isEmpty()) {
+                    return super.visitLambda(lambda, ctx);
+                }
+
                 J.Lambda l = super.visitLambda(lambda, ctx);
-                int scopeParamIndex =
-                        getScopeParamIndex(l.getType(), l.getParameters().getParameters().size());
+                boolean changed = false;
+                for (java.util.Map.Entry<Integer, String> entry : targets.entrySet()) {
+                    int idx = entry.getKey();
+                    String targetType = entry.getValue();
 
-                if (scopeParamIndex < 0
-                        || l.getParameters().getParameters().size() <= scopeParamIndex) {
-                    return l;
-                }
+                    if (l.getParameters().getParameters().size() <= idx) {
+                        continue;
+                    }
 
-                Object raw = l.getParameters().getParameters().get(scopeParamIndex);
-                if (!(raw instanceof J.VariableDeclarations)) {
-                    return l;
-                }
+                    Object raw = l.getParameters().getParameters().get(idx);
+                    if (!(raw instanceof J.VariableDeclarations)) {
+                        continue;
+                    }
 
-                J.VariableDeclarations updatedVd =
-                        updateScopeParameter((J.VariableDeclarations) raw);
-                if (updatedVd != null) {
-                    final int idx = scopeParamIndex;
-                    l =
-                            l.withParameters(
-                                    l.getParameters()
-                                            .withParameters(
-                                                    ListUtils.map(
-                                                            l.getParameters().getParameters(),
-                                                            (i, p) -> i == idx ? updatedVd : p)));
+                    J.VariableDeclarations updatedVd =
+                            migrateParameterType(
+                                    (J.VariableDeclarations) raw, SCRIPTABLE, targetType);
+                    if (updatedVd != null) {
+                        changed = true;
+                        final int currentIdx = idx;
+                        final J.VariableDeclarations replacement = updatedVd;
+                        l =
+                                l.withParameters(
+                                        l.getParameters()
+                                                .withParameters(
+                                                        ListUtils.map(
+                                                                l.getParameters().getParameters(),
+                                                                (i, p) ->
+                                                                        i == currentIdx
+                                                                                ? replacement
+                                                                                : p)));
+                    }
                 }
-                return l;
+                return changed ? l : super.visitLambda(lambda, ctx);
             }
 
             @Override
@@ -178,8 +273,8 @@ public class MigrateCallableToVarScope extends Recipe {
                     return m;
                 }
 
-                int scopeParamIndex = getScopeParamIndex(type, -1);
-                if (scopeParamIndex < 0) {
+                java.util.Map<Integer, String> targets = getTargetParameterTypes(type, -1);
+                if (targets.isEmpty()) {
                     return m;
                 }
 
@@ -197,60 +292,138 @@ public class MigrateCallableToVarScope extends Recipe {
                     J.MethodDeclaration method, ExecutionContext ctx) {
 
                 J.MethodDeclaration m = super.visitMethodDeclaration(method, ctx);
-
-                // Determine which parameter index holds the `scope` (VarScope target).
-                // For call() and construct() it is index 1.
-                // For execIdCall() it is index 2 (after IdFunctionObject and Context).
-                int scopeParamIndex = -1;
                 J.ClassDeclaration enclosingClass =
                         getCursor().firstEnclosingOrThrow(J.ClassDeclaration.class);
 
+                java.util.Map<Integer, String> targets = new java.util.HashMap<>();
+
                 if (CALL_MATCHER.matches(m, enclosingClass)) {
-                    scopeParamIndex = 1;
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(2, OBJECT);
                 } else if (CONSTRUCT_MATCHER.matches(m, enclosingClass)) {
-                    scopeParamIndex = 1;
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
                 } else if (EXEC_ID_CALL_MATCHER.matches(m, enclosingClass)) {
-                    scopeParamIndex = 2;
+                    if (migrateScope) targets.put(2, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(3, OBJECT);
+                } else if (migrateScriptExec && SCRIPT_EXEC_MATCHER.matches(m, enclosingClass)) {
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(2, OBJECT);
+                } else if (migrateScriptExec && SCRIPT_EXEC_2_MATCHER.matches(m, enclosingClass)) {
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
                 } else {
-                    // Fallback for cases where strict signature matching fails (common if currently
-                    // using Scriptable)
-                    // but it's clearly intended to be one of these methods.
+                    // Fallback heuristics
                     String name = m.getSimpleName();
                     int paramCount = m.getParameters().size();
                     if ("call".equals(name) && paramCount == 4) {
-                        scopeParamIndex = 1;
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
+                        if (migrateThisObj) targets.put(2, OBJECT);
                     } else if ("construct".equals(name) && paramCount == 3) {
-                        scopeParamIndex = 1;
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
                     } else if ("execIdCall".equals(name) && paramCount == 5) {
-                        scopeParamIndex = 2;
+                        if (migrateScope) targets.put(2, VAR_SCOPE);
+                        if (migrateThisObj) targets.put(3, OBJECT);
+                    } else if ("exec".equals(name)) {
+                        if (paramCount == 3) {
+                            if (migrateScriptExec) {
+                                if (migrateScope) targets.put(1, VAR_SCOPE);
+                                if (migrateThisObj) targets.put(2, OBJECT);
+                            }
+                        } else if (paramCount == 2) {
+                            if (migrateScriptExec) {
+                                if (migrateScope) targets.put(1, VAR_SCOPE);
+                            }
+                        }
                     }
                 }
 
-                if (scopeParamIndex < 0) {
+                if (targets.isEmpty()) {
                     return m;
                 }
 
-                // Guard: only update if the parameter list is long enough
-                if (m.getParameters().size() <= scopeParamIndex) {
-                    return m;
+                for (java.util.Map.Entry<Integer, String> entry : targets.entrySet()) {
+                    int idx = entry.getKey();
+                    String targetType = entry.getValue();
+
+                    if (m.getParameters().size() <= idx) {
+                        continue;
+                    }
+
+                    Object raw = m.getParameters().get(idx);
+                    if (!(raw instanceof J.VariableDeclarations)) {
+                        continue;
+                    }
+
+                    J.VariableDeclarations updatedVd =
+                            migrateParameterType(
+                                    (J.VariableDeclarations) raw, SCRIPTABLE, targetType);
+                    if (updatedVd != null) {
+                        m =
+                                m.withParameters(
+                                        ListUtils.map(
+                                                m.getParameters(),
+                                                (i, p) -> i == idx ? updatedVd : p));
+
+                        // Documentation polish: Update Javadoc @param tags
+                        final String paramName = updatedVd.getVariables().get(0).getSimpleName();
+                        final String newTypeSimple =
+                                targetType.substring(targetType.lastIndexOf('.') + 1);
+
+                        final J.MethodDeclaration methodForLambda = m;
+                        m =
+                                m.withComments(
+                                        ListUtils.map(
+                                                m.getComments(),
+                                                c -> {
+                                                    String rawText =
+                                                            c.printComment(new Cursor(null, c));
+                                                    boolean isJavadoc = rawText.startsWith("/**");
+                                                    String text = rawText;
+                                                    if (isJavadoc) {
+                                                        text =
+                                                                rawText.substring(
+                                                                        3, rawText.length() - 2);
+                                                    } else if (rawText.startsWith("/*")) {
+                                                        text =
+                                                                rawText.substring(
+                                                                        2, rawText.length() - 2);
+                                                    } else if (rawText.startsWith("//")) {
+                                                        text = rawText.substring(2);
+                                                    }
+
+                                                    String[] lines = text.split("\n");
+                                                    boolean modified = false;
+                                                    for (int i = 0; i < lines.length; i++) {
+                                                        if (lines[i].contains(
+                                                                "@param " + paramName)) {
+                                                            String newLine =
+                                                                    lines[i].replace(
+                                                                            "Scriptable",
+                                                                            newTypeSimple);
+                                                            if (!newLine.equals(lines[i])) {
+                                                                lines[i] = newLine;
+                                                                modified = true;
+                                                            }
+                                                        }
+                                                    }
+
+                                                    if (!modified) {
+                                                        return c;
+                                                    }
+
+                                                    String updatedText = String.join("\n", lines);
+                                                    if (isJavadoc) {
+                                                        updatedText = "*" + updatedText;
+                                                    }
+                                                    return new TextComment(
+                                                            c.isMultiline(),
+                                                            updatedText,
+                                                            c.getSuffix(),
+                                                            c.getMarkers());
+                                                }));
+                    }
                 }
 
-                // Parameters in OpenRewrite 8 are J.VariableDeclarations
-                Object raw = m.getParameters().get(scopeParamIndex);
-                if (!(raw instanceof J.VariableDeclarations)) {
-                    return m;
-                }
-
-                J.VariableDeclarations updatedVd =
-                        updateScopeParameter((J.VariableDeclarations) raw);
-                if (updatedVd != null) {
-                    final int idx = scopeParamIndex;
-                    m =
-                            m.withParameters(
-                                    ListUtils.map(
-                                            m.getParameters(), (i, p) -> i == idx ? updatedVd : p));
-                }
-
+                maybeRemoveImport(SCRIPTABLE);
                 return m;
             }
 
@@ -259,85 +432,150 @@ public class MigrateCallableToVarScope extends Recipe {
                     J.MethodInvocation invocation, ExecutionContext ctx) {
 
                 J.MethodInvocation inv = super.visitMethodInvocation(invocation, ctx);
+                java.util.Map<Integer, String> targets = getTargetArgumentIndices(inv);
 
-                int scopeParamIndex = getScopeArgumentIndex(inv);
-                if (scopeParamIndex < 0) {
+                if (targets.isEmpty()) {
                     return inv;
                 }
 
-                if (inv.getArguments().size() <= scopeParamIndex) {
-                    return inv;
-                }
+                for (java.util.Map.Entry<Integer, String> entry : targets.entrySet()) {
+                    int idx = entry.getKey();
+                    String targetType = entry.getValue();
 
-                Object rawArg = inv.getArguments().get(scopeParamIndex);
-                if (!(rawArg instanceof J.TypeCast)) {
-                    return inv;
-                }
+                    if (inv.getArguments().size() <= idx) {
+                        continue;
+                    }
 
-                J.TypeCast cast = (J.TypeCast) rawArg;
-                TypeTree castType = cast.getClazz().getTree();
-                if (!TypeUtils.isOfClassType(castType.getType(), OLD_TYPE)) {
-                    return inv;
-                }
+                    Object rawArg = inv.getArguments().get(idx);
+                    if (!(rawArg instanceof J.TypeCast)) {
+                        continue;
+                    }
 
-                JavaType.FullyQualified newFqType = JavaType.ShallowClass.build(NEW_TYPE);
-                TypeTree newTypeTree;
+                    J.TypeCast cast = (J.TypeCast) rawArg;
+                    TypeTree castType = cast.getClazz().getTree();
+                    if (!TypeUtils.isOfClassType(castType.getType(), SCRIPTABLE)) {
+                        continue;
+                    }
 
-                if (castType instanceof J.Identifier) {
-                    J.Identifier id = (J.Identifier) castType;
-                    newTypeTree = id.withSimpleName("VarScope").withType(newFqType);
-                } else if (castType instanceof J.FieldAccess) {
-                    J.FieldAccess fa = (J.FieldAccess) castType;
-                    newTypeTree =
-                            fa.withName(fa.getName().withSimpleName("VarScope").withType(newFqType))
+                    JavaType.FullyQualified newFqType = JavaType.ShallowClass.build(targetType);
+                    TypeTree newTypeTree;
+
+                    String simpleName =
+                            targetType.contains(".")
+                                    ? targetType.substring(targetType.lastIndexOf('.') + 1)
+                                    : targetType;
+
+                    if (castType instanceof J.Identifier) {
+                        J.Identifier id = (J.Identifier) castType;
+                        newTypeTree = id.withSimpleName(simpleName).withType(newFqType);
+                    } else if (castType instanceof J.FieldAccess) {
+                        J.FieldAccess fa = (J.FieldAccess) castType;
+                        newTypeTree =
+                                fa.withName(
+                                                fa.getName()
+                                                        .withSimpleName(simpleName)
+                                                        .withType(newFqType))
+                                        .withType(newFqType);
+                    } else {
+                        continue;
+                    }
+
+                    J.TypeCast newCast =
+                            cast.withClazz(cast.getClazz().withTree(newTypeTree))
                                     .withType(newFqType);
-                } else {
-                    return inv;
+
+                    final int currentIdx = idx;
+                    final J.TypeCast replacement = newCast;
+                    inv =
+                            inv.withArguments(
+                                    ListUtils.map(
+                                            inv.getArguments(),
+                                            (i, arg) -> i == currentIdx ? replacement : arg));
+
+                    maybeAddImport(targetType);
                 }
-
-                J.TypeCast newCast =
-                        cast.withClazz(cast.getClazz().withTree(newTypeTree)).withType(newFqType);
-
-                final int idx = scopeParamIndex;
-                final J.TypeCast replacement = newCast;
-                inv =
-                        inv.withArguments(
-                                ListUtils.map(
-                                        inv.getArguments(),
-                                        (i, arg) -> i == idx ? replacement : arg));
-
-                maybeAddImport(NEW_TYPE);
 
                 return inv;
             }
 
-            private int getScopeArgumentIndex(J.MethodInvocation inv) {
+            private java.util.Map<Integer, String> getTargetArgumentIndices(
+                    J.MethodInvocation inv) {
+                java.util.Map<Integer, String> targets = new java.util.HashMap<>();
                 if (CALL_MATCHER.matches(inv)) {
-                    return 1;
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(2, OBJECT);
+                } else if (CONSTRUCT_MATCHER.matches(inv)) {
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                } else if (EXEC_ID_CALL_MATCHER.matches(inv)) {
+                    if (migrateScope) targets.put(2, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(3, OBJECT);
+                } else if (migrateScriptExec && SCRIPT_EXEC_MATCHER.matches(inv)) {
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                    if (migrateThisObj) targets.put(2, OBJECT);
+                } else if (migrateScriptExec && SCRIPT_EXEC_2_MATCHER.matches(inv)) {
+                    if (migrateScope) targets.put(1, VAR_SCOPE);
+                } else {
+                    // Fallback heuristics
+                    String name = inv.getSimpleName();
+                    int argCount = inv.getArguments().size();
+                    if ("call".equals(name) && argCount == 4) {
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
+                        if (migrateThisObj) targets.put(2, OBJECT);
+                    } else if ("construct".equals(name) && argCount == 3) {
+                        if (migrateScope) targets.put(1, VAR_SCOPE);
+                    } else if ("execIdCall".equals(name) && argCount == 5) {
+                        if (migrateScope) targets.put(2, VAR_SCOPE);
+                        if (migrateThisObj) targets.put(3, OBJECT);
+                    } else if ("exec".equals(name)) {
+                        if (argCount == 3) {
+                            if (migrateScriptExec) {
+                                if (migrateScope) targets.put(1, VAR_SCOPE);
+                                if (migrateThisObj) targets.put(2, OBJECT);
+                            }
+                        } else if (argCount == 2) {
+                            if (migrateScriptExec) {
+                                if (migrateScope) targets.put(1, VAR_SCOPE);
+                            }
+                        }
+                    }
                 }
-                if (CONSTRUCT_MATCHER.matches(inv)) {
-                    return 1;
-                }
-                if (EXEC_ID_CALL_MATCHER.matches(inv)) {
-                    return 2;
+                return targets;
+            }
+
+            @Override
+            public J.VariableDeclarations visitVariableDeclarations(
+                    J.VariableDeclarations multiVariable, ExecutionContext ctx) {
+                J.VariableDeclarations mv = super.visitVariableDeclarations(multiVariable, ctx);
+                if (mv.getVariables().isEmpty()
+                        || mv.getVariables().get(0).getInitializer() == null) {
+                    return mv;
                 }
 
-                // Fallback for parse-error scenarios where invocation method type attribution
-                // is
-                // missing (common in pre-migration code that no longer compiles against Rhino
-                // 2.0).
-                String name = inv.getSimpleName();
-                int argCount = inv.getArguments().size();
-                if ("call".equals(name) && argCount == 4) {
-                    return 1;
+                Expression initializer = mv.getVariables().get(0).getInitializer();
+                if (initializer instanceof J.MethodInvocation) {
+                    J.MethodInvocation inv = (J.MethodInvocation) initializer;
+                    if (INIT_STANDARD_OBJECTS_MATCHER.matches(inv)) {
+                        J.VariableDeclarations updated =
+                                migrateParameterType(mv, SCRIPTABLE, VAR_SCOPE);
+                        if (updated != null) {
+                            maybeRemoveImport(SCRIPTABLE);
+                            return updated;
+                        }
+                    }
                 }
-                if ("construct".equals(name) && argCount == 3) {
-                    return 1;
+                return mv;
+            }
+
+            @Override
+            public J.Assignment visitAssignment(J.Assignment assignment, ExecutionContext ctx) {
+                J.Assignment asgn = super.visitAssignment(assignment, ctx);
+                if (asgn.getAssignment() instanceof J.MethodInvocation) {
+                    J.MethodInvocation inv = (J.MethodInvocation) asgn.getAssignment();
+                    if (INIT_STANDARD_OBJECTS_MATCHER.matches(inv)) {
+                        maybeRemoveImport(SCRIPTABLE);
+                    }
                 }
-                if ("execIdCall".equals(name) && argCount == 5) {
-                    return 2;
-                }
-                return -1;
+                return asgn;
             }
         };
     }
