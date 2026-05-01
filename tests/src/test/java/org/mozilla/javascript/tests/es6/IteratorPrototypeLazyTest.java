@@ -34,6 +34,33 @@ public class IteratorPrototypeLazyTest {
     }
 
     @Test
+    public void mapReentrantNextThrows() {
+        // Calling next() on an iterator helper while it is already running must
+        // throw a TypeError, not stack-overflow.
+        String code =
+                "var loopCount = 0;\n"
+                        + "function* g() { while (true) { loopCount++; yield; } }\n"
+                        + "var enterCount = 0;\n"
+                        + "var iter = g().map(function() { enterCount++; iter.next(); });\n"
+                        + "var msg;\n"
+                        + "try { iter.next(); msg = 'no throw'; }\n"
+                        + "catch (e) { msg = (e instanceof TypeError) + ':' + (enterCount === 1); }\n"
+                        + "msg;";
+        Utils.assertWithAllModes_ES6("true:true", code);
+    }
+
+    @Test
+    public void filterReentrantNextThrows() {
+        String code =
+                "var iter = [1,2,3].values().filter(function() { iter.next(); return true; });\n"
+                        + "var threw = false;\n"
+                        + "try { iter.next(); }\n"
+                        + "catch (e) { threw = e instanceof TypeError; }\n"
+                        + "threw;";
+        Utils.assertWithAllModes_ES6(Boolean.TRUE, code);
+    }
+
+    @Test
     public void mapCallbackThrowClosesSource() {
         String code =
                 "var closed = false;\n"

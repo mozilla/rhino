@@ -583,7 +583,11 @@ public abstract class ES6Iterator extends ScriptableObject {
     /**
      * Shared base for lazy iterator helpers: holds a source iterator with a cached next method and
      * provides default {@code isDone}/{@code nextValue} overrides (the helpers override {@code
-     * next} directly, since their per-step logic doesn't match the isDone/nextValue split).
+     * nextHelper} for their per-step logic, since it doesn't match the isDone/nextValue split).
+     *
+     * <p>Per spec, an iterator helper's {@code next} runs as a generator closure, so re-entering
+     * it while it is already running throws a TypeError. We enforce that with an {@code active}
+     * flag set across each {@code next} invocation.
      */
     abstract static class AbstractIteratorHelper extends ES6Iterator {
 
@@ -591,6 +595,7 @@ public abstract class ES6Iterator extends ScriptableObject {
 
         protected final Scriptable source;
         protected final Callable sourceNext;
+        private boolean active;
 
         protected AbstractIteratorHelper(VarScope scope, Scriptable source, Callable sourceNext) {
             super(scope, WRAP_FOR_VALID_TAG);
@@ -612,6 +617,21 @@ public abstract class ES6Iterator extends ScriptableObject {
         protected Object nextValue(Context cx, VarScope scope) {
             return Undefined.instance;
         }
+
+        @Override
+        protected final Object next(Context cx, VarScope scope) {
+            if (active) {
+                throw ScriptRuntime.typeErrorById("msg.iterator.helper.executing");
+            }
+            active = true;
+            try {
+                return nextHelper(cx, scope);
+            } finally {
+                active = false;
+            }
+        }
+
+        protected abstract Object nextHelper(Context cx, VarScope scope);
 
         @Override
         protected Object closeIterator(Context cx, VarScope scope, Object value) {
@@ -636,7 +656,7 @@ public abstract class ES6Iterator extends ScriptableObject {
         }
 
         @Override
-        protected Object next(Context cx, VarScope scope) {
+        protected Object nextHelper(Context cx, VarScope scope) {
             if (exhausted) return makeIteratorResult(cx, scope, Boolean.TRUE);
             Scriptable step = iteratorStep(cx, scope, source, sourceNext);
             if (step == null) {
@@ -673,7 +693,7 @@ public abstract class ES6Iterator extends ScriptableObject {
         }
 
         @Override
-        protected Object next(Context cx, VarScope scope) {
+        protected Object nextHelper(Context cx, VarScope scope) {
             if (exhausted) return makeIteratorResult(cx, scope, Boolean.TRUE);
             VarScope predScope = callScopeFor(cx, predicate);
             for (; ; ) {
@@ -715,7 +735,7 @@ public abstract class ES6Iterator extends ScriptableObject {
         }
 
         @Override
-        protected Object next(Context cx, VarScope scope) {
+        protected Object nextHelper(Context cx, VarScope scope) {
             if (exhausted) return makeIteratorResult(cx, scope, Boolean.TRUE);
             if (remaining <= 0) {
                 exhausted = true;
@@ -745,7 +765,7 @@ public abstract class ES6Iterator extends ScriptableObject {
         }
 
         @Override
-        protected Object next(Context cx, VarScope scope) {
+        protected Object nextHelper(Context cx, VarScope scope) {
             if (exhausted) return makeIteratorResult(cx, scope, Boolean.TRUE);
             if (!primed) {
                 primed = true;
@@ -781,7 +801,7 @@ public abstract class ES6Iterator extends ScriptableObject {
         }
 
         @Override
-        protected Object next(Context cx, VarScope scope) {
+        protected Object nextHelper(Context cx, VarScope scope) {
             if (exhausted) return makeIteratorResult(cx, scope, Boolean.TRUE);
             for (; ; ) {
                 if (inner != null) {
