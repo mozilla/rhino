@@ -4,10 +4,9 @@ module(
 )
 
 bazel_dep(name = "rules_java", version = "9.6.1")
-bazel_dep(name = "rules_jvm_external", version = "6.10")
-bazel_dep(name = "contrib_rules_jvm", version = "0.32.0")
+bazel_dep(name = "rules_jvm_external", version = "7.0")
+bazel_dep(name = "contrib_rules_jvm", version = "0.33.0")
 bazel_dep(name = "rules_kotlin", version = "2.3.20")
-bazel_dep(name = "rules_shell", version = "0.7.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 
