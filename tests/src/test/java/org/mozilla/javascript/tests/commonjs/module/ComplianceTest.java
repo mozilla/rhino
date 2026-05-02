@@ -20,6 +20,7 @@ import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 import org.opentest4j.AssertionFailedError;
 
@@ -34,7 +35,7 @@ public class ComplianceTest {
     public static Collection<Object[]> data() {
         List<Object[]> retval = new ArrayList<Object[]>(16);
         final File[] files =
-                new File("src/test/resources/org/mozilla/javascript/tests/commonjs/module/1.0")
+                new File(TestSource.resolveDirectory("testsrc/commonjs/module/1.0/README"))
                         .listFiles();
         for (File file : files) {
             if (file.isDirectory()) {

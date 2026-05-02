@@ -1,11 +1,16 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.InputStreamReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
@@ -17,6 +22,7 @@ import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -53,7 +59,10 @@ public class RequireTest {
         try (Context cx = createContext()) {
             TopLevel scope = cx.initStandardObjects();
             final Require require = getSandboxedRequire(cx, scope, false);
-            final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
+            final String jsFile =
+                    Path.of(TestSource.resolve("testsrc/commonjs/module/testNonSandboxed.js"))
+                            .toUri()
+                            .toString();
             ScriptableObject.putProperty(scope, "moduleUri", jsFile);
             require.requireMain(cx, "testNonSandboxed");
         }
@@ -176,7 +185,11 @@ public class RequireTest {
     }
 
     private Reader getReader(String name) {
-        return new InputStreamReader(getClass().getResourceAsStream(name));
+        try {
+            return new FileReader(TestSource.resolve("testsrc/commonjs/module/" + name));
+        } catch (IOException ioe) {
+            throw new AssertionError(ioe);
+        }
     }
 
     private void testWithSandboxedRequire(String moduleId) throws Exception {
@@ -202,7 +215,6 @@ public class RequireTest {
     }
 
     private URI getDirectory() throws URISyntaxException {
-        final String jsFile = getClass().getResource("testSandboxed.js").toExternalForm();
-        return new URI(jsFile.substring(0, jsFile.lastIndexOf('/') + 1));
+        return Path.of(TestSource.resolveDirectory("testsrc/commonjs/module/foo.js")).toUri();
     }
 }
