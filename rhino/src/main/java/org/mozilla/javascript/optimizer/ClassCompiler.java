@@ -368,7 +368,7 @@ public class ClassCompiler {
                 "Ljava/util/List;");
 
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod(2);
+        cfw.stopMethod(3);
         for (var child : builder.nestedFunctions) {
             buildDescriptor(cfw, (JSDescriptor.Builder) child, classes, builders);
         }
