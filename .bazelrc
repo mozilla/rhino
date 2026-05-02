@@ -4,7 +4,7 @@ build --java_language_version=17
 build --java_runtime_version=remotejdk_17
 # Force Bazel to use Java 25 for its own internal tools/helpers
 build --extra_toolchains=@rules_java//java:all
-build --java_runtime_version=remotejdk_25
+build --tool_java_runtime_version=remotejdk_25
 
 # Set properties that will be required to ensure that
 # all legacy tests pass consistently

@@ -43,7 +43,6 @@ public class DoctestsTest {
     }
 
     public static File[] getDoctestFiles() {
-        String baseDir = TestSource.resolveDirectory("testsrc/doctests/arguments.doctest");
         return TestUtils.recursiveListFiles(
                 // For most portability resolvedirectory needs to start with the name
                 // of a well-known file.

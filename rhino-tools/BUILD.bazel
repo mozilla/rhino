@@ -1,5 +1,5 @@
 load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
 
 java_library(
     name = "rhino-tools",
@@ -10,6 +10,42 @@ java_library(
         "//rhino",
         "@maven//:org_jline_jline_reader",
         "@maven//:org_jline_jline_terminal",
+    ],
+)
+
+java_binary(
+    name = "shell",
+    main_class = "org.mozilla.javascript.tools.shell.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":rhino-tools",
+        "//rhino",
+        "//rhino-xml",
+        "@maven//:org_jline_jline_reader",
+        "@maven//:org_jline_jline_terminal",
+        "@maven//:org_jline_jline_terminal_ffm",
+        "@maven//:org_jline_jline_terminal_jni",
+    ],
+)
+
+java_binary(
+    name = "debugger",
+    main_class = "org.mozilla.javascript.tools.debugger.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":rhino-tools",
+        "//rhino",
+        "//rhino-xml",
+    ],
+)
+
+java_binary(
+    name = "jsc",
+    main_class = "org.mozilla.javascript.tools.jsc.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":rhino-tools",
+        "//rhino",
     ],
 )
 

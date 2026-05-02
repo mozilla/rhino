@@ -18,8 +18,8 @@ java_test_suite(
     ),
     data = ["//tests:testsrc"],
     runner = "junit5",
-    test_suffixes = ["Test.java"],
     tags = ["no-agent"],
+    test_suffixes = ["Test.java"],
     deps = [
         ":rhino-engine",
         "//rhino",
