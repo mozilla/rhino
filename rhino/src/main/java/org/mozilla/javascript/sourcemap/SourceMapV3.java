@@ -104,7 +104,34 @@ public final class SourceMapV3 implements SourceMapper {
 
     @Override
     public Position mapPosition(int targetLine, int targetColumn) {
-        throw new UnsupportedOperationException("not implemented yet");
+        if (targetLine < 1 || targetColumn < 1) return null;
+        int lineIdx = targetLine - 1;
+        if (lineIdx >= segmentsByLine.size()) return null;
+        List<Segment> segs = segmentsByLine.get(lineIdx);
+        if (segs.isEmpty()) return null;
+        int targetGenCol = targetColumn - 1;
+        Segment found = findLargestGenColLE(segs, targetGenCol);
+        if (found == null) return null;
+        if (!found.hasSource()) return null;
+        String path = sourcePaths.get(found.sourceIndex());
+        return new Position(path, found.srcLine() + 1, found.srcCol() + 1);
+    }
+
+    private static Segment findLargestGenColLE(List<Segment> segs, int target) {
+        int lo = 0;
+        int hi = segs.size() - 1;
+        int best = -1;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            int gc = segs.get(mid).genCol();
+            if (gc <= target) {
+                best = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return best < 0 ? null : segs.get(best);
     }
 
     @Override
