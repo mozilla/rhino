@@ -88,9 +88,6 @@ test {
     jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
 
     systemProperty 'test262properties', System.getProperty('test262properties')
-    if (System.getProperty('updateSourceMapTestsExcludelist') != null) {
-        systemProperty 'updateSourceMapTestsExcludelist', System.getProperty('updateSourceMapTestsExcludelist')
-    }
     if (System.getProperty('updateTest262properties') != null) {
         if (System.getenv("RHINO_TEST_JAVA_VERSION") != "17") {
             System.out.println("Test262 properties update is only accurate on Java 17 and you have " + JavaVersion.current())
@@ -98,6 +95,9 @@ test {
             throw new Exception("Incorrect Java version for Test 262 properties update")
         }
         systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
+    }
+    if (System.getProperty('updateSourceMapTestsExcludelist') != null) {
+        systemProperty 'updateSourceMapTestsExcludelist', System.getProperty('updateSourceMapTestsExcludelist')
     }
 
     System.properties.each { k,v->
