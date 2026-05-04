@@ -23,7 +23,7 @@ New files:
 - `rhino/src/test/java/org/mozilla/javascript/sourcemap/SourceMapJsonParserTest.java`
 - `rhino/src/test/java/org/mozilla/javascript/sourcemap/MappingsDecoderTest.java`
 - `rhino/src/test/java/org/mozilla/javascript/sourcemap/SourceMapV3Test.java`
-- `tests/src/test/java/org/mozilla/javascript/tests/sourcemap/SourceMapSpecSuiteTest.java`
+- `tests/src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java`
 - `tests/testsrc/source-map-tests-excludelist.txt`
 
 Modified files:
@@ -2016,10 +2016,13 @@ Expected: file exists, resources directory has `.js`/`.js.map` files.
 
 If the structure differs from the design assumption, **stop and update the plan** before proceeding — the test runner (Task 10) depends on these paths.
 
-- [ ] **Step 3: Pin the submodule to the current commit**
+- [ ] **Step 3: Pin the submodule to the latest `main` commit**
+
+`git submodule add` already checks out the default branch (typically `main`) at its current tip. Capture the SHA so we have a deliberate pin:
 
 Run: `git -C tests/source-map-tests rev-parse HEAD`
-Record this SHA in the commit message.
+
+Record this SHA in the commit message. Future refreshes will be deliberate (`git -C tests/source-map-tests pull origin main` followed by a new commit) rather than tracking an unpinned ref.
 
 - [ ] **Step 4: Commit**
 
@@ -2035,7 +2038,7 @@ Pinned at upstream commit <SHA-from-step-3>."
 ## Task 10: Implement `SourceMapSpecSuiteTest` (validity-only with excludelist)
 
 **Files:**
-- Create: `tests/src/test/java/org/mozilla/javascript/tests/sourcemap/SourceMapSpecSuiteTest.java`
+- Create: `tests/src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java` (note: same package as `SourceMapJsonParser` so the package-private parser is reachable on the classpath)
 - Create: `tests/testsrc/source-map-tests-excludelist.txt`
 - Modify: `tests/build.gradle`
 
@@ -2062,14 +2065,14 @@ In `tests/build.gradle`, inside the `test {` block, add (near the existing `test
 
 - [ ] **Step 3: Write the test class**
 
-Write `tests/src/test/java/org/mozilla/javascript/tests/sourcemap/SourceMapSpecSuiteTest.java`:
+Write `tests/src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java`:
 
 ```java
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript.tests.sourcemap;
+package org.mozilla.javascript.sourcemap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -2091,9 +2094,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.mozilla.javascript.sourcemap.SourceMapException;
-import org.mozilla.javascript.sourcemap.SourceMapJsonParser;
-import org.mozilla.javascript.sourcemap.SourceMapV3;
 
 class SourceMapSpecSuiteTest {
 
@@ -2157,23 +2157,21 @@ class SourceMapSpecSuiteTest {
         Boolean expectedValid = (Boolean) obj.get("sourceMapIsValid");
         boolean isOnExcludelist = excludelist.contains(name);
 
+        boolean passed;
         try {
             assertCase(name, sourceMapFile, expectedValid, obj);
-            if (isOnExcludelist && !UPDATE_MODE) {
-                fail(
-                        "case '"
-                                + name
-                                + "' is on the excludelist but currently passes — remove it.");
-            }
+            passed = true;
         } catch (Throwable t) {
             currentlyFailing.add(name);
             if (UPDATE_MODE || isOnExcludelist) {
-                // suppress
-                return;
+                return; // suppress; recorded above
             }
             if (t instanceof RuntimeException) throw (RuntimeException) t;
             if (t instanceof AssertionError) throw (AssertionError) t;
             throw new RuntimeException(t);
+        }
+        if (passed && isOnExcludelist && !UPDATE_MODE) {
+            fail("case '" + name + "' is on the excludelist but currently passes — remove it.");
         }
     }
 
@@ -2301,7 +2299,7 @@ Add the helper methods:
     private static void runCheckMapping(SourceMapV3 parsed, Map<String, Object> action) {
         int genLine = ((Long) action.get("generatedLine")).intValue() + 1;
         int genCol = ((Long) action.get("generatedColumn")).intValue() + 1;
-        org.mozilla.javascript.sourcemap.Position p = parsed.mapPosition(genLine, genCol);
+        Position p = parsed.mapPosition(genLine, genCol);
         String origSource = (String) action.get("originalSource");
         Object origLine = action.get("originalLine");
         Object origCol = action.get("originalColumn");
