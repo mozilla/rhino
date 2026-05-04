@@ -21,6 +21,7 @@ import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapV3;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -314,6 +315,69 @@ class SourceMapperTest {
                 true);
     }
 
+    // ---- end-to-end SourceMapV3 integration ----
+
+    @Test
+    void realSourceMapV3RemapsStackTraceLine() {
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    // Generated source: 1 line, "throw 'err';\n".
+                    // Source map: maps generated line 1 col 0 → orig.js line 5 col 0.
+                    // VLQ "AAKA" = (genCol=0, srcIdx=0, srcLine=5, srcCol=0).
+                    String mapJson =
+                            "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                    + "\"sourcesContent\":[\"line1\\nline2\\nline3\\nline4\\nthrow 'err';\"],"
+                                    + "\"mappings\":\"AAKA\"}";
+                    SourceMapV3 mapper = SourceMapV3.parse(mapJson);
+
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource("throw 'err';\n")
+                                            .sourceName("transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                    assertEquals(6, ex.lineNumber(), "expected source line 6 (5 zero-indexed + 1)");
+                    return null;
+                });
+    }
+
+    @Test
+    void realSourceMapV3SurfacesPrimarySourceToDebugger() {
+        Utils.runWithMode(
+                cx -> {
+                    String original = "var primary = true;\n";
+                    String mapJson =
+                            "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                    + "\"sourcesContent\":[\""
+                                    + original.replace("\n", "\\n")
+                                    + "\"],"
+                                    + "\"mappings\":\"\"}";
+                    SourceMapV3 mapper = SourceMapV3.parse(mapJson);
+
+                    RecordingDebugger debugger = new RecordingDebugger();
+                    cx.setDebugger(debugger, null);
+                    try {
+                        cx.compileScript(
+                                ScriptCompileSpec.fromSource("var x = 1;\n")
+                                        .sourceName("transpiled.js")
+                                        .lineno(1)
+                                        .sourceMapper(mapper)
+                                        .build());
+                    } finally {
+                        cx.setDebugger(null, null);
+                    }
+
+                    assertEquals(original, debugger.sources.iterator().next());
+                    return null;
+                },
+                true);
+    }
+
     // ---- realistic source-map integration test ----
 
     @Test
@@ -329,19 +393,20 @@ class SourceMapperTest {
                     public Position mapPosition(int targetLine, int targetColumn) {
                         if (targetLine != 1) return null;
                         return targetColumn < 9
-                                ? new Position(1, targetColumn)
-                                : new Position(2, targetColumn - 8);
+                                ? new Position("source.js", 1, targetColumn)
+                                : new Position("source.js", 2, targetColumn - 8);
                     }
 
                     @Override
-                    public String getOriginalSource() {
+                    public String getPrimarySourceContent() {
                         return originalSource;
                     }
 
                     @Override
-                    public String getSourceLineText(int sourceLine) {
-                        if (sourceLine == 1) return "var x = 1;";
-                        if (sourceLine == 2) return "throw new Error(\"oops\");";
+                    public String getSourceLineText(String sourcePath, int lineNumber) {
+                        if (!"source.js".equals(sourcePath)) return null;
+                        if (lineNumber == 1) return "var x = 1;";
+                        if (lineNumber == 2) return "throw new Error(\"oops\");";
                         return null;
                     }
                 };
@@ -380,17 +445,18 @@ class SourceMapperTest {
                 new SourceMapper() {
                     @Override
                     public Position mapPosition(int targetLine, int targetColumn) {
-                        return new Position(1, targetColumn); // both lines originate from line 1
+                        return new Position(
+                                null, 1, targetColumn); // both lines originate from line 1
                     }
 
                     @Override
-                    public String getOriginalSource() {
+                    public String getPrimarySourceContent() {
                         return originalSource;
                     }
 
                     @Override
-                    public String getSourceLineText(int sourceLine) {
-                        return sourceLine == 1 ? "var obj = {[\"x\"]: 1}; throw \"done\";" : null;
+                    public String getSourceLineText(String sourcePath, int lineNumber) {
+                        return lineNumber == 1 ? "var obj = {[\"x\"]: 1}; throw \"done\";" : null;
                     }
                 };
 
