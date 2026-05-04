@@ -101,7 +101,7 @@ public class WithScope implements VarScope {
 
     /** Must return null to continue looping or the final collection result. */
     protected Object updateDotQuery(boolean value) {
-        // NativeWith itself does not support it
+        // WithScope itself does not support it
         throw new IllegalStateException();
     }
 }

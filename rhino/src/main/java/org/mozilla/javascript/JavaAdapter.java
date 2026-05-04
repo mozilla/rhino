@@ -576,9 +576,9 @@ public final class JavaAdapter {
         return ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            TopLevel global = ScriptRuntime.getGlobal(cx);
-                            script.exec(cx, global, global.getGlobalThis());
-                            return global.getGlobalThis();
+                            TopLevel top = ScriptRuntime.getGlobal(cx);
+                            script.exec(cx, top, top.getGlobalThis());
+                            return top.getGlobalThis();
                         });
     }
 

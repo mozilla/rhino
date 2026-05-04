@@ -990,7 +990,7 @@ public class ScriptRuntime {
             }
         } else if (id instanceof String) {
             String propName = (String) id;
-            value = getObjectProp(source, propName, cx, (VarScope) scope);
+            value = getObjectProp(source, propName, cx, scope);
             if (value != Scriptable.NOT_FOUND) {
                 result.put(propName, result, value);
             }
@@ -2618,7 +2618,7 @@ public class ScriptRuntime {
     }
 
     public static Object setConst(VarScope bound, Object value, Context cx, String id) {
-        ScriptableObject.putConstProperty((VarScope) bound, id, value);
+        ScriptableObject.putConstProperty(bound, id, value);
         return value;
     }
 
@@ -2984,7 +2984,9 @@ public class ScriptRuntime {
                 }
                 throw notFunctionError(result, name);
             }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            // Top scope is not a with scope or an activation frame,
+            // the called function will resolve `globalThis` in its
+            // realm.
             storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
             return (Callable) result;
         }
@@ -3024,7 +3026,9 @@ public class ScriptRuntime {
                     throw notFoundError(scope, name);
                 }
             }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            // If the scope is a wtih scope then `this` will be its
+            // object, otherwise the callee will resolve `globalThis`
+            // in its realm.
             return new LookupResult(
                     result,
                     scope instanceof WithScope
@@ -3442,7 +3446,7 @@ public class ScriptRuntime {
 
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
-                return evalSpecial(cx, (VarScope) scope, callerThis, args, filename, lineNumber);
+                return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
             }
         } else {
             throw Kit.codeBug();
@@ -6188,7 +6192,7 @@ public class ScriptRuntime {
         } else if (callThisArg == null) {
             return null;
         }
-        return ScriptRuntime.toObject((VarScope) scope, callThisArg);
+        return ScriptRuntime.toObject(scope, callThisArg);
     }
 
     /**

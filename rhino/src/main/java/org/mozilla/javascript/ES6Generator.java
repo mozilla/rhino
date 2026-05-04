@@ -244,11 +244,7 @@ public final class ES6Generator extends ScriptableObject {
         try {
             Object r =
                     function.resumeGenerator(
-                            cx,
-                            (VarScope) scope,
-                            NativeGenerator.GENERATOR_SEND,
-                            savedState,
-                            value);
+                            cx, scope, NativeGenerator.GENERATOR_SEND, savedState, value);
 
             if (r instanceof YieldStarResult) {
                 // This special result tells us that we are executing a "yield *"
@@ -343,7 +339,7 @@ public final class ES6Generator extends ScriptableObject {
         }
 
         try {
-            Object r = function.resumeGenerator(cx, (VarScope) scope, op, savedState, throwValue);
+            Object r = function.resumeGenerator(cx, scope, op, savedState, throwValue);
             ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, r);
             // If we get here without an exception we can still run.
             state = State.SUSPENDED_YIELD;
