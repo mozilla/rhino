@@ -2696,7 +2696,7 @@ public class Context implements Closeable {
                 String debugSource = sourceString;
                 SourceMapper mapper = compilerEnv.getSourceMapper();
                 if (mapper != null) {
-                    String original = mapper.getOriginalSource();
+                    String original = mapper.getPrimarySourceContent();
                     if (original != null) {
                         debugSource = original;
                     }

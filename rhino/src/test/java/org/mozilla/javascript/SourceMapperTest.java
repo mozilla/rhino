@@ -27,10 +27,13 @@ import org.mozilla.javascript.testutils.Utils;
 class SourceMapperTest {
 
     /**
-     * Maps target line N to source line {@code 100 + N} and column M to {@code 200 + M}. Returns
-     * null for any target line in {@code skipLines} so we can exercise the skip-on-null path.
+     * Maps target line N to source line {@code 100 + N} and column M to {@code 200 + M}, using a
+     * fixed source path. Returns null for any target line in {@code skipLines} so we can exercise
+     * the skip-on-null path.
      */
     private static final class TestMapper implements SourceMapper {
+        private static final String SOURCE_PATH = "original.js";
+
         private final Set<Integer> skipLines;
         private final String originalSource;
         private final List<String> originalLines;
@@ -47,19 +50,20 @@ class SourceMapperTest {
         @Override
         public Position mapPosition(int targetLine, int targetColumn) {
             if (skipLines.contains(targetLine)) return null;
-            return new Position(100 + targetLine, 200 + targetColumn);
+            return new Position(SOURCE_PATH, 100 + targetLine, 200 + targetColumn);
         }
 
         @Override
-        public String getOriginalSource() {
+        public String getPrimarySourceContent() {
             return originalSource;
         }
 
         @Override
-        public String getSourceLineText(int sourceLine) {
+        public String getSourceLineText(String sourcePath, int lineNumber) {
+            if (!SOURCE_PATH.equals(sourcePath)) return null;
             // mapPosition emits source lines starting at 101 (target line 1 → 101). Honor the
             // same offset here so the source space is internally consistent.
-            int idx = sourceLine - 101;
+            int idx = lineNumber - 101;
             if (idx < 0 || idx >= originalLines.size()) return null;
             return originalLines.get(idx);
         }
