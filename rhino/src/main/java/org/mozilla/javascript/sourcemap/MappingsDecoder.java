@@ -51,23 +51,40 @@ final class MappingsDecoder {
         int nameIndex = 0;
 
         int genCol = 0;
-        int prevGenCol = -1;
+
+        // Track comma-separated structure to detect zero-field segments.
+        boolean lineStart = true;
+        boolean commaJustSeen = false;
 
         while (d.pos < d.src.length()) {
             char c = d.src.charAt(d.pos);
             if (c == ';') {
+                if (commaJustSeen) {
+                    throw new SourceMapException(
+                            "zero-field segment (trailing comma) at line " + d.line);
+                }
+                currentLine.sort((a, b) -> Integer.compare(a.genCol(), b.genCol()));
                 result.add(currentLine);
                 currentLine = new ArrayList<>();
                 d.pos++;
                 d.line++;
                 genCol = 0;
-                prevGenCol = -1;
+                lineStart = true;
+                commaJustSeen = false;
                 continue;
             }
             if (c == ',') {
+                if (lineStart || commaJustSeen) {
+                    throw new SourceMapException("zero-field segment at line " + d.line);
+                }
                 d.pos++;
+                commaJustSeen = true;
+                lineStart = false;
                 continue;
             }
+
+            lineStart = false;
+            commaJustSeen = false;
 
             int[] fields = new int[5];
             int count = 0;
@@ -77,8 +94,7 @@ final class MappingsDecoder {
                 fields[count++] = d.readVlq();
             }
             // Detect a 6th-field overflow: if we filled 5 but the next char is still a Base64
-            // digit,
-            // the segment exceeds the spec maximum.
+            // digit, the segment exceeds the spec maximum.
             if (count == 5
                     && d.pos < d.src.length()
                     && d.src.charAt(d.pos) != ','
@@ -92,10 +108,9 @@ final class MappingsDecoder {
             }
 
             genCol += fields[0];
-            if (genCol < prevGenCol) {
-                throw new SourceMapException("decreasing generated column at line " + d.line);
+            if (genCol < 0) {
+                throw new SourceMapException("negative generated column at line " + d.line);
             }
-            prevGenCol = genCol;
 
             Segment seg;
             if (count == 1) {
@@ -130,12 +145,16 @@ final class MappingsDecoder {
             }
             currentLine.add(seg);
         }
+        if (commaJustSeen) {
+            throw new SourceMapException("zero-field segment (trailing comma) at line " + d.line);
+        }
+        currentLine.sort((a, b) -> Integer.compare(a.genCol(), b.genCol()));
         result.add(currentLine);
         return result;
     }
 
     private int readVlq() {
-        int result = 0;
+        long result = 0L;
         int shift = 0;
         boolean continuation;
         do {
@@ -149,12 +168,16 @@ final class MappingsDecoder {
                         "invalid Base64 character '" + c + "' at line " + line);
             }
             continuation = (digit & VLQ_CONTINUATION_BIT) != 0;
-            int chunk = digit & VLQ_BASE_MASK;
+            long chunk = digit & VLQ_BASE_MASK;
             result |= chunk << shift;
             shift += VLQ_BASE_SHIFT;
         } while (continuation);
         boolean negative = (result & 1) != 0;
         result >>>= 1;
-        return negative ? -result : result;
+        if (result > Integer.MAX_VALUE) {
+            throw new SourceMapException("VLQ magnitude exceeds 32 bits at line " + line);
+        }
+        int magnitude = (int) result;
+        return negative ? -magnitude : magnitude;
     }
 }

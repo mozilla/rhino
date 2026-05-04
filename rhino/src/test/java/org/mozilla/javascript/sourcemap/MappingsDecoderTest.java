@@ -130,10 +130,25 @@ class MappingsDecoderTest {
     }
 
     @Test
-    void rejectsDecreasingGenCol() {
-        // Two segments on same line where the second has negative genCol delta resulting in lower
-        // generated column than the first → rejected.
-        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("CAAA,DAAA", 1, 0));
+    void outOfOrderSegmentsAreSortedByGenCol() {
+        // "CAAA,DAAA": first genCol=+1, second delta=-1 → genCol=0. ECMA-426 allows out-of-order
+        // segments; decoder must sort them ascending.
+        List<List<Segment>> r = MappingsDecoder.decode("CAAA,DAAA", 1, 0);
+        assertEquals(2, r.get(0).size());
+        assertEquals(0, r.get(0).get(0).genCol());
+        assertEquals(1, r.get(0).get(1).genCol());
+    }
+
+    @Test
+    void rejectsZeroFieldSegment() {
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode(",", 0, 0));
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode(",,,,", 0, 0));
+    }
+
+    @Test
+    void rejectsVlqOverflow() {
+        // "ggggggE" decodes to a magnitude of 2^31 which exceeds Integer.MAX_VALUE.
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("ggggggE", 0, 0));
     }
 
     @Test
