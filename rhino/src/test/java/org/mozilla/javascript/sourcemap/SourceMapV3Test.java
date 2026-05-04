@@ -226,4 +226,97 @@ class SourceMapV3Test {
                 SourceMapV3.parse("{\"version\":3,\"sources\":[\"o.js\"],\"mappings\":\"AAAA;\"}");
         assertNull(m.mapPosition(2, 1));
     }
+
+    @Test
+    void getSourceLineTextReturnsLineFromSourcesContent() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                + "\"sourcesContent\":[\"line one\\nline two\\nline three\"],"
+                                + "\"mappings\":\"\"}");
+        assertEquals("line one", m.getSourceLineText("orig.js", 1));
+        assertEquals("line two", m.getSourceLineText("orig.js", 2));
+        assertEquals("line three", m.getSourceLineText("orig.js", 3));
+    }
+
+    @Test
+    void getSourceLineTextReturnsNullForUnknownPath() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                + "\"sourcesContent\":[\"x\"],\"mappings\":\"\"}");
+        assertNull(m.getSourceLineText("other.js", 1));
+    }
+
+    @Test
+    void getSourceLineTextReturnsNullForNullPath() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                + "\"sourcesContent\":[\"x\"],\"mappings\":\"\"}");
+        assertNull(m.getSourceLineText(null, 1));
+    }
+
+    @Test
+    void getSourceLineTextReturnsNullForOutOfRangeLine() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                + "\"sourcesContent\":[\"only\"],\"mappings\":\"\"}");
+        assertNull(m.getSourceLineText("orig.js", 0));
+        assertNull(m.getSourceLineText("orig.js", 99));
+    }
+
+    @Test
+    void getSourceLineTextReturnsNullWhenSourcesContentMissing() {
+        SourceMapV3 m =
+                SourceMapV3.parse("{\"version\":3,\"sources\":[\"orig.js\"],\"mappings\":\"\"}");
+        assertNull(m.getSourceLineText("orig.js", 1));
+    }
+
+    @Test
+    void getSourceLineTextReturnsNullWhenEntryIsNull() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                + "\"sourcesContent\":[null],\"mappings\":\"\"}");
+        assertNull(m.getSourceLineText("orig.js", 1));
+    }
+
+    @Test
+    void getPrimarySourceContentReturnsFirstSourcesContent() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"a\",\"b\"],"
+                                + "\"sourcesContent\":[\"alpha\",\"beta\"],\"mappings\":\"\"}");
+        assertEquals("alpha", m.getPrimarySourceContent());
+    }
+
+    @Test
+    void getPrimarySourceContentReturnsNullWhenAbsent() {
+        SourceMapV3 m = SourceMapV3.parse("{\"version\":3,\"sources\":[\"a\"],\"mappings\":\"\"}");
+        assertNull(m.getPrimarySourceContent());
+    }
+
+    @Test
+    void getPrimarySourceContentReturnsNullWhenFirstEntryIsNull() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"a\"],"
+                                + "\"sourcesContent\":[null],\"mappings\":\"\"}");
+        assertNull(m.getPrimarySourceContent());
+    }
+
+    @Test
+    void getSourceLineTextHandlesCrLfAndLoneCr() {
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"o.js\"],"
+                                + "\"sourcesContent\":[\"a\\r\\nb\\rc\\nd\"],"
+                                + "\"mappings\":\"\"}");
+        assertEquals("a", m.getSourceLineText("o.js", 1));
+        assertEquals("b", m.getSourceLineText("o.js", 2));
+        assertEquals("c", m.getSourceLineText("o.js", 3));
+        assertEquals("d", m.getSourceLineText("o.js", 4));
+    }
 }

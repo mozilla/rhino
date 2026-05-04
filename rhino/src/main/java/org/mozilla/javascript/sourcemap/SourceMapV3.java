@@ -136,12 +136,45 @@ public final class SourceMapV3 implements SourceMapper {
 
     @Override
     public String getSourceLineText(String sourcePath, int lineNumber) {
-        throw new UnsupportedOperationException("not implemented yet");
+        if (sourcePath == null || lineNumber < 1) return null;
+        if (sourcesContent == null) return null;
+        List<String> lines = lineCache.computeIfAbsent(sourcePath, this::splitSourceLines);
+        if (lines == null) return null;
+        if (lineNumber > lines.size()) return null;
+        return lines.get(lineNumber - 1);
     }
 
     @Override
     public String getPrimarySourceContent() {
-        throw new UnsupportedOperationException("not implemented yet");
+        if (sourcesContent == null || sourcesContent.isEmpty()) return null;
+        return sourcesContent.get(0);
+    }
+
+    private List<String> splitSourceLines(String sourcePath) {
+        int idx = sourcePaths.indexOf(sourcePath);
+        if (idx < 0) return null;
+        if (sourcesContent == null) return null;
+        String content = sourcesContent.get(idx);
+        if (content == null) return null;
+        // Split on CRLF, LF, or lone CR.
+        List<String> out = new ArrayList<>();
+        int start = 0;
+        int i = 0;
+        while (i < content.length()) {
+            char c = content.charAt(i);
+            if (c == '\r' || c == '\n') {
+                out.add(content.substring(start, i));
+                if (c == '\r' && i + 1 < content.length() && content.charAt(i + 1) == '\n') {
+                    i++;
+                }
+                i++;
+                start = i;
+            } else {
+                i++;
+            }
+        }
+        if (start < content.length()) out.add(content.substring(start));
+        return out;
     }
 
     public List<String> sources() {
