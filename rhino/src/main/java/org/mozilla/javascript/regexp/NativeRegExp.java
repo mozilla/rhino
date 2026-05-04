@@ -251,7 +251,7 @@ public class NativeRegExp extends ScriptableObject {
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
 
-        return DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
+        return DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
     }
 
     static ClassDescriptor.Builder makeCtorBuilder() {
@@ -4745,8 +4745,7 @@ public class NativeRegExp extends ScriptableObject {
         }
 
         Scriptable callThis = ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, replaceFunction);
-        Object replacementValue =
-                replaceFunction.call(cx, (VarScope) scope, callThis, replacerArgs);
+        Object replacementValue = replaceFunction.call(cx, scope, callThis, replacerArgs);
         return ScriptRuntime.toString(replacementValue);
     }
 

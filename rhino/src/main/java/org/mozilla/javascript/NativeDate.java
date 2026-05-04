@@ -106,7 +106,7 @@ final class NativeDate extends ScriptableObject {
     static void init(Context cx, VarScope scope, boolean sealed) {
         DESCRIPTOR.buildConstructor(
                 cx,
-                (VarScope) scope,
+                scope,
                 cx.getLanguageVersion() >= Context.VERSION_ES6
                         ? new NativeObject()
                         : new NativeDate(Double.NaN),
@@ -187,7 +187,7 @@ final class NativeDate extends ScriptableObject {
                     ScriptRuntime.toString(o),
                     ScriptRuntime.toString(toISO));
         }
-        Object result = ((Callable) toISO).call(cx, (VarScope) s, o, ScriptRuntime.emptyArgs);
+        Object result = ((Callable) toISO).call(cx, s, o, ScriptRuntime.emptyArgs);
         if (!ScriptRuntime.isPrimitive(result)) {
             throw ScriptRuntime.typeErrorById(
                     "msg.toisostring.must.return.primitive", ScriptRuntime.toString(result));

@@ -545,18 +545,18 @@ public final class Interpreter extends Icode implements Evaluator {
         public void delete(Symbol key) {}
 
         @Override
-        public Object get(String name, VarScope start) {
+        public Object get(String name, VarScope scope) {
             int offset = getOffsets().getOrDefault(name, -1);
             return offset >= 0 ? frame.getFromVars(offset) : NOT_FOUND;
         }
 
         @Override
-        public Object get(int index, VarScope start) {
+        public Object get(int index, VarScope scope) {
             return NOT_FOUND;
         }
 
         @Override
-        public Object get(Symbol key, VarScope start) {
+        public Object get(Symbol key, VarScope scope) {
             return NOT_FOUND;
         }
 
@@ -5059,7 +5059,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // However, when called from interpretLoop() as part of
                 // restarting a continuation, it can also be a WIthScope if
                 // the continuation was captured within a "with" or "catch"
-                // block ("catch" implicitly uses NativeWith to create a scope
+                // block ("catch" implicitly uses WithScope to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
                     if (scope instanceof WithScope) {

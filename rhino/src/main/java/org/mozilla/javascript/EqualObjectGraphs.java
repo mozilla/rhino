@@ -342,13 +342,13 @@ final class EqualObjectGraphs {
     }
 
     private static <T extends PropHolder<T>> Object[] getIds(final PropHolder<T> s) {
-        if (s instanceof SlotMapOwner) {
+        if (s instanceof SlotMapOwner<T> smo) {
             // Grabs symbols too
-            try (var map = ((SlotMapOwner<T>) s).startCompoundOp(false)) {
-                return ((SlotMapOwner<T>) s).getIds(map, true, true);
+            try (var map = smo.startCompoundOp(false)) {
+                return smo.getIds(map, true, true);
             }
-        } else if (s instanceof DebuggableObject) {
-            return ((DebuggableObject) s).getAllIds();
+        } else if (s instanceof DebuggableObject dbo) {
+            return dbo.getAllIds();
         } else {
             return s.getIds();
         }

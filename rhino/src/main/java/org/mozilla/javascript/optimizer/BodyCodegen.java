@@ -3532,7 +3532,7 @@ class BodyCodegen {
             return exceptionInfo.getLast();
         }
 
-        private class ExceptionInfo {
+        private static class ExceptionInfo {
             ExceptionInfo(Jump node, Node finallyBlock) {
                 this.finallyBlock = finallyBlock;
                 handlerLabels = new int[EXCEPTION_MAX];
