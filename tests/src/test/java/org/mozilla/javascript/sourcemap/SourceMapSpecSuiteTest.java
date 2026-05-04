@@ -188,14 +188,10 @@ class SourceMapSpecSuiteTest {
             int expected = ((Long) origCol).intValue() + 1;
             assertEquals(expected, p.column(), "source column mismatch");
         }
-        Object mappedName = action.get("mappedName");
-        if (mappedName != null) {
-            // Names are not surfaced through SourceMapper in v1. Cases with a non-null
-            // mappedName must be excludelisted — fail loudly so we notice.
-            fail(
-                    "checkMapping with non-null mappedName is unsupported in v1 — excludelist this case ("
-                            + mappedName
-                            + ")");
+        if (action.containsKey("mappedName")) {
+            String expectedName = (String) action.get("mappedName");
+            assertEquals(
+                    expectedName, parsed.getMappedName(genLine, genCol), "mappedName mismatch");
         }
     }
 

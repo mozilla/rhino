@@ -307,6 +307,37 @@ class SourceMapV3Test {
         assertNull(m.getPrimarySourceContent());
     }
 
+    // "AAAAA,SAASC": first seg (genCol=0,srcIdx=0,srcLine=0,srcCol=0,nameIdx=0),
+    //               second seg deltas (+9,0,0,+9,+1) →
+    // (genCol=9,srcIdx=0,srcLine=0,srcCol=9,nameIdx=1).
+    private static final String NAMED_MAP =
+            "{\"version\":3,\"sources\":[\"o.js\"],\"names\":[\"foo\",\"bar\"],"
+                    + "\"mappings\":\"AAAAA,SAASC\"}";
+
+    @Test
+    void getMappedNameReturnsName() {
+        SourceMapV3 m = SourceMapV3.parse(NAMED_MAP);
+        assertEquals("foo", m.getMappedName(1, 1));
+        assertEquals("bar", m.getMappedName(1, 10));
+    }
+
+    @Test
+    void getMappedNameReturnsNullForNoName() {
+        // Segment without a name index.
+        SourceMapV3 m =
+                SourceMapV3.parse(
+                        "{\"version\":3,\"sources\":[\"o.js\"],\"names\":[\"x\"],"
+                                + "\"mappings\":\"AAAA\"}");
+        assertNull(m.getMappedName(1, 1));
+    }
+
+    @Test
+    void getMappedNameReturnsNullOutOfRange() {
+        SourceMapV3 m = SourceMapV3.parse(NAMED_MAP);
+        assertNull(m.getMappedName(0, 1));
+        assertNull(m.getMappedName(99, 1));
+    }
+
     @Test
     void getSourceLineTextHandlesCrLfAndLoneCr() {
         SourceMapV3 m =

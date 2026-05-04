@@ -25,6 +25,7 @@ public final class SourceMapV3 implements SourceMapper {
     private final List<String> sourcePaths; // resolved, may contain nulls
     private final List<String> sourcesContent; // parallel; nullable entries; may be null overall
     private final List<String> ignoreList; // resolved paths
+    private final List<String> names;
     private final List<List<Segment>> segmentsByLine;
     private final Map<String, List<String>> lineCache = new HashMap<>();
 
@@ -33,11 +34,13 @@ public final class SourceMapV3 implements SourceMapper {
             List<String> sourcePaths,
             List<String> sourcesContent,
             List<String> ignoreList,
+            List<String> names,
             List<List<Segment>> segmentsByLine) {
         this.file = file;
         this.sourcePaths = sourcePaths;
         this.sourcesContent = sourcesContent;
         this.ignoreList = ignoreList;
+        this.names = names;
         this.segmentsByLine = segmentsByLine;
     }
 
@@ -87,7 +90,7 @@ public final class SourceMapV3 implements SourceMapper {
         List<List<Segment>> segments =
                 MappingsDecoder.decode(mappings, sourcePaths.size(), names.size());
 
-        return new SourceMapV3(file, sourcePaths, sourcesContent, ignoreList, segments);
+        return new SourceMapV3(file, sourcePaths, sourcesContent, ignoreList, names, segments);
     }
 
     public static SourceMapV3 parse(Reader reader) throws IOException {
@@ -115,6 +118,24 @@ public final class SourceMapV3 implements SourceMapper {
         if (!found.hasSource()) return null;
         String path = sourcePaths.get(found.sourceIndex());
         return new Position(path, found.srcLine() + 1, found.srcCol() + 1);
+    }
+
+    /**
+     * Returns the original name for the symbol at the given target position, or {@code null} if the
+     * segment has no name or the position is unmapped.
+     *
+     * @param targetLine 1-indexed line in the transpiled source
+     * @param targetColumn 1-indexed column in the transpiled source
+     */
+    public String getMappedName(int targetLine, int targetColumn) {
+        if (targetLine < 1 || targetColumn < 1) return null;
+        int lineIdx = targetLine - 1;
+        if (lineIdx >= segmentsByLine.size()) return null;
+        List<Segment> segs = segmentsByLine.get(lineIdx);
+        if (segs.isEmpty()) return null;
+        Segment found = findLargestGenColLE(segs, targetColumn - 1);
+        if (found == null || found.nameIndex() == Segment.ABSENT) return null;
+        return names.get(found.nameIndex());
     }
 
     private static Segment findLargestGenColLE(List<Segment> segs, int target) {
