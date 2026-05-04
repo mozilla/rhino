@@ -1,0 +1,15 @@
+# Auto-generated; review diff before committing.
+# One source-map-spec-tests.json case "name" per line.
+basicMapping
+basicMappingWithIndexMap
+indexMapEmptySections
+indexMapWithMissingFile
+indexMapWithTwoConcatenatedSources
+mappingSemanticsFiveFieldSegment
+mappingSemanticsRelative2
+sourceResolutionAbsoluteURL
+sourceRootResolution
+sourcesNonNullSourcesContentNull
+sourcesNullSourcesContentNonNull
+transitiveMapping
+transitiveMappingWithThreeSteps
