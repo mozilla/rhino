@@ -14,6 +14,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.testutils.Utils;
 
 public class CatchTest {
     public static class Foo extends ScriptableObject {
@@ -72,5 +73,31 @@ public class CatchTest {
                         throw new RuntimeException(ex);
                     }
                 });
+    }
+
+    /**
+     * Regression: a try/catch/finally where the catch block exits normally and the finally block
+     * unconditionally returns. Confirms the finally body is executed once on the catch-normal-exit
+     * path, even when an exception was caught and the finally body itself contains a return.
+     */
+    @Test
+    public void tryCatchFinallyReturnsFromFinally() {
+        String script =
+                "function f(value) {"
+                        + "  var result = 0;"
+                        + "  try {"
+                        + "    switch (value) {"
+                        + "    case 1: result += 4; throw result; break;"
+                        + "    case 4: result += 64; throw 'ex'; }"
+                        + "    return result;"
+                        + "  } catch (e) {"
+                        + "    if ((value===1)&&(e!==4)) throw 'fail2.1: '+e;"
+                        + "    if ((value===4)&&(e!=='ex')) throw 'fail2.2: '+e;"
+                        + "  } finally {"
+                        + "    return result;"
+                        + "  }"
+                        + "}"
+                        + "f(1) + ',' + f(4)";
+        Utils.assertWithAllModes("4,64", script);
     }
 }

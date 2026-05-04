@@ -695,4 +695,30 @@ public class ArrayDestructuringTest {
                     return null;
                 });
     }
+
+    /**
+     * Nested rest spread into an array pattern. The inner [x] runs iterator-close, which is
+     * implemented with a try/finally; the surrounding assignment leaves stack temporaries live, so
+     * the JSR/RETSUB scheme used to bug out on a non-empty stack at the JSR site.
+     */
+    @Test
+    public void nestedRestSpreadIntoArrayPattern() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    String script =
+                            "var x = null;"
+                                    + "var result;"
+                                    + "var vals = [];"
+                                    + "result = [...[x]] = vals;"
+                                    + "(result === vals) + ',' + (typeof x);";
+                    Object res = cx.evaluateString(scope, script, "test", 1, null);
+                    if (!"true,undefined".equals(org.mozilla.javascript.Context.toString(res))) {
+                        throw new RuntimeException("got: " + res);
+                    }
+                    return null;
+                });
+    }
+
 }
