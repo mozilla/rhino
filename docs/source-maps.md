@@ -23,7 +23,7 @@ primary original source content at compilation time.
 
 ## Architecture
 
-Four classes live in `org.mozilla.javascript.sourcemap`:
+The classes in `org.mozilla.javascript.sourcemap`:
 
 | Class | Visibility | Role |
 |---|---|---|
