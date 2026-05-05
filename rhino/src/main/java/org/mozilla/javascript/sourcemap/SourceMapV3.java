@@ -6,7 +6,7 @@ package org.mozilla.javascript.sourcemap;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -94,30 +94,21 @@ public final class SourceMapV3 implements SourceMapper {
     }
 
     public static SourceMapV3 parse(Reader reader) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        char[] buf = new char[8192];
-        int n;
-        while ((n = reader.read(buf)) >= 0) sb.append(buf, 0, n);
-        return parse(sb.toString());
+        StringWriter sw = new StringWriter();
+        reader.transferTo(sw);
+        return parse(sw.toString());
     }
 
     public static SourceMapV3 parseFile(Path path) throws IOException {
-        return parse(new String(Files.readAllBytes(path), StandardCharsets.UTF_8));
+        return parse(Files.readString(path));
     }
 
     @Override
     public Position mapPosition(int targetLine, int targetColumn) {
-        if (targetLine < 1 || targetColumn < 1) return null;
-        int lineIdx = targetLine - 1;
-        if (lineIdx >= segmentsByLine.size()) return null;
-        List<Segment> segs = segmentsByLine.get(lineIdx);
-        if (segs.isEmpty()) return null;
-        int targetGenCol = targetColumn - 1;
-        Segment found = findLargestGenColLE(segs, targetGenCol);
-        if (found == null) return null;
-        if (!found.hasSource()) return null;
-        String path = sourcePaths.get(found.sourceIndex());
-        return new Position(path, found.srcLine() + 1, found.srcCol() + 1);
+        Segment found = findSegment(targetLine, targetColumn);
+        if (found == null || !found.hasSource()) return null;
+        return new Position(
+                sourcePaths.get(found.sourceIndex()), found.srcLine() + 1, found.srcCol() + 1);
     }
 
     /**
@@ -128,14 +119,18 @@ public final class SourceMapV3 implements SourceMapper {
      * @param targetColumn 1-indexed column in the transpiled source
      */
     public String getMappedName(int targetLine, int targetColumn) {
+        Segment found = findSegment(targetLine, targetColumn);
+        if (found == null || found.nameIndex() == Segment.ABSENT) return null;
+        return names.get(found.nameIndex());
+    }
+
+    private Segment findSegment(int targetLine, int targetColumn) {
         if (targetLine < 1 || targetColumn < 1) return null;
         int lineIdx = targetLine - 1;
         if (lineIdx >= segmentsByLine.size()) return null;
         List<Segment> segs = segmentsByLine.get(lineIdx);
         if (segs.isEmpty()) return null;
-        Segment found = findLargestGenColLE(segs, targetColumn - 1);
-        if (found == null || found.nameIndex() == Segment.ABSENT) return null;
-        return names.get(found.nameIndex());
+        return findLargestGenColLE(segs, targetColumn - 1);
     }
 
     private static Segment findLargestGenColLE(List<Segment> segs, int target) {
