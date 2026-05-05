@@ -11,9 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A {@link SourceMapper} backed by a parsed ECMA-426 plain source map. Indexed (sectioned) source
@@ -27,7 +27,7 @@ public final class SourceMapV3 implements SourceMapper {
     private final List<String> ignoreList; // resolved paths
     private final List<String> names;
     private final List<List<Segment>> segmentsByLine;
-    private final Map<String, List<String>> lineCache = new HashMap<>();
+    private final Map<String, List<String>> lineCache = new ConcurrentHashMap<>();
 
     private SourceMapV3(
             String file,
