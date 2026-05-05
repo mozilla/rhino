@@ -529,8 +529,8 @@ public class FunctionObject extends BaseFunction {
     public static final int JAVA_BOOLEAN_TYPE = 3;
     public static final int JAVA_DOUBLE_TYPE = 4;
     public static final int JAVA_SCRIPTABLE_TYPE = 5;
-    public static final int JAVA_VARSCOPE_TYPE = 6;
-    public static final int JAVA_OBJECT_TYPE = 7;
+    public static final int JAVA_OBJECT_TYPE = 6;
+    public static final int JAVA_VARSCOPE_TYPE = 7;
 
     MemberBox member;
     private String functionName;
