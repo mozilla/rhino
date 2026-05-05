@@ -124,6 +124,55 @@ class SourceMapperTest {
                 true);
     }
 
+    // ---- compiled-only tests (BodyCodegen path) ----
+
+    @Test
+    void compiledModeRemapsStackTraceLine() {
+        Utils.runWithMode(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    SourceMapper mapper = new TestMapper("throw 'err';\n");
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource("throw 'err';\n")
+                                            .sourceName("transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                    assertEquals(101, ex.lineNumber(), "compiled mode should remap line");
+                    return null;
+                },
+                false);
+    }
+
+    @Test
+    void compiledModeSkippedLineFallsBackToPreviousMappedLine() {
+        Utils.runWithMode(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    SourceMapper mapper = new TestMapper("var x = 1;\nthrow 'err';\n", 2);
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource("var x = 1;\nthrow 'err';\n")
+                                            .sourceName("transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                    assertEquals(
+                            101,
+                            ex.lineNumber(),
+                            "compiled mode: unmapped line should fall back to last mapped line");
+                    return null;
+                },
+                false);
+    }
+
     // ---- mode-agnostic tests ----
 
     @Test

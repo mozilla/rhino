@@ -487,7 +487,7 @@ class BodyCodegen {
             cfw.addAStore(popvLocal);
 
             int linenum = scriptOrFn.getEndLineno();
-            if (linenum != -1) addRemappedLineEntry(linenum, 0);
+            if (linenum != -1) addRemappedLineEntry(linenum, 1);
 
         } else {
             if (fnCurrent.itsContainsCalls0) {
