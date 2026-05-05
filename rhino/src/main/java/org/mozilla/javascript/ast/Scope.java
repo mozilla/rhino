@@ -126,13 +126,34 @@ public class Scope extends Jump {
         Scope result = new Scope(scope.getPosition(), scope.getLength());
         result.symbolTable = scope.symbolTable;
         scope.symbolTable = null;
-        result.varSymbolTable = scope.varSymbolTable;
-        scope.varSymbolTable = null;
+        if (result.symbolTable != null) {
+            for (Symbol sym : result.symbolTable.values()) {
+                sym.setContainingTable(result);
+            }
+        }
+        if (scope.varSymbolTable != null) {
+            result.varSymbolTable = new LinkedHashMap<>(scope.varSymbolTable);
+        }
         result.parent = scope.parent;
         result.setParentScope(scope.getParentScope());
         scope.parent = result;
         result.top = scope.top;
         return result;
+    }
+
+    /**
+     * Moves a single symbol from this scope to the destination scope. Unlike {@link #putSymbol},
+     * this does not re-register the symbol with the top-level ScriptNode since it was already
+     * registered when first defined.
+     */
+    public void moveSymbol(String name, Scope dest) {
+        if (symbolTable == null) return;
+        Symbol sym = symbolTable.remove(name);
+        if (sym != null) {
+            sym.setContainingTable(dest);
+            dest.ensureSymbolTable();
+            dest.symbolTable.put(name, sym);
+        }
     }
 
     /** Copies all symbols from source scope to dest scope. */
