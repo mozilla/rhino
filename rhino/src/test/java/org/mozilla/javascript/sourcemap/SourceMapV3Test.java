@@ -213,6 +213,13 @@ class SourceMapV3Test {
     }
 
     @Test
+    void mapPositionRejectsColumnZero() {
+        SourceMapV3 m = SourceMapV3.parse(SIMPLE_MAP);
+        assertNull(m.mapPosition(1, 0));
+        assertNull(m.mapPosition(1, -1));
+    }
+
+    @Test
     void mapPositionReturnsNullForOneFieldSegment() {
         // mappings "A" is a single 1-field segment at genCol=0 with no source.
         SourceMapV3 m = SourceMapV3.parse("{\"version\":3,\"sources\":[],\"mappings\":\"A\"}");
