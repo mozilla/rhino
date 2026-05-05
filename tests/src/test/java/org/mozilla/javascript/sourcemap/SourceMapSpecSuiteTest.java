@@ -25,6 +25,36 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+/**
+ * Runs the <a href="https://github.com/tc39/source-map-tests">tc39/source-map-tests</a> suite
+ * against {@link SourceMapV3}. The suite lives in the {@code tests/source-map-tests} git submodule
+ * and must be initialised before these tests can run ({@code git submodule update --init}).
+ *
+ * <h2>Excludelist</h2>
+ *
+ * Cases that are known to fail are listed in {@code tests/testsrc/source-map-tests-excludelist.txt}
+ * (one {@code name} value per line; blank lines and {@code #} comments are ignored). A listed case
+ * is silently skipped. Two failure modes keep the list honest:
+ *
+ * <ul>
+ *   <li>A case that is <em>on</em> the excludelist but currently <em>passes</em> fails the build,
+ *       so stale entries are caught immediately.
+ *   <li>A case that is <em>not</em> on the excludelist but currently <em>fails</em> also fails the
+ *       build, so regressions are caught immediately.
+ * </ul>
+ *
+ * <h2>Regenerating the excludelist</h2>
+ *
+ * To rewrite the excludelist to exactly the set of currently failing cases (e.g. after fixing bugs
+ * or after the submodule is updated to a newer suite version), run:
+ *
+ * <pre>
+ * ./gradlew :tests:test --tests SourceMapSpecSuiteTest -DupdateSourceMapTestsExcludelist=true
+ * </pre>
+ *
+ * When {@code updateSourceMapTestsExcludelist} is set, all failures are suppressed and the file is
+ * overwritten at the end of the run. Review the diff before committing.
+ */
 class SourceMapSpecSuiteTest {
 
     private static final Path SUITE_ROOT = Paths.get("source-map-tests");
