@@ -5189,10 +5189,10 @@ public class Parser {
     }
 
     /**
-     * Restructures a destructuring {@code comma} body so the iterator-using portion (starting
-     * with {@code iteratorAssignNode}) runs inside a try/finally. The finally invokes
-     * IteratorClose's abrupt-completion branch when the {@code needsCloseName} sentinel is still
-     * set, ensuring iter.return() is called on exceptions and generator {@code .return()}.
+     * Restructures a destructuring {@code comma} body so the iterator-using portion (starting with
+     * {@code iteratorAssignNode}) runs inside a try/finally. The finally invokes IteratorClose's
+     * abrupt-completion branch when the {@code needsCloseName} sentinel is still set, ensuring
+     * iter.return() is called on exceptions and generator {@code .return()}.
      *
      * <p>Emitted structure (appended to {@code comma}, after any pre-iterator children that were
      * left in place, e.g. default-value setup):
@@ -5256,8 +5256,7 @@ public class Parser {
         tryBody.addChildToBack(new Node(Token.EXPR_VOID, normalClose));
 
         // Finally body: needsClose ? ITERATOR_CLOSE_ABRUPT(iter) : undefined
-        Node abruptClose =
-                new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
+        Node abruptClose = new Node(Token.ITERATOR_CLOSE_ABRUPT, createName(iteratorName));
         Node finallyExpr =
                 new Node(
                         Token.HOOK,
@@ -5272,6 +5271,24 @@ public class Parser {
         Jump tryJump = new Jump(Token.TRY, tryBody);
         tryJump.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
 
+        makeFinallyNode(finallyBody, handlerBlock, tryJump);
+
+        handlerBlock.addChildToBack(tryJump);
+
+        // Re-attach as a statement-level child of the outer COMMA. COMMA handling in the
+        // backends recognizes LOCAL_BLOCK children and generates them as statements.
+        comma.addChildToBack(handlerBlock);
+
+        // Append a trailing expression so LOCAL_BLOCK is never the final child of COMMA.
+        // createDestructuringAssignment appends {@code createName(tempName)} after this helper
+        // returns for the outer case; inner/nested calls don't, so without this placeholder the
+        // inner COMMA would end with LOCAL_BLOCK, which COMMA's last-child handling evaluates as
+        // an expression. The value is either discarded (inner destructuring used only for
+        // side-effects) or overwritten by the outer caller's tempName reference.
+        comma.addChildToBack(new Node(Token.UNDEFINED));
+    }
+
+    public static void makeFinallyNode(Node finallyBody, Node handlerBlock, Jump tryJump) {
         Node finallyTarget = Node.newTarget();
         tryJump.setFinally(finallyTarget);
 
@@ -5290,20 +5307,6 @@ public class Parser {
         tryJump.addChildToBack(finallyNode);
 
         tryJump.addChildToBack(finallyEnd);
-
-        handlerBlock.addChildToBack(tryJump);
-
-        // Re-attach as a statement-level child of the outer COMMA. COMMA handling in the
-        // backends recognizes LOCAL_BLOCK children and generates them as statements.
-        comma.addChildToBack(handlerBlock);
-
-        // Append a trailing expression so LOCAL_BLOCK is never the final child of COMMA.
-        // createDestructuringAssignment appends {@code createName(tempName)} after this helper
-        // returns for the outer case; inner/nested calls don't, so without this placeholder the
-        // inner COMMA would end with LOCAL_BLOCK, which COMMA's last-child handling evaluates as
-        // an expression. The value is either discarded (inner destructuring used only for
-        // side-effects) or overwritten by the outer caller's tempName reference.
-        comma.addChildToBack(new Node(Token.UNDEFINED));
     }
 
     private Node buildAbruptCloseHook(String iteratorName, String needsCloseName) {

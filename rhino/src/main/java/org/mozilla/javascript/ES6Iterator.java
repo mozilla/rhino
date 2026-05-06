@@ -585,9 +585,9 @@ public abstract class ES6Iterator extends ScriptableObject {
      * provides default {@code isDone}/{@code nextValue} overrides (the helpers override {@code
      * nextHelper} for their per-step logic, since it doesn't match the isDone/nextValue split).
      *
-     * <p>Per spec, an iterator helper's {@code next} runs as a generator closure, so re-entering
-     * it while it is already running throws a TypeError. We enforce that with an {@code active}
-     * flag set across each {@code next} invocation.
+     * <p>Per spec, an iterator helper's {@code next} runs as a generator closure, so re-entering it
+     * while it is already running throws a TypeError. We enforce that with an {@code active} flag
+     * set across each {@code next} invocation.
      */
     abstract static class AbstractIteratorHelper extends ES6Iterator {
 

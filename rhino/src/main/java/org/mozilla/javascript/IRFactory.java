@@ -1989,22 +1989,7 @@ public final class IRFactory {
         }
 
         if (hasFinally) {
-            Node finallyTarget = Node.newTarget();
-            pn.setFinally(finallyTarget);
-
-            // add jsr finally to the try block
-            pn.addChildToBack(makeJump(Token.JSR, finallyTarget));
-
-            // jump around finally code
-            Node finallyEnd = Node.newTarget();
-            pn.addChildToBack(makeJump(Token.GOTO, finallyEnd));
-
-            pn.addChildToBack(finallyTarget);
-            Node fBlock = new Node(Token.FINALLY, finallyBlock);
-            fBlock.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
-            pn.addChildToBack(fBlock);
-
-            pn.addChildToBack(finallyEnd);
+            Parser.makeFinallyNode(finallyBlock, handlerBlock, pn);
         }
         handlerBlock.addChildToBack(pn);
         return handlerBlock;

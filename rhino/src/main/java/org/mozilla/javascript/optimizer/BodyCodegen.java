@@ -2311,10 +2311,7 @@ class BodyCodegen {
         } else {
             if (type == Token.JSR) {
 
-
-
-
-                    inlineFinally(target);
+                inlineFinally(target);
 
             } else {
                 addGoto(target, ByteCode.GOTO);
