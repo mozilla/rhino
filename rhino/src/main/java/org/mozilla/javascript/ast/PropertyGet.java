@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for the '.' operator. Node type is {@link Token#GETPROP}. */
@@ -80,6 +81,19 @@ public class PropertyGet extends InfixExpression {
         sb.append(".");
         sb.append(getRight().toSource(0));
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != PropertyGet.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        PropertyGet copy = new PropertyGet();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyInfixFieldsFrom(this);
+        return copy;
     }
 
     /** Visits this node, the target expression, and the property name. */

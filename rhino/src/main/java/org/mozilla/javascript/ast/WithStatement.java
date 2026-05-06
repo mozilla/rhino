@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -113,6 +115,34 @@ public class WithStatement extends AstNode {
             sb.append("\n").append(statement.toSource(depth + 1));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != WithStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        WithStatement copy = new WithStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.expression = this.expression;
+        copy.statement = this.statement;
+        copy.lp = this.lp;
+        copy.rp = this.rp;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        WithStatement copy = (WithStatement) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
+        if (this.statement != null) {
+            copy.statement = (AstNode) this.statement.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the with-object, then the body statement. */

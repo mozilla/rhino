@@ -4,6 +4,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -55,6 +57,32 @@ public class TaggedTemplateLiteral extends AstNode {
         sb.append(target.toSource(0));
         sb.append(templateLiteral.toSource(0));
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != TaggedTemplateLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        TaggedTemplateLiteral copy = new TaggedTemplateLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.target = this.target;
+        copy.templateLiteral = this.templateLiteral;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        TaggedTemplateLiteral copy = (TaggedTemplateLiteral) copyNode;
+        if (this.target != null) {
+            copy.target = (AstNode) this.target.cloneStructure(map);
+        }
+        if (this.templateLiteral != null) {
+            copy.templateLiteral = (AstNode) this.templateLiteral.cloneStructure(map);
+        }
     }
 
     /** Visits this node. */

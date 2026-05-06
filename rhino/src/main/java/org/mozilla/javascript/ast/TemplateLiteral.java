@@ -8,7 +8,9 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -126,6 +128,32 @@ public class TemplateLiteral extends AstNode {
         }
         sb.append("`");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != TemplateLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        TemplateLiteral copy = new TemplateLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.elements = this.elements;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        TemplateLiteral copy = (TemplateLiteral) copyNode;
+        if (this.elements != null) {
+            List<AstNode> list = new ArrayList<>(this.elements.size());
+            for (AstNode e : this.elements) {
+                list.add((AstNode) e.cloneStructure(map));
+            }
+            copy.elements = list;
+        }
     }
 
     /** Visits this node. */

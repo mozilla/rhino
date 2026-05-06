@@ -8,7 +8,9 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -137,6 +139,41 @@ public class TryStatement extends AstNode {
             sb.append(finallyBlock.toSource(depth));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != TryStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        TryStatement copy = new TryStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.tryBlock = this.tryBlock;
+        copy.catchClauses = this.catchClauses;
+        copy.finallyBlock = this.finallyBlock;
+        copy.finallyPosition = this.finallyPosition;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        TryStatement copy = (TryStatement) copyNode;
+        if (this.tryBlock != null) {
+            copy.tryBlock = (AstNode) this.tryBlock.cloneStructure(map);
+        }
+        if (this.catchClauses != null) {
+            List<CatchClause> list = new ArrayList<>(this.catchClauses.size());
+            for (CatchClause cc : this.catchClauses) {
+                list.add((CatchClause) cc.cloneStructure(map));
+            }
+            copy.catchClauses = list;
+        }
+        if (this.finallyBlock != null) {
+            copy.finallyBlock = (AstNode) this.finallyBlock.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the try-block, then any catch clauses, and then any finally block. */

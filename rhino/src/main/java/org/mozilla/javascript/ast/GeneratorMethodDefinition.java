@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -15,6 +17,10 @@ import org.mozilla.javascript.Token;
 public class GeneratorMethodDefinition extends AstNode {
 
     private AstNode methodName;
+
+    private GeneratorMethodDefinition() {
+        setType(Token.MUL);
+    }
 
     public GeneratorMethodDefinition(int pos, int len, AstNode methodName) {
         super(pos, len);
@@ -35,6 +41,28 @@ public class GeneratorMethodDefinition extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + '*' + methodName.toSource(depth);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != GeneratorMethodDefinition.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        GeneratorMethodDefinition copy = new GeneratorMethodDefinition();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.methodName = this.methodName;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        GeneratorMethodDefinition copy = (GeneratorMethodDefinition) copyNode;
+        if (this.methodName != null) {
+            copy.methodName = (AstNode) this.methodName.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the name. */

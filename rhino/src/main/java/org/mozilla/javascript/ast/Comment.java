@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -96,6 +97,18 @@ public class Comment extends AstNode {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != Comment.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Comment copy = new Comment(this.position, this.length, this.commentType, this.value);
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
     }
 
     /**

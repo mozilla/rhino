@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
+
 /**
  * AST node representing the set of assignment operators such as {@code =}, {@code *=} and {@code
  * +=}.
@@ -32,5 +34,18 @@ public class Assignment extends InfixExpression {
 
     public Assignment(int operator, AstNode left, AstNode right, int operatorPos) {
         super(operator, left, right, operatorPos);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != Assignment.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Assignment copy = new Assignment();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyInfixFieldsFrom(this);
+        return copy;
     }
 }

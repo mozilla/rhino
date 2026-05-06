@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -72,6 +73,20 @@ public class TemplateCharacters extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + rawValue;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != TemplateCharacters.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        TemplateCharacters copy = new TemplateCharacters();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.value = this.value;
+        copy.rawValue = this.rawValue;
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

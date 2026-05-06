@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -89,6 +91,44 @@ public class BreakStatement extends Jump {
         }
         sb.append(";\n");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != BreakStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        BreakStatement copy = new BreakStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.breakLabel = this.breakLabel;
+        copy.targetNode = this.targetNode;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        BreakStatement copy = (BreakStatement) copyNode;
+        if (this.breakLabel != null) {
+            copy.breakLabel = (Name) this.breakLabel.cloneStructure(map);
+        }
+    }
+
+    @Override
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        if (breakLabel != null) {
+            breakLabel.fixupReferences(map);
+        }
+        if (targetNode != null) {
+            Node mapped = map.get(targetNode);
+            if (mapped instanceof AstNode) {
+                targetNode = (AstNode) mapped;
+            }
+        }
+        super.fixupReferences(map);
     }
 
     /** Visits this node, then visits the break label if non-{@code null}. */

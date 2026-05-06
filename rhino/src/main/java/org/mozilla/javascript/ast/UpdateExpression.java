@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -116,6 +118,29 @@ public class UpdateExpression extends AstNode {
             sb.append(operatorToString(type));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != UpdateExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        UpdateExpression copy = new UpdateExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.operand = this.operand;
+        copy.isPostfix = this.isPostfix;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        UpdateExpression copy = (UpdateExpression) copyNode;
+        if (this.operand != null) {
+            copy.operand = (AstNode) this.operand.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the operand. */

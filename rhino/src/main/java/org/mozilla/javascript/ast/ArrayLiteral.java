@@ -8,7 +8,9 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -167,6 +169,35 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ArrayLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ArrayLiteral copy = new ArrayLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.elements = this.elements;
+        copy.destructuringLength = this.destructuringLength;
+        copy.skipCount = this.skipCount;
+        copy.isDestructuring = this.isDestructuring;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ArrayLiteral copy = (ArrayLiteral) copyNode;
+        if (this.elements != null) {
+            List<AstNode> list = new ArrayList<>(this.elements.size());
+            for (AstNode e : this.elements) {
+                list.add((AstNode) e.cloneStructure(map));
+            }
+            copy.elements = list;
+        }
     }
 
     /**

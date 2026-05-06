@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -165,6 +167,45 @@ public class ForInLoop extends Loop {
             sb.append("\n").append(body.toSource(depth + 1));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ForInLoop.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ForInLoop copy = new ForInLoop();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyLoopFieldsFrom(this);
+        copy.copyForInLoopFieldsFrom(this);
+        return copy;
+    }
+
+    /** Copies {@link ForInLoop}-level fields. */
+    protected void copyForInLoopFieldsFrom(ForInLoop source) {
+        this.iterator = source.iterator;
+        this.iteratedObject = source.iteratedObject;
+        this.inPosition = source.inPosition;
+        this.eachPosition = source.eachPosition;
+        this.isForEach = source.isForEach;
+        this.isForOf = source.isForOf;
+        this.isForAwaitOf = source.isForAwaitOf;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ForInLoop copy = (ForInLoop) copyNode;
+        if (this.iterator != null) {
+            copy.iterator = (AstNode) this.iterator.cloneStructure(map);
+        }
+        if (this.iteratedObject != null) {
+            copy.iteratedObject = (AstNode) this.iteratedObject.cloneStructure(map);
+        }
     }
 
     /** Visits this node, the iterator, the iterated object, and the body. */

@@ -7,8 +7,10 @@
 package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -132,6 +134,33 @@ public class VariableDeclaration extends AstNode {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != VariableDeclaration.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        VariableDeclaration copy = new VariableDeclaration();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.variables = this.variables;
+        copy.isStatement = this.isStatement;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        VariableDeclaration copy = (VariableDeclaration) copyNode;
+        if (this.variables != null) {
+            List<VariableInitializer> list = new ArrayList<>(this.variables.size());
+            for (VariableInitializer vi : this.variables) {
+                list.add((VariableInitializer) vi.cloneStructure(map));
+            }
+            copy.variables = list;
+        }
     }
 
     /** Visits this node, then each {@link VariableInitializer} child. */

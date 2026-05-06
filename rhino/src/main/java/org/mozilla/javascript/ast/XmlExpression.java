@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -61,6 +63,29 @@ public class XmlExpression extends XmlFragment {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + "{" + expression.toSource(depth) + "}";
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != XmlExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        XmlExpression copy = new XmlExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.expression = this.expression;
+        copy.isXmlAttribute = this.isXmlAttribute;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        XmlExpression copy = (XmlExpression) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the child expression. */

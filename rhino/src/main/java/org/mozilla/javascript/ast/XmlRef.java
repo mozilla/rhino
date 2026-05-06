@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
+
 /**
  * Base class for E4X XML attribute-access or property-get expressions. Such expressions can take a
  * variety of forms. The general syntax has three parts:
@@ -80,5 +83,24 @@ public abstract class XmlRef extends AstNode {
     /** Sets position of {@code ::} token, or -1 if not present */
     public void setColonPos(int colonPos) {
         this.colonPos = colonPos;
+    }
+
+    /**
+     * Copies {@link XmlRef}-level fields. The namespace reference is shared until {@link
+     * #cloneNamedChildren} runs.
+     */
+    protected void copyXmlRefFieldsFrom(XmlRef source) {
+        this.namespace = source.namespace;
+        this.atPos = source.atPos;
+        this.colonPos = source.colonPos;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        XmlRef copy = (XmlRef) copyNode;
+        if (this.namespace != null) {
+            copy.namespace = (Name) this.namespace.cloneStructure(map);
+        }
     }
 }

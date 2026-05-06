@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -71,6 +73,28 @@ public class ThrowStatement extends AstNode {
         sb.append(expression.toSource(0));
         sb.append(";\n");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ThrowStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ThrowStatement copy = new ThrowStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.expression = this.expression;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ThrowStatement copy = (ThrowStatement) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the thrown expression. */

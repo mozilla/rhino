@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -68,6 +70,31 @@ public class WhileLoop extends Loop {
             sb.append(body.toSource(depth + 1));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != WhileLoop.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        WhileLoop copy = new WhileLoop();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyLoopFieldsFrom(this);
+        copy.condition = this.condition;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        WhileLoop copy = (WhileLoop) copyNode;
+        if (this.condition != null) {
+            copy.condition = (AstNode) this.condition.cloneStructure(map);
+        }
     }
 
     /** Visits this node, the condition, then the body. */

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -69,6 +71,29 @@ public class XmlPropRef extends XmlRef {
         }
         sb.append(propName.toSource(0));
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != XmlPropRef.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        XmlPropRef copy = new XmlPropRef();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyXmlRefFieldsFrom(this);
+        copy.propName = this.propName;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        XmlPropRef copy = (XmlPropRef) copyNode;
+        if (this.propName != null) {
+            copy.propName = (Name) this.propName.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the namespace if present, then the property name. */

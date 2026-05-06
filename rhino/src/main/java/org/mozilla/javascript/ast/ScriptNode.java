@@ -349,6 +349,46 @@ public class ScriptNode extends Scope {
     }
 
     @Override
+    protected Node shallowCopy() {
+        if (getClass() != ScriptNode.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ScriptNode copy = new ScriptNode();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyScriptNodeFieldsFrom(this);
+        return copy;
+    }
+
+    /** Copies {@link ScriptNode}-level fields. Lists are duplicated; entries are shared. */
+    protected void copyScriptNodeFieldsFrom(ScriptNode source) {
+        this.rawSourceStart = source.rawSourceStart;
+        this.rawSourceEnd = source.rawSourceEnd;
+        this.rawSource = source.rawSource;
+        this.sourceName = source.sourceName;
+        this.endLineno = source.endLineno;
+        if (source.functions != null) {
+            this.functions = new ArrayList<>(source.functions);
+        }
+        if (source.literals != null) {
+            this.literals = new ArrayList<>(source.literals);
+        }
+        if (source.symbols != null) {
+            this.symbols = new ArrayList<>(source.symbols);
+        }
+        this.paramCount = source.paramCount;
+        this.variableNames = source.variableNames;
+        this.isConsts = source.isConsts;
+        this.compilerData = source.compilerData;
+        this.tempNumber = source.tempNumber;
+        this.inStrictMode = source.inStrictMode;
+        this.isMethodDefinition = source.isMethodDefinition;
+    }
+
+    @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             for (Node kid : this) {

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -141,6 +143,31 @@ public class Name extends AstNode {
         Name clone = new Name(this.getPosition(), this.getLength(), prefix + this.identifier);
         clone.setLineColumnNumber(this.getLineno(), this.getColumn());
         return clone;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != Name.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Name copy = new Name();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.identifier = this.identifier;
+        copy.scope = this.scope;
+        return copy;
+    }
+
+    @Override
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        if (scope != null) {
+            Node mapped = map.get(scope);
+            if (mapped instanceof Scope) {
+                scope = (Scope) mapped;
+            }
+        }
+        super.fixupReferences(map);
     }
 
     /** Visits this node. There are no children to visit. */

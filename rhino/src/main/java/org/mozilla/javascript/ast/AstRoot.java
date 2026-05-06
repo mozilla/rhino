@@ -120,6 +120,24 @@ public class AstRoot extends ScriptNode {
         return dpv.toString();
     }
 
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != AstRoot.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        AstRoot copy = new AstRoot();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyScriptNodeFieldsFrom(this);
+        if (this.comments != null) {
+            copy.comments = new TreeSet<>(this.comments);
+        }
+        return copy;
+    }
+
     /**
      * Debugging function to check that the parser has set the parent link for every node in the
      * tree.

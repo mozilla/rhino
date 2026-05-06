@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -74,6 +76,29 @@ public class NewExpression extends FunctionCall {
             sb.append(initializer.toSource(0));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != NewExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        NewExpression copy = new NewExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyFunctionCallFieldsFrom(this);
+        copy.initializer = this.initializer;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        NewExpression copy = (NewExpression) copyNode;
+        if (this.initializer != null) {
+            copy.initializer = (ObjectLiteral) this.initializer.cloneStructure(map);
+        }
     }
 
     /**
