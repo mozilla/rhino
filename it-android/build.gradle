@@ -49,12 +49,15 @@ if (!System.getenv("ANDROID_HOME") && !localProperties.get("sdk.dir")) {
 
         }
         compileOptions {
+            coreLibraryDesugaringEnabled true
             sourceCompatibility JavaVersion.VERSION_11
             targetCompatibility JavaVersion.VERSION_11
         }
     }
 
     dependencies {
+        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
         // To test against other versions, replace the dependencies by
         //implementation 'org.mozilla:rhino:1.7.15'
         implementation project(':rhino')
