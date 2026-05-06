@@ -982,48 +982,6 @@ class BodyCodegen {
                 break;
 
             case Token.FINALLY:
-                {
-                    // This is the non-exception case for a finally block. In
-                    // other words, since we inline finally blocks wherever
-                    // jsr was previously used, and jsr is only used when the
-                    // function is not a generator, we don't need to generate
-                    // this case if the function isn't a generator.
-                    if (!isGenerator) {
-                        break;
-                    }
-
-                    if (compilerEnv.isGenerateObserverCount()) saveCurrentCodeOffset();
-                    // there is exactly one value on the stack when enterring
-                    // finally blocks: the return address (or its int encoding)
-                    cfw.setStackTop((short) 1);
-
-                    // Save return address in a new local
-                    int finallyRegister = getNewWordLocal();
-
-                    int finallyStart = cfw.acquireLabel();
-                    int finallyEnd = cfw.acquireLabel();
-                    cfw.markLabel(finallyStart);
-
-                    generateIntegerWrap();
-                    cfw.addAStore(finallyRegister);
-
-                    while (child != null) {
-                        generateStatement(child);
-                        child = child.getNext();
-                    }
-
-                    cfw.addALoad(finallyRegister);
-                    cfw.add(ByteCode.CHECKCAST, "java/lang/Integer");
-                    generateIntegerUnwrap();
-                    FinallyReturnPoint ret = finallys.get(node);
-                    cfw.add(ByteCode.GOTO, ret.getTableLebel(cfw));
-
-                    // After this GOTO we expect stack to be empty again!
-                    cfw.setStackTop((short) 0);
-
-                    releaseWordLocal((short) finallyRegister);
-                    cfw.markLabel(finallyEnd);
-                }
                 break;
 
             case Token.DEBUGGER:
@@ -2352,12 +2310,12 @@ class BodyCodegen {
             cfw.markLabel(fallThruLabel);
         } else {
             if (type == Token.JSR) {
-                if (isGenerator) {
-                    addGotoWithReturn(target);
-                } else {
-                    // This assumes that JSR is only ever used for finally
+
+
+
+
                     inlineFinally(target);
-                }
+
             } else {
                 addGoto(target, ByteCode.GOTO);
             }
@@ -3519,10 +3477,7 @@ class BodyCodegen {
 
             // get the label to JSR to
             int finallyLabel = finallyTarget.labelId();
-            if (isGenerator) addGotoWithReturn(finallyTarget);
-            else {
-                inlineFinally(finallyTarget, handlerLabels[FINALLY_EXCEPTION], finallyEnd);
-            }
+            inlineFinally(finallyTarget, handlerLabels[FINALLY_EXCEPTION], finallyEnd);
 
             // rethrow
             cfw.addALoad(exceptionLocal);
