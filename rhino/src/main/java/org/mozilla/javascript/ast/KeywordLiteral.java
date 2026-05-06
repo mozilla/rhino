@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -94,6 +95,18 @@ public class KeywordLiteral extends AstNode {
                 throw new IllegalStateException("Invalid keyword literal type: " + getType());
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != KeywordLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        KeywordLiteral copy = new KeywordLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

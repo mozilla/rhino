@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -105,5 +106,18 @@ public class XmlMemberGet extends InfixExpression {
             default:
                 throw new IllegalArgumentException("Invalid type of XmlMemberGet: " + getType());
         }
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != XmlMemberGet.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        XmlMemberGet copy = new XmlMemberGet();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyInfixFieldsFrom(this);
+        return copy;
     }
 }

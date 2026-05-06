@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -56,6 +58,28 @@ public class AwaitExpression extends AstNode {
     @Override
     public String toSource(int depth) {
         return value == null ? "await" : "await " + value.toSource(0);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != AwaitExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        AwaitExpression copy = new AwaitExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.value = this.value;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        AwaitExpression copy = (AwaitExpression) copyNode;
+        if (this.value != null) {
+            copy.value = (AstNode) this.value.cloneStructure(map);
+        }
     }
 
     /** Visits this node, and if present, the awaited value. */

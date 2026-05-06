@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
@@ -92,6 +93,53 @@ public class Jump extends AstNode {
         if (continueTarget.getType() != Token.TARGET) codeBug();
         if (target2 != null) codeBug(); // only once
         target2 = continueTarget;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != Jump.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Jump copy = new Jump(type);
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        return copy;
+    }
+
+    /**
+     * Copies the {@link Jump}-level cross-reference fields ({@code target}, {@code target2}, {@code
+     * jumpNode}) from {@code source} into this node. Intended for use by subclass {@link
+     * Node#shallowCopy()} implementations. The values are copied raw; remapping happens later in
+     * {@link Jump#fixupReferences(IdentityHashMap)}.
+     */
+    protected void copyJumpFieldsFrom(Jump source) {
+        this.target = source.target;
+        this.target2 = source.target2;
+        this.jumpNode = source.jumpNode;
+    }
+
+    @Override
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        if (target != null) {
+            Node mapped = map.get(target);
+            if (mapped != null) {
+                target = mapped;
+            }
+        }
+        if (target2 != null) {
+            Node mapped = map.get(target2);
+            if (mapped != null) {
+                target2 = mapped;
+            }
+        }
+        if (jumpNode != null) {
+            Node mapped = map.get(jumpNode);
+            if (mapped instanceof Jump) {
+                jumpNode = (Jump) mapped;
+            }
+        }
+        super.fixupReferences(map);
     }
 
     /**

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a parenthesized expression. Node type is {@link Token#LP}. */
@@ -56,6 +58,28 @@ public class ParenthesizedExpression extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + "(" + expression.toSource(0) + ")";
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ParenthesizedExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ParenthesizedExpression copy = new ParenthesizedExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.expression = this.expression;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ParenthesizedExpression copy = (ParenthesizedExpression) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the child expression. */

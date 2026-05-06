@@ -9,6 +9,7 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.Node;
@@ -540,6 +541,69 @@ public class FunctionNode extends ScriptNode {
                     memberExprNode.visit(v);
                 }
             }
+        }
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != FunctionNode.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        FunctionNode copy = new FunctionNode();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyScriptNodeFieldsFrom(this);
+        copy.copyFunctionNodeFieldsFrom(this);
+        return copy;
+    }
+
+    /** Copies {@link FunctionNode}-level fields. */
+    protected void copyFunctionNodeFieldsFrom(FunctionNode source) {
+        this.functionName = source.functionName;
+        this.params = source.params;
+        this.body = source.body;
+        this.isExpressionClosure = source.isExpressionClosure;
+        this.functionForm = source.functionForm;
+        this.lp = source.lp;
+        this.rp = source.rp;
+        this.hasRestParameter = source.hasRestParameter;
+        this.isShorthand = source.isShorthand;
+        this.defaultParams = source.defaultParams;
+        this.destructuringRvalues = source.destructuringRvalues;
+        this.functionType = source.functionType;
+        this.needsActivation = source.needsActivation;
+        this.requiresArgumentObject = source.requiresArgumentObject;
+        this.isGenerator = source.isGenerator;
+        this.isES6Generator = source.isES6Generator;
+        this.isAsync = source.isAsync;
+        this.generatorResumePoints = source.generatorResumePoints;
+        this.liveLocals = source.liveLocals;
+        this.generatorParamInitBlock = source.generatorParamInitBlock;
+        this.memberExprNode = source.memberExprNode;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        FunctionNode copy = (FunctionNode) copyNode;
+        if (this.functionName != null) {
+            copy.functionName = (Name) this.functionName.cloneStructure(map);
+        }
+        if (this.params != null) {
+            List<AstNode> list = new ArrayList<>(this.params.size());
+            for (AstNode p : this.params) {
+                list.add((AstNode) p.cloneStructure(map));
+            }
+            copy.params = list;
+        }
+        if (this.body != null) {
+            copy.body = (AstNode) this.body.cloneStructure(map);
+        }
+        if (this.memberExprNode != null) {
+            copy.memberExprNode = (AstNode) this.memberExprNode.cloneStructure(map);
         }
     }
 

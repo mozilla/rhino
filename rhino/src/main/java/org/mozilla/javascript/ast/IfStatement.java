@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -181,5 +183,39 @@ public class IfStatement extends AstNode {
 
     public void setElseKeyWordInlineComment(AstNode elseKeyWordInlineComment) {
         this.elseKeyWordInlineComment = elseKeyWordInlineComment;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != IfStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        IfStatement copy = new IfStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.condition = this.condition;
+        copy.thenPart = this.thenPart;
+        copy.elsePart = this.elsePart;
+        copy.elseKeyWordInlineComment = this.elseKeyWordInlineComment;
+        copy.elsePosition = this.elsePosition;
+        copy.lp = this.lp;
+        copy.rp = this.rp;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        IfStatement copy = (IfStatement) copyNode;
+        if (this.condition != null) {
+            copy.condition = (AstNode) this.condition.cloneStructure(map);
+        }
+        if (this.thenPart != null) {
+            copy.thenPart = (AstNode) this.thenPart.cloneStructure(map);
+        }
+        if (this.elsePart != null) {
+            copy.elsePart = (AstNode) this.elsePart.cloneStructure(map);
+        }
     }
 }

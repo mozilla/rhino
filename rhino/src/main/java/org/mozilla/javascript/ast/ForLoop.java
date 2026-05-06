@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -122,6 +124,44 @@ public class ForLoop extends Loop {
             sb.append(body.toSource(depth + 1));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ForLoop.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ForLoop copy = new ForLoop();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyLoopFieldsFrom(this);
+        copy.copyForLoopFieldsFrom(this);
+        return copy;
+    }
+
+    /** Copies {@link ForLoop}-level fields. References shared until {@link #cloneNamedChildren}. */
+    protected void copyForLoopFieldsFrom(ForLoop source) {
+        this.initializer = source.initializer;
+        this.condition = source.condition;
+        this.increment = source.increment;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ForLoop copy = (ForLoop) copyNode;
+        if (this.initializer != null) {
+            copy.initializer = (AstNode) this.initializer.cloneStructure(map);
+        }
+        if (this.condition != null) {
+            copy.condition = (AstNode) this.condition.cloneStructure(map);
+        }
+        if (this.increment != null) {
+            copy.increment = (AstNode) this.increment.cloneStructure(map);
+        }
     }
 
     /**

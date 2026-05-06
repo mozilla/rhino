@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -32,6 +33,18 @@ public class EmptyExpression extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != EmptyExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        EmptyExpression copy = new EmptyExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
     }
 
     /** Visits this node. There are no children. */

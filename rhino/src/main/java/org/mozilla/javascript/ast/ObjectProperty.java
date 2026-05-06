@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -133,6 +135,33 @@ public class ObjectProperty extends AbstractObjectProperty {
             sb.append(value.toSource(getType() == Token.COLON ? 0 : depth + 1));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ObjectProperty.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ObjectProperty copy = new ObjectProperty();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.key = this.key;
+        copy.value = this.value;
+        copy.shorthand = this.shorthand;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ObjectProperty copy = (ObjectProperty) copyNode;
+        if (this.key != null) {
+            copy.key = (AstNode) this.key.cloneStructure(map);
+        }
+        if (this.value != null) {
+            copy.value = (AstNode) this.value.cloneStructure(map);
+        }
     }
 
     /** Visits this node, the key, and the value. */

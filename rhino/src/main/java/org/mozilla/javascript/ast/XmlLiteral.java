@@ -7,7 +7,9 @@
 package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -70,6 +72,32 @@ public class XmlLiteral extends AstNode {
             sb.append(frag.toSource(0));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != XmlLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        XmlLiteral copy = new XmlLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.fragments = this.fragments;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        XmlLiteral copy = (XmlLiteral) copyNode;
+        if (this.fragments != null) {
+            List<XmlFragment> list = new ArrayList<>(this.fragments.size());
+            for (XmlFragment f : this.fragments) {
+                list.add((XmlFragment) f.cloneStructure(map));
+            }
+            copy.fragments = list;
+        }
     }
 
     /** Visits this node, then visits each child fragment in lexical order. */

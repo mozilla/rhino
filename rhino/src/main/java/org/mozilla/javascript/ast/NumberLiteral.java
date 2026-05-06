@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a Number literal. Node type is {@link Token#NUMBER}. */
@@ -74,6 +75,20 @@ public class NumberLiteral extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + (value == null ? "<null>" : value);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != NumberLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        NumberLiteral copy = new NumberLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.value = this.value;
+        copy.number = this.number;
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

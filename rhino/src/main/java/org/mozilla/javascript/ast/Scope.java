@@ -8,6 +8,7 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -278,6 +279,64 @@ public class Scope extends Jump {
             n = n.getNext();
         }
         return stmts;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != Scope.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Scope copy = new Scope();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        return copy;
+    }
+
+    /**
+     * Copies {@link Scope}-level fields (parent scope link, top, symbol tables, child scopes).
+     * Symbol-table maps are duplicated so the copy and original do not share mutable state, but
+     * {@link Symbol} entries themselves are shared.
+     */
+    protected void copyScopeFieldsFrom(Scope source) {
+        this.parentScope = source.parentScope;
+        this.top = source.top;
+        if (source.symbolTable != null) {
+            this.symbolTable = new LinkedHashMap<>(source.symbolTable);
+        }
+        if (source.varSymbolTable != null) {
+            this.varSymbolTable = new LinkedHashMap<>(source.varSymbolTable);
+        }
+        if (source.childScopes != null) {
+            this.childScopes = new ArrayList<>(source.childScopes);
+        }
+    }
+
+    @Override
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        if (parentScope != null) {
+            Node mapped = map.get(parentScope);
+            if (mapped instanceof Scope) {
+                parentScope = (Scope) mapped;
+            }
+        }
+        if (top != null) {
+            Node mapped = map.get(top);
+            if (mapped instanceof ScriptNode) {
+                top = (ScriptNode) mapped;
+            }
+        }
+        if (childScopes != null) {
+            for (int i = 0; i < childScopes.size(); i++) {
+                Node mapped = map.get(childScopes.get(i));
+                if (mapped instanceof Scope) {
+                    childScopes.set(i, (Scope) mapped);
+                }
+            }
+        }
+        super.fixupReferences(map);
     }
 
     @Override

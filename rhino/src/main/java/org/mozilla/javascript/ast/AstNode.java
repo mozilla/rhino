@@ -176,6 +176,19 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         length = len;
     }
 
+    /**
+     * Copies the {@link AstNode}-level scalar fields ({@code position}, {@code length}, and {@code
+     * inlineComment}) from {@code src} to {@code dst} in addition to the {@link Node} base fields.
+     * Subclass {@link Node#shallowCopy()} implementations call this to populate the
+     * AstNode-specific state on a freshly-allocated copy.
+     */
+    protected static void copyAstFields(AstNode src, AstNode dst) {
+        copyBaseFields(src, dst);
+        dst.position = src.position;
+        dst.length = src.length;
+        dst.inlineComment = src.inlineComment;
+    }
+
     /** Returns relative position in parent */
     public int getPosition() {
         return position;

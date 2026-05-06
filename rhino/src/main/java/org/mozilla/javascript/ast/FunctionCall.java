@@ -8,7 +8,9 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a function call. Node type is {@link Token#CALL}. */
@@ -152,6 +154,47 @@ public class FunctionCall extends AstNode {
             sb.append(this.getInlineComment().toSource(depth)).append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != FunctionCall.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        FunctionCall copy = new FunctionCall();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyFunctionCallFieldsFrom(this);
+        return copy;
+    }
+
+    /**
+     * Copies {@link FunctionCall}-level fields. Children references are shared until {@link
+     * #cloneNamedChildren} runs.
+     */
+    protected void copyFunctionCallFieldsFrom(FunctionCall source) {
+        this.target = source.target;
+        this.arguments = source.arguments;
+        this.lp = source.lp;
+        this.rp = source.rp;
+        this.optionalCall = source.optionalCall;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        FunctionCall copy = (FunctionCall) copyNode;
+        if (this.target != null) {
+            copy.target = (AstNode) this.target.cloneStructure(map);
+        }
+        if (this.arguments != null) {
+            List<AstNode> args = new ArrayList<>(this.arguments.size());
+            for (AstNode a : this.arguments) {
+                args.add((AstNode) a.cloneStructure(map));
+            }
+            copy.arguments = args;
+        }
     }
 
     /** Visits this node, the target object, and the arguments. */

@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -1061,6 +1062,152 @@ public class Node implements Iterable<Node> {
         while (child != null) {
             child.resetTargets_r();
             child = child.next;
+        }
+    }
+
+    /**
+     * Returns a deep copy of this node and every descendant, suitable for placing the copy at a
+     * second location in the same compilation unit (for example, inlining a finally block at
+     * multiple exit paths).
+     *
+     * <p>The copy is built in two phases:
+     *
+     * <ol>
+     *   <li>Each node is allocated via {@link #shallowCopy()} and its children are recursively
+     *       cloned. The original-to-copy mapping is recorded in an identity map.
+     *   <li>The copy is walked and any cross-reference pointing at a node inside the original
+     *       subtree is rewritten to its corresponding copy. Cross-references that point outside the
+     *       subtree (for example a {@code break} whose target is in the surrounding loop) are
+     *       preserved as-is.
+     * </ol>
+     *
+     * <p>{@code TARGET}, {@code YIELD}, {@code YIELD_STAR} and {@code AWAIT} nodes in the copy have
+     * their {@code labelId} reset to {@code -1} so that code generation will allocate new labels
+     * rather than colliding with the original.
+     *
+     * <p>This is a structural copy. {@link org.mozilla.javascript.ast.Symbol} objects in scope
+     * tables are shared with the original; the copy does not introduce a new lexical scope. If a
+     * subclass that carries cross-reference state has not overridden {@link #shallowCopy()}, this
+     * method will throw {@link UnsupportedOperationException}.
+     *
+     * @return the root of the freshly-cloned subtree, with no parent and no {@code next} sibling
+     */
+    public final Node cloneTree() {
+        IdentityHashMap<Node, Node> map = new IdentityHashMap<>();
+        Node copy = cloneStructure(map);
+        copy.fixupReferences(map);
+        return copy;
+    }
+
+    /**
+     * Recursively allocates a copy of this node and its descendants, recording each {@code
+     * original→copy} pair in {@code map}. Walks both the linked-list child chain and any named
+     * child fields declared by subclasses (via {@link #cloneNamedChildren}).
+     *
+     * <p>Public so {@link org.mozilla.javascript.ast.AstNode} subclasses (which sit in another
+     * package and access children through abstract supertype references) can recurse into their
+     * named-field children that are not part of the linked-list child chain. End users should call
+     * {@link #cloneTree()} instead.
+     */
+    public Node cloneStructure(IdentityHashMap<Node, Node> map) {
+        Node copy = shallowCopy();
+        map.put(this, copy);
+        if (copy.type == Token.TARGET
+                || copy.type == Token.YIELD
+                || copy.type == Token.YIELD_STAR
+                || copy.type == Token.AWAIT) {
+            copy.putIntProp(LABEL_ID_PROP, -1);
+        }
+        Node prev = null;
+        for (Node child = first; child != null; child = child.next) {
+            Node childCopy = child.cloneStructure(map);
+            childCopy.next = null;
+            if (prev == null) {
+                copy.first = childCopy;
+            } else {
+                prev.next = childCopy;
+            }
+            prev = childCopy;
+        }
+        copy.last = prev;
+        cloneNamedChildren(copy, map);
+        return copy;
+    }
+
+    /**
+     * Subclass hook to deep-clone named-field children that are not part of the linked-list child
+     * chain. Called after {@link #shallowCopy()} has populated {@code copy} with raw (shared)
+     * references and after the linked-list children have been cloned.
+     *
+     * <p>Implementations recurse via {@link #cloneStructure(IdentityHashMap)} on each named child
+     * of the original and assign the resulting copy onto the corresponding field of {@code copy}.
+     * The default implementation does nothing.
+     */
+    protected void cloneNamedChildren(Node copy, IdentityHashMap<Node, Node> map) {}
+
+    /**
+     * Allocates a fresh node of the same dynamic type as {@code this}, copying scalar state (node
+     * type, line/column, property list) but not children, the {@code next} sibling, or any
+     * cross-reference fields. Cross-references are remapped by {@link #fixupReferences} after the
+     * full structure has been cloned.
+     *
+     * <p>Subclasses that carry typed fields beyond what {@link #copyBaseFields(Node, Node)}
+     * captures must override this method. The base implementation refuses to operate on subclass
+     * instances rather than silently producing a degraded copy.
+     */
+    protected Node shallowCopy() {
+        if (getClass() != Node.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Node copy = new Node(type);
+        copyBaseFields(this, copy);
+        return copy;
+    }
+
+    /**
+     * Copies the scalar fields defined on {@link Node} (line, column, and a fresh chain of
+     * property-list entries with shared values) from {@code src} into {@code dst}. Property values
+     * that are themselves {@link Node} references are remapped later by {@link
+     * #fixupReferences(IdentityHashMap)}.
+     */
+    protected static void copyBaseFields(Node src, Node dst) {
+        dst.lineno = src.lineno;
+        dst.column = src.column;
+        PropListItem head = null;
+        PropListItem tail = null;
+        for (PropListItem p = src.propListHead; p != null; p = p.next) {
+            PropListItem c = new PropListItem();
+            c.type = p.type;
+            c.intValue = p.intValue;
+            c.objectValue = p.objectValue;
+            if (head == null) {
+                head = c;
+            } else {
+                tail.next = c;
+            }
+            tail = c;
+        }
+        dst.propListHead = head;
+    }
+
+    /**
+     * Walks this node and all descendants of the cloned subtree, rewriting any cross-reference that
+     * lands in {@code map} (i.e. points at a node in the original subtree) to the corresponding
+     * copy. Subclasses with typed cross-references override this and chain to {@code
+     * super.fixupReferences(map)}.
+     */
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        for (PropListItem p = propListHead; p != null; p = p.next) {
+            if (p.objectValue instanceof Node) {
+                Node mapped = map.get(p.objectValue);
+                if (mapped != null) {
+                    p.objectValue = mapped;
+                }
+            }
+        }
+        for (Node child = first; child != null; child = child.next) {
+            child.fixupReferences(map);
         }
     }
 

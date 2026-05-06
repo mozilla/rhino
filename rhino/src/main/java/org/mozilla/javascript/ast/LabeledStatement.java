@@ -7,7 +7,9 @@
 package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -112,6 +114,36 @@ public class LabeledStatement extends AstNode {
         }
         sb.append(statement.toSource(depth + 1));
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != LabeledStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        LabeledStatement copy = new LabeledStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.labels = this.labels;
+        copy.statement = this.statement;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        LabeledStatement copy = (LabeledStatement) copyNode;
+        if (this.labels != null) {
+            List<Label> list = new ArrayList<>(this.labels.size());
+            for (Label l : this.labels) {
+                list.add((Label) l.cloneStructure(map));
+            }
+            copy.labels = list;
+        }
+        if (this.statement != null) {
+            copy.statement = (AstNode) this.statement.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then each label in the label-list, and finally the statement. */

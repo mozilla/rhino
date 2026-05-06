@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -157,6 +159,39 @@ public class CatchClause extends AstNode {
         sb.append(") ");
         sb.append(body.toSource(0));
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != CatchClause.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        CatchClause copy = new CatchClause();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.varName = this.varName;
+        copy.catchCondition = this.catchCondition;
+        copy.body = this.body;
+        copy.ifPosition = this.ifPosition;
+        copy.lp = this.lp;
+        copy.rp = this.rp;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        CatchClause copy = (CatchClause) copyNode;
+        if (this.varName != null) {
+            copy.varName = (AstNode) this.varName.cloneStructure(map);
+        }
+        if (this.catchCondition != null) {
+            copy.catchCondition = (AstNode) this.catchCondition.cloneStructure(map);
+        }
+        if (this.body != null) {
+            copy.body = (Scope) this.body.cloneStructure(map);
+        }
     }
 
     /**
