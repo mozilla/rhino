@@ -199,9 +199,7 @@ public class NodeTransformer {
                                     || elemtype == Token.SCOPE_BLOCK) {
                                 Node unwind;
                                 if (elemtype == Token.TRY) {
-                                    Jump jsrnode = new Jump(Token.JSR);
-                                    jsrnode.target = ((Jump) n).getFinally();
-                                    unwind = jsrnode;
+                                    unwind = makeFinallyJump(n);
                                 } else {
                                     unwind = new Node(Token.LEAVE_SCOPE);
                                 }
@@ -259,10 +257,9 @@ public class NodeTransformer {
                                 Node leave = new Node(Token.LEAVE_SCOPE);
                                 previous = addBeforeCurrent(parent, previous, node, leave);
                             } else if (elemtype == Token.TRY) {
-                                Jump tryNode = (Jump) n;
-                                Jump jsrFinally = new Jump(Token.JSR);
-                                jsrFinally.target = tryNode.getFinally();
-                                previous = addBeforeCurrent(parent, previous, node, jsrFinally);
+                                previous =
+                                        addBeforeCurrent(
+                                                parent, previous, node, makeFinallyJump(n));
                             }
                         }
 
@@ -454,6 +451,12 @@ public class NodeTransformer {
                     createScopeObjects,
                     inStrictMode);
         }
+    }
+
+    private static Node makeFinallyJump(Node tryNode) {
+        Jump jsrnode = new Jump(Token.JSR);
+        jsrnode.target = ((Jump) tryNode).getFinally();
+        return jsrnode;
     }
 
     protected void visitNew(Node node, ScriptNode tree) {}

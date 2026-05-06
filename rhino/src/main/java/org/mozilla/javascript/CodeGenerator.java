@@ -2092,10 +2092,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     /**
      * Register one or more exception handler entries covering [icodeStart, icodeEnd) but skipping
      * any PC ranges in {@code excludeRanges}. The exclude ranges correspond to inlined finally
-     * bodies on this try's normal-completion paths; an exception thrown inside such a body must
-     * not be re-caught by the same try (which would re-enter the finally and double-run it),
-     * matching the prior JSR/RETSUB behavior where the body executed at the FINALLY block's PC
-     * outside the protected range.
+     * bodies on this try's normal-completion paths; an exception thrown inside such a body must not
+     * be re-caught by the same try (which would re-enter the finally and double-run it), matching
+     * the prior JSR/RETSUB behavior where the body executed at the FINALLY block's PC outside the
+     * protected range.
      */
     private void addExceptionHandlersExcluding(
             int icodeStart,
@@ -2140,12 +2140,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
         if (cursor < icodeEnd) {
             addExceptionHandler(
-                    cursor,
-                    icodeEnd,
-                    handlerStart,
-                    isFinally,
-                    exceptionObjectLocal,
-                    scopeLocal);
+                    cursor, icodeEnd, handlerStart, isFinally, exceptionObjectLocal, scopeLocal);
         }
     }
 
