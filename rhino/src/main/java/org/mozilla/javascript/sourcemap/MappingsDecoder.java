@@ -63,7 +63,7 @@ final class MappingsDecoder {
                     throw new SourceMapException(
                             "zero-field segment (trailing comma) at line " + d.line);
                 }
-                currentLine.sort((a, b) -> Integer.compare(a.genCol(), b.genCol()));
+                currentLine.sort((a, b) -> Integer.compare(a.getGenCol(), b.getGenCol()));
                 result.add(currentLine);
                 currentLine = new ArrayList<>();
                 d.pos++;
@@ -148,7 +148,7 @@ final class MappingsDecoder {
         if (commaJustSeen) {
             throw new SourceMapException("zero-field segment (trailing comma) at line " + d.line);
         }
-        currentLine.sort((a, b) -> Integer.compare(a.genCol(), b.genCol()));
+        currentLine.sort((a, b) -> Integer.compare(a.getGenCol(), b.getGenCol()));
         result.add(currentLine);
         return result;
     }

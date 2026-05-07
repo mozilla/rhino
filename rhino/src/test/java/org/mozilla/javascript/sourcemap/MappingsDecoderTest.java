@@ -41,8 +41,8 @@ class MappingsDecoderTest {
         assertEquals(1, r.size());
         assertEquals(1, r.get(0).size());
         Segment s = r.get(0).get(0);
-        assertEquals(0, s.genCol());
-        assertEquals(Segment.ABSENT, s.sourceIndex());
+        assertEquals(0, s.getGenCol());
+        assertEquals(Segment.ABSENT, s.getSourceIndex());
     }
 
     @Test
@@ -50,11 +50,11 @@ class MappingsDecoderTest {
         // "AAAA" — genCol=0, sourceIndex=0, srcLine=0, srcCol=0.
         List<List<Segment>> r = MappingsDecoder.decode("AAAA", 1, 0);
         Segment s = r.get(0).get(0);
-        assertEquals(0, s.genCol());
-        assertEquals(0, s.sourceIndex());
-        assertEquals(0, s.srcLine());
-        assertEquals(0, s.srcCol());
-        assertEquals(Segment.ABSENT, s.nameIndex());
+        assertEquals(0, s.getGenCol());
+        assertEquals(0, s.getSourceIndex());
+        assertEquals(0, s.getSrcLine());
+        assertEquals(0, s.getSrcCol());
+        assertEquals(Segment.ABSENT, s.getNameIndex());
     }
 
     @Test
@@ -62,7 +62,7 @@ class MappingsDecoderTest {
         // "AAAAA" — five zeros.
         List<List<Segment>> r = MappingsDecoder.decode("AAAAA", 1, 1);
         Segment s = r.get(0).get(0);
-        assertEquals(0, s.nameIndex());
+        assertEquals(0, s.getNameIndex());
     }
 
     @Test
@@ -73,9 +73,9 @@ class MappingsDecoderTest {
         assertEquals(2, r.get(0).size());
         Segment a = r.get(0).get(0);
         Segment b = r.get(0).get(1);
-        assertEquals(0, a.genCol());
-        assertEquals(1, b.genCol());
-        assertEquals(2, b.srcLine());
+        assertEquals(0, a.getGenCol());
+        assertEquals(1, b.getGenCol());
+        assertEquals(2, b.getSrcLine());
     }
 
     @Test
@@ -86,8 +86,8 @@ class MappingsDecoderTest {
         List<List<Segment>> r = MappingsDecoder.decode("AAAA;AACA", 1, 0);
         assertEquals(2, r.size());
         Segment l1 = r.get(1).get(0);
-        assertEquals(0, l1.genCol());
-        assertEquals(1, l1.srcLine());
+        assertEquals(0, l1.getGenCol());
+        assertEquals(1, l1.getSrcLine());
     }
 
     @Test
@@ -98,7 +98,7 @@ class MappingsDecoderTest {
         //   ('C'=2 → +1 delta, 'A'=0, 'D'=3 → magnitude 1 sign 1 → -1 delta, 'A'=0)
         List<List<Segment>> r = MappingsDecoder.decode("AACA,CADA", 1, 0);
         Segment s = r.get(0).get(1);
-        assertEquals(0, s.srcLine());
+        assertEquals(0, s.getSrcLine());
     }
 
     @Test
@@ -135,8 +135,8 @@ class MappingsDecoderTest {
         // segments; decoder must sort them ascending.
         List<List<Segment>> r = MappingsDecoder.decode("CAAA,DAAA", 1, 0);
         assertEquals(2, r.get(0).size());
-        assertEquals(0, r.get(0).get(0).genCol());
-        assertEquals(1, r.get(0).get(1).genCol());
+        assertEquals(0, r.get(0).get(0).getGenCol());
+        assertEquals(1, r.get(0).get(1).getGenCol());
     }
 
     @Test

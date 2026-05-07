@@ -208,15 +208,15 @@ class SourceMapSpecSuiteTest {
             fail("expected mapping at (" + genLine + "," + genCol + ") but got null");
         }
         if (origSource != null) {
-            assertEquals(origSource, p.sourcePath(), "sourcePath mismatch");
+            assertEquals(origSource, p.getSourcePath(), "sourcePath mismatch");
         }
         if (origLine != null) {
             int expected = ((Long) origLine).intValue() + 1;
-            assertEquals(expected, p.line(), "source line mismatch");
+            assertEquals(expected, p.getLine(), "source line mismatch");
         }
         if (origCol != null) {
             int expected = ((Long) origCol).intValue() + 1;
-            assertEquals(expected, p.column(), "source column mismatch");
+            assertEquals(expected, p.getColumn(), "source column mismatch");
         }
         if (action.containsKey("mappedName")) {
             String expectedName = (String) action.get("mappedName");

@@ -108,7 +108,9 @@ public final class SourceMapV3 implements SourceMapper {
         Segment found = findSegment(targetLine, targetColumn);
         if (found == null || !found.hasSource()) return null;
         return new Position(
-                sourcePaths.get(found.sourceIndex()), found.srcLine() + 1, found.srcCol() + 1);
+                sourcePaths.get(found.getSourceIndex()),
+                found.getSrcLine() + 1,
+                found.getSrcCol() + 1);
     }
 
     /**
@@ -120,8 +122,8 @@ public final class SourceMapV3 implements SourceMapper {
      */
     public String getMappedName(int targetLine, int targetColumn) {
         Segment found = findSegment(targetLine, targetColumn);
-        if (found == null || found.nameIndex() == Segment.ABSENT) return null;
-        return names.get(found.nameIndex());
+        if (found == null || found.getNameIndex() == Segment.ABSENT) return null;
+        return names.get(found.getNameIndex());
     }
 
     private Segment findSegment(int targetLine, int targetColumn) {
@@ -139,7 +141,7 @@ public final class SourceMapV3 implements SourceMapper {
         int best = -1;
         while (lo <= hi) {
             int mid = (lo + hi) >>> 1;
-            int gc = segs.get(mid).genCol();
+            int gc = segs.get(mid).getGenCol();
             if (gc <= target) {
                 best = mid;
                 lo = mid + 1;
