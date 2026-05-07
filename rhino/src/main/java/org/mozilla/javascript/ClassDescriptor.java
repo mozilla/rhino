@@ -211,7 +211,7 @@ public class ClassDescriptor {
         ScriptableObject.defineProperty(
                 scope, ctorDesc.name.toString(), global, ctorDesc.attributes);
         for (var e : ctorDescs) {
-            var f = new JSFunction(scope, e.funcDesc, null, null);
+            var f = new JSFunction(scope, e.funcDesc, null, Undefined.instance, null);
             f.setStandardPropertyAttributes(e.stdAttrs);
             if (e.name instanceof String) {
                 global.put((String) e.name, global, f);
@@ -241,7 +241,7 @@ public class ClassDescriptor {
             ScriptableObject proto,
             boolean sealed,
             BiConsumer<Context, JSFunction> customStep) {
-        var ctor = new JSFunction(scope, ctorDesc.funcDesc, null, null);
+        var ctor = new JSFunction(scope, ctorDesc.funcDesc, null, Undefined.instance, null);
 
         if (proto != null) {
             ctor.setPrototypeProperty(proto);
@@ -258,7 +258,7 @@ public class ClassDescriptor {
         }
 
         for (var e : ctorDescs) {
-            var f = new JSFunction(scope, e.funcDesc, null, null);
+            var f = new JSFunction(scope, e.funcDesc, null, Undefined.instance, null);
             f.setStandardPropertyAttributes(e.stdAttrs);
             if (e.name instanceof String) {
                 ctor.put((String) e.name, ctor, f);
@@ -280,7 +280,7 @@ public class ClassDescriptor {
             }
             proto.setAttributes("constructor", DONTENUM);
             for (var e : protoDescs) {
-                var f = new JSFunction(scope, e.funcDesc, null, null);
+                var f = new JSFunction(scope, e.funcDesc, null, Undefined.instance, null);
                 f.setStandardPropertyAttributes(e.stdAttrs);
                 if (e.name instanceof String) {
                     proto.put((String) e.name, proto, f);
