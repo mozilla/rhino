@@ -62,14 +62,14 @@ public class FunctionCompileSpecTest {
     public void testBuilderDefaults() {
         FunctionCompileSpec spec = FunctionCompileSpec.fromSource("function f() {}", scope).build();
 
-        assertEquals("function f() {}", spec.source());
-        assertSame(scope, spec.scope());
-        assertNull(spec.sourceName());
-        assertEquals(0, spec.lineno());
-        assertNull(spec.securityDomain());
-        assertNull(spec.compiler());
-        assertNull(spec.compilationErrorReporter());
-        assertNull(spec.compilerEnvironsProcessor());
+        assertEquals("function f() {}", spec.getSource());
+        assertSame(scope, spec.getScope());
+        assertNull(spec.getSourceName());
+        assertEquals(0, spec.getLineno());
+        assertNull(spec.getSecurityDomain());
+        assertNull(spec.getCompiler());
+        assertNull(spec.getCompilationErrorReporter());
+        assertNull(spec.getCompilerEnvironsProcessor());
     }
 
     @Test
@@ -77,7 +77,7 @@ public class FunctionCompileSpecTest {
         FunctionCompileSpec spec =
                 FunctionCompileSpec.fromSource("function f() {}", scope).lineno(-5).build();
 
-        assertEquals(0, spec.lineno());
+        assertEquals(0, spec.getLineno());
     }
 
     @Test

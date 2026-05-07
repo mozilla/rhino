@@ -71,20 +71,20 @@ public class ScriptCompileSpecTest {
     public void testBuilderDefaults() {
         ScriptCompileSpec spec = ScriptCompileSpec.fromSource("1").build();
 
-        assertEquals("1", spec.source());
-        assertNull(spec.sourceName());
-        assertEquals(0, spec.lineno());
-        assertNull(spec.securityDomain());
-        assertNull(spec.compiler());
-        assertNull(spec.compilationErrorReporter());
-        assertNull(spec.compilerEnvironsProcessor());
+        assertEquals("1", spec.getSource());
+        assertNull(spec.getSourceName());
+        assertEquals(0, spec.getLineno());
+        assertNull(spec.getSecurityDomain());
+        assertNull(spec.getCompiler());
+        assertNull(spec.getCompilationErrorReporter());
+        assertNull(spec.getCompilerEnvironsProcessor());
     }
 
     @Test
     public void testNegativeLinenoNormalized() {
         ScriptCompileSpec spec = ScriptCompileSpec.fromSource("1").lineno(-5).build();
 
-        assertEquals(0, spec.lineno());
+        assertEquals(0, spec.getLineno());
     }
 
     @Test

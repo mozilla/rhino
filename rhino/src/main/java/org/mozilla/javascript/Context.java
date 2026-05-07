@@ -2571,13 +2571,13 @@ public class Context implements Closeable {
     protected Script compileScriptImpl(ScriptCompileSpec spec) {
         return (Script)
                 compileImpl(
-                        spec.source(),
-                        spec.sourceName(),
-                        spec.lineno(),
-                        spec.securityDomain(),
-                        spec.compiler(),
-                        spec.compilationErrorReporter(),
-                        spec.compilerEnvironsProcessor(),
+                        spec.getSource(),
+                        spec.getSourceName(),
+                        spec.getLineno(),
+                        spec.getSecurityDomain(),
+                        spec.getCompiler(),
+                        spec.getCompilationErrorReporter(),
+                        spec.getCompilerEnvironsProcessor(),
                         null,
                         false);
     }
@@ -2585,14 +2585,14 @@ public class Context implements Closeable {
     protected Function compileFunctionImpl(FunctionCompileSpec spec) {
         return (Function)
                 compileImpl(
-                        spec.source(),
-                        spec.sourceName(),
-                        spec.lineno(),
-                        spec.securityDomain(),
-                        spec.compiler(),
-                        spec.compilationErrorReporter(),
-                        spec.compilerEnvironsProcessor(),
-                        spec.scope(),
+                        spec.getSource(),
+                        spec.getSourceName(),
+                        spec.getLineno(),
+                        spec.getSecurityDomain(),
+                        spec.getCompiler(),
+                        spec.getCompilationErrorReporter(),
+                        spec.getCompilerEnvironsProcessor(),
+                        spec.getScope(),
                         true);
     }
 
