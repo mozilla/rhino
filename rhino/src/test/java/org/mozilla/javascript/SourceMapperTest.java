@@ -187,10 +187,10 @@ class SourceMapperTest {
 
                     assertFalse(reporter.errors.isEmpty(), "expected at least one error");
                     ReportedError err = reporter.errors.get(0);
-                    assertEquals(101, err.line(), "error line should be remapped");
+                    assertEquals(101, err.line, "error line should be remapped");
                     assertEquals(
                             "let x = 'unterminated;",
-                            err.lineSource(),
+                            err.lineSource,
                             "lineSource should come from the mapper");
                     return null;
                 });
@@ -317,7 +317,15 @@ class SourceMapperTest {
         return InterpreterIcodeCapture.capture(() -> cx.compileScript(spec));
     }
 
-    private record ReportedError(String message, int line, String lineSource, int offset) {}
+    private static final class ReportedError {
+        private final int line;
+        private final String lineSource;
+
+        private ReportedError(int line, String lineSource) {
+            this.line = line;
+            this.lineSource = lineSource;
+        }
+    }
 
     private static final class RecordingErrorReporter implements ErrorReporter {
         final List<ReportedError> errors = new ArrayList<>();
@@ -331,7 +339,7 @@ class SourceMapperTest {
         @Override
         public void error(
                 String message, String sourceName, int line, String lineSource, int lineOffset) {
-            errors.add(new ReportedError(message, line, lineSource, lineOffset));
+            errors.add(new ReportedError(line, lineSource));
         }
 
         @Override

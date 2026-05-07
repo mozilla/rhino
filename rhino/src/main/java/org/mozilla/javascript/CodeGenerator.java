@@ -262,7 +262,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         if (mapper != null) {
             Position mapped = mapper.mapPosition(lineno, node.getColumn());
             if (mapped == null) return;
-            lineno = mapped.line();
+            lineno = mapped.getLine();
         }
         if (lineno == lineNumber) return;
         if (itsData.firstLinePC < 0) {

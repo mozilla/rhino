@@ -3156,7 +3156,7 @@ class BodyCodegen {
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper == null) return line;
         Position mapped = mapper.mapPosition(line, column);
-        return mapped == null ? -1 : mapped.line();
+        return mapped == null ? -1 : mapped.getLine();
     }
 
     private void visitTryCatchFinally(Jump node, Node child) {
