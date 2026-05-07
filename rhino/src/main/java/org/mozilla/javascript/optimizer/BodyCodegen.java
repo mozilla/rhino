@@ -3379,7 +3379,10 @@ class BodyCodegen {
             finallys.put(finallyTarget.getNext(), ret);
         }
 
-        while (child != null) {
+        // We want to go up to the point where we hit the finally. We
+        // definitely don't want the inlined nodes generated here
+        // inside the catch block.
+        while (child != null && child.getType() != Token.FINALLY) {
             if (child == catchTarget) {
                 int catchLabel = getTargetLabel(catchTarget);
                 exceptionManager.removeHandler(JAVASCRIPT_EXCEPTION, catchLabel);
@@ -3478,6 +3481,15 @@ class BodyCodegen {
             }
         }
         releaseWordLocal(savedVariableObject);
+
+        // If we have any left over copies of the finally blcok we should put them here.
+        if (child != null) {
+            child = child.getNext();
+            while (child != null) {
+                generateStatement(child);
+                child = child.getNext();
+            }
+        }
         // realEnd is only reached from the normal-path GOTO above; the
         // catch/finally handlers rethrow or jump elsewhere. Restore the
         // tracker to the entry depth so code after the try/catch sees the
@@ -3768,14 +3780,6 @@ class BodyCodegen {
             child = child.getNext();
         }
         exceptionManager.markInlineFinallyEnd(fBlock, finallyEnd);
-    }
-
-    private void inlineFinally(Node finallyTarget) {
-        int finallyStart = cfw.acquireLabel();
-        int finallyEnd = cfw.acquireLabel();
-        cfw.markLabel(finallyStart);
-        inlineFinally(finallyTarget, finallyStart, finallyEnd);
-        cfw.markLabel(finallyEnd);
     }
 
     /**
