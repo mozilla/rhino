@@ -11,6 +11,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     private final JSDescriptor<JSFunction> descriptor;
     private final Object lexicalThis;
+    private final Object lexicalNewTarget;
     private final Scriptable homeObject;
 
     public JSFunction(
@@ -18,10 +19,12 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             VarScope scope,
             JSDescriptor<JSFunction> descriptor,
             Object lexicalThis,
+            Object lexicalNewTarget,
             Scriptable homeObject) {
         super(scope);
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
+        this.lexicalNewTarget = lexicalNewTarget;
         this.homeObject = homeObject;
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, descriptor.isES6Generator());
         if (!descriptor.isShorthand()) {
@@ -33,10 +36,12 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             VarScope scope,
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,
+            Object lexicalNewTarget,
             Scriptable homeObject) {
         super(scope);
         this.descriptor = descriptor;
         this.lexicalThis = lexicalThis;
+        this.lexicalNewTarget = lexicalNewTarget;
         this.homeObject = homeObject;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
@@ -143,7 +148,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
         var realThis = getThisObj(thisObj);
-        return descriptor.getCode().execute(cx, this, nt, scope, realThis, args);
+        return descriptor.getCode().execute(cx, this, lexicalNewTarget, scope, realThis, args);
     }
 
     public final Object getThisObj(Object thisObj) {
@@ -216,6 +221,10 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         return homeObject;
     }
 
+    public Object getLexicalNewTarget() {
+        return lexicalNewTarget;
+    }
+
     @Override
     public void setHomeObject(Scriptable homeObject) {
         throw new UnsupportedOperationException("Cannot set home object on JS function.");
@@ -245,7 +254,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             Scriptable homeObject,
             Object staticSecurityDomain) {
         assert (desc.getSecurityDomain() == staticSecurityDomain);
-        JSFunction f = new JSFunction(cx, scope, desc, null, homeObject);
+        JSFunction f = new JSFunction(cx, scope, desc, null, Undefined.instance, homeObject);
         return f;
     }
 
@@ -253,7 +262,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     static JSFunction createFunction(
             Context cx, VarScope scope, JSDescriptor<?> parent, int index, Scriptable homeObject) {
         JSDescriptor<JSFunction> desc = parent.getFunction(index);
-        JSFunction f = new JSFunction(cx, scope, desc, null, homeObject);
+        JSFunction f = new JSFunction(cx, scope, desc, null, Undefined.instance, homeObject);
         return f;
     }
 

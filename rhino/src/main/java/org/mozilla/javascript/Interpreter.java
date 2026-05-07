@@ -2817,7 +2817,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                     ifun,
                                     compilerData,
                                     callParentFrame,
-                                    Undefined.instance);
+                                    ifun.getLexicalNewTarget());
                     if (op != Icode.TAIL_CALL) {
                         frame.savedCallOp = op;
                     }
@@ -4299,11 +4299,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             InterpreterData<?> code,
             CallFrame parentFrame,
             Object newTarget) {
-        // Arrow functions inherit new.target from their enclosing context
-        if (fnOrScript.getDescriptor().getFunctionType() == FunctionNode.ARROW_FUNCTION
-                && parentFrame != null) {
-            newTarget = parentFrame.newTarget;
-        }
         CallFrame frame =
                 new CallFrame(
                         cx,
@@ -4471,7 +4466,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         var desc = frame.fnOrScript.getDescriptor().getFunction(index);
         boolean isArrow = desc.getFunctionType() == FunctionNode.ARROW_FUNCTION;
         var homeObject = isArrow ? frame.fnOrScript.getHomeObject() : null;
-        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, homeObject);
+        var newTarget = isArrow ? frame.newTarget : Undefined.instance;
+        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, newTarget, homeObject);
         return f;
     }
 
@@ -4479,7 +4475,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             Context cx, CallFrame frame, int index, Scriptable homeObject) {
         var desc = frame.fnOrScript.getDescriptor().getFunction(index);
         boolean isArrow = desc.getFunctionType() == FunctionNode.ARROW_FUNCTION;
-        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, homeObject);
+        var newTarget = isArrow ? frame.newTarget : Undefined.instance;
+        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, newTarget, homeObject);
         return f;
     }
 }

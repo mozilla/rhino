@@ -8,7 +8,6 @@ import org.mozilla.javascript.InterpreterV2;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.ScriptOrFn;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.interpreterv2.instruction.Instruction;
