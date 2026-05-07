@@ -309,7 +309,7 @@ class SourceMapperTest {
     // ---- realistic source-map integration test ----
 
     @Test
-    void realisticSourceMapMapsThrowToOriginalLine() {
+    void minifiedSourceMap() {
         // Simulates a two-line original file bundled onto one minified line:
         //   original line 1: "var x = 1;"   -> minified cols 1-8
         //   original line 2: "throw ..."    -> minified col 9 onward
@@ -355,6 +355,52 @@ class SourceMapperTest {
                             2,
                             ex.lineNumber(),
                             "throw at minified col 9 should map to original line 2");
+                    return null;
+                });
+    }
+
+    @Test
+    void transpiledSourceMap() {
+        // A computed-property literal ({["x"]: 1}) can't run on IE11, so a transpiler splits the
+        // one original line into two: object creation + property assignment.  The throw lands on
+        // transpiled line 2 but must be reported as original line 1.
+        String originalSource = "var obj = {[\"x\"]: 1}; throw \"done\";\n";
+        String transpiledSource = "var obj = {};\nobj[\"x\"] = 1; throw \"done\";\n";
+        SourceMapper mapper =
+                new SourceMapper() {
+                    @Override
+                    public Position mapPosition(int targetLine, int targetColumn) {
+                        return new Position(1, targetColumn); // both lines originate from line 1
+                    }
+
+                    @Override
+                    public String getOriginalSource() {
+                        return originalSource;
+                    }
+
+                    @Override
+                    public String getSourceLineText(int sourceLine) {
+                        return sourceLine == 1 ? "var obj = {[\"x\"]: 1}; throw \"done\";" : null;
+                    }
+                };
+
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource(transpiledSource)
+                                            .sourceName("app.transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                    assertEquals(
+                            1,
+                            ex.lineNumber(),
+                            "throw on transpiled line 2 should map back to original line 1");
                     return null;
                 });
     }
