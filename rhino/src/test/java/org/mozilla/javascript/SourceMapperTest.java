@@ -306,6 +306,59 @@ class SourceMapperTest {
                 true);
     }
 
+    // ---- realistic source-map integration test ----
+
+    @Test
+    void realisticSourceMapMapsThrowToOriginalLine() {
+        // Simulates a two-line original file bundled onto one minified line:
+        //   original line 1: "var x = 1;"   -> minified cols 1-8
+        //   original line 2: "throw ..."    -> minified col 9 onward
+        String originalSource = "var x = 1;\nthrow new Error(\"oops\");\n";
+        String minifiedSource = "var x=1;throw new Error(\"oops\");\n";
+        SourceMapper mapper =
+                new SourceMapper() {
+                    @Override
+                    public Position mapPosition(int targetLine, int targetColumn) {
+                        if (targetLine != 1) return null;
+                        return targetColumn < 9
+                                ? new Position(1, targetColumn)
+                                : new Position(2, targetColumn - 8);
+                    }
+
+                    @Override
+                    public String getOriginalSource() {
+                        return originalSource;
+                    }
+
+                    @Override
+                    public String getSourceLineText(int sourceLine) {
+                        if (sourceLine == 1) return "var x = 1;";
+                        if (sourceLine == 2) return "throw new Error(\"oops\");";
+                        return null;
+                    }
+                };
+
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource(minifiedSource)
+                                            .sourceName("app.min.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                    assertEquals(
+                            2,
+                            ex.lineNumber(),
+                            "throw at minified col 9 should map to original line 2");
+                    return null;
+                });
+    }
+
     private String captureIcodeDump(Context cx, String source, SourceMapper mapper) {
         ScriptCompileSpec.Builder builder =
                 ScriptCompileSpec.fromSource(source).sourceName("test").lineno(1);
