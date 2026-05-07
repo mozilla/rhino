@@ -965,6 +965,7 @@ public class Codegen implements Evaluator {
                     + "Lorg/mozilla/javascript/VarScope;"
                     + "Lorg/mozilla/javascript/JSDescriptor;"
                     + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Scriptable;"
                     + ")V";
 
