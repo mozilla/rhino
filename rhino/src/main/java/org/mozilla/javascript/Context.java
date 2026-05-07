@@ -2606,8 +2606,15 @@ public class Context implements Closeable {
                 Evaluator evaluator, CompilerEnvirons env, ScriptNode tree, String rawSource);
     }
 
-    private record Compiled<T extends ScriptOrFn<T>>(
-            Evaluator evaluator, CompilationResult<T> result) {}
+    private static final class Compiled<T extends ScriptOrFn<T>> {
+        private final Evaluator evaluator;
+        private final CompilationResult<T> result;
+
+        private Compiled(Evaluator evaluator, CompilationResult<T> result) {
+            this.evaluator = evaluator;
+            this.result = result;
+        }
+    }
 
     private <T extends ScriptOrFn<T>> Compiled<T> compileImpl(
             String sourceString,
