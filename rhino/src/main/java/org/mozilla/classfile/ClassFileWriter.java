@@ -1392,6 +1392,14 @@ public class ClassFileWriter {
 
     public void addExceptionHandler(
             int startLabel, int endLabel, int handlerLabel, String catchClassName) {
+        if (DEBUGCODE) {
+            if (DEBUGCODEORIGINS) {
+                printOrigin();
+            }
+            System.err.printf(
+                "Exception %x to %x, handler %x, %s.\n",
+                startLabel, endLabel, handlerLabel, catchClassName);
+        }
         if ((startLabel & 0x80000000) != 0x80000000)
             throw new IllegalArgumentException("Bad startLabel");
         if ((endLabel & 0x80000000) != 0x80000000)
