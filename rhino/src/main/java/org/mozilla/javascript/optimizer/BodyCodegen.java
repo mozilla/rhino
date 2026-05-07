@@ -2311,23 +2311,12 @@ class BodyCodegen {
         } else {
             if (type == Token.JSR) {
 
-                inlineFinally(target);
+                throw new Error();
 
             } else {
                 addGoto(target, ByteCode.GOTO);
             }
         }
-    }
-
-    private void addGotoWithReturn(Node target) {
-        FinallyReturnPoint ret = finallys.get(target);
-        cfw.addLoadConstant(ret.jsrPoints.size());
-        addGoto(target, ByteCode.GOTO);
-        // Don't leave something on the stack here!
-        cfw.add(ByteCode.POP);
-        int retLabel = cfw.acquireLabel();
-        cfw.markLabel(retLabel);
-        ret.jsrPoints.add(Integer.valueOf(retLabel));
     }
 
     private void generateArrayLiteralFactory(Node node, int count) {

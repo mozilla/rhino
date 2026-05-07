@@ -5292,19 +5292,24 @@ public class Parser {
         Node finallyTarget = Node.newTarget();
         tryJump.setFinally(finallyTarget);
 
-        Jump jsrToFinally = new Jump(Token.JSR);
-        jsrToFinally.target = finallyTarget;
-        tryJump.addChildToBack(jsrToFinally);
+        Node finallyNormal = Node.newTarget();
+        Jump jumpToFinally = new Jump(Token.GOTO);
+        jumpToFinally.target = finallyNormal;
+        tryJump.addChildToBack(jumpToFinally);
 
         Node finallyEnd = Node.newTarget();
-        Jump gotoEnd = new Jump(Token.GOTO);
-        gotoEnd.target = finallyEnd;
-        tryJump.addChildToBack(gotoEnd);
 
         tryJump.addChildToBack(finallyTarget);
         Node finallyNode = new Node(Token.FINALLY, finallyBody);
         finallyNode.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
         tryJump.addChildToBack(finallyNode);
+        tryJump.addChildToBack(finallyNormal);
+        tryJump.addChildToBack(finallyBody.cloneTree());
+        // We put the goto here because we may need to add more copies
+        // of the finally code after this one.
+        Jump gotoEnd = new Jump(Token.GOTO);
+        gotoEnd.target = finallyEnd;
+        tryJump.addChildToBack(gotoEnd);
 
         tryJump.addChildToBack(finallyEnd);
     }
