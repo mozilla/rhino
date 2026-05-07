@@ -2,7 +2,6 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -14,121 +13,121 @@ import java.util.function.Consumer;
  * @see FunctionCompileSpec
  */
 public final class ScriptCompileSpec {
-	private final String source;
-	private final String sourceName;
-	private final int lineno;
-	private final Object securityDomain;
-	private final Evaluator compiler;
-	private final ErrorReporter compilationErrorReporter;
-	private final Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+    private final String source;
+    private final String sourceName;
+    private final int lineno;
+    private final Object securityDomain;
+    private final Evaluator compiler;
+    private final ErrorReporter compilationErrorReporter;
+    private final Consumer<CompilerEnvirons> compilerEnvironsProcessor;
 
-	public ScriptCompileSpec(
-			String source,
-			String sourceName,
-			int lineno,
-			Object securityDomain,
-			Evaluator compiler,
-			ErrorReporter compilationErrorReporter,
-			Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
-		this.source = source;
-		this.sourceName = sourceName;
-		this.lineno = lineno;
-		this.securityDomain = securityDomain;
-		this.compiler = compiler;
-		this.compilationErrorReporter = compilationErrorReporter;
-		this.compilerEnvironsProcessor = compilerEnvironsProcessor;
-	}
+    public ScriptCompileSpec(
+            String source,
+            String sourceName,
+            int lineno,
+            Object securityDomain,
+            Evaluator compiler,
+            ErrorReporter compilationErrorReporter,
+            Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+        this.source = source;
+        this.sourceName = sourceName;
+        this.lineno = lineno;
+        this.securityDomain = securityDomain;
+        this.compiler = compiler;
+        this.compilationErrorReporter = compilationErrorReporter;
+        this.compilerEnvironsProcessor = compilerEnvironsProcessor;
+    }
 
-	public static Builder fromSource(String source) {
-		return new Builder(source);
-	}
+    public static Builder fromSource(String source) {
+        return new Builder(source);
+    }
 
-	public static Builder fromReader(Reader reader) throws IOException {
-		return new Builder(Kit.readReader(reader));
-	}
+    public static Builder fromReader(Reader reader) throws IOException {
+        return new Builder(Kit.readReader(reader));
+    }
 
-	public String getSource() {
-		return source;
-	}
+    public String getSource() {
+        return source;
+    }
 
-	public String getSourceName() {
-		return sourceName;
-	}
+    public String getSourceName() {
+        return sourceName;
+    }
 
-	public int getLineno() {
-		return lineno;
-	}
+    public int getLineno() {
+        return lineno;
+    }
 
-	public Object getSecurityDomain() {
-		return securityDomain;
-	}
+    public Object getSecurityDomain() {
+        return securityDomain;
+    }
 
-	public Evaluator getCompiler() {
-		return compiler;
-	}
+    public Evaluator getCompiler() {
+        return compiler;
+    }
 
-	public ErrorReporter getCompilationErrorReporter() {
-		return compilationErrorReporter;
-	}
+    public ErrorReporter getCompilationErrorReporter() {
+        return compilationErrorReporter;
+    }
 
-	public Consumer<CompilerEnvirons> getCompilerEnvironsProcessor() {
-		return compilerEnvironsProcessor;
-	}
+    public Consumer<CompilerEnvirons> getCompilerEnvironsProcessor() {
+        return compilerEnvironsProcessor;
+    }
 
-	public static final class Builder {
-		private final String source;
-		private String sourceName;
-		private int lineno = 0;
-		private Object securityDomain;
-		private Evaluator compiler;
-		private ErrorReporter compilationErrorReporter;
-		private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+    public static final class Builder {
+        private final String source;
+        private String sourceName;
+        private int lineno = 0;
+        private Object securityDomain;
+        private Evaluator compiler;
+        private ErrorReporter compilationErrorReporter;
+        private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
 
-		private Builder(String source) {
-			this.source = source;
-		}
+        private Builder(String source) {
+            this.source = source;
+        }
 
-		public Builder sourceName(String sourceName) {
-			this.sourceName = sourceName;
-			return this;
-		}
+        public Builder sourceName(String sourceName) {
+            this.sourceName = sourceName;
+            return this;
+        }
 
-		public Builder lineno(int lineno) {
-			this.lineno = lineno;
-			return this;
-		}
+        public Builder lineno(int lineno) {
+            this.lineno = lineno;
+            return this;
+        }
 
-		public Builder securityDomain(Object securityDomain) {
-			this.securityDomain = securityDomain;
-			return this;
-		}
+        public Builder securityDomain(Object securityDomain) {
+            this.securityDomain = securityDomain;
+            return this;
+        }
 
-		public Builder compiler(Evaluator compiler) {
-			this.compiler = compiler;
-			return this;
-		}
+        public Builder compiler(Evaluator compiler) {
+            this.compiler = compiler;
+            return this;
+        }
 
-		public Builder compilationErrorReporter(ErrorReporter compilationErrorReporter) {
-			this.compilationErrorReporter = compilationErrorReporter;
-			return this;
-		}
+        public Builder compilationErrorReporter(ErrorReporter compilationErrorReporter) {
+            this.compilationErrorReporter = compilationErrorReporter;
+            return this;
+        }
 
-		public Builder compilerEnvironsProcessor(
-				Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
-			this.compilerEnvironsProcessor = compilerEnvironsProcessor;
-			return this;
-		}
+        public Builder compilerEnvironsProcessor(
+                Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+            this.compilerEnvironsProcessor = compilerEnvironsProcessor;
+            return this;
+        }
 
-		public ScriptCompileSpec build() {
-			int normalizedLineno = Math.max(lineno, 0);
-			return new ScriptCompileSpec(
-					source,
-					sourceName,
-					normalizedLineno,
-					securityDomain,
-					compiler,
-					compilationErrorReporter,
-					compilerEnvironsProcessor);
-		}
-	}
+        public ScriptCompileSpec build() {
+            int normalizedLineno = Math.max(lineno, 0);
+            return new ScriptCompileSpec(
+                    source,
+                    sourceName,
+                    normalizedLineno,
+                    securityDomain,
+                    compiler,
+                    compilationErrorReporter,
+                    compilerEnvironsProcessor);
+        }
+    }
 }
