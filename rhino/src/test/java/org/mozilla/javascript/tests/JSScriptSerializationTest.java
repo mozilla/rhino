@@ -21,12 +21,14 @@ public class JSScriptSerializationTest {
     private Context cx;
     private TopLevel scope;
 
-    @BeforeEach public void init() {
+    @BeforeEach
+    public void init() {
         cx = Context.enter();
         scope = cx.initStandardObjects();
     }
 
-    @AfterEach public void close() {
+    @AfterEach
+    public void close() {
         Context.exit();
     }
 
@@ -45,23 +47,27 @@ public class JSScriptSerializationTest {
         }
     }
 
-    @Test public void interpretedScriptSurvivesSerializationRoundTrip() throws Exception {
+    @Test
+    public void interpretedScriptSurvivesSerializationRoundTrip() throws Exception {
         cx.setInterpretedMode(true);
         Script script = cx.compileString("'hello';", "test.js", 1, null);
         Assertions.assertEquals("hello", script.exec(cx, scope, scope));
 
         byte[] bytes = serialize(script);
         Script deserialized = deserialize(bytes);
+
         Assertions.assertEquals("hello", deserialized.exec(cx, scope, scope));
     }
 
-    @Test public void compiledScriptSurvivesSerializationRoundTrip() throws Exception {
+    @Test
+    public void compiledScriptSurvivesSerializationRoundTrip() throws Exception {
         cx.setInterpretedMode(false);
         Script script = cx.compileString("'hello';", "test.js", 1, null);
         Assertions.assertEquals("hello", script.exec(cx, scope, scope));
 
         byte[] bytes = serialize(script);
         Script deserialized = deserialize(bytes);
+
         Assertions.assertEquals("hello", deserialized.exec(cx, scope, scope));
     }
 }

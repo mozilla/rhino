@@ -1,13 +1,18 @@
 package org.mozilla.javascript;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 /**
  * Represents a script object built upon a {@link JSDescriptor}. This class does not support the
  * {@link Callable} interface scripts do not support arguments or some other parts of a call
  * operation.
  */
-public class JSScript implements Script, ScriptOrFn<JSScript> {
+public class JSScript implements Script, ScriptOrFn<JSScript>, Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+
     private final JSDescriptor<JSScript> descriptor;
-    private final Scriptable homeObject;
+    private final transient Scriptable homeObject;
 
     public JSScript(JSDescriptor<JSScript> descriptor, Scriptable homeObject) {
         this.descriptor = descriptor;
