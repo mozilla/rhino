@@ -191,12 +191,19 @@ public class BaseFunction extends ScriptableObject implements Function {
                 proto,
                 sealed,
                 (c, ctor) -> {
+                    VarScope top = ScriptableObject.getTopLevelScope(scope);
+
                     var function = (Scriptable) ScriptableObject.getProperty(scope, FUNCTION_CLASS);
                     var functionProto =
                             (Scriptable)
                                     ScriptableObject.getProperty(function, PROTOTYPE_PROPERTY_NAME);
                     proto.setPrototype(functionProto);
                     proto.setAttributes("constructor", DONTENUM | READONLY);
+
+                    var asyncGeneratorProto =
+                            ScriptableObject.getTopScopeValue(top, ES6AsyncGenerator.ASYNC_GENERATOR_TAG);
+
+                    proto.defineProperty("prototype", asyncGeneratorProto, READONLY | DONTENUM);
                 });
     }
 
