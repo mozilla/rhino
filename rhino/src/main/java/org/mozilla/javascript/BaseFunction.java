@@ -791,8 +791,9 @@ public class BaseFunction extends ScriptableObject implements Function {
             // For generator functions, the .prototype property's [[Prototype]]
             // should be %GeneratorPrototype%, not Object.prototype
             VarScope top = ScriptableObject.getTopLevelScope(scope);
-            Object generatorProto =
-                    ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG);
+            Object generatorProto = isAsync() ?
+                ScriptableObject.getTopScopeValue(top, ES6AsyncGenerator.ASYNC_GENERATOR_TAG) :
+                ScriptableObject.getTopScopeValue(top, ES6Generator.GENERATOR_TAG);
             if (generatorProto instanceof Scriptable) {
                 proto = (Scriptable) generatorProto;
             } else {
