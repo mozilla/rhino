@@ -2779,7 +2779,9 @@ class BodyCodegen {
                 "newObject",
                 "(Lorg/mozilla/javascript/VarScope;)Lorg/mozilla/javascript/Scriptable;");
         cfw.add(ByteCode.DUP);
-        savedHomeObjectLocal = getNewWordLocal();
+        if (savedHomeObjectLocal != -1) {
+            savedHomeObjectLocal = getNewWordLocal();
+        }
         cfw.addAStore(savedHomeObjectLocal);
         cfw.add(ByteCode.DUP);
 
