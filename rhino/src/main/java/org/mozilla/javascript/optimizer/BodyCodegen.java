@@ -3,7 +3,6 @@ package org.mozilla.javascript.optimizer;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
-import static org.mozilla.javascript.ScriptableObject.getFunctionPrototype;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -151,11 +150,10 @@ class BodyCodegen {
         cfw.addALoad(argsLocal);
         cfw.addPush(scriptOrFn.hasRestParameter());
         boolean needsActivation =
-            !(scriptOrFn instanceof FunctionNode)
-            || ((FunctionNode) scriptOrFn).requiresArgumentObject();
+                !(scriptOrFn instanceof FunctionNode)
+                        || ((FunctionNode) scriptOrFn).requiresArgumentObject();
         cfw.addPush(needsActivation);
-        String methodName =
-            isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
+        String methodName = isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
         addScriptRuntimeInvoke(
                 methodName,
                 "(Lorg/mozilla/javascript/JSFunction;"
@@ -1301,8 +1299,7 @@ class BodyCodegen {
                                 ByteCode.INVOKESTATIC,
                                 "org/mozilla/javascript/ScriptRuntime",
                                 "storeClassComputedFieldKeys",
-                                "(Lorg/mozilla/javascript/BaseFunction;"
-                                        + "[Ljava/lang/Object;)V");
+                                "(Lorg/mozilla/javascript/BaseFunction;" + "[Ljava/lang/Object;)V");
                     }
 
                     releaseWordLocal(savedHomeObjectLocal);

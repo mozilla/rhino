@@ -1397,8 +1397,8 @@ public class ClassFileWriter {
                 printOrigin();
             }
             System.err.printf(
-                "Exception %x to %x, handler %x, %s.\n",
-                startLabel, endLabel, handlerLabel, catchClassName);
+                    "Exception %x to %x, handler %x, %s.\n",
+                    startLabel, endLabel, handlerLabel, catchClassName);
         }
         if ((startLabel & 0x80000000) != 0x80000000)
             throw new IllegalArgumentException("Bad startLabel");

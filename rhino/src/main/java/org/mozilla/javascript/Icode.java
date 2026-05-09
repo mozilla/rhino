@@ -243,10 +243,12 @@ abstract class Icode {
             Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD = Icode_DEFINE_CLASS_COMPUTED_SETTER - 1,
 
             // Define a static getter on a class constructor with a computed key on the stack.
-            Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER = Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD - 1,
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER =
+                    Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD - 1,
 
             // Define a static setter on a class constructor with a computed key on the stack.
-            Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER = Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER - 1,
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER =
+                    Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER - 1,
 
             // Last icode
             MIN_ICODE = Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER;

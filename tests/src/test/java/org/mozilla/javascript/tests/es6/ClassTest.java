@@ -928,4 +928,53 @@ public class ClassTest {
         Utils.assertEvaluatorExceptionES6(
                 "missing ( before function parameters.", "function return() { return 'Hello!'; }");
     }
+
+    @Test
+    public void numericLiteralMethodNameUsesNumericValue() {
+        Utils.assertWithAllModes_ES6(
+                "Hello!",
+                "class C { 0b101() { return 'Hello!'; } }\n" + "new C()[5]()\n");
+    }
+
+    @Test
+    public void numericLiteralMethodNameNotRawDigits() {
+        Utils.assertWithAllModes_ES6(
+                "undefined",
+                "class C { 0b101() { return 'Hello!'; } }\n" + "typeof new C()[101]\n");
+    }
+
+    @Test
+    public void numericLiteralGetterUsesNumericValue() {
+        Utils.assertWithAllModes_ES6(
+                "Hello!",
+                "class C { get 0b101() { return 'Hello!'; } }\n" + "new C()[5]\n");
+    }
+
+    @Test
+    public void numericLiteralHexGetterUsesNumericValue() {
+        Utils.assertWithAllModes_ES6(
+                "ok", "class C { get 0xff() { return 'ok'; } }\n" + "new C()[255]\n");
+    }
+
+    @Test
+    public void numericLiteralSetterUsesNumericValue() {
+        Utils.assertWithAllModes_ES6(
+                "set:42",
+                "var captured;\n"
+                        + "class C { set 0b101(v) { captured = 'set:' + v; } }\n"
+                        + "new C()[5] = 42;\n"
+                        + "captured\n");
+    }
+
+    @Test
+    public void numericLiteralFieldUsesNumericValue() {
+        Utils.assertWithAllModes_ES6(
+                "Hello!", "class C { 0b101 = 'Hello!'; }\n" + "new C()[5]\n");
+    }
+
+    @Test
+    public void numericLiteralStaticMethodUsesNumericValue() {
+        Utils.assertWithAllModes_ES6(
+                "Hello!", "class C { static 0xff() { return 'Hello!'; } }\n" + "C[255]()\n");
+    }
 }

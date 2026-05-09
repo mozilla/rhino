@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Token;
@@ -45,7 +44,7 @@ public class ClassNode extends AstNode {
         public final ElementKind kind;
 
         private ClassField(
-            String name, AstNode computedName, AstNode initializer, ElementKind kind) {
+                String name, AstNode computedName, AstNode initializer, ElementKind kind) {
             this.name = name;
             this.computedName = computedName;
             this.initializer = initializer;
@@ -158,8 +157,8 @@ public class ClassNode extends AstNode {
     }
 
     /**
-     * Add an instance method whose property key is computed at runtime (e.g. {@code [expr]()}).
-     * The {@code name} is null; {@code keyExpr} holds the expression to evaluate.
+     * Add an instance method whose property key is computed at runtime (e.g. {@code [expr]()}). The
+     * {@code name} is null; {@code keyExpr} holds the expression to evaluate.
      */
     public void addComputedMethod(AstNode keyExpr, FunctionNode fn, ElementKind kind) {
         addMethodInternal(null, keyExpr, fn, kind);

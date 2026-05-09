@@ -5738,8 +5738,7 @@ public class ScriptRuntime {
                     s.stringId, (target.getAttributes(s.stringId) | DONTENUM) & ~READONLY);
         } else {
             target.setGetterOrSetter(null, s.index, callable, isSetter);
-            target.setAttributes(
-                    s.index, (target.getAttributes(s.index) | DONTENUM) & ~READONLY);
+            target.setAttributes(s.index, (target.getAttributes(s.index) | DONTENUM) & ~READONLY);
         }
     }
 
@@ -5747,8 +5746,7 @@ public class ScriptRuntime {
             BaseFunction constructor, Object key, Object methodFn) {
         Object protoObj = constructor.getPrototypeProperty();
         if (protoObj instanceof ScriptableObject) {
-            defineMethodOn(
-                    (ScriptableObject) protoObj, key, methodFn, ScriptableObject.DONTENUM);
+            defineMethodOn((ScriptableObject) protoObj, key, methodFn, ScriptableObject.DONTENUM);
         }
     }
 

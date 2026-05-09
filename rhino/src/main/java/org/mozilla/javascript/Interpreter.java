@@ -4728,8 +4728,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoGetClassComputedKey extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object key =
-                    ScriptRuntime.getClassComputedFieldKey(frame.fnOrScript, state.indexReg);
+            Object key = ScriptRuntime.getClassComputedFieldKey(frame.fnOrScript, state.indexReg);
             frame.stack[++state.stackTop] = key;
             return null;
         }

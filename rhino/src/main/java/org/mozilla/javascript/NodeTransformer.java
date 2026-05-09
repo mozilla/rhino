@@ -204,7 +204,8 @@ public class NodeTransformer {
                                     Node returnTo = Node.newTarget();
                                     Node unwind = makeFinallyJump(n, returnTo);
                                     unwind.setLineColumnNumber(node.getLineno(), node.getColumn());
-                                    returnTo.setLineColumnNumber(node.getLineno(), node.getColumn());
+                                    returnTo.setLineColumnNumber(
+                                            node.getLineno(), node.getColumn());
                                     unwindBlock.addChildToBack(unwind);
                                     unwindBlock.addChildToBack(returnTo);
                                 } else {
@@ -265,12 +266,8 @@ public class NodeTransformer {
                                 Node fjump = makeFinallyJump(n, returnTo);
                                 fjump.setLineColumnNumber(node.getLineno(), node.getColumn());
                                 returnTo.setLineColumnNumber(node.getLineno(), node.getColumn());
-                                previous =
-                                        addBeforeCurrent(
-                                                parent, previous, node, fjump);
-                                previous =
-                                        addBeforeCurrent(
-                                                parent, previous, node, returnTo);
+                                previous = addBeforeCurrent(parent, previous, node, fjump);
+                                previous = addBeforeCurrent(parent, previous, node, returnTo);
                             }
                         }
 

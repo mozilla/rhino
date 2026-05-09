@@ -1196,7 +1196,7 @@ public class Parser {
                 isStringOrNumericName = true;
             } else if (tt == Token.NUMBER || tt == Token.BIGINT) {
                 consumeToken();
-                memberName = ts.getString();
+                memberName = numericMemberName(tt);
                 isStringOrNumericName = true;
             } else if (tt == Token.LB) {
                 // Computed property: [expression]
@@ -1249,7 +1249,7 @@ public class Parser {
                         isStringOrNumericName = true;
                     } else if (tt == Token.NUMBER || tt == Token.BIGINT) {
                         consumeToken();
-                        memberName = ts.getString();
+                        memberName = numericMemberName(tt);
                         isStringOrNumericName = true;
                     } else if (tt == Token.LB) {
                         isComputed = true;
@@ -1299,7 +1299,7 @@ public class Parser {
                         isStringOrNumericName = true;
                     } else if (tt == Token.NUMBER || tt == Token.BIGINT) {
                         consumeToken();
-                        memberName = ts.getString();
+                        memberName = numericMemberName(tt);
                         isStringOrNumericName = true;
                     } else if (tt == Token.LB) {
                         isComputed = true;
@@ -1363,8 +1363,7 @@ public class Parser {
                 }
                 if (isComputed) {
                     if (isStatic) {
-                        classNode.addStaticComputedMethod(
-                                computedKeyExpr, method, accessorKind);
+                        classNode.addStaticComputedMethod(computedKeyExpr, method, accessorKind);
                     } else {
                         classNode.addComputedMethod(computedKeyExpr, method, accessorKind);
                     }
@@ -1458,6 +1457,15 @@ public class Parser {
         constructor.setRawSourceBounds(pos, end);
 
         return classNode;
+    }
+
+    private String numericMemberName(int tt) {
+        // PropName of a NumericLiteral is ToString of its numeric value, so a literal
+        // like 0b101 or 0xff becomes "5" or "255" rather than its raw source form.
+        if (tt == Token.BIGINT) {
+            return ScriptRuntime.bigIntToString(ts.getBigInt(), 10);
+        }
+        return ScriptRuntime.toString(ts.getNumber());
     }
 
     private FunctionNode createDefaultConstructor(int pos, boolean isDerived) {
