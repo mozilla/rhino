@@ -3,6 +3,7 @@ package org.mozilla.javascript.optimizer;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
+import static org.mozilla.javascript.ScriptableObject.getFunctionPrototype;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -117,6 +118,10 @@ class BodyCodegen {
     // This creates a user-facing function that returns a NativeGenerator
     // object.
     private void generateGenerator(int mainMaxLocals, int mainMaxStack) {
+        boolean isArrow = false;
+        if (scriptOrFn instanceof FunctionNode) {
+            isArrow = ((FunctionNode) scriptOrFn).getFunctionType() == FunctionNode.ARROW_FUNCTION;
+        }
         cfw.startMethod(
                 codegen.getBodyMethodName(scriptOrFn),
                 codegen.getBodyMethodSignature(scriptOrFn),
@@ -145,11 +150,14 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(argsLocal);
         cfw.addPush(scriptOrFn.hasRestParameter());
-        cfw.addPush(
-                !(scriptOrFn instanceof FunctionNode)
-                        || ((FunctionNode) scriptOrFn).requiresArgumentObject());
+        boolean needsActivation =
+            !(scriptOrFn instanceof FunctionNode)
+            || ((FunctionNode) scriptOrFn).requiresArgumentObject();
+        cfw.addPush(needsActivation);
+        String methodName =
+            isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
         addScriptRuntimeInvoke(
-                "createFunctionActivation",
+                methodName,
                 "(Lorg/mozilla/javascript/JSFunction;"
                         + "Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/VarScope;"
