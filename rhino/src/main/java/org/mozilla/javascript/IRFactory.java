@@ -8,7 +8,9 @@ package org.mozilla.javascript;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import org.mozilla.javascript.ast.AbstractObjectProperty;
@@ -18,10 +20,13 @@ import org.mozilla.javascript.ast.ArrayLiteral;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.AwaitExpression;
 import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassComputedKeyRef;
+import org.mozilla.javascript.ast.ClassNode;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
 import org.mozilla.javascript.ast.ContinueStatement;
@@ -100,6 +105,12 @@ public final class IRFactory {
     private Parser parser;
     private AstNodePosition astNodePos;
     private boolean outerScopeIsStrict;
+    private boolean insideClassConstructor;
+
+    /**
+     * Stack of enclosing classes' {@code #name -> SymbolKey} maps, used to resolve private names.
+     */
+    private final Deque<Map<String, SymbolKey>> privateSymbolScopes = new ArrayDeque<>();
 
     public IRFactory(CompilerEnvirons env, String sourceString) {
         this(env, null, sourceString, env.getErrorReporter());
@@ -173,6 +184,8 @@ public final class IRFactory {
                     return transformForInLoop((ForInLoop) node);
                 }
                 return transformForLoop((ForLoop) node);
+            case Token.CLASS:
+                return transformClass((ClassNode) node);
             case Token.FUNCTION:
                 return transformFunction((FunctionNode) node);
             case Token.GENEXPR:
@@ -198,6 +211,7 @@ public final class IRFactory {
             case Token.NULL:
             case Token.UNDEFINED:
             case Token.DEBUGGER:
+            case Token.NEW_TARGET:
                 return transformLiteral(node);
             case Token.SUPER:
                 parser.setRequiresActivation();
@@ -235,6 +249,10 @@ public final class IRFactory {
             case Token.YIELD:
             case Token.YIELD_STAR:
                 return transformYield((Yield) node);
+            case Token.AWAIT:
+                return transformAwait((AwaitExpression) node);
+            case Token.GET_CLASS_COMPUTED_KEY:
+                return node;
             default:
                 if (node instanceof ExpressionStatement) {
                     return transformExprStmt((ExpressionStatement) node);
@@ -413,7 +431,8 @@ public final class IRFactory {
                                 body,
                                 acl,
                                 acl.isForEach(),
-                                acl.isForOf());
+                                acl.isForOf(),
+                                false);
             }
         } finally {
             for (int i = 0; i < pushed; i++) {
@@ -467,6 +486,29 @@ public final class IRFactory {
         boolean shouldTryToInferName =
                 (originalLeft == left); // If we removed parens, we won't try to infer name
         left = transformAssignmentLeft(node, left, right);
+
+        // Private field initialization: the synthesized Assignment is marked so that the first
+        // write creates the slot with attribute PRIVATE instead of following normal SETELEM
+        // semantics.
+        if (node.getIntProp(Node.PRIVATE_FIELD_INIT_PROP, 0) == 1 && left instanceof PropertyGet) {
+            PropertyGet pg = (PropertyGet) left;
+            String privateName = pg.getProperty().getIdentifier();
+            Node targetNode = transform(pg.getTarget());
+            Node loadSymbol = loadPrivateSymbolLiteral(privateName);
+            astNodePos.push(left);
+            try {
+                Node transformedRight = transform(right);
+                Node defineField =
+                        new Node(Token.DEFINE_FIELD, targetNode, loadSymbol, transformedRight);
+                int kind = node.getIntProp(Node.FIELD_KIND_PROP, 0);
+                if (kind != 0) {
+                    defineField.putIntProp(Node.FIELD_KIND_PROP, kind);
+                }
+                return defineField;
+            } finally {
+                astNodePos.pop();
+            }
+        }
 
         Node target = null;
         if (isDestructuring(left)) {
@@ -614,7 +656,15 @@ public final class IRFactory {
             Node obj = transform(loop.getIteratedObject());
             Node body = transform(loop.getBody());
             return createForIn(
-                    declType, loop, lhs, obj, body, loop, loop.isForEach(), loop.isForOf());
+                    declType,
+                    loop,
+                    lhs,
+                    obj,
+                    body,
+                    loop,
+                    loop.isForEach(),
+                    loop.isForOf(),
+                    loop.isForAwaitOf());
         } finally {
             parser.popScope();
         }
@@ -637,6 +687,371 @@ public final class IRFactory {
         }
     }
 
+    private Node transformClass(ClassNode classNode) {
+        FunctionNode constructor = classNode.getConstructor();
+        boolean isStatement = classNode.isStatement();
+        boolean hasSuperClass = classNode.getSuperClass() != null;
+        boolean hasMethods = classNode.getMethodCount() > 0;
+        boolean hasStaticMethods = classNode.getStaticMethodCount() > 0;
+        boolean hasStaticFields = classNode.getStaticFieldCount() > 0;
+        boolean hasStaticComputedFields = classNode.getStaticComputedFieldCount() > 0;
+        boolean hasStaticPrivateFields = classNode.getStaticPrivateFieldCount() > 0;
+        boolean hasPrivateFields = classNode.getPrivateFieldCount() > 0;
+        boolean hasComputedFields = classNode.getComputedFieldCount() > 0;
+        Name className = classNode.getClassName();
+
+        // Class bodies are always strict
+        constructor.setInStrictMode(true);
+
+        // Always use FUNCTION_EXPRESSION for the constructor function itself.
+        // For class declarations, we wrap the result in a SETNAME to bind
+        // the name in the enclosing scope (like a let binding).
+        constructor.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
+
+        // Set the class name on the constructor
+        if (className != null) {
+            constructor.setFunctionName(className);
+        }
+
+        // For derived classes (has extends), keep the method definition flag
+        // so the CodeGenerator knows to use the homeObject mechanism.
+        // For base classes, clear it so the constructor can be constructed normally.
+        if (!hasSuperClass) {
+            constructor.setMethodDefinition(false);
+        }
+
+        // Inject field initialization into the constructor body
+        if (classNode.getFieldCount() > 0
+                || classNode.getComputedFieldCount() > 0
+                || hasPrivateFields) {
+            injectFieldInitializers(classNode, constructor, hasSuperClass);
+        }
+
+        // Make the class's private names visible to its constructor and all methods during IR
+        // transformation.
+        Map<String, SymbolKey> privateSymbols = classNode.getPrivateSymbols();
+        boolean pushedPrivateScope = !privateSymbols.isEmpty();
+        if (pushedPrivateScope) {
+            privateSymbolScopes.push(privateSymbols);
+        }
+        Node constructorNode;
+        java.util.List<Node> methodNodes;
+        java.util.List<Node> staticMethodNodes;
+        try {
+            // Transform the constructor as a regular function
+            boolean savedInsideClassConstructor = insideClassConstructor;
+            insideClassConstructor = hasSuperClass;
+            try {
+                constructorNode = transformFunction(constructor);
+            } finally {
+                insideClassConstructor = savedInsideClassConstructor;
+            }
+
+            // Transform instance method functions
+            methodNodes = new java.util.ArrayList<>();
+            if (hasMethods) {
+                for (FunctionNode methodFn : classNode.getMethods()) {
+                    methodFn.setInStrictMode(true);
+                    methodNodes.add(transformFunction(methodFn));
+                }
+            }
+
+            // Transform static method functions
+            staticMethodNodes = new java.util.ArrayList<>();
+            if (hasStaticMethods) {
+                for (FunctionNode methodFn : classNode.getStaticMethods()) {
+                    methodFn.setInStrictMode(true);
+                    staticMethodNodes.add(transformFunction(methodFn));
+                }
+            }
+        } finally {
+            if (pushedPrivateScope) {
+                privateSymbolScopes.pop();
+            }
+        }
+
+        if (hasSuperClass
+                || hasMethods
+                || hasStaticMethods
+                || hasStaticFields
+                || hasStaticComputedFields
+                || hasStaticPrivateFields
+                || hasComputedFields) {
+            // Use Token.CLASS node for classes with extends, methods, or static fields.
+            // For base classes without superclass, use Token.NULL as sentinel.
+            Node superClassNode =
+                    hasSuperClass ? transform(classNode.getSuperClass()) : new Node(Token.NULL);
+            Node classSetup = new Node(Token.CLASS, superClassNode, constructorNode);
+            classSetup.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
+
+            // Add instance method nodes as children. For methods with computed keys
+            // (name == null), emit the key expression child just before the function
+            // child so the CodeGenerator can evaluate the key at definition time.
+            if (hasMethods) {
+                java.util.List<AstNode> methodKeys = classNode.getMethodComputedKeys();
+                for (int i = 0; i < methodNodes.size(); i++) {
+                    AstNode keyExpr = methodKeys.isEmpty() ? null : methodKeys.get(i);
+                    if (keyExpr != null) {
+                        classSetup.addChildToBack(transform(keyExpr));
+                    }
+                    classSetup.addChildToBack(methodNodes.get(i));
+                }
+                classSetup.putProp(
+                        Node.CLASS_METHODS_PROP, classNode.getMethodNames().toArray(new String[0]));
+                classSetup.putProp(
+                        Node.CLASS_METHOD_KINDS_PROP, toKindInts(classNode.getMethodKinds()));
+            }
+
+            // Add static method nodes as children (after instance methods)
+            if (hasStaticMethods) {
+                java.util.List<AstNode> smKeys = classNode.getStaticMethodComputedKeys();
+                for (int i = 0; i < staticMethodNodes.size(); i++) {
+                    AstNode keyExpr = smKeys.isEmpty() ? null : smKeys.get(i);
+                    if (keyExpr != null) {
+                        classSetup.addChildToBack(transform(keyExpr));
+                    }
+                    classSetup.addChildToBack(staticMethodNodes.get(i));
+                }
+                classSetup.putProp(
+                        Node.CLASS_STATIC_METHODS_PROP,
+                        classNode.getStaticMethodNames().toArray(new String[0]));
+                classSetup.putProp(
+                        Node.CLASS_STATIC_METHOD_KINDS_PROP,
+                        toKindInts(classNode.getStaticMethodKinds()));
+            }
+
+            // Add static named field value expressions as children
+            if (hasStaticFields) {
+                java.util.List<AstNode> sfInits = classNode.getStaticFieldInitializers();
+                for (AstNode init : sfInits) {
+                    if (init != null) {
+                        classSetup.addChildToBack(transform(init));
+                    } else {
+                        classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
+                    }
+                }
+                classSetup.putProp(
+                        Node.CLASS_STATIC_FIELDS_PROP,
+                        classNode.getStaticFieldNames().toArray(new String[0]));
+            }
+
+            // Add static computed field key+value expressions as children (alternating).
+            // Static private fields are emitted here too, with a LOAD_LITERAL pushing the
+            // shared SymbolKey as the key. The runtime detects the private-name SymbolKey
+            // and sets the PRIVATE attribute on the slot it creates.
+            int computedFieldPairs = 0;
+            if (hasStaticComputedFields) {
+                java.util.List<AstNode> scKeys = classNode.getStaticComputedFieldKeys();
+                java.util.List<AstNode> scInits = classNode.getStaticComputedFieldInitializers();
+                for (int i = 0; i < scKeys.size(); i++) {
+                    classSetup.addChildToBack(transform(scKeys.get(i)));
+                    AstNode init = scInits.get(i);
+                    if (init != null) {
+                        classSetup.addChildToBack(transform(init));
+                    } else {
+                        classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
+                    }
+                }
+                computedFieldPairs += classNode.getStaticComputedFieldCount();
+            }
+            if (hasStaticPrivateFields) {
+                java.util.List<String> spNames = classNode.getStaticPrivateFieldNames();
+                java.util.List<AstNode> spInits = classNode.getStaticPrivateFieldInitializers();
+                // Make private names visible while transforming initializers, since
+                // an initializer may read from other private names declared on the class.
+                if (pushedPrivateScope) {
+                    privateSymbolScopes.push(privateSymbols);
+                }
+                try {
+                    for (int i = 0; i < spNames.size(); i++) {
+                        SymbolKey key = classNode.getOrCreatePrivateSymbol(spNames.get(i));
+                        Node keyLoad = new Node(Token.LOAD_LITERAL);
+                        keyLoad.putIntProp(
+                                Node.LITERAL_INDEX_PROP, parser.currentScriptOrFn.addLiteral(key));
+                        classSetup.addChildToBack(keyLoad);
+                        AstNode init = spInits.get(i);
+                        if (init != null) {
+                            classSetup.addChildToBack(transform(init));
+                        } else {
+                            classSetup.addChildToBack(new Node(Token.VOID, Node.newNumber(0)));
+                        }
+                    }
+                } finally {
+                    if (pushedPrivateScope) {
+                        privateSymbolScopes.pop();
+                    }
+                }
+                computedFieldPairs += classNode.getStaticPrivateFieldCount();
+            }
+            if (computedFieldPairs > 0) {
+                classSetup.putIntProp(Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT, computedFieldPairs);
+            }
+
+            // Instance computed field keys must be evaluated at class declaration time and then
+            // stored on the constructor so each instance can look them up by index when the
+            // injected field initializers run.
+            if (hasComputedFields) {
+                java.util.List<AstNode> cKeys = classNode.getComputedFieldKeys();
+                if (pushedPrivateScope) {
+                    privateSymbolScopes.push(privateSymbols);
+                }
+                try {
+                    for (AstNode keyExpr : cKeys) {
+                        classSetup.addChildToBack(transform(keyExpr));
+                    }
+                } finally {
+                    if (pushedPrivateScope) {
+                        privateSymbolScopes.pop();
+                    }
+                }
+                classSetup.putIntProp(Node.CLASS_COMPUTED_FIELD_KEYS_COUNT, cKeys.size());
+            }
+
+            if (isStatement && className != null) {
+                Node setName =
+                        new Node(
+                                Token.EXPR_VOID,
+                                createAssignment(
+                                        Token.ASSIGN,
+                                        parser.createName(className.getIdentifier()),
+                                        classSetup));
+                return setName;
+            }
+            return classSetup;
+        }
+
+        // No superclass and no methods - simple case
+        if (isStatement && className != null) {
+            Node setName =
+                    new Node(
+                            Token.EXPR_VOID,
+                            createAssignment(
+                                    Token.ASSIGN,
+                                    parser.createName(className.getIdentifier()),
+                                    constructorNode));
+            return setName;
+        }
+        return constructorNode;
+    }
+
+    private static int[] toKindInts(java.util.List<ClassNode.ElementKind> kinds) {
+        int[] out = new int[kinds.size()];
+        for (int i = 0; i < kinds.size(); i++) {
+            out[i] = kinds.get(i).ordinal();
+        }
+        return out;
+    }
+
+    private void injectFieldInitializers(
+            ClassNode classNode, FunctionNode constructor, boolean hasSuperClass) {
+        AstNode body = constructor.getBody();
+
+        // Create field init statements
+        java.util.List<AstNode> initStmts = new java.util.ArrayList<>();
+
+        // Named fields: this.fieldName = initializer
+        var instaceFields = classNode.getInstanceFields();
+        for (var e : instaceFields) {
+            var thisNode = new KeywordLiteral();
+            thisNode.setType(Token.THIS);
+            Name propName = new Name(0, e.name);
+            PropertyGet propGet = new PropertyGet(thisNode, propName);
+
+            AstNode value = e.initializer;
+            if (value == null) {
+                value = new KeywordLiteral();
+                value.setType(Token.UNDEFINED);
+            }
+
+            Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
+            initStmts.add(new ExpressionStatement(assign));
+        }
+
+        // Computed fields: this[<pre-evaluated key>] = initializer.
+        // The actual key expressions are evaluated once at class declaration time (as
+        // children of the CLASS setup node) and stashed on the constructor; here we only
+        // emit a reference that will load the i-th stored key at instance creation time.
+        java.util.List<AstNode> computedKeys = classNode.getComputedFieldKeys();
+        java.util.List<AstNode> computedInits = classNode.getComputedFieldInitializers();
+        for (int i = 0; i < computedKeys.size(); i++) {
+            KeywordLiteral thisNode = new KeywordLiteral();
+            thisNode.setType(Token.THIS);
+            ElementGet elemGet = new ElementGet(thisNode, new ClassComputedKeyRef(i));
+
+            AstNode value = computedInits.get(i);
+            if (value == null) {
+                value = new KeywordLiteral();
+                value.setType(Token.UNDEFINED);
+            }
+
+            Assignment assign = new Assignment(Token.ASSIGN, elemGet, value, 0);
+            initStmts.add(new ExpressionStatement(assign));
+        }
+
+        // Private fields: this.#name = initializer, marked so the assignment becomes a
+        // DEFINE_FIELD that establishes the slot with attribute PRIVATE. Private accessors
+        // (get/set #name) are marked with FIELD_KIND_PROP so DEFINE_FIELD installs a
+        // getter/setter on the slot instead of storing a value.
+        java.util.List<String> privateNames = classNode.getPrivateFieldNames();
+        java.util.List<AstNode> privateInits = classNode.getPrivateFieldInitializers();
+        java.util.List<ClassNode.ElementKind> privateKinds = classNode.getPrivateFieldKinds();
+        for (int i = 0; i < privateNames.size(); i++) {
+            KeywordLiteral thisNode = new KeywordLiteral();
+            thisNode.setType(Token.THIS);
+            Name propName = new Name(0, privateNames.get(i));
+            PropertyGet propGet = new PropertyGet(thisNode, propName);
+
+            AstNode value = privateInits.get(i);
+            if (value == null) {
+                value = new KeywordLiteral();
+                value.setType(Token.UNDEFINED);
+            }
+
+            Assignment assign = new Assignment(Token.ASSIGN, propGet, value, 0);
+            assign.putIntProp(Node.PRIVATE_FIELD_INIT_PROP, 1);
+            ClassNode.ElementKind kind = privateKinds.get(i);
+            if (kind == ClassNode.ElementKind.GETTER) {
+                assign.putIntProp(Node.FIELD_KIND_PROP, 1);
+            } else if (kind == ClassNode.ElementKind.SETTER) {
+                assign.putIntProp(Node.FIELD_KIND_PROP, 2);
+            }
+            initStmts.add(new ExpressionStatement(assign));
+        }
+
+        if (!hasSuperClass) {
+            // Base class: prepend field init statements to constructor body
+            for (int i = initStmts.size() - 1; i >= 0; i--) {
+                body.addChildToFront(initStmts.get(i));
+            }
+        } else {
+            // Derived class: find super() call and insert field inits after it
+            Node insertAfter = findSuperCall(body);
+            if (insertAfter != null) {
+                for (AstNode stmt : initStmts) {
+                    body.addChildAfter(stmt, insertAfter);
+                    insertAfter = stmt;
+                }
+            }
+        }
+    }
+
+    private static Node findSuperCall(AstNode body) {
+        // Walk the body's direct children to find the ExpressionStatement
+        // containing a super() call
+        for (Node child = body.getFirstChild(); child != null; child = child.getNext()) {
+            if (child instanceof ExpressionStatement) {
+                AstNode expr = ((ExpressionStatement) child).getExpression();
+                if (expr instanceof FunctionCall) {
+                    AstNode target = ((FunctionCall) expr).getTarget();
+                    if (target instanceof KeywordLiteral && target.getType() == Token.SUPER) {
+                        return child;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private Node transformFunction(FunctionNode fn) {
         Node mexpr = decompileFunctionHeader(fn);
         int index = parser.currentScriptOrFn.addFunction(fn);
@@ -649,6 +1064,14 @@ public final class IRFactory {
             // function parsing, we should lump it all into a helper class.
             Node destructuring = (Node) fn.getProp(Node.DESTRUCTURING_PARAMS);
             fn.removeProp(Node.DESTRUCTURING_PARAMS);
+
+            // Async non-generator functions use generator machinery internally to implement
+            // await: each await expression becomes a yield point. Mark the function as a
+            // generator now so that default-parameter and return-statement handling below
+            // uses the correct (generator) code paths.
+            if (fn.isAsync() && !fn.isES6Generator()) {
+                fn.setIsGenerator();
+            }
 
             int lineno = fn.getBody().getLineno(), column = fn.getBody().getColumn();
             ++parser.nestingOfFunction; // only for body, not params
@@ -663,6 +1086,8 @@ public final class IRFactory {
                             && defaultParams.get(i - 1) instanceof String) {
                         AstNode rhs = (AstNode) defaultParams.get(i);
                         String name = (String) defaultParams.get(i - 1);
+                        Node transformedRhs = transform(rhs);
+                        inferNameIfMissing(new Name(0, name), transformedRhs, null);
                         Node paramInit =
                                 createIf(
                                         createBinary(
@@ -674,7 +1099,7 @@ public final class IRFactory {
                                                 createAssignment(
                                                         Token.ASSIGN,
                                                         parser.createName(name),
-                                                        transform(rhs)),
+                                                        transformedRhs),
                                                 body.getLineno(),
                                                 body.getColumn()),
                                         null,
@@ -703,13 +1128,27 @@ public final class IRFactory {
                     Node a = i[0];
                     if (i[1] instanceof AstNode) {
                         AstNode b = (AstNode) i[1];
-                        a.replaceChild(b, transform(b));
+                        Node transformed = transform(b);
+                        if (i.length > 2 && i[2] instanceof Name) {
+                            inferNameIfMissing(i[2], transformed, null);
+                        }
+                        a.replaceChild(b, transformed);
                     }
                 }
             }
 
             if (destructuring != null) {
-                body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno, column));
+                Node destructuringStmt = new Node(Token.EXPR_VOID, destructuring, lineno, column);
+                if (fn.isGenerator()) {
+                    Node paramInitBlock = fn.getGeneratorParamInitBlock();
+                    if (paramInitBlock == null) {
+                        paramInitBlock = new Node(Token.BLOCK);
+                        fn.setGeneratorParamInitBlock(paramInitBlock);
+                    }
+                    paramInitBlock.addChildToFront(destructuringStmt);
+                } else {
+                    body.addChildToFront(destructuringStmt);
+                }
             }
 
             int syntheticType = fn.getFunctionType();
@@ -737,7 +1176,30 @@ public final class IRFactory {
     private Node transformFunctionCall(FunctionCall node) {
         astNodePos.push(node);
         try {
-            Node transformedTarget = transform(node.getTarget());
+            AstNode target = node.getTarget();
+            Node transformedTarget = transform(target);
+
+            // super() in a derived class constructor
+            if (target.getType() == Token.SUPER && insideClassConstructor) {
+                // Replace the super keyword with THISFN so the interpreter can
+                // get the homeObject (superclass) from the current function.
+                Node call = createCallOrNew(Token.CALL, new Node(Token.THISFN));
+                call.setLineColumnNumber(node.getLineno(), node.getColumn());
+                List<AstNode> args = node.getArguments();
+                if (args.size() == 1 && args.get(0) instanceof Spread) {
+                    // super(...expr): evaluate expr and spread its elements at runtime.
+                    Spread spread = (Spread) args.get(0);
+                    call.addChildToBack(transform(spread.getExpression()));
+                    call.putIntProp(Node.SUPER_CONSTRUCTOR_SPREAD_CALL, 1);
+                } else {
+                    for (int i = 0; i < args.size(); i++) {
+                        call.addChildToBack(transform(args.get(i)));
+                    }
+                }
+                call.putIntProp(Node.SUPER_CONSTRUCTOR_CALL, 1);
+                return call;
+            }
+
             Node call = createCallOrNew(Token.CALL, transformedTarget);
             call.setLineColumnNumber(node.getLineno(), node.getColumn());
             List<AstNode> args = node.getArguments();
@@ -879,7 +1341,8 @@ public final class IRFactory {
                                 body,
                                 acl,
                                 acl.isForEach(),
-                                acl.isForOf());
+                                acl.isForOf(),
+                                false);
             }
         } finally {
             for (int i = 0; i < pushed; i++) {
@@ -948,10 +1411,12 @@ public final class IRFactory {
 
     private Node transformLiteral(AstNode node) {
         // Trying to call super as a function. See 15.4.2 Static Semantics: HasDirectSuper
-        // Note that this will need to change when classes are implemented, because in a class
-        // constructor calling "super()" _is_ allowed.
-        if (node.getParent() instanceof FunctionCall && node.getType() == Token.SUPER)
+        // In a class constructor calling "super()" is allowed.
+        if (node.getParent() instanceof FunctionCall
+                && node.getType() == Token.SUPER
+                && !insideClassConstructor) {
             parser.reportError("msg.super.shorthand.function");
+        }
         return node;
     }
 
@@ -1059,7 +1524,43 @@ public final class IRFactory {
     private Node transformPropertyGet(PropertyGet node) {
         Node target = transform(node.getTarget());
         String name = node.getProperty().getIdentifier();
+        if (isPrivateName(name)) {
+            Node loadSymbol = loadPrivateSymbolLiteral(name);
+            Node elemGet = new Node(Token.GETELEM, target, loadSymbol);
+            if (node.type == Token.QUESTION_DOT) {
+                elemGet.putIntProp(Node.OPTIONAL_CHAINING, 1);
+            }
+            return elemGet;
+        }
         return createPropertyGet(target, null, name, 0, node.type);
+    }
+
+    private static boolean isPrivateName(String name) {
+        return name != null && !name.isEmpty() && name.charAt(0) == '#';
+    }
+
+    /**
+     * Build a {@code LOAD_LITERAL} IR node that pushes the {@link SymbolKey} for the given private
+     * name (e.g., {@code #foo}) at runtime. The key is shared across all functions of the enclosing
+     * class; each function gets its own literal-table entry pointing to the same key instance.
+     */
+    private Node loadPrivateSymbolLiteral(String privateName) {
+        SymbolKey key = null;
+        for (Map<String, SymbolKey> scope : privateSymbolScopes) {
+            SymbolKey candidate = scope.get(privateName);
+            if (candidate != null) {
+                key = candidate;
+                break;
+            }
+        }
+        if (key == null) {
+            parser.reportError("msg.undeclared.private.name", privateName);
+            // Fall back to a locally-created key so IR construction proceeds.
+            key = new SymbolKey(privateName, org.mozilla.javascript.Symbol.Kind.PRIVATE);
+        }
+        Node load = new Node(Token.LOAD_LITERAL);
+        load.putIntProp(Node.LITERAL_INDEX_PROP, parser.currentScriptOrFn.addLiteral(key));
+        return load;
     }
 
     private Node transformTemplateLiteral(TemplateLiteral node) {
@@ -1096,12 +1597,12 @@ public final class IRFactory {
                 call.addChildToBack(transform(elem));
             }
         }
-        parser.currentScriptOrFn.addTemplateLiteral(templateLiteral);
+        parser.currentScriptOrFn.addLiteral(templateLiteral);
         return call;
     }
 
     private Node transformRegExp(RegExpLiteral node) {
-        parser.currentScriptOrFn.addRegExp(node);
+        parser.currentScriptOrFn.addLiteral(node);
         return node;
     }
 
@@ -1384,6 +1885,12 @@ public final class IRFactory {
         return new Node(node.getType(), node.getLineno(), node.getColumn());
     }
 
+    private Node transformAwait(AwaitExpression node) {
+        Node kid = node.getValue() == null ? null : transform(node.getValue());
+        if (kid != null) return new Node(Token.AWAIT, kid, node.getLineno(), node.getColumn());
+        return new Node(Token.AWAIT, node.getLineno(), node.getColumn());
+    }
+
     private Node transformSpread(Spread node) {
         Node kid = transform(node.getExpression());
         return new Node(node.getType(), kid, node.getLineno(), node.getColumn());
@@ -1579,7 +2086,13 @@ public final class IRFactory {
         // Add return to end if needed.
         Node lastStmt = statements.getLastChild();
         if (lastStmt == null || lastStmt.getType() != Token.RETURN) {
-            statements.addChildToBack(new Node(Token.RETURN));
+            if (fnNode.isClassConstructor()) {
+                // Class constructors should return 'this' implicitly.
+                // For derived constructors, 'this' was set by super().
+                statements.addChildToBack(new Node(Token.RETURN, new Node(Token.THIS)));
+            } else {
+                statements.addChildToBack(new Node(Token.RETURN));
+            }
         }
 
         Node result = Node.newString(Token.FUNCTION, fnNode.getName());
@@ -1694,7 +2207,8 @@ public final class IRFactory {
             Node body,
             AstNode ast,
             boolean isForEach,
-            boolean isForOf) {
+            boolean isForOf,
+            boolean isForAwaitOf) {
         astNodePos.push(ast);
         try {
             int destructuring = -1;
@@ -1731,18 +2245,31 @@ public final class IRFactory {
             }
 
             Node localBlock = new Node(Token.LOCAL_BLOCK);
-            int initType =
-                    isForEach
-                            ? Token.ENUM_INIT_VALUES
-                            : isForOf
-                                    ? Token.ENUM_INIT_VALUES_IN_ORDER
-                                    : (destructuring != -1
-                                            ? Token.ENUM_INIT_ARRAY
-                                            : Token.ENUM_INIT_KEYS);
+            int initType;
+            if (isForAwaitOf) {
+                initType = Token.ENUM_INIT_ASYNC_ITERATOR;
+            } else if (isForEach) {
+                initType = Token.ENUM_INIT_VALUES;
+            } else if (isForOf) {
+                initType = Token.ENUM_INIT_VALUES_IN_ORDER;
+            } else {
+                initType = destructuring != -1 ? Token.ENUM_INIT_ARRAY : Token.ENUM_INIT_KEYS;
+            }
             Node init = new Node(initType, obj);
             init.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
-            Node cond = new Node(Token.ENUM_NEXT);
-            cond.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+            Node cond;
+            if (isForAwaitOf) {
+                // cond = ENUM_ASYNC_STEP(AWAIT(ENUM_ASYNC_NEXT)); produces a boolean !done.
+                Node asyncNext = new Node(Token.ENUM_ASYNC_NEXT);
+                asyncNext.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+                Node await = new Node(Token.AWAIT, asyncNext);
+                Node asyncStep = new Node(Token.ENUM_ASYNC_STEP, await);
+                asyncStep.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+                cond = asyncStep;
+            } else {
+                cond = new Node(Token.ENUM_NEXT);
+                cond.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+            }
             Node id = new Node(Token.ENUM_ID);
             id.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
 
@@ -1892,7 +2419,7 @@ public final class IRFactory {
                 // but prefix it with LEAVEWITH since try..catch produces
                 // "with"code in order to limit the scope of the exception
                 // object.
-                catchStatement.addChildToBack(new Node(Token.LEAVEWITH));
+                catchStatement.addChildToBack(new Node(Token.LEAVE_SCOPE));
                 catchStatement.addChildToBack(makeJump(Token.GOTO, endCatch));
 
                 // Create condition "if" when present
@@ -1911,13 +2438,9 @@ public final class IRFactory {
                 catchScope.putIntProp(Node.CATCH_SCOPE_PROP, scopeIndex);
                 catchScopeBlock.addChildToBack(catchScope);
 
-                // Add with statement based on catch scope object
-                catchScopeBlock.addChildToBack(
-                        createWith(
-                                createUseLocal(catchScopeBlock),
-                                condStmt,
-                                catchLineno,
-                                catchColumn));
+                parser.setRequiresActivation();
+                catchScopeBlock.addChildToBack(condStmt);
+                catchScopeBlock.addChildToBack(new Node(Token.LEAVE_SCOPE));
 
                 // move to next cb
                 cb = cb.getNext();
@@ -1935,22 +2458,7 @@ public final class IRFactory {
         }
 
         if (hasFinally) {
-            Node finallyTarget = Node.newTarget();
-            pn.setFinally(finallyTarget);
-
-            // add jsr finally to the try block
-            pn.addChildToBack(makeJump(Token.JSR, finallyTarget));
-
-            // jump around finally code
-            Node finallyEnd = Node.newTarget();
-            pn.addChildToBack(makeJump(Token.GOTO, finallyEnd));
-
-            pn.addChildToBack(finallyTarget);
-            Node fBlock = new Node(Token.FINALLY, finallyBlock);
-            fBlock.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
-            pn.addChildToBack(fBlock);
-
-            pn.addChildToBack(finallyEnd);
+            Parser.makeFinallyNode(finallyBlock, handlerBlock, pn);
         }
         handlerBlock.addChildToBack(pn);
         return handlerBlock;
@@ -1962,7 +2470,7 @@ public final class IRFactory {
         result.addChildToBack(new Node(Token.ENTERWITH, obj));
         Node bodyNode = new Node(Token.WITH, body, lineno, column);
         result.addChildrenToBack(bodyNode);
-        result.addChildToBack(new Node(Token.LEAVEWITH));
+        result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         return result;
     }
 

@@ -146,6 +146,74 @@ public class ArrayDestructuringTest {
                 });
     }
 
+    /** Destructured let variables must be visible after the declaration. */
+    @Test
+    public void letArrayDestructuringVisibleAfterDeclaration() {
+        Utils.assertWithAllModes_ES6(7, "function f() { let [x] = [7]; return x; } f()");
+    }
+
+    /** Destructured const variables must be visible after the declaration. */
+    @Test
+    public void constArrayDestructuringVisibleAfterDeclaration() {
+        Utils.assertWithAllModes_ES6(7, "function f() { const [x] = [7]; return x; } f()");
+    }
+
+    /** Multiple let-destructured variables visible after the declaration. */
+    @Test
+    public void letArrayDestructuringMultipleVariables() {
+        Utils.assertWithAllModes_ES6(3, "function f() { let [a, b] = [1, 2]; return a + b; } f()");
+    }
+
+    /** Nested array destructuring with default in a let declaration. */
+    @Test
+    public void letNestedArrayDestructuringWithDefault() {
+        Utils.assertWithAllModes_ES6(7, "function f() { let [[x] = [7]] = []; return x; } f()");
+    }
+
+    /** Object destructuring with let should also be visible after the declaration. */
+    @Test
+    public void letObjectDestructuringVisibleAfterDeclaration() {
+        Utils.assertWithAllModes_ES6(7, "function f() { let {x} = {x: 7}; return x; } f()");
+    }
+
+    /** Empty object destructuring of null must throw TypeError. */
+    @Test
+    public void emptyObjectDestructuringNullThrows() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "var threw = false;\n"
+                                    + "try { (function() { const {} = null; })(); }\n"
+                                    + "catch (e) { if (e instanceof TypeError) threw = true; }\n"
+                                    + "if (!threw) throw new Error('Expected TypeError');";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /** Empty object destructuring of undefined must throw TypeError. */
+    @Test
+    public void emptyObjectDestructuringUndefinedThrows() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "var threw = false;\n"
+                                    + "try { (function() { const {} = undefined; })(); }\n"
+                                    + "catch (e) { if (e instanceof TypeError) threw = true; }\n"
+                                    + "if (!threw) throw new Error('Expected TypeError');";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
     /** Test that array destructuring of non-iterable objects throws TypeError. */
     @Test
     public void arrayDestructuringNonIterableThrows() {
@@ -227,6 +295,52 @@ public class ArrayDestructuringTest {
                 });
     }
 
+    /**
+     * Destructuring assignment with defaults into pre-existing variables must always apply the
+     * default when the source value is undefined, regardless of the variables' prior values. See
+     * for-of case below and issue around pre-existing lvalues keeping stale values.
+     */
+    @Test
+    public void destructuringAssignmentWithDefaultsForOfLoop() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "var x, y;\n"
+                                    + "x = 'foo';\n"
+                                    + "y = 'bar';\n"
+                                    + "var results = [];\n"
+                                    + "var counter = 0;\n"
+                                    + "for ([x = 4, y = 5] of [[]]) {\n"
+                                    + "  results.push(x);\n"
+                                    + "  results.push(y);\n"
+                                    + "  counter += 1;\n"
+                                    + "}\n"
+                                    + "for ([x = 4, y = 5] of [[7, 3]]) {\n"
+                                    + "  results.push(x);\n"
+                                    + "  results.push(y);\n"
+                                    + "  counter += 1;\n"
+                                    + "}\n"
+                                    + "results.push(x);\n"
+                                    + "results.push(y);\n"
+                                    + "results.push(counter);\n"
+                                    + "var expected = [4, 5, 7, 3, 7, 3, 2];\n"
+                                    + "if (results.length !== expected.length)"
+                                    + " throw new Error('Length mismatch: ' + results.join(','));\n"
+                                    + "for (var i = 0; i < expected.length; i++) {\n"
+                                    + "  if (results[i] !== expected[i])"
+                                    + "    throw new Error('At ' + i + ' expected ' + expected[i]"
+                                    + "                    + ' got ' + results[i]"
+                                    + "                    + ' (results=' + results.join(',') + ')');\n"
+                                    + "}\n";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
     /** Test destructuring with defaults in for loop initialization. */
     @Test
     public void destructuringWithDefaultsInForLoop() {
@@ -247,6 +361,38 @@ public class ArrayDestructuringTest {
                     cx.evaluateString(scope, script, "test", 1, null);
                     return null;
                 });
+    }
+
+    /**
+     * When iterator.return() returns null/undefined, the result must be coerced to an Object, which
+     * throws a TypeError.
+     */
+    @Test
+    public void arrayDestructuringIteratorReturnNullThrows() {
+        Utils.assertEcmaErrorES6(
+                "TypeError: Cannot convert null to an object.",
+                "var iter = {};"
+                        + "iter[Symbol.iterator] = function() {"
+                        + "  return {"
+                        + "    next: function() { return { value: 1, done: false }; },"
+                        + "    return: function() { return null; }"
+                        + "  };"
+                        + "};"
+                        + "var [a] = iter;");
+    }
+
+    @Test
+    public void arrayDestructuringIteratorReturnUndefinedThrows() {
+        Utils.assertEcmaErrorES6(
+                "TypeError: Cannot convert undefined to an object.",
+                "var iter = {};"
+                        + "iter[Symbol.iterator] = function() {"
+                        + "  return {"
+                        + "    next: function() { return { value: 1, done: false }; },"
+                        + "    return: function() { return undefined; }"
+                        + "  };"
+                        + "};"
+                        + "var [a] = iter;");
     }
 
     /**
@@ -334,37 +480,32 @@ public class ArrayDestructuringTest {
     }
 
     /**
-     * Test that shadowing Symbol breaks array destructuring (expected behavior). If user shadows
-     * Symbol, destructuring should behave like manually written obj[Symbol.iterator]() code.
+     * Test that shadowing Symbol does not affect array destructuring. Per spec, GetIterator uses
+     * the well-known @@iterator symbol directly, not the user-visible {@code Symbol.iterator}
+     * lookup, so a local {@code Symbol} binding must not change destructuring behavior.
      */
     @Test
-    public void arrayDestructuringShadowedSymbolFails() {
+    public void arrayDestructuringIgnoresShadowedSymbol() {
         Utils.runWithAllModes(
                 cx -> {
                     cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
                     TopLevel scope = cx.initStandardObjects();
 
-                    // Shadow Symbol with a plain object - should cause iterator access to fail
                     String script =
                             "let Symbol = { iterator: 'not a symbol' };\n"
                                     + "var f = ([x, y]) => x + y;\n"
-                                    + "var errorThrown = false;\n"
-                                    + "try {\n"
-                                    + "  f([1, 2]);\n"
-                                    + "} catch (e) {\n"
-                                    + "  errorThrown = true;\n"
-                                    + "}\n"
-                                    + "if (!errorThrown) throw new Error('Expected error when Symbol is shadowed');"
+                                    + "var result = f([1, 2]);\n"
+                                    + "if (result !== 3) throw new Error('Expected 3, got ' + result);\n"
                                     + "\n"
-                                    + "// Verify that manually written code also fails with shadowed Symbol\n"
-                                    + "errorThrown = false;\n"
+                                    + "// Manually written code still uses the shadowed Symbol binding\n"
+                                    + "var errorThrown = false;\n"
                                     + "try {\n"
                                     + "  var arr = [1, 2];\n"
                                     + "  var iter = arr[Symbol.iterator]();\n"
                                     + "} catch (e) {\n"
                                     + "  errorThrown = true;\n"
                                     + "}\n"
-                                    + "if (!errorThrown) throw new Error('Manual code should also fail with shadowed Symbol');"
+                                    + "if (!errorThrown) throw new Error('Manual code should fail with shadowed Symbol');"
                                     + "";
 
                     cx.evaluateString(scope, script, "test", 1, null);
@@ -398,6 +539,56 @@ public class ArrayDestructuringTest {
                                     + "var f = function([a, b, c]) { return a + b + c; };\n"
                                     + "var result = f(iterable);\n"
                                     + "if (result !== 60) throw new Error('Expected 60, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /** Test that elision in array destructuring advances the iterator. */
+    @Test
+    public void arrayDestructuringElisionAdvancesIterator() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "function* g() {\n"
+                                    + "  yield 'a';\n"
+                                    + "  yield 'b';\n"
+                                    + "  yield 'c';\n"
+                                    + "}\n"
+                                    + "function f([a,,b]) {\n"
+                                    + "  return a + ',' + b;\n"
+                                    + "}\n"
+                                    + "var result = f(g());\n"
+                                    + "if (result !== 'a,c') throw new Error('Expected a,c, got ' + result);";
+
+                    cx.evaluateString(scope, script, "test", 1, null);
+                    return null;
+                });
+    }
+
+    /** Test that leading elision in array destructuring advances the iterator. */
+    @Test
+    public void arrayDestructuringLeadingElisionAdvancesIterator() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+
+                    String script =
+                            "function* g() {\n"
+                                    + "  yield 'a';\n"
+                                    + "  yield 'b';\n"
+                                    + "  yield 'c';\n"
+                                    + "}\n"
+                                    + "function f([,,a]) {\n"
+                                    + "  return a;\n"
+                                    + "}\n"
+                                    + "var result = f(g());\n"
+                                    + "if (result !== 'c') throw new Error('Expected c, got ' + result);";
 
                     cx.evaluateString(scope, script, "test", 1, null);
                     return null;
@@ -504,4 +695,30 @@ public class ArrayDestructuringTest {
                     return null;
                 });
     }
+
+    /**
+     * Nested rest spread into an array pattern. The inner [x] runs iterator-close, which is
+     * implemented with a try/finally; the surrounding assignment leaves stack temporaries live, so
+     * the JSR/RETSUB scheme used to bug out on a non-empty stack at the JSR site.
+     */
+    @Test
+    public void nestedRestSpreadIntoArrayPattern() {
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    String script =
+                            "var x = null;"
+                                    + "var result;"
+                                    + "var vals = [];"
+                                    + "result = [...[x]] = vals;"
+                                    + "(result === vals) + ',' + (typeof x);";
+                    Object res = cx.evaluateString(scope, script, "test", 1, null);
+                    if (!"true,undefined".equals(org.mozilla.javascript.Context.toString(res))) {
+                        throw new RuntimeException("got: " + res);
+                    }
+                    return null;
+                });
+    }
+
 }

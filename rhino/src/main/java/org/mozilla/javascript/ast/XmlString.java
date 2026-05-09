@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
+
 /**
  * AST node for an XML-text-only component of an XML literal expression. This node differs from a
  * {@link StringLiteral} in that it does not have quotes for delimiters.
@@ -49,6 +51,19 @@ public class XmlString extends XmlFragment {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + xml;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != XmlString.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        XmlString copy = new XmlString();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.xml = this.xml;
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

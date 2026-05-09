@@ -464,6 +464,18 @@ public class DefaultParametersTest {
                 "Default values are only supported in version >= 200", script + "()");
     }
 
+    @Test
+    public void restParameterWithDefaultThrowsSyntaxError() throws Exception {
+        Utils.assertEvaluatorExceptionES6(
+                "rest parameter may not have a default value", "function f(...x = []) { }");
+    }
+
+    @Test
+    public void restParameterWithDefaultThrowsSyntaxErrorArrow() throws Exception {
+        Utils.assertEvaluatorExceptionES6(
+                "rest parameter may not have a default value", "(...x = []) => {}");
+    }
+
     // Test that length property reflects the number of parameters without defaults
     @Test
     public void arrowFunctionLengthSimple() throws Exception {
@@ -502,5 +514,25 @@ public class DefaultParametersTest {
         Utils.assertWithAllModes_ES6(1, "function f(a, b=1, c=2) {}; f.length");
         Utils.assertWithAllModes_ES6(2, "function f(a, b, c=1, d=2) {}; f.length");
         Utils.assertWithAllModes_ES6(0, "function f(a=1, b=2, c=3) {}; f.length");
+    }
+
+    @Test
+    public void defaultParameterFunctionName() throws Exception {
+        Utils.assertWithAllModes_ES6(
+                "arrow", "function f(arrow = () => {}) { return arrow; } f().name");
+        Utils.assertWithAllModes_ES6(
+                "fn", "function f(fn = function() {}) { return fn; } f().name");
+        Utils.assertWithAllModes_ES6(
+                "gen", "function f(gen = function*() {}) { return gen; } f().name");
+    }
+
+    @Test
+    public void destructuringDefaultParameterFunctionName() throws Exception {
+        Utils.assertWithAllModes_ES6(
+                "arrow", "function f([arrow = () => {}]) { return arrow; } f([]).name");
+        Utils.assertWithAllModes_ES6(
+                "fn", "function f([fn = function() {}]) { return fn; } f([]).name");
+        Utils.assertWithAllModes_ES6(
+                "arrow", "function f({arrow = () => {}}) { return arrow; } f({}).name");
     }
 }

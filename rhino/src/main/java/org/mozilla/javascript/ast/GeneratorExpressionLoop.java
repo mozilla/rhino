@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
+
 /** */
 public class GeneratorExpressionLoop extends ForInLoop {
 
@@ -41,6 +43,22 @@ public class GeneratorExpressionLoop extends ForInLoop {
                 + (isForOf() ? " of " : " in ")
                 + iteratedObject.toSource(0)
                 + ")";
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != GeneratorExpressionLoop.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        GeneratorExpressionLoop copy = new GeneratorExpressionLoop();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyLoopFieldsFrom(this);
+        copy.copyForInLoopFieldsFrom(this);
+        return copy;
     }
 
     /**

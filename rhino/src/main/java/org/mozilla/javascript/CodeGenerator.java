@@ -14,8 +14,10 @@ import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
@@ -49,6 +51,25 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     private final ArrayList<Object> literalIds = new ArrayList<>();
 
     private int exceptionTableTop;
+
+    // Maps a finally TARGET node to information about its enclosing FINALLY,
+    // so that JSRs taken on a normal (non-exceptional) path can be replaced
+    // with an inlined copy of the finally body instead of a GOSUB/RETSUB pair.
+    // Populated while processing the corresponding TRY node.
+    private final HashMap<Node, FinallyContext> finallyByTarget = new HashMap<>();
+
+    private static final class FinallyContext {
+        final Node finallyNode;
+        // Pairs of [startPC, endPC) of inlined finally bodies. These are excluded
+        // from the catch/finally protected ranges so an exception thrown by an
+        // inlined finally body is not re-caught by the same try (which would
+        // re-run the finally body via STARTSUB).
+        final ArrayList<int[]> inlineRanges = new ArrayList<>();
+
+        FinallyContext(Node finallyNode) {
+            this.finallyNode = finallyNode;
+        }
+    }
 
     // ECF_ or Expression Context Flags constants: for now only TAIL
     private static final int ECF_TAIL = 1 << 0;
@@ -138,9 +159,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     private void generateICodeFromTree(Node tree) {
         generateNestedFunctions();
 
-        generateRegExpLiterals();
-
-        generateTemplateLiterals();
+        generateLiterals();
 
         visitStatement(tree, 0);
         fixLabelGotos();
@@ -220,37 +239,36 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
     }
 
-    private void generateRegExpLiterals() {
-        int N = scriptOrFn.getRegexpCount();
+    private void generateLiterals() {
+        int N = scriptOrFn.getLiteralCount();
         if (N == 0) return;
 
-        Context cx = Context.getContext();
-        RegExpProxy rep = ScriptRuntime.checkRegExpProxy(cx);
+        Context cx = null;
+        RegExpProxy rep = null;
         Object[] array = new Object[N];
         for (int i = 0; i != N; i++) {
-            String string = scriptOrFn.getRegexpString(i);
-            String flags = scriptOrFn.getRegexpFlags(i);
-            array[i] = rep.compileRegExp(cx, string, flags);
-        }
-        itsData.itsRegExpLiterals = array;
-    }
-
-    private void generateTemplateLiterals() {
-        int N = scriptOrFn.getTemplateLiteralCount();
-        if (N == 0) return;
-
-        Object[] array = new Object[N];
-        for (int i = 0; i != N; i++) {
-            List<TemplateCharacters> strings = scriptOrFn.getTemplateLiteralStrings(i);
-            int j = 0;
-            String[] values = new String[strings.size() * 2];
-            for (TemplateCharacters s : strings) {
-                values[j++] = s.getValue();
-                values[j++] = s.getRawValue();
+            var literal = scriptOrFn.getLiteral(i);
+            if (literal instanceof RegExpLiteral) {
+                if (rep == null) {
+                    cx = Context.getContext();
+                    rep = ScriptRuntime.checkRegExpProxy(cx);
+                }
+                var re = (RegExpLiteral) literal;
+                array[i] = rep.compileRegExp(cx, re.getValue(), re.getFlags());
+            } else if (literal instanceof TemplateLiteral) {
+                var strings = ((TemplateLiteral) literal).getTemplateStrings();
+                String[] values = new String[strings.size() * 2];
+                int j = 0;
+                for (TemplateCharacters s : strings) {
+                    values[j++] = s.getValue();
+                    values[j++] = s.getRawValue();
+                }
+                array[i] = values;
+            } else {
+                array[i] = literal;
             }
-            array[i] = values;
         }
-        itsData.itsTemplateLiterals = array;
+        builder.literals = array;
     }
 
     private void updateLineNumber(Node node) {
@@ -283,7 +301,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     // at script/function start.
                     // In addition, function expressions can not be present here
                     // at statement level, they must only be present as expressions.
-                    if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
+                    if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT
+                            || fnType == FunctionNode.FUNCTION_BLOCK_SCOPED) {
                         addIndexOp(Icode_CLOSURE_STMT, fnIndex);
                     } else {
                         if (fnType != FunctionNode.FUNCTION_STATEMENT) {
@@ -311,6 +330,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.LABEL:
             case Token.LOOP:
             case Token.BLOCK:
+            case Token.SCOPE_BLOCK:
             case Token.EMPTY:
             case Token.WITH:
                 updateLineNumber(node);
@@ -328,8 +348,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(-1);
                 break;
 
-            case Token.LEAVEWITH:
-                addToken(Token.LEAVEWITH);
+            case Token.ENTER_SCOPE:
+                visitEnterScope(node, child);
+                break;
+
+            case Token.LEAVE_SCOPE:
+                addToken(Token.LEAVE_SCOPE);
                 break;
 
             case Token.LOCAL_BLOCK:
@@ -400,17 +424,39 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.JSR:
                 {
                     Node target = ((Jump) node).target;
-                    addGoto(target, Icode_GOSUB);
+                    FinallyContext fc = finallyByTarget.get(target);
+                    if (fc != null) {
+                        // Inline the finally body for this normal-path caller. The exception
+                        // handler still enters the FINALLY block via STARTSUB/RETSUB, so
+                        // those are emitted separately when the FINALLY child is visited.
+                        // Reset target labels in the body subtree first so each inlined copy
+                        // gets fresh label IDs.
+                        resetTargetLabels(fc.finallyNode);
+                        int inlineStart = iCodeTop;
+                        Node body = fc.finallyNode.getFirstChild();
+                        while (body != null) {
+                            visitStatement(body, initialStackDepth);
+                            body = body.getNext();
+                        }
+                        fc.inlineRanges.add(new int[] {inlineStart, iCodeTop});
+                    } else {
+                        addGoto(target, Icode_GOSUB);
+                    }
                 }
                 break;
 
             case Token.FINALLY:
                 {
-                    // Account for incomming GOTOSUB address
+                    // Exception-path entry: STARTSUB stores the thrown exception in the
+                    // local register, the body runs, RETSUB rethrows. Normal-path callers
+                    // are handled by inlining (see Token.JSR), so the FINALLY block is
+                    // entered only via the exception handler. Reset labels in the body
+                    // subtree because any preceding inlined copy already used them.
                     stackChange(1);
                     int finallyRegister = getLocalBlockRef(node);
                     addIndexOp(Icode_STARTSUB, finallyRegister);
                     stackChange(-1);
+                    resetTargetLabels(node);
                     while (child != null) {
                         visitStatement(child, initialStackDepth);
                         child = child.getNext();
@@ -435,6 +481,20 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                     addIndexOp(Icode_SCOPE_SAVE, scopeLocal);
 
+                    Node finallyTargetNode = tryNode.getFinally();
+                    FinallyContext fc = null;
+                    if (finallyTargetNode != null) {
+                        for (Node c = node.getFirstChild(); c != null; c = c.getNext()) {
+                            if (c.getType() == Token.FINALLY) {
+                                fc = new FinallyContext(c);
+                                break;
+                            }
+                        }
+                        if (fc != null) {
+                            finallyByTarget.put(finallyTargetNode, fc);
+                        }
+                    }
+
                     int tryStart = iCodeTop;
                     boolean savedFlag = itsInTryFlag;
                     itsInTryFlag = true;
@@ -444,7 +504,21 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     }
                     itsInTryFlag = savedFlag;
 
+                    if (fc != null) {
+                        finallyByTarget.remove(finallyTargetNode);
+                    }
+
                     Node catchTarget = tryNode.target;
+                    Node finallyTarget = tryNode.getFinally();
+                    // Splitting both catch and finally ranges by inline-body PCs would
+                    // produce two entries with identical (start, end), which trips the
+                    // interpreter's "no shared end" invariant in getExceptionHandler.
+                    // Only split when there is no catch (the destructuring iterator-close
+                    // case), where avoiding self re-entry into the same finally is the
+                    // motivation. With a catch present, fall back to the prior single
+                    // protected ranges.
+                    List<int[]> excludeRanges =
+                            (fc != null && catchTarget == null) ? fc.inlineRanges : null;
                     if (catchTarget != null) {
                         int catchStartPC = labelTable[getTargetLabel(catchTarget)];
                         addExceptionHandler(
@@ -455,16 +529,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                                 exceptionObjectLocal,
                                 scopeLocal);
                     }
-                    Node finallyTarget = tryNode.getFinally();
                     if (finallyTarget != null) {
                         int finallyStartPC = labelTable[getTargetLabel(finallyTarget)];
-                        addExceptionHandler(
+                        addExceptionHandlersExcluding(
                                 tryStart,
                                 finallyStartPC,
                                 finallyStartPC,
                                 true,
                                 exceptionObjectLocal,
-                                scopeLocal);
+                                scopeLocal,
+                                excludeRanges);
                     }
 
                     addIndexOp(Icode_LOCAL_CLEAR, scopeLocal);
@@ -536,6 +610,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.ENUM_INIT_VALUES:
             case Token.ENUM_INIT_ARRAY:
             case Token.ENUM_INIT_VALUES_IN_ORDER:
+            case Token.ENUM_INIT_ASYNC_ITERATOR:
                 visitExpression(child, 0);
                 addIndexOp(type, getLocalBlockRef(node));
                 stackChange(-1);
@@ -551,6 +626,25 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         if (stackDepth != initialStackDepth) {
             throw Kit.codeBug();
         }
+    }
+
+    private void visitEnterScope(Node node, Node child) {
+        addToken(Token.ENTER_SCOPE);
+        stackChange(1);
+        Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        int i = 0;
+        while (child != null) {
+            addIcode(Icode_DUP);
+            stackChange(1);
+            visitExpression(child, 0);
+            addStringOp(Token.SETNAME, (String) names[i]);
+            addIcode(Icode_POP);
+            stackChange(-2);
+            child = child.getNext();
+            i++;
+        }
+        addIcode(Icode_POP);
+        stackChange(-1);
     }
 
     private void visitExpression(Node node, int contextFlags) {
@@ -576,6 +670,151 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 }
                 break;
 
+            case Token.CLASS:
+                {
+                    // child 0: superclass expression (or Token.NULL for base classes
+                    // with methods)
+                    // child 1: constructor FUNCTION node
+                    // child 2..N: method FUNCTION nodes (optional)
+                    Node superClassExpr = child;
+                    Node constructorFn = child.getNext();
+                    int fnIndex = constructorFn.getExistingIntProp(Node.FUNCTION_PROP);
+                    // Evaluate the superclass expression
+                    visitExpression(superClassExpr, 0);
+                    // Create the constructor function with the superclass as homeObject
+                    // stack: ... superClass -> ... constructorFunction
+                    addIndexOp(Icode_CLASS_EXPR, fnIndex);
+                    // stack doesn't change: superClass consumed, function pushed
+
+                    // Define instance methods on constructor.prototype
+                    String[] methodNames = (String[]) node.getProp(Node.CLASS_METHODS_PROP);
+                    int[] methodKinds = (int[]) node.getProp(Node.CLASS_METHOD_KINDS_PROP);
+                    // Track the node after the constructor for iterating method children
+                    Node nextMethodNode = constructorFn.getNext();
+                    if (methodNames != null) {
+                        for (int i = 0; i < methodNames.length; i++) {
+                            boolean computed = methodNames[i] == null;
+                            if (computed) {
+                                // Evaluate the key expression; stack: ... constructor key
+                                visitExpression(nextMethodNode, 0);
+                                nextMethodNode = nextMethodNode.getNext();
+                            }
+                            int methodFnIndex =
+                                    nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            int kind = methodKinds == null ? 0 : methodKinds[i];
+                            if (computed) {
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_CLASS_COMPUTED_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_CLASS_COMPUTED_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_CLASS_COMPUTED_METHOD);
+                                }
+                                stackChange(-1);
+                            } else {
+                                addStringPrefix(methodNames[i]);
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_CLASS_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_CLASS_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_CLASS_METHOD);
+                                }
+                            }
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                    }
+
+                    // Define static methods on the constructor itself
+                    String[] staticMethodNames =
+                            (String[]) node.getProp(Node.CLASS_STATIC_METHODS_PROP);
+                    int[] staticMethodKinds =
+                            (int[]) node.getProp(Node.CLASS_STATIC_METHOD_KINDS_PROP);
+                    if (staticMethodNames != null) {
+                        for (int i = 0; i < staticMethodNames.length; i++) {
+                            boolean computed = staticMethodNames[i] == null;
+                            if (computed) {
+                                visitExpression(nextMethodNode, 0);
+                                nextMethodNode = nextMethodNode.getNext();
+                            }
+                            int methodFnIndex =
+                                    nextMethodNode.getExistingIntProp(Node.FUNCTION_PROP);
+                            int kind = staticMethodKinds == null ? 0 : staticMethodKinds[i];
+                            if (computed) {
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD);
+                                }
+                                stackChange(-1);
+                            } else {
+                                addStringPrefix(staticMethodNames[i]);
+                                addIndexPrefix(methodFnIndex);
+                                if (kind == 1) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_GETTER);
+                                } else if (kind == 2) {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_SETTER);
+                                } else {
+                                    addIcode(Icode_DEFINE_STATIC_CLASS_METHOD);
+                                }
+                            }
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                    }
+
+                    // Define static named fields on the constructor
+                    String[] staticFieldNames =
+                            (String[]) node.getProp(Node.CLASS_STATIC_FIELDS_PROP);
+                    if (staticFieldNames != null) {
+                        for (int i = 0; i < staticFieldNames.length; i++) {
+                            visitExpression(nextMethodNode, 0);
+                            addStringPrefix(staticFieldNames[i]);
+                            addIcode(Icode_DEFINE_STATIC_CLASS_FIELD);
+                            stackChange(-1);
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                    }
+
+                    // Define static computed fields on the constructor
+                    int staticComputedFieldCount =
+                            node.getIntProp(Node.CLASS_STATIC_COMPUTED_FIELDS_COUNT, 0);
+                    for (int i = 0; i < staticComputedFieldCount; i++) {
+                        visitExpression(nextMethodNode, 0); // key
+                        nextMethodNode = nextMethodNode.getNext();
+                        visitExpression(nextMethodNode, 0); // value
+                        addIcode(Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD);
+                        stackChange(-2);
+                        nextMethodNode = nextMethodNode.getNext();
+                    }
+
+                    // Evaluate instance computed field keys at class declaration time and
+                    // stash them on the constructor for later use by field initializers.
+                    int computedFieldKeysCount =
+                            node.getIntProp(Node.CLASS_COMPUTED_FIELD_KEYS_COUNT, 0);
+                    if (computedFieldKeysCount > 0) {
+                        for (int i = 0; i < computedFieldKeysCount; i++) {
+                            visitExpression(nextMethodNode, 0);
+                            nextMethodNode = nextMethodNode.getNext();
+                        }
+                        addIndexOp(Icode_STORE_CLASS_COMPUTED_KEYS, computedFieldKeysCount);
+                        stackChange(-computedFieldKeysCount);
+                    }
+                }
+                break;
+
+            case Token.GET_CLASS_COMPUTED_KEY:
+                {
+                    int index = node.getExistingIntProp(Node.LITERAL_INDEX_PROP);
+                    addIndexOp(Icode_GET_CLASS_COMPUTED_KEY, index);
+                    stackChange(1);
+                }
+                break;
+
             case Token.LOCAL_LOAD:
                 {
                     int localIndex = getLocalBlockRef(node);
@@ -588,9 +827,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 {
                     Node lastChild = node.getLastChild();
                     while (child != lastChild) {
-                        visitExpression(child, 0);
-                        addIcode(Icode_POP);
-                        stackChange(-1);
+                        if (child.getType() == Token.LOCAL_BLOCK) {
+                            // Embedded statement-level side-effect (e.g. try/finally for
+                            // iterator cleanup in destructuring). Produces no value, so no POP.
+                            visitStatement(child, stackDepth);
+                        } else {
+                            visitExpression(child, 0);
+                            addIcode(Icode_POP);
+                            stackChange(-1);
+                        }
                         child = child.getNext();
                     }
                     // Preserve tail context flag if any
@@ -675,6 +920,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
                         addUint16(lineNumber & 0xFFFF);
+                    } else if (node.getIntProp(Node.SUPER_CONSTRUCTOR_CALL, 0) == 1) {
+                        if (node.getIntProp(Node.SUPER_CONSTRUCTOR_SPREAD_CALL, 0) == 1) {
+                            addIcode(Icode_CONSTRUCT_SUPER_SPREAD);
+                        } else {
+                            addIndexOp(Icode_CONSTRUCT_SUPER, argCount);
+                        }
                     } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                         addIndexOp(Icode_CALL_ON_SUPER, argCount);
                     } else {
@@ -866,6 +1117,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.BITNOT:
             case Token.TYPEOF:
             case Token.VOID:
+            case Token.TO_OBJECT_COERCIBLE:
+            case Token.ITERATOR_CLOSE_ABRUPT:
                 visitExpression(child, 0);
                 if (type == Token.VOID) {
                     addIcode(Icode_POP);
@@ -919,6 +1172,28 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                             property);
                     stackChange(-1);
                 }
+                break;
+
+            case Token.DEFINE_FIELD:
+                // Children: target, key, value. Pushes all three, pops all three, leaves value
+                // on stack as the expression result. FIELD_KIND_PROP selects between storing
+                // a value (0), a getter (1), or a setter (2) on the private slot.
+                visitExpression(child, 0); // target
+                child = child.getNext();
+                visitExpression(child, 0); // key (a symbol-valued Node.LOAD_LITERAL)
+                child = child.getNext();
+                visitExpression(child, 0); // value (or accessor fn)
+                {
+                    int fieldKind = node.getIntProp(Node.FIELD_KIND_PROP, 0);
+                    if (fieldKind == 1) {
+                        addIcode(Icode_DEFINE_PRIVATE_GETTER);
+                    } else if (fieldKind == 2) {
+                        addIcode(Icode_DEFINE_PRIVATE_SETTER);
+                    } else {
+                        addIcode(Icode_DEFINE_PRIVATE_FIELD);
+                    }
+                }
+                stackChange(-2); // three pushed, one left (value)
                 break;
 
             case Token.SETELEM:
@@ -1052,6 +1327,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.THIS:
             case Token.SUPER:
             case Token.THISFN:
+            case Token.NEW_TARGET:
             case Token.FALSE:
             case Token.TRUE:
                 addToken(type);
@@ -1065,8 +1341,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.ENUM_NEXT:
             case Token.ENUM_ID:
+            case Token.ENUM_ASYNC_NEXT:
                 addIndexOp(type, getLocalBlockRef(node));
                 stackChange(1);
+                break;
+
+            case Token.ENUM_ASYNC_STEP:
+                // Child is the expression that evaluates to the awaited IteratorResult.
+                visitExpression(child, 0);
+                addIndexOp(type, getLocalBlockRef(node));
+                // opcode pops the result and pushes the boolean: net zero on top of the child.
                 break;
 
             case Token.BIGINT:
@@ -1078,6 +1362,14 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 {
                     int index = node.getExistingIntProp(Node.REGEXP_PROP);
                     addIndexOp(Token.REGEXP, index);
+                    stackChange(1);
+                }
+                break;
+
+            case Token.LOAD_LITERAL:
+                {
+                    int index = node.getExistingIntProp(Node.LITERAL_INDEX_PROP);
+                    addIndexOp(Token.LOAD_LITERAL, index);
                     stackChange(1);
                 }
                 break;
@@ -1156,16 +1448,27 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
             case Token.YIELD:
             case Token.YIELD_STAR:
+            case Token.AWAIT:
                 if (child != null) {
                     visitExpression(child, 0);
                 } else {
                     addIcode(Icode_UNDEF);
                     stackChange(1);
                 }
-                if (type == Token.YIELD) {
-                    addToken(Token.YIELD);
-                } else {
+                if (type == Token.YIELD_STAR) {
                     addIcode(Icode_YIELD_STAR);
+                } else {
+                    // Inside an async generator we need to tell yield and await apart at the
+                    // driver level. Wrap the value of an await in an AwaitMarker; a plain yield
+                    // yields the raw value.
+                    if (type == Token.AWAIT
+                            && scriptOrFn instanceof FunctionNode
+                            && ((FunctionNode) scriptOrFn).isAsyncGenerator()) {
+                        addIcode(Icode_WRAP_AWAIT);
+                    }
+                    // Token.YIELD and Token.AWAIT both use the same yield opcode; the async
+                    // Promise runner drives the generator for await.
+                    addToken(Token.YIELD);
                 }
                 addUint16(node.getLineno() & 0xFFFF);
                 break;
@@ -1178,7 +1481,17 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     addToken(Token.ENTERWITH);
                     stackChange(-1);
                     visitExpression(with.getFirstChild(), 0);
-                    addToken(Token.LEAVEWITH);
+                    addToken(Token.LEAVE_SCOPE);
+                    break;
+                }
+
+            case Token.SCOPEEXPR:
+                {
+                    Node enterScope = node.getFirstChild();
+                    Node expr = enterScope.getNext();
+                    visitEnterScope(enterScope, enterScope.getFirstChild());
+                    visitExpression(expr.getFirstChild(), 0);
+                    addToken(Token.LEAVE_SCOPE);
                     break;
                 }
 
@@ -1691,6 +2004,21 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         labelTable[label] = iCodeTop;
     }
 
+    /**
+     * Recursively clear labelId on every TARGET node in the subtree, so the subtree can be walked
+     * again to emit a fresh copy of its bytecode (e.g. for inlining a finally body at multiple
+     * non-exceptional callers). YIELD/AWAIT label IDs are left alone because the function's
+     * resumption table refers to them.
+     */
+    private void resetTargetLabels(Node node) {
+        if (node.getType() == Token.TARGET) {
+            node.labelId(-1);
+        }
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            resetTargetLabels(child);
+        }
+    }
+
     private void addGoto(Node target, int gotoOp) {
         int label = getTargetLabel(target);
         if (!(label < labelTableTop)) Kit.codeBug();
@@ -1931,6 +2259,61 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         } else {
             addIcode(Icode_REG_IND4);
             addInt(index);
+        }
+    }
+
+    /**
+     * Register one or more exception handler entries covering [icodeStart, icodeEnd) but skipping
+     * any PC ranges in {@code excludeRanges}. The exclude ranges correspond to inlined finally
+     * bodies on this try's normal-completion paths; an exception thrown inside such a body must not
+     * be re-caught by the same try (which would re-enter the finally and double-run it), matching
+     * the prior JSR/RETSUB behavior where the body executed at the FINALLY block's PC outside the
+     * protected range.
+     */
+    private void addExceptionHandlersExcluding(
+            int icodeStart,
+            int icodeEnd,
+            int handlerStart,
+            boolean isFinally,
+            int exceptionObjectLocal,
+            int scopeLocal,
+            List<int[]> excludeRanges) {
+        if (excludeRanges == null || excludeRanges.isEmpty()) {
+            addExceptionHandler(
+                    icodeStart,
+                    icodeEnd,
+                    handlerStart,
+                    isFinally,
+                    exceptionObjectLocal,
+                    scopeLocal);
+            return;
+        }
+        int cursor = icodeStart;
+        for (int[] r : excludeRanges) {
+            int rStart = r[0];
+            int rEnd = r[1];
+            if (rEnd <= cursor || rStart >= icodeEnd) {
+                continue;
+            }
+            int segStart = cursor;
+            int segEnd = Math.min(rStart, icodeEnd);
+            if (segEnd > segStart) {
+                addExceptionHandler(
+                        segStart,
+                        segEnd,
+                        handlerStart,
+                        isFinally,
+                        exceptionObjectLocal,
+                        scopeLocal);
+            }
+            cursor = Math.max(cursor, rEnd);
+            if (cursor >= icodeEnd) {
+                break;
+            }
+        }
+        if (cursor < icodeEnd) {
+            addExceptionHandler(
+                    cursor, icodeEnd, handlerStart, isFinally, exceptionObjectLocal, scopeLocal);
         }
     }
 

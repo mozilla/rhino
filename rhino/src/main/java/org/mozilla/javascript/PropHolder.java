@@ -46,4 +46,15 @@ public interface PropHolder<T extends PropHolder<T>> {
      * @return the parent scope
      */
     public T getAncestor();
+
+    /**
+     * Get an array of property ids.
+     *
+     * <p>Not all property ids need be returned. Those properties whose ids are not returned are
+     * considered non-enumerable.
+     *
+     * @return an array of Objects. Each entry in the array is either a java.lang.String or a
+     *     java.lang.Number
+     */
+    public Object[] getIds();
 }

@@ -18,7 +18,8 @@ public interface Symbol {
     enum Kind {
         REGULAR, // A regular symbol is created using the constructor
         BUILT_IN, // A built-in symbol is one of the properties of the "Symbol" constructor
-        REGISTERED // A registered symbol was created using "Symbol.for"
+        REGISTERED, // A registered symbol was created using "Symbol.for"
+        PRIVATE // A private symbol is the identity key for a class private field or method
     }
 
     /**

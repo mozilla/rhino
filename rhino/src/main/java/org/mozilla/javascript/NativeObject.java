@@ -96,7 +96,7 @@ public class NativeObject extends ScriptableObject implements Map {
 
     static JSFunction init(Context cx, VarScope s, boolean sealed) {
         var desc = cx.version >= Context.VERSION_ES6 ? ES6_DESCRIPTOR : LEGACY_DESCRIPTOR;
-        return desc.buildConstructor(cx, (VarScope) s, new NativeObject(), sealed);
+        return desc.buildConstructor(cx, s, new NativeObject(), sealed);
     }
 
     @Override

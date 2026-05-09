@@ -297,9 +297,9 @@ public class Kit {
         try (BufferedReader in = new BufferedReader(reader)) {
             char[] cbuf = new char[1024];
             StringBuilder sb = new StringBuilder(1024);
-            int bytes_read;
-            while ((bytes_read = in.read(cbuf, 0, 1024)) != -1) {
-                sb.append(cbuf, 0, bytes_read);
+            int chars_read;
+            while ((chars_read = in.read(cbuf, 0, 1024)) != -1) {
+                sb.append(cbuf, 0, chars_read);
             }
             return sb.toString();
         }

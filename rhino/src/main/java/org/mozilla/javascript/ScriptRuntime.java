@@ -6,6 +6,12 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.Symbol.Kind.REGULAR;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
+
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -22,6 +28,7 @@ import java.util.ResourceBundle;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.dtoa.DoubleFormatter;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -69,17 +76,26 @@ public class ScriptRuntime {
 
     /** Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3 */
     public static BaseFunction typeErrorThrower(Context cx) {
-        if (cx.typeErrorThrower == null) {
-            BaseFunction thrower = new ThrowTypeError(cx.topCallScope);
-            cx.typeErrorThrower = thrower;
+        return typeErrorThrower(cx.topCallScope);
+    }
+
+    private static final SymbolKey TYPE_ERROR_THROWER = new SymbolKey("TypeErrorThrower", REGULAR);
+
+    public static BaseFunction typeErrorThrower(VarScope scope) {
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        var thrower = top.get(TYPE_ERROR_THROWER, top);
+        if (thrower == NOT_FOUND) {
+            thrower = new ThrowTypeError(top);
+            top.defineProperty(TYPE_ERROR_THROWER, thrower, DONTENUM | READONLY | PERMANENT);
         }
-        return cx.typeErrorThrower;
+        return (BaseFunction) thrower;
     }
 
     static final class ThrowTypeError extends BaseFunction {
         private static final long serialVersionUID = -5891740962154902286L;
 
         ThrowTypeError(VarScope scope) {
+            super(scope);
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
 
             setAttributes("length", DONTENUM | PERMANENT | READONLY);
@@ -102,7 +118,7 @@ public class ScriptRuntime {
         }
 
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             throwNotAllowed();
             return null;
         }
@@ -138,7 +154,7 @@ public class ScriptRuntime {
          * @return the result of the call
          */
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             Object[] nestedArgs = new Object[2];
 
             nestedArgs[0] = methodName;
@@ -207,7 +223,7 @@ public class ScriptRuntime {
                         : new LegacyCacheFactory.Concurrent();
         typeFactory.associate(scope);
 
-        LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
+        JSFunction function = BaseFunction.init(cx, scope, sealed);
         JSFunction obj = NativeObject.init(cx, scope, sealed);
 
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
@@ -229,23 +245,23 @@ public class ScriptRuntime {
             // representation
             NativeArray.setMaximumInitialCapacity(200000);
         }
-        NativeString.init(scope, sealed);
+        NativeString.init(cx, scope, sealed);
         NativeBoolean.init(cx, scope, sealed);
-        NativeNumber.init(scope, sealed);
+        NativeNumber.init(cx, scope, sealed);
         NativeDate.init(cx, scope, sealed);
         new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
 
-        NativeScript.init(cx, scope, sealed);
+        NativeScript.init2(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
-        NativeArrayIterator.init(scope, sealed);
-        NativeStringIterator.init(scope, sealed);
+        NativeArrayIterator.init(cx, scope, sealed);
+        NativeStringIterator.init(cx, scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        NativeJavaObject.init(cx, scope, sealed);
+        NativeJavaMap.init(cx, scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -282,8 +298,6 @@ public class ScriptRuntime {
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
-            NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
-            NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
             new LazilyLoadedCtor<>(scope, "Map", sealed, true, NativeMap::init);
             new LazilyLoadedCtor<>(scope, "Promise", sealed, true, NativePromise::init);
             new LazilyLoadedCtor<>(scope, "Set", sealed, true, NativeSet::init);
@@ -302,7 +316,7 @@ public class ScriptRuntime {
     private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
-            regExpProxy.register(scope, sealed);
+            regExpProxy.register(cx, scope, sealed);
         }
     }
 
@@ -990,7 +1004,7 @@ public class ScriptRuntime {
             }
         } else if (id instanceof String) {
             String propName = (String) id;
-            value = getObjectProp(source, propName, cx, (VarScope) scope);
+            value = getObjectProp(source, propName, cx, scope);
             if (value != Scriptable.NOT_FOUND) {
                 result.put(propName, result, value);
             }
@@ -1641,6 +1655,17 @@ public class ScriptRuntime {
         throw Context.reportRuntimeErrorById("msg.not.ctor", constructorName);
     }
 
+    public static Function getExistingCtor(Context cx, VarScope scope, SymbolKey constructorName) {
+        Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
+        if (ctorVal instanceof Function) {
+            return (Function) ctorVal;
+        }
+        if (ctorVal == Scriptable.NOT_FOUND) {
+            throw Context.reportRuntimeErrorById("msg.ctor.not.found", constructorName);
+        }
+        throw Context.reportRuntimeErrorById("msg.not.ctor", constructorName);
+    }
+
     /**
      * Return -1L if str is not an index, or the index value as lower 32 bits of the result. Note
      * that the result needs to be cast to an int in order to produce the actual index, which may be
@@ -1845,6 +1870,9 @@ public class ScriptRuntime {
         }
 
         if (result == Scriptable.NOT_FOUND) {
+            if (isPrivateSymbol(elem)) {
+                throw typeErrorById("msg.private.not.on.object", ((Symbol) elem).getName());
+            }
             result = Undefined.instance;
         }
         return result;
@@ -1879,6 +1907,9 @@ public class ScriptRuntime {
         }
 
         if (result == Scriptable.NOT_FOUND) {
+            if (isPrivateSymbol(elem)) {
+                throw typeErrorById("msg.private.not.on.object", ((Symbol) elem).getName());
+            }
             result = Undefined.instance;
         }
         return result;
@@ -2051,7 +2082,11 @@ public class ScriptRuntime {
         if (obj instanceof XMLObject) {
             ((XMLObject) obj).put(cx, elem, value);
         } else if (isSymbol(elem)) {
-            ScriptableObject.putProperty(obj, (Symbol) elem, value);
+            Symbol sym = (Symbol) elem;
+            if (isPrivateSymbol(sym) && !ScriptableObject.hasProperty(obj, sym)) {
+                throw typeErrorById("msg.private.write.not.on.object", sym.getName());
+            }
+            ScriptableObject.putProperty(obj, sym, value);
         } else {
             StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
@@ -2087,8 +2122,11 @@ public class ScriptRuntime {
             Context cx) {
         // No XML support for super
         if (isSymbol(elem)) {
-            ScriptableObject.putSuperProperty(
-                    superScriptable, thisScriptable, (Symbol) elem, value);
+            Symbol sym = (Symbol) elem;
+            if (isPrivateSymbol(sym) && !ScriptableObject.hasProperty(thisScriptable, sym)) {
+                throw typeErrorById("msg.private.write.not.on.object", sym.getName());
+            }
+            ScriptableObject.putSuperProperty(superScriptable, thisScriptable, sym, value);
         } else {
             StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
@@ -2383,8 +2421,8 @@ public class ScriptRuntime {
                         break;
                     }
                 }
-            } else if (scope instanceof NativeCall) {
-                // NativeCall does not prototype chain and Scriptable.get
+            } else if (scope instanceof CatchScope || scope instanceof NativeCall) {
+                // Scopes do not have a prototype chain and Scriptable.get
                 // can be called directly.
                 result = scope.get(name, scope);
                 if (result != Scriptable.NOT_FOUND) {
@@ -2467,7 +2505,7 @@ public class ScriptRuntime {
                         break;
                     }
                 }
-            } else if (scope instanceof NativeCall) {
+            } else if (scope instanceof CatchScope || scope instanceof NativeCall) {
                 // NativeCall does not prototype chain and Scriptable.get
                 // can be called directly.
                 result = scope.get(name, scope);
@@ -2530,18 +2568,24 @@ public class ScriptRuntime {
         childScopesChecks:
         if (parent != null) {
             // Check for possibly nested "with" scopes first
-            while (scope instanceof WithScope) {
-                Scriptable withObj = ((WithScope) scope).getObject();
-                if (withObj instanceof XMLObject) {
-                    XMLObject xmlObject = (XMLObject) withObj;
-                    if (xmlObject.has(cx, id)) {
-                        return new WithScope(scope.getParentScope(), xmlObject);
-                    }
-                    if (firstXMLScope == null) {
-                        firstXMLScope = scope;
+            while (scope.isNestedScope()) {
+                if (scope instanceof WithScope) {
+                    Scriptable withObj = ((WithScope) scope).getObject();
+                    if (withObj instanceof XMLObject) {
+                        XMLObject xmlObject = (XMLObject) withObj;
+                        if (xmlObject.has(cx, id)) {
+                            return new WithScope(scope.getParentScope(), xmlObject);
+                        }
+                        if (firstXMLScope == null) {
+                            firstXMLScope = scope;
+                        }
+                    } else {
+                        if (ScriptableObject.hasProperty(withObj, id)) {
+                            return scope;
+                        }
                     }
                 } else {
-                    if (ScriptableObject.hasProperty(withObj, id)) {
+                    if (scope.has(id, scope)) {
                         return scope;
                     }
                 }
@@ -2618,7 +2662,7 @@ public class ScriptRuntime {
     }
 
     public static Object setConst(VarScope bound, Object value, Context cx, String id) {
-        ScriptableObject.putConstProperty((VarScope) bound, id, value);
+        ScriptableObject.putConstProperty(bound, id, value);
         return value;
     }
 
@@ -2635,7 +2679,7 @@ public class ScriptRuntime {
      * if a given property has already been enumerated.
      */
     private static class IdEnumeration implements Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -8685189816346084720L;
         Scriptable obj;
         Object[] ids;
         HashSet<Object> used;
@@ -2648,6 +2692,7 @@ public class ScriptRuntime {
         boolean enumNumbers;
 
         Scriptable iterator;
+        boolean isAsyncIteration;
     }
 
     public static Scriptable toIterator(Context cx, Scriptable obj, boolean keyOnly) {
@@ -2684,6 +2729,7 @@ public class ScriptRuntime {
     public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
     public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
     public static final int ENUMERATE_VALUES_IN_ORDER = 6;
+    public static final int ENUMERATE_VALUES_IN_ORDER_ASYNC = 7;
 
     /**
      * @deprecated Use {@link #enumInit(Object, Context, VarScope, int)} instead
@@ -2817,6 +2863,7 @@ public class ScriptRuntime {
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
+            new Error(String.format("%s", v)).printStackTrace();
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
@@ -2877,6 +2924,105 @@ public class ScriptRuntime {
         }
 
         return result;
+    }
+
+    /**
+     * Internal marker that wraps the operand of an {@code await} inside an async-generator body, so
+     * the driver can tell a yield point that is an {@code await} (resume generator with the
+     * resolved value) from a plain {@code yield} (resolve the consumer's pending request).
+     */
+    public static final class AwaitMarker {
+        private final Object value;
+
+        public AwaitMarker(Object value) {
+            this.value = value;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+    }
+
+    /** Wrap {@code v} in an {@link AwaitMarker}. Invoked from generated code for {@code await}. */
+    public static Object wrapAwait(Object v) {
+        return new AwaitMarker(v);
+    }
+
+    /**
+     * Initialise async iteration for a for-await-of loop. Looks up {@code [Symbol.asyncIterator]}
+     * on the operand and falls back to {@code [Symbol.iterator]} when absent (per the spec's
+     * CreateAsyncFromSyncIterator coercion, simplified: the sync iterator's results will flow
+     * through the existing await machinery unchanged).
+     */
+    public static Object enumInitAsyncIterator(Object value, Context cx, VarScope scope) {
+        IdEnumeration x = new IdEnumeration();
+        x.obj = toObjectOrNull(cx, value, scope);
+        if (x.obj == null || !(x.obj instanceof SymbolScriptable)) {
+            throw typeErrorById("msg.not.iterable", toString(value));
+        }
+        x.enumType = ENUMERATE_VALUES_IN_ORDER_ASYNC;
+        x.isAsyncIteration = true;
+
+        Object iteratorFn = Scriptable.NOT_FOUND;
+        if (ScriptableObject.hasProperty(x.obj, SymbolKey.ASYNC_ITERATOR)) {
+            iteratorFn = ScriptableObject.getProperty(x.obj, SymbolKey.ASYNC_ITERATOR);
+        }
+        if (iteratorFn == Scriptable.NOT_FOUND
+                || iteratorFn == null
+                || Undefined.isUndefined(iteratorFn)) {
+            if (!ScriptableObject.hasProperty(x.obj, SymbolKey.ITERATOR)) {
+                throw typeErrorById("msg.not.iterable", toString(value));
+            }
+            iteratorFn = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
+        }
+        if (!(iteratorFn instanceof Callable)) {
+            throw typeErrorById("msg.not.iterable", toString(value));
+        }
+        Callable f = (Callable) iteratorFn;
+        VarScope callScope =
+                (f instanceof Function) ? ((Function) f).getDeclarationScope() : cx.topCallScope;
+        Object v = f.call(cx, callScope, x.obj, emptyArgs);
+        if (!(v instanceof Scriptable)) {
+            throw typeErrorById("msg.not.iterable", toString(value));
+        }
+        x.iterator = (Scriptable) v;
+        return x;
+    }
+
+    /**
+     * Invoke {@code iterator.next()} on an async-iteration enumeration and return the raw result
+     * (which is typically a Promise of an IteratorResult, but may be a plain IteratorResult when
+     * the underlying iterator is a sync iterator coerced to async). The caller is expected to
+     * {@code await} this value and then pass the resolved IteratorResult to {@link
+     * #enumAsyncStep(Object, Object, Context)}.
+     */
+    public static Object enumAsyncNext(Object enumObj, Context cx) {
+        IdEnumeration x = (IdEnumeration) enumObj;
+        Object nextFn = ScriptableObject.getProperty(x.iterator, ES6Iterator.NEXT_METHOD);
+        if (!(nextFn instanceof Callable)) {
+            throw notFunctionError(x.iterator, ES6Iterator.NEXT_METHOD);
+        }
+        Callable f = (Callable) nextFn;
+        VarScope callScope =
+                (f instanceof Function) ? ((Function) f).getDeclarationScope() : cx.topCallScope;
+        return f.call(cx, callScope, x.iterator, emptyArgs);
+    }
+
+    /**
+     * After the async-iteration result has been awaited, process it: store the {@code .value} on
+     * the enumeration so a subsequent {@code ENUM_ID} reads it, and return {@code Boolean.TRUE} if
+     * iteration should continue (i.e. {@code !done}), else {@code Boolean.FALSE}.
+     */
+    public static Boolean enumAsyncStep(Object enumObj, Object awaitedResult, Context cx) {
+        IdEnumeration x = (IdEnumeration) enumObj;
+        Scriptable resultObj = toObject(cx, cx.topCallScope, awaitedResult);
+        Object done = ScriptableObject.getProperty(resultObj, ES6Iterator.DONE_PROPERTY);
+        if (done != Scriptable.NOT_FOUND && toBoolean(done)) {
+            x.currentId = Undefined.instance;
+            return Boolean.FALSE;
+        }
+        x.currentId = ScriptableObject.getProperty(resultObj, ES6Iterator.VALUE_PROPERTY);
+        return Boolean.TRUE;
     }
 
     private static void enumChangeObject(IdEnumeration x) {
@@ -2984,7 +3130,9 @@ public class ScriptRuntime {
                 }
                 throw notFunctionError(result, name);
             }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            // Top scope is not a with scope or an activation frame,
+            // the called function will resolve `globalThis` in its
+            // realm.
             storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
             return (Callable) result;
         }
@@ -3024,7 +3172,9 @@ public class ScriptRuntime {
                     throw notFoundError(scope, name);
                 }
             }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            // If the scope is a wtih scope then `this` will be its
+            // object, otherwise the callee will resolve `globalThis`
+            // in its realm.
             return new LookupResult(
                     result,
                     scope instanceof WithScope
@@ -3381,6 +3531,81 @@ public class ScriptRuntime {
         return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
     }
 
+    /** Result of {@link #callAsyncIterator}: the iterator and whether it is async. */
+    public static final class AsyncIteratorResult {
+        private final Object iterator;
+        private final boolean isAsync;
+
+        AsyncIteratorResult(Object iterator, boolean isAsync) {
+            this.iterator = iterator;
+            this.isAsync = isAsync;
+        }
+
+        public Object getIterator() {
+            return iterator;
+        }
+
+        public boolean isAsync() {
+            return isAsync;
+        }
+    }
+
+    /**
+     * Get an async iterator for {@code obj} following the hint=async variant of GetIterator: try
+     * {@code [Symbol.asyncIterator]} first, and only fall back to {@code [Symbol.iterator]} when
+     * the async lookup does not produce a callable method. Used by {@code yield*} in async
+     * generator functions.
+     */
+    public static AsyncIteratorResult callAsyncIterator(Object obj, Context cx, VarScope scope) {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
+        if (sobj != null) {
+            Object asyncMethod = ScriptableObject.getProperty(sobj, SymbolKey.ASYNC_ITERATOR);
+            if (asyncMethod != Scriptable.NOT_FOUND
+                    && asyncMethod != null
+                    && !Undefined.isUndefined(asyncMethod)) {
+                if (!(asyncMethod instanceof Callable)) {
+                    throw notFunctionError(sobj, SymbolKey.ASYNC_ITERATOR);
+                }
+                Callable f = (Callable) asyncMethod;
+                VarScope callScope =
+                        (f instanceof Function)
+                                ? ((Function) f).getDeclarationScope()
+                                : cx.topCallScope;
+                Object iter = f.call(cx, callScope, sobj, emptyArgs);
+                return new AsyncIteratorResult(iter, true);
+            }
+        }
+        // Fall back to the sync iterator protocol.
+        Object iter = callIterator(obj, cx, scope);
+        return new AsyncIteratorResult(iter, false);
+    }
+
+    /**
+     * Implements the abrupt-completion branch of the ECMAScript IteratorClose abstract operation.
+     * Called from destructuring (and similar) code during unwinding so the original abrupt
+     * completion is preserved: any exception thrown by iterator.return is swallowed, and a
+     * non-object return value does NOT raise a TypeError. If {@code iterator} is null or not a
+     * Scriptable (e.g. it was never opened) this is a no-op.
+     */
+    public static void closeIteratorAbrupt(Object iterator, Context cx, VarScope scope) {
+        if (!(iterator instanceof Scriptable)) {
+            return;
+        }
+        Scriptable iter = (Scriptable) iterator;
+        try {
+            Object ret = ScriptableObject.getProperty(iter, "return");
+            if (ret == Scriptable.NOT_FOUND || ret == Undefined.instance || ret == null) {
+                return;
+            }
+            if (!(ret instanceof Callable)) {
+                return;
+            }
+            ((Callable) ret).call(cx, scope, iter, ScriptRuntime.emptyArgs);
+        } catch (RuntimeException ignored) {
+            // Per spec: on abrupt completion, errors from return() are discarded.
+        }
+    }
+
     /**
      * Given an iterator result, return true if and only if there is a "done" property that's true.
      */
@@ -3398,7 +3623,7 @@ public class ScriptRuntime {
      * times. The args array reference should not be stored in any object that can be GC-reachable
      * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
-    public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
+    public static Ref callRef(Callable function, Object thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
             RefCallable rfunction = (RefCallable) function;
             Ref ref = rfunction.refCall(cx, thisObj, args);
@@ -3431,7 +3656,7 @@ public class ScriptRuntime {
             Scriptable thisObj,
             Object[] args,
             VarScope scope,
-            Scriptable callerThis,
+            Object callerThis,
             int callType,
             String filename,
             int lineNumber,
@@ -3442,7 +3667,7 @@ public class ScriptRuntime {
 
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
-                return evalSpecial(cx, (VarScope) scope, callerThis, args, filename, lineNumber);
+                return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
             }
         } else {
             throw Kit.codeBug();
@@ -3470,7 +3695,7 @@ public class ScriptRuntime {
      * <p>See Ecma 15.3.4.[34]
      */
     public static Object applyOrCall(
-            boolean isApply, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, VarScope scope, Object thisObj, Object[] args) {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
@@ -3534,7 +3759,7 @@ public class ScriptRuntime {
                         || ScriptableObject.hasProperty(obj, "length"));
     }
 
-    static Object[] getApplyArguments(Context cx, Object arg1) {
+    public static Object[] getApplyArguments(Context cx, Object arg1) {
         if (arg1 == null || Undefined.isUndefined(arg1)) {
             return ScriptRuntime.emptyArgs;
         } else if (arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1)) {
@@ -3546,14 +3771,16 @@ public class ScriptRuntime {
         }
     }
 
-    static Callable getCallable(Scriptable thisObj) {
+    static Callable getCallable(Object thisObj) {
         Callable function;
         if (thisObj instanceof Callable) {
             function = (Callable) thisObj;
         } else if (thisObj == null) {
             throw ScriptRuntime.notFunctionError(null, null);
+        } else if (!(thisObj instanceof Scriptable)) {
+            throw ScriptRuntime.notFunctionError(thisObj, null);
         } else {
-            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+            Object value = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
             if (!(value instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(value, thisObj);
             }
@@ -4873,12 +5100,12 @@ public class ScriptRuntime {
      */
     @Deprecated
     public static Object doTopCall(
-            Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            Callable callable, Context cx, VarScope scope, Object thisObj, Object[] args) {
         return doTopCall(callable, cx, scope, thisObj, args, cx.isStrictMode());
     }
 
     @Deprecated
-    public static Object doTopCall(Script script, Context cx, VarScope scope, Scriptable thisObj) {
+    public static Object doTopCall(Script script, Context cx, VarScope scope, Object thisObj) {
         return doTopCall(script, cx, scope, thisObj, cx.isStrictMode());
     }
 
@@ -4886,7 +5113,7 @@ public class ScriptRuntime {
             Callable callable,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
@@ -4913,11 +5140,7 @@ public class ScriptRuntime {
     }
 
     public static Object doTopCall(
-            Script script,
-            Context cx,
-            VarScope scope,
-            Scriptable thisObj,
-            boolean isTopLevelStrict) {
+            Script script, Context cx, VarScope scope, Object thisObj, boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
         if (cx.topCallScope != null) throw new IllegalStateException();
 
@@ -4982,11 +5205,7 @@ public class ScriptRuntime {
     }
 
     public static void initScript(
-            ScriptOrFn execObj,
-            Scriptable thisObj,
-            Context cx,
-            VarScope scope,
-            boolean evalScript) {
+            ScriptOrFn execObj, Object thisObj, Context cx, VarScope scope, boolean evalScript) {
         if (cx.topCallScope == null) throw new IllegalStateException();
 
         var desc = execObj.getDescriptor();
@@ -4997,7 +5216,7 @@ public class ScriptRuntime {
             VarScope varScope = scope;
             // Never define any variables from var statements inside with
             // object. See bug 38590.
-            while (varScope instanceof WithScope) {
+            while (varScope.isNestedScope()) {
                 varScope = varScope.getParentScope();
             }
 
@@ -5088,9 +5307,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    public static Scriptable newCatchScope(
+    public static VarScope newCatchScope(
             Throwable t,
-            Scriptable lastCatchScope,
+            VarScope lastCatchScope,
             String exceptionName,
             Context cx,
             VarScope scope) {
@@ -5108,8 +5327,7 @@ public class ScriptRuntime {
             // the previous scope object
 
             if (lastCatchScope != null) {
-                NativeObject last = (NativeObject) lastCatchScope;
-                obj = last.getAssociatedValue(t);
+                obj = ((DeclarationScope) lastCatchScope).getAssociatedValue(t);
                 if (obj == null) Kit.codeBug();
                 break getObj;
             }
@@ -5196,26 +5414,26 @@ public class ScriptRuntime {
             obj = errorObject;
         }
 
-        NativeObject catchScopeObject = new NativeObject();
+        var catchScope = new CatchScope(scope);
         // See ECMA 12.4
         if (exceptionName != null) {
-            catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
+            catchScope.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
         }
 
         if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) && isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch
             // scope that can be used to retrieve the Java exception associated
             // with the JavaScript exception (to get stack trace info, etc.)
-            catchScopeObject.defineProperty(
+            catchScope.defineProperty(
                     "__exception__",
                     Context.javaToJS(t, scope),
                     ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
         }
 
         if (cacheObj) {
-            catchScopeObject.associateValue(t, obj);
+            catchScope.associateValue(t, obj);
         }
-        return catchScopeObject;
+        return catchScope;
     }
 
     public static Scriptable wrapException(Throwable t, VarScope scope, Context cx) {
@@ -5312,9 +5530,12 @@ public class ScriptRuntime {
         return new WithScope(scope, sobj);
     }
 
-    public static VarScope leaveWith(VarScope scope) {
-        WithScope nw = (WithScope) scope;
-        return nw.getParentScope();
+    public static VarScope enterScope(VarScope scope) {
+        return new LocalScope(scope);
+    }
+
+    public static VarScope leaveScope(VarScope scope) {
+        return scope.getParentScope();
     }
 
     public static VarScope enterDotQuery(Object value, VarScope scope) {
@@ -5360,9 +5581,22 @@ public class ScriptRuntime {
 
     public static void setFunctionProtoAndParent(
             BaseFunction fn, Context cx, VarScope scope, boolean es6GeneratorFunction) {
+        setFunctionProtoAndParent(fn, cx, scope, es6GeneratorFunction, false);
+    }
+
+    public static void setFunctionProtoAndParent(
+            BaseFunction fn,
+            Context cx,
+            VarScope scope,
+            boolean es6GeneratorFunction,
+            boolean isAsync) {
         fn.setParentScope(scope);
-        if (es6GeneratorFunction) {
+        if (es6GeneratorFunction && isAsync) {
+            fn.setPrototype(ScriptableObject.getAsyncGeneratorFunctionPrototype(scope));
+        } else if (es6GeneratorFunction) {
             fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));
+        } else if (isAsync) {
+            fn.setPrototype(ScriptableObject.getAsyncFunctionPrototype(scope));
         } else {
             fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
@@ -5370,6 +5604,275 @@ public class ScriptRuntime {
         if (cx != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
             fn.setStandardPropertyAttributes(ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
+    }
+
+    public static Scriptable superConstructorCall(
+            BaseFunction thisFn, Context cx, VarScope scope, Object[] args) {
+        Scriptable homeObject = thisFn.getHomeObject();
+        if (homeObject == null || !(homeObject instanceof Constructable)) {
+            throw typeErrorById("msg.extends.not.ctor");
+        }
+        if (homeObject instanceof JSFunction) {
+            // Pass new.target (the original constructor) through so the correct
+            // prototype is used for the new object.
+            return ((JSFunction) homeObject).construct(cx, thisFn, scope, null, args);
+        }
+        return ((Constructable) homeObject).construct(cx, scope, args);
+    }
+
+    public static void setupClassPrototypeChain(
+            BaseFunction constructor, Scriptable superClass, VarScope scope) {
+        if (superClass == null) {
+            return;
+        }
+
+        if (!(superClass instanceof ScriptableObject)) {
+            throw typeError("Super class must be an object");
+        }
+        // Set constructor.__proto__ = superClass
+        // This enables static method inheritance (future) and super() resolution
+        constructor.setPrototype(superClass);
+
+        // Set constructor.prototype.__proto__ = superClass.prototype
+        Object superProto = superClass.get("prototype", superClass);
+        Object constructorProto = constructor.getPrototypeProperty();
+        if (constructorProto instanceof ScriptableObject && superProto instanceof Scriptable) {
+            ((ScriptableObject) constructorProto).setPrototype((Scriptable) superProto);
+        }
+    }
+
+    public static void defineClassMethod(BaseFunction constructor, String name, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            // ES6 14.5.14: methods are {writable: true, enumerable: false, configurable: true}
+            ScriptableObject proto = (ScriptableObject) protoObj;
+            StringIdOrIndex s = toStringIdOrIndex(name);
+            if (s.stringId != null) {
+                proto.defineProperty(s.stringId, methodFn, ScriptableObject.DONTENUM);
+            } else {
+                proto.put(s.index, proto, methodFn);
+                proto.setAttributes(s.index, ScriptableObject.DONTENUM);
+            }
+        }
+    }
+
+    public static void defineStaticClassMethod(
+            BaseFunction constructor, String name, Object methodFn) {
+        // Static methods are non-enumerable properties on the constructor itself
+        constructor.defineOwnProperty(
+                Context.getCurrentContext(), name, new DescriptorInfo(methodFn, DONTENUM, true));
+    }
+
+    private static void defineAccessorOn(
+            ScriptableObject target, String name, Object fn, boolean isSetter) {
+        StringIdOrIndex s = toStringIdOrIndex(name);
+        if (fn instanceof Callable) {
+            if (s.stringId != null) {
+                target.setGetterOrSetter(s.stringId, 0, (Callable) fn, isSetter);
+                target.setAttributes(
+                        s.stringId, (target.getAttributes(s.stringId) | DONTENUM) & ~READONLY);
+            } else {
+                target.setGetterOrSetter(null, s.index, (Callable) fn, isSetter);
+                target.setAttributes(
+                        s.index, (target.getAttributes(s.index) | DONTENUM) & ~READONLY);
+            }
+        }
+    }
+
+    public static void defineClassGetter(BaseFunction constructor, String name, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineAccessorOn((ScriptableObject) protoObj, name, methodFn, false);
+        }
+    }
+
+    public static void defineClassSetter(BaseFunction constructor, String name, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineAccessorOn((ScriptableObject) protoObj, name, methodFn, true);
+        }
+    }
+
+    public static void defineStaticClassGetter(
+            BaseFunction constructor, String name, Object methodFn) {
+        defineAccessorOn(constructor, name, methodFn, false);
+    }
+
+    public static void defineStaticClassSetter(
+            BaseFunction constructor, String name, Object methodFn) {
+        defineAccessorOn(constructor, name, methodFn, true);
+    }
+
+    private static void defineMethodOn(
+            ScriptableObject target, Object key, Object methodFn, int attrs) {
+        if (key instanceof Symbol) {
+            ((SymbolScriptable) target).put((Symbol) key, target, methodFn);
+            target.setAttributes((Symbol) key, attrs);
+            return;
+        }
+        StringIdOrIndex s = toStringIdOrIndex(key);
+        if (s.stringId != null) {
+            target.defineProperty(s.stringId, methodFn, attrs);
+        } else {
+            target.put(s.index, target, methodFn);
+            target.setAttributes(s.index, attrs);
+        }
+    }
+
+    private static void defineComputedAccessorOn(
+            ScriptableObject target, Object key, Object fn, boolean isSetter) {
+        if (!(fn instanceof Callable)) {
+            return;
+        }
+        Callable callable = (Callable) fn;
+        if (key instanceof Symbol) {
+            target.setGetterOrSetter((Symbol) key, 0, callable, isSetter);
+            target.setAttributes(
+                    (Symbol) key, (target.getAttributes((Symbol) key) | DONTENUM) & ~READONLY);
+            return;
+        }
+        StringIdOrIndex s = toStringIdOrIndex(key);
+        if (s.stringId != null) {
+            target.setGetterOrSetter(s.stringId, 0, callable, isSetter);
+            target.setAttributes(
+                    s.stringId, (target.getAttributes(s.stringId) | DONTENUM) & ~READONLY);
+        } else {
+            target.setGetterOrSetter(null, s.index, callable, isSetter);
+            target.setAttributes(
+                    s.index, (target.getAttributes(s.index) | DONTENUM) & ~READONLY);
+        }
+    }
+
+    public static void defineClassComputedMethod(
+            BaseFunction constructor, Object key, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineMethodOn(
+                    (ScriptableObject) protoObj, key, methodFn, ScriptableObject.DONTENUM);
+        }
+    }
+
+    public static void defineStaticClassComputedMethod(
+            BaseFunction constructor, Object key, Object methodFn) {
+        defineMethodOn(constructor, key, methodFn, ScriptableObject.DONTENUM);
+    }
+
+    public static void defineClassComputedGetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineComputedAccessorOn((ScriptableObject) protoObj, key, methodFn, false);
+        }
+    }
+
+    public static void defineClassComputedSetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        Object protoObj = constructor.getPrototypeProperty();
+        if (protoObj instanceof ScriptableObject) {
+            defineComputedAccessorOn((ScriptableObject) protoObj, key, methodFn, true);
+        }
+    }
+
+    public static void defineStaticClassComputedGetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        defineComputedAccessorOn(constructor, key, methodFn, false);
+    }
+
+    public static void defineStaticClassComputedSetter(
+            BaseFunction constructor, Object key, Object methodFn) {
+        defineComputedAccessorOn(constructor, key, methodFn, true);
+    }
+
+    public static void defineStaticClassField(BaseFunction constructor, String name, Object value) {
+        constructor.defineOwnProperty(
+                Context.getCurrentContext(), name, new DescriptorInfo(value, 0, true));
+    }
+
+    /** Associated-value key used to stash pre-evaluated instance computed field keys. */
+    private static final Object CLASS_COMPUTED_KEYS_ASSOC = new Object();
+
+    /**
+     * Store the pre-evaluated instance computed-field keys on the class constructor so the
+     * constructor can retrieve them at instance creation time. Called at class declaration time.
+     */
+    public static void storeClassComputedFieldKeys(BaseFunction constructor, Object[] keys) {
+        constructor.associateValue(CLASS_COMPUTED_KEYS_ASSOC, keys);
+    }
+
+    /** Retrieve the i-th pre-evaluated instance computed-field key stored on {@code fn}. */
+    public static Object getClassComputedFieldKey(ScriptOrFn<?> fn, int index) {
+        if (fn instanceof BaseFunction) {
+            Object stored = ((BaseFunction) fn).getAssociatedValue(CLASS_COMPUTED_KEYS_ASSOC);
+            if (stored instanceof Object[]) {
+                return ((Object[]) stored)[index];
+            }
+        }
+        throw Kit.codeBug();
+    }
+
+    public static void defineStaticClassComputedField(
+            BaseFunction constructor, Object key, Object value) {
+        if (key instanceof Symbol) {
+            Symbol sym = (Symbol) key;
+            ((SymbolScriptable) constructor).put(sym, constructor, value);
+            // Private-name SymbolKeys identify static private fields, which must be
+            // hidden from Object.getOwnPropertySymbols just like instance private fields.
+            String name = sym.getName();
+            if (name != null && !name.isEmpty() && name.charAt(0) == '#') {
+                constructor.setAttributes(
+                        sym, constructor.getAttributes(sym) | ScriptableObject.PRIVATE);
+            }
+        } else {
+            StringIdOrIndex s = toStringIdOrIndex(key);
+            if (s.stringId != null) {
+                constructor.put(s.stringId, constructor, value);
+            } else {
+                constructor.put(s.index, constructor, value);
+            }
+        }
+    }
+
+    /**
+     * Initialize a private class field on {@code target} keyed by the given {@link Symbol}, with
+     * attribute {@link ScriptableObject#PRIVATE} so the slot is hidden from enumeration and {@code
+     * Object.getOwnPropertySymbols}.
+     */
+    public static void definePrivateField(
+            Object target, Symbol key, Object value, Context cx, VarScope scope) {
+        Scriptable obj = toObjectOrNull(cx, target, scope);
+        if (obj == null) {
+            throw undefReadError(target, String.valueOf(key));
+        }
+        SymbolScriptable sObj = (obj instanceof SymbolScriptable) ? (SymbolScriptable) obj : null;
+        if (sObj == null) {
+            throw typeErrorById("msg.ctor.not.found", String.valueOf(key));
+        }
+        sObj.put(key, obj, value);
+        if (obj instanceof ScriptableObject) {
+            ((ScriptableObject) obj)
+                    .setAttributes(
+                            key,
+                            ((ScriptableObject) obj).getAttributes(key) | ScriptableObject.PRIVATE);
+        }
+    }
+
+    /**
+     * Install a private getter or setter on {@code target} keyed by the given {@link Symbol}. Marks
+     * the slot with {@link ScriptableObject#PRIVATE} so it's hidden from enumeration.
+     */
+    public static void definePrivateAccessor(
+            Object target, Symbol key, Object fn, boolean isSetter, Context cx, VarScope scope) {
+        Scriptable obj = toObjectOrNull(cx, target, scope);
+        if (obj == null) {
+            throw undefReadError(target, String.valueOf(key));
+        }
+        if (!(obj instanceof ScriptableObject)) {
+            throw typeErrorById("msg.ctor.not.found", String.valueOf(key));
+        }
+        ScriptableObject so = (ScriptableObject) obj;
+        Callable accessor = (fn instanceof Callable) ? (Callable) fn : null;
+        so.setGetterOrSetter(key, 0, accessor, isSetter);
+        so.setAttributes(key, so.getAttributes(key) | ScriptableObject.PRIVATE);
     }
 
     public static void setObjectProtoAndParent(ScriptableObject object, VarScope scope) {
@@ -5389,8 +5892,31 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject obj, JSFunction f, Object nt, VarScope s, TopLevel.Builtins type) {
-        obj.setPrototype((Scriptable) f.getPrototypeProperty());
+        obj.setPrototype(findPrototype(f, nt, type));
+
         obj.setParentScope(s);
+    }
+
+    public static Scriptable findPrototype(JSFunction f, Object nt, TopLevel.Builtins type) {
+        Object proto;
+        if (nt instanceof JSFunction) {
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        } else if (nt instanceof Scriptable
+                && nt instanceof Function
+                && ((Function) nt).isConstructor()) {
+            var sobj = ((Scriptable) nt);
+            proto = sobj.get("prototype", sobj);
+        } else {
+            nt = f;
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        }
+
+        if (proto instanceof Scriptable) {
+            return (Scriptable) proto;
+        } else {
+            TopLevel top = ScriptableObject.getTopLevelScope(((Function) nt).getDeclarationScope());
+            return TopLevel.getBuiltinPrototype(top, type);
+        }
     }
 
     public static void initFunction(
@@ -5413,9 +5939,16 @@ public class ScriptRuntime {
                 // Always put function expression statements into initial
                 // activation object ignoring the with statement to follow
                 // SpiderMonkey
-                while (scope instanceof WithScope) {
+                while (scope.isNestedScope()) {
                     scope = scope.getParentScope();
                 }
+                scope.put(name, scope, function);
+            }
+        } else if (type == FunctionNode.FUNCTION_BLOCK_SCOPED) {
+            String name = function.getFunctionName();
+            if (name != null && name.length() != 0) {
+                // Block-scoped function in strict mode: bind in the current
+                // (block) scope only, do not walk up to the activation object.
                 scope.put(name, scope, function);
             }
         } else {
@@ -5934,8 +6467,9 @@ public class ScriptRuntime {
     }
 
     public static Scriptable getTemplateLiteralCallSite(
-            Context cx, VarScope scope, Object[] strings, int index) {
-        Object callsite = strings[index];
+            Context cx, VarScope scope, JSDescriptor<?> descriptor, int index) {
+        Object[] literals = descriptor.getLiterals();
+        Object callsite = literals[index];
 
         if (callsite instanceof Scriptable) return (Scriptable) callsite;
 
@@ -5961,7 +6495,7 @@ public class ScriptRuntime {
         AbstractEcmaObjectOperations.setIntegrityLevel(
                 cx, siteObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
-        strings[index] = siteObj;
+        literals[index] = siteObj;
 
         return siteObj;
     }
@@ -6085,6 +6619,14 @@ public class ScriptRuntime {
     }
 
     /**
+     * Returns whether {@code obj} is a {@link Symbol} that is the identity key of a JavaScript
+     * class private field or method.
+     */
+    public static boolean isPrivateSymbol(Object obj) {
+        return isSymbol(obj) && ((Symbol) obj).getKind() == Symbol.Kind.PRIVATE;
+    }
+
+    /**
      * Return that the symbol was created by the constructor, or is a built-in Symbol, and was not
      * put in the registry using "for".
      */
@@ -6188,7 +6730,7 @@ public class ScriptRuntime {
         } else if (callThisArg == null) {
             return null;
         }
-        return ScriptRuntime.toObject((VarScope) scope, callThisArg);
+        return ScriptRuntime.toObject(scope, callThisArg);
     }
 
     /**

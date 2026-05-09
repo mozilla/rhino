@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node representing a parse error or a warning. Node type is {@link Token#ERROR}. */
@@ -40,6 +41,19 @@ public class ErrorNode extends AstNode {
     @Override
     public String toSource(int depth) {
         return "";
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ErrorNode.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ErrorNode copy = new ErrorNode();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.message = this.message;
+        return copy;
     }
 
     /**

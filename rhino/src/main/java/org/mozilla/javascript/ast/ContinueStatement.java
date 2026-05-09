@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -99,6 +101,44 @@ public class ContinueStatement extends Jump {
         }
         sb.append(";\n");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ContinueStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ContinueStatement copy = new ContinueStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.label = this.label;
+        copy.targetLoop = this.targetLoop;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ContinueStatement copy = (ContinueStatement) copyNode;
+        if (this.label != null) {
+            copy.label = (Name) this.label.cloneStructure(map);
+        }
+    }
+
+    @Override
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        if (label != null) {
+            label.fixupReferences(map);
+        }
+        if (targetLoop != null) {
+            Node mapped = map.get(targetLoop);
+            if (mapped instanceof Loop) {
+                targetLoop = (Loop) mapped;
+            }
+        }
+        super.fixupReferences(map);
     }
 
     /** Visits this node, then visits the label if non-{@code null}. */

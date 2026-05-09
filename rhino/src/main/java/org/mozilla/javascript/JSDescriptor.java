@@ -30,6 +30,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private static final int REQUIRES_ACTIVATION_FRAME_FLAG = 1 << 10;
     private static final int REQUIRES_ARGUMENT_OBJECT_FLAG = 1 << 11;
     private static final int DECLARED_AS_FUNCTION_EXPRESSION_FLAG = 1 << 12;
+    private static final int DERIVED_CONSTRUCTOR_FLAG = 1 << 13;
+    private static final int IS_ASYNC_FLAG = 1 << 14;
+    private static final int IS_CLASS_CONSTRUCTOR_FLAG = 1 << 15;
 
     private final JSCode<T> code;
     private final JSCode<T> constructor;
@@ -50,6 +53,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private final SecurityController securityController;
     private final Object securityDomain;
     private final int functionType;
+    private final Object[] literals;
 
     public JSDescriptor(
             JSCode<T> code,
@@ -79,9 +83,13 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             boolean requiresActivationFrame,
             boolean requiresArgumentObject,
             boolean declaredAsFunctionExpression,
+            boolean derivedConstructor,
+            boolean isAsync,
+            boolean isClassConstructor,
             SecurityController securityController,
             Object securityDomain,
-            int functionType) {
+            int functionType,
+            Object[] literals) {
         this.code = code;
         this.constructor = constructor;
         this.parent = parent;
@@ -102,6 +110,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         flags = flags | (requiresActivationFrame ? REQUIRES_ACTIVATION_FRAME_FLAG : 0);
         flags = flags | (requiresArgumentObject ? REQUIRES_ARGUMENT_OBJECT_FLAG : 0);
         flags = flags | (declaredAsFunctionExpression ? DECLARED_AS_FUNCTION_EXPRESSION_FLAG : 0);
+        flags = flags | (derivedConstructor ? DERIVED_CONSTRUCTOR_FLAG : 0);
+        flags = flags | (isAsync ? IS_ASYNC_FLAG : 0);
+        flags = flags | (isClassConstructor ? IS_CLASS_CONSTRUCTOR_FLAG : 0);
         this.flags = flags;
 
         this.sourceFile = sourceFile;
@@ -116,6 +127,15 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         this.securityController = securityController;
         this.securityDomain = securityDomain;
         this.functionType = functionType;
+        this.literals = literals;
+    }
+
+    public Object[] getLiterals() {
+        return literals;
+    }
+
+    public Object getLiteral(int index) {
+        return literals[index];
     }
 
     public JSCode<T> getCode() {
@@ -152,8 +172,16 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return (flags & IS_ES6_GENERATOR_FLAG) != 0;
     }
 
+    public boolean isAsync() {
+        return (flags & IS_ASYNC_FLAG) != 0;
+    }
+
     public boolean isShorthand() {
         return (flags & IS_SHORTHAND_FLAG) != 0;
+    }
+
+    public boolean isClassConstructor() {
+        return (flags & IS_CLASS_CONSTRUCTOR_FLAG) != 0;
     }
 
     public boolean hasPrototype() {
@@ -297,6 +325,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public boolean isScript;
         public boolean isTopLevel;
         public boolean isES6Generator;
+        public boolean isAsync;
         public boolean isShorthand;
         public boolean hasPrototype;
         public boolean hasLexicalThis;
@@ -315,9 +344,11 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public boolean requiresActivationFrame;
         public boolean requiresArgumentObject;
         public boolean declaredAsFunctionExpression;
+        public boolean isClassConstructor;
         public SecurityController securityController;
         public Object securityDomain;
         public int functionType;
+        public Object[] literals;
 
         public Builder() {}
 
@@ -385,9 +416,13 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             requiresActivationFrame,
                             requiresArgumentObject,
                             declaredAsFunctionExpression,
+                            false,
+                            isAsync,
+                            isClassConstructor,
                             securityController,
                             securityDomain,
-                            functionType);
+                            functionType,
+                            literals);
             consumer.accept(result);
             result.nestedFunctions =
                     Collections.unmodifiableList(

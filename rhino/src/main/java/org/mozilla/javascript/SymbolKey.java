@@ -15,6 +15,7 @@ public class SymbolKey implements Symbol, Serializable {
     // These are common SymbolKeys that are equivalent to well-known symbols
     // defined in ECMAScript.
     public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator", BUILT_IN);
+    public static final SymbolKey ASYNC_ITERATOR = new SymbolKey("Symbol.asyncIterator", BUILT_IN);
     public static final SymbolKey TO_STRING_TAG = new SymbolKey("Symbol.toStringTag", BUILT_IN);
     public static final SymbolKey SPECIES = new SymbolKey("Symbol.species", BUILT_IN);
     public static final SymbolKey HAS_INSTANCE = new SymbolKey("Symbol.hasInstance", BUILT_IN);

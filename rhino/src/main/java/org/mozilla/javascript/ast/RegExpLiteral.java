@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a RegExp literal. Node type is {@link Token#REGEXP}. */
@@ -56,6 +57,20 @@ public class RegExpLiteral extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + "/" + value + "/" + (flags == null ? "" : flags);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != RegExpLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        RegExpLiteral copy = new RegExpLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.value = this.value;
+        copy.flags = this.flags;
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -29,6 +31,7 @@ public class ForInLoop extends Loop {
     protected int eachPosition = -1;
     protected boolean isForEach;
     protected boolean isForOf;
+    protected boolean isForAwaitOf;
 
     {
         type = Token.FOR;
@@ -97,6 +100,19 @@ public class ForInLoop extends Loop {
         this.isForOf = isForOf;
     }
 
+    /** Returns whether the loop is a for-await-of loop */
+    public boolean isForAwaitOf() {
+        return isForAwaitOf;
+    }
+
+    /**
+     * Sets whether the loop is a for-await-of loop. A for-await-of loop implies {@link #isForOf()}
+     * is also true.
+     */
+    public void setIsForAwaitOf(boolean isForAwaitOf) {
+        this.isForAwaitOf = isForAwaitOf;
+    }
+
     /** Returns position of "in" or "of" keyword */
     public int getInPosition() {
         return inPosition;
@@ -131,7 +147,9 @@ public class ForInLoop extends Loop {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append("for ");
-        if (isForEach()) {
+        if (isForAwaitOf()) {
+            sb.append("await ");
+        } else if (isForEach()) {
             sb.append("each ");
         }
         sb.append("(");
@@ -149,6 +167,45 @@ public class ForInLoop extends Loop {
             sb.append("\n").append(body.toSource(depth + 1));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ForInLoop.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ForInLoop copy = new ForInLoop();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.copyLoopFieldsFrom(this);
+        copy.copyForInLoopFieldsFrom(this);
+        return copy;
+    }
+
+    /** Copies {@link ForInLoop}-level fields. */
+    protected void copyForInLoopFieldsFrom(ForInLoop source) {
+        this.iterator = source.iterator;
+        this.iteratedObject = source.iteratedObject;
+        this.inPosition = source.inPosition;
+        this.eachPosition = source.eachPosition;
+        this.isForEach = source.isForEach;
+        this.isForOf = source.isForOf;
+        this.isForAwaitOf = source.isForAwaitOf;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ForInLoop copy = (ForInLoop) copyNode;
+        if (this.iterator != null) {
+            copy.iterator = (AstNode) this.iterator.cloneStructure(map);
+        }
+        if (this.iteratedObject != null) {
+            copy.iteratedObject = (AstNode) this.iteratedObject.cloneStructure(map);
+        }
     }
 
     /** Visits this node, the iterator, the iterated object, and the body. */

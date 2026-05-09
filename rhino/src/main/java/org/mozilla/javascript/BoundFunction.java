@@ -26,6 +26,7 @@ public class BoundFunction extends BaseFunction {
             Callable targetFunction,
             Scriptable boundThis,
             Object[] boundArgs) {
+        super(scope);
         this.targetFunction = targetFunction;
         this.boundThis = boundThis;
         this.boundArgs = boundArgs;
@@ -58,7 +59,7 @@ public class BoundFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] extraArgs) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] extraArgs) {
         return targetFunction.call(cx, scope, getCallThis(), concat(boundArgs, extraArgs));
     }
 

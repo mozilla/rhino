@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
+
 /** Abstract base type for loops. */
 public abstract class Loop extends Scope {
 
@@ -63,5 +66,24 @@ public abstract class Loop extends Scope {
     public void setParens(int lp, int rp) {
         this.lp = lp;
         this.rp = rp;
+    }
+
+    /**
+     * Copies {@link Loop}-level fields. The body reference is shared until {@link
+     * #cloneNamedChildren} runs.
+     */
+    protected void copyLoopFieldsFrom(Loop source) {
+        this.body = source.body;
+        this.lp = source.lp;
+        this.rp = source.rp;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        Loop copy = (Loop) copyNode;
+        if (this.body != null) {
+            copy.body = (AstNode) this.body.cloneStructure(map);
+        }
     }
 }

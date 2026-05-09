@@ -6,13 +6,14 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
  * AST node for keyword literals: currently, {@code this}, {@code super}, {@code null}, {@code
- * undefined}, {@code true}, {@code false}, and {@code debugger}. Node type is one of {@link
- * Token#THIS}, {@link Token#SUPER}, {@link Token#NULL}, {@link Token#UNDEFINED}, {@link
- * Token#TRUE}, {@link Token#FALSE}, or {@link Token#DEBUGGER}.
+ * undefined}, {@code true}, {@code false}, {@code debugger}, and {@code new.target}. Node type is
+ * one of {@link Token#THIS}, {@link Token#SUPER}, {@link Token#NULL}, {@link Token#UNDEFINED},
+ * {@link Token#TRUE}, {@link Token#FALSE}, {@link Token#DEBUGGER}, or {@link Token#NEW_TARGET}.
  */
 public class KeywordLiteral extends AstNode {
 
@@ -49,7 +50,8 @@ public class KeywordLiteral extends AstNode {
                 || nodeType == Token.UNDEFINED
                 || nodeType == Token.TRUE
                 || nodeType == Token.FALSE
-                || nodeType == Token.DEBUGGER))
+                || nodeType == Token.DEBUGGER
+                || nodeType == Token.NEW_TARGET))
             throw new IllegalArgumentException("Invalid node type: " + nodeType);
         type = nodeType;
         return this;
@@ -86,10 +88,25 @@ public class KeywordLiteral extends AstNode {
             case Token.DEBUGGER:
                 sb.append("debugger;\n");
                 break;
+            case Token.NEW_TARGET:
+                sb.append("new.target");
+                break;
             default:
                 throw new IllegalStateException("Invalid keyword literal type: " + getType());
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != KeywordLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        KeywordLiteral copy = new KeywordLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

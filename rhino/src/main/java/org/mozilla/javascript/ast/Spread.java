@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a spread `...expression`. */
@@ -40,6 +42,28 @@ public class Spread extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + "..." + expression.toSource(depth);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != Spread.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Spread copy = new Spread(this.position, this.length);
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.expression = this.expression;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        Spread copy = (Spread) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the expression. */

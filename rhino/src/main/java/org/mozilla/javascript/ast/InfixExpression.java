@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -159,6 +161,41 @@ public class InfixExpression extends AstNode {
         sb.append(" ");
         sb.append(right.toSource());
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != InfixExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        InfixExpression copy = new InfixExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyInfixFieldsFrom(this);
+        return copy;
+    }
+
+    /**
+     * Copies {@link InfixExpression}-level fields ({@code left}, {@code right}, {@code
+     * operatorPosition}). Children references are shared until {@link #cloneNamedChildren} runs.
+     */
+    protected void copyInfixFieldsFrom(InfixExpression source) {
+        this.left = source.left;
+        this.right = source.right;
+        this.operatorPosition = source.operatorPosition;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        InfixExpression copy = (InfixExpression) copyNode;
+        if (this.left != null) {
+            copy.left = (AstNode) this.left.cloneStructure(map);
+        }
+        if (this.right != null) {
+            copy.right = (AstNode) this.right.cloneStructure(map);
+        }
     }
 
     /** Visits this node, the left operand, and the right operand. */

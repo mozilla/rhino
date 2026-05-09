@@ -219,4 +219,51 @@ class FunctionNameTest {
     void inferenceIsNotUsedInEs5InObjectLiteral() {
         Utils.assertWithAllModes_1_8("", "o = { f: function() {} }; o.f.name");
     }
+
+    @Test
+    void arrayDestructuringAssignmentDefault() {
+        Utils.assertWithAllModes_ES6(
+                "f", "var f; var vals = []; [f = function() {}] = vals; f.name");
+    }
+
+    @Test
+    void arrayDestructuringAssignmentDefaultArrow() {
+        Utils.assertWithAllModes_ES6("f", "var f; var vals = []; [f = () => {}] = vals; f.name");
+    }
+
+    @Test
+    void arrayDestructuringVarDefault() {
+        Utils.assertWithAllModes_ES6("f", "var vals = []; var [f = () => {}] = vals; f.name");
+    }
+
+    @Test
+    void arrayDestructuringLetDefault() {
+        Utils.assertWithAllModes_ES6("f", "var vals = []; let [f = () => {}] = vals; f.name");
+    }
+
+    @Test
+    void arrayDestructuringConstDefault() {
+        Utils.assertWithAllModes_ES6("f", "var vals = []; const [f = () => {}] = vals; f.name");
+    }
+
+    @Test
+    void objectDestructuringAssignmentDefault() {
+        Utils.assertWithAllModes_ES6("f", "var f; var obj = {}; ({f = () => {}} = obj); f.name");
+    }
+
+    @Test
+    void objectDestructuringVarDefault() {
+        Utils.assertWithAllModes_ES6("f", "var obj = {}; var {f = () => {}} = obj; f.name");
+    }
+
+    @Test
+    void destructuringWithoutDefaultDoesNotInferName() {
+        Utils.assertWithAllModes_ES6("", "var [f] = [() => {}]; f.name");
+    }
+
+    @Test
+    void destructuringNonAnonymousDefaultDoesNotOverride() {
+        Utils.assertWithAllModes_ES6(
+                "g", "var vals = []; var [f = function g() {}] = vals; f.name");
+    }
 }

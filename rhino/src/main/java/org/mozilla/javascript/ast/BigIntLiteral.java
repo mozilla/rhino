@@ -7,6 +7,7 @@
 package org.mozilla.javascript.ast;
 
 import java.math.BigInteger;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a BigInt literal. Node type is {@link Token#BIGINT}. */
@@ -72,6 +73,20 @@ public class BigIntLiteral extends AstNode {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth) + (bigInt == null ? "<null>" : bigInt.toString() + "n");
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != BigIntLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        BigIntLiteral copy = new BigIntLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.value = this.value;
+        copy.bigInt = this.bigInt;
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

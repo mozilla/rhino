@@ -138,7 +138,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     }
 
     public static class PositionComparator implements Comparator<AstNode>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1551233591343412911L;
 
         /**
          * Sorts nodes by (relative) start position. The start positions are relative to their
@@ -174,6 +174,19 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         this();
         position = pos;
         length = len;
+    }
+
+    /**
+     * Copies the {@link AstNode}-level scalar fields ({@code position}, {@code length}, and {@code
+     * inlineComment}) from {@code src} to {@code dst} in addition to the {@link Node} base fields.
+     * Subclass {@link Node#shallowCopy()} implementations call this to populate the
+     * AstNode-specific state on a freshly-allocated copy.
+     */
+    protected static void copyAstFields(AstNode src, AstNode dst) {
+        copyBaseFields(src, dst);
+        dst.position = src.position;
+        dst.length = src.length;
+        dst.inlineComment = src.inlineComment;
     }
 
     /** Returns relative position in parent */
@@ -378,6 +391,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.CALL:
             case Token.CATCH:
             case Token.CATCH_SCOPE:
+            case Token.CLASS:
             case Token.CONST:
             case Token.CONTINUE:
             case Token.DEC:
@@ -400,7 +414,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.INC:
             case Token.JSR:
             case Token.LABEL:
-            case Token.LEAVEWITH:
+            case Token.LEAVE_SCOPE:
             case Token.LET:
             case Token.LETEXPR:
             case Token.LOCAL_BLOCK:

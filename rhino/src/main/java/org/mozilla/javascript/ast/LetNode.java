@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -117,6 +119,36 @@ public class LetNode extends Scope {
             sb.append(body.toSource(depth));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != LetNode.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        LetNode copy = new LetNode();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.variables = this.variables;
+        copy.body = this.body;
+        copy.lp = this.lp;
+        copy.rp = this.rp;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        LetNode copy = (LetNode) copyNode;
+        if (this.variables != null) {
+            copy.variables = (VariableDeclaration) this.variables.cloneStructure(map);
+        }
+        if (this.body != null) {
+            copy.body = (AstNode) this.body.cloneStructure(map);
+        }
     }
 
     /** Visits this node, the variable list, and if present, the body expression or statement. */

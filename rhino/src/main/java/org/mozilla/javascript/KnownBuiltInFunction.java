@@ -12,7 +12,7 @@ package org.mozilla.javascript;
  */
 public class KnownBuiltInFunction extends LambdaFunction {
 
-    private static final long serialVersionUID = -8388132362854748293L;
+    private static final long serialVersionUID = 4527445659952834584L;
 
     private final Object tag;
 

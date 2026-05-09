@@ -324,6 +324,56 @@ class RestParametersDestructuringTest {
 
             Utils.assertWithAllModes_ES6(5.0, code);
         }
+
+        @Test
+        void restWithArrayPatternFromGenerator() {
+            String code =
+                    "function* g() { yield 7; yield 5; yield 1; }\n"
+                            + "function h([...[a, b]]) { return a + '|' + b; }\n"
+                            + "h(g());";
+
+            Utils.assertWithAllModes_ES6("7|5", code);
+        }
+
+        @Test
+        void restWithObjectPatternFromGenerator() {
+            String code =
+                    "function* g() { yield 10; yield 20; yield 30; }\n"
+                            + "function h([...{length}]) { return length; }\n"
+                            + "h(g());";
+
+            Utils.assertWithAllModes_ES6(3.0, code);
+        }
+
+        @Test
+        void restNameFromGenerator() {
+            String code =
+                    "function* g() { yield 1; yield 2; yield 3; }\n"
+                            + "function h([...rest]) { return rest.join(','); }\n"
+                            + "h(g());";
+
+            Utils.assertWithAllModes_ES6("1,2,3", code);
+        }
+
+        @Test
+        void restWithArrayPatternFromGeneratorAfterElements() {
+            String code =
+                    "function* g() { yield 1; yield 2; yield 3; yield 4; }\n"
+                            + "function h([first, ...[a, b]]) { return first + '|' + a + '|' + b; }\n"
+                            + "h(g());";
+
+            Utils.assertWithAllModes_ES6("1|2|3", code);
+        }
+
+        @Test
+        void restNameFromGeneratorAfterElements() {
+            String code =
+                    "function* g() { yield 1; yield 2; yield 3; yield 4; }\n"
+                            + "function h([first, ...rest]) { return first + '|' + rest.join(','); }\n"
+                            + "h(g());";
+
+            Utils.assertWithAllModes_ES6("1|2,3,4", code);
+        }
     }
 
     @Nested

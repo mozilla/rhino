@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -70,7 +71,19 @@ public class Node implements Iterable<Node> {
             SUPER_PROPERTY_ACCESS = 31,
             NUMBER_OF_SPREAD = 32,
             OBJECT_REST_PROP = 33, // marks a CALL node as object rest operation
-            LAST_PROP = OBJECT_REST_PROP,
+            SUPER_CONSTRUCTOR_CALL = 34, // marks a CALL as super() in derived constructor
+            LITERAL_INDEX_PROP = 35, // int index into the shared literals table
+            CLASS_METHODS_PROP = 36, // String[] of method names for class definitions
+            CLASS_STATIC_METHODS_PROP = 37, // String[] of static method names
+            CLASS_STATIC_FIELDS_PROP = 38, // String[] of static field names
+            CLASS_STATIC_COMPUTED_FIELDS_COUNT = 39, // int count of static computed fields
+            PRIVATE_FIELD_INIT_PROP = 40, // marks a synthesized init of a class private field
+            CLASS_COMPUTED_FIELD_KEYS_COUNT = 41, // int count of instance computed field keys
+            SUPER_CONSTRUCTOR_SPREAD_CALL = 42, // super() whose single argument is a spread
+            CLASS_METHOD_KINDS_PROP = 43, // int[] per-method kind: 0=method,1=getter,2=setter
+            CLASS_STATIC_METHOD_KINDS_PROP = 44, // int[] per-static-method kind
+            FIELD_KIND_PROP = 45, // 0=value, 1=getter, 2=setter (for DEFINE_FIELD)
+            LAST_PROP = FIELD_KIND_PROP,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
@@ -78,8 +91,7 @@ public class Node implements Iterable<Node> {
     public static final int BOTH = 0, LEFT = 1, RIGHT = 2;
     public static final int // values for SPECIALCALL_PROP
             NON_SPECIALCALL = 0,
-            SPECIALCALL_EVAL = 1,
-            SPECIALCALL_WITH = 2;
+            SPECIALCALL_EVAL = 1;
     public static final int // flags for INCRDECR_PROP
             DECR_FLAG = 0x1,
             POST_FLAG = 0x2;
@@ -460,6 +472,20 @@ public class Node implements Iterable<Node> {
                 return "number_of_spread";
             case OBJECT_REST_PROP:
                 return "object_rest_prop";
+            case LITERAL_INDEX_PROP:
+                return "literal_index_prop";
+            case PRIVATE_FIELD_INIT_PROP:
+                return "private_field_init_prop";
+            case CLASS_COMPUTED_FIELD_KEYS_COUNT:
+                return "class_computed_field_keys_count";
+            case SUPER_CONSTRUCTOR_SPREAD_CALL:
+                return "super_constructor_spread_call";
+            case CLASS_METHOD_KINDS_PROP:
+                return "class_method_kinds_prop";
+            case CLASS_STATIC_METHOD_KINDS_PROP:
+                return "class_static_method_kinds_prop";
+            case FIELD_KIND_PROP:
+                return "field_kind_prop";
 
             default:
                 Kit.codeBug();
@@ -605,14 +631,20 @@ public class Node implements Iterable<Node> {
     }
 
     public final int labelId() {
-        if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
+        if ((type != Token.TARGET)
+                && (type != Token.YIELD)
+                && (type != Token.YIELD_STAR)
+                && (type != Token.AWAIT)) {
             Kit.codeBug();
         }
         return getIntProp(LABEL_ID_PROP, -1);
     }
 
     public void labelId(int labelId) {
-        if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
+        if ((type != Token.TARGET)
+                && (type != Token.YIELD)
+                && (type != Token.YIELD_STAR)
+                && (type != Token.AWAIT)) {
             Kit.codeBug();
         }
         putIntProp(LABEL_ID_PROP, labelId);
@@ -969,7 +1001,7 @@ public class Node implements Iterable<Node> {
             case Token.ASSIGN_EXP:
             case Token.ASSIGN_NULLISH:
             case Token.ENTERWITH:
-            case Token.LEAVEWITH:
+            case Token.LEAVE_SCOPE:
             case Token.RETURN:
             case Token.GOTO:
             case Token.IFEQ:
@@ -1053,6 +1085,152 @@ public class Node implements Iterable<Node> {
         while (child != null) {
             child.resetTargets_r();
             child = child.next;
+        }
+    }
+
+    /**
+     * Returns a deep copy of this node and every descendant, suitable for placing the copy at a
+     * second location in the same compilation unit (for example, inlining a finally block at
+     * multiple exit paths).
+     *
+     * <p>The copy is built in two phases:
+     *
+     * <ol>
+     *   <li>Each node is allocated via {@link #shallowCopy()} and its children are recursively
+     *       cloned. The original-to-copy mapping is recorded in an identity map.
+     *   <li>The copy is walked and any cross-reference pointing at a node inside the original
+     *       subtree is rewritten to its corresponding copy. Cross-references that point outside the
+     *       subtree (for example a {@code break} whose target is in the surrounding loop) are
+     *       preserved as-is.
+     * </ol>
+     *
+     * <p>{@code TARGET}, {@code YIELD}, {@code YIELD_STAR} and {@code AWAIT} nodes in the copy have
+     * their {@code labelId} reset to {@code -1} so that code generation will allocate new labels
+     * rather than colliding with the original.
+     *
+     * <p>This is a structural copy. {@link org.mozilla.javascript.ast.Symbol} objects in scope
+     * tables are shared with the original; the copy does not introduce a new lexical scope. If a
+     * subclass that carries cross-reference state has not overridden {@link #shallowCopy()}, this
+     * method will throw {@link UnsupportedOperationException}.
+     *
+     * @return the root of the freshly-cloned subtree, with no parent and no {@code next} sibling
+     */
+    public final Node cloneTree() {
+        IdentityHashMap<Node, Node> map = new IdentityHashMap<>();
+        Node copy = cloneStructure(map);
+        copy.fixupReferences(map);
+        return copy;
+    }
+
+    /**
+     * Recursively allocates a copy of this node and its descendants, recording each {@code
+     * original→copy} pair in {@code map}. Walks both the linked-list child chain and any named
+     * child fields declared by subclasses (via {@link #cloneNamedChildren}).
+     *
+     * <p>Public so {@link org.mozilla.javascript.ast.AstNode} subclasses (which sit in another
+     * package and access children through abstract supertype references) can recurse into their
+     * named-field children that are not part of the linked-list child chain. End users should call
+     * {@link #cloneTree()} instead.
+     */
+    public Node cloneStructure(IdentityHashMap<Node, Node> map) {
+        Node copy = shallowCopy();
+        map.put(this, copy);
+        if (copy.type == Token.TARGET
+                || copy.type == Token.YIELD
+                || copy.type == Token.YIELD_STAR
+                || copy.type == Token.AWAIT) {
+            copy.putIntProp(LABEL_ID_PROP, -1);
+        }
+        Node prev = null;
+        for (Node child = first; child != null; child = child.next) {
+            Node childCopy = child.cloneStructure(map);
+            childCopy.next = null;
+            if (prev == null) {
+                copy.first = childCopy;
+            } else {
+                prev.next = childCopy;
+            }
+            prev = childCopy;
+        }
+        copy.last = prev;
+        cloneNamedChildren(copy, map);
+        return copy;
+    }
+
+    /**
+     * Subclass hook to deep-clone named-field children that are not part of the linked-list child
+     * chain. Called after {@link #shallowCopy()} has populated {@code copy} with raw (shared)
+     * references and after the linked-list children have been cloned.
+     *
+     * <p>Implementations recurse via {@link #cloneStructure(IdentityHashMap)} on each named child
+     * of the original and assign the resulting copy onto the corresponding field of {@code copy}.
+     * The default implementation does nothing.
+     */
+    protected void cloneNamedChildren(Node copy, IdentityHashMap<Node, Node> map) {}
+
+    /**
+     * Allocates a fresh node of the same dynamic type as {@code this}, copying scalar state (node
+     * type, line/column, property list) but not children, the {@code next} sibling, or any
+     * cross-reference fields. Cross-references are remapped by {@link #fixupReferences} after the
+     * full structure has been cloned.
+     *
+     * <p>Subclasses that carry typed fields beyond what {@link #copyBaseFields(Node, Node)}
+     * captures must override this method. The base implementation refuses to operate on subclass
+     * instances rather than silently producing a degraded copy.
+     */
+    protected Node shallowCopy() {
+        if (getClass() != Node.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Node copy = new Node(type);
+        copyBaseFields(this, copy);
+        return copy;
+    }
+
+    /**
+     * Copies the scalar fields defined on {@link Node} (line, column, and a fresh chain of
+     * property-list entries with shared values) from {@code src} into {@code dst}. Property values
+     * that are themselves {@link Node} references are remapped later by {@link
+     * #fixupReferences(IdentityHashMap)}.
+     */
+    protected static void copyBaseFields(Node src, Node dst) {
+        dst.lineno = src.lineno;
+        dst.column = src.column;
+        PropListItem head = null;
+        PropListItem tail = null;
+        for (PropListItem p = src.propListHead; p != null; p = p.next) {
+            PropListItem c = new PropListItem();
+            c.type = p.type;
+            c.intValue = p.intValue;
+            c.objectValue = p.objectValue;
+            if (head == null) {
+                head = c;
+            } else {
+                tail.next = c;
+            }
+            tail = c;
+        }
+        dst.propListHead = head;
+    }
+
+    /**
+     * Walks this node and all descendants of the cloned subtree, rewriting any cross-reference that
+     * lands in {@code map} (i.e. points at a node in the original subtree) to the corresponding
+     * copy. Subclasses with typed cross-references override this and chain to {@code
+     * super.fixupReferences(map)}.
+     */
+    protected void fixupReferences(IdentityHashMap<Node, Node> map) {
+        for (PropListItem p = propListHead; p != null; p = p.next) {
+            if (p.objectValue instanceof Node) {
+                Node mapped = map.get(p.objectValue);
+                if (mapped != null) {
+                    p.objectValue = mapped;
+                }
+            }
+        }
+        for (Node child = first; child != null; child = child.next) {
+            child.fixupReferences(map);
         }
     }
 
@@ -1185,9 +1363,6 @@ public class Node implements Iterable<Node> {
                         switch (x.intValue) {
                             case SPECIALCALL_EVAL:
                                 sb.append("eval");
-                                break;
-                            case SPECIALCALL_WITH:
-                                sb.append("with");
                                 break;
                             default:
                                 // NON_SPECIALCALL should not be stored

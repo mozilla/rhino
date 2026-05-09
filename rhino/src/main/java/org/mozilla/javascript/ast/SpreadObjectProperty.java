@@ -6,12 +6,14 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for a spread `...expression` in an object literal. */
 public class SpreadObjectProperty extends AbstractObjectProperty {
 
-    private final Spread spreadNode;
+    private Spread spreadNode;
 
     {
         type = Token.DOTDOTDOT;
@@ -36,6 +38,27 @@ public class SpreadObjectProperty extends AbstractObjectProperty {
     @Override
     public String toSource(int depth) {
         return spreadNode.toSource(depth);
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != SpreadObjectProperty.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        SpreadObjectProperty copy = new SpreadObjectProperty(this.spreadNode);
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        SpreadObjectProperty copy = (SpreadObjectProperty) copyNode;
+        if (this.spreadNode != null) {
+            copy.spreadNode = (Spread) this.spreadNode.cloneStructure(map);
+        }
     }
 
     @Override

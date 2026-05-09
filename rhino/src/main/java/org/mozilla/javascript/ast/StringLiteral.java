@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Token;
 
@@ -76,6 +77,20 @@ public class StringLiteral extends AstNode {
                 + quoteChar
                 + ScriptRuntime.escapeString(value, quoteChar)
                 + quoteChar;
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != StringLiteral.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        StringLiteral copy = new StringLiteral();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.value = this.value;
+        copy.quoteChar = this.quoteChar;
+        return copy;
     }
 
     /** Visits this node. There are no children to visit. */

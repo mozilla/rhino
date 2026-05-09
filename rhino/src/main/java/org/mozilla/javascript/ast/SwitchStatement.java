@@ -8,7 +8,9 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -138,6 +140,40 @@ public class SwitchStatement extends Scope {
         sb.append(pad);
         sb.append("}\n");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != SwitchStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        SwitchStatement copy = new SwitchStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyJumpFieldsFrom(this);
+        copy.copyScopeFieldsFrom(this);
+        copy.expression = this.expression;
+        copy.cases = this.cases;
+        copy.lp = this.lp;
+        copy.rp = this.rp;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        SwitchStatement copy = (SwitchStatement) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
+        if (this.cases != null) {
+            List<SwitchCase> list = new ArrayList<>(this.cases.size());
+            for (SwitchCase sc : this.cases) {
+                list.add((SwitchCase) sc.cloneStructure(map));
+            }
+            copy.cases = list;
+        }
     }
 
     /** Visits this node, then the switch-expression, then the cases in lexical order. */

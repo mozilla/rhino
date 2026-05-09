@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /** AST node for an empty statement. Node type is {@link Token#EMPTY}. */
@@ -30,6 +31,18 @@ public class EmptyStatement extends AstNode {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth)).append(";\n");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != EmptyStatement.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        EmptyStatement copy = new EmptyStatement();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
     }
 
     /** Visits this node. There are no children. */

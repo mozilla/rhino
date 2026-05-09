@@ -7,7 +7,9 @@
 package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -130,6 +132,36 @@ public class SwitchCase extends AstNode {
             }
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != SwitchCase.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        SwitchCase copy = new SwitchCase();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.expression = this.expression;
+        copy.statements = this.statements;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        SwitchCase copy = (SwitchCase) copyNode;
+        if (this.expression != null) {
+            copy.expression = (AstNode) this.expression.cloneStructure(map);
+        }
+        if (this.statements != null) {
+            List<AstNode> list = new ArrayList<>(this.statements.size());
+            for (AstNode s : this.statements) {
+                list.add((AstNode) s.cloneStructure(map));
+            }
+            copy.statements = list;
+        }
     }
 
     /**

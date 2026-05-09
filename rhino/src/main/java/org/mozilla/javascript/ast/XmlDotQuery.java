@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -60,5 +61,19 @@ public class XmlDotQuery extends InfixExpression {
         sb.append(getRight().toSource(0));
         sb.append(")");
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != XmlDotQuery.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        XmlDotQuery copy = new XmlDotQuery();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.copyInfixFieldsFrom(this);
+        copy.rp = this.rp;
+        return copy;
     }
 }

@@ -24,8 +24,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             double[] itsDoubleTable,
             BigInteger[] itsBigIntTable,
             InterpreterData<JSFunction>[] itsNestedFunctions,
-            Object[] itsRegExpLiterals,
-            Object[] itsTemplateLiterals,
             byte[] itsICode,
             int[] itsExceptionTable,
             int itsMaxVars,
@@ -40,8 +38,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
         this.itsDoubleTable = itsDoubleTable;
         this.itsBigIntTable = itsBigIntTable;
         this.itsNestedFunctions = itsNestedFunctions;
-        this.itsRegExpLiterals = itsRegExpLiterals;
-        this.itsTemplateLiterals = itsTemplateLiterals;
         this.itsICode = itsICode;
         this.itsExceptionTable = itsExceptionTable;
         this.itsMaxVars = itsMaxVars;
@@ -58,8 +54,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
     final double[] itsDoubleTable;
     final BigInteger[] itsBigIntTable;
     final InterpreterData<JSFunction>[] itsNestedFunctions;
-    final Object[] itsRegExpLiterals;
-    final Object[] itsTemplateLiterals;
 
     final byte[] itsICode;
 
@@ -101,7 +95,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             VarScope scope,
             Object thisObj,
             Object[] args) {
-        return Interpreter.interpret(executableObject, this, cx, scope, (Scriptable) thisObj, args);
+        return Interpreter.interpret(executableObject, this, cx, scope, thisObj, args, newTarget);
     }
 
     @Override
@@ -120,8 +114,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
         double[] itsDoubleTable;
         BigInteger[] itsBigIntTable;
         InterpreterData<JSFunction>[] itsNestedFunctions;
-        Object[] itsRegExpLiterals;
-        Object[] itsTemplateLiterals;
 
         byte[] itsICode;
 
@@ -158,8 +150,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
                                 itsDoubleTable,
                                 itsBigIntTable,
                                 itsNestedFunctions,
-                                itsRegExpLiterals,
-                                itsTemplateLiterals,
                                 itsICode,
                                 itsExceptionTable,
                                 itsMaxVars,

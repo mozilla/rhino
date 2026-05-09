@@ -162,14 +162,94 @@ abstract class Icode {
             // delete super.prop
             Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
 
+            // Call super() in a derived class constructor
+            Icode_CONSTRUCT_SUPER = Icode_DELPROP_SUPER - 1,
+
+            // Call super(...arr) in a derived class constructor. Top of stack is the
+            // array-like whose elements are spread as the super constructor arguments.
+            Icode_CONSTRUCT_SUPER_SPREAD = Icode_CONSTRUCT_SUPER - 1,
+
+            // Class declaration with extends: stack has superclass, creates constructor with
+            // homeObject
+            Icode_CLASS_STMT = Icode_CONSTRUCT_SUPER_SPREAD - 1,
+
+            // Class expression with extends: stack has superclass, creates constructor with
+            // homeObject
+            Icode_CLASS_EXPR = Icode_CLASS_STMT - 1,
+
             // spread
-            Icode_SPREAD = Icode_DELPROP_SUPER - 1,
+            Icode_SPREAD = Icode_CLASS_EXPR - 1,
 
             // object rest - create object excluding extracted keys
             Icode_OBJECT_REST = Icode_SPREAD - 1,
 
+            // Wrap top-of-stack in an AwaitMarker (used inside async generator bodies so the
+            // driver can distinguish await from yield).
+            Icode_WRAP_AWAIT = Icode_OBJECT_REST - 1,
+
+            // Define a method on a class prototype
+            Icode_DEFINE_CLASS_METHOD = Icode_WRAP_AWAIT - 1,
+
+            // Define a getter on a class prototype
+            Icode_DEFINE_CLASS_GETTER = Icode_DEFINE_CLASS_METHOD - 1,
+
+            // Define a setter on a class prototype
+            Icode_DEFINE_CLASS_SETTER = Icode_DEFINE_CLASS_GETTER - 1,
+
+            // Define a static method on a class constructor
+            Icode_DEFINE_STATIC_CLASS_METHOD = Icode_DEFINE_CLASS_SETTER - 1,
+
+            // Define a static getter on a class constructor
+            Icode_DEFINE_STATIC_CLASS_GETTER = Icode_DEFINE_STATIC_CLASS_METHOD - 1,
+
+            // Define a static setter on a class constructor
+            Icode_DEFINE_STATIC_CLASS_SETTER = Icode_DEFINE_STATIC_CLASS_GETTER - 1,
+
+            // Define a static named field on a class constructor (value on stack)
+            Icode_DEFINE_STATIC_CLASS_FIELD = Icode_DEFINE_STATIC_CLASS_SETTER - 1,
+
+            // Define a static computed field on a class constructor (key and value on stack)
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD = Icode_DEFINE_STATIC_CLASS_FIELD - 1,
+
+            // Define a class private field: stack has target, symbol key, value -> ...
+            Icode_DEFINE_PRIVATE_FIELD = Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD - 1,
+
+            // Define a class private getter: stack has target, symbol key, fn -> ... fn
+            Icode_DEFINE_PRIVATE_GETTER = Icode_DEFINE_PRIVATE_FIELD - 1,
+
+            // Define a class private setter: stack has target, symbol key, fn -> ... fn
+            Icode_DEFINE_PRIVATE_SETTER = Icode_DEFINE_PRIVATE_GETTER - 1,
+
+            // Store instance computed field keys on a constructor.
+            // Stack has constructor and `count` keys, with the constructor underneath.
+            // indexReg holds `count`. After the op: ... constructor.
+            Icode_STORE_CLASS_COMPUTED_KEYS = Icode_DEFINE_PRIVATE_SETTER - 1,
+
+            // Push the i-th pre-evaluated instance computed field key of the currently
+            // executing function onto the stack. indexReg holds the index.
+            Icode_GET_CLASS_COMPUTED_KEY = Icode_STORE_CLASS_COMPUTED_KEYS - 1,
+
+            // Define a method on a class prototype with a computed key on the stack.
+            // Stack: ... constructor key -> ... constructor. indexReg holds the method fn index.
+            Icode_DEFINE_CLASS_COMPUTED_METHOD = Icode_GET_CLASS_COMPUTED_KEY - 1,
+
+            // Define a getter on a class prototype with a computed key on the stack.
+            Icode_DEFINE_CLASS_COMPUTED_GETTER = Icode_DEFINE_CLASS_COMPUTED_METHOD - 1,
+
+            // Define a setter on a class prototype with a computed key on the stack.
+            Icode_DEFINE_CLASS_COMPUTED_SETTER = Icode_DEFINE_CLASS_COMPUTED_GETTER - 1,
+
+            // Define a static method on a class constructor with a computed key on the stack.
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD = Icode_DEFINE_CLASS_COMPUTED_SETTER - 1,
+
+            // Define a static getter on a class constructor with a computed key on the stack.
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER = Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD - 1,
+
+            // Define a static setter on a class constructor with a computed key on the stack.
+            Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER = Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER - 1,
+
             // Last icode
-            MIN_ICODE = Icode_OBJECT_REST;
+            MIN_ICODE = Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -359,10 +439,58 @@ abstract class Icode {
                 return "CALL_ON_SUPER";
             case Icode_DELPROP_SUPER:
                 return "DELPROP_SUPER";
+            case Icode_CONSTRUCT_SUPER:
+                return "CONSTRUCT_SUPER";
+            case Icode_CONSTRUCT_SUPER_SPREAD:
+                return "CONSTRUCT_SUPER_SPREAD";
+            case Icode_CLASS_STMT:
+                return "CLASS_STMT";
+            case Icode_CLASS_EXPR:
+                return "CLASS_EXPR";
             case Icode_SPREAD:
                 return "SPREAD";
             case Icode_OBJECT_REST:
                 return "OBJECT_REST";
+            case Icode_WRAP_AWAIT:
+                return "WRAP_AWAIT";
+            case Icode_DEFINE_CLASS_METHOD:
+                return "DEFINE_CLASS_METHOD";
+            case Icode_DEFINE_CLASS_GETTER:
+                return "DEFINE_CLASS_GETTER";
+            case Icode_DEFINE_CLASS_SETTER:
+                return "DEFINE_CLASS_SETTER";
+            case Icode_DEFINE_STATIC_CLASS_METHOD:
+                return "DEFINE_STATIC_CLASS_METHOD";
+            case Icode_DEFINE_STATIC_CLASS_GETTER:
+                return "DEFINE_STATIC_CLASS_GETTER";
+            case Icode_DEFINE_STATIC_CLASS_SETTER:
+                return "DEFINE_STATIC_CLASS_SETTER";
+            case Icode_DEFINE_STATIC_CLASS_FIELD:
+                return "DEFINE_STATIC_CLASS_FIELD";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_FIELD:
+                return "DEFINE_STATIC_CLASS_COMPUTED_FIELD";
+            case Icode_DEFINE_PRIVATE_FIELD:
+                return "DEFINE_PRIVATE_FIELD";
+            case Icode_DEFINE_PRIVATE_GETTER:
+                return "DEFINE_PRIVATE_GETTER";
+            case Icode_DEFINE_PRIVATE_SETTER:
+                return "DEFINE_PRIVATE_SETTER";
+            case Icode_STORE_CLASS_COMPUTED_KEYS:
+                return "STORE_CLASS_COMPUTED_KEYS";
+            case Icode_GET_CLASS_COMPUTED_KEY:
+                return "GET_CLASS_COMPUTED_KEY";
+            case Icode_DEFINE_CLASS_COMPUTED_METHOD:
+                return "DEFINE_CLASS_COMPUTED_METHOD";
+            case Icode_DEFINE_CLASS_COMPUTED_GETTER:
+                return "DEFINE_CLASS_COMPUTED_GETTER";
+            case Icode_DEFINE_CLASS_COMPUTED_SETTER:
+                return "DEFINE_CLASS_COMPUTED_SETTER";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_METHOD:
+                return "DEFINE_STATIC_CLASS_COMPUTED_METHOD";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_GETTER:
+                return "DEFINE_STATIC_CLASS_COMPUTED_GETTER";
+            case Icode_DEFINE_STATIC_CLASS_COMPUTED_SETTER:
+                return "DEFINE_STATIC_CLASS_COMPUTED_SETTER";
         }
 
         // icode without name

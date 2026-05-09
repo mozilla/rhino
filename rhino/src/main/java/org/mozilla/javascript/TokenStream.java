@@ -65,6 +65,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 case Token.STRING:
                 case Token.REGEXP:
                 case Token.NAME:
+                case Token.PRIVATE_NAME:
                     return name + " `" + this.string + "'";
 
                 case Token.NUMBER:
@@ -364,7 +365,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 Id_break = Token.BREAK,
                 Id_case = Token.CASE,
                 Id_catch = Token.CATCH,
-                Id_class = Token.RESERVED,
+                Id_class = Token.CLASS,
                 Id_const = Token.CONST,
                 Id_continue = Token.CONTINUE,
                 Id_debugger = Token.DEBUGGER,
@@ -373,7 +374,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 Id_do = Token.DO,
                 Id_else = Token.ELSE,
                 Id_export = Token.RESERVED,
-                Id_extends = Token.RESERVED,
+                Id_extends = Token.EXTENDS,
                 Id_finally = Token.FINALLY,
                 Id_for = Token.FOR,
                 Id_function = Token.FUNCTION,
@@ -396,7 +397,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 Id_yield = Token.YIELD,
 
                 // 11.6.2.2 Future Reserved Words
-                Id_await = Token.RESERVED,
+                Id_await = Token.NAME,
                 Id_enum = Token.RESERVED,
 
                 // 11.6.2.2 NOTE Strict Future Reserved Words
@@ -1154,6 +1155,69 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 // #! hashbang: only on the first line of a Script, no leading whitespace
                 skipLine();
                 return Token.COMMENT;
+            }
+
+            if (c == '#') {
+                int peek = peekChar();
+                boolean startIsEscape = false;
+                if (peek == '\\') {
+                    getChar(); // consume '\\'
+                    if (peekChar() == 'u') {
+                        getChar(); // consume 'u'
+                        startIsEscape = true;
+                    } else {
+                        ungetChar('\\');
+                    }
+                }
+                if (startIsEscape
+                        || Character.isUnicodeIdentifierStart(peek)
+                        || peek == '$'
+                        || peek == '_') {
+                    stringBufferTop = 0;
+                    addToString('#');
+                    boolean inEscape = startIsEscape;
+                    boolean containsEscape = startIsEscape;
+                    for (; ; ) {
+                        if (inEscape) {
+                            int escapeVal = readIdentifierUnicodeEscape();
+                            if (escapeVal < 0) {
+                                return Token.ERROR;
+                            }
+                            addToString(escapeVal);
+                            inEscape = false;
+                        } else {
+                            int pc = peekChar();
+                            if (pc == '\\') {
+                                getChar(); // consume '\\'
+                                if (peekChar() == 'u') {
+                                    getChar(); // consume 'u'
+                                    inEscape = true;
+                                    containsEscape = true;
+                                } else {
+                                    parser.addError("msg.illegal.character", '\\');
+                                    return Token.ERROR;
+                                }
+                            } else if (pc == EOF_CHAR
+                                    || pc == BYTE_ORDER_MARK
+                                    || !(Character.isUnicodeIdentifierPart(pc) || pc == '$')) {
+                                break;
+                            } else {
+                                addToString(getChar());
+                            }
+                        }
+                    }
+                    String str = getStringFromBuffer();
+                    if (containsEscape && !isValidIdentifierName(str.substring(1))) {
+                        parser.reportError("msg.invalid.escape");
+                        return Token.ERROR;
+                    }
+                    this.string = internString(str);
+                    cursor = sourceCursor;
+                    tokenEnd = cursor;
+                    return Token.PRIVATE_NAME;
+                }
+                parser.addError("msg.illegal.character", c);
+                return Token.ERROR;
             }
 
             switch (c) {
@@ -2161,6 +2225,40 @@ class TokenStream implements Parser.CurrentPositionReporter {
         if (ungetCursor != 0 && ungetBuffer[ungetCursor - 1] == '\n') Kit.codeBug();
         ungetBuffer[ungetCursor++] = c;
         cursor--;
+    }
+
+    // Read a unicode escape with the leading \\u already consumed. Supports both
+    // \\uXXXX and \\u{...} forms. Returns the code point (0 to 0x10FFFF) or -1
+    // on error, in which case the error has already been reported.
+    private int readIdentifierUnicodeEscape() throws IOException {
+        int escapeVal = 0;
+        if (matchChar('{')) {
+            for (; ; ) {
+                int c = getChar();
+                if (c == '}') {
+                    break;
+                }
+                escapeVal = Kit.xDigitToInt(c, escapeVal);
+                if (escapeVal < 0) {
+                    parser.reportError("msg.invalid.escape");
+                    return -1;
+                }
+            }
+            if (escapeVal > 0x10FFFF) {
+                parser.reportError("msg.invalid.escape");
+                return -1;
+            }
+            return escapeVal;
+        }
+        for (int i = 0; i != 4; ++i) {
+            int c = getChar();
+            escapeVal = Kit.xDigitToInt(c, escapeVal);
+            if (escapeVal < 0) {
+                parser.reportError("msg.invalid.escape");
+                return -1;
+            }
+        }
+        return escapeVal;
     }
 
     private boolean matchChar(int test) throws IOException {

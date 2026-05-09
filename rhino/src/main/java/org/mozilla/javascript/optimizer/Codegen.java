@@ -10,9 +10,7 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
-import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,16 +27,20 @@ import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
+import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptOrFn;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 
 /**
  * This class generates code for a given IR tree.
@@ -154,25 +156,11 @@ public class Codegen implements Evaluator {
             var descs = new ArrayList<JSDescriptor<?>>();
             JSDescriptor<T> desc = compiled.builder.build(d -> descs.add(d));
             cl.getField(DESCRIPTORS_FIELD_NAME).set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.builderEnv.hasRegExpLiterals) {
-                cl.getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
-                        .invoke(null, Context.getCurrentContext());
-            }
-            if (compiled.builderEnv.hasTemplateLiterals) {
-                cl.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
-            }
             return desc;
-        } catch (InvocationTargetException x) {
-            var cause = x.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            e = x;
         } catch (SecurityException
                 | IllegalArgumentException
                 | IllegalAccessException
-                | NoSuchFieldException
-                | NoSuchMethodException x) {
+                | NoSuchFieldException x) {
             e = x;
         }
         throw new RuntimeException(e);
@@ -277,6 +265,38 @@ public class Codegen implements Evaluator {
         }
     }
 
+    private static void populateLiterals(ScriptNode n, JSDescriptor.Builder<?> builder) {
+        int count = n.getLiteralCount();
+        if (count == 0) return;
+
+        Context cx = null;
+        RegExpProxy rep = null;
+        Object[] array = new Object[count];
+        for (int i = 0; i != count; ++i) {
+            var literal = n.getLiteral(i);
+            if (literal instanceof RegExpLiteral) {
+                if (rep == null) {
+                    cx = Context.getCurrentContext();
+                    rep = ScriptRuntime.checkRegExpProxy(cx);
+                }
+                var re = (RegExpLiteral) literal;
+                array[i] = rep.compileRegExp(cx, re.getValue(), re.getFlags());
+            } else if (literal instanceof TemplateLiteral) {
+                List<TemplateCharacters> strings = ((TemplateLiteral) literal).getTemplateStrings();
+                String[] values = new String[strings.size() * 2];
+                int j = 0;
+                for (TemplateCharacters s : strings) {
+                    values[j++] = s.getValue();
+                    values[j++] = s.getRawValue();
+                }
+                array[i] = values;
+            } else {
+                array[i] = literal;
+            }
+        }
+        builder.literals = array;
+    }
+
     private <U extends ScriptOrFn<U>> void collectScriptNodes_r(
             ScriptNode n,
             JSDescriptor.Builder<U> builder,
@@ -298,8 +318,7 @@ public class Codegen implements Evaluator {
             code.resumeType = GENERATOR_METHOD_SIGNATURE;
         }
         builder.setCode(code);
-        builderEnv.hasRegExpLiterals |= (n.getRegexpCount() > 0);
-        builderEnv.hasTemplateLiterals |= (n.getTemplateLiteralCount() > 0);
+        populateLiterals(n, builder);
         CodeGenUtils.setConstructor(builder, n);
 
         x.add(n);
@@ -402,19 +421,7 @@ public class Codegen implements Evaluator {
         for (int i = 0; i != count; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
 
-            BodyCodegen bodygen = new BodyCodegen();
-            bodygen.cfw = cfw;
-            bodygen.codegen = this;
-            bodygen.compilerEnv = compilerEnv;
-            bodygen.scriptOrFn = n;
-            bodygen.scriptOrFnIndex = i;
-            if (n instanceof FunctionNode) {
-                bodygen.scriptOrFnType = "Lorg/mozilla/javascript/JSFunction;";
-                bodygen.scriptOrFnClass = "org.mozilla.javascript.JSFunction";
-            } else {
-                bodygen.scriptOrFnType = "Lorg/mozilla/javascript/JSScript;";
-                bodygen.scriptOrFnClass = "org.mozilla.javascript.JSScript";
-            }
+            BodyCodegen bodygen = new BodyCodegen(cfw, this, compilerEnv, n, i);
 
             bodygen.generateBodyCode();
 
@@ -430,8 +437,6 @@ public class Codegen implements Evaluator {
             }
         }
 
-        emitRegExpInit(cfw);
-        emitTemplateLiteralInit(cfw);
         emitConstantDudeInitializers(cfw);
 
         return cfw.toByteArray();
@@ -567,151 +572,6 @@ public class Codegen implements Evaluator {
                 "lookup",
                 "()Ljava/lang/invoke/MethodHandles$Lookup;");
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod(0);
-    }
-
-    private void emitRegExpInit(ClassFileWriter cfw) {
-        // precompile all regexp literals
-
-        int totalRegCount = 0;
-        for (int i = 0; i != scriptOrFnNodes.length; ++i) {
-            totalRegCount += scriptOrFnNodes[i].getRegexpCount();
-        }
-        if (totalRegCount == 0) {
-            return;
-        }
-
-        cfw.startMethod(
-                REGEXP_INIT_METHOD_NAME,
-                REGEXP_INIT_METHOD_SIGNATURE,
-                (short) (ACC_STATIC | ACC_PUBLIC));
-        cfw.addField("_reInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
-        cfw.add(ByteCode.GETSTATIC, mainClassName, "_reInitDone", "Z");
-        int doInit = cfw.acquireLabel();
-        cfw.add(ByteCode.IFEQ, doInit);
-        cfw.add(ByteCode.RETURN);
-        cfw.markLabel(doInit);
-
-        // get regexp proxy and store it in local slot 1
-        cfw.addALoad(0); // context
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "checkRegExpProxy",
-                "(Lorg/mozilla/javascript/Context;" + ")Lorg/mozilla/javascript/RegExpProxy;");
-        cfw.addAStore(1); // proxy
-
-        // We could apply double-checked locking here but concurrency
-        // shouldn't be a problem in practice
-        for (int i = 0; i != scriptOrFnNodes.length; ++i) {
-            ScriptNode n = scriptOrFnNodes[i];
-            int regCount = n.getRegexpCount();
-            for (int j = 0; j != regCount; ++j) {
-                String reFieldName = getCompiledRegexpName(n, j);
-                String reFieldType = "Ljava/lang/Object;";
-                String reString = n.getRegexpString(j);
-                String reFlags = n.getRegexpFlags(j);
-                cfw.addField(reFieldName, reFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
-                cfw.addALoad(1); // proxy
-                cfw.addALoad(0); // context
-                cfw.addPush(reString);
-                if (reFlags == null) {
-                    cfw.add(ByteCode.ACONST_NULL);
-                } else {
-                    cfw.addPush(reFlags);
-                }
-                cfw.addInvoke(
-                        ByteCode.INVOKEINTERFACE,
-                        "org/mozilla/javascript/RegExpProxy",
-                        "compileRegExp",
-                        "(Lorg/mozilla/javascript/Context;"
-                                + "Ljava/lang/String;Ljava/lang/String;"
-                                + ")Ljava/lang/Object;");
-                cfw.add(ByteCode.PUTSTATIC, mainClassName, reFieldName, reFieldType);
-            }
-        }
-
-        cfw.addPush(1);
-        cfw.add(ByteCode.PUTSTATIC, mainClassName, "_reInitDone", "Z");
-        cfw.add(ByteCode.RETURN);
-        cfw.stopMethod(2);
-    }
-
-    /**
-     * Overview:
-     *
-     * <pre>
-     * for each fn in functions(script) do
-     *   let field = []
-     *   for each templateLiteral in templateLiterals(fn) do
-     *     let values = concat([[cooked(s), raw(s)] | s <- strings(templateLiteral)])
-     *     field.push(values)
-     *   end
-     *   class[getTemplateLiteralName(fn)] = field
-     * end
-     * </pre>
-     */
-    private void emitTemplateLiteralInit(ClassFileWriter cfw) {
-        // emit all template literals
-
-        int totalTemplateLiteralCount = 0;
-        for (ScriptNode n : scriptOrFnNodes) {
-            totalTemplateLiteralCount += n.getTemplateLiteralCount();
-        }
-
-        cfw.startMethod(
-                TEMPLATE_LITERAL_INIT_METHOD_NAME,
-                TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
-                (short) (ACC_STATIC | ACC_PUBLIC));
-        cfw.addField("_qInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
-
-        cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
-        int doInit = cfw.acquireLabel();
-        cfw.add(ByteCode.IFEQ, doInit);
-        cfw.add(ByteCode.RETURN);
-        cfw.markLabel(doInit);
-
-        // We could apply double-checked locking here but concurrency
-        // shouldn't be a problem in practice
-        for (ScriptNode n : scriptOrFnNodes) {
-            int qCount = n.getTemplateLiteralCount();
-            if (qCount == 0) continue;
-            String qFieldName = getTemplateLiteralName(n);
-            String qFieldType = "[Ljava/lang/Object;";
-            cfw.addField(qFieldName, qFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
-            cfw.addPush(qCount);
-            cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
-            for (int j = 0; j < qCount; ++j) {
-                List<TemplateCharacters> strings = n.getTemplateLiteralStrings(j);
-                cfw.add(ByteCode.DUP);
-                cfw.addPush(j);
-                cfw.addPush(strings.size() * 2);
-                cfw.add(ByteCode.ANEWARRAY, "java/lang/String");
-                int k = 0;
-                for (TemplateCharacters s : strings) {
-                    // cooked value
-                    cfw.add(ByteCode.DUP);
-                    cfw.addPush(k++);
-                    if (s.getValue() != null) {
-                        cfw.addPush(s.getValue());
-                    } else {
-                        cfw.add(ByteCode.ACONST_NULL);
-                    }
-                    cfw.add(ByteCode.AASTORE);
-                    // raw value
-                    cfw.add(ByteCode.DUP);
-                    cfw.addPush(k++);
-                    cfw.addPush(s.getRawValue());
-                    cfw.add(ByteCode.AASTORE);
-                }
-                cfw.add(ByteCode.AASTORE);
-            }
-            cfw.add(ByteCode.PUTSTATIC, mainClassName, qFieldName, qFieldType);
-        }
-
-        cfw.addPush(true);
-        cfw.add(ByteCode.PUTSTATIC, mainClassName, "_qInitDone", "Z");
-        cfw.add(ByteCode.RETURN);
         cfw.stopMethod(0);
     }
 
@@ -921,14 +781,6 @@ public class Codegen implements Evaluator {
         return "_i" + getIndex(ofn.fnode);
     }
 
-    String getCompiledRegexpName(ScriptNode n, int regexpIndex) {
-        return "_re" + getIndex(n) + "_" + regexpIndex;
-    }
-
-    String getTemplateLiteralName(ScriptNode n) {
-        return "_q" + getIndex(n);
-    }
-
     static RuntimeException badTree() {
         throw new RuntimeException("Bad tree in codegen");
     }
@@ -947,12 +799,6 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
-    static final String REGEXP_INIT_METHOD_NAME = "_reInit";
-    static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
-
-    static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";
-    static final String TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE = "()V";
-
     static final String CODE_INIT_SIGNATURE = "(Lorg/mozilla/javascript/Context;" + ")V";
 
     static final String CODE_CONSTRUCTOR_SIGNATURE = "(Lorg/mozilla/javascript/Context;I)V";
@@ -964,7 +810,8 @@ public class Codegen implements Evaluator {
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/VarScope;"
                     + "Lorg/mozilla/javascript/JSDescriptor;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Scriptable;"
                     + ")V";
 

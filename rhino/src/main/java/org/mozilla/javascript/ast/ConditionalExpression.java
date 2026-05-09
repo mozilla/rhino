@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -138,6 +140,38 @@ public class ConditionalExpression extends AstNode {
         sb.append(" : ");
         sb.append(falseExpression.toSource(0));
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != ConditionalExpression.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        ConditionalExpression copy = new ConditionalExpression();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.testExpression = this.testExpression;
+        copy.trueExpression = this.trueExpression;
+        copy.falseExpression = this.falseExpression;
+        copy.questionMarkPosition = this.questionMarkPosition;
+        copy.colonPosition = this.colonPosition;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        ConditionalExpression copy = (ConditionalExpression) copyNode;
+        if (this.testExpression != null) {
+            copy.testExpression = (AstNode) this.testExpression.cloneStructure(map);
+        }
+        if (this.trueExpression != null) {
+            copy.trueExpression = (AstNode) this.trueExpression.cloneStructure(map);
+        }
+        if (this.falseExpression != null) {
+            copy.falseExpression = (AstNode) this.falseExpression.cloneStructure(map);
+        }
     }
 
     /**

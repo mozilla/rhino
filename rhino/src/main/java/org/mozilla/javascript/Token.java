@@ -41,8 +41,9 @@ public class Token {
             // Interpreter reuses the following as bytecodes
             FIRST_BYTECODE_TOKEN = EOL + 1,
             ENTERWITH = FIRST_BYTECODE_TOKEN,
-            LEAVEWITH = ENTERWITH + 1,
-            RETURN = LEAVEWITH + 1,
+            ENTER_SCOPE = ENTERWITH + 1,
+            LEAVE_SCOPE = ENTER_SCOPE + 1,
+            RETURN = LEAVE_SCOPE + 1,
             GOTO = RETURN + 1,
             IFEQ = GOTO + 1,
             IFNE = IFEQ + 1,
@@ -132,10 +133,25 @@ public class Token {
             REF_NS_MEMBER = REF_MEMBER + 1, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
+            BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
+            NEW_TARGET = BIGINT + 1, // new.target meta-property
+            TO_OBJECT_COERCIBLE = NEW_TARGET + 1, // ES6 RequireObjectCoercible
+            // Async iteration support (for-await-of)
+            ENUM_INIT_ASYNC_ITERATOR = TO_OBJECT_COERCIBLE + 1,
+            ENUM_ASYNC_NEXT = ENUM_INIT_ASYNC_ITERATOR + 1,
+            ENUM_ASYNC_STEP = ENUM_ASYNC_NEXT + 1,
+            // Push a constant value stored in the shared literals table
+            LOAD_LITERAL = ENUM_ASYNC_STEP + 1,
+            // Abrupt-completion IteratorClose: calls iterator.return, swallowing errors.
+            // Produces undefined on the stack. Used inside the finally branch of destructuring
+            // (and similar) lowerings so the iterator is closed even on exception /
+            // generator-return.
+            ITERATOR_CLOSE_ABRUPT = LOAD_LITERAL + 1,
+            // Define a new private field: stack has target, key, value -> ...
+            DEFINE_FIELD = ITERATOR_CLOSE_ABRUPT + 1;
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = BIGINT,
+    public static final int LAST_BYTECODE_TOKEN = DEFINE_FIELD,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -209,7 +225,8 @@ public class Token {
             SETPROP_OP = USE_STACK + 1, // x.y op= something
             SETELEM_OP = SETPROP_OP + 1, // x[y] op= something
             LOCAL_BLOCK = SETELEM_OP + 1,
-            SET_REF_OP = LOCAL_BLOCK + 1, // *reference op= something
+            SCOPE_BLOCK = LOCAL_BLOCK + 1,
+            SET_REF_OP = SCOPE_BLOCK + 1, // *reference op= something
 
             // For XML support:
             DOTDOT = SET_REF_OP + 1, // member operator (..)
@@ -230,7 +247,8 @@ public class Token {
             SETCONSTVAR = SETCONST + 1,
             ARRAYCOMP = SETCONSTVAR + 1, // array comprehension
             LETEXPR = ARRAYCOMP + 1,
-            WITHEXPR = LETEXPR + 1,
+            SCOPEEXPR = LETEXPR + 1,
+            WITHEXPR = SCOPEEXPR + 1,
             DEBUGGER = WITHEXPR + 1,
             COMMENT = DEBUGGER + 1,
             GENEXPR = COMMENT + 1,
@@ -246,7 +264,13 @@ public class Token {
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
-            LAST_TOKEN = OBJECT_REST + 1;
+            AWAIT = OBJECT_REST + 1, // ES2017 await expression
+            CLASS = AWAIT + 1, // ES6 class declaration/expression
+            EXTENDS = CLASS + 1, // ES6 extends clause
+            PRIVATE_NAME = EXTENDS + 1, // ES2022 private class member name: #foo
+            GET_CLASS_COMPUTED_KEY =
+                    PRIVATE_NAME + 1, // retrieve a pre-evaluated class computed-field key
+            LAST_TOKEN = GET_CLASS_COMPUTED_KEY + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -277,8 +301,10 @@ public class Token {
                 return "EOL";
             case ENTERWITH:
                 return "ENTERWITH";
-            case LEAVEWITH:
-                return "LEAVEWITH";
+            case ENTER_SCOPE:
+                return "ENTER_SCOPE";
+            case LEAVE_SCOPE:
+                return "LEAVE_SCOPE";
             case RETURN:
                 return "RETURN";
             case GOTO:
@@ -383,6 +409,10 @@ public class Token {
                 return "SHNE";
             case REGEXP:
                 return "REGEXP";
+            case LOAD_LITERAL:
+                return "LOAD_LITERAL";
+            case DEFINE_FIELD:
+                return "DEFINE_FIELD";
             case BINDNAME:
                 return "BINDNAME";
             case THROW:
@@ -579,6 +609,8 @@ public class Token {
                 return "SETELEM_OP";
             case LOCAL_BLOCK:
                 return "LOCAL_BLOCK";
+            case SCOPE_BLOCK:
+                return "SCOPE_BLOCK";
             case SET_REF_OP:
                 return "SET_REF_OP";
             case DOTDOT:
@@ -599,6 +631,26 @@ public class Token {
                 return "TO_DOUBLE";
             case OBJECT_REST:
                 return "OBJECT_REST";
+            case AWAIT:
+                return "AWAIT";
+            case TO_OBJECT_COERCIBLE:
+                return "TO_OBJECT_COERCIBLE";
+            case ITERATOR_CLOSE_ABRUPT:
+                return "ITERATOR_CLOSE_ABRUPT";
+            case ENUM_INIT_ASYNC_ITERATOR:
+                return "ENUM_INIT_ASYNC_ITERATOR";
+            case ENUM_ASYNC_NEXT:
+                return "ENUM_ASYNC_NEXT";
+            case ENUM_ASYNC_STEP:
+                return "ENUM_ASYNC_STEP";
+            case CLASS:
+                return "CLASS";
+            case EXTENDS:
+                return "EXTENDS";
+            case PRIVATE_NAME:
+                return "PRIVATE_NAME";
+            case GET_CLASS_COMPUTED_KEY:
+                return "GET_CLASS_COMPUTED_KEY";
             case GET:
                 return "GET";
             case SET:
@@ -621,6 +673,8 @@ public class Token {
                 return "ARRAYCOMP";
             case WITHEXPR:
                 return "WITHEXPR";
+            case SCOPEEXPR:
+                return "SCOPEEXPR";
             case LETEXPR:
                 return "LETEXPR";
             case DEBUGGER:
@@ -637,6 +691,8 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
+            case NEW_TARGET:
+                return "NEW_TARGET";
             case TEMPLATE_LITERAL:
                 return "TEMPLATE_LITERAL";
             case STRING_CONCAT:
@@ -734,6 +790,10 @@ public class Token {
                 return "throw";
             case Token.TRY:
                 return "try";
+            case Token.CLASS:
+                return "class";
+            case Token.EXTENDS:
+                return "extends";
             default:
                 return null;
         }

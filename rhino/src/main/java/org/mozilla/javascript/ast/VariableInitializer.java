@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.ast;
 
+import java.util.IdentityHashMap;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
@@ -99,6 +101,32 @@ public class VariableInitializer extends AstNode {
             sb.append(initializer.toSource(0));
         }
         return sb.toString();
+    }
+
+    @Override
+    protected Node shallowCopy() {
+        if (getClass() != VariableInitializer.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        VariableInitializer copy = new VariableInitializer();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        copy.target = this.target;
+        copy.initializer = this.initializer;
+        return copy;
+    }
+
+    @Override
+    protected void cloneNamedChildren(Node copyNode, IdentityHashMap<Node, Node> map) {
+        super.cloneNamedChildren(copyNode, map);
+        VariableInitializer copy = (VariableInitializer) copyNode;
+        if (this.target != null) {
+            copy.target = (AstNode) this.target.cloneStructure(map);
+        }
+        if (this.initializer != null) {
+            copy.initializer = (AstNode) this.initializer.cloneStructure(map);
+        }
     }
 
     /** Visits this node, then the target expression, then the initializer expression if present. */

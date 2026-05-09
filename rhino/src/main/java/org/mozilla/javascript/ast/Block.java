@@ -59,6 +59,18 @@ public class Block extends AstNode {
     }
 
     @Override
+    protected Node shallowCopy() {
+        if (getClass() != Block.class) {
+            throw new UnsupportedOperationException(
+                    "shallowCopy() not implemented for " + getClass().getName());
+        }
+        Block copy = new Block();
+        copy.type = this.type;
+        copyAstFields(this, copy);
+        return copy;
+    }
+
+    @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             for (Node kid : this) {
