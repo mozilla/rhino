@@ -1191,6 +1191,26 @@ public class Context implements Closeable {
     }
 
     /**
+     * Compile and execute a script described by {@code spec} in the given scope.
+     *
+     * @return the result of evaluating the source, or null if compilation produced no script
+     */
+    public final Object evaluateScript(ScriptCompileSpec spec, VarScope scope) {
+        Script script = compileScript(spec);
+        if (script != null) {
+            return script.exec(this, scope, scope);
+        }
+        return null;
+    }
+
+    /**
+     * @see #evaluateScript(ScriptCompileSpec, VarScope)
+     */
+    public final Object evaluateScript(ScriptCompileSpec.Builder spec, VarScope scope) {
+        return evaluateScript(spec.build(), scope);
+    }
+
+    /**
      * Evaluate a JavaScript source string.
      *
      * <p>The provided source name and line number are used for error messages and for producing
@@ -1208,12 +1228,13 @@ public class Context implements Closeable {
      */
     public final Object evaluateString(
             VarScope scope, String source, String sourceName, int lineno, Object securityDomain) {
-        Script script = compileString(source, sourceName, lineno, securityDomain);
-        if (script != null) {
-            return script.exec(
-                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
-        }
-        return null;
+        return evaluateScript(
+                ScriptCompileSpec.fromSource(source)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .build(),
+                scope);
     }
 
     /**
@@ -1234,12 +1255,13 @@ public class Context implements Closeable {
     public final Object evaluateReader(
             VarScope scope, Reader in, String sourceName, int lineno, Object securityDomain)
             throws IOException {
-        Script script = compileReader(in, sourceName, lineno, securityDomain);
-        if (script != null) {
-            return script.exec(
-                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
-        }
-        return null;
+        return evaluateScript(
+                ScriptCompileSpec.fromReader(in)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .build(),
+                scope);
     }
 
     /**
@@ -1437,22 +1459,13 @@ public class Context implements Closeable {
             Object securityDomain,
             Consumer<CompilerEnvirons> compilerEnvironsProcessor)
             throws IOException {
-        if (lineno < 0) {
-            // For compatibility IllegalArgumentException can not be thrown here
-            lineno = 0;
-        }
-
-        return (Script)
-                compileImpl(
-                        null,
-                        Kit.readReader(in),
-                        sourceName,
-                        lineno,
-                        securityDomain,
-                        false,
-                        null,
-                        null,
-                        compilerEnvironsProcessor);
+        return compileScript(
+                ScriptCompileSpec.fromReader(in)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .compilerEnvironsProcessor(compilerEnvironsProcessor)
+                        .build());
     }
 
     /**
@@ -1472,10 +1485,6 @@ public class Context implements Closeable {
      */
     public final Script compileString(
             String source, String sourceName, int lineno, Object securityDomain) {
-        if (lineno < 0) {
-            // For compatibility IllegalArgumentException can not be thrown here
-            lineno = 0;
-        }
         return compileString(source, null, null, sourceName, lineno, securityDomain, null);
     }
 
@@ -1487,17 +1496,15 @@ public class Context implements Closeable {
             int lineno,
             Object securityDomain,
             Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
-        return (Script)
-                compileImpl(
-                        null,
-                        source,
-                        sourceName,
-                        lineno,
-                        securityDomain,
-                        false,
-                        compiler,
-                        compilationErrorReporter,
-                        compilerEnvironsProcessor);
+        return compileScript(
+                ScriptCompileSpec.fromSource(source)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .compiler(compiler)
+                        .compilationErrorReporter(compilationErrorReporter)
+                        .compilerEnvironsProcessor(compilerEnvironsProcessor)
+                        .build());
     }
 
     /**
@@ -1529,17 +1536,38 @@ public class Context implements Closeable {
             String sourceName,
             int lineno,
             Object securityDomain) {
-        return (Function)
-                compileImpl(
-                        scope,
-                        source,
-                        sourceName,
-                        lineno,
-                        securityDomain,
-                        true,
-                        compiler,
-                        compilationErrorReporter,
-                        null);
+        return compileFunction(
+                FunctionCompileSpec.fromSource(source, scope)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .compiler(compiler)
+                        .compilationErrorReporter(compilationErrorReporter)
+                        .build());
+    }
+
+    /** Compile a script described by {@code spec}. */
+    public final Script compileScript(ScriptCompileSpec spec) {
+        return compileScriptImpl(spec);
+    }
+
+    /**
+     * @see #compileScript(ScriptCompileSpec)
+     */
+    public final Script compileScript(ScriptCompileSpec.Builder spec) {
+        return compileScriptImpl(spec.build());
+    }
+
+    /** Compile a function described by {@code spec}. */
+    public final Function compileFunction(FunctionCompileSpec spec) {
+        return compileFunctionImpl(spec);
+    }
+
+    /**
+     * @see #compileFunction(FunctionCompileSpec)
+     */
+    public final Function compileFunction(FunctionCompileSpec.Builder spec) {
+        return compileFunctionImpl(spec.build());
     }
 
     /**
@@ -2541,19 +2569,48 @@ public class Context implements Closeable {
         return cx;
     }
 
-    protected Object compileImpl(
-            VarScope scope,
+    protected Script compileScriptImpl(ScriptCompileSpec spec) {
+        return (Script)
+                compileImpl(
+                        spec.getSource(),
+                        spec.getSourceName(),
+                        spec.getLineno(),
+                        spec.getSecurityDomain(),
+                        spec.getCompiler(),
+                        spec.getCompilationErrorReporter(),
+                        spec.getCompilerEnvironsProcessor(),
+                        null,
+                        false);
+    }
+
+    protected Function compileFunctionImpl(FunctionCompileSpec spec) {
+        return (Function)
+                compileImpl(
+                        spec.getSource(),
+                        spec.getSourceName(),
+                        spec.getLineno(),
+                        spec.getSecurityDomain(),
+                        spec.getCompiler(),
+                        spec.getCompilationErrorReporter(),
+                        spec.getCompilerEnvironsProcessor(),
+                        spec.getScope(),
+                        true);
+    }
+
+    private Object compileImpl(
             String sourceString,
             String sourceName,
             int lineno,
             Object securityDomain,
-            boolean returnFunction,
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
-            Consumer<CompilerEnvirons> compilerEnvironProcessor) {
+            Consumer<CompilerEnvirons> compilerEnvironProcessor,
+            VarScope scope,
+            boolean returnFunction) {
         if (sourceName == null) {
             sourceName = "unnamed script";
         }
+
         if (securityDomain != null && getSecurityController() == null) {
             throw new IllegalArgumentException(
                     "securityDomain should be null if setSecurityController() was never called");
@@ -2565,9 +2622,11 @@ public class Context implements Closeable {
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
         compilerEnv.setSecurityDomain(securityDomain);
+
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
         }
+
         if (compilerEnvironProcessor != null) {
             compilerEnvironProcessor.accept(compilerEnv);
         }
