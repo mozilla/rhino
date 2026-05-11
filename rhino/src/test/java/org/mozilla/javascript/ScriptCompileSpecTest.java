@@ -38,7 +38,8 @@ public class ScriptCompileSpecTest {
                                 .build());
 
         assertNotNull(script);
-        Object result = script.exec(cx, scope, scope);
+        Object result =
+                script.exec(cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
         assertEquals(42, ((Number) result).intValue());
     }
 
@@ -100,7 +101,8 @@ public class ScriptCompileSpecTest {
                                 .lineno(1)
                                 .build());
 
-        Object result = script.exec(cx, scope, scope);
+        Object result =
+                script.exec(cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
         assertEquals(15, ((Number) result).intValue());
     }
 
@@ -198,8 +200,10 @@ public class ScriptCompileSpecTest {
                                 .lineno(1)
                                 .build());
 
-        Object oldResult = oldWay.exec(cx, scope, scope);
-        Object newResult = newWay.exec(cx, scope, scope);
+        Object oldResult =
+                oldWay.exec(cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
+        Object newResult =
+                newWay.exec(cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
         assertEquals(((Number) oldResult).intValue(), ((Number) newResult).intValue());
         assertEquals(3, ((Number) newResult).intValue());
     }

@@ -1198,7 +1198,8 @@ public class Context implements Closeable {
     public final Object evaluateScript(ScriptCompileSpec spec, VarScope scope) {
         Script script = compileScript(spec);
         if (script != null) {
-            return script.exec(this, scope, scope);
+            return script.exec(
+                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
         }
         return null;
     }
