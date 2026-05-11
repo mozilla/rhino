@@ -972,6 +972,10 @@ public final class Interpreter extends Icode implements Evaluator {
                 // skip indexes ID (uint16)
                 return 1 + 2;
 
+            case Icode_SPREAD:
+                // 2-byte source position operand (always emitted, even when unused)
+                return 1 + 2;
+
             case Icode_REG_BIGINT1:
                 // ubyte bigint index
                 return 1 + 1;
@@ -4492,14 +4496,23 @@ public final class Interpreter extends Icode implements Evaluator {
             --state.stackTop;
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
 
+            // Always consume the 2-byte operand to keep pc in sync.
+            int sourcePos = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
+
             if (store.hasSkipIndexes()) {
-                int sourcePos = getIndex(frame.idata.itsICode, frame.pc);
-                frame.pc += 2;
                 store.spread(cx, frame.scope, source, sourcePos);
             } else {
                 store.spread(cx, frame.scope, source, 0);
             }
             return null;
+        }
+
+        @Override
+        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
+            int sourcePos = ctx.getIndex(ctx.pc);
+            ctx.out.println(tname + " sourcePos=" + sourcePos);
+            ctx.pc += 2;
         }
     }
 
