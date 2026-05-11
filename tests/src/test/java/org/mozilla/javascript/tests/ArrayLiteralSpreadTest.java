@@ -281,4 +281,17 @@ class ArrayLiteralSpreadTest {
                         + "}";
         Utils.assertWithAllModes_ES6("Next failed", script);
     }
+
+    @Test
+    void testMultiSpreadsWithSkipWhenSpreadAddsMultipleElements() {
+        String script =
+                "var a = [...[1], , ...[2,3], , ...[4]];\n"
+                        + "a[0] + '/'"
+                        + " + ((1 in a) ? 'present' : 'absent') + '/'"
+                        + " + a[2] + '/'"
+                        + " + a[3] + '/'"
+                        + " + ((4 in a) ? 'present' : 'absent') + '/'"
+                        + " + a[5];\n";
+        Utils.assertWithAllModes_ES6("1/absent/2/3/absent/4", script);
+    }
 }
