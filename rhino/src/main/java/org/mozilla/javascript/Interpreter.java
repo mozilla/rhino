@@ -4432,9 +4432,9 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int skipIdx = 0xFF & ctx.idata.itsICode[ctx.pc];
+            int skipIdx = getIndex(ctx.idata.itsICode, ctx.pc);
             ctx.out.println(tname + " " + ctx.indexReg + " skipIdx=" + skipIdx);
-            ++ctx.pc;
+            ctx.pc += 2;
         }
     }
 
