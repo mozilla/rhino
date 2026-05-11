@@ -161,6 +161,16 @@ public final class ES6Generator extends ScriptableObject {
                 // Return a result to the original generator
                 return resumeLocal(cx, scope, doneValue);
             }
+            if (function.isAsync() && function.isGeneratorFunction()) {
+                // For async generators yield* extracts IteratorValue(innerResult) and
+                // AsyncGeneratorYields it (spec step vi). Read value now and return a fresh
+                // result so the async driver doesn't re-invoke the user's "done" accessor.
+                Object yieldValue =
+                        ScriptableObject.getProperty(nextResult, ES6Iterator.VALUE_PROPERTY);
+                Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
+                ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, yieldValue);
+                return result;
+            }
             // Otherwise, we have a normal result and should continue
             return nextResult;
 
@@ -381,7 +391,11 @@ public final class ES6Generator extends ScriptableObject {
             }
             return resumeLocal(cx, scope, value);
         }
-        return ir;
+        // Return a fresh result so the async driver does not re-invoke the user's
+        // "done"/"value" accessors that have already been read here.
+        Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
+        ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, value);
+        return result;
     }
 
     Scriptable resumeLocal(Context cx, VarScope scope, Object value) {
