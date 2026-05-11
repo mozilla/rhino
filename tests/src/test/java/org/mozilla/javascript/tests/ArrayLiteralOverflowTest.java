@@ -16,7 +16,7 @@ public class ArrayLiteralOverflowTest {
      * encoding.
      */
     @Test
-    public void testLiteralIdsOverflowWithSparseArrayInterpreted() {
+    public void testLiteralIdsOverflowWithSparseArray() {
         StringBuilder sb = new StringBuilder();
 
         // Create 260 object literals to push literalIds past 255
@@ -33,7 +33,7 @@ public class ArrayLiteralOverflowTest {
 
     /** Tests spread with sparse arrays when literalIds has grown past 255. */
     @Test
-    public void testManySpreadArrayLiteralsInterpreted() {
+    public void testManySpreadArrayLiterals() {
         StringBuilder sb = new StringBuilder();
         sb.append("var base = [0];\n");
 
