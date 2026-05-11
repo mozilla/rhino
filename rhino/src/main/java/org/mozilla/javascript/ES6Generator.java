@@ -428,18 +428,30 @@ public final class ES6Generator extends ScriptableObject {
                 // This special result tells us that we are executing a "yield *"
                 state = State.SUSPENDED_YIELD;
                 YieldStarResult ysResult = (YieldStarResult) r;
+                Object delegeeTmp;
+                boolean delegeeIsAsyncTmp;
+
                 try {
                     if (function.isAsync() && function.isGeneratorFunction()) {
                         // In async generators, yield* first tries Symbol.asyncIterator and only
                         // falls back to Symbol.iterator when that lookup does not yield a method.
                         ScriptRuntime.AsyncIteratorResult ar =
                                 ScriptRuntime.callAsyncIterator(ysResult.getResult(), cx, scope);
-                        delegee = ar.getIterator();
-                        delegeeIsAsync = ar.isAsync();
+                        delegeeTmp = ar.getIterator();
+                        delegeeIsAsyncTmp = ar.isAsync();
                     } else {
-                        delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
-                        delegeeIsAsync = false;
+                        delegeeTmp = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
+                        delegeeIsAsyncTmp = false;
                     }
+                    if (!ScriptRuntime.isObject(delegeeTmp)) {
+                        delegee = null;
+                        delegeeIsAsync = false;
+                        throw ScriptRuntime.typeError("Iterator must be an object");
+                    } else {
+                        delegee = delegeeTmp;
+                        delegeeIsAsync = delegeeIsAsyncTmp;
+                    }
+
                     // Per spec GetIteratorFromMethod: fetch "next" once when the iterator is
                     // obtained and reuse it for every step.
                     delegeeNext =
