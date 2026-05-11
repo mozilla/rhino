@@ -69,9 +69,14 @@ public abstract class NewLiteralStorage {
         }
 
         if (spreadAdjustments != null) {
-            if (sourcePosition < spreadAdjustments.length) {
-                spreadAdjustments[sourcePosition] = index - indexBefore - 1;
+            // sourcePosition can exceed the initial spreadAdjustments size when
+            // there are more spreads than holes or when all children are spreads,
+            // because the array was sized to (nonSpreadChildren + holes) which
+            // does not cover sourcePositions beyond that range.
+            if (sourcePosition >= spreadAdjustments.length) {
+                spreadAdjustments = Arrays.copyOf(spreadAdjustments, sourcePosition + 1);
             }
+            spreadAdjustments[sourcePosition] = index - indexBefore - 1;
         }
     }
 
