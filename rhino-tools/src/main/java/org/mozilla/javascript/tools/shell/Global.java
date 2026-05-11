@@ -78,6 +78,7 @@ public class Global extends ImporterTopLevel {
         "load",
         "loadClass",
         "print",
+        "printJavaStack",
         "quit",
         "readline",
         "readFile",
@@ -223,6 +224,16 @@ public class Global extends ImporterTopLevel {
      */
     public static Object print(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         return doPrint(args, funObj, true);
+    }
+
+    public static void printJavaStack(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+        Console c = getInstance(funObj).getConsole();
+        var stack = new Error().getStackTrace();
+        for (int i = 0; i < stack.length; i++) {
+            String s = stack[i].toString();
+            c.println(s);
+        }
+        c.println();
     }
 
     /** Print just as in "print," but without the trailing newline. */
