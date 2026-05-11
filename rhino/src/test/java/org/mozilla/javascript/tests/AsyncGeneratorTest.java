@@ -291,4 +291,32 @@ public class AsyncGeneratorTest {
                         + "it.throw('boom').then(r => { secondVal = r.value; });",
                 "firstVal + '|' + secondVal");
     }
+
+    @Test
+    public void objectLiteralAsyncGeneratorMethodWithReturnValue() {
+        assertAsyncResult(
+                "a,b|c",
+                "var values = [], lastVal;\n"
+                        + "var obj = { async *gen() { yield 'a'; yield 'b'; return 'c'; } };\n"
+                        + "async function consume() {\n"
+                        + "  var it = obj.gen();\n"
+                        + "  var r;\n"
+                        + "  while (!(r = await it.next()).done) values.push(r.value);\n"
+                        + "  lastVal = r.value;\n"
+                        + "}\n"
+                        + "consume();",
+                "values.join(',') + '|' + lastVal");
+    }
+
+    @Test
+    public void objectLiteralGeneratorMethodWithReturnValue() {
+        // Regression for the same parser flag-ordering bug, but in a non-async
+        // shorthand generator method on an object literal.
+        Utils.assertWithAllModes_ES6(
+                "a:false,b:true",
+                "var obj = { *gen() { yield 'a'; return 'b'; } };\n"
+                        + "var it = obj.gen();\n"
+                        + "var r1 = it.next(), r2 = it.next();\n"
+                        + "[r1.value+':'+r1.done, r2.value+':'+r2.done].join(',')\n");
+    }
 }

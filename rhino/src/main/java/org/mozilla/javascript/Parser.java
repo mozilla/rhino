@@ -965,13 +965,23 @@ public class Parser {
 
     private FunctionNode function(int type, boolean isMethodDefiniton, boolean isAsync)
             throws IOException {
-        return function(type, isMethodDefiniton, isAsync, false);
+        return function(type, isMethodDefiniton, isAsync, false, false);
     }
 
     private FunctionNode function(
             int type, boolean isMethodDefiniton, boolean isAsync, boolean isClassConstructor)
             throws IOException {
-        boolean isGenerator = false;
+        return function(type, isMethodDefiniton, isAsync, false, isClassConstructor);
+    }
+
+    private FunctionNode function(
+            int type,
+            boolean isMethodDefiniton,
+            boolean isAsync,
+            boolean isGeneratorMethod,
+            boolean isClassConstructor)
+            throws IOException {
+        boolean isGenerator = isGeneratorMethod;
         int syntheticType = type;
         int baseLineno = lineNumber(); // line number where source starts
         int functionSourceStart = ts.tokenBeg; // start of "function" kwd
@@ -1340,10 +1350,13 @@ public class Parser {
                     // above. Static methods named `constructor` are allowed.
                     reportError("msg.unexpected.token");
                 }
-                FunctionNode method = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
-                if (isGenerator) {
-                    method.setIsES6Generator();
-                }
+                FunctionNode method =
+                        function(
+                                FunctionNode.FUNCTION_EXPRESSION,
+                                true,
+                                isAsync,
+                                isGenerator,
+                                false);
                 if (accessorKind == ClassNode.ElementKind.GETTER) {
                     if (isAsync || isGenerator) {
                         reportError("msg.unexpected.token");
@@ -5126,7 +5139,8 @@ public class Parser {
             boolean isShorthand,
             boolean isAsync)
             throws IOException {
-        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync);
+        FunctionNode fn =
+                function(FunctionNode.FUNCTION_EXPRESSION, true, isAsync, isGenerator, false);
         // We've already parsed the function name, so fn should be anonymous.
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {
@@ -5145,9 +5159,6 @@ public class Parser {
             case METHOD_ENTRY:
                 pn.setIsNormalMethod();
                 fn.setFunctionIsNormalMethod();
-                if (isGenerator) {
-                    fn.setIsES6Generator();
-                }
                 if (isShorthand) {
                     fn.setIsShorthand();
                 }

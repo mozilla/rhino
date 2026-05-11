@@ -699,6 +699,89 @@ public class ClassTest {
     }
 
     @Test
+    public void generatorMethodWithReturnValue() {
+        Utils.assertWithAllModes_ES6(
+                "a:false,b:false,c:true",
+                "class A { *gen() { yield 'a'; yield 'b'; return 'c'; } }\n"
+                        + "var it = new A().gen();\n"
+                        + "var r1 = it.next(), r2 = it.next(), r3 = it.next();\n"
+                        + "[r1.value+':'+r1.done, r2.value+':'+r2.done, r3.value+':'+r3.done]"
+                        + "  .join(',')\n");
+    }
+
+    @Test
+    public void staticGeneratorMethodWithReturnValue() {
+        Utils.assertWithAllModes_ES6(
+                "a:false,b:true",
+                "class A { static *gen() { yield 'a'; return 'b'; } }\n"
+                        + "var it = A.gen();\n"
+                        + "var r1 = it.next(), r2 = it.next();\n"
+                        + "[r1.value+':'+r1.done, r2.value+':'+r2.done].join(',')\n");
+    }
+
+    @Test
+    public void asyncGeneratorMethod() {
+        String script =
+                "var values = [];\n"
+                        + "var lastDone;\n"
+                        + "class A { async *gen() { yield 'a'; yield 'b'; return 'c'; } }\n"
+                        + "async function consume() {\n"
+                        + "  var it = new A().gen();\n"
+                        + "  var r;\n"
+                        + "  while (!(r = await it.next()).done) values.push(r.value);\n"
+                        + "  lastDone = r.value;\n"
+                        + "}\n"
+                        + "consume();\n";
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    cx.evaluateString(scope, script, "test.js", 1, null);
+                    cx.processMicrotasks();
+                    assertEquals(
+                            "a,b",
+                            Context.toString(
+                                    cx.evaluateString(scope, "values.join(',')", "r1", 1, null)));
+                    assertEquals(
+                            "c",
+                            Context.toString(
+                                    cx.evaluateString(scope, "String(lastDone)", "r2", 1, null)));
+                    return null;
+                });
+    }
+
+    @Test
+    public void staticAsyncGeneratorMethod() {
+        String script =
+                "var values = [];\n"
+                        + "var lastDone;\n"
+                        + "class A { static async *gen() { yield 'a'; yield 'b'; return 'c'; } }\n"
+                        + "async function consume() {\n"
+                        + "  var it = A.gen();\n"
+                        + "  var r;\n"
+                        + "  while (!(r = await it.next()).done) values.push(r.value);\n"
+                        + "  lastDone = r.value;\n"
+                        + "}\n"
+                        + "consume();\n";
+        Utils.runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    cx.evaluateString(scope, script, "test.js", 1, null);
+                    cx.processMicrotasks();
+                    assertEquals(
+                            "a,b",
+                            Context.toString(
+                                    cx.evaluateString(scope, "values.join(',')", "r1", 1, null)));
+                    assertEquals(
+                            "c",
+                            Context.toString(
+                                    cx.evaluateString(scope, "String(lastDone)", "r2", 1, null)));
+                    return null;
+                });
+    }
+
+    @Test
     public void instanceGetter() {
         Utils.assertWithAllModes_ES6(
                 1,
