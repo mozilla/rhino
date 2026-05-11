@@ -704,18 +704,33 @@ public class NativeObject extends ScriptableObject implements Map {
             } else {
                 ids = sourceObj.getIds();
             }
+            // Issue #2126: when the target is a NativeArray,
+            // AbstractEcmaObjectOperations.put() routes through
+            // ScriptableObject.putOwnProperty()/putImpl(), which bypasses
+            // NativeArray.put(int) and thus fails to update the array length.
+            // The slots get written but stay invisible (length stays 0).
+            // Short-circuit to the array's own put() so length is maintained.
+            boolean targetIsArray = targetObj instanceof NativeArray;
             for (Object key : ids) {
                 if (key instanceof Integer) {
                     int intId = (Integer) key;
                     if (sourceObj.has(intId, sourceObj) && isEnumerable(intId, sourceObj)) {
                         Object val = sourceObj.get(intId, sourceObj);
-                        AbstractEcmaObjectOperations.put(cx, targetObj, intId, val, true);
+                        if (targetIsArray) {
+                            targetObj.put(intId, targetObj, val);
+                        } else {
+                            AbstractEcmaObjectOperations.put(cx, targetObj, intId, val, true);
+                        }
                     }
                 } else if (key instanceof String) {
                     String stringId = ScriptRuntime.toString(key);
                     if (sourceObj.has(stringId, sourceObj) && isEnumerable(stringId, sourceObj)) {
                         Object val = sourceObj.get(stringId, sourceObj);
-                        AbstractEcmaObjectOperations.put(cx, targetObj, stringId, val, true);
+                        if (targetIsArray) {
+                            targetObj.put(stringId, targetObj, val);
+                        } else {
+                            AbstractEcmaObjectOperations.put(cx, targetObj, stringId, val, true);
+                        }
                     }
                 }
             }
