@@ -136,7 +136,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(101, ex.lineNumber(), "stack-trace line should be remapped");
                     return null;
                 });
@@ -158,7 +160,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(
                             101,
                             ex.lineNumber(),
@@ -215,7 +219,7 @@ class SourceMapperTest {
                     RhinoException ex =
                             assertThrows(
                                     RhinoException.class,
-                                    () -> fn.call(cx, scope, scope, new Object[0]));
+                                    () -> fn.call(cx, scope, scope.getGlobalThis(), new Object[0]));
                     assertEquals(101, ex.lineNumber(), "function-path line should be remapped");
                     return null;
                 });
@@ -350,7 +354,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(
                             2,
                             ex.lineNumber(),
@@ -396,7 +402,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(
                             1,
                             ex.lineNumber(),
