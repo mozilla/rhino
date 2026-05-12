@@ -6,6 +6,12 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.Symbol.Kind.REGULAR;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
+
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -69,17 +75,26 @@ public class ScriptRuntime {
 
     /** Returns representation of the [[ThrowTypeError]] object. See ECMA 5 spec, 13.2.3 */
     public static BaseFunction typeErrorThrower(Context cx) {
-        if (cx.typeErrorThrower == null) {
-            BaseFunction thrower = new ThrowTypeError(cx.topCallScope);
-            cx.typeErrorThrower = thrower;
+        return typeErrorThrower(cx.topCallScope);
+    }
+
+    private static final SymbolKey TYPE_ERROR_THROWER = new SymbolKey("TypeErrorThrower", REGULAR);
+
+    public static BaseFunction typeErrorThrower(VarScope scope) {
+        TopLevel top = ScriptableObject.getTopLevelScope(scope);
+        var thrower = top.get(TYPE_ERROR_THROWER, top);
+        if (thrower == NOT_FOUND) {
+            thrower = new ThrowTypeError(top);
+            top.defineProperty(TYPE_ERROR_THROWER, thrower, DONTENUM | READONLY | PERMANENT);
         }
-        return cx.typeErrorThrower;
+        return (BaseFunction) thrower;
     }
 
     static final class ThrowTypeError extends BaseFunction {
         private static final long serialVersionUID = -5891740962154902286L;
 
         ThrowTypeError(VarScope scope) {
+            super(scope);
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
 
             setAttributes("length", DONTENUM | PERMANENT | READONLY);
@@ -102,7 +117,7 @@ public class ScriptRuntime {
         }
 
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             throwNotAllowed();
             return null;
         }
@@ -138,7 +153,7 @@ public class ScriptRuntime {
          * @return the result of the call
          */
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             Object[] nestedArgs = new Object[2];
 
             nestedArgs[0] = methodName;
@@ -207,7 +222,7 @@ public class ScriptRuntime {
                         : new LegacyCacheFactory.Concurrent();
         typeFactory.associate(scope);
 
-        LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
+        JSFunction function = BaseFunction.init(cx, scope, sealed);
         JSFunction obj = NativeObject.init(cx, scope, sealed);
 
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
@@ -229,23 +244,23 @@ public class ScriptRuntime {
             // representation
             NativeArray.setMaximumInitialCapacity(200000);
         }
-        NativeString.init(scope, sealed);
+        NativeString.init(cx, scope, sealed);
         NativeBoolean.init(cx, scope, sealed);
-        NativeNumber.init(scope, sealed);
+        NativeNumber.init(cx, scope, sealed);
         NativeDate.init(cx, scope, sealed);
         new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
 
-        NativeScript.init(cx, scope, sealed);
+        NativeScript.init2(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
-        NativeArrayIterator.init(scope, sealed);
-        NativeStringIterator.init(scope, sealed);
+        NativeArrayIterator.init(cx, scope, sealed);
+        NativeStringIterator.init(cx, scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        NativeJavaObject.init(cx, scope, sealed);
+        NativeJavaMap.init(cx, scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -282,8 +297,6 @@ public class ScriptRuntime {
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
-            NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
-            NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
             new LazilyLoadedCtor<>(scope, "Map", sealed, true, NativeMap::init);
             new LazilyLoadedCtor<>(scope, "Promise", sealed, true, NativePromise::init);
             new LazilyLoadedCtor<>(scope, "Set", sealed, true, NativeSet::init);
@@ -302,7 +315,7 @@ public class ScriptRuntime {
     private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
-            regExpProxy.register(scope, sealed);
+            regExpProxy.register(cx, scope, sealed);
         }
     }
 
@@ -1641,6 +1654,17 @@ public class ScriptRuntime {
         throw Context.reportRuntimeErrorById("msg.not.ctor", constructorName);
     }
 
+    public static Function getExistingCtor(Context cx, VarScope scope, SymbolKey constructorName) {
+        Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
+        if (ctorVal instanceof Function) {
+            return (Function) ctorVal;
+        }
+        if (ctorVal == Scriptable.NOT_FOUND) {
+            throw Context.reportRuntimeErrorById("msg.ctor.not.found", constructorName);
+        }
+        throw Context.reportRuntimeErrorById("msg.not.ctor", constructorName);
+    }
+
     /**
      * Return -1L if str is not an index, or the index value as lower 32 bits of the result. Note
      * that the result needs to be cast to an int in order to produce the actual index, which may be
@@ -2383,8 +2407,8 @@ public class ScriptRuntime {
                         break;
                     }
                 }
-            } else if (scope instanceof NativeCall) {
-                // NativeCall does not prototype chain and Scriptable.get
+            } else if (scope instanceof CatchScope || scope instanceof NativeCall) {
+                // Scopes do not have a prototype chain and Scriptable.get
                 // can be called directly.
                 result = scope.get(name, scope);
                 if (result != Scriptable.NOT_FOUND) {
@@ -2467,7 +2491,7 @@ public class ScriptRuntime {
                         break;
                     }
                 }
-            } else if (scope instanceof NativeCall) {
+            } else if (scope instanceof CatchScope || scope instanceof NativeCall) {
                 // NativeCall does not prototype chain and Scriptable.get
                 // can be called directly.
                 result = scope.get(name, scope);
@@ -2530,18 +2554,24 @@ public class ScriptRuntime {
         childScopesChecks:
         if (parent != null) {
             // Check for possibly nested "with" scopes first
-            while (scope instanceof WithScope) {
-                Scriptable withObj = ((WithScope) scope).getObject();
-                if (withObj instanceof XMLObject) {
-                    XMLObject xmlObject = (XMLObject) withObj;
-                    if (xmlObject.has(cx, id)) {
-                        return new WithScope(scope.getParentScope(), xmlObject);
-                    }
-                    if (firstXMLScope == null) {
-                        firstXMLScope = scope;
+            while (scope.isNestedScope()) {
+                if (scope instanceof WithScope) {
+                    Scriptable withObj = ((WithScope) scope).getObject();
+                    if (withObj instanceof XMLObject) {
+                        XMLObject xmlObject = (XMLObject) withObj;
+                        if (xmlObject.has(cx, id)) {
+                            return new WithScope(scope.getParentScope(), xmlObject);
+                        }
+                        if (firstXMLScope == null) {
+                            firstXMLScope = scope;
+                        }
+                    } else {
+                        if (ScriptableObject.hasProperty(withObj, id)) {
+                            return scope;
+                        }
                     }
                 } else {
-                    if (ScriptableObject.hasProperty(withObj, id)) {
+                    if (scope.has(id, scope)) {
                         return scope;
                     }
                 }
@@ -2635,7 +2665,7 @@ public class ScriptRuntime {
      * if a given property has already been enumerated.
      */
     private static class IdEnumeration implements Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -8685189816346084720L;
         Scriptable obj;
         Object[] ids;
         HashSet<Object> used;
@@ -2817,6 +2847,7 @@ public class ScriptRuntime {
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
+            new Error(String.format("%s", v)).printStackTrace();
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
@@ -3402,7 +3433,7 @@ public class ScriptRuntime {
      * times. The args array reference should not be stored in any object that can be GC-reachable
      * after this method returns. If this is necessary, store args.clone(), not args array itself.
      */
-    public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
+    public static Ref callRef(Callable function, Object thisObj, Object[] args, Context cx) {
         if (function instanceof RefCallable) {
             RefCallable rfunction = (RefCallable) function;
             Ref ref = rfunction.refCall(cx, thisObj, args);
@@ -3435,7 +3466,7 @@ public class ScriptRuntime {
             Scriptable thisObj,
             Object[] args,
             VarScope scope,
-            Scriptable callerThis,
+            Object callerThis,
             int callType,
             String filename,
             int lineNumber,
@@ -3474,7 +3505,7 @@ public class ScriptRuntime {
      * <p>See Ecma 15.3.4.[34]
      */
     public static Object applyOrCall(
-            boolean isApply, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            boolean isApply, Context cx, VarScope scope, Object thisObj, Object[] args) {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
@@ -3550,14 +3581,16 @@ public class ScriptRuntime {
         }
     }
 
-    static Callable getCallable(Scriptable thisObj) {
+    static Callable getCallable(Object thisObj) {
         Callable function;
         if (thisObj instanceof Callable) {
             function = (Callable) thisObj;
         } else if (thisObj == null) {
             throw ScriptRuntime.notFunctionError(null, null);
+        } else if (!(thisObj instanceof Scriptable)) {
+            throw ScriptRuntime.notFunctionError(thisObj, null);
         } else {
-            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+            Object value = ((Scriptable) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
             if (!(value instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(value, thisObj);
             }
@@ -4877,12 +4910,12 @@ public class ScriptRuntime {
      */
     @Deprecated
     public static Object doTopCall(
-            Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+            Callable callable, Context cx, VarScope scope, Object thisObj, Object[] args) {
         return doTopCall(callable, cx, scope, thisObj, args, cx.isStrictMode());
     }
 
     @Deprecated
-    public static Object doTopCall(Script script, Context cx, VarScope scope, Scriptable thisObj) {
+    public static Object doTopCall(Script script, Context cx, VarScope scope, Object thisObj) {
         return doTopCall(script, cx, scope, thisObj, cx.isStrictMode());
     }
 
@@ -4890,7 +4923,7 @@ public class ScriptRuntime {
             Callable callable,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
@@ -4917,11 +4950,7 @@ public class ScriptRuntime {
     }
 
     public static Object doTopCall(
-            Script script,
-            Context cx,
-            VarScope scope,
-            Scriptable thisObj,
-            boolean isTopLevelStrict) {
+            Script script, Context cx, VarScope scope, Object thisObj, boolean isTopLevelStrict) {
         if (scope == null) throw new IllegalArgumentException();
         if (cx.topCallScope != null) throw new IllegalStateException();
 
@@ -4986,11 +5015,7 @@ public class ScriptRuntime {
     }
 
     public static void initScript(
-            ScriptOrFn execObj,
-            Scriptable thisObj,
-            Context cx,
-            VarScope scope,
-            boolean evalScript) {
+            ScriptOrFn execObj, Object thisObj, Context cx, VarScope scope, boolean evalScript) {
         if (cx.topCallScope == null) throw new IllegalStateException();
 
         var desc = execObj.getDescriptor();
@@ -5001,7 +5026,7 @@ public class ScriptRuntime {
             VarScope varScope = scope;
             // Never define any variables from var statements inside with
             // object. See bug 38590.
-            while (varScope instanceof WithScope) {
+            while (varScope.isNestedScope()) {
                 varScope = varScope.getParentScope();
             }
 
@@ -5092,9 +5117,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    public static Scriptable newCatchScope(
+    public static VarScope newCatchScope(
             Throwable t,
-            Scriptable lastCatchScope,
+            VarScope lastCatchScope,
             String exceptionName,
             Context cx,
             VarScope scope) {
@@ -5112,8 +5137,7 @@ public class ScriptRuntime {
             // the previous scope object
 
             if (lastCatchScope != null) {
-                NativeObject last = (NativeObject) lastCatchScope;
-                obj = last.getAssociatedValue(t);
+                obj = ((DeclarationScope) lastCatchScope).getAssociatedValue(t);
                 if (obj == null) Kit.codeBug();
                 break getObj;
             }
@@ -5200,26 +5224,26 @@ public class ScriptRuntime {
             obj = errorObject;
         }
 
-        NativeObject catchScopeObject = new NativeObject();
+        var catchScope = new CatchScope(scope);
         // See ECMA 12.4
         if (exceptionName != null) {
-            catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
+            catchScope.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
         }
 
         if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) && isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch
             // scope that can be used to retrieve the Java exception associated
             // with the JavaScript exception (to get stack trace info, etc.)
-            catchScopeObject.defineProperty(
+            catchScope.defineProperty(
                     "__exception__",
                     Context.javaToJS(t, scope),
                     ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
         }
 
         if (cacheObj) {
-            catchScopeObject.associateValue(t, obj);
+            catchScope.associateValue(t, obj);
         }
-        return catchScopeObject;
+        return catchScope;
     }
 
     public static Scriptable wrapException(Throwable t, VarScope scope, Context cx) {
@@ -5316,9 +5340,12 @@ public class ScriptRuntime {
         return new WithScope(scope, sobj);
     }
 
-    public static VarScope leaveWith(VarScope scope) {
-        WithScope nw = (WithScope) scope;
-        return nw.getParentScope();
+    public static VarScope enterScope(VarScope scope) {
+        return new LocalScope(scope);
+    }
+
+    public static VarScope leaveScope(VarScope scope) {
+        return scope.getParentScope();
     }
 
     public static VarScope enterDotQuery(Object value, VarScope scope) {
@@ -5393,8 +5420,31 @@ public class ScriptRuntime {
 
     public static void setBuiltinProtoAndParent(
             ScriptableObject obj, JSFunction f, Object nt, VarScope s, TopLevel.Builtins type) {
-        obj.setPrototype((Scriptable) f.getPrototypeProperty());
+        obj.setPrototype(findPrototype(f, nt, type));
+
         obj.setParentScope(s);
+    }
+
+    public static Scriptable findPrototype(JSFunction f, Object nt, TopLevel.Builtins type) {
+        Object proto;
+        if (nt instanceof JSFunction) {
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        } else if (nt instanceof Scriptable
+                && nt instanceof Function
+                && ((Function) nt).isConstructor()) {
+            var sobj = ((Scriptable) nt);
+            proto = sobj.get("prototype", sobj);
+        } else {
+            nt = f;
+            proto = ((JSFunction) nt).getPrototypeProperty();
+        }
+
+        if (proto instanceof Scriptable) {
+            return (Scriptable) proto;
+        } else {
+            TopLevel top = ScriptableObject.getTopLevelScope(((Function) nt).getDeclarationScope());
+            return TopLevel.getBuiltinPrototype(top, type);
+        }
     }
 
     public static void initFunction(
@@ -5417,9 +5467,16 @@ public class ScriptRuntime {
                 // Always put function expression statements into initial
                 // activation object ignoring the with statement to follow
                 // SpiderMonkey
-                while (scope instanceof WithScope) {
+                while (scope.isNestedScope()) {
                     scope = scope.getParentScope();
                 }
+                scope.put(name, scope, function);
+            }
+        } else if (type == FunctionNode.FUNCTION_BLOCK_SCOPED) {
+            String name = function.getFunctionName();
+            if (name != null && name.length() != 0) {
+                // Block-scoped function in strict mode: bind in the current
+                // (block) scope only, do not walk up to the activation object.
                 scope.put(name, scope, function);
             }
         } else {

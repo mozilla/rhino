@@ -75,7 +75,8 @@ public final class Interpreter extends Icode implements Evaluator {
         final boolean useActivation;
         boolean isContinuationsTopFrame;
 
-        final Scriptable thisObj;
+        final Object thisObj;
+        final Object newTarget;
 
         // The values that change during interpretation
 
@@ -93,7 +94,8 @@ public final class Interpreter extends Icode implements Evaluator {
 
         CallFrame(
                 Context cx,
-                Scriptable thisObj,
+                Object thisObj,
+                Object newTarget,
                 ScriptOrFn fnOrScript,
                 InterpreterData code,
                 CallFrame parentFrame,
@@ -116,6 +118,7 @@ public final class Interpreter extends Icode implements Evaluator {
             this.fnOrScript = fnOrScript;
             varSource = this;
             this.thisObj = thisObj;
+            this.newTarget = newTarget;
 
             this.parentFrame = parentFrame;
             if (parentFrame == null) {
@@ -183,6 +186,7 @@ public final class Interpreter extends Icode implements Evaluator {
             isContinuationsTopFrame = original.isContinuationsTopFrame;
 
             thisObj = original.thisObj;
+            newTarget = original.newTarget;
 
             result = original.result;
             resultDbl = original.resultDbl;
@@ -235,6 +239,7 @@ public final class Interpreter extends Icode implements Evaluator {
             isContinuationsTopFrame = original.isContinuationsTopFrame;
 
             thisObj = original.thisObj;
+            newTarget = original.newTarget;
 
             result = original.result;
             resultDbl = original.resultDbl;
@@ -1166,8 +1171,9 @@ public final class Interpreter extends Icode implements Evaluator {
             InterpreterData idata,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
-            Object[] args) {
+            Object thisObj,
+            Object[] args,
+            Object newTarget) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
         var desc = ifun.getDescriptor();
@@ -1215,7 +1221,8 @@ public final class Interpreter extends Icode implements Evaluator {
                         args.length,
                         ifun,
                         idata,
-                        null);
+                        null,
+                        newTarget);
         frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
         cx.isContinuationsTopCall = false;
 
@@ -1511,11 +1518,13 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.THIS] = new DoThis();
         instructionObjs[base + Token.SUPER] = new DoSuper();
         instructionObjs[base + Token.THISFN] = new DoThisFunction();
+        instructionObjs[base + Token.NEW_TARGET] = new DoNewTarget();
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode_UNDEF] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
-        instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
+        instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
+        instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
@@ -3407,7 +3416,7 @@ public final class Interpreter extends Icode implements Evaluator {
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
-            Scriptable funThisObj = result.getThis();
+            Object funThisObj = result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
             if (op == Icode_CALL_ON_SUPER) {
@@ -3435,82 +3444,72 @@ public final class Interpreter extends Icode implements Evaluator {
             // if the function is already an interpreted function, which
             // should be the majority of cases.
             for (; ; ) {
-                if (fun instanceof KnownBuiltInFunction) {
-                    KnownBuiltInFunction kfun = (KnownBuiltInFunction) fun;
-                    // Bug 405654 -- make the best effort to keep
-                    // Function.apply and Function.call within this
-                    // interpreter loop invocation
-                    if (BaseFunction.isApplyOrCall(kfun)) {
-                        // funThisObj becomes fun
-                        fun = ScriptRuntime.getCallable(funThisObj);
-                        // first arg becomes thisObj
-                        funThisObj =
-                                getApplyThis(
-                                        cx,
-                                        stack,
-                                        sDbl,
-                                        boundArgs,
-                                        state.stackTop + 1,
-                                        state.indexReg,
-                                        (Function) fun,
-                                        frame);
-                        if (BaseFunction.isApply(kfun)) {
-                            // Apply: second argument after new "this"
-                            // should be array-like
-                            // and we'll spread its elements on the stack
-                            final Object[] callArgs;
-                            if (blen > 1) {
-                                callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
-                            } else if (state.indexReg < 2) {
-                                callArgs = ScriptRuntime.emptyArgs;
-                            } else {
-                                callArgs =
-                                        ScriptRuntime.getApplyArguments(
-                                                cx, stack[state.stackTop - blen + 2]);
-                            }
-
-                            int alen = callArgs.length;
-                            // We're coming from the outside, so this
-                            // is replacing any bound args we might
-                            // have had already.
-                            boundArgs = callArgs;
-                            blen = alen;
-                            state.indexReg = alen;
+                if (BaseFunction.isApplyOrCall(fun)) {
+                    // funThisObj becomes fun
+                    var target = ScriptRuntime.getCallable(funThisObj);
+                    // first arg becomes thisObj
+                    funThisObj =
+                            getApplyThis(
+                                    cx,
+                                    stack,
+                                    sDbl,
+                                    boundArgs,
+                                    state.stackTop + 1,
+                                    state.indexReg,
+                                    (Function) target,
+                                    frame);
+                    if (BaseFunction.isApply(fun)) {
+                        // Apply: second argument after new "this"
+                        // should be array-like
+                        // and we'll spread its elements on the stack
+                        final Object[] callArgs;
+                        if (blen > 1) {
+                            callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
+                        } else if (state.indexReg < 2) {
+                            callArgs = ScriptRuntime.emptyArgs;
                         } else {
-                            // Call: shift args left, starting from 2nd
-                            if (state.indexReg > 0) {
-                                if (state.indexReg > 1 && blen == 0) {
-                                    System.arraycopy(
-                                            stack,
-                                            state.stackTop + 2,
-                                            stack,
-                                            state.stackTop + 1,
-                                            state.indexReg - 1);
-                                    System.arraycopy(
-                                            sDbl,
-                                            state.stackTop + 2,
-                                            sDbl,
-                                            state.stackTop + 1,
-                                            state.indexReg - 1);
-                                } else if (state.indexReg > 1) {
-                                    Object[] newBArgs = new Object[boundArgs.length - 1];
-                                    System.arraycopy(
-                                            boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
-                                    boundArgs = newBArgs;
-                                    blen = newBArgs.length;
-                                } else {
-                                    // Bound args is 1 long.
-                                    boundArgs = new Object[0];
-                                    blen = 0;
-                                }
-                                state.indexReg--;
-                            }
+                            callArgs =
+                                    ScriptRuntime.getApplyArguments(
+                                            cx, stack[state.stackTop - blen + 2]);
                         }
+
+                        int alen = callArgs.length;
+                        // We're coming from the outside, so this
+                        // is replacing any bound args we might
+                        // have had already.
+                        boundArgs = callArgs;
+                        blen = alen;
+                        state.indexReg = alen;
                     } else {
-                        // Some other IdFunctionObject we don't know how to
-                        // reduce.
-                        break;
+                        // Call: shift args left, starting from 2nd
+                        if (state.indexReg > 0) {
+                            if (state.indexReg > 1 && blen == 0) {
+                                System.arraycopy(
+                                        stack,
+                                        state.stackTop + 2,
+                                        stack,
+                                        state.stackTop + 1,
+                                        state.indexReg - 1);
+                                System.arraycopy(
+                                        sDbl,
+                                        state.stackTop + 2,
+                                        sDbl,
+                                        state.stackTop + 1,
+                                        state.indexReg - 1);
+                            } else if (state.indexReg > 1) {
+                                Object[] newBArgs = new Object[boundArgs.length - 1];
+                                System.arraycopy(boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
+                                boundArgs = newBArgs;
+                                blen = newBArgs.length;
+                            } else {
+                                // Bound args is 1 long.
+                                boundArgs = new Object[0];
+                                blen = 0;
+                            }
+                            state.indexReg--;
+                        }
                     }
+                    fun = target;
                 } else if (fun instanceof LambdaConstructor) {
                     break;
                 } else if (fun instanceof LambdaFunction) {
@@ -3555,8 +3554,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (fun instanceof JSFunction
                     && ((JSFunction) fun).getDescriptor().getCode() instanceof InterpreterData) {
                 JSFunction ifun = (JSFunction) fun;
-                JSDescriptor desc = ifun.getDescriptor();
-                InterpreterData idata = (InterpreterData) desc.getCode();
+
+                JSDescriptor<JSFunction> desc = ifun.getDescriptor();
+                var idata = (InterpreterData<JSFunction>) desc.getCode();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     CallFrame callParentFrame = frame;
@@ -3598,7 +3598,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     state.indexReg,
                                     ifun,
                                     idata,
-                                    callParentFrame);
+                                    callParentFrame,
+                                    ifun.getLexicalNewTarget());
                     if (op != Icode_TAIL_CALL) {
                         frame.savedStackTop = state.stackTop;
                         frame.savedCallOp = op;
@@ -3626,8 +3627,9 @@ public final class Interpreter extends Icode implements Evaluator {
                 return BREAK_WITHOUT_EXTENSION;
             }
 
-            if (fun instanceof IdFunctionObject) {
-                IdFunctionObject ifun = (IdFunctionObject) fun;
+            if (fun instanceof JSFunction) {
+                var ifun = (JSFunction) fun;
+
                 if (NativeContinuation.isContinuationConstructor(ifun)) {
                     frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
                     return null;
@@ -3672,8 +3674,9 @@ public final class Interpreter extends Icode implements Evaluator {
             if (lhs instanceof JSFunction
                     && ((JSFunction) lhs).getConstructor() instanceof InterpreterData) {
                 JSFunction f = (JSFunction) lhs;
-                JSDescriptor desc = f.getDescriptor();
-                InterpreterData idata = (InterpreterData) desc.getConstructor();
+
+                JSDescriptor<JSFunction> desc = f.getDescriptor();
+                var idata = (InterpreterData<JSFunction>) desc.getConstructor();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6
@@ -3698,7 +3701,8 @@ public final class Interpreter extends Icode implements Evaluator {
                                     state.indexReg,
                                     f,
                                     idata,
-                                    frame);
+                                    frame,
+                                    lhs);
 
                     frame.stack[state.stackTop] = newInstance;
                     frame.savedStackTop = state.stackTop;
@@ -3706,19 +3710,20 @@ public final class Interpreter extends Icode implements Evaluator {
                     return new StateContinueResult(calleeFrame, state.indexReg);
                 }
             }
+            if (lhs instanceof JSFunction) {
+                var f = (JSFunction) lhs;
+
+                if (NativeContinuation.isContinuationConstructor(f)) {
+                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
+                    return null;
+                }
+            }
+
             if (!(lhs instanceof Constructable)) {
                 if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
                 throw ScriptRuntime.notFunctionError(lhs);
             }
             Constructable ctor = (Constructable) lhs;
-
-            if (ctor instanceof IdFunctionObject) {
-                IdFunctionObject ifun = (IdFunctionObject) ctor;
-                if (NativeContinuation.isContinuationConstructor(ifun)) {
-                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
-                    return null;
-                }
-            }
 
             Object[] outArgs =
                     getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
@@ -4099,6 +4104,14 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
+    private static class DoNewTarget extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++state.stackTop] = frame.newTarget;
+            return null;
+        }
+    }
+
     private static class DoFalse extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
@@ -4134,10 +4147,19 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoLeaveWith extends InstructionClass {
+    private static class DoEnterScope extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.scope = ScriptRuntime.leaveWith(frame.scope);
+            frame.scope = new LocalScope(frame.scope);
+            frame.stack[++state.stackTop] = frame.scope;
+            return null;
+        }
+    }
+
+    private static class DoLeaveScope extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope = ScriptRuntime.leaveScope(frame.scope);
             return null;
         }
     }
@@ -4154,15 +4176,17 @@ public final class Interpreter extends Icode implements Evaluator {
 
             boolean afterFirstScope = (frame.idata.itsICode[frame.pc] != 0);
             Throwable caughtException = (Throwable) frame.stack[state.stackTop + 1];
-            Scriptable lastCatchScope;
+            VarScope lastCatchScope;
             if (!afterFirstScope) {
                 lastCatchScope = null;
             } else {
-                lastCatchScope = (Scriptable) frame.stack[state.indexReg];
+                lastCatchScope = (VarScope) frame.stack[state.indexReg];
             }
-            frame.stack[state.indexReg] =
+            VarScope catchScope =
                     ScriptRuntime.newCatchScope(
                             caughtException, lastCatchScope, state.stringReg, cx, frame.scope);
+            frame.stack[state.indexReg] = catchScope;
+            frame.scope = catchScope;
             ++frame.pc;
             return null;
         }
@@ -4183,7 +4207,9 @@ public final class Interpreter extends Icode implements Evaluator {
             state.indexReg += frame.idata.itsMaxVars;
             int enumType =
                     op == Token.ENUM_INIT_KEYS
-                            ? ScriptRuntime.ENUMERATE_KEYS
+                            ? cx.getLanguageVersion() <= Context.VERSION_1_8
+                                    ? ScriptRuntime.ENUMERATE_KEYS
+                                    : ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR
                             : op == Token.ENUM_INIT_VALUES
                                     ? ScriptRuntime.ENUMERATE_VALUES
                                     : op == Token.ENUM_INIT_VALUES_IN_ORDER
@@ -5019,7 +5045,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static CallFrame initFrame(
             Context cx,
             VarScope callerScope,
-            Scriptable thisObj,
+            Object thisObj,
             Scriptable homeObj,
             Object[] args,
             double[] argsDbl,
@@ -5028,11 +5054,13 @@ public final class Interpreter extends Icode implements Evaluator {
             int argCount,
             ScriptOrFn fnOrScript,
             InterpreterData code,
-            CallFrame parentFrame) {
+            CallFrame parentFrame,
+            Object newTarget) {
         CallFrame frame =
                 new CallFrame(
                         cx,
                         thisObj,
+                        newTarget,
                         fnOrScript,
                         code,
                         parentFrame,
@@ -5063,7 +5091,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // block ("catch" implicitly uses WithScope to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
-                    if (scope instanceof WithScope) {
+                    if (!(scope instanceof NativeCall)) {
                         scope = scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null
@@ -5278,7 +5306,8 @@ public final class Interpreter extends Icode implements Evaluator {
         var desc = frame.fnOrScript.getDescriptor().getFunction(index);
         boolean isArrow = desc.getFunctionType() == FunctionNode.ARROW_FUNCTION;
         var homeObject = isArrow ? frame.fnOrScript.getHomeObject() : null;
-        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, homeObject);
+        var newTarget = isArrow ? frame.newTarget : Undefined.instance;
+        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, newTarget, homeObject);
         return f;
     }
 
@@ -5286,7 +5315,8 @@ public final class Interpreter extends Icode implements Evaluator {
             Context cx, CallFrame frame, int index, Scriptable homeObject) {
         var desc = frame.fnOrScript.getDescriptor().getFunction(index);
         boolean isArrow = desc.getFunctionType() == FunctionNode.ARROW_FUNCTION;
-        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, homeObject);
+        var newTarget = isArrow ? frame.newTarget : Undefined.instance;
+        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, newTarget, homeObject);
         return f;
     }
 }

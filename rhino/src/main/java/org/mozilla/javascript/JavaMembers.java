@@ -109,7 +109,7 @@ class JavaMembers {
                 return new FieldAndMethods(scope, withField);
             } else {
                 var method = (ExecutableOverload) member;
-                var built = new NativeJavaMethod(method.methods, method.name);
+                var built = new NativeJavaMethod(scope, method.methods, method.name);
                 ScriptRuntime.setFunctionProtoAndParent(
                         built, Context.getCurrentContext(), scope, false);
                 return built;
@@ -290,7 +290,7 @@ class JavaMembers {
             Scriptable prototype = ScriptableObject.getFunctionPrototype(scope);
 
             if (methodOrCtor.isConstructor()) {
-                NativeJavaConstructor fun = new NativeJavaConstructor(methodOrCtor);
+                NativeJavaConstructor fun = new NativeJavaConstructor(scope, methodOrCtor);
                 fun.setPrototype(prototype);
                 member = fun;
                 ht.put(name, fun);
@@ -300,7 +300,7 @@ class JavaMembers {
 
                 if (member instanceof ExecutableOverload
                         && ((ExecutableOverload) member).methods.length > 1) {
-                    NativeJavaMethod fun = new NativeJavaMethod(methodOrCtor, name);
+                    NativeJavaMethod fun = new NativeJavaMethod(scope, methodOrCtor, name);
                     fun.setPrototype(prototype);
                     ht.put(name, fun);
                     member = fun;
@@ -458,7 +458,7 @@ class JavaMembers {
             collectFields(accessibleFields, isStatic, typeFactory);
 
             var table = isStatic ? staticMembers : members;
-            table.putAll(extractBeaning(table, isStatic, includePrivate));
+            table.putAll(extractBeaning(scope, table, isStatic, includePrivate));
         }
 
         // Reflect constructors
@@ -467,7 +467,7 @@ class JavaMembers {
         for (int i = 0; i != constructors.length; ++i) {
             ctorMembers[i] = new ExecutableBox(constructors[i], typeFactory);
         }
-        ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
+        ctors = new NativeJavaMethod(scope, ctorMembers, cl.getSimpleName());
     }
 
     /**
@@ -592,7 +592,7 @@ class JavaMembers {
      * member table at this stage
      */
     private static Map<String, BeanProperty> extractBeaning(
-            Map<String, Object> members, boolean isStatic, boolean includePrivate) {
+            VarScope scope, Map<String, Object> members, boolean isStatic, boolean includePrivate) {
         var beans = new HashMap<String, BeanProperty>();
         for (var entry : members.entrySet()) {
             var name = entry.getKey();
@@ -624,16 +624,16 @@ class JavaMembers {
                             // prefer 'get' over 'is'
                             || bean.getter.getFunctionName().startsWith("is")) {
                         if (method.methods.length == 1) {
-                            bean.getter = new NativeJavaMethod(method.methods, name);
+                            bean.getter = new NativeJavaMethod(scope, method.methods, name);
                         } else {
-                            bean.getter = new NativeJavaMethod(candidate, name);
+                            bean.getter = new NativeJavaMethod(scope, candidate, name);
                         }
                     }
                 }
             } else { // isSetBeaning
                 var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
                 // capture all possible setters for now, actual setter will be searched later
-                bean.setter = new NativeJavaMethod(method.methods, name);
+                bean.setter = new NativeJavaMethod(scope, method.methods, name);
             }
         }
 
@@ -651,7 +651,7 @@ class JavaMembers {
                 // We have a getter. Now, do we have a setter with matching type?
                 match = extractSetMethod(type, setterCandidates.methods, isStatic);
                 if (match != null) {
-                    bean.setter = new NativeJavaMethod(match, match.getName());
+                    bean.setter = new NativeJavaMethod(scope, match, match.getName());
                     continue;
                 }
             }
@@ -911,7 +911,7 @@ class FieldAndMethods extends NativeJavaMethod {
     private static final long serialVersionUID = -9222428244284796755L;
 
     FieldAndMethods(VarScope scope, ExecutableOverload.WithField withField) {
-        super(withField.methods, withField.name);
+        super(scope, withField.methods, withField.name);
         this.field = withField.field;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));

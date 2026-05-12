@@ -20,5 +20,5 @@ public interface Callable {
      * @param args the array of arguments
      * @return the result of the call
      */
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args);
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args);
 }

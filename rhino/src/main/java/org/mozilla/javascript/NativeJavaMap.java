@@ -30,8 +30,8 @@ public class NativeJavaMap extends NativeJavaObject {
     private final TypeInfo keyType;
     private final TypeInfo valueType;
 
-    static void init(TopLevel scope, boolean sealed) {
-        NativeJavaMapIterator.init(scope, sealed);
+    static void init(Context cx, TopLevel scope, boolean sealed) {
+        NativeJavaMapIterator.init(cx, scope, sealed);
     }
 
     @SuppressWarnings("unchecked")
@@ -160,7 +160,7 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     private static Callable symbol_iterator =
-            (Context cx, VarScope scope, Scriptable thisObj, Object[] args) -> {
+            (cx, scope, thisObj, args) -> {
                 if (!(thisObj instanceof NativeJavaMap)) {
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
@@ -168,11 +168,20 @@ public class NativeJavaMap extends NativeJavaObject {
             };
 
     private static final class NativeJavaMapIterator extends ES6Iterator {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -6354388021424261488L;
         private static final String ITERATOR_TAG = "JavaMapIterator";
 
-        static void init(TopLevel scope, boolean sealed) {
-            ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
+        private static final ClassDescriptor DESCRIPTOR =
+                ES6Iterator.makeDescriptor(ITERATOR_TAG, "Java Map Iterator");
+
+        static void init(Context cx, VarScope scope, boolean sealed) {
+            ES6Iterator.initialize(
+                    DESCRIPTOR,
+                    cx,
+                    (TopLevel) scope,
+                    new NativeJavaMapIterator(),
+                    sealed,
+                    ITERATOR_TAG);
         }
 
         /** Only for constructing the prototype object. */

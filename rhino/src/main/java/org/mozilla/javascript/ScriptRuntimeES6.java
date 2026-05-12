@@ -45,8 +45,7 @@ public class ScriptRuntimeES6 {
                         scope,
                         "get [Symbol.species]",
                         0,
-                        (Context lcx, VarScope lscope, Scriptable thisObj, Object[] args) ->
-                                thisObj,
+                        (Context lcx, VarScope lscope, Object thisObj, Object[] args) -> thisObj,
                         false),
                 ScriptableObject.NOT_FOUND,
                 ScriptableObject.NOT_FOUND);

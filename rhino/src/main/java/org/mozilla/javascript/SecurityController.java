@@ -135,14 +135,14 @@ public abstract class SecurityController {
             Context cx,
             Callable callable,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         return execWithDomain(
                 cx,
                 scope,
                 new Script() {
                     @Override
-                    public Object exec(Context cx, VarScope scope, Scriptable thisObjIgnored) {
+                    public Object exec(Context cx, VarScope scope, Object thisObjIgnored) {
                         return callable.call(cx, scope, thisObj, args);
                     }
                 },
@@ -154,7 +154,7 @@ public abstract class SecurityController {
             Context cx,
             Script script,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args) {
         return execWithDomain(cx, scope, script, securityDomain);
     }
