@@ -2214,6 +2214,24 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return null;
     }
 
+    public static Scriptable getClassPrototype(VarScope scope, Symbol className) {
+        scope = getTopLevelScope(scope);
+        Object ctor = getProperty(scope, className);
+        Object proto;
+        if (ctor instanceof BaseFunction) {
+            proto = ((BaseFunction) ctor).getPrototypeProperty();
+        } else if (ctor instanceof Scriptable) {
+            Scriptable ctorObj = (Scriptable) ctor;
+            proto = ctorObj.get("prototype", ctorObj);
+        } else {
+            return null;
+        }
+        if (proto instanceof Scriptable) {
+            return (Scriptable) proto;
+        }
+        return null;
+    }
+
     /**
      * Get the global scope.
      *
@@ -2313,6 +2331,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     public static Object getProperty(VarScope obj, String name) {
+        return obj.get(name, obj);
+    }
+
+    public static Object getProperty(VarScope obj, Symbol name) {
         return obj.get(name, obj);
     }
 

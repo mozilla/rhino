@@ -38,7 +38,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return construct(cx, scope, args);
     }
 
@@ -61,6 +61,10 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         NativeJavaPackage pkg = new NativeJavaPackage(true, "", loader);
         ScriptRuntime.setObjectProtoAndParent(pkg, scope);
         return pkg;
+    }
+
+    public Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args) {
+        return construct(cx, s, args);
     }
 
     public static void init(Context cx, VarScope scope, boolean sealed) {

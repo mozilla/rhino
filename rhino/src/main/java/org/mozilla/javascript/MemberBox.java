@@ -171,7 +171,7 @@ final class MemberBox implements Serializable {
                         public Object call(
                                 Context cx,
                                 VarScope callScope,
-                                Scriptable thisObj,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeGetter = MemberBox.this;
                             if (nativeGetter.delegateTo == null) {
@@ -204,7 +204,7 @@ final class MemberBox implements Serializable {
                         public Object call(
                                 Context cx,
                                 VarScope callScope,
-                                Scriptable thisObj,
+                                Object thisObj,
                                 Object[] originalArgs) {
                             MemberBox nativeSetter = MemberBox.this;
                             Object value =

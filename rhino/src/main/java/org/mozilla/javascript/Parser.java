@@ -3055,6 +3055,20 @@ public class Parser {
         } else {
             consumeToken();
             int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
+
+            // Detect new.target meta-property
+            if (peekToken() == Token.DOT) {
+                consumeToken(); // consume '.'
+                if (matchToken(Token.NAME, true) && "target".equals(ts.getString())) {
+                    int end = ts.tokenEnd;
+                    KeywordLiteral nt = new KeywordLiteral(pos, end - pos, Token.NEW_TARGET);
+                    nt.setLineColumnNumber(lineno, column);
+                    return memberExprTail(allowCallSyntax, nt);
+                }
+                reportError("msg.bad.new.dot");
+                return makeErrorNode();
+            }
+
             NewExpression nx = new NewExpression(pos);
 
             AstNode target = memberExpr(false);

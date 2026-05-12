@@ -65,6 +65,11 @@ public class TopLevel extends ScopeObject {
         /** The built-in Promise type. */
         Promise,
         Date,
+        Map,
+        Set,
+        WeakMap,
+        WeakSet,
+        Proxy,
         ArrayBuffer,
         Int8Array,
         Uint8Array,
@@ -197,7 +202,10 @@ public class TopLevel extends ScopeObject {
                 // Handle weird situation of "GeneratorFunction" being a real constructor
                 // which is never registered in the top-level scope
                 ctors.put(
-                        builtin, (BaseFunction) BaseFunction.initAsGeneratorFunction(this, sealed));
+                        builtin,
+                        (BaseFunction)
+                                BaseFunction.initAsGeneratorFunction(
+                                        Context.getCurrentContext(), this, sealed));
             }
         }
         errors = new EnumMap<>(NativeErrors.class);
@@ -240,7 +248,7 @@ public class TopLevel extends ScopeObject {
             }
         }
         // fall back to normal constructor lookup
-        String typeName;
+        Object typeName;
         if (type == Builtins.GeneratorFunction) {
             // GeneratorFunction isn't stored in scope with that name, but in case
             // we end up falling back to this value then we have to
@@ -249,7 +257,11 @@ public class TopLevel extends ScopeObject {
         } else {
             typeName = type.name();
         }
-        return ScriptRuntime.getExistingCtor(cx, scope, typeName);
+        if (typeName instanceof String) {
+            return ScriptRuntime.getExistingCtor(cx, scope, (String) typeName);
+        } else {
+            return ScriptRuntime.getExistingCtor(cx, scope, (SymbolKey) typeName);
+        }
     }
 
     /**
@@ -291,8 +303,7 @@ public class TopLevel extends ScopeObject {
             return result;
         }
 
-        // fall back to normal prototype lookup
-        String typeName;
+        Object typeName;
         if (type == Builtins.GeneratorFunction) {
             // GeneratorFunction isn't stored in scope with that name, but in case
             // we end up falling back to this value then we have to
@@ -301,7 +312,11 @@ public class TopLevel extends ScopeObject {
         } else {
             typeName = type.name();
         }
-        return ScriptableObject.getClassPrototype(scope, typeName);
+        if (typeName instanceof String) {
+            return ScriptableObject.getClassPrototype(scope, (String) typeName);
+        } else {
+            return ScriptableObject.getClassPrototype(scope, (SymbolKey) typeName);
+        }
     }
 
     /**
