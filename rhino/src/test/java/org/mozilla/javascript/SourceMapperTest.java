@@ -141,7 +141,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(101, ex.lineNumber(), "compiled mode should remap line");
                     return null;
                 },
@@ -163,7 +165,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(
                             101,
                             ex.lineNumber(),
@@ -389,7 +393,9 @@ class SourceMapperTest {
                                             .build());
 
                     RhinoException ex =
-                            assertThrows(RhinoException.class, () -> script.exec(cx, scope, scope));
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
                     assertEquals(6, ex.lineNumber(), "expected source line 6 (5 zero-indexed + 1)");
                     return null;
                 });
