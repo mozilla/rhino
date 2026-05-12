@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
-    private static final long serialVersionUID = -5332312783643935019L;
+    private static final long serialVersionUID = 8880062939740158370L;
 
     /**
      * Create a JavaScript function object from a Java method.
@@ -77,6 +77,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Scriptable
      */
     public FunctionObject(String name, Member methodOrConstructor, VarScope scope) {
+        super(scope);
         if (methodOrConstructor instanceof Constructor) {
             member = new MemberBox(scope, (Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
@@ -353,7 +354,7 @@ public class FunctionObject extends BaseFunction {
      * @see org.mozilla.javascript.Function#call( Context, VarScope, Scriptable, Object[])
      */
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisArg, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisArg, Object[] args) {
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;

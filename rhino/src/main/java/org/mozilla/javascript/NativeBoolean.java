@@ -71,8 +71,7 @@ final class NativeBoolean extends ScriptableObject {
             Context cx, JSFunction fun, Object nt, VarScope s, Object thisObj, Object[] args) {
         boolean b = ScriptRuntime.toBoolean(args.length > 0 ? args[0] : Undefined.instance);
         var res = new NativeBoolean(b);
-        res.setPrototype((Scriptable) fun.getPrototypeProperty());
-        res.setParentScope(s);
+        ScriptRuntime.setBuiltinProtoAndParent(res, fun, nt, s, TopLevel.Builtins.Boolean);
         return res;
     }
 

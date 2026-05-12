@@ -41,8 +41,9 @@ public class Token {
             // Interpreter reuses the following as bytecodes
             FIRST_BYTECODE_TOKEN = EOL + 1,
             ENTERWITH = FIRST_BYTECODE_TOKEN,
-            LEAVEWITH = ENTERWITH + 1,
-            RETURN = LEAVEWITH + 1,
+            ENTER_SCOPE = ENTERWITH + 1,
+            LEAVE_SCOPE = ENTER_SCOPE + 1,
+            RETURN = LEAVE_SCOPE + 1,
             GOTO = RETURN + 1,
             IFEQ = GOTO + 1,
             IFNE = IFEQ + 1,
@@ -132,10 +133,11 @@ public class Token {
             REF_NS_MEMBER = REF_MEMBER + 1, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = REF_NS_MEMBER + 1, // Reference for @y, @[y] etc.
             REF_NS_NAME = REF_NAME + 1, // Reference for ns::y, @ns::y@[y] etc.
-            BIGINT = REF_NS_NAME + 1; // ES2020 BigInt
+            BIGINT = REF_NS_NAME + 1, // ES2020 BigInt
+            NEW_TARGET = BIGINT + 1; // new.target meta-property
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = BIGINT,
+    public static final int LAST_BYTECODE_TOKEN = NEW_TARGET,
             TRY = LAST_BYTECODE_TOKEN + 1,
             SEMI = TRY + 1, // semicolon
             LB = SEMI + 1, // left and right brackets
@@ -209,7 +211,8 @@ public class Token {
             SETPROP_OP = USE_STACK + 1, // x.y op= something
             SETELEM_OP = SETPROP_OP + 1, // x[y] op= something
             LOCAL_BLOCK = SETELEM_OP + 1,
-            SET_REF_OP = LOCAL_BLOCK + 1, // *reference op= something
+            SCOPE_BLOCK = LOCAL_BLOCK + 1,
+            SET_REF_OP = SCOPE_BLOCK + 1, // *reference op= something
 
             // For XML support:
             DOTDOT = SET_REF_OP + 1, // member operator (..)
@@ -230,7 +233,8 @@ public class Token {
             SETCONSTVAR = SETCONST + 1,
             ARRAYCOMP = SETCONSTVAR + 1, // array comprehension
             LETEXPR = ARRAYCOMP + 1,
-            WITHEXPR = LETEXPR + 1,
+            SCOPEEXPR = LETEXPR + 1,
+            WITHEXPR = SCOPEEXPR + 1,
             DEBUGGER = WITHEXPR + 1,
             COMMENT = DEBUGGER + 1,
             GENEXPR = COMMENT + 1,
@@ -246,7 +250,8 @@ public class Token {
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
-            LAST_TOKEN = OBJECT_REST + 1;
+            AWAIT = OBJECT_REST + 1, // ES2017 await expression
+            LAST_TOKEN = AWAIT + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -277,8 +282,10 @@ public class Token {
                 return "EOL";
             case ENTERWITH:
                 return "ENTERWITH";
-            case LEAVEWITH:
-                return "LEAVEWITH";
+            case ENTER_SCOPE:
+                return "ENTER_SCOPE";
+            case LEAVE_SCOPE:
+                return "LEAVE_SCOPE";
             case RETURN:
                 return "RETURN";
             case GOTO:
@@ -579,6 +586,8 @@ public class Token {
                 return "SETELEM_OP";
             case LOCAL_BLOCK:
                 return "LOCAL_BLOCK";
+            case SCOPE_BLOCK:
+                return "SCOPE_BLOCK";
             case SET_REF_OP:
                 return "SET_REF_OP";
             case DOTDOT:
@@ -599,6 +608,8 @@ public class Token {
                 return "TO_DOUBLE";
             case OBJECT_REST:
                 return "OBJECT_REST";
+            case AWAIT:
+                return "AWAIT";
             case GET:
                 return "GET";
             case SET:
@@ -621,6 +632,8 @@ public class Token {
                 return "ARRAYCOMP";
             case WITHEXPR:
                 return "WITHEXPR";
+            case SCOPEEXPR:
+                return "SCOPEEXPR";
             case LETEXPR:
                 return "LETEXPR";
             case DEBUGGER:
@@ -637,6 +650,8 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
+            case NEW_TARGET:
+                return "NEW_TARGET";
             case TEMPLATE_LITERAL:
                 return "TEMPLATE_LITERAL";
             case STRING_CONCAT:

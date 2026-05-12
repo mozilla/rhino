@@ -138,7 +138,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     }
 
     public static class PositionComparator implements Comparator<AstNode>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1551233591343412911L;
 
         /**
          * Sorts nodes by (relative) start position. The start positions are relative to their
@@ -400,7 +400,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             case Token.INC:
             case Token.JSR:
             case Token.LABEL:
-            case Token.LEAVEWITH:
+            case Token.LEAVE_SCOPE:
             case Token.LET:
             case Token.LETEXPR:
             case Token.LOCAL_BLOCK:

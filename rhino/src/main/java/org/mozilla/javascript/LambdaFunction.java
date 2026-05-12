@@ -13,7 +13,7 @@ package org.mozilla.javascript;
  */
 public class LambdaFunction extends BaseFunction {
 
-    private static final long serialVersionUID = -8388132362854748293L;
+    private static final long serialVersionUID = 6594410813947157220L;
 
     // The target is expected to be a lambda. Lambdas may be serialized, which
     // requires this special interface.
@@ -38,6 +38,7 @@ public class LambdaFunction extends BaseFunction {
             int length,
             SerializableCallable target,
             boolean defaultPrototype) {
+        super(scope);
         this.target = target;
         this.name = name;
         this.length = length;
@@ -78,6 +79,7 @@ public class LambdaFunction extends BaseFunction {
             int length,
             Object prototype,
             SerializableCallable target) {
+        super(scope);
         this.target = target;
         this.name = name;
         this.length = length;
@@ -87,6 +89,7 @@ public class LambdaFunction extends BaseFunction {
 
     /** Create a new built-in function, with no name, and no default prototype. */
     public LambdaFunction(VarScope scope, int length, SerializableCallable target) {
+        super(scope);
         this.target = target;
         this.length = length;
         this.name = "";
@@ -94,7 +97,7 @@ public class LambdaFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         return target.call(cx, getDeclarationScope(), thisObj, args);
     }
 

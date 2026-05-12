@@ -29,7 +29,7 @@ public interface Function extends Scriptable, Callable, Constructable {
      * @return the result of the call
      */
     @Override
-    Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args);
+    Object call(Context cx, VarScope scope, Object thisObj, Object[] args);
 
     /**
      * Call the function as a constructor.
@@ -46,6 +46,9 @@ public interface Function extends Scriptable, Callable, Constructable {
     @Override
     Scriptable construct(Context cx, VarScope scope, Object[] args);
 
+    @Override
+    Scriptable construct(Context cx, Object nt, VarScope s, Object thisObj, Object[] args);
+
     /**
      * Return the scope in which this function was declared or closed over. This is the
      * "[[Environment]]" defined in https://tc39.es/ecma262/#sec-ecmascript-function-objects.
@@ -60,5 +63,10 @@ public interface Function extends Scriptable, Callable, Constructable {
     /** Return whether this function can be called as a constructor. */
     default boolean isConstructor() {
         return true;
+    }
+
+    /** Returns whether this is an async function. */
+    default boolean isAsync() {
+        return false;
     }
 }

@@ -82,7 +82,7 @@ final class NativeError extends ScriptableObject {
 
     static void init(Context cx, VarScope scope, boolean sealed) {
         var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
-        NativeCallSite.init(scope, sealed);
+        NativeCallSite.init(cx, scope, sealed);
 
         ProtoProps protoProps = new ProtoProps();
         ((ScriptableObject) ctor.getPrototypeProperty()).associateValue(ProtoProps.KEY, protoProps);

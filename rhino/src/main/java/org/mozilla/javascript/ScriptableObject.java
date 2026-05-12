@@ -2180,6 +2180,16 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 getTopLevelScope(scope), TopLevel.Builtins.GeneratorFunction);
     }
 
+    public static Scriptable getAsyncFunctionPrototype(VarScope scope) {
+        return TopLevel.getBuiltinPrototype(
+                getTopLevelScope(scope), TopLevel.Builtins.AsyncFunction);
+    }
+
+    public static Scriptable getAsyncGeneratorFunctionPrototype(VarScope scope) {
+        return TopLevel.getBuiltinPrototype(
+                getTopLevelScope(scope), TopLevel.Builtins.AsyncGeneratorFunction);
+    }
+
     public static Scriptable getArrayPrototype(VarScope scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope), TopLevel.Builtins.Array);
     }
@@ -2197,6 +2207,24 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @return the prototype for the named class, or null if it cannot be found.
      */
     public static Scriptable getClassPrototype(VarScope scope, String className) {
+        scope = getTopLevelScope(scope);
+        Object ctor = getProperty(scope, className);
+        Object proto;
+        if (ctor instanceof BaseFunction) {
+            proto = ((BaseFunction) ctor).getPrototypeProperty();
+        } else if (ctor instanceof Scriptable) {
+            Scriptable ctorObj = (Scriptable) ctor;
+            proto = ctorObj.get("prototype", ctorObj);
+        } else {
+            return null;
+        }
+        if (proto instanceof Scriptable) {
+            return (Scriptable) proto;
+        }
+        return null;
+    }
+
+    public static Scriptable getClassPrototype(VarScope scope, Symbol className) {
         scope = getTopLevelScope(scope);
         Object ctor = getProperty(scope, className);
         Object proto;
@@ -2313,6 +2341,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     public static Object getProperty(VarScope obj, String name) {
+        return obj.get(name, obj);
+    }
+
+    public static Object getProperty(VarScope obj, Symbol name) {
         return obj.get(name, obj);
     }
 

@@ -255,7 +255,7 @@ public class NativeConsole extends ScriptableObject {
                         public Object call(
                                 Context callCx,
                                 VarScope callScope,
-                                Scriptable callThisObj,
+                                Object callThisObj,
                                 Object[] callArgs) {
                             Object value = callArgs[1];
                             while (value instanceof Delegator) {

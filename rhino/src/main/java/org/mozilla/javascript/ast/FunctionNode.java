@@ -63,6 +63,7 @@ public class FunctionNode extends ScriptNode {
     public static final int FUNCTION_EXPRESSION = 2;
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
     public static final int ARROW_FUNCTION = 4;
+    public static final int FUNCTION_BLOCK_SCOPED = 5;
 
     public static enum Form {
         FUNCTION,
@@ -97,6 +98,12 @@ public class FunctionNode extends ScriptNode {
     }
 
     @Override
+    public boolean hasDestructuring() {
+        return getProp(Node.DESTRUCTURING_PARAMS) != null
+                || ((destructuringRvalues != null) && !destructuringRvalues.isEmpty());
+    }
+
+    @Override
     public List<Node[]> getDestructuringRvalues() {
         return destructuringRvalues;
     }
@@ -118,6 +125,7 @@ public class FunctionNode extends ScriptNode {
     private boolean requiresArgumentObject;
     private boolean isGenerator;
     private boolean isES6Generator;
+    private boolean isAsync;
     private List<Node> generatorResumePoints;
     private Map<Node, int[]> liveLocals;
     private Node generatorParamInitBlock; // IR block for default parameters init in generators
@@ -327,6 +335,15 @@ public class FunctionNode extends ScriptNode {
         needsActivation = true;
     }
 
+    public boolean isAsync() {
+        return isAsync;
+    }
+
+    public void setIsAsync() {
+        isAsync = true;
+        needsActivation = true;
+    }
+
     @Override
     public boolean hasRestParameter() {
         return hasRestParameter;
@@ -443,6 +460,9 @@ public class FunctionNode extends ScriptNode {
         boolean isArrow = functionType == ARROW_FUNCTION;
         if (!isMethod()) {
             sb.append(makeIndent(depth));
+            if (isAsync) {
+                sb.append("async ");
+            }
             if (!isArrow) {
                 sb.append("function");
             }
