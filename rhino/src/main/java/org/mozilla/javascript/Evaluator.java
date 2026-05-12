@@ -8,47 +8,55 @@ package org.mozilla.javascript;
 
 import java.util.List;
 import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.debug.DebuggableScript;
 
 /** Abstraction of evaluation, which can be implemented either by an interpreter or compiler. */
 public interface Evaluator {
 
     /**
-     * Compile the script or function from intermediate representation tree into an executable form.
+     * Compile a script from intermediate representation tree into an executable form.
      *
      * @param compilerEnv Compiler environment
      * @param tree parse tree
      * @param rawSource the source code
-     * @param returnFunction if true, compiling a function
-     * @return an opaque object that can be passed to either createFunctionObject or
-     *     createScriptObject, depending on the value of returnFunction
+     * @return a result that can be passed to {@link #createScriptObject}
      */
-    public Object compile(
-            CompilerEnvirons compilerEnv,
-            ScriptNode tree,
-            String rawSource,
-            boolean returnFunction);
+    CompilationResult<JSScript> compileScript(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource);
+
+    /**
+     * Compile a function from intermediate representation tree into an executable form.
+     *
+     * @param compilerEnv Compiler environment
+     * @param tree parse tree
+     * @param rawSource the source code
+     * @return a result that can be passed to {@link #createFunctionObject}
+     */
+    CompilationResult<JSFunction> compileFunction(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource);
 
     /**
      * Create a function object.
      *
      * @param cx Current context
      * @param scope scope of the function
-     * @param bytecode opaque object returned by compile
+     * @param compiled the result returned by {@link #compileFunction}
      * @param staticSecurityDomain security domain
      * @return Function object that can be called
      */
-    public Function createFunctionObject(
-            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain);
+    Function createFunctionObject(
+            Context cx,
+            VarScope scope,
+            CompilationResult<JSFunction> compiled,
+            Object staticSecurityDomain);
 
     /**
      * Create a script object.
      *
-     * @param bytecode opaque object returned by compile
+     * @param compiled the result returned by {@link #compileScript}
      * @param staticSecurityDomain security domain
      * @return Script object that can be evaluated
      */
-    public Script createScriptObject(Object bytecode, Object staticSecurityDomain);
+    Script createScriptObject(CompilationResult<JSScript> compiled, Object staticSecurityDomain);
 
     /**
      * Capture stack information from the given exception.
@@ -83,8 +91,4 @@ public interface Evaluator {
      * @return list of strings for the stack trace
      */
     public List<String> getScriptStack(RhinoException ex);
-
-    public default DebuggableScript getDebuggableScript(Object bytecode) {
-        return null;
-    }
 }
