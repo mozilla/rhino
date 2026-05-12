@@ -561,7 +561,7 @@ public class Context implements Closeable {
         if (factory == null) {
             factory = ContextFactory.getGlobal();
         }
-        return call(factory, cx -> callable.call(cx, (VarScope) scope, thisObj, args));
+        return call(factory, cx -> callable.call(cx, scope, thisObj, args));
     }
 
     /** The method implements {@link ContextFactory#call(ContextAction)} logic. */
@@ -1198,7 +1198,8 @@ public class Context implements Closeable {
     public final Object evaluateScript(ScriptCompileSpec spec, VarScope scope) {
         Script script = compileScript(spec);
         if (script != null) {
-            return script.exec(this, scope, scope);
+            return script.exec(
+                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
         }
         return null;
     }

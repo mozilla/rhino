@@ -75,7 +75,7 @@ public class Utils {
      *
      * @param action the action to execute
      */
-    public static void runWithAllModes(final ContextAction<?> action) {
+    public static <T> void runWithAllModes(final ContextAction<T> action) {
         runWithMode(action, true);
         runWithMode(action, false);
     }
@@ -86,8 +86,8 @@ public class Utils {
      * @param contextFactory the context factory to use
      * @param action the action to execute
      */
-    public static void runWithAllModes(
-            final ContextFactory contextFactory, final ContextAction<?> action) {
+    public static <T> void runWithAllModes(
+            final ContextFactory contextFactory, final ContextAction<T> action) {
         runWithMode(contextFactory, action, true);
         runWithMode(contextFactory, action, false);
     }
@@ -98,7 +98,8 @@ public class Utils {
      * @param action the action to execute
      * @param interpretedMode true if interpreted mode should be used
      */
-    public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
+    public static <T> void runWithMode(
+            final ContextAction<T> action, final boolean interpretedMode) {
         runWithMode(new ContextFactory(), action, interpretedMode);
     }
 
@@ -109,9 +110,9 @@ public class Utils {
      * @param action the action to execute
      * @param interpretedMode true if interpreted mode should be used
      */
-    public static void runWithMode(
+    public static <T> void runWithMode(
             final ContextFactory contextFactory,
-            final ContextAction<?> action,
+            final ContextAction<T> action,
             final boolean interpretedMode) {
 
         try (final Context cx = contextFactory.enterContext()) {

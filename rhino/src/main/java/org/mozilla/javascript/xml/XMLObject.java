@@ -52,10 +52,10 @@ public abstract class XMLObject extends ScriptableObject {
     /** Generic reference to implement x::ns, x.@ns::y, x..@ns::y etc. */
     public abstract Ref memberRef(Context cx, Object namespace, Object elem, int memberTypeFlags);
 
-    /** Wrap this object into NativeWith to implement the with statement. */
+    /** Wrap this object into {@link WithScope} to implement the with statement. */
     public abstract WithScope enterWith(VarScope scope);
 
-    /** Wrap this object into NativeWith to implement the .() query. */
+    /** Wrap this object into {@link WithScope} to implement the .() query. */
     public abstract WithScope enterDotQuery(VarScope scope);
 
     /**

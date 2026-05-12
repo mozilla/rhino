@@ -1,10 +1,13 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -558,7 +561,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         return Kit.initHash(h, key, value);
     }
 
-    void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
+    void addLazilyInitializedValue(
+            String name, int index, LazilyLoadedCtor<T> init, int attributes) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
         var lslot = getMap().compute(this, name, index, ScriptableObject::ensureLazySlot);
@@ -566,7 +570,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         lslot.value = init;
     }
 
-    void addLazilyInitializedValue(Symbol key, int index, LazilyLoadedCtor init, int attributes) {
+    void addLazilyInitializedValue(
+            Symbol key, int index, LazilyLoadedCtor<T> init, int attributes) {
         if (key != null && index != 0) throw new IllegalArgumentException(key.toString());
         checkNotSealed(key, index);
         LazyLoadSlot lslot = getMap().compute(this, key, index, ScriptableObject::ensureLazySlot);
@@ -791,6 +796,54 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         checkNotSealed(key, 0);
         put(key, getThis(), value);
         setAttributes(key, attributes);
+    }
+
+    /**
+     * Returns an array of ids for the properties of the object.
+     *
+     * <p>Any properties with the attribute DONTENUM are not listed.
+     *
+     * @return an array of java.lang.Objects with an entry for every listed property. Properties
+     *     accessed via an integer index will have a corresponding Integer entry in the returned
+     *     array. Properties accessed by a String will have a String entry in the returned array.
+     */
+    @Override
+    public Object[] getIds() {
+        try (var map = startCompoundOp(false)) {
+            return getIds(map, false, false);
+        }
+    }
+
+    Object[] getIds(CompoundOperationMap<T> map, boolean getNonEnumerable, boolean getSymbols) {
+        if (map.isEmpty()) {
+            return ScriptRuntime.emptyArgs;
+        }
+
+        int c = 0;
+        Object[] a = new Object[map.dirtySize()];
+
+        for (var slot : map) {
+            if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
+                    && (getSymbols || !(slot.name instanceof Symbol))) {
+                a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);
+            }
+        }
+
+        Object[] result;
+        if (c == a.length) {
+            result = a;
+        } else {
+            result = new Object[c];
+            System.arraycopy(a, 0, result, 0, c);
+        }
+
+        Context cx = Context.getCurrentContext();
+        if ((cx != null) && cx.hasFeature(Context.FEATURE_ENUMERATE_IDS_FIRST)) {
+            // Move all the numeric IDs to the front in numeric order
+            Arrays.sort(result, ScriptableObject.KEY_COMPARATOR);
+        }
+
+        return result;
     }
 
     public abstract T getThis();

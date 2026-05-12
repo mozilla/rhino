@@ -40,7 +40,12 @@ public class FunctionCompileSpecTest {
                                 .build());
 
         assertNotNull(func);
-        Object result = func.call(cx, scope, scope, new Object[] {5, 7});
+        Object result =
+                func.call(
+                        cx,
+                        scope,
+                        ScriptableObject.getTopLevelScope(scope).getGlobalThis(),
+                        new Object[] {5, 7});
         assertEquals(12, ((Number) result).intValue());
     }
 
@@ -54,7 +59,12 @@ public class FunctionCompileSpecTest {
                                 .sourceName("mul.js")
                                 .build());
 
-        Object result = func.call(cx, scope, scope, new Object[] {6, 7});
+        Object result =
+                func.call(
+                        cx,
+                        scope,
+                        ScriptableObject.getTopLevelScope(scope).getGlobalThis(),
+                        new Object[] {6, 7});
         assertEquals(42, ((Number) result).intValue());
     }
 
@@ -125,8 +135,12 @@ public class FunctionCompileSpecTest {
                                 .build());
 
         Object[] args = new Object[] {1, 2};
-        Object oldResult = oldWay.call(cx, scope, scope, args);
-        Object newResult = newWay.call(cx, scope, scope, args);
+        Object oldResult =
+                oldWay.call(
+                        cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis(), args);
+        Object newResult =
+                newWay.call(
+                        cx, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis(), args);
         assertEquals(((Number) oldResult).intValue(), ((Number) newResult).intValue());
         assertEquals(3, ((Number) newResult).intValue());
     }
@@ -156,7 +170,12 @@ public class FunctionCompileSpecTest {
                         FunctionCompileSpec.fromSource("function f() { return 1; };;;", scope)
                                 .sourceName("trailing.js")
                                 .build());
-        Object result = func.call(cx, scope, scope, new Object[0]);
+        Object result =
+                func.call(
+                        cx,
+                        scope,
+                        ScriptableObject.getTopLevelScope(scope).getGlobalThis(),
+                        new Object[0]);
         assertEquals(1, ((Number) result).intValue());
     }
 
@@ -183,7 +202,12 @@ public class FunctionCompileSpecTest {
                 received.get().isGeneratingSource(),
                 "mutation in processor should take effect on the env passed to it");
 
-        Object result = func.call(cx, scope, scope, new Object[0]);
+        Object result =
+                func.call(
+                        cx,
+                        scope,
+                        ScriptableObject.getTopLevelScope(scope).getGlobalThis(),
+                        new Object[0]);
         assertEquals(7, ((Number) result).intValue());
     }
 }

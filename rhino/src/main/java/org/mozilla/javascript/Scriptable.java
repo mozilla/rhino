@@ -288,6 +288,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @return an array of Objects. Each entry in the array is either a java.lang.String or a
      *     java.lang.Number
      */
+    @Override
     public Object[] getIds();
 
     /**
