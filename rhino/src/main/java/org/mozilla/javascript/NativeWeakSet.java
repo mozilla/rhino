@@ -6,6 +6,10 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.value;
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.WeakHashMap;
@@ -21,33 +25,32 @@ public class NativeWeakSet extends ScriptableObject {
 
     private static final String CLASS_NAME = "WeakSet";
 
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                CLASS_NAME,
+                                0,
+                                ClassDescriptor.typeError(),
+                                NativeWeakSet::jsConstructor)
+                        .withMethod(PROTO, "add", 1, NativeWeakSet::js_add)
+                        .withMethod(PROTO, "delete", 1, NativeWeakSet::js_delete)
+                        .withMethod(PROTO, "has", 1, NativeWeakSet::js_has)
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value(CLASS_NAME, DONTENUM | READONLY))
+                        .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
+                        .build();
+    }
+
     private boolean instanceOfWeakSet = false;
 
     private transient WeakHashMap<Object, Boolean> map = new WeakHashMap<>();
 
     static Object init(Context cx, VarScope scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        0,
-                        LambdaConstructor.CONSTRUCTOR_NEW,
-                        NativeWeakSet::jsConstructor);
-        constructor.setPrototypePropertyAttributes(DONTENUM | READONLY | PERMANENT);
-
-        constructor.definePrototypeMethod(scope, "add", 1, NativeWeakSet::js_add);
-        constructor.definePrototypeMethod(scope, "delete", 1, NativeWeakSet::js_delete);
-        constructor.definePrototypeMethod(scope, "has", 1, NativeWeakSet::js_has);
-
-        constructor.definePrototypeProperty(
-                SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-
-        ScriptRuntimeES6.addSymbolSpecies(cx, scope, constructor);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
-        }
-        return constructor;
+        return DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
     }
 
     @Override
@@ -55,16 +58,20 @@ public class NativeWeakSet extends ScriptableObject {
         return CLASS_NAME;
     }
 
-    private static Scriptable jsConstructor(Context cx, VarScope scope, Object[] args) {
+    private static Scriptable jsConstructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeWeakSet ns = new NativeWeakSet();
         ns.instanceOfWeakSet = true;
         if (args.length > 0) {
-            NativeSet.loadFromIterable(cx, scope, ns, NativeMap.key(args));
+            NativeSet.loadFromIterable(cx, f.getDeclarationScope(), ns, NativeMap.key(args));
         }
+        ns.setParentScope(f.getDeclarationScope());
+        ns.setPrototype((Scriptable) f.getPrototypeProperty());
         return ns;
     }
 
-    private static Object js_add(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_add(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeWeakSet realThis = realThis(thisObj, "add");
         var k = NativeMap.key(args);
         return realThis.js_add(k);
@@ -84,7 +91,8 @@ public class NativeWeakSet extends ScriptableObject {
         return this;
     }
 
-    private static Object js_delete(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_delete(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeWeakSet realThis = realThis(thisObj, "add");
         var arg = NativeMap.key(args);
         return realThis.js_delete(arg);
@@ -97,7 +105,8 @@ public class NativeWeakSet extends ScriptableObject {
         return map.remove(key) != null;
     }
 
-    private static Object js_has(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object js_has(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeWeakSet realThis = realThis(thisObj, "add");
         var arg = NativeMap.key(args);
         return realThis.js_has(arg);

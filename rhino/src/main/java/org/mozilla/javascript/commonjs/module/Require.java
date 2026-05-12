@@ -45,7 +45,7 @@ import org.mozilla.javascript.VarScope;
  * @version $Id: Require.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
 public class Require extends BaseFunction {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 5682218649242405574L;
     private final ModuleScriptProvider moduleScriptProvider;
     private final TopLevel nativeScope;
     private final Scriptable paths;
@@ -174,7 +174,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
         if (args == null || args.length < 1) {
             throw ScriptRuntime.throwError(cx, scope, "require() needs one argument");
         }
