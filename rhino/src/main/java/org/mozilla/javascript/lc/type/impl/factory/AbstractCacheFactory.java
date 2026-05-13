@@ -3,6 +3,7 @@ package org.mozilla.javascript.lc.type.impl.factory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -19,7 +20,7 @@ import org.mozilla.javascript.lc.type.impl.VariableTypeInfoImpl;
  * @author ZZZank
  */
 public abstract class AbstractCacheFactory implements FactoryBase, CachedFactory {
-    private static final long serialVersionUID = 4533445095188189419L;
+    @Serial private static final long serialVersionUID = 4533445095188189419L;
 
     private transient Map<TypeVariable<?>, VariableTypeInfoImpl> variableCache;
     private transient Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> consolidationMappingCache;
@@ -54,10 +55,12 @@ public abstract class AbstractCacheFactory implements FactoryBase, CachedFactory
         return got;
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         initCache();

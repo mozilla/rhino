@@ -11,6 +11,7 @@ import static org.mozilla.javascript.ClassDescriptor.Builder.alias;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ import org.mozilla.javascript.xml.XMLObject;
  * @author Mike McCabe
  */
 public class NativeArray extends ScriptableObject implements List {
-    private static final long serialVersionUID = 7331366857676127338L;
+    @Serial private static final long serialVersionUID = 7331366857676127338L;
 
     /*
      * Optimization possibilities and open issues:

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * This class implements the "arguments" object.
  *
@@ -15,7 +17,7 @@ package org.mozilla.javascript;
  * @author Norris Boyd
  */
 class Arguments extends ScriptableObject {
-    private static final long serialVersionUID = 4275508002492040609L;
+    @Serial private static final long serialVersionUID = 4275508002492040609L;
 
     private static final String CLASS_NAME = "Arguments";
 

@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -15,7 +16,7 @@ import java.io.Serializable;
  */
 public final class ScriptStackElement implements Serializable {
 
-    private static final long serialVersionUID = -6416688260860477449L;
+    @Serial private static final long serialVersionUID = -6416688260860477449L;
 
     public final String fileName;
     public final String functionName;

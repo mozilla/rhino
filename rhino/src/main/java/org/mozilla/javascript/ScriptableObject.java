@@ -11,6 +11,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
@@ -55,7 +56,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 DebuggableObject,
                 ConstProperties<Scriptable> {
 
-    private static final long serialVersionUID = 2829861078851942586L;
+    @Serial private static final long serialVersionUID = 2829861078851942586L;
 
     /**
      * The empty property attribute.
@@ -2981,11 +2982,13 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         writeMaps(out);
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         readMaps(in);
@@ -3047,7 +3050,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * defined to be stable.
      */
     public static final class KeyComparator implements Comparator<Object>, Serializable {
-        private static final long serialVersionUID = 6411335891523988149L;
+        @Serial private static final long serialVersionUID = 6411335891523988149L;
 
         @Override
         public int compare(Object o1, Object o2) {

@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -21,7 +22,7 @@ import org.mozilla.javascript.VarScope;
  * insertion.
  */
 public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
-    private static final long serialVersionUID = -1383405116607004281L;
+    @Serial private static final long serialVersionUID = -1383405116607004281L;
 
     private static final String CLASS_NAME = "Uint8ClampedArray";
 

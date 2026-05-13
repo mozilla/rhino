@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import java.io.Serial;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
@@ -18,7 +19,7 @@ import org.mozilla.javascript.annotations.JSGetter;
  * JavaScript methods. Each call to getCount() returns the current value and then increments it.
  */
 public class Counter extends ScriptableObject {
-    private static final long serialVersionUID = 438270592527335642L;
+    @Serial private static final long serialVersionUID = 438270592527335642L;
 
     /**
      * The zero-argument constructor used by Rhino runtime to create instances. Initializes the

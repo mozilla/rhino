@@ -8,6 +8,7 @@ package org.mozilla.javascript.typedarrays;
 
 import static org.mozilla.javascript.SymbolKey.TO_STRING_TAG;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +50,7 @@ import org.mozilla.javascript.Wrapper;
  */
 public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         implements List<T>, RandomAccess, ExternalArrayData {
-    private static final long serialVersionUID = -4963053773152251274L;
+    @Serial private static final long serialVersionUID = -4963053773152251274L;
 
     /**
      * The length in elements of the array. For auto-length views (ES2025), this is not used but is

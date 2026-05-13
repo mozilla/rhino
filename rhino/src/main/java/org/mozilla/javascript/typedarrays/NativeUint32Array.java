@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -19,7 +20,7 @@ import org.mozilla.javascript.VarScope;
  * interface. It also implements List&lt;Long&gt; for direct manipulation in Java.
  */
 public class NativeUint32Array extends NativeTypedArrayView<Long> {
-    private static final long serialVersionUID = -7987831421954144244L;
+    @Serial private static final long serialVersionUID = -7987831421954144244L;
 
     private static final String CLASS_NAME = "Uint32Array";
     private static final int BYTES_PER_ELEMENT = 4;

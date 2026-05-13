@@ -9,6 +9,8 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ScriptableObject.CONST;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 
+import java.io.Serial;
+
 /**
  * This class implements the activation object.
  *
@@ -18,7 +20,7 @@ import static org.mozilla.javascript.ScriptableObject.PERMANENT;
  * @author Norris Boyd
  */
 public final class NativeCall extends DeclarationScope {
-    private static final long serialVersionUID = -7471457301304454454L;
+    @Serial private static final long serialVersionUID = -7471457301304454454L;
 
     private static final Object CALL_TAG = "Call";
 

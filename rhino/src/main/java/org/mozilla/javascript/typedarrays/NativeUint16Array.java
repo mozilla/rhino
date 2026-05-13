@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -19,7 +20,7 @@ import org.mozilla.javascript.VarScope;
  * interface. It also implements List&lt;Integer&gt; for direct manipulation in Java.
  */
 public class NativeUint16Array extends NativeTypedArrayView<Integer> {
-    private static final long serialVersionUID = 7700018949434240321L;
+    @Serial private static final long serialVersionUID = 7700018949434240321L;
 
     private static final String CLASS_NAME = "Uint16Array";
     private static final int BYTES_PER_ELEMENT = 2;

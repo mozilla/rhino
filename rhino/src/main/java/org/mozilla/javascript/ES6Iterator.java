@@ -6,9 +6,11 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public abstract class ES6Iterator extends ScriptableObject {
 
-    private static final long serialVersionUID = 2438373029140003950L;
+    @Serial private static final long serialVersionUID = 2438373029140003950L;
 
     public static final String NEXT_METHOD = "next";
     public static final String DONE_PROPERTY = "done";

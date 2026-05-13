@@ -6,13 +6,14 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
 
 final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implements Serializable {
-    private static final long serialVersionUID = 5067677351589230234L;
+    @Serial private static final long serialVersionUID = 5067677351589230234L;
 
     static final int INITIAL_MAX_ICODE_LENGTH = 1024;
     static final int INITIAL_STRINGTABLE_SIZE = 64;

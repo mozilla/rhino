@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -33,7 +34,7 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
 
-    private static final long serialVersionUID = -6948590651130498591L;
+    @Serial private static final long serialVersionUID = -6948590651130498591L;
 
     static void init(TopLevel scope, boolean sealed) {
         JavaIterableIterator.init(scope, sealed);
@@ -852,6 +853,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 "msg.conversion.not.allowed", String.valueOf(value), type);
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
 
@@ -877,6 +879,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
 
@@ -916,7 +919,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             };
 
     private static final class JavaIterableIterator extends ES6Iterator {
-        private static final long serialVersionUID = -2636492890037940863L;
+        @Serial private static final long serialVersionUID = -2636492890037940863L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
         static void init(TopLevel scope, boolean sealed) {

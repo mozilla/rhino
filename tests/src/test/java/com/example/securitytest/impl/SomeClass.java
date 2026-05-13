@@ -8,6 +8,7 @@
 package com.example.securitytest.impl;
 
 import com.example.securitytest.SomeInterface;
+import java.io.Serial;
 import java.util.ArrayList;
 
 /**
@@ -20,7 +21,7 @@ import java.util.ArrayList;
  * @author Roland Praml, FOCONIS AG
  */
 public class SomeClass extends ArrayList<String> implements SomeInterface {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     @Override
     public String foo() {

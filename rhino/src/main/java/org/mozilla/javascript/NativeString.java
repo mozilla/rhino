@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ScriptRuntime.rangeError;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
+import java.io.Serial;
 import java.text.Collator;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
  * @author Ronald Brill
  */
 final class NativeString extends ScriptableObject {
-    private static final long serialVersionUID = 920268368584188687L;
+    @Serial private static final long serialVersionUID = 920268368584188687L;
 
     private static final String CLASS_NAME = "String";
 

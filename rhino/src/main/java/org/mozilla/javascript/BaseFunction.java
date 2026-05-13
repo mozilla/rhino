@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.EnumSet;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -19,7 +20,7 @@ import org.mozilla.javascript.xml.XMLObject;
  * @author Norris Boyd
  */
 public class BaseFunction extends ScriptableObject implements Function {
-    private static final long serialVersionUID = 5311394446546053859L;
+    @Serial private static final long serialVersionUID = 5311394446546053859L;
 
     private static final Object FUNCTION_TAG = "Function";
     private static final String FUNCTION_CLASS = "Function";

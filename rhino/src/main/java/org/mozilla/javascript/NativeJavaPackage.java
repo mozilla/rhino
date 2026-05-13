@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ import java.util.Set;
  * @see NativeJavaClass
  */
 public class NativeJavaPackage extends ScriptableObject {
-    private static final long serialVersionUID = 7445054382212031523L;
+    @Serial private static final long serialVersionUID = 7445054382212031523L;
 
     NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {
         this.packageName = packageName;

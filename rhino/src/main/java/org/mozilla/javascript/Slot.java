@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
@@ -12,7 +13,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * various types of getter and setter methods.
  */
 public class Slot<T extends PropHolder<T>> implements Serializable {
-    private static final long serialVersionUID = -6090581677123995491L;
+    @Serial private static final long serialVersionUID = -6090581677123995491L;
     Object name; // This can change due to caching
     int indexOrHash;
     private short attributes;

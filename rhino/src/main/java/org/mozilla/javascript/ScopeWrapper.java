@@ -1,7 +1,9 @@
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public class ScopeWrapper extends ScriptableObject {
-    private static final long serialVersionUID = -3481312197060837332L;
+    @Serial private static final long serialVersionUID = -3481312197060837332L;
 
     private final VarScope scope;
 

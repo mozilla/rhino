@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NativeConsole extends ScriptableObject {
-    private static final long serialVersionUID = 5694613212458273057L;
+    @Serial private static final long serialVersionUID = 5694613212458273057L;
 
     private static final String CLASS_NAME = "Console";
 

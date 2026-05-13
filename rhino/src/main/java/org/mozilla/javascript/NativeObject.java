@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
  * @author Norris Boyd
  */
 public class NativeObject extends ScriptableObject implements Map {
-    private static final long serialVersionUID = -6345305608474346996L;
+    @Serial private static final long serialVersionUID = -6345305608474346996L;
 
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";

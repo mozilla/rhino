@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.Serial;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -121,7 +122,7 @@ import org.mozilla.javascript.tools.shell.ConsoleTextArea;
 public class SwingGui extends JFrame implements GuiCallback {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -8217029773456711621L;
+    @Serial private static final long serialVersionUID = -8217029773456711621L;
 
     /** The debugger. */
     Dim dim;
@@ -975,7 +976,7 @@ class MessageDialogWrapper {
 class EvalTextArea extends JTextArea implements KeyListener, DocumentListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -3918033649601064194L;
+    @Serial private static final long serialVersionUID = -3918033649601064194L;
 
     /** The debugger GUI. */
     private SwingGui debugGui;
@@ -1174,7 +1175,7 @@ class EvalTextArea extends JTextArea implements KeyListener, DocumentListener {
 class EvalWindow extends JInternalFrame implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -2860585845212160176L;
+    @Serial private static final long serialVersionUID = -2860585845212160176L;
 
     /** The text area into which expressions can be typed. */
     private EvalTextArea evalTextArea;
@@ -1219,7 +1220,7 @@ class EvalWindow extends JInternalFrame implements ActionListener {
 class JSInternalConsole extends JInternalFrame implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -5523468828771087292L;
+    @Serial private static final long serialVersionUID = -5523468828771087292L;
 
     /** Creates a new JSInternalConsole. */
     public JSInternalConsole(String name) {
@@ -1281,7 +1282,7 @@ class JSInternalConsole extends JInternalFrame implements ActionListener {
 class FilePopupMenu extends JPopupMenu {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 3589525009546013565L;
+    @Serial private static final long serialVersionUID = 3589525009546013565L;
 
     /** The popup x position. */
     int x;
@@ -1313,7 +1314,7 @@ class FileTextArea extends JTextArea
         implements ActionListener, PopupMenuListener, KeyListener, MouseListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -25032065448563720L;
+    @Serial private static final long serialVersionUID = -25032065448563720L;
 
     /** The owning {@link FileWindow}. */
     private FileWindow w;
@@ -1472,7 +1473,7 @@ class FileTextArea extends JTextArea
 class MoreWindows extends JDialog implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 5177066296457377546L;
+    @Serial private static final long serialVersionUID = 5177066296457377546L;
 
     /** Last selected value. */
     private String value;
@@ -1601,7 +1602,7 @@ class MoreWindows extends JDialog implements ActionListener {
 class FindFunction extends JDialog implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 559491015232880916L;
+    @Serial private static final long serialVersionUID = 559491015232880916L;
 
     /** Last selected function. */
     private String value;
@@ -1741,7 +1742,7 @@ class FindFunction extends JDialog implements ActionListener {
 class FileHeader extends JPanel implements MouseListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -2858905404778259127L;
+    @Serial private static final long serialVersionUID = -2858905404778259127L;
 
     /** The line that the mouse was pressed on. */
     private int pressLine = -1;
@@ -1885,7 +1886,7 @@ class FileHeader extends JPanel implements MouseListener {
 class FileWindow extends JInternalFrame implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = -6212382604952082370L;
+    @Serial private static final long serialVersionUID = -6212382604952082370L;
 
     /** The debugger GUI. */
     private SwingGui debugGui;
@@ -2059,7 +2060,7 @@ class FileWindow extends JInternalFrame implements ActionListener {
 class MyTableModel extends AbstractTableModel {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 2971618907207577000L;
+    @Serial private static final long serialVersionUID = 2971618907207577000L;
 
     /** The debugger GUI. */
     private SwingGui debugGui;
@@ -2169,7 +2170,7 @@ class MyTableModel extends AbstractTableModel {
 class Evaluator extends JTable {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 8133672432982594256L;
+    @Serial private static final long serialVersionUID = 8133672432982594256L;
 
     /** The {@link TableModel} for this table. */
     MyTableModel tableModel;
@@ -2421,7 +2422,7 @@ class VariableModel implements TreeTableModel {
 class MyTreeTable extends JTreeTable {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 3457265548184453049L;
+    @Serial private static final long serialVersionUID = 3457265548184453049L;
 
     /** Creates a new MyTreeTable. */
     public MyTreeTable(VariableModel model) {
@@ -2511,7 +2512,7 @@ class MyTreeTable extends JTreeTable {
 class ContextWindow extends JPanel implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 2306040975490228051L;
+    @Serial private static final long serialVersionUID = 2306040975490228051L;
 
     /** The debugger GUI. */
     private SwingGui debugGui;
@@ -2842,7 +2843,7 @@ class ContextWindow extends JPanel implements ActionListener {
 class Menubar extends JMenuBar implements ActionListener {
 
     /** Serializable magic number. */
-    private static final long serialVersionUID = 3217170497245911461L;
+    @Serial private static final long serialVersionUID = 3217170497245911461L;
 
     /** Items that are enabled only when interrupted. */
     private List<JMenuItem> interruptOnlyItems =

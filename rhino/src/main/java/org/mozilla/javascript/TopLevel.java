@@ -11,6 +11,7 @@ import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.util.EnumMap;
 
 /**
@@ -36,7 +37,7 @@ import java.util.EnumMap;
  */
 public class TopLevel extends ScopeObject {
 
-    private static final long serialVersionUID = -4648046356662472260L;
+    @Serial private static final long serialVersionUID = -4648046356662472260L;
 
     /** An enumeration of built-in ECMAScript objects. */
     public enum Builtins {
@@ -116,11 +117,13 @@ public class TopLevel extends ScopeObject {
     private EnumMap<NativeErrors, BaseFunction> errors;
     private transient ScriptableObject globalThis;
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         out.writeObject(globalThis);
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         globalThis = (ScriptableObject) in.readObject();

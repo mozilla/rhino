@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.EnumSet;
 
 /**
@@ -21,7 +22,7 @@ import java.util.EnumSet;
  * @author Norris Boyd
  */
 class NativeScript extends BaseFunction {
-    private static final long serialVersionUID = -6795101161980121700L;
+    @Serial private static final long serialVersionUID = -6795101161980121700L;
 
     private static final Object SCRIPT_TAG = "Script";
 

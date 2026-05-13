@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
@@ -23,7 +24,7 @@ import org.mozilla.javascript.VarScope;
  * "ByteIo" class as a helper.
  */
 public class NativeDataView extends NativeArrayBufferView {
-    private static final long serialVersionUID = 1427967607557438968L;
+    @Serial private static final long serialVersionUID = 1427967607557438968L;
 
     public static final String CLASS_NAME = "DataView";
 
