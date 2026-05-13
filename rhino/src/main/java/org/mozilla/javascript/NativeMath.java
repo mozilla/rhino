@@ -6,13 +6,15 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * This class implements the Math native object. See ECMA 15.8.
  *
  * @author Norris Boyd
  */
 final class NativeMath extends ScriptableObject {
-    private static final long serialVersionUID = -8838847185801131569L;
+    @Serial private static final long serialVersionUID = -8838847185801131569L;
 
     private static final String MATH_TAG = "Math";
     private static final double LOG2E = 1.4426950408889634;

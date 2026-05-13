@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.Objects;
  * @author Ronald Brill
  */
 class NativeProxy extends ScriptableObject {
-    private static final long serialVersionUID = 6676871870513494844L;
+    @Serial private static final long serialVersionUID = 6676871870513494844L;
 
     private static final String PROXY_TAG = "Proxy";
 

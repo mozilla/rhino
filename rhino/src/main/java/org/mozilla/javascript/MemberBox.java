@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.AccessibleObject;
@@ -25,7 +26,7 @@ import java.lang.reflect.Modifier;
  * @author Igor Bukanov
  */
 final class MemberBox implements Serializable {
-    private static final long serialVersionUID = 8260700214130563887L;
+    @Serial private static final long serialVersionUID = 8260700214130563887L;
 
     private transient Member memberObject;
     private transient Class<?>[] argTypes;
@@ -349,6 +350,7 @@ final class MemberBox implements Serializable {
         return null;
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         boolean isMethod = in.readBoolean();
@@ -372,6 +374,7 @@ final class MemberBox implements Serializable {
         }
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         out.writeBoolean(memberObject instanceof Method);

@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -19,7 +20,7 @@ import org.mozilla.javascript.VarScope;
  * It also implements List&lt;Byte&gt; for direct manipulation in Java.
  */
 public class NativeInt8Array extends NativeTypedArrayView<Byte> {
-    private static final long serialVersionUID = 6655250857400433124L;
+    @Serial private static final long serialVersionUID = 6655250857400433124L;
 
     private static final String CLASS_NAME = "Int8Array";
 

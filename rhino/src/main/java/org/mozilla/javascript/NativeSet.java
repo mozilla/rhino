@@ -6,8 +6,10 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public class NativeSet extends ScriptableObject {
-    private static final long serialVersionUID = -8442212766987072986L;
+    @Serial private static final long serialVersionUID = -8442212766987072986L;
     private static final String CLASS_NAME = "Set";
     static final String ITERATOR_TAG = "Set Iterator";
 

@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.EnumSet;
 import org.mozilla.javascript.debug.DebuggableScript;
 
@@ -16,7 +17,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
  */
 public abstract class NativeFunction extends BaseFunction {
 
-    private static final long serialVersionUID = 8713897114082216401L;
+    @Serial private static final long serialVersionUID = 8713897114082216401L;
 
     private boolean isShorthand;
 

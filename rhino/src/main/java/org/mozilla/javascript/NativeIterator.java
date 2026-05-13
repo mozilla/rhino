@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.Iterator;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Iterator;
  * @author Norris Boyd
  */
 public final class NativeIterator extends ScriptableObject {
-    private static final long serialVersionUID = -4136968203581667681L;
+    @Serial private static final long serialVersionUID = -4136968203581667681L;
     private static final Object ITERATOR_TAG = "Iterator";
     private static final String CLASS_NAME = "Iterator";
 
@@ -89,7 +90,7 @@ public final class NativeIterator extends ScriptableObject {
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
 
     public static class StopIteration extends NativeObject {
-        private static final long serialVersionUID = 2485151085722377663L;
+        @Serial private static final long serialVersionUID = 2485151085722377663L;
 
         private Object value = Undefined.instance;
 

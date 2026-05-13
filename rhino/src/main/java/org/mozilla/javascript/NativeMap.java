@@ -6,11 +6,12 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 
 public class NativeMap extends ScriptableObject {
-    private static final long serialVersionUID = 1171922614280016891L;
+    @Serial private static final long serialVersionUID = 1171922614280016891L;
     private static final String CLASS_NAME = "Map";
     static final String ITERATOR_TAG = "Map Iterator";
 

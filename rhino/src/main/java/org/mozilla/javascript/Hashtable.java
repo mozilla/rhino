@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import java.util.NoSuchElementException;
 @SuppressWarnings("ReferenceEquality")
 public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
-    private static final long serialVersionUID = -7151554912419543747L;
+    @Serial private static final long serialVersionUID = -7151554912419543747L;
     private final HashMap<Object, Entry> map = new HashMap<>();
     private Entry first = null;
     private Entry last = null;
@@ -37,7 +38,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
      * which JavaScript and Java differ. This entry also becomes a node in the linked list.
      */
     public static final class Entry implements Serializable {
-        private static final long serialVersionUID = 4086572107122965503L;
+        @Serial private static final long serialVersionUID = 4086572107122965503L;
         Object key;
         Object value;
         boolean deleted;

@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.util.WeakHashMap;
 
 /**
@@ -19,7 +20,7 @@ import java.util.WeakHashMap;
  * same semantics.
  */
 public class NativeWeakMap extends ScriptableObject {
-    private static final long serialVersionUID = 8670434366883930453L;
+    @Serial private static final long serialVersionUID = 8670434366883930453L;
 
     private static final String CLASS_NAME = "WeakMap";
 

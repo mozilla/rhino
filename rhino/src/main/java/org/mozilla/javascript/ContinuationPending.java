@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * Exception thrown by {@link org.mozilla.javascript.Context#executeScriptWithContinuations(Script,
  * VarScope)} and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable,
@@ -17,7 +19,7 @@ package org.mozilla.javascript;
  * @author Norris Boyd
  */
 public class ContinuationPending extends RuntimeException {
-    private static final long serialVersionUID = 4956008116771118856L;
+    @Serial private static final long serialVersionUID = 4956008116771118856L;
     private NativeContinuation continuationState;
     private Object applicationState;
 

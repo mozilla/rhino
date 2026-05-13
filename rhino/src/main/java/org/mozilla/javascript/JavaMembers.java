@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
 
+import java.io.Serial;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -908,7 +909,7 @@ final class BeanProperty {
 }
 
 class FieldAndMethods extends NativeJavaMethod {
-    private static final long serialVersionUID = -9222428244284796755L;
+    @Serial private static final long serialVersionUID = -9222428244284796755L;
 
     FieldAndMethods(VarScope scope, ExecutableOverload.WithField withField) {
         super(withField.methods, withField.name);

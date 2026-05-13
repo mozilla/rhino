@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -24,7 +25,7 @@ import org.mozilla.javascript.xml.XMLObject;
  * @author Matthew Crumley, Raphael Speyer
  */
 public final class NativeJSON extends ScriptableObject {
-    private static final long serialVersionUID = -4567599697595654984L;
+    @Serial private static final long serialVersionUID = -4567599697595654984L;
 
     private static final String JSON_TAG = "JSON";
 

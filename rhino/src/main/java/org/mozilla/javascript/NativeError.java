@@ -10,6 +10,7 @@ import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.List;
  * <p>ECMA 15.11
  */
 final class NativeError extends ScriptableObject {
-    private static final long serialVersionUID = -5338413581437645187L;
+    @Serial private static final long serialVersionUID = -5338413581437645187L;
 
     private static final String ERROR_TAG = "Error";
     private static final String STACK_TAG = "stack";
@@ -378,7 +379,7 @@ final class NativeError extends ScriptableObject {
     private static final class ProtoProps implements Serializable {
         static final String KEY = "_ErrorPrototypeProps";
 
-        private static final long serialVersionUID = 1907180507775337939L;
+        @Serial private static final long serialVersionUID = 1907180507775337939L;
 
         int stackTraceLimit = DEFAULT_STACK_LIMIT;
         Function prepareStackTrace;

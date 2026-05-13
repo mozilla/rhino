@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +25,7 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 public class NativeJavaMap extends NativeJavaObject {
 
-    private static final long serialVersionUID = -3786257752907047381L;
+    @Serial private static final long serialVersionUID = -3786257752907047381L;
 
     private final Map<Object, Object> map;
     private final TypeInfo keyType;
@@ -168,7 +169,7 @@ public class NativeJavaMap extends NativeJavaObject {
             };
 
     private static final class NativeJavaMapIterator extends ES6Iterator {
-        private static final long serialVersionUID = -6354388021424261488L;
+        @Serial private static final long serialVersionUID = -6354388021424261488L;
         private static final String ITERATOR_TAG = "JavaMapIterator";
 
         static void init(TopLevel scope, boolean sealed) {

@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
@@ -20,7 +21,7 @@ import org.mozilla.javascript.VarScope;
  * interface. It also implements List&lt;Float&gt; for direct manipulation in Java.
  */
 public class NativeFloat16Array extends NativeTypedArrayView<Float> {
-    private static final long serialVersionUID = -6624401421392903192L;
+    @Serial private static final long serialVersionUID = -6624401421392903192L;
 
     private static final String CLASS_NAME = "Float16Array";
     private static final int BYTES_PER_ELEMENT = 2;

@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -67,7 +68,7 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
  * @author Norris Boyd
  */
 public class Global extends ImporterTopLevel {
-    private static final long serialVersionUID = 4029130780977538005L;
+    @Serial private static final long serialVersionUID = 4029130780977538005L;
 
     private static final String[] TOP_COMMANDS = {
         "defineClass",

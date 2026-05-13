@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.regexp;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ES6Iterator;
 import org.mozilla.javascript.ScriptRuntime;
@@ -16,7 +17,7 @@ import org.mozilla.javascript.VarScope;
 
 // See ECMAScript spec 22.2.9.1
 public final class NativeRegExpStringIterator extends ES6Iterator {
-    private static final long serialVersionUID = -1622794465605583044L;
+    @Serial private static final long serialVersionUID = -1622794465605583044L;
     private static final String ITERATOR_TAG = "RegExpStringIterator";
 
     private Scriptable regexp;

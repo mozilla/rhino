@@ -1,5 +1,6 @@
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
@@ -8,7 +9,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * and mutated by functions is visible via the slot's property descriptor.
  */
 public class AccessorSlot extends Slot<Scriptable> {
-    private static final long serialVersionUID = 1677840254177335827L;
+    @Serial private static final long serialVersionUID = 1677840254177335827L;
 
     AccessorSlot(Object name, int index) {
         super(name, index, 0);

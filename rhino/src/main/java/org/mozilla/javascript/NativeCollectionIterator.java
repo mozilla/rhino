@@ -3,11 +3,12 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Iterator;
 
 public class NativeCollectionIterator extends ES6Iterator {
-    private static final long serialVersionUID = 7094840979404373443L;
+    @Serial private static final long serialVersionUID = 7094840979404373443L;
     private String className;
     private Type type;
     private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
@@ -61,6 +62,7 @@ public class NativeCollectionIterator extends ES6Iterator {
         }
     }
 
+    @Serial
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         className = (String) stream.readObject();
@@ -68,6 +70,7 @@ public class NativeCollectionIterator extends ES6Iterator {
         iterator = Collections.emptyIterator();
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
         stream.writeObject(className);

@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -16,7 +17,7 @@ import java.io.Serializable;
  * would not restore them correctly as it lacks support for readResolve method
  */
 public final class UniqueTag implements Serializable {
-    private static final long serialVersionUID = -4320556826714577259L;
+    @Serial private static final long serialVersionUID = -4320556826714577259L;
 
     private static final int ID_NOT_FOUND = 1;
     private static final int ID_NULL_VALUE = 2;

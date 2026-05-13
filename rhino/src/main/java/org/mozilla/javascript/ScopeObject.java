@@ -7,10 +7,11 @@ import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 
 public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Serializable {
-    private static final long serialVersionUID = 2283542168979106620L;
+    @Serial private static final long serialVersionUID = 2283542168979106620L;
 
     private final VarScope parentScope;
 
@@ -357,11 +358,13 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
         return slot.setValue(value, this, start);
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         writeMaps(out);
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         readMaps(in);

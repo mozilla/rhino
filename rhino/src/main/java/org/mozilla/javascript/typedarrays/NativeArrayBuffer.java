@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.Constructable;
 import org.mozilla.javascript.Context;
@@ -23,7 +24,7 @@ import org.mozilla.javascript.VarScope;
  * implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
  */
 public class NativeArrayBuffer extends ScriptableObject {
-    private static final long serialVersionUID = 3110411773054879549L;
+    @Serial private static final long serialVersionUID = 3110411773054879549L;
 
     public static final String CLASS_NAME = "ArrayBuffer";
 

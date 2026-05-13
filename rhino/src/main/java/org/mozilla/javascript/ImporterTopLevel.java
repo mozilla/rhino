@@ -11,6 +11,7 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
+import java.io.Serial;
 import java.util.ArrayList;
 
 /**
@@ -48,7 +49,7 @@ import java.util.ArrayList;
  * @author Norris Boyd
  */
 public class ImporterTopLevel extends TopLevel {
-    private static final long serialVersionUID = -9095380847465315412L;
+    @Serial private static final long serialVersionUID = -9095380847465315412L;
 
     private static final ClassDescriptor DESCRIPTOR;
 

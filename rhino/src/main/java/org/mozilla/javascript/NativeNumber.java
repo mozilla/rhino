@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.text.NumberFormat;
 import java.util.IllformedLocaleException;
 import java.util.Locale;
@@ -19,7 +20,7 @@ import org.mozilla.javascript.dtoa.DecimalFormatter;
  * @author Norris Boyd
  */
 final class NativeNumber extends ScriptableObject {
-    private static final long serialVersionUID = 3504516769741512101L;
+    @Serial private static final long serialVersionUID = 3504516769741512101L;
 
     /**
      * @see <a

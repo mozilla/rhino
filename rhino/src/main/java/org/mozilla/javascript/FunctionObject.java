@@ -10,13 +10,14 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
-    private static final long serialVersionUID = 8880062939740158370L;
+    @Serial private static final long serialVersionUID = 8880062939740158370L;
 
     /**
      * Create a JavaScript function object from a Java method.

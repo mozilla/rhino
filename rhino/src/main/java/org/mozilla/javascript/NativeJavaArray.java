@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 import java.util.Objects;
 import org.mozilla.javascript.lc.type.TypeInfo;
@@ -20,7 +21,7 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  * @see NativeJavaPackage
  */
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
-    private static final long serialVersionUID = -924022554283675333L;
+    @Serial private static final long serialVersionUID = -924022554283675333L;
 
     @Override
     public String getClassName() {
