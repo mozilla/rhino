@@ -7,10 +7,10 @@ import org.mozilla.javascript.testutils.Utils;
  * Regression test for Object.assign with array target.
  *
  * <p>Issue: {@code Object.assign([], src)} returned an empty array instead of a copy of src's
- * enumerable own properties. The integer-keyed property writes went through
- * {@code AbstractEcmaObjectOperations.put} -&gt; {@code ScriptableObject.putOwnProperty} -&gt;
- * {@code putImpl}, which bypasses {@code NativeArray.put(int)} and so the array's length was
- * never updated. The slots got stored but stayed invisible to iteration and serialization.
+ * enumerable own properties. The integer-keyed property writes went through {@code
+ * AbstractEcmaObjectOperations.put} -&gt; {@code ScriptableObject.putOwnProperty} -&gt; {@code
+ * putImpl}, which bypasses {@code NativeArray.put(int)} and so the array's length was never
+ * updated. The slots got stored but stayed invisible to iteration and serialization.
  *
  * <p>Upstream issue: <a href="https://github.com/mozilla/rhino/issues/2126">mozilla/rhino#2126</a>.
  *
@@ -35,9 +35,7 @@ public class ObjectAssignArrayTargetTest {
     @Test
     public void emptyArrayTarget_lengthIsUpdated() {
         Utils.assertWithAllModes_ES6(
-                "3",
-                "const clone = Object.assign([], ['a','b','c']);"
-                        + "'' + clone.length;");
+                "3", "const clone = Object.assign([], ['a','b','c']);" + "'' + clone.length;");
     }
 
     @Test
@@ -71,27 +69,20 @@ public class ObjectAssignArrayTargetTest {
     public void preFilledArrayTarget_overwriteByIndex() {
         Utils.assertWithAllModes_ES6(
                 "[\"a\",\"b\",\"z\"]",
-                "const t = ['x','y','z'];"
-                        + "Object.assign(t, ['a','b']);"
-                        + "JSON.stringify(t);");
+                "const t = ['x','y','z'];" + "Object.assign(t, ['a','b']);" + "JSON.stringify(t);");
     }
 
     @Test
     public void preFilledArrayTarget_lengthGrowsWhenSourceLonger() {
         Utils.assertWithAllModes_ES6(
-                "3",
-                "const t = ['x'];"
-                        + "Object.assign(t, ['a','b','c']);"
-                        + "'' + t.length;");
+                "3", "const t = ['x'];" + "Object.assign(t, ['a','b','c']);" + "'' + t.length;");
     }
 
     @Test
     public void arrayTarget_objectSourceWithStringIndices() {
         Utils.assertWithAllModes_ES6(
                 "[\"a\",\"b\"]",
-                "const t = [];"
-                        + "Object.assign(t, {0:'a', 1:'b'});"
-                        + "JSON.stringify(t);");
+                "const t = [];" + "Object.assign(t, {0:'a', 1:'b'});" + "JSON.stringify(t);");
     }
 
     @Test
@@ -126,9 +117,7 @@ public class ObjectAssignArrayTargetTest {
     @Test
     public void arrayTarget_arrayJoinWorksAfterAssign() {
         Utils.assertWithAllModes_ES6(
-                "a|b|c",
-                "const clone = Object.assign([], ['a','b','c']);"
-                        + "clone.join('|');");
+                "a|b|c", "const clone = Object.assign([], ['a','b','c']);" + "clone.join('|');");
     }
 
     @Test
@@ -156,9 +145,7 @@ public class ObjectAssignArrayTargetTest {
     @Test
     public void objectTarget_objectSource_keepsExistingBehavior() {
         Utils.assertWithAllModes_ES6(
-                "3",
-                "const o = Object.assign({}, {a:1, b:2});"
-                        + "'' + (o.a + o.b);");
+                "3", "const o = Object.assign({}, {a:1, b:2});" + "'' + (o.a + o.b);");
     }
 
     // ---------------------------------------------------------------------
@@ -293,25 +280,18 @@ public class ObjectAssignArrayTargetTest {
     @Test
     public void arrayDestructuring_basicPositional() {
         Utils.assertWithAllModes_ES6(
-                "x|y|z",
-                "const [a, b, c] = ['x','y','z'];"
-                        + "a + '|' + b + '|' + c;");
+                "x|y|z", "const [a, b, c] = ['x','y','z'];" + "a + '|' + b + '|' + c;");
     }
 
     @Test
     public void arrayDestructuring_withSkipsAndDefaults() {
         Utils.assertWithAllModes_ES6(
-                "b|def",
-                "const [, b, , d = 'def'] = ['a','b','c'];"
-                        + "b + '|' + d;");
+                "b|def", "const [, b, , d = 'def'] = ['a','b','c'];" + "b + '|' + d;");
     }
 
     @Test
     public void objectDestructuring_basicNoRest() {
-        Utils.assertWithAllModes_ES6(
-                "1|2",
-                "const {a, b} = {a:1, b:2, c:3};"
-                        + "a + '|' + b;");
+        Utils.assertWithAllModes_ES6("1|2", "const {a, b} = {a:1, b:2, c:3};" + "a + '|' + b;");
     }
 
     @Test
@@ -326,9 +306,7 @@ public class ObjectAssignArrayTargetTest {
     @Test
     public void objectSpread_arraySourceAsObject() {
         Utils.assertWithAllModes_ES6(
-                "a,b",
-                "const out = {...['a','b']};"
-                        + "out[0] + ',' + out[1];");
+                "a,b", "const out = {...['a','b']};" + "out[0] + ',' + out[1];");
     }
 
     @Test
@@ -343,7 +321,6 @@ public class ObjectAssignArrayTargetTest {
     public void arrayOf_variadicArgs() {
         Utils.assertWithAllModes_ES6(
                 "[\"a\",\"b\",\"c\"]|3",
-                "const out = Array.of('a','b','c');"
-                        + "JSON.stringify(out) + '|' + out.length;");
+                "const out = Array.of('a','b','c');" + "JSON.stringify(out) + '|' + out.length;");
     }
 }
