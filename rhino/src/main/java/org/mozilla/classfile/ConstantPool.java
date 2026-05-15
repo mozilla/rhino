@@ -48,7 +48,7 @@ final class ConstantPool {
         itsPool[itsTop++] = CONSTANT_Integer;
         itsTop = ClassFileWriter.putInt32(k, itsPool, itsTop);
         itsPoolTypes.put(itsTopIndex, CONSTANT_Integer);
-        return (short) itsTopIndex++;
+        return itsTopIndex++;
     }
 
     int addConstant(long k) {
