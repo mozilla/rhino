@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
@@ -307,13 +308,11 @@ public class Main {
                     usageError = args[i];
                     break goodUsage;
                 }
-                if (opt < 0) {
-                    shellContextFactory.setInterpretedMode(true);
-                }
+                shellContextFactory.setEvaluationMethod(EvaluationMethod.forLevel(opt));
                 continue;
             }
             if (arg.equals("-int") || arg.equals("-interpreted")) {
-                shellContextFactory.setInterpretedMode(true);
+                shellContextFactory.setEvaluationMethod(EvaluationMethod.Interpreter);
                 continue;
             }
             if (arg.equals("-encoding")) {

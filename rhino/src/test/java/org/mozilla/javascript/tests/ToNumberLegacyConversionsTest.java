@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
 
@@ -119,7 +120,7 @@ public class ToNumberLegacyConversionsTest {
     @BeforeEach
     public void setup() {
         cx = Context.enter();
-        cx.setInterpretedMode(interpreted);
+        cx.setEvaluationMethod(EvaluationMethod.Interpreter);
         cx.setLanguageVersion(Context.VERSION_1_8);
         scope = cx.initSafeStandardObjects();
     }

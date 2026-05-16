@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.Interpreter;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.ScriptableObject;
@@ -33,7 +34,7 @@ public class ContinuationComparisonTest {
     private NativeContinuation createContinuation() throws Exception {
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
-            cx.setInterpretedMode(true); // interpreter for continuations
+            cx.setEvaluationMethod(EvaluationMethod.Interpreter);
             TopLevel global = cx.initStandardObjects();
             final AtomicReference<NativeContinuation> captured = new AtomicReference<>();
             ScriptableObject.putProperty(

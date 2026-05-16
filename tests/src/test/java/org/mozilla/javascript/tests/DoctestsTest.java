@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.testutils.TestSource;
@@ -69,8 +70,9 @@ public class DoctestsTest {
         List<Object[]> result = new ArrayList<Object[]>();
         for (File f : doctests) {
             String contents = loadFile(f);
-            result.add(new Object[] {f.getName(), contents, false});
-            result.add(new Object[] {f.getName(), contents, true});
+            for (var e : EvaluationMethod.values()) {
+                result.add(new Object[] {f.getName(), contents, e});
+            }
         }
         return result;
     }
@@ -86,12 +88,13 @@ public class DoctestsTest {
 
     @MethodSource("doctestValues")
     @ParameterizedTest(name = "{0} interpreted:{2}")
-    public void runDoctest(String name, String source, boolean interpretedMode) throws Exception {
+    public void runDoctest(String name, String source, EvaluationMethod evalMethod)
+            throws Exception {
         initDoctestsTest(name, source, interpretedMode);
         ContextFactory factory = ContextFactory.getGlobal();
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
-            cx.setInterpretedMode(interpretedMode);
+            cx.setEvaluationMethod(evalMethod);
             Global global = new Global(cx);
             global.setFileLoadPrefix(TestSource.getPrefix());
             // global.runDoctest throws an exception on any failure

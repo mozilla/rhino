@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
 import org.mozilla.javascript.drivers.TestUtils;
@@ -42,13 +43,13 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  */
 public class MozillaSuiteTest {
     private File jsFile;
-    private boolean interpretedMode;
+    private EvaluationMethod evaluationMethod;
 
     public MozillaSuiteTest() {}
 
-    public void initMozillaSuiteTest(File jsFile, boolean interpretedMode) {
+    public void initMozillaSuiteTest(File jsFile, EvaluationMethod method) {
         this.jsFile = jsFile;
-        this.interpretedMode = interpretedMode;
+        this.evaluationMethod = method;
         ShellTest.cacheFramework();
     }
 
@@ -84,13 +85,13 @@ public class MozillaSuiteTest {
         return testDir;
     }
 
-    private static String getTestFilename(boolean interpretedMode) {
-        return interpretedMode ? "interpreted.tests" : "compiled.tests";
+    private static String getTestFilename(EvaluationMethod method) {
+        return method != EvaluationMethod.Compiler ? "interpreted.tests" : "compiled.tests";
     }
 
-    private static List<File> getTestFiles(boolean interpretedMode) throws IOException {
+    private static List<File> getTestFiles(EvaluationMethod method) throws IOException {
         File testDir = getTestDir();
-        String[] tests = TestUtils.loadTestsFromResource("/" + getTestFilename(interpretedMode));
+        String[] tests = TestUtils.loadTestsFromResource("/" + getTestFilename(method));
         if (tests.length == 0) {
             throw new IOException(
                     "No Mozilla Suite tests found in "
@@ -112,10 +113,10 @@ public class MozillaSuiteTest {
 
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
-        for (boolean im : new boolean[] {false, true}) {
-            var tests = getTestFiles(im);
+        for (var em : Context.EvaluationMethod.values()) {
+            var tests = getTestFiles(em);
             for (File f : tests) {
-                result.add(new Object[] {f, im});
+                result.add(new Object[] {f, em});
             }
         }
         return result;
@@ -172,13 +173,13 @@ public class MozillaSuiteTest {
     }
 
     @MethodSource("mozillaSuiteValues")
-    @ParameterizedTest(name = "{index}, js={0}, interpreted={1}")
-    public void runMozillaTest(File jsFile, boolean interpretedMode) throws Exception {
-        initMozillaSuiteTest(jsFile, interpretedMode);
+    @ParameterizedTest(name = "{index}, js={0}, evaluationMethod={1}")
+    public void runMozillaTest(File jsFile, EvaluationMethod method) throws Exception {
+        initMozillaSuiteTest(jsFile, method);
         // System.out.println("Test \"" + jsFile + "\" running under optimization level " +
         // optimizationLevel);
         final ShellContextFactory shellContextFactory = new ShellContextFactory();
-        shellContextFactory.setInterpretedMode(interpretedMode);
+        shellContextFactory.setEvaluationMethod(evaluationMethod);
         shellContextFactory.setLanguageVersion(Context.VERSION_1_8);
         ShellTestParameters params = new ShellTestParameters();
         JunitStatus status = new JunitStatus();
@@ -192,7 +193,7 @@ public class MozillaSuiteTest {
     public static void main(String[] args) throws IOException {
         try (PrintStream out = new PrintStream("fix-tests-files.sh")) {
             try {
-                for (boolean interpretedMode : new boolean[] {false, true}) {
+                for (var evalMethod : EvaluationMethod.values()) {
                     File testDir = getTestDir();
                     File[] allTests =
                             TestUtils.recursiveListFiles(
@@ -205,13 +206,13 @@ public class MozillaSuiteTest {
                                         }
                                     });
                     HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
-                    var testFiles = getTestFiles(interpretedMode);
+                    var testFiles = getTestFiles(evalMethod);
                     diff.removeAll(testFiles);
                     ArrayList<String> skippedPassed = new ArrayList<String>();
                     int absolutePathLength = testDir.getAbsolutePath().length() + 1;
                     for (File testFile : diff) {
                         try {
-                            new MozillaSuiteTest().runMozillaTest(testFile, interpretedMode);
+                            new MozillaSuiteTest().runMozillaTest(testFile, evalMethod);
                             // strip off testDir
                             String canonicalized =
                                     testFile.getAbsolutePath().substring(absolutePathLength);
@@ -225,7 +226,7 @@ public class MozillaSuiteTest {
                     // skipped but now pass. Print out shell commands to update the
                     // appropriate *.tests file.
                     if (skippedPassed.size() > 0) {
-                        out.println("cat >> " + getTestFilename(interpretedMode) + " <<EOF");
+                        out.println("cat >> " + getTestFilename(evalMethod) + " <<EOF");
                         String[] sorted = skippedPassed.toArray(new String[0]);
                         Arrays.sort(sorted);
                         for (int j = 0; j < sorted.length; j++) {
