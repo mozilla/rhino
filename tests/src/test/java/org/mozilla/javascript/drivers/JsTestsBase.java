@@ -11,12 +11,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeAll;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
 public abstract class JsTestsBase {
-    private boolean interpretedMode;
+    private EvaluationMethod evalMethod;
 
     private static ContextFactory threadSafeFactory;
 
@@ -25,8 +26,8 @@ public abstract class JsTestsBase {
         threadSafeFactory = Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS);
     }
 
-    public void setInterpretedMode(boolean interpretedMode) {
-        this.interpretedMode = interpretedMode;
+    public void setEvaluationMethod(EvaluationMethod evalMethod) {
+        this.evalMethod = evalMethod;
     }
 
     public void runJsTest(Context cx, TopLevel shared, String name, String source) {
@@ -46,15 +47,17 @@ public abstract class JsTestsBase {
 
     public void runJsTests(File[] tests) throws IOException {
         try (Context cx = threadSafeFactory.enterContext()) {
-            cx.setInterpretedMode(this.interpretedMode);
+            cx.setEvaluationMethod(evalMethod);
             TopLevel shared = cx.initStandardObjects();
             for (File f : tests) {
                 int length = (int) f.length(); // don't worry about very long
                 // files
                 char[] buf = new char[length];
-                new FileReader(f).read(buf, 0, length);
-                String session = new String(buf);
-                runJsTest(cx, shared, f.getName(), session);
+                try (var fr = new FileReader(f)) {
+                    fr.read(buf, 0, length);
+                    String session = new String(buf);
+                    runJsTest(cx, shared, f.getName(), session);
+                }
             }
         }
     }

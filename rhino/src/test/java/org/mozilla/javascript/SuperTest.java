@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.testutils.Utils;
 
 class SuperTest {
@@ -1162,10 +1163,10 @@ class SuperTest {
                 cx.setLanguageVersion(Context.VERSION_ES6);
                 TopLevel scope = cx.initStandardObjects();
 
-                cx.setInterpretedMode(true);
+                cx.setEvaluationMethod(EvaluationMethod.Interpreter);
                 cx.evaluateString(scope, script, "test", 1, null);
 
-                cx.setInterpretedMode(false);
+                cx.setEvaluationMethod(EvaluationMethod.Compiler);
                 Object res = cx.evaluateString(scope, script2, "test", 1, null);
                 assertEquals("object", res);
             }

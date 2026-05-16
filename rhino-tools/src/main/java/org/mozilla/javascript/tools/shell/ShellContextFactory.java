@@ -7,6 +7,7 @@
 package org.mozilla.javascript.tools.shell;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 
@@ -14,7 +15,7 @@ public class ShellContextFactory extends ContextFactory {
     private boolean strictMode;
     private boolean warningAsError;
     private int languageVersion = Context.VERSION_ES6;
-    private boolean interpretedMode;
+    private EvaluationMethod evaluationMode = EvaluationMethod.Compiler;
     private boolean generatingDebug;
     private boolean allowReservedKeywords = true;
     private ErrorReporter errorReporter;
@@ -43,7 +44,7 @@ public class ShellContextFactory extends ContextFactory {
     @Override
     protected void onContextCreated(Context cx) {
         cx.setLanguageVersion(languageVersion);
-        cx.setInterpretedMode(interpretedMode);
+        cx.setEvaluationMethod(evaluationMode);
         if (errorReporter != null) {
             cx.setErrorReporter(errorReporter);
         }
@@ -67,9 +68,9 @@ public class ShellContextFactory extends ContextFactory {
         this.languageVersion = version;
     }
 
-    public void setInterpretedMode(boolean interpreted) {
+    public void setEvaluationMethod(EvaluationMethod method) {
         checkNotSealed();
-        this.interpretedMode = interpreted;
+        this.evaluationMode = method;
     }
 
     public void setErrorReporter(ErrorReporter errorReporter) {

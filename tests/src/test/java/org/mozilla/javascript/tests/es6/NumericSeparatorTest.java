@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -32,7 +33,7 @@ public class NumericSeparatorTest {
 
                     return null;
                 },
-                true);
+                EvaluationMethod.Interpreter);
 
         // the byte code generator adds a cast to integer
         Utils.runWithMode(
@@ -45,7 +46,7 @@ public class NumericSeparatorTest {
 
                     return null;
                 },
-                false);
+                EvaluationMethod.Compiler);
     }
 
     /** Special Tokenizer test for numeric separator constant at end. */

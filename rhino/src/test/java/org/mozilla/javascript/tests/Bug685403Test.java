@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContinuationPending;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Script;
@@ -29,7 +30,7 @@ public class Bug685403Test {
     @BeforeEach
     public void setUp() {
         cx = Context.enter();
-        cx.setInterpretedMode(true);
+        cx.setEvaluationMethod(EvaluationMethod.Interpreter);
         scope = cx.initStandardObjects();
     }
 

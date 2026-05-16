@@ -3010,7 +3010,8 @@ public class Context implements Closeable {
     private boolean generatingDebugChanged;
     private boolean generatingSource = true;
     boolean useDynamicScope;
-    private EvaluationMethod evaluationMethod;
+    // interpreted mode defaulted to false, so we keep compatibility with that.
+    private EvaluationMethod evaluationMethod = EvaluationMethod.Compiler;
     private int maximumInterpreterStackDepth;
     private WrapFactory wrapFactory;
     Debugger debugger;

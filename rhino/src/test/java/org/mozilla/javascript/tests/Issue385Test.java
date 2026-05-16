@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.VarScope;
 
@@ -34,7 +35,7 @@ public class Issue385Test {
         cx.setLanguageVersion(Context.VERSION_1_8);
         // errors are reported in the parsing stage,
         // optimization level doesn't matter
-        cx.setInterpretedMode(true);
+        cx.setEvaluationMethod(EvaluationMethod.Interpreter);
     }
 
     @AfterEach
