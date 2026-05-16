@@ -11,7 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
+import org.mozilla.classfile.ClassFileWriter.ClassSizeException;
 import org.mozilla.javascript.CompilationResult;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
@@ -28,8 +28,8 @@ import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.ScriptNode;
 
 /**
- * When the compiler throws {@link ClassFileFormatException} (e.g. method bytecode exceeds 64K),
- * {@code Context.compileImpl} must transparently fall back to the interpreter and produce a working
+ * When the compiler throws {@link ClassSizeException} (e.g. method bytecode exceeds 64K), {@code
+ * Context.compileImpl} must transparently fall back to the interpreter and produce a working
  * Script/Function.
  */
 public class CompilerFallbackTest {
@@ -48,7 +48,7 @@ public class CompilerFallbackTest {
     }
 
     @Test
-    public void scriptCompileFallsBackToInterpreterOnClassFileFormatException() {
+    public void scriptCompileFallsBackToInterpreterOnClassSizeException() {
         Script script =
                 cx.compileScript(
                         ScriptCompileSpec.fromSource("1 + 2 + 3")
@@ -62,7 +62,7 @@ public class CompilerFallbackTest {
     }
 
     @Test
-    public void functionCompileFallsBackToInterpreterOnClassFileFormatException() {
+    public void functionCompileFallsBackToInterpreterOnClassSizeException() {
         Function func =
                 cx.compileFunction(
                         FunctionCompileSpec.fromSource(
@@ -85,13 +85,13 @@ public class CompilerFallbackTest {
         @Override
         public CompilationResult<JSScript> compileScript(
                 CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
-            throw new ClassFileFormatException("simulated: method too big");
+            throw new ClassSizeException("simulated: method too big");
         }
 
         @Override
         public CompilationResult<JSFunction> compileFunction(
                 CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
-            throw new ClassFileFormatException("simulated: method too big");
+            throw new ClassSizeException("simulated: method too big");
         }
 
         @Override

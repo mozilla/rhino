@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
-import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
+import org.mozilla.classfile.ClassFileWriter.ClassSizeException;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
@@ -2664,7 +2664,7 @@ public class Context implements Closeable {
             }
 
             result = compileFn.compile(compiler, compilerEnv, tree, sourceString);
-        } catch (ClassFileFormatException e) {
+        } catch (ClassSizeException e) {
             // we hit some class file limit, fall back to interpreter or report
 
             // we have to recreate the tree because the compile call might have changed the tree
