@@ -12,13 +12,13 @@ jmh {
     if (System.getenv('BENCHMARK') != null) {
       includes = [System.getenv('BENCHMARK')]
     }
-    if (System.getenv('INTERPRETED') != null) {
-       def vals = System.getenv('INTERPRETED').split(",")
+    if (System.getenv('EVALMODE') != null) {
+       def vals = System.getenv('EVALMODE').split(",")
        def aParams = project.objects.listProperty(String)
        for (String v : vals) {
            aParams.add(v)
        }
-       benchmarkParameters = [interpreted: aParams]
+       benchmarkParameters = [evalMethod: aParams]
     }
     if (System.getenv('PROFILERS') != null) {
         if ('cpu'.equals(System.getenv('PROFILERS'))) {
