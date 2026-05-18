@@ -520,6 +520,36 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             }
             return v;
         }
+
+        if (ScriptRuntime.isObject(arg0)) {
+            var items = (Scriptable) arg0;
+            Object iteratorProp = ScriptableObject.getProperty(items, SymbolKey.ITERATOR);
+            final Object[] arrayElements;
+            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
+                final Object iterator = ScriptRuntime.callIterator(items, cx, scope);
+                if (!Undefined.isUndefined(iterator)) {
+                    final ArrayList<Object> elems = new ArrayList<>();
+                    try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+                        for (Object temp : it) {
+                            elems.add(temp);
+                        }
+                    }
+                    arrayElements = elems.toArray();
+                } else {
+                    arrayElements = ScriptRuntime.getArrayElements(items);
+                }
+            } else {
+                arrayElements = ScriptRuntime.getArrayElements(items);
+            }
+
+            NativeArrayBuffer na =
+                    makeArrayBuffer(cx, scope, arrayElements.length, bytesPerElement);
+            NativeTypedArrayView<?> v = constructable.construct(na, 0, arrayElements.length);
+            for (int i = 0; i < arrayElements.length; i++) {
+                v.js_set(i, arrayElements[i]);
+            }
+            return v;
+        }
         throw ScriptRuntime.constructError("Error", "invalid argument");
     }
 
