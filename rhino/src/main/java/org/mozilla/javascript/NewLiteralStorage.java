@@ -81,61 +81,24 @@ public abstract class NewLiteralStorage {
     }
 
     private void spreadArray(Context cx, VarScope scope, Object source) {
-        // See ecma-262 2026, 13.2.5.5 (Array Spread)
-        if (source != null && !Undefined.isUndefined(source)) {
-            Scriptable src = ScriptRuntime.toObject(cx, scope, source);
-
-            // Check if the object has Symbol.iterator
-            Object iteratorProp = ScriptableObject.getProperty(src, SymbolKey.ITERATOR);
-            if ((iteratorProp != Scriptable.NOT_FOUND) && !Undefined.isUndefined(iteratorProp)) {
-                // Per spec, if Symbol.iterator exists, use it. Let exceptions propagate.
-                final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
-                if (!Undefined.isUndefined(iterator)) {
-                    List<Object> spreadValues = new ArrayList<>();
-                    try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
-                        for (Object temp : it) {
-                            spreadValues.add(temp);
-                        }
-                    }
-
-                    // Resize arrays
-                    int spreadSize = spreadValues.size();
-                    int newLen = values.length + spreadSize;
-                    getterSetters = Arrays.copyOf(getterSetters, newLen);
-                    values = Arrays.copyOf(values, newLen);
-
-                    // Push all values
-                    for (Object value : spreadValues) {
-                        pushValue(value);
-                    }
-                    return;
-                }
+        // See ecma-262 2026, 13.2.5.5 (Array Spread). ToObject throws TypeError for null /
+        // undefined; callIterator throws TypeError if @@iterator is missing.
+        Scriptable src = ScriptRuntime.toObject(cx, scope, source);
+        final Object iterator = ScriptRuntime.callIterator(src, cx, scope);
+        List<Object> spreadValues = new ArrayList<>();
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+            for (Object temp : it) {
+                spreadValues.add(temp);
             }
-            // Fallback for objects without Symbol.iterator
-            int spreadSize =
-                    (src instanceof NativeArray)
-                            ? (int) ((NativeArray) src).getLength()
-                            : src.getIds().length;
-            int newLen = values.length + spreadSize;
-            getterSetters = Arrays.copyOf(getterSetters, newLen);
-            values = Arrays.copyOf(values, newLen);
+        }
 
-            if (src instanceof NativeArray) { // TODO: check if it's dense
-                NativeArray arr = (NativeArray) src;
-                long length = arr.getLength();
+        int spreadSize = spreadValues.size();
+        int newLen = values.length + spreadSize;
+        getterSetters = Arrays.copyOf(getterSetters, newLen);
+        values = Arrays.copyOf(values, newLen);
 
-                for (int i = 0; i < length; i++) {
-                    Object value = NativeArray.getElem(cx, arr, i);
-                    pushValue(value);
-                }
-            } else {
-                Object[] ids = src.getIds();
-
-                for (Object id : ids) {
-                    Object value = getPropertyById(src, id);
-                    pushValue(value);
-                }
-            }
+        for (Object value : spreadValues) {
+            pushValue(value);
         }
     }
 
