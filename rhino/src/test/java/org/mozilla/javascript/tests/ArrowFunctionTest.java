@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
+import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.NodeVisitor;
 import org.mozilla.javascript.ast.ReturnStatement;
@@ -76,5 +77,61 @@ public class ArrowFunctionTest {
     public void arrowFnEvalToString() {
         String source = "eval(\"()=>this\").toString()";
         Utils.assertWithAllModes("()=>this", source);
+    }
+
+    @Test
+    public void testArrowRhinoWithLineEndingOnlyThis() {
+        FunctionNode arrowFn = parseAndExtractArrowFn("()=>this");
+
+        assertEquals(0, arrowFn.getPosition());
+        assertEquals(0, arrowFn.getAbsolutePosition());
+        assertEquals(8, arrowFn.getLength());
+
+        Block body = (Block) arrowFn.getBody();
+        assertEquals(4, body.getPosition());
+        assertEquals(4, body.getAbsolutePosition());
+        assertEquals(4, body.getLength());
+    }
+
+    @Test
+    public void testArrowRhinoWithLineEndingOnlyThisNl() {
+        FunctionNode arrowFn = parseAndExtractArrowFn("()=>this\n");
+
+        assertEquals(0, arrowFn.getPosition());
+        assertEquals(0, arrowFn.getAbsolutePosition());
+        assertEquals(8, arrowFn.getLength());
+
+        Block body = (Block) arrowFn.getBody();
+        assertEquals(4, body.getPosition());
+        assertEquals(4, body.getAbsolutePosition());
+        assertEquals(4, body.getLength());
+    }
+
+    @Test
+    public void testArrowRhinoWithLineEndingThisWithProperty() {
+        FunctionNode arrowFn = parseAndExtractArrowFn("()=>this.xs");
+
+        assertEquals(0, arrowFn.getPosition());
+        assertEquals(0, arrowFn.getAbsolutePosition());
+        assertEquals(11, arrowFn.getLength());
+
+        Block body = (Block) arrowFn.getBody();
+        assertEquals(4, body.getPosition());
+        assertEquals(4, body.getAbsolutePosition());
+        assertEquals(7, body.getLength());
+    }
+
+    @Test
+    public void testArrowRhinoWithLineEndingThisWithPropertyNl() {
+        FunctionNode arrowFn = parseAndExtractArrowFn("()=>this.xs\n");
+
+        assertEquals(0, arrowFn.getPosition());
+        assertEquals(0, arrowFn.getAbsolutePosition());
+        assertEquals(11, arrowFn.getLength());
+
+        Block body = (Block) arrowFn.getBody();
+        assertEquals(4, body.getPosition());
+        assertEquals(4, body.getAbsolutePosition());
+        assertEquals(7, body.getLength());
     }
 }

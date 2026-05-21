@@ -781,13 +781,9 @@ class TokenStream implements Parser.CurrentPositionReporter {
                     }
                 }
 
-                // `ungetChar` will decrement the cursor, however the _actual_ tokenEnd should
-                // still be restored correctly after `getStringFromBuffer()` mutates it, so we save
-                // and restore it.
-                int savedTokenEnd = cursor;
-                ungetChar(c); // decrements cursor
+                if (c != EOF_CHAR)
+                    ungetChar(c); // decrements cursor, don't do this if the char is already EOF
                 String str = getStringFromBuffer(); // mutates tokenEnd to point to cursor
-                tokenEnd = savedTokenEnd; // restore tokenEnd
 
                 if (!containsEscape
                         || parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
