@@ -12,164 +12,164 @@ abstract class Icode {
     static final int
 
             // delete operator used on a name
-            Icode_DELNAME = 0,
+            DELNAME = 0,
 
             // Stack: ... value1 -> ... value1 value1
-            Icode_DUP = Icode_DELNAME - 1,
+            DUP = DELNAME - 1,
 
             // Stack: ... value2 value1 -> ... value2 value1 value2 value1
-            Icode_DUP2 = Icode_DUP - 1,
+            DUP2 = DUP - 1,
 
             // Stack: ... value2 value1 -> ... value1 value2
-            Icode_SWAP = Icode_DUP2 - 1,
+            SWAP = DUP2 - 1,
 
             // Stack: ... value1 -> ...
-            Icode_POP = Icode_SWAP - 1,
+            POP = SWAP - 1,
 
             // Store stack top into return register and then pop it
-            Icode_POP_RESULT = Icode_POP - 1,
+            POP_RESULT = POP - 1,
 
             // To jump conditionally and pop additional stack value
-            Icode_IFEQ_POP = Icode_POP_RESULT - 1,
+            IFEQ_POP = POP_RESULT - 1,
 
             // various types of ++/--
-            Icode_VAR_INC_DEC = Icode_IFEQ_POP - 1,
-            Icode_NAME_INC_DEC = Icode_VAR_INC_DEC - 1,
-            Icode_PROP_INC_DEC = Icode_NAME_INC_DEC - 1,
-            Icode_ELEM_INC_DEC = Icode_PROP_INC_DEC - 1,
-            Icode_REF_INC_DEC = Icode_ELEM_INC_DEC - 1,
+            VAR_INC_DEC = IFEQ_POP - 1,
+            NAME_INC_DEC = VAR_INC_DEC - 1,
+            PROP_INC_DEC = NAME_INC_DEC - 1,
+            ELEM_INC_DEC = PROP_INC_DEC - 1,
+            REF_INC_DEC = ELEM_INC_DEC - 1,
 
             // load/save scope from/to local
-            Icode_SCOPE_LOAD = Icode_REF_INC_DEC - 1,
-            Icode_SCOPE_SAVE = Icode_SCOPE_LOAD - 1,
-            Icode_TYPEOFNAME = Icode_SCOPE_SAVE - 1,
+            SCOPE_LOAD = REF_INC_DEC - 1,
+            SCOPE_SAVE = SCOPE_LOAD - 1,
+            TYPEOFNAME = SCOPE_SAVE - 1,
 
             // helper for function calls
-            Icode_NAME_AND_THIS = Icode_TYPEOFNAME - 1,
-            Icode_PROP_AND_THIS = Icode_NAME_AND_THIS - 1,
-            Icode_ELEM_AND_THIS = Icode_PROP_AND_THIS - 1,
-            Icode_VALUE_AND_THIS = Icode_ELEM_AND_THIS - 1,
-            Icode_NAME_AND_THIS_OPTIONAL = Icode_VALUE_AND_THIS - 1,
-            Icode_PROP_AND_THIS_OPTIONAL = Icode_NAME_AND_THIS_OPTIONAL - 1,
-            Icode_ELEM_AND_THIS_OPTIONAL = Icode_PROP_AND_THIS_OPTIONAL - 1,
-            Icode_VALUE_AND_THIS_OPTIONAL = Icode_ELEM_AND_THIS_OPTIONAL - 1,
+            NAME_AND_THIS = TYPEOFNAME - 1,
+            PROP_AND_THIS = NAME_AND_THIS - 1,
+            ELEM_AND_THIS = PROP_AND_THIS - 1,
+            VALUE_AND_THIS = ELEM_AND_THIS - 1,
+            NAME_AND_THIS_OPTIONAL = VALUE_AND_THIS - 1,
+            PROP_AND_THIS_OPTIONAL = NAME_AND_THIS_OPTIONAL - 1,
+            ELEM_AND_THIS_OPTIONAL = PROP_AND_THIS_OPTIONAL - 1,
+            VALUE_AND_THIS_OPTIONAL = ELEM_AND_THIS_OPTIONAL - 1,
 
             // Create closure object for nested functions
-            Icode_CLOSURE_EXPR = Icode_VALUE_AND_THIS_OPTIONAL - 1,
-            Icode_CLOSURE_STMT = Icode_CLOSURE_EXPR - 1,
+            CLOSURE_EXPR = VALUE_AND_THIS_OPTIONAL - 1,
+            CLOSURE_STMT = CLOSURE_EXPR - 1,
 
             // Special calls
-            Icode_CALLSPECIAL = Icode_CLOSURE_STMT - 1,
-            Icode_CALLSPECIAL_OPTIONAL = Icode_CALLSPECIAL - 1,
+            CALLSPECIAL = CLOSURE_STMT - 1,
+            CALLSPECIAL_OPTIONAL = CALLSPECIAL - 1,
 
             // To return undefined value
-            Icode_RETUNDEF = Icode_CALLSPECIAL_OPTIONAL - 1,
+            RETUNDEF = CALLSPECIAL_OPTIONAL - 1,
 
             // Exception handling implementation
-            Icode_GOSUB = Icode_RETUNDEF - 1,
-            Icode_STARTSUB = Icode_GOSUB - 1,
-            Icode_RETSUB = Icode_STARTSUB - 1,
+            GOSUB = RETUNDEF - 1,
+            STARTSUB = GOSUB - 1,
+            RETSUB = STARTSUB - 1,
 
             // To indicating a line number change in icodes.
-            Icode_LINE = Icode_RETSUB - 1,
+            LINE = RETSUB - 1,
 
             // To store shorts and ints inline
-            Icode_SHORTNUMBER = Icode_LINE - 1,
-            Icode_INTNUMBER = Icode_SHORTNUMBER - 1,
+            SHORTNUMBER = LINE - 1,
+            INTNUMBER = SHORTNUMBER - 1,
 
             // To create and populate array to hold values for [] and {} literals
-            Icode_LITERAL_NEW_OBJECT = Icode_INTNUMBER - 1,
-            Icode_LITERAL_NEW_ARRAY = Icode_LITERAL_NEW_OBJECT - 1,
-            Icode_LITERAL_SET = Icode_LITERAL_NEW_ARRAY - 1,
-            Icode_METHOD_EXPR = Icode_LITERAL_SET - 1,
+            LITERAL_NEW_OBJECT = INTNUMBER - 1,
+            LITERAL_NEW_ARRAY = LITERAL_NEW_OBJECT - 1,
+            LITERAL_SET = LITERAL_NEW_ARRAY - 1,
+            METHOD_EXPR = LITERAL_SET - 1,
 
             // Array literal with skipped index like [1,,2]
-            Icode_SPARE_ARRAYLIT = Icode_METHOD_EXPR - 1,
+            SPARE_ARRAYLIT = METHOD_EXPR - 1,
 
             // Load index register to prepare for the following index operation
-            Icode_REG_IND_C0 = Icode_SPARE_ARRAYLIT - 1,
-            Icode_REG_IND_C1 = Icode_REG_IND_C0 - 1,
-            Icode_REG_IND_C2 = Icode_REG_IND_C1 - 1,
-            Icode_REG_IND_C3 = Icode_REG_IND_C2 - 1,
-            Icode_REG_IND_C4 = Icode_REG_IND_C3 - 1,
-            Icode_REG_IND_C5 = Icode_REG_IND_C4 - 1,
-            Icode_REG_IND1 = Icode_REG_IND_C5 - 1,
-            Icode_REG_IND2 = Icode_REG_IND1 - 1,
-            Icode_REG_IND4 = Icode_REG_IND2 - 1,
+            REG_IND_C0 = SPARE_ARRAYLIT - 1,
+            REG_IND_C1 = REG_IND_C0 - 1,
+            REG_IND_C2 = REG_IND_C1 - 1,
+            REG_IND_C3 = REG_IND_C2 - 1,
+            REG_IND_C4 = REG_IND_C3 - 1,
+            REG_IND_C5 = REG_IND_C4 - 1,
+            REG_IND1 = REG_IND_C5 - 1,
+            REG_IND2 = REG_IND1 - 1,
+            REG_IND4 = REG_IND2 - 1,
 
             // Load string register to prepare for the following string operation
-            Icode_REG_STR_C0 = Icode_REG_IND4 - 1,
-            Icode_REG_STR_C1 = Icode_REG_STR_C0 - 1,
-            Icode_REG_STR_C2 = Icode_REG_STR_C1 - 1,
-            Icode_REG_STR_C3 = Icode_REG_STR_C2 - 1,
-            Icode_REG_STR1 = Icode_REG_STR_C3 - 1,
-            Icode_REG_STR2 = Icode_REG_STR1 - 1,
-            Icode_REG_STR4 = Icode_REG_STR2 - 1,
+            REG_STR_C0 = REG_IND4 - 1,
+            REG_STR_C1 = REG_STR_C0 - 1,
+            REG_STR_C2 = REG_STR_C1 - 1,
+            REG_STR_C3 = REG_STR_C2 - 1,
+            REG_STR1 = REG_STR_C3 - 1,
+            REG_STR2 = REG_STR1 - 1,
+            REG_STR4 = REG_STR2 - 1,
 
             // Version of getvar/setvar that read var index directly from bytecode
-            Icode_GETVAR1 = Icode_REG_STR4 - 1,
-            Icode_SETVAR1 = Icode_GETVAR1 - 1,
+            GETVAR1 = REG_STR4 - 1,
+            SETVAR1 = GETVAR1 - 1,
 
             // Load undefined
-            Icode_UNDEF = Icode_SETVAR1 - 1,
-            Icode_ZERO = Icode_UNDEF - 1,
-            Icode_ONE = Icode_ZERO - 1,
+            UNDEF = SETVAR1 - 1,
+            ZERO = UNDEF - 1,
+            ONE = ZERO - 1,
 
             // entrance and exit from .()
-            Icode_ENTERDQ = Icode_ONE - 1,
-            Icode_LEAVEDQ = Icode_ENTERDQ - 1,
-            Icode_TAIL_CALL = Icode_LEAVEDQ - 1,
+            ENTERDQ = ONE - 1,
+            LEAVEDQ = ENTERDQ - 1,
+            TAIL_CALL = LEAVEDQ - 1,
 
             // Clear local to allow GC its context
-            Icode_LOCAL_CLEAR = Icode_TAIL_CALL - 1,
+            LOCAL_CLEAR = TAIL_CALL - 1,
 
             // Literal get/set
-            Icode_LITERAL_GETTER = Icode_LOCAL_CLEAR - 1,
-            Icode_LITERAL_SETTER = Icode_LITERAL_GETTER - 1,
+            LITERAL_GETTER = LOCAL_CLEAR - 1,
+            LITERAL_SETTER = LITERAL_GETTER - 1,
 
             // const
-            Icode_SETCONST = Icode_LITERAL_SETTER - 1,
-            Icode_SETCONSTVAR = Icode_SETCONST - 1,
-            Icode_SETCONSTVAR1 = Icode_SETCONSTVAR - 1,
+            SETCONST = LITERAL_SETTER - 1,
+            SETCONSTVAR = SETCONST - 1,
+            SETCONSTVAR1 = SETCONSTVAR - 1,
 
             // Generator opcodes (along with Token.YIELD)
-            Icode_GENERATOR = Icode_SETCONSTVAR1 - 1,
-            Icode_GENERATOR_END = Icode_GENERATOR - 1,
-            Icode_DEBUGGER = Icode_GENERATOR_END - 1,
-            Icode_GENERATOR_RETURN = Icode_DEBUGGER - 1,
-            Icode_YIELD_STAR = Icode_GENERATOR_RETURN - 1,
+            GENERATOR = SETCONSTVAR1 - 1,
+            GENERATOR_END = GENERATOR - 1,
+            DEBUGGER = GENERATOR_END - 1,
+            GENERATOR_RETURN = DEBUGGER - 1,
+            YIELD_STAR = GENERATOR_RETURN - 1,
 
             // Load BigInt register to prepare for the following BigInt operation
-            Icode_REG_BIGINT_C0 = Icode_YIELD_STAR - 1,
-            Icode_REG_BIGINT_C1 = Icode_REG_BIGINT_C0 - 1,
-            Icode_REG_BIGINT_C2 = Icode_REG_BIGINT_C1 - 1,
-            Icode_REG_BIGINT_C3 = Icode_REG_BIGINT_C2 - 1,
-            Icode_REG_BIGINT1 = Icode_REG_BIGINT_C3 - 1,
-            Icode_REG_BIGINT2 = Icode_REG_BIGINT1 - 1,
-            Icode_REG_BIGINT4 = Icode_REG_BIGINT2 - 1,
+            REG_BIGINT_C0 = YIELD_STAR - 1,
+            REG_BIGINT_C1 = REG_BIGINT_C0 - 1,
+            REG_BIGINT_C2 = REG_BIGINT_C1 - 1,
+            REG_BIGINT_C3 = REG_BIGINT_C2 - 1,
+            REG_BIGINT1 = REG_BIGINT_C3 - 1,
+            REG_BIGINT2 = REG_BIGINT1 - 1,
+            REG_BIGINT4 = REG_BIGINT2 - 1,
 
             // Call to GetTemplateLiteralCallSite
-            Icode_TEMPLATE_LITERAL_CALLSITE = Icode_REG_BIGINT4 - 1,
-            Icode_LITERAL_KEY_SET = Icode_TEMPLATE_LITERAL_CALLSITE - 1,
+            TEMPLATE_LITERAL_CALLSITE = REG_BIGINT4 - 1,
+            LITERAL_KEY_SET = TEMPLATE_LITERAL_CALLSITE - 1,
 
             // Jump if stack head is null or undefined
-            Icode_IF_NULL_UNDEF = Icode_LITERAL_KEY_SET - 1,
-            Icode_IF_NOT_NULL_UNDEF = Icode_IF_NULL_UNDEF - 1,
+            IF_NULL_UNDEF = LITERAL_KEY_SET - 1,
+            IF_NOT_NULL_UNDEF = IF_NULL_UNDEF - 1,
 
             // Call a method on the super object, i.e. super.foo()
-            Icode_CALL_ON_SUPER = Icode_IF_NOT_NULL_UNDEF - 1,
+            CALL_ON_SUPER = IF_NOT_NULL_UNDEF - 1,
 
             // delete super.prop
-            Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
+            DELPROP_SUPER = CALL_ON_SUPER - 1,
 
             // spread
-            Icode_SPREAD = Icode_DELPROP_SUPER - 1,
+            SPREAD = DELPROP_SUPER - 1,
 
             // object rest - create object excluding extracted keys
-            Icode_OBJECT_REST = Icode_SPREAD - 1,
+            OBJECT_REST = SPREAD - 1,
 
             // Last icode
-            MIN_ICODE = Icode_OBJECT_REST;
+            MIN_ICODE = OBJECT_REST;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -185,183 +185,183 @@ abstract class Icode {
         }
 
         switch (bytecode) {
-            case Icode_DELNAME:
+            case DELNAME:
                 return "DELNAME";
-            case Icode_DUP:
+            case DUP:
                 return "DUP";
-            case Icode_DUP2:
+            case DUP2:
                 return "DUP2";
-            case Icode_SWAP:
+            case SWAP:
                 return "SWAP";
-            case Icode_POP:
+            case POP:
                 return "POP";
-            case Icode_POP_RESULT:
+            case POP_RESULT:
                 return "POP_RESULT";
-            case Icode_IFEQ_POP:
+            case IFEQ_POP:
                 return "IFEQ_POP";
-            case Icode_VAR_INC_DEC:
+            case VAR_INC_DEC:
                 return "VAR_INC_DEC";
-            case Icode_NAME_INC_DEC:
+            case NAME_INC_DEC:
                 return "NAME_INC_DEC";
-            case Icode_PROP_INC_DEC:
+            case PROP_INC_DEC:
                 return "PROP_INC_DEC";
-            case Icode_ELEM_INC_DEC:
+            case ELEM_INC_DEC:
                 return "ELEM_INC_DEC";
-            case Icode_REF_INC_DEC:
+            case REF_INC_DEC:
                 return "REF_INC_DEC";
-            case Icode_SCOPE_LOAD:
+            case SCOPE_LOAD:
                 return "SCOPE_LOAD";
-            case Icode_SCOPE_SAVE:
+            case SCOPE_SAVE:
                 return "SCOPE_SAVE";
-            case Icode_TYPEOFNAME:
+            case TYPEOFNAME:
                 return "TYPEOFNAME";
-            case Icode_NAME_AND_THIS:
+            case NAME_AND_THIS:
                 return "NAME_AND_THIS";
-            case Icode_PROP_AND_THIS:
+            case PROP_AND_THIS:
                 return "PROP_AND_THIS";
-            case Icode_ELEM_AND_THIS:
+            case ELEM_AND_THIS:
                 return "ELEM_AND_THIS";
-            case Icode_VALUE_AND_THIS:
+            case VALUE_AND_THIS:
                 return "VALUE_AND_THIS";
-            case Icode_NAME_AND_THIS_OPTIONAL:
+            case NAME_AND_THIS_OPTIONAL:
                 return "NAME_AND_THIS_OPTIONAL";
-            case Icode_PROP_AND_THIS_OPTIONAL:
+            case PROP_AND_THIS_OPTIONAL:
                 return "PROP_AND_THIS_OPTIONAL";
-            case Icode_ELEM_AND_THIS_OPTIONAL:
+            case ELEM_AND_THIS_OPTIONAL:
                 return "ELEM_AND_THIS_OPTIONAL";
-            case Icode_VALUE_AND_THIS_OPTIONAL:
+            case VALUE_AND_THIS_OPTIONAL:
                 return "VALUE_AND_THIS_OPTIONAL";
-            case Icode_CLOSURE_EXPR:
+            case CLOSURE_EXPR:
                 return "CLOSURE_EXPR";
-            case Icode_CLOSURE_STMT:
+            case CLOSURE_STMT:
                 return "CLOSURE_STMT";
-            case Icode_CALLSPECIAL:
+            case CALLSPECIAL:
                 return "CALLSPECIAL";
-            case Icode_CALLSPECIAL_OPTIONAL:
+            case CALLSPECIAL_OPTIONAL:
                 return "CALLSPECIAL_OPTIONAL";
-            case Icode_RETUNDEF:
+            case RETUNDEF:
                 return "RETUNDEF";
-            case Icode_GOSUB:
+            case GOSUB:
                 return "GOSUB";
-            case Icode_STARTSUB:
+            case STARTSUB:
                 return "STARTSUB";
-            case Icode_RETSUB:
+            case RETSUB:
                 return "RETSUB";
-            case Icode_LINE:
+            case LINE:
                 return "LINE";
-            case Icode_SHORTNUMBER:
+            case SHORTNUMBER:
                 return "SHORTNUMBER";
-            case Icode_INTNUMBER:
+            case INTNUMBER:
                 return "INTNUMBER";
-            case Icode_LITERAL_NEW_OBJECT:
+            case LITERAL_NEW_OBJECT:
                 return "LITERAL_NEW_OBJECT";
-            case Icode_LITERAL_NEW_ARRAY:
+            case LITERAL_NEW_ARRAY:
                 return "LITERAL_NEW_ARRAY";
-            case Icode_LITERAL_SET:
+            case LITERAL_SET:
                 return "LITERAL_SET";
-            case Icode_METHOD_EXPR:
+            case METHOD_EXPR:
                 return "METHOD_EXPR";
-            case Icode_SPARE_ARRAYLIT:
+            case SPARE_ARRAYLIT:
                 return "SPARE_ARRAYLIT";
-            case Icode_REG_IND_C0:
+            case REG_IND_C0:
                 return "REG_IND_C0";
-            case Icode_REG_IND_C1:
+            case REG_IND_C1:
                 return "REG_IND_C1";
-            case Icode_REG_IND_C2:
+            case REG_IND_C2:
                 return "REG_IND_C2";
-            case Icode_REG_IND_C3:
+            case REG_IND_C3:
                 return "REG_IND_C3";
-            case Icode_REG_IND_C4:
+            case REG_IND_C4:
                 return "REG_IND_C4";
-            case Icode_REG_IND_C5:
+            case REG_IND_C5:
                 return "REG_IND_C5";
-            case Icode_REG_IND1:
+            case REG_IND1:
                 return "LOAD_IND1";
-            case Icode_REG_IND2:
+            case REG_IND2:
                 return "LOAD_IND2";
-            case Icode_REG_IND4:
+            case REG_IND4:
                 return "LOAD_IND4";
-            case Icode_REG_STR_C0:
+            case REG_STR_C0:
                 return "REG_STR_C0";
-            case Icode_REG_STR_C1:
+            case REG_STR_C1:
                 return "REG_STR_C1";
-            case Icode_REG_STR_C2:
+            case REG_STR_C2:
                 return "REG_STR_C2";
-            case Icode_REG_STR_C3:
+            case REG_STR_C3:
                 return "REG_STR_C3";
-            case Icode_REG_STR1:
+            case REG_STR1:
                 return "LOAD_STR1";
-            case Icode_REG_STR2:
+            case REG_STR2:
                 return "LOAD_STR2";
-            case Icode_REG_STR4:
+            case REG_STR4:
                 return "LOAD_STR4";
-            case Icode_GETVAR1:
+            case GETVAR1:
                 return "GETVAR1";
-            case Icode_SETVAR1:
+            case SETVAR1:
                 return "SETVAR1";
-            case Icode_UNDEF:
+            case UNDEF:
                 return "UNDEF";
-            case Icode_ZERO:
+            case ZERO:
                 return "ZERO";
-            case Icode_ONE:
+            case ONE:
                 return "ONE";
-            case Icode_ENTERDQ:
+            case ENTERDQ:
                 return "ENTERDQ";
-            case Icode_LEAVEDQ:
+            case LEAVEDQ:
                 return "LEAVEDQ";
-            case Icode_TAIL_CALL:
+            case TAIL_CALL:
                 return "TAIL_CALL";
-            case Icode_LOCAL_CLEAR:
+            case LOCAL_CLEAR:
                 return "LOCAL_CLEAR";
-            case Icode_LITERAL_GETTER:
+            case LITERAL_GETTER:
                 return "LITERAL_GETTER";
-            case Icode_LITERAL_SETTER:
+            case LITERAL_SETTER:
                 return "LITERAL_SETTER";
-            case Icode_SETCONST:
+            case SETCONST:
                 return "SETCONST";
-            case Icode_SETCONSTVAR:
+            case SETCONSTVAR:
                 return "SETCONSTVAR";
-            case Icode_SETCONSTVAR1:
+            case SETCONSTVAR1:
                 return "SETCONSTVAR1";
-            case Icode_GENERATOR:
+            case GENERATOR:
                 return "GENERATOR";
-            case Icode_GENERATOR_END:
+            case GENERATOR_END:
                 return "GENERATOR_END";
-            case Icode_DEBUGGER:
+            case DEBUGGER:
                 return "DEBUGGER";
-            case Icode_GENERATOR_RETURN:
+            case GENERATOR_RETURN:
                 return "GENERATOR_RETURN";
-            case Icode_YIELD_STAR:
+            case YIELD_STAR:
                 return "YIELD_STAR";
-            case Icode_REG_BIGINT_C0:
+            case REG_BIGINT_C0:
                 return "REG_BIGINT_C0";
-            case Icode_REG_BIGINT_C1:
+            case REG_BIGINT_C1:
                 return "REG_BIGINT_C1";
-            case Icode_REG_BIGINT_C2:
+            case REG_BIGINT_C2:
                 return "REG_BIGINT_C2";
-            case Icode_REG_BIGINT_C3:
+            case REG_BIGINT_C3:
                 return "REG_BIGINT_C3";
-            case Icode_REG_BIGINT1:
+            case REG_BIGINT1:
                 return "LOAD_BIGINT1";
-            case Icode_REG_BIGINT2:
+            case REG_BIGINT2:
                 return "LOAD_BIGINT2";
-            case Icode_REG_BIGINT4:
+            case REG_BIGINT4:
                 return "LOAD_BIGINT4";
-            case Icode_TEMPLATE_LITERAL_CALLSITE:
+            case TEMPLATE_LITERAL_CALLSITE:
                 return "TEMPLATE_LITERAL_CALLSITE";
-            case Icode_LITERAL_KEY_SET:
+            case LITERAL_KEY_SET:
                 return "LITERAL_KEY_SET";
-            case Icode_IF_NULL_UNDEF:
+            case IF_NULL_UNDEF:
                 return "IF_NULL_UNDEF";
-            case Icode_IF_NOT_NULL_UNDEF:
+            case IF_NOT_NULL_UNDEF:
                 return "IF_NOT_NULL_UNDEF";
-            case Icode_CALL_ON_SUPER:
+            case CALL_ON_SUPER:
                 return "CALL_ON_SUPER";
-            case Icode_DELPROP_SUPER:
+            case DELPROP_SUPER:
                 return "DELPROP_SUPER";
-            case Icode_SPREAD:
+            case SPREAD:
                 return "SPREAD";
-            case Icode_OBJECT_REST:
+            case OBJECT_REST:
                 return "OBJECT_REST";
         }
 
