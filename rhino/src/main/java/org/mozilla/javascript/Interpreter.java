@@ -27,7 +27,7 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 
-public final class Interpreter extends Icode implements Evaluator {
+public final class Interpreter implements Evaluator {
 
     static final int EXCEPTION_TRY_START_SLOT = 0;
     static final int EXCEPTION_TRY_END_SLOT = 1;
@@ -698,7 +698,7 @@ public final class Interpreter extends Icode implements Evaluator {
             System.err.println(str);
             throw new IllegalStateException(str);
         }
-        if (MIN_ICODE < -128) {
+        if (Icode.MIN_ICODE < -128) {
             String str = "Violation of Interpreter.MIN_ICODE >= -128";
             System.err.println(str);
             throw new IllegalStateException(str);
@@ -834,7 +834,7 @@ public final class Interpreter extends Icode implements Evaluator {
             int icodeLength = bytecodeSpan(token);
             String tname = Icode.bytecodeName(token);
             ctx.pc = pc + 1;
-            InstructionClass instr = instructionObjs[-MIN_ICODE + token];
+            InstructionClass instr = instructionObjs[-Icode.MIN_ICODE + token];
             instr.dumpICode(token, tname, ctx);
             if (pc + icodeLength != ctx.pc) Kit.codeBug();
             pc += icodeLength;
@@ -870,26 +870,26 @@ public final class Interpreter extends Icode implements Evaluator {
         switch (bytecode) {
             case Token.THROW:
             case Token.YIELD:
-            case Icode_YIELD_STAR:
-            case Icode_GENERATOR:
-            case Icode_GENERATOR_END:
-            case Icode_GENERATOR_RETURN:
+            case Icode.YIELD_STAR:
+            case Icode.GENERATOR:
+            case Icode.GENERATOR_END:
+            case Icode.GENERATOR_RETURN:
                 // source line
                 return 1 + 2;
 
-            case Icode_GOSUB:
+            case Icode.GOSUB:
             case Token.GOTO:
             case Token.IFEQ:
             case Token.IFNE:
-            case Icode_IFEQ_POP:
-            case Icode_IF_NULL_UNDEF:
-            case Icode_IF_NOT_NULL_UNDEF:
-            case Icode_LEAVEDQ:
+            case Icode.IFEQ_POP:
+            case Icode.IF_NULL_UNDEF:
+            case Icode.IF_NOT_NULL_UNDEF:
+            case Icode.LEAVEDQ:
                 // target pc offset
                 return 1 + 2;
 
-            case Icode_CALLSPECIAL:
-            case Icode_CALLSPECIAL_OPTIONAL:
+            case Icode.CALLSPECIAL:
+            case Icode.CALLSPECIAL_OPTIONAL:
                 // call type
                 // is new
                 // line number
@@ -899,85 +899,85 @@ public final class Interpreter extends Icode implements Evaluator {
                 // scope flag
                 return 1 + 1;
 
-            case Icode_VAR_INC_DEC:
-            case Icode_NAME_INC_DEC:
-            case Icode_PROP_INC_DEC:
-            case Icode_ELEM_INC_DEC:
-            case Icode_REF_INC_DEC:
+            case Icode.VAR_INC_DEC:
+            case Icode.NAME_INC_DEC:
+            case Icode.PROP_INC_DEC:
+            case Icode.ELEM_INC_DEC:
+            case Icode.REF_INC_DEC:
                 // type of ++/--
                 return 1 + 1;
 
-            case Icode_SHORTNUMBER:
+            case Icode.SHORTNUMBER:
                 // short number
                 return 1 + 2;
 
-            case Icode_INTNUMBER:
+            case Icode.INTNUMBER:
                 // int number
                 return 1 + 4;
 
-            case Icode_REG_IND1:
+            case Icode.REG_IND1:
                 // ubyte index
                 return 1 + 1;
 
-            case Icode_REG_IND2:
+            case Icode.REG_IND2:
                 // ushort index
                 return 1 + 2;
 
-            case Icode_REG_IND4:
+            case Icode.REG_IND4:
                 // int index
                 return 1 + 4;
 
-            case Icode_REG_STR1:
+            case Icode.REG_STR1:
                 // ubyte string index
                 return 1 + 1;
 
-            case Icode_REG_STR2:
+            case Icode.REG_STR2:
                 // ushort string index
                 return 1 + 2;
 
-            case Icode_REG_STR4:
+            case Icode.REG_STR4:
                 // int string index
                 return 1 + 4;
 
-            case Icode_GETVAR1:
-            case Icode_SETVAR1:
-            case Icode_SETCONSTVAR1:
+            case Icode.GETVAR1:
+            case Icode.SETVAR1:
+            case Icode.SETCONSTVAR1:
                 // byte var index
                 return 1 + 1;
 
-            case Icode_LINE:
+            case Icode.LINE:
                 // line number
                 return 1 + 2;
 
-            case Icode_LITERAL_NEW_OBJECT:
+            case Icode.LITERAL_NEW_OBJECT:
                 // make a copy or not flag
                 return 1 + 1;
 
-            case Icode_LITERAL_NEW_ARRAY:
+            case Icode.LITERAL_NEW_ARRAY:
                 // skip indexes ID (uint16)
                 return 1 + 2;
 
-            case Icode_SPREAD:
+            case Icode.SPREAD:
                 // 2-byte source position operand (always emitted, even when unused)
                 return 1 + 2;
 
-            case Icode_REG_BIGINT1:
+            case Icode.REG_BIGINT1:
                 // ubyte bigint index
                 return 1 + 1;
 
-            case Icode_REG_BIGINT2:
+            case Icode.REG_BIGINT2:
                 // ushort bigint index
                 return 1 + 2;
 
-            case Icode_REG_BIGINT4:
+            case Icode.REG_BIGINT4:
                 // uint bigint index
                 return 1 + 4;
 
-            case Icode_OBJECT_REST:
+            case Icode.OBJECT_REST:
                 // computedKeyCount byte
                 return 1 + 1;
         }
-        if (!validBytecode(bytecode)) throw Kit.codeBug();
+        if (!Icode.validBytecode(bytecode)) throw Kit.codeBug();
         return 1;
     }
 
@@ -1003,7 +1003,7 @@ public final class Interpreter extends Icode implements Evaluator {
         for (int pc = 0; pc != iCodeLength; ) {
             int bytecode = iCode[pc];
             int span = bytecodeSpan(bytecode);
-            if (bytecode == Icode_LINE) {
+            if (bytecode == Icode.LINE) {
                 if (span != 3) Kit.codeBug();
                 int line = getIndex(iCode, pc + 1);
                 presentLines.add(line);
@@ -1400,13 +1400,13 @@ public final class Interpreter extends Icode implements Evaluator {
     private static final InstructionClass[] instructionObjs;
 
     static {
-        instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - MIN_ICODE];
-        int base = -MIN_ICODE;
-        instructionObjs[base + Icode_GENERATOR] = new DoGenerator();
+        instructionObjs = new InstructionClass[Token.LAST_BYTECODE_TOKEN + 1 - Icode.MIN_ICODE];
+        int base = -Icode.MIN_ICODE;
+        instructionObjs[base + Icode.GENERATOR] = new DoGenerator();
         instructionObjs[base + Token.YIELD] = new DoYield();
-        instructionObjs[base + Icode_YIELD_STAR] = new DoYield();
-        instructionObjs[base + Icode_GENERATOR_END] = new DoGeneratorEnd();
-        instructionObjs[base + Icode_GENERATOR_RETURN] = new DoGeneratorReturn();
+        instructionObjs[base + Icode.YIELD_STAR] = new DoYield();
+        instructionObjs[base + Icode.GENERATOR_END] = new DoGeneratorEnd();
+        instructionObjs[base + Icode.GENERATOR_RETURN] = new DoGeneratorReturn();
         instructionObjs[base + Token.THROW] = new DoThrow();
         instructionObjs[base + Token.RETHROW] = new DoRethrow();
         instructionObjs[base + Token.GE] = new DoCompare();
@@ -1421,21 +1421,21 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.SHNE] = new DoShallowNotEquals();
         instructionObjs[base + Token.IFNE] = new DoIfNE();
         instructionObjs[base + Token.IFEQ] = new DoIfEQ();
-        instructionObjs[base + Icode_IFEQ_POP] = new DoIfEQPop();
-        instructionObjs[base + Icode_IF_NULL_UNDEF] = new DoIfNullUndef();
-        instructionObjs[base + Icode_IF_NOT_NULL_UNDEF] = new DoIfNotNullUndef();
+        instructionObjs[base + Icode.IFEQ_POP] = new DoIfEQPop();
+        instructionObjs[base + Icode.IF_NULL_UNDEF] = new DoIfNullUndef();
+        instructionObjs[base + Icode.IF_NOT_NULL_UNDEF] = new DoIfNotNullUndef();
         instructionObjs[base + Token.GOTO] = new DoGoto();
-        instructionObjs[base + Icode_GOSUB] = new DoGosub();
-        instructionObjs[base + Icode_STARTSUB] = new DoStartSub();
-        instructionObjs[base + Icode_RETSUB] = new DoRetsub();
-        instructionObjs[base + Icode_POP] = new DoPop();
-        instructionObjs[base + Icode_POP_RESULT] = new DoPopResult();
-        instructionObjs[base + Icode_DUP] = new DoDup();
-        instructionObjs[base + Icode_DUP2] = new DoDup2();
-        instructionObjs[base + Icode_SWAP] = new DoSwap();
+        instructionObjs[base + Icode.GOSUB] = new DoGosub();
+        instructionObjs[base + Icode.STARTSUB] = new DoStartSub();
+        instructionObjs[base + Icode.RETSUB] = new DoRetsub();
+        instructionObjs[base + Icode.POP] = new DoPop();
+        instructionObjs[base + Icode.POP_RESULT] = new DoPopResult();
+        instructionObjs[base + Icode.DUP] = new DoDup();
+        instructionObjs[base + Icode.DUP2] = new DoDup2();
+        instructionObjs[base + Icode.SWAP] = new DoSwap();
         instructionObjs[base + Token.RETURN] = new DoReturn();
         instructionObjs[base + Token.RETURN_RESULT] = new DoReturnResult();
-        instructionObjs[base + Icode_RETUNDEF] = new DoReturnUndef();
+        instructionObjs[base + Icode.RETUNDEF] = new DoReturnUndef();
         instructionObjs[base + Token.BITNOT] = new DoBitNot();
         instructionObjs[base + Token.BITAND] = new DoBitOp();
         instructionObjs[base + Token.BITOR] = new DoBitOp();
@@ -1456,68 +1456,68 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.STRICT_SETNAME] = new DoSetName();
         instructionObjs[base + Token.STRING_CONCAT] = new DoStringConcat();
         instructionObjs[base + Token.SETNAME] = new DoSetName();
-        instructionObjs[base + Icode_SETCONST] = new DoSetConst();
+        instructionObjs[base + Icode.SETCONST] = new DoSetConst();
         instructionObjs[base + Token.DELPROP] = new DoDelName();
-        instructionObjs[base + Icode_DELNAME] = new DoDelName();
-        instructionObjs[base + Icode_DELPROP_SUPER] = new DoDelPropSuper();
+        instructionObjs[base + Icode.DELNAME] = new DoDelName();
+        instructionObjs[base + Icode.DELPROP_SUPER] = new DoDelPropSuper();
         instructionObjs[base + Token.GETPROPNOWARN] = new DoGetPropNoWarn();
         instructionObjs[base + Token.GETPROP] = new DoGetProp();
         instructionObjs[base + Token.GETPROP_SUPER] = new DoGetPropSuper();
         instructionObjs[base + Token.GETPROPNOWARN_SUPER] = new DoGetPropSuper();
         instructionObjs[base + Token.SETPROP] = new DoSetProp();
         instructionObjs[base + Token.SETPROP_SUPER] = new DoSetPropSuper();
-        instructionObjs[base + Icode_PROP_INC_DEC] = new DoPropIncDec();
+        instructionObjs[base + Icode.PROP_INC_DEC] = new DoPropIncDec();
         instructionObjs[base + Token.GETELEM] = new DoGetElem();
         instructionObjs[base + Token.GETELEM_SUPER] = new DoGetElemSuper();
         instructionObjs[base + Token.SETELEM] = new DoSetElem();
         instructionObjs[base + Token.SETELEM_SUPER] = new DoSetElemSuper();
-        instructionObjs[base + Icode_ELEM_INC_DEC] = new DoElemIncDec();
+        instructionObjs[base + Icode.ELEM_INC_DEC] = new DoElemIncDec();
         instructionObjs[base + Token.GET_REF] = new DoGetRef();
         instructionObjs[base + Token.SET_REF] = new DoSetRef();
         instructionObjs[base + Token.DEL_REF] = new DoDelRef();
-        instructionObjs[base + Icode_REF_INC_DEC] = new DoRefIncDec();
+        instructionObjs[base + Icode.REF_INC_DEC] = new DoRefIncDec();
         instructionObjs[base + Token.LOCAL_LOAD] = new DoLocalLoad();
-        instructionObjs[base + Icode_LOCAL_CLEAR] = new DoLocalClear();
-        instructionObjs[base + Icode_NAME_AND_THIS] = new DoNameAndThis();
-        instructionObjs[base + Icode_NAME_AND_THIS_OPTIONAL] = new DoNameAndThisOptional();
-        instructionObjs[base + Icode_PROP_AND_THIS] = new DoPropAndThis();
-        instructionObjs[base + Icode_PROP_AND_THIS_OPTIONAL] = new DoPropAndThisOptional();
-        instructionObjs[base + Icode_ELEM_AND_THIS] = new DoElemAndThis();
-        instructionObjs[base + Icode_ELEM_AND_THIS_OPTIONAL] = new DoElemAndThisOptional();
-        instructionObjs[base + Icode_VALUE_AND_THIS] = new DoValueAndThis();
-        instructionObjs[base + Icode_VALUE_AND_THIS_OPTIONAL] = new DoValueAndThisOptional();
-        instructionObjs[base + Icode_CALLSPECIAL] = new DoCallSpecial();
-        instructionObjs[base + Icode_CALLSPECIAL_OPTIONAL] = new DoCallSpecial();
+        instructionObjs[base + Icode.LOCAL_CLEAR] = new DoLocalClear();
+        instructionObjs[base + Icode.NAME_AND_THIS] = new DoNameAndThis();
+        instructionObjs[base + Icode.NAME_AND_THIS_OPTIONAL] = new DoNameAndThisOptional();
+        instructionObjs[base + Icode.PROP_AND_THIS] = new DoPropAndThis();
+        instructionObjs[base + Icode.PROP_AND_THIS_OPTIONAL] = new DoPropAndThisOptional();
+        instructionObjs[base + Icode.ELEM_AND_THIS] = new DoElemAndThis();
+        instructionObjs[base + Icode.ELEM_AND_THIS_OPTIONAL] = new DoElemAndThisOptional();
+        instructionObjs[base + Icode.VALUE_AND_THIS] = new DoValueAndThis();
+        instructionObjs[base + Icode.VALUE_AND_THIS_OPTIONAL] = new DoValueAndThisOptional();
+        instructionObjs[base + Icode.CALLSPECIAL] = new DoCallSpecial();
+        instructionObjs[base + Icode.CALLSPECIAL_OPTIONAL] = new DoCallSpecial();
         instructionObjs[base + Token.CALL] = new DoCallByteCode();
-        instructionObjs[base + Icode_CALL_ON_SUPER] = new DoCallByteCode();
-        instructionObjs[base + Icode_TAIL_CALL] = new DoCallByteCode();
+        instructionObjs[base + Icode.CALL_ON_SUPER] = new DoCallByteCode();
+        instructionObjs[base + Icode.TAIL_CALL] = new DoCallByteCode();
         instructionObjs[base + Token.REF_CALL] = new DoCallByteCode();
         instructionObjs[base + Token.NEW] = new DoNew();
         instructionObjs[base + Token.TYPEOF] = new DoTypeOf();
-        instructionObjs[base + Icode_TYPEOFNAME] = new DoTypeOfName();
+        instructionObjs[base + Icode.TYPEOFNAME] = new DoTypeOfName();
         instructionObjs[base + Token.STRING] = new DoString();
-        instructionObjs[base + Icode_SHORTNUMBER] = new DoShortNumber();
-        instructionObjs[base + Icode_INTNUMBER] = new DoIntNumber();
+        instructionObjs[base + Icode.SHORTNUMBER] = new DoShortNumber();
+        instructionObjs[base + Icode.INTNUMBER] = new DoIntNumber();
         instructionObjs[base + Token.NUMBER] = new DoNumber();
         instructionObjs[base + Token.BIGINT] = new DoBigInt();
         instructionObjs[base + Token.NAME] = new DoName();
-        instructionObjs[base + Icode_NAME_INC_DEC] = new DoNameIncDec();
-        instructionObjs[base + Icode_SETCONSTVAR1] = new DoSetConstVar1();
-        instructionObjs[base + Icode_SETCONSTVAR] = new DoSetConstVar();
-        instructionObjs[base + Icode_SETVAR1] = new DoSetVar1();
+        instructionObjs[base + Icode.NAME_INC_DEC] = new DoNameIncDec();
+        instructionObjs[base + Icode.SETCONSTVAR1] = new DoSetConstVar1();
+        instructionObjs[base + Icode.SETCONSTVAR] = new DoSetConstVar();
+        instructionObjs[base + Icode.SETVAR1] = new DoSetVar1();
         instructionObjs[base + Token.SETVAR] = new DoSetVar();
-        instructionObjs[base + Icode_GETVAR1] = new DoGetVar1();
+        instructionObjs[base + Icode.GETVAR1] = new DoGetVar1();
         instructionObjs[base + Token.GETVAR] = new DoGetVar();
-        instructionObjs[base + Icode_VAR_INC_DEC] = new DoVarIncDec();
-        instructionObjs[base + Icode_ZERO] = new DoZero();
-        instructionObjs[base + Icode_ONE] = new DoOne();
+        instructionObjs[base + Icode.VAR_INC_DEC] = new DoVarIncDec();
+        instructionObjs[base + Icode.ZERO] = new DoZero();
+        instructionObjs[base + Icode.ONE] = new DoOne();
         instructionObjs[base + Token.NULL] = new DoNull();
         instructionObjs[base + Token.THIS] = new DoThis();
         instructionObjs[base + Token.SUPER] = new DoSuper();
         instructionObjs[base + Token.THISFN] = new DoThisFunction();
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
-        instructionObjs[base + Icode_UNDEF] = new DoUndef();
+        instructionObjs[base + Icode.UNDEF] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
         instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
@@ -1533,54 +1533,54 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Token.REF_NS_MEMBER] = new DoRefNsMember();
         instructionObjs[base + Token.REF_NAME] = new DoRefName();
         instructionObjs[base + Token.REF_NS_NAME] = new DoRefNsName();
-        instructionObjs[base + Icode_SCOPE_LOAD] = new DoScopeLoad();
-        instructionObjs[base + Icode_SCOPE_SAVE] = new DoScopeSave();
-        instructionObjs[base + Icode_SPREAD] = new DoSpread();
-        instructionObjs[base + Icode_OBJECT_REST] = new DoObjectRest();
-        instructionObjs[base + Icode_CLOSURE_EXPR] = new DoClosureExpr();
-        instructionObjs[base + Icode_METHOD_EXPR] = new DoMethodExpr();
-        instructionObjs[base + Icode_CLOSURE_STMT] = new DoClosureStatement();
+        instructionObjs[base + Icode.SCOPE_LOAD] = new DoScopeLoad();
+        instructionObjs[base + Icode.SCOPE_SAVE] = new DoScopeSave();
+        instructionObjs[base + Icode.SPREAD] = new DoSpread();
+        instructionObjs[base + Icode.OBJECT_REST] = new DoObjectRest();
+        instructionObjs[base + Icode.CLOSURE_EXPR] = new DoClosureExpr();
+        instructionObjs[base + Icode.METHOD_EXPR] = new DoMethodExpr();
+        instructionObjs[base + Icode.CLOSURE_STMT] = new DoClosureStatement();
         instructionObjs[base + Token.REGEXP] = new DoRegExp();
-        instructionObjs[base + Icode_TEMPLATE_LITERAL_CALLSITE] = new DoTemplateLiteralCallSite();
-        instructionObjs[base + Icode_LITERAL_NEW_OBJECT] = new DoLiteralNewObject();
-        instructionObjs[base + Icode_LITERAL_NEW_ARRAY] = new DoLiteralNewArray();
-        instructionObjs[base + Icode_LITERAL_SET] = new DoLiteralSet();
-        instructionObjs[base + Icode_LITERAL_GETTER] = new DoLiteralGetter();
-        instructionObjs[base + Icode_LITERAL_SETTER] = new DoLiteralSetter();
-        instructionObjs[base + Icode_LITERAL_KEY_SET] = new DoLiteralKeySet();
+        instructionObjs[base + Icode.TEMPLATE_LITERAL_CALLSITE] = new DoTemplateLiteralCallSite();
+        instructionObjs[base + Icode.LITERAL_NEW_OBJECT] = new DoLiteralNewObject();
+        instructionObjs[base + Icode.LITERAL_NEW_ARRAY] = new DoLiteralNewArray();
+        instructionObjs[base + Icode.LITERAL_SET] = new DoLiteralSet();
+        instructionObjs[base + Icode.LITERAL_GETTER] = new DoLiteralGetter();
+        instructionObjs[base + Icode.LITERAL_SETTER] = new DoLiteralSetter();
+        instructionObjs[base + Icode.LITERAL_KEY_SET] = new DoLiteralKeySet();
         instructionObjs[base + Token.OBJECTLIT] = new DoObjectLit();
         instructionObjs[base + Token.ARRAYLIT] = new DoArrayLiteral();
-        instructionObjs[base + Icode_SPARE_ARRAYLIT] = new DoArrayLiteral();
-        instructionObjs[base + Icode_ENTERDQ] = new DoEnterDotQuery();
-        instructionObjs[base + Icode_LEAVEDQ] = new DoLeaveDotQuery();
+        instructionObjs[base + Icode.SPARE_ARRAYLIT] = new DoArrayLiteral();
+        instructionObjs[base + Icode.ENTERDQ] = new DoEnterDotQuery();
+        instructionObjs[base + Icode.LEAVEDQ] = new DoLeaveDotQuery();
         instructionObjs[base + Token.DEFAULTNAMESPACE] = new DoDefaultNamespace();
         instructionObjs[base + Token.ESCXMLATTR] = new DoEscXMLAttr();
         instructionObjs[base + Token.ESCXMLTEXT] = new DoEscXMLText();
-        instructionObjs[base + Icode_DEBUGGER] = new DoDebug();
-        instructionObjs[base + Icode_LINE] = new DoLineChange();
-        instructionObjs[base + Icode_REG_IND_C0] = new DoIndexCn();
-        instructionObjs[base + Icode_REG_IND_C1] = new DoIndexCn();
-        instructionObjs[base + Icode_REG_IND_C2] = new DoIndexCn();
-        instructionObjs[base + Icode_REG_IND_C3] = new DoIndexCn();
-        instructionObjs[base + Icode_REG_IND_C4] = new DoIndexCn();
-        instructionObjs[base + Icode_REG_IND_C5] = new DoIndexCn();
-        instructionObjs[base + Icode_REG_IND1] = new DoRegIndex1();
-        instructionObjs[base + Icode_REG_IND2] = new DoRegIndex2();
-        instructionObjs[base + Icode_REG_IND4] = new DoRegIndex4();
-        instructionObjs[base + Icode_REG_STR_C0] = new DoStringCn();
-        instructionObjs[base + Icode_REG_STR_C1] = new DoStringCn();
-        instructionObjs[base + Icode_REG_STR_C2] = new DoStringCn();
-        instructionObjs[base + Icode_REG_STR_C3] = new DoStringCn();
-        instructionObjs[base + Icode_REG_STR1] = new DoRegString1();
-        instructionObjs[base + Icode_REG_STR2] = new DoRegString2();
-        instructionObjs[base + Icode_REG_STR4] = new DoRegString4();
-        instructionObjs[base + Icode_REG_BIGINT_C0] = new DoBigIntCn();
-        instructionObjs[base + Icode_REG_BIGINT_C1] = new DoBigIntCn();
-        instructionObjs[base + Icode_REG_BIGINT_C2] = new DoBigIntCn();
-        instructionObjs[base + Icode_REG_BIGINT_C3] = new DoBigIntCn();
-        instructionObjs[base + Icode_REG_BIGINT1] = new DoRegBigInt1();
-        instructionObjs[base + Icode_REG_BIGINT2] = new DoRegBigInt2();
-        instructionObjs[base + Icode_REG_BIGINT4] = new DoRegBigInt4();
+        instructionObjs[base + Icode.DEBUGGER] = new DoDebug();
+        instructionObjs[base + Icode.LINE] = new DoLineChange();
+        instructionObjs[base + Icode.REG_IND_C0] = new DoIndexCn();
+        instructionObjs[base + Icode.REG_IND_C1] = new DoIndexCn();
+        instructionObjs[base + Icode.REG_IND_C2] = new DoIndexCn();
+        instructionObjs[base + Icode.REG_IND_C3] = new DoIndexCn();
+        instructionObjs[base + Icode.REG_IND_C4] = new DoIndexCn();
+        instructionObjs[base + Icode.REG_IND_C5] = new DoIndexCn();
+        instructionObjs[base + Icode.REG_IND1] = new DoRegIndex1();
+        instructionObjs[base + Icode.REG_IND2] = new DoRegIndex2();
+        instructionObjs[base + Icode.REG_IND4] = new DoRegIndex4();
+        instructionObjs[base + Icode.REG_STR_C0] = new DoStringCn();
+        instructionObjs[base + Icode.REG_STR_C1] = new DoStringCn();
+        instructionObjs[base + Icode.REG_STR_C2] = new DoStringCn();
+        instructionObjs[base + Icode.REG_STR_C3] = new DoStringCn();
+        instructionObjs[base + Icode.REG_STR1] = new DoRegString1();
+        instructionObjs[base + Icode.REG_STR2] = new DoRegString2();
+        instructionObjs[base + Icode.REG_STR4] = new DoRegString4();
+        instructionObjs[base + Icode.REG_BIGINT_C0] = new DoBigIntCn();
+        instructionObjs[base + Icode.REG_BIGINT_C1] = new DoBigIntCn();
+        instructionObjs[base + Icode.REG_BIGINT_C2] = new DoBigIntCn();
+        instructionObjs[base + Icode.REG_BIGINT_C3] = new DoBigIntCn();
+        instructionObjs[base + Icode.REG_BIGINT1] = new DoRegBigInt1();
+        instructionObjs[base + Icode.REG_BIGINT2] = new DoRegBigInt2();
+        instructionObjs[base + Icode.REG_BIGINT4] = new DoRegBigInt4();
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
@@ -1862,7 +1862,7 @@ public final class Interpreter extends Icode implements Evaluator {
                     // exception handler
                     int op = iCode[frame.pc++];
 
-                    var insn = instructionObjs[-MIN_ICODE + op];
+                    var insn = instructionObjs[-Icode.MIN_ICODE + op];
 
                     nextState = insn.execute(cx, frame, state, op);
                 } while (nextState == null);
@@ -1928,7 +1928,7 @@ public final class Interpreter extends Icode implements Evaluator {
             if (!frame.frozen) {
                 return new YieldResult(
                         freezeGenerator(
-                                cx, frame, state, state.generatorState, op == Icode_YIELD_STAR));
+                                cx, frame, state, state.generatorState, op == Icode.YIELD_STAR));
             }
             Object obj = thawGenerator(frame, state, state.generatorState, op);
             if (obj != Scriptable.NOT_FOUND) {
@@ -2012,7 +2012,7 @@ public final class Interpreter extends Icode implements Evaluator {
             return generatorState.value;
         }
         if (generatorState.operation != NativeGenerator.GENERATOR_SEND) throw Kit.codeBug();
-        if ((op == Token.YIELD) || (op == Icode_YIELD_STAR)) {
+        if ((op == Token.YIELD) || (op == Icode.YIELD_STAR)) {
             frame.stack[state.stackTop] = generatorState.value;
         }
         return Scriptable.NOT_FOUND;
@@ -2027,7 +2027,7 @@ public final class Interpreter extends Icode implements Evaluator {
             if (!frame.frozen) {
                 return new YieldResult(
                         freezeGenerator(
-                                cx, frame, state, state.generatorState, op == Icode_YIELD_STAR));
+                                cx, frame, state, state.generatorState, op == Icode.YIELD_STAR));
             }
             Object obj = thawGenerator(frame, state, state.generatorState, op);
             if (obj != Scriptable.NOT_FOUND) {
@@ -2411,7 +2411,7 @@ public final class Interpreter extends Icode implements Evaluator {
             final double[] sDbl = frame.sDbl;
             final InterpreterData iData = frame.idata;
             if (state.stackTop == frame.emptyStackTop + 1) {
-                // Call from Icode_GOSUB: store return PC address in the local
+                // Call from Icode.GOSUB: store return PC address in the local
                 state.indexReg += iData.itsMaxVars;
                 stack[state.indexReg] = stack[state.stackTop];
                 sDbl[state.indexReg] = sDbl[state.stackTop];
@@ -2914,7 +2914,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Object lhs = frame.stack[state.stackTop];
             if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             frame.stack[state.stackTop] =
-                    ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode_DELNAME);
+                    ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode.DELNAME);
             return null;
         }
     }
@@ -3335,7 +3335,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
             byte[] iCode = frame.idata.itsICode;
-            boolean isOptionalChainingCall = (op == Icode_CALLSPECIAL_OPTIONAL);
+            boolean isOptionalChainingCall = (op == Icode.CALLSPECIAL_OPTIONAL);
 
             if (state.instructionCounting) {
                 cx.instructionCount += INVOCATION_COST;
@@ -3414,7 +3414,7 @@ public final class Interpreter extends Icode implements Evaluator {
             Scriptable funThisObj = result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
-            if (op == Icode_CALL_ON_SUPER) {
+            if (op == Icode.CALL_ON_SUPER) {
                 // funThisObj would have been the "super" object, which we
                 // used to lookup the function. Now that that's done, we
                 // discard it and invoke the function with the current
@@ -3555,7 +3555,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     CallFrame callParentFrame = frame;
-                    if (op == Icode_TAIL_CALL) {
+                    if (op == Icode.TAIL_CALL) {
                         // In principle tail call can re-use the current
                         // frame and its stack arrays but it is hard to
                         // do properly. Any exceptions that can legally
@@ -3594,7 +3594,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     ifun,
                                     idata,
                                     callParentFrame);
-                    if (op != Icode_TAIL_CALL) {
+                    if (op != Icode.TAIL_CALL) {
                         frame.savedStackTop = state.stackTop;
                         frame.savedCallOp = op;
                     }
@@ -4586,7 +4586,7 @@ public final class Interpreter extends Icode implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             var store = (NewLiteralStorage) frame.stack[state.stackTop];
             int[] skipIndexes = null;
-            if (op == Icode_SPARE_ARRAYLIT) {
+            if (op == Icode.SPARE_ARRAYLIT) {
                 skipIndexes = store.getAdjustedSkipIndexes();
                 if (skipIndexes == null) {
                     skipIndexes = (int[]) frame.idata.literalIds[state.indexReg];
@@ -4599,7 +4599,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            if (op == Icode_SPARE_ARRAYLIT) {
+            if (op == Icode.SPARE_ARRAYLIT) {
                 ctx.out.println(tname + " " + ctx.idata.literalIds[ctx.indexReg]);
             } else {
                 ctx.out.println(tname);
@@ -4705,13 +4705,13 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoIndexCn extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = Icode_REG_IND_C0 - op;
+            state.indexReg = Icode.REG_IND_C0 - op;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = Icode_REG_IND_C0 - op;
+            ctx.indexReg = Icode.REG_IND_C0 - op;
             ctx.out.println(tname);
         }
     }
@@ -4767,13 +4767,13 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoStringCn extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.stringReg = frame.idata.itsStringTable[Icode_REG_STR_C0 - op];
+            state.stringReg = frame.idata.itsStringTable[Icode.REG_STR_C0 - op];
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.idata.itsStringTable[Icode_REG_STR_C0 - op];
+            String str = ctx.idata.itsStringTable[Icode.REG_STR_C0 - op];
             ctx.out.println(tname + " \"" + str + '"');
         }
     }
@@ -4829,7 +4829,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoBigIntCn extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.bigIntReg = frame.idata.itsBigIntTable[Icode_REG_BIGINT_C0 - op];
+            state.bigIntReg = frame.idata.itsBigIntTable[Icode.REG_BIGINT_C0 - op];
             return null;
         }
 
@@ -4838,7 +4838,7 @@ public final class Interpreter extends Icode implements Evaluator {
             ctx.out.println(
                     tname
                             + " "
-                            + ctx.idata.itsBigIntTable[Icode_REG_BIGINT_C0 - op].toString()
+                            + ctx.idata.itsBigIntTable[Icode.REG_BIGINT_C0 - op].toString()
                             + 'n');
         }
     }
@@ -5138,7 +5138,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     private static void setCallResult(CallFrame frame, Object callResult, double callResultDbl) {
-        if (frame.savedCallOp == Token.CALL || frame.savedCallOp == Icode_CALL_ON_SUPER) {
+        if (frame.savedCallOp == Token.CALL || frame.savedCallOp == Icode.CALL_ON_SUPER) {
             frame.stack[frame.savedStackTop] = callResult;
             frame.sDbl[frame.savedStackTop] = callResultDbl;
         } else if (frame.savedCallOp == Token.NEW) {
@@ -5177,7 +5177,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 x.stack[i] = null;
                 x.stackAttributes[i] = ScriptableObject.EMPTY;
             }
-            if (x.savedCallOp == Token.CALL || x.savedCallOp == Icode_CALL_ON_SUPER) {
+            if (x.savedCallOp == Token.CALL || x.savedCallOp == Icode.CALL_ON_SUPER) {
                 // the call will always overwrite the stack top with the result
                 x.stack[x.savedStackTop] = null;
             } else {

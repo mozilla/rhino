@@ -7,10 +7,10 @@ import org.mozilla.javascript.*;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
- * Regression tests for fixed-width Icode_SPREAD encoding in object literals.
+ * Regression tests for fixed-width Icode.SPREAD encoding in object literals.
  *
- * <p>visitObjectLiteralWithSpread() emitted Icode_SPREAD with no operand bytes. Once
- * bytecodeSpan(Icode_SPREAD) was fixed to return 1+2, the linear bytecode scanners would skip 2
+ * <p>visitObjectLiteralWithSpread() emitted Icode.SPREAD with no operand bytes. Once
+ * bytecodeSpan(Icode.SPREAD) was fixed to return 1+2, the linear bytecode scanners would skip 2
  * extra bytes after every object spread, misreading real opcodes as operand data.
  *
  * <p>The desync is tested indirectly: if bytecodeSpan is wrong, instructions after the spread are
@@ -68,7 +68,7 @@ public class ObjectLiteralSpreadBytecodeTest {
 
     // ------------------------------------------------------------------
     // 2. Code *after* the spread must execute correctly.
-    //    If bytecodeSpan(Icode_SPREAD) returns 1 instead of 3, the 2
+    //    If bytecodeSpan(Icode.SPREAD) returns 1 instead of 3, the 2
     //    operand bytes of the now-unconditional uint16 are misread as
     //    the next opcode(s), breaking any computation that follows.
     // ------------------------------------------------------------------
@@ -121,9 +121,9 @@ public class ObjectLiteralSpreadBytecodeTest {
     }
 
     // ------------------------------------------------------------------
-    // 3. Error line numbers: pcSourceLineStart is driven by Icode_LINE
+    // 3. Error line numbers: pcSourceLineStart is driven by Icode.LINE
     //    instructions found via bytecodeSpan(). If the span for
-    //    Icode_SPREAD is wrong, the line counter drifts.
+    //    Icode.SPREAD is wrong, the line counter drifts.
     // ------------------------------------------------------------------
 
     @Test
@@ -134,7 +134,7 @@ public class ObjectLiteralSpreadBytecodeTest {
             cx.evaluateString(
                     cx.initStandardObjects(),
                     "var a = {x:1};\n" // line 1
-                            + "var b = {...a};\n" // line 2 (Icode_SPREAD here)
+                            + "var b = {...a};\n" // line 2 (Icode.SPREAD here)
                             + "undefinedVar;\n", // line 3 ← must be reported
                     "test",
                     1,
@@ -145,7 +145,7 @@ public class ObjectLiteralSpreadBytecodeTest {
                     3,
                     e.lineNumber(),
                     "ReferenceError must be on line 3; "
-                            + "wrong line means bytecodeSpan(Icode_SPREAD) is incorrect");
+                            + "wrong line means bytecodeSpan(Icode.SPREAD) is incorrect");
         } finally {
             Context.exit();
         }
@@ -160,7 +160,7 @@ public class ObjectLiteralSpreadBytecodeTest {
                     cx.initStandardObjects(),
                     "var a = {x:1};\n" // line 1
                             + "var b = {y:2};\n" // line 2
-                            + "var c = {...a,...b};\n" // line 3 (two Icode_SPREADs)
+                            + "var c = {...a,...b};\n" // line 3 (two Icode.SPREADs)
                             + "undefinedVar;\n", // line 4 ← must be reported
                     "test",
                     1,
@@ -183,8 +183,8 @@ public class ObjectLiteralSpreadBytecodeTest {
                     cx.initStandardObjects(),
                     "var obj = {x:1};\n" // line 1
                             + "var arr = [1,2];\n" // line 2
-                            + "var o2 = {...obj, y:2};\n" // line 3 (object Icode_SPREAD)
-                            + "var a2 = [...arr, 3];\n" // line 4 (array Icode_SPREAD)
+                            + "var o2 = {...obj, y:2};\n" // line 3 (object Icode.SPREAD)
+                            + "var a2 = [...arr, 3];\n" // line 4 (array Icode.SPREAD)
                             + "undefinedVar;\n", // line 5 ← must be reported
                     "test",
                     1,
