@@ -23,6 +23,8 @@ import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 class BodyCodegen {
     void generateBodyCode() {
@@ -485,7 +487,7 @@ class BodyCodegen {
             cfw.addAStore(popvLocal);
 
             int linenum = scriptOrFn.getEndLineno();
-            if (linenum != -1) cfw.addLineNumberEntry((short) linenum);
+            if (linenum != -1) addRemappedLineEntry(linenum, 0);
 
         } else {
             if (fnCurrent.itsContainsCalls0) {
@@ -3136,9 +3138,25 @@ class BodyCodegen {
     }
 
     private void updateLineNumber(Node node) {
-        itsLineNumber = node.getLineno();
-        if (itsLineNumber == -1) return;
-        cfw.addLineNumberEntry((short) itsLineNumber);
+        int lineno = node.getLineno();
+        if (lineno == -1) return;
+        int emitLine = remapLine(lineno, node.getColumn());
+        if (emitLine == -1) return;
+        itsLineNumber = emitLine;
+        cfw.addLineNumberEntry((short) emitLine);
+    }
+
+    private void addRemappedLineEntry(int line, int column) {
+        int emitLine = remapLine(line, column);
+        if (emitLine == -1) return;
+        cfw.addLineNumberEntry((short) emitLine);
+    }
+
+    private int remapLine(int line, int column) {
+        SourceMapper mapper = compilerEnv.getSourceMapper();
+        if (mapper == null) return line;
+        Position mapped = mapper.mapPosition(line, column);
+        return mapped == null ? -1 : mapped.getLine();
     }
 
     private void visitTryCatchFinally(Jump node, Node child) {

@@ -10,6 +10,7 @@ module org.mozilla.rhino {
     exports org.mozilla.javascript.debug;
     exports org.mozilla.javascript.optimizer;
     exports org.mozilla.javascript.serialize;
+    exports org.mozilla.javascript.sourcemap;
     exports org.mozilla.javascript.typedarrays;
     exports org.mozilla.javascript.xml;
     exports org.mozilla.javascript.config;

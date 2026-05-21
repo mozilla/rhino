@@ -35,6 +35,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -2580,6 +2581,7 @@ public class Context implements Closeable {
                         spec.getCompiler(),
                         spec.getCompilationErrorReporter(),
                         spec.getCompilerEnvironsProcessor(),
+                        spec.getSourceMapper(),
                         false,
                         Evaluator::compileScript);
         return compiled.evaluator.createScriptObject(compiled.result, spec.getSecurityDomain());
@@ -2595,6 +2597,7 @@ public class Context implements Closeable {
                         spec.getCompiler(),
                         spec.getCompilationErrorReporter(),
                         spec.getCompilerEnvironsProcessor(),
+                        spec.getSourceMapper(),
                         true,
                         Evaluator::compileFunction);
         return compiled.evaluator.createFunctionObject(
@@ -2625,6 +2628,7 @@ public class Context implements Closeable {
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
             Consumer<CompilerEnvirons> compilerEnvironProcessor,
+            SourceMapper sourceMapper,
             boolean returnFunction,
             CompileFn<T> compileFn) {
         if (sourceName == null) {
@@ -2639,6 +2643,9 @@ public class Context implements Closeable {
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
         compilerEnv.setSecurityDomain(securityDomain);
+        if (sourceMapper != null) {
+            compilerEnv.setSourceMapper(sourceMapper);
+        }
 
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
@@ -2686,7 +2693,15 @@ public class Context implements Closeable {
             if (sourceString == null) Kit.codeBug();
             DebuggableScript dscript = result.getDebuggableScript();
             if (dscript != null) {
-                notifyDebugger_r(this, dscript, sourceString);
+                String debugSource = sourceString;
+                SourceMapper mapper = compilerEnv.getSourceMapper();
+                if (mapper != null) {
+                    String original = mapper.getOriginalSource();
+                    if (original != null) {
+                        debugSource = original;
+                    }
+                }
+                notifyDebugger_r(this, dscript, debugSource);
             } else {
                 throw new RuntimeException("NOT SUPPORTED");
             }

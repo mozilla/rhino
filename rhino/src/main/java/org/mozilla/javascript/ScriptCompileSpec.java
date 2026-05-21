@@ -3,6 +3,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.function.Consumer;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /**
  * Parameters for compiling a JavaScript script (i.e. top-level program source). Build instances via
@@ -20,6 +21,7 @@ public final class ScriptCompileSpec {
     private final Evaluator compiler;
     private final ErrorReporter compilationErrorReporter;
     private final Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+    private final SourceMapper sourceMapper;
 
     public ScriptCompileSpec(
             String source,
@@ -28,7 +30,8 @@ public final class ScriptCompileSpec {
             Object securityDomain,
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
-            Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+            Consumer<CompilerEnvirons> compilerEnvironsProcessor,
+            SourceMapper sourceMapper) {
         this.source = source;
         this.sourceName = sourceName;
         this.lineno = lineno;
@@ -36,6 +39,7 @@ public final class ScriptCompileSpec {
         this.compiler = compiler;
         this.compilationErrorReporter = compilationErrorReporter;
         this.compilerEnvironsProcessor = compilerEnvironsProcessor;
+        this.sourceMapper = sourceMapper;
     }
 
     public static Builder fromSource(String source) {
@@ -74,6 +78,10 @@ public final class ScriptCompileSpec {
         return compilerEnvironsProcessor;
     }
 
+    public SourceMapper getSourceMapper() {
+        return sourceMapper;
+    }
+
     public static final class Builder {
         private final String source;
         private String sourceName;
@@ -82,6 +90,7 @@ public final class ScriptCompileSpec {
         private Evaluator compiler;
         private ErrorReporter compilationErrorReporter;
         private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+        private SourceMapper sourceMapper;
 
         private Builder(String source) {
             this.source = source;
@@ -118,6 +127,11 @@ public final class ScriptCompileSpec {
             return this;
         }
 
+        public Builder sourceMapper(SourceMapper sourceMapper) {
+            this.sourceMapper = sourceMapper;
+            return this;
+        }
+
         public ScriptCompileSpec build() {
             int normalizedLineno = Math.max(lineno, 0);
             return new ScriptCompileSpec(
@@ -127,7 +141,8 @@ public final class ScriptCompileSpec {
                     securityDomain,
                     compiler,
                     compilationErrorReporter,
-                    compilerEnvironsProcessor);
+                    compilerEnvironsProcessor,
+                    sourceMapper);
         }
     }
 }

@@ -4,13 +4,10 @@
 
 package org.mozilla.javascript;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -488,24 +485,12 @@ class InterpreterBytecodeDumpTest {
     }
 
     private static String getByteCodeFrom(String source) throws IOException {
-        var oldBytecodePrintStream = Interpreter.interpreterBytecodePrintStream;
-        var oldTokenPrintICode = Token.printICode;
-        var oldTokenPrintNames = Token.printNames;
-        try (var buffer = new ByteArrayOutputStream()) {
-            Interpreter.interpreterBytecodePrintStream = new PrintStream(buffer);
-            Token.printICode = true;
-            Token.printNames = true;
-
-            try (Context cx = Context.enter()) {
-                cx.setInterpretedMode(true);
-                cx.compileString(source, "test", 1, null);
-            }
-
-            return buffer.toString(UTF_8);
-        } finally {
-            Token.printNames = oldTokenPrintNames;
-            Token.printICode = oldTokenPrintICode;
-            Interpreter.interpreterBytecodePrintStream = oldBytecodePrintStream;
-        }
+        return InterpreterIcodeCapture.capture(
+                () -> {
+                    try (Context cx = Context.enter()) {
+                        cx.setInterpretedMode(true);
+                        cx.compileString(source, "test", 1, null);
+                    }
+                });
     }
 }

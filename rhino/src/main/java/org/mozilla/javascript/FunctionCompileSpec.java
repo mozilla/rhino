@@ -3,6 +3,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.function.Consumer;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /**
  * Parameters for compiling a JavaScript function (a single function definition). The parent scope
@@ -21,6 +22,7 @@ public final class FunctionCompileSpec {
     private final Evaluator compiler;
     private final ErrorReporter compilationErrorReporter;
     private final Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+    private final SourceMapper sourceMapper;
 
     public FunctionCompileSpec(
             String source,
@@ -30,7 +32,8 @@ public final class FunctionCompileSpec {
             Object securityDomain,
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
-            Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
+            Consumer<CompilerEnvirons> compilerEnvironsProcessor,
+            SourceMapper sourceMapper) {
         if (scope == null) {
             throw new IllegalArgumentException("scope is required for FunctionCompileSpec");
         }
@@ -42,6 +45,7 @@ public final class FunctionCompileSpec {
         this.compiler = compiler;
         this.compilationErrorReporter = compilationErrorReporter;
         this.compilerEnvironsProcessor = compilerEnvironsProcessor;
+        this.sourceMapper = sourceMapper;
     }
 
     public static Builder fromSource(String source, VarScope scope) {
@@ -84,6 +88,10 @@ public final class FunctionCompileSpec {
         return compilerEnvironsProcessor;
     }
 
+    public SourceMapper getSourceMapper() {
+        return sourceMapper;
+    }
+
     public static final class Builder {
         private final String source;
         private final VarScope scope;
@@ -93,6 +101,7 @@ public final class FunctionCompileSpec {
         private Evaluator compiler;
         private ErrorReporter compilationErrorReporter;
         private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
+        private SourceMapper sourceMapper;
 
         private Builder(String source, VarScope scope) {
             if (scope == null) {
@@ -133,6 +142,11 @@ public final class FunctionCompileSpec {
             return this;
         }
 
+        public Builder sourceMapper(SourceMapper sourceMapper) {
+            this.sourceMapper = sourceMapper;
+            return this;
+        }
+
         public FunctionCompileSpec build() {
             int normalizedLineno = Math.max(lineno, 0);
             return new FunctionCompileSpec(
@@ -143,7 +157,8 @@ public final class FunctionCompileSpec {
                     securityDomain,
                     compiler,
                     compilationErrorReporter,
-                    compilerEnvironsProcessor);
+                    compilerEnvironsProcessor,
+                    sourceMapper);
         }
     }
 }
