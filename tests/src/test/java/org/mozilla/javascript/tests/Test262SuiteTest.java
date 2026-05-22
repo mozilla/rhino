@@ -878,9 +878,7 @@ public class Test262SuiteTest {
         }
 
         public boolean shouldRun() {
-            return shouldRun &&
-                   ((isDebug && debugEnabled) ||
-                    (!isDebug && normalEnabled));
+            return shouldRun && ((isDebug && debugEnabled) || (!isDebug && normalEnabled));
         }
 
         public String trackerName(boolean strict) {
