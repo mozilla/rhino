@@ -4,17 +4,16 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.*;
 
 public class JSScriptSerializationTest {
 
@@ -51,23 +50,29 @@ public class JSScriptSerializationTest {
     public void interpretedScriptSurvivesSerializationRoundTrip() throws Exception {
         cx.setInterpretedMode(true);
         Script script = cx.compileString("'hello';", "test.js", 1, null);
-        Assertions.assertEquals("hello", script.exec(cx, scope, scope));
+
+        assertTrue(script.getDescriptor().isInterpreted());
+        assertEquals("hello", script.exec(cx, scope, scope));
 
         byte[] bytes = serialize(script);
         Script deserialized = deserialize(bytes);
 
-        Assertions.assertEquals("hello", deserialized.exec(cx, scope, scope));
+        assertTrue(script.getDescriptor().isInterpreted());
+        assertEquals("hello", deserialized.exec(cx, scope, scope));
     }
 
     @Test
     public void compiledScriptSurvivesSerializationRoundTrip() throws Exception {
         cx.setInterpretedMode(false);
         Script script = cx.compileString("'hello';", "test.js", 1, null);
-        Assertions.assertEquals("hello", script.exec(cx, scope, scope));
+
+        assertFalse(script.getDescriptor().isInterpreted());
+        assertEquals("hello", script.exec(cx, scope, scope));
 
         byte[] bytes = serialize(script);
         Script deserialized = deserialize(bytes);
 
-        Assertions.assertEquals("hello", deserialized.exec(cx, scope, scope));
+        assertFalse(script.getDescriptor().isInterpreted());
+        assertEquals("hello", deserialized.exec(cx, scope, scope));
     }
 }

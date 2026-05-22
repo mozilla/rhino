@@ -54,13 +54,11 @@ public class JSScript implements Script, ScriptOrFn<JSScript>, Serializable {
 
     @Serial
     protected Object writeReplace() {
-        if (!(descriptor.getCode() instanceof InterpreterData)) { // in compiled mode
-            return new CompiledScriptProxy(
-                    descriptor.getRawSource(),
-                    descriptor.getSourceName(),
-                    descriptor.getLanguageVersion());
+        if (descriptor.isInterpreted()) {
+            return this;
+        } else {
+            return new CompiledScriptProxy(descriptor);
         }
-        return this; // in interpreted mode
     }
 
     /**
@@ -95,10 +93,10 @@ public class JSScript implements Script, ScriptOrFn<JSScript>, Serializable {
         private final String sourceName;
         private final int languageVersion;
 
-        CompiledScriptProxy(String source, String sourceName, int languageVersion) {
-            this.source = source;
-            this.sourceName = sourceName;
-            this.languageVersion = languageVersion;
+        CompiledScriptProxy(JSDescriptor<JSScript> descriptor) {
+            this.source = descriptor.getRawSource();
+            this.sourceName = descriptor.getSourceName();
+            this.languageVersion = descriptor.getLanguageVersion();
         }
 
         /** recompiles from source */
