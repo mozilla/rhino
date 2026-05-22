@@ -85,6 +85,9 @@ public class Test262SuiteTest {
     private static final String testHarnessDir;
     private static final String testProperties;
 
+    private static final boolean normalEnabled;
+    private static final boolean debugEnabled;
+
     private static final boolean updateTest262Properties;
     private static final boolean rollUpEnabled;
     private static final boolean statsEnabled;
@@ -135,9 +138,13 @@ public class Test262SuiteTest {
                         : TestSource.resolve("testsrc/test262.properties");
 
         String updateProps = System.getProperty("updateTest262properties");
+        boolean debug = System.getProperty("runTest262Debug") != null;
+        boolean normal = System.getProperty("runTest262NonDebug") != null ? true : !debug;
 
         if (updateProps != null) {
             updateTest262Properties = true;
+            debugEnabled = true;
+            normalEnabled = true;
 
             switch (updateProps) {
                 case "all":
@@ -154,6 +161,8 @@ public class Test262SuiteTest {
             }
         } else {
             updateTest262Properties = rollUpEnabled = statsEnabled = includeUnsupported = false;
+            normalEnabled = normal;
+            debugEnabled = debug;
         }
     }
 
@@ -689,10 +698,7 @@ public class Test262SuiteTest {
                 continue;
             }
 
-            for (TestMode testMode :
-                    new TestMode[] {
-                        TestMode.INTERPRETED, TestMode.COMPILED, TestMode.DEBUGGER_INTERPRETED
-                    }) {
+            for (TestMode testMode : TestMode.valuesShouldRun()) {
                 if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
@@ -830,30 +836,35 @@ public class Test262SuiteTest {
         INTERPRETED(
                 "interpreted",
                 true,
+                false,
                 cx -> {
                     cx.setInterpretedMode(true);
                 }),
         COMPILED(
                 "compiled",
                 true,
+                false,
                 cx -> {
                     cx.setInterpretedMode(false);
                 }),
         DEBUGGER_INTERPRETED(
                 "debugger",
                 true,
+                true,
                 cx -> {
                     cx.setInterpretedMode(true);
                     cx.setDebugger(new NoOpDebugger(), null);
                 }),
-        SKIPPED("skipped", false, cx -> {});
+        SKIPPED("skipped", false, false, cx -> {});
 
         private final String keyPart;
         private final boolean shouldRun;
+        private final boolean isDebug;
         private final Consumer<Context> setup;
 
-        TestMode(String name, boolean shouldRun, Consumer<Context> setup) {
+        TestMode(String name, boolean shouldRun, boolean isDebug, Consumer<Context> setup) {
             this.shouldRun = shouldRun;
+            this.isDebug = isDebug;
             this.keyPart = name;
             this.setup = setup;
         }
@@ -867,11 +878,23 @@ public class Test262SuiteTest {
         }
 
         public boolean shouldRun() {
-            return shouldRun;
+            return shouldRun &&
+                   ((isDebug && debugEnabled) ||
+                    (!isDebug && normalEnabled));
         }
 
         public String trackerName(boolean strict) {
             return keyPart() + "-" + (strict ? "strict" : "non-strict");
+        }
+
+        public static TestMode[] valuesShouldRun() {
+            var values = new ArrayList<TestMode>();
+            for (var e : TestMode.values()) {
+                if (e.shouldRun()) {
+                    values.add(e);
+                }
+            }
+            return values.toArray(new TestMode[0]);
         }
     }
 
@@ -1270,7 +1293,7 @@ public class Test262SuiteTest {
         public void onDebuggerStatement(Context cx) {}
 
         @Override
-        public void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args) {}
+        public void onEnter(Context cx, VarScope activation, Scriptable thisObj, Object[] args) {}
 
         @Override
         public void onExit(Context cx, boolean byThrow, Object resultOrException) {}
