@@ -10,26 +10,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.*;
 
 public class JSScriptSerializationTest {
-
-    private Context cx;
-    private TopLevel scope;
-
-    @BeforeEach
-    public void init() {
-        cx = Context.enter();
-        scope = cx.initStandardObjects();
-    }
-
-    @AfterEach
-    public void close() {
-        Context.exit();
-    }
 
     private static byte[] serialize(Script script) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -48,31 +32,37 @@ public class JSScriptSerializationTest {
 
     @Test
     public void interpretedScriptSurvivesSerializationRoundTrip() throws Exception {
-        cx.setInterpretedMode(true);
-        Script script = cx.compileString("'hello';", "test.js", 1, null);
+        try (Context cx = Context.enter()) {
+            TopLevel scope = cx.initStandardObjects();
+            cx.setInterpretedMode(true);
+            Script script = cx.compileString("'hello';", "test.js", 1, null);
 
-        assertTrue(script.getDescriptor().isInterpreted());
-        assertEquals("hello", script.exec(cx, scope, scope));
+            assertTrue(script.getDescriptor().isInterpreted());
+            assertEquals("hello", script.exec(cx, scope, scope));
 
-        byte[] bytes = serialize(script);
-        Script deserialized = deserialize(bytes);
+            byte[] bytes = serialize(script);
+            Script deserialized = deserialize(bytes);
 
-        assertTrue(script.getDescriptor().isInterpreted());
-        assertEquals("hello", deserialized.exec(cx, scope, scope));
+            assertTrue(script.getDescriptor().isInterpreted());
+            assertEquals("hello", deserialized.exec(cx, scope, scope));
+        }
     }
 
     @Test
     public void compiledScriptSurvivesSerializationRoundTrip() throws Exception {
-        cx.setInterpretedMode(false);
-        Script script = cx.compileString("'hello';", "test.js", 1, null);
+        try (Context cx = Context.enter()) {
+            TopLevel scope = cx.initStandardObjects();
+            cx.setInterpretedMode(false);
+            Script script = cx.compileString("'hello';", "test.js", 1, null);
 
-        assertFalse(script.getDescriptor().isInterpreted());
-        assertEquals("hello", script.exec(cx, scope, scope));
+            assertFalse(script.getDescriptor().isInterpreted());
+            assertEquals("hello", script.exec(cx, scope, scope));
 
-        byte[] bytes = serialize(script);
-        Script deserialized = deserialize(bytes);
+            byte[] bytes = serialize(script);
+            Script deserialized = deserialize(bytes);
 
-        assertFalse(script.getDescriptor().isInterpreted());
-        assertEquals("hello", deserialized.exec(cx, scope, scope));
+            assertFalse(script.getDescriptor().isInterpreted());
+            assertEquals("hello", deserialized.exec(cx, scope, scope));
+        }
     }
 }

@@ -52,6 +52,10 @@ public class JSScript implements Script, ScriptOrFn<JSScript>, Serializable {
         return ret;
     }
 
+    /**
+     * Serialisation: A JSScript that is interpreted will be serialised normally; a compiled one
+     * will be substituted by a CompiledScriptProxy.
+     */
     @Serial
     protected Object writeReplace() {
         if (descriptor.isInterpreted()) {
@@ -71,7 +75,7 @@ public class JSScript implements Script, ScriptOrFn<JSScript>, Serializable {
      *   <li>Works for scripts of any complexity: nested functions, closures, regex literals,
      *       template literals, etc.
      *   <li>Cross-JVM compatible — the serialized form is plain source text.
-     *   <li>Strict mode and language version are preserved and re-applied on deserialization.
+     *   <li>Language version is preserved and re-applied on deserialization.
      * </ul>
      *
      * <p><b>Limitations:</b>
@@ -102,13 +106,10 @@ public class JSScript implements Script, ScriptOrFn<JSScript>, Serializable {
         /** recompiles from source */
         @Serial
         private Object readResolve() {
-            Context cx = Context.enter();
-            try {
+            try (Context cx = Context.enter()) {
                 cx.setLanguageVersion(languageVersion);
                 cx.setInterpretedMode(false);
                 return cx.compileString(source, sourceName, 1, null);
-            } finally {
-                Context.exit();
             }
         }
     }
