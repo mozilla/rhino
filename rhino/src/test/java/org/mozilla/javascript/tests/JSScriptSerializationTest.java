@@ -33,36 +33,38 @@ public class JSScriptSerializationTest {
     @Test
     public void interpretedScriptSurvivesSerializationRoundTrip() throws Exception {
         try (Context cx = Context.enter()) {
-            TopLevel scope = cx.initStandardObjects();
+            TopLevel global = cx.initStandardObjects();
+            Scriptable thisObject = global.getGlobalThis();
             cx.setInterpretedMode(true);
             Script script = cx.compileString("'hello';", "test.js", 1, null);
 
             assertTrue(script.getDescriptor().isInterpreted());
-            assertEquals("hello", script.exec(cx, scope, scope));
+            assertEquals("hello", script.exec(cx, global, thisObject));
 
             byte[] bytes = serialize(script);
             Script deserialized = deserialize(bytes);
 
             assertTrue(script.getDescriptor().isInterpreted());
-            assertEquals("hello", deserialized.exec(cx, scope, scope));
+            assertEquals("hello", deserialized.exec(cx, global, thisObject));
         }
     }
 
     @Test
     public void compiledScriptSurvivesSerializationRoundTrip() throws Exception {
         try (Context cx = Context.enter()) {
-            TopLevel scope = cx.initStandardObjects();
+            TopLevel global = cx.initStandardObjects();
+            Scriptable thisObject = global.getGlobalThis();
             cx.setInterpretedMode(false);
             Script script = cx.compileString("'hello';", "test.js", 1, null);
 
             assertFalse(script.getDescriptor().isInterpreted());
-            assertEquals("hello", script.exec(cx, scope, scope));
+            assertEquals("hello", script.exec(cx, global, thisObject));
 
             byte[] bytes = serialize(script);
             Script deserialized = deserialize(bytes);
 
             assertFalse(script.getDescriptor().isInterpreted());
-            assertEquals("hello", deserialized.exec(cx, scope, scope));
+            assertEquals("hello", deserialized.exec(cx, global, thisObject));
         }
     }
 }
