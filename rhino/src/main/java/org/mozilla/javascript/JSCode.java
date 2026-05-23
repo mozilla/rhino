@@ -35,7 +35,7 @@ public abstract class JSCode<T extends ScriptOrFn<T>> implements JSCodeExec<T>, 
 
     private static class NotCallable extends JSCode<JSFunction> implements Serializable {
 
-        private static final long serialVersionUID = 2691205302914111400L;
+        private static final long serialVersionUID = -31340315773728063L;
 
         @Override
         public Object execute(

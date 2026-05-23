@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.commonjs.module.provider;
 
+import java.io.Serial;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.mozilla.javascript.commonjs.module.ModuleScript;
@@ -19,7 +20,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  */
 public class StrongCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
 
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = -8435427841788350515L;
     private final Map<String, CachedModuleScript> modules =
             new ConcurrentHashMap<>(16, .75f, getConcurrencyLevel());
 

@@ -24,7 +24,7 @@ public interface Script {
     // Maintained for backward compatibility of already-compiled classes
     @Deprecated(since = "1.8.1")
     default Object exec(Context cx, VarScope scope) {
-        return exec(cx, scope, scope);
+        return exec(cx, scope, Undefined.SCRIPTABLE_UNDEFINED);
     }
 
     /**

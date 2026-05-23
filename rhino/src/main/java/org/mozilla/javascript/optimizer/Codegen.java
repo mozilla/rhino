@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CodeGenUtils;
+import org.mozilla.javascript.CompilationResult;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Evaluator;
@@ -39,6 +40,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.debug.DebuggableScript;
 
 /**
  * This class generates code for a given IR tree.
@@ -67,13 +69,14 @@ public class Codegen implements Evaluator {
         throw new UnsupportedOperationException();
     }
 
-    private static class CompilationResult<T extends ScriptOrFn<T>> {
+    private static class CodegenCompilationResult<T extends ScriptOrFn<T>>
+            implements CompilationResult<T> {
         final JSDescriptor.Builder<T> builder;
         final String className;
         final byte[] bytecode;
         final OptJSCode.BuilderEnv builderEnv;
 
-        CompilationResult(
+        CodegenCompilationResult(
                 JSDescriptor.Builder<T> builder,
                 String className,
                 byte[] bytecode,
@@ -83,11 +86,27 @@ public class Codegen implements Evaluator {
             this.bytecode = bytecode;
             this.builderEnv = builderEnv;
         }
+
+        @Override
+        public DebuggableScript getDebuggableScript() {
+            // Can't debug compiled classes
+            return null;
+        }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Object compile(
+    public CompilationResult<JSScript> compileScript(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
+        return doCompile(compilerEnv, tree, rawSource, false);
+    }
+
+    @Override
+    public CompilationResult<JSFunction> compileFunction(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
+        return doCompile(compilerEnv, tree, rawSource, true);
+    }
+
+    private <T extends ScriptOrFn<T>> CodegenCompilationResult<T> doCompile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
             String rawSource,
@@ -107,7 +126,7 @@ public class Codegen implements Evaluator {
 
         String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
-        JSDescriptor.Builder<?> builder = new JSDescriptor.Builder();
+        JSDescriptor.Builder<T> builder = new JSDescriptor.Builder<>();
         OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv(mainClassName);
         byte[] mainClassBytes =
                 compileToClassFile(
@@ -119,28 +138,30 @@ public class Codegen implements Evaluator {
                         rawSource,
                         returnFunction);
 
-        return new CompilationResult(builder, mainClassName, mainClassBytes, builderEnv);
+        return new CodegenCompilationResult<>(builder, mainClassName, mainClassBytes, builderEnv);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Script createScriptObject(Object bytecode, Object staticSecurityDomain) {
+    public Script createScriptObject(
+            CompilationResult<JSScript> compiled, Object staticSecurityDomain) {
         JSDescriptor<JSScript> desc =
-                defineClass((CompilationResult<JSScript>) bytecode, staticSecurityDomain);
+                defineClass((CodegenCompilationResult<JSScript>) compiled, staticSecurityDomain);
         return JSFunction.createScript(desc, null, staticSecurityDomain);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Function createFunctionObject(
-            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain) {
+            Context cx,
+            VarScope scope,
+            CompilationResult<JSFunction> compiled,
+            Object staticSecurityDomain) {
         JSDescriptor<JSFunction> desc =
-                defineClass((CompilationResult<JSFunction>) bytecode, staticSecurityDomain);
+                defineClass((CodegenCompilationResult<JSFunction>) compiled, staticSecurityDomain);
         return JSFunction.createFunction(cx, scope, desc, null, staticSecurityDomain);
     }
 
     private <T extends ScriptOrFn<T>> JSDescriptor<T> defineClass(
-            CompilationResult<T> compiled, Object staticSecurityDomain) {
+            CodegenCompilationResult<T> compiled, Object staticSecurityDomain) {
         // The generated classes in this case refer only to Rhino classes
         // which must be accessible through this class loader
         ClassLoader rhinoLoader = getClass().getClassLoader();
@@ -518,7 +539,7 @@ public class Codegen implements Evaluator {
                 "org/mozilla/javascript/BaseFunction",
                 "createObject",
                 "(Lorg/mozilla/javascript/Context;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(firstLocal);
 

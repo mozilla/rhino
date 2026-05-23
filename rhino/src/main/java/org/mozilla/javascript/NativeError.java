@@ -10,6 +10,7 @@ import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.List;
  * <p>ECMA 15.11
  */
 final class NativeError extends ScriptableObject {
-    private static final long serialVersionUID = -5338413581437645187L;
+    @Serial private static final long serialVersionUID = -5338413581437645187L;
 
     private static final String ERROR_TAG = "Error";
     private static final String STACK_TAG = "stack";
@@ -54,9 +55,9 @@ final class NativeError extends ScriptableObject {
                         .build();
     }
 
-    private static Object js_constructor(
+    static Object js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return make(cx, s, f, args);
+        return make(cx, f, nt, s, thisObj, args, TopLevel.NativeErrors.Error);
     }
 
     private static Object js_toString(
@@ -108,9 +109,16 @@ final class NativeError extends ScriptableObject {
         return obj;
     }
 
-    static NativeError make(Context cx, VarScope scope, Function ctorObj, Object[] args) {
-        NativeError obj = makeProto(scope, ctorObj);
-
+    public static NativeError make(
+            Context cx,
+            JSFunction f,
+            Object nt,
+            VarScope s,
+            Object thisObj,
+            Object[] args,
+            TopLevel.NativeErrors type) {
+        NativeError obj = new NativeError();
+        ScriptRuntime.setBuiltinProtoAndParent(obj, f, nt, s, type);
         int arglen = args.length;
         if (arglen >= 1) {
             if (!Undefined.isUndefined(args[0])) {
@@ -135,8 +143,10 @@ final class NativeError extends ScriptableObject {
         return obj;
     }
 
-    static NativeError makeAggregate(Context cx, VarScope scope, Function ctorObj, Object[] args) {
-        NativeError obj = makeProto(scope, ctorObj);
+    static NativeError makeAggregate(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        NativeError obj = new NativeError();
+        ScriptRuntime.setBuiltinProtoAndParent(obj, f, nt, s, TopLevel.NativeErrors.AggregateError);
 
         int arglen = args.length;
         if (arglen >= 1) {
@@ -160,14 +170,14 @@ final class NativeError extends ScriptableObject {
                 }
             }
 
-            final Object iterator = ScriptRuntime.callIterator(args[0], cx, scope);
-            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+            final Object iterator = ScriptRuntime.callIterator(args[0], cx, s);
+            try (IteratorLikeIterable it = new IteratorLikeIterable(cx, s, iterator)) {
                 List<Object> errors = new ArrayList<>();
                 for (Object o : it) {
                     errors.add(o);
                 }
 
-                Scriptable newArray = cx.newArray(scope, errors.toArray());
+                Scriptable newArray = cx.newArray(s, errors.toArray());
                 obj.defineProperty("errors", newArray, DONTENUM);
             }
         } else {
@@ -378,7 +388,7 @@ final class NativeError extends ScriptableObject {
     private static final class ProtoProps implements Serializable {
         static final String KEY = "_ErrorPrototypeProps";
 
-        private static final long serialVersionUID = 1907180507775337939L;
+        @Serial private static final long serialVersionUID = 1907180507775337939L;
 
         int stackTraceLimit = DEFAULT_STACK_LIMIT;
         Function prepareStackTrace;

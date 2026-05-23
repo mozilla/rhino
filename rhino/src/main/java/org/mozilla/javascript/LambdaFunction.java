@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * This class implements a single JavaScript function that has the prototype of the built-in
  * Function class, and which is implemented using a single function that can easily be implemented
@@ -13,7 +15,7 @@ package org.mozilla.javascript;
  */
 public class LambdaFunction extends BaseFunction {
 
-    private static final long serialVersionUID = -8388132362854748293L;
+    @Serial private static final long serialVersionUID = 6594410813947157220L;
 
     // The target is expected to be a lambda. Lambdas may be serialized, which
     // requires this special interface.

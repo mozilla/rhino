@@ -1,0 +1,49 @@
+# Ensure that we only support Java 17 features for all builds
+build --java_language_version=17
+# Ensure that Java 17-compatible bytecode is produced
+build --java_runtime_version=remotejdk_17
+# Force Bazel to use Java 25 for its own internal tools/helpers
+build --extra_toolchains=@rules_java//java:all
+build --tool_java_runtime_version=remotejdk_25
+
+# Set properties that will be required to ensure that
+# all legacy tests pass consistently
+test --jvmopt="-Duser.language=en"
+test --jvmopt="-Duser.country=US"
+test --jvmopt="-Duser.timezone=America/Los_Angeles"
+test --jvmopt="-Dfile.encoding=UTF-8"
+
+# Default javac options
+build --javacopt="-encoding UTF-8"
+build --javacopt="-Xlint:deprecation"
+build --javacopt="-Xlint:unchecked"
+build --javacopt="-Xlint:-removal"
+test --javacopt="-Xlint:-deprecation"
+
+# Set up Errorprone for success
+build --javacopt="-Xep:JUnit4TestNotRun:OFF
+build --javacopt="-Xep:ReturnValueIgnored:OFF"
+build --javacopt="-Xep:IdentityBinaryExpression:OFF"
+build --javacopt="-Xep:ClassInitializationDeadlock:OFF"
+build --javacopt="-Xep:EffectivelyPrivate:OFF"
+build --javacopt="-Xep:BooleanLiteral:OFF"
+build --javacopt="-Xep:AssignmentExpression:OFF"
+build --javacopt="-Xep:DuplicateBranches:OFF"
+build --javacopt="-Xep:PatternMatchingInstanceof:OFF"
+build --javacopt="-Xep:StatementSwitchToExpressionSwitch:OFF"
+build --javacopt="-Xep:RedundantControlFlow:OFF"
+build --javacopt="-Xep:AlmostJavadoc:OFF"
+build --javacopt="-Xep:EmptyBlockTag:OFF"
+build --javacopt="-Xep:EscapedEntity:OFF"
+build --javacopt="-Xep:MissingSummary:OFF"
+build --javacopt="-Xep:InvalidBlockTag:OFF"
+build --javacopt="-Xep:NotJavadoc:OFF"
+build --javacopt="-Xep:UnicodeEscape:OFF"
+build --javacopt="-Xep:EmptyCatch:OFF"
+build --javacopt="-Xep:LabelledBreakTarget:OFF"
+build --javacopt="-Xep:JavaUtilDate:OFF"
+build --javacopt="-Xep:InlineMeSuggester:OFF"
+build --javacopt="-Xep:UnusedVariable:OFF"
+build --javacopt="-Xep:AnnotateFormatMethod:OFF"
+
+try-import %workspace%/.bazelrc.user

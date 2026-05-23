@@ -1,5 +1,6 @@
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
@@ -13,7 +14,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * using some native functionality without using reflection.
  */
 public class LambdaSlot extends Slot<Scriptable> {
-    private static final long serialVersionUID = -3046681698806493052L;
+    @Serial private static final long serialVersionUID = -3046681698806493052L;
 
     LambdaSlot(Object name, int index) {
         super(name, index, 0);

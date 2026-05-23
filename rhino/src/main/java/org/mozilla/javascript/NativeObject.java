@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
  * @author Norris Boyd
  */
 public class NativeObject extends ScriptableObject implements Map {
-    private static final long serialVersionUID = -6345305608474346996L;
+    @Serial private static final long serialVersionUID = -6345305608474346996L;
 
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";
@@ -96,7 +97,7 @@ public class NativeObject extends ScriptableObject implements Map {
 
     static JSFunction init(Context cx, VarScope s, boolean sealed) {
         var desc = cx.version >= Context.VERSION_ES6 ? ES6_DESCRIPTOR : LEGACY_DESCRIPTOR;
-        return desc.buildConstructor(cx, (VarScope) s, new NativeObject(), sealed);
+        return desc.buildConstructor(cx, s, new NativeObject(), sealed);
     }
 
     @Override
@@ -280,7 +281,7 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object js_defineGetterOrSetter(
-            Context cx, Scriptable scope, boolean isSetter, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, boolean isSetter, Object thisObj, Object[] args) {
         if (args.length < 2 || !(args[1] instanceof Callable)) {
             Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
             throw ScriptRuntime.notFunctionError(badArg);
@@ -312,7 +313,7 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object js_lookupGetterOrSetter(
-            Context cx, Scriptable scope, boolean isSetter, Object thisObj, Object[] args) {
+            Context cx, VarScope scope, boolean isSetter, Object thisObj, Object[] args) {
         if (args.length < 1 || !(thisObj instanceof ScriptableObject)) return Undefined.instance;
 
         ScriptableObject so = (ScriptableObject) thisObj;
@@ -320,7 +321,7 @@ public class NativeObject extends ScriptableObject implements Map {
         int index = s.stringId != null ? 0 : s.index;
         Object gs;
         for (; ; ) {
-            gs = so.getGetterOrSetter(s.stringId, index, scope, isSetter);
+            gs = so.getGetterOrSetter(s.stringId, index, so, isSetter);
             if (gs != null) {
                 break;
             }
@@ -703,18 +704,33 @@ public class NativeObject extends ScriptableObject implements Map {
             } else {
                 ids = sourceObj.getIds();
             }
+            // Issue #2126: when the target is a NativeArray,
+            // AbstractEcmaObjectOperations.put() routes through
+            // ScriptableObject.putOwnProperty()/putImpl(), which bypasses
+            // NativeArray.put(int) and thus fails to update the array length.
+            // The slots get written but stay invisible (length stays 0).
+            // Short-circuit to the array's own put() so length is maintained.
+            boolean targetIsArray = targetObj instanceof NativeArray;
             for (Object key : ids) {
                 if (key instanceof Integer) {
                     int intId = (Integer) key;
                     if (sourceObj.has(intId, sourceObj) && isEnumerable(intId, sourceObj)) {
                         Object val = sourceObj.get(intId, sourceObj);
-                        AbstractEcmaObjectOperations.put(cx, targetObj, intId, val, true);
+                        if (targetIsArray) {
+                            targetObj.put(intId, targetObj, val);
+                        } else {
+                            AbstractEcmaObjectOperations.put(cx, targetObj, intId, val, true);
+                        }
                     }
                 } else if (key instanceof String) {
                     String stringId = ScriptRuntime.toString(key);
                     if (sourceObj.has(stringId, sourceObj) && isEnumerable(stringId, sourceObj)) {
                         Object val = sourceObj.get(stringId, sourceObj);
-                        AbstractEcmaObjectOperations.put(cx, targetObj, stringId, val, true);
+                        if (targetIsArray) {
+                            targetObj.put(stringId, targetObj, val);
+                        } else {
+                            AbstractEcmaObjectOperations.put(cx, targetObj, stringId, val, true);
+                        }
                     }
                 }
             }

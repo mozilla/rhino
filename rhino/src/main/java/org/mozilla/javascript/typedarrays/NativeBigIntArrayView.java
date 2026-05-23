@@ -1,10 +1,11 @@
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import org.mozilla.javascript.ScriptRuntime;
 
 public abstract class NativeBigIntArrayView extends NativeTypedArrayView<BigInteger> {
-    private static final long serialVersionUID = -3349222145964894609L;
+    @Serial private static final long serialVersionUID = -3349222145964894609L;
 
     protected NativeBigIntArrayView() {}
 

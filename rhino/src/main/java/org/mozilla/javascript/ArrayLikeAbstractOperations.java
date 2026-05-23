@@ -31,59 +31,6 @@ public class ArrayLikeAbstractOperations {
         public long getLength(Context cx, Scriptable o);
     }
 
-    /**
-     * Implements the methods "every", "filter", "forEach", "map", and "some" without using an
-     * IdFunctionObject.
-     */
-    public static Object iterativeMethod(
-            Context cx,
-            IterativeOperation operation,
-            VarScope scope,
-            Object thisObj,
-            Object[] args,
-            LengthAccessor lengthAccessor) {
-        return iterativeMethod(cx, null, operation, scope, thisObj, args, lengthAccessor, true);
-    }
-
-    /**
-     * Implements the methods "every", "filter", "forEach", "map", and "some" using an
-     * IdFunctionObject.
-     */
-    public static Object iterativeMethod(
-            Context cx,
-            IdFunctionObject fun,
-            IterativeOperation operation,
-            VarScope scope,
-            Object thisObj,
-            Object[] args,
-            LengthAccessor lengthAccessor) {
-        return iterativeMethod(cx, fun, operation, scope, thisObj, args, lengthAccessor, false);
-    }
-
-    private static Object iterativeMethod(
-            Context cx,
-            IdFunctionObject fun,
-            IterativeOperation operation,
-            VarScope scope,
-            Object thisObj,
-            Object[] args,
-            LengthAccessor lengthAccessor,
-            boolean skipCoercibleCheck) {
-        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-
-        if (!skipCoercibleCheck) {
-            if (IterativeOperation.FIND == operation
-                    || IterativeOperation.FIND_INDEX == operation
-                    || IterativeOperation.FIND_LAST == operation
-                    || IterativeOperation.FIND_LAST_INDEX == operation) {
-                requireObjectCoercible(cx, o, fun);
-            }
-        }
-
-        long length = lengthAccessor.getLength(cx, o);
-        return coercibleIterativeMethod(cx, operation, scope, o, args, length);
-    }
-
     public static Object iterativeMethod(
             Context cx,
             Object tag,

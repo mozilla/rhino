@@ -10,6 +10,7 @@ import java.io.CharArrayWriter;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -372,7 +373,7 @@ public abstract class RhinoException extends RuntimeException {
         return stackStyle;
     }
 
-    private static final long serialVersionUID = 1883500631321581169L;
+    @Serial private static final long serialVersionUID = 1883500631321581169L;
 
     // Just for testing!
     private static StackStyle stackStyle = RhinoConfig.get("rhino.stack.style", StackStyle.RHINO);

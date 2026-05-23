@@ -6,11 +6,12 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.math.BigInteger;
 
 /** This class implements the BigInt native object. */
 final class NativeBigInt extends ScriptableObject {
-    private static final long serialVersionUID = 1335609231306775449L;
+    @Serial private static final long serialVersionUID = 1335609231306775449L;
 
     private static final String CLASS_NAME = "BigInt";
 
@@ -74,7 +75,7 @@ final class NativeBigInt extends ScriptableObject {
         return (args.length >= 1) ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
     }
 
-    private static Scriptable js_constructor(Context cx, Scriptable scope, Object[] args) {
+    private static Scriptable js_constructor(Context cx, VarScope scope, Object[] args) {
         throw ScriptRuntime.typeErrorById("msg.no.new", CLASS_NAME);
     }
 

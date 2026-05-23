@@ -4,18 +4,19 @@
 
 package org.mozilla.javascript.commonjs.module;
 
+import java.io.Serial;
 import java.net.URI;
 import org.mozilla.javascript.DeclarationScope;
 import org.mozilla.javascript.ScopeObject;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.VarScope;
 
 /**
  * A top-level module scope. This class provides methods to retrieve the module's source and base
  * URIs in order to resolve relative module IDs and check sandbox constraints.
  */
 public class ModuleScope extends DeclarationScope {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = -877901398709024429L;
     private final URI uri;
     private final URI base;
 
@@ -38,14 +39,9 @@ public class ModuleScope extends DeclarationScope {
         return base;
     }
 
-    @Override
-    public String getClassName() {
-        return "module";
-    }
-
     /** Search up the chain of scopes to find a module scope. */
-    public static ModuleScope findModuleScope(Scriptable scope) {
-        Scriptable current = scope;
+    public static ModuleScope findModuleScope(VarScope scope) {
+        VarScope current = scope;
         while (current != null) {
             if (current instanceof ModuleScope) {
                 return (ModuleScope) current;

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.mozilla.javascript.ast.AbstractObjectProperty;
 import org.mozilla.javascript.ast.ArrayComprehension;
@@ -89,6 +90,8 @@ import org.mozilla.javascript.ast.XmlPropRef;
 import org.mozilla.javascript.ast.XmlRef;
 import org.mozilla.javascript.ast.XmlString;
 import org.mozilla.javascript.ast.Yield;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /**
  * This class implements the JavaScript parser.
@@ -212,12 +215,8 @@ public class Parser {
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
         } else {
-            errorReporter.warning(
-                    message,
-                    sourceURI,
-                    currentPos.getLineno(),
-                    currentPos.getLine(),
-                    currentPos.getOffset());
+            MappedLocation loc = mapCurrentPos();
+            errorReporter.warning(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
     }
 
@@ -244,13 +243,66 @@ public class Parser {
         if (errorCollector != null) {
             errorCollector.error(message, sourceURI, position, length);
         } else {
-            errorReporter.error(
-                    message,
-                    sourceURI,
-                    currentPos.getLineno(),
-                    currentPos.getLine(),
-                    currentPos.getOffset());
+            MappedLocation loc = mapCurrentPos();
+            errorReporter.error(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
+    }
+
+    private static final class MappedLocation {
+        private final int line;
+        private final String lineSource;
+        private final int offset;
+
+        private MappedLocation(int line, String lineSource, int offset) {
+            this.line = line;
+            this.lineSource = lineSource;
+            this.offset = offset;
+        }
+
+        public int getLine() {
+            return line;
+        }
+
+        public String getLineSource() {
+            return lineSource;
+        }
+
+        public int getOffset() {
+            return offset;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || obj.getClass() != this.getClass()) return false;
+            var that = (MappedLocation) obj;
+            return this.line == that.line
+                    && Objects.equals(this.lineSource, that.lineSource)
+                    && this.offset == that.offset;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(line, lineSource, offset);
+        }
+
+        @Override
+        public String toString() {
+            return "MappedLocation["
+                    + "line="
+                    + line
+                    + ", "
+                    + "lineSource="
+                    + lineSource
+                    + ", "
+                    + "offset="
+                    + offset
+                    + ']';
+        }
+    }
+
+    private MappedLocation mapCurrentPos() {
+        return mapLocation(currentPos.getLineno(), currentPos.getLine(), currentPos.getOffset());
     }
 
     private void addStrictWarning(
@@ -280,7 +332,8 @@ public class Parser {
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
         } else {
-            errorReporter.warning(message, sourceURI, line, lineSource, lineOffset);
+            MappedLocation loc = mapLocation(line, lineSource, lineOffset);
+            errorReporter.warning(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
     }
 
@@ -297,8 +350,25 @@ public class Parser {
         if (errorCollector != null) {
             errorCollector.error(message, sourceURI, position, length);
         } else {
-            errorReporter.error(message, sourceURI, line, lineSource, lineOffset);
+            MappedLocation loc = mapLocation(line, lineSource, lineOffset);
+            errorReporter.error(message, sourceURI, loc.line, loc.lineSource, loc.offset);
         }
+    }
+
+    private MappedLocation mapLocation(int line, String lineSource, int offset) {
+        SourceMapper mapper = compilerEnv.getSourceMapper();
+        if (mapper != null) {
+            Position mapped = mapper.mapPosition(line, offset);
+            if (mapped != null) {
+                line = mapped.getLine();
+                offset = mapped.getColumn();
+                String mappedLine = mapper.getSourceLineText(line);
+                if (mappedLine != null) {
+                    lineSource = mappedLine;
+                }
+            }
+        }
+        return new MappedLocation(line, lineSource, offset);
     }
 
     String lookupMessage(String messageId) {

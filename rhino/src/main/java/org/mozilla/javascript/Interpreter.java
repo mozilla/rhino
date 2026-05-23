@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -541,24 +542,22 @@ public final class Interpreter extends Icode implements Evaluator {
         public void delete(int index) {}
 
         @Override
-        public Object get(String name, Scriptable start) {
+        public void delete(Symbol key) {}
+
+        @Override
+        public Object get(String name, VarScope scope) {
             int offset = getOffsets().getOrDefault(name, -1);
             return offset >= 0 ? frame.getFromVars(offset) : NOT_FOUND;
         }
 
         @Override
-        public Object get(int index, Scriptable start) {
+        public Object get(int index, VarScope scope) {
             return NOT_FOUND;
         }
 
         @Override
-        public String getClassName() {
-            return "debugscope";
-        }
-
-        @Override
-        public Object getDefaultValue(Class<?> hint) {
-            return null;
+        public Object get(Symbol key, VarScope scope) {
+            return NOT_FOUND;
         }
 
         @Override
@@ -572,27 +571,22 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public Scriptable getPrototype() {
-            return null;
-        }
-
-        @Override
-        public boolean has(String name, Scriptable start) {
+        public boolean has(String name, VarScope start) {
             return getOffsets().containsKey(name);
         }
 
         @Override
-        public boolean has(int index, Scriptable start) {
+        public boolean has(int index, VarScope start) {
             return false;
         }
 
         @Override
-        public boolean hasInstance(Scriptable instance) {
+        public boolean has(Symbol key, VarScope start) {
             return false;
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public void put(String name, VarScope start, Object value) {
             int offset = getOffsets().getOrDefault(name, -1);
             if (offset >= 0) {
                 frame.setInVars(offset, value);
@@ -600,22 +594,17 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public void put(int index, VarScope start, Object value) {
             // Do nothing.
         }
 
         @Override
-        public void setParentScope(VarScope parent) {
+        public void put(Symbol key, VarScope start, Object value) {
             // Do nothing.
         }
 
         @Override
-        public void setPrototype(Scriptable prototype) {
-            // Do nothing.
-        }
-
-        @Override
-        public void defineConst(String name, Scriptable start) {
+        public void defineConst(String name, VarScope start) {
             // TODO Auto-generated method stub
 
         }
@@ -632,7 +621,7 @@ public final class Interpreter extends Icode implements Evaluator {
         }
 
         @Override
-        public void putConst(String name, Scriptable start, Object value) {
+        public void putConst(String name, VarScope start, Object value) {
             // TODO Auto-generated method stub
 
         }
@@ -716,53 +705,54 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class CompilationResult<T extends ScriptOrFn<T>> {
+    private static class InterpreterCompilationResult<T extends ScriptOrFn<T>>
+            implements CompilationResult<T> {
         private final JSDescriptor<T> descriptor;
         private final Scriptable homeObject;
 
-        CompilationResult(JSDescriptor<T> descriptor, Scriptable homeObject) {
+        InterpreterCompilationResult(JSDescriptor<T> descriptor, Scriptable homeObject) {
             this.descriptor = descriptor;
             this.homeObject = homeObject;
+        }
+
+        @Override
+        public DebuggableScript getDebuggableScript() {
+            return descriptor;
         }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Object compile(
-            CompilerEnvirons compilerEnv,
-            ScriptNode tree,
-            String rawSource,
-            boolean returnFunction) {
-        CodeGenerator<?> cgen = new CodeGenerator<>();
-        var itsData = cgen.compile(compilerEnv, tree, rawSource, returnFunction);
-        return new CompilationResult(itsData, compilerEnv.homeObject());
+    public CompilationResult<JSScript> compileScript(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
+        CodeGenerator<JSScript> cgen = new CodeGenerator<>();
+        JSDescriptor<JSScript> itsData = cgen.compile(compilerEnv, tree, rawSource, false);
+        return new InterpreterCompilationResult<>(itsData, compilerEnv.homeObject());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public DebuggableScript getDebuggableScript(Object bytecode) {
-        return ((CompilationResult<?>) bytecode).descriptor;
+    public CompilationResult<JSFunction> compileFunction(
+            CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
+        CodeGenerator<JSFunction> cgen = new CodeGenerator<>();
+        JSDescriptor<JSFunction> itsData = cgen.compile(compilerEnv, tree, rawSource, true);
+        return new InterpreterCompilationResult<>(itsData, compilerEnv.homeObject());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Script createScriptObject(Object bytecode, Object staticSecurityDomain) {
-        var compilerResult = (CompilationResult<JSScript>) bytecode;
-        return JSFunction.createScript(
-                compilerResult.descriptor, compilerResult.homeObject, staticSecurityDomain);
+    public Script createScriptObject(
+            CompilationResult<JSScript> compiled, Object staticSecurityDomain) {
+        var result = (InterpreterCompilationResult<JSScript>) compiled;
+        return JSFunction.createScript(result.descriptor, result.homeObject, staticSecurityDomain);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Function createFunctionObject(
-            Context cx, VarScope scope, Object bytecode, Object staticSecurityDomain) {
-        var compilerResult = (CompilationResult<JSFunction>) bytecode;
+            Context cx,
+            VarScope scope,
+            CompilationResult<JSFunction> compiled,
+            Object staticSecurityDomain) {
+        var result = (InterpreterCompilationResult<JSFunction>) compiled;
         return JSFunction.createFunction(
-                cx,
-                scope,
-                compilerResult.descriptor,
-                compilerResult.homeObject,
-                staticSecurityDomain);
+                cx, scope, result.descriptor, result.homeObject, staticSecurityDomain);
     }
 
     private static int getShort(byte[] iCode, int pc) {
@@ -964,8 +954,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 return 1 + 1;
 
             case Icode_LITERAL_NEW_ARRAY:
-                // skip indexes ID byte
-                return 1 + 1;
+                // skip indexes ID (uint16)
+                return 1 + 2;
+
+            case Icode_SPREAD:
+                // 2-byte source position operand (always emitted, even when unused)
+                return 1 + 2;
 
             case Icode_REG_BIGINT1:
                 // ubyte bigint index
@@ -1244,7 +1238,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     public static Object resumeGenerator(
-            Context cx, Scriptable scope, int operation, Object savedState, Object value) {
+            Context cx, VarScope scope, int operation, Object savedState, Object value) {
         CallFrame frame = (CallFrame) savedState;
         CallFrame activeFrame = frame.shallowCloneFrozen((CallFrame) cx.lastInterpreterFrame);
         try {
@@ -2898,6 +2892,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static class DoSetConst extends InstructionClass {
         @Override
+        @SuppressWarnings("unchecked")
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
@@ -3444,82 +3439,72 @@ public final class Interpreter extends Icode implements Evaluator {
             // if the function is already an interpreted function, which
             // should be the majority of cases.
             for (; ; ) {
-                if (fun instanceof KnownBuiltInFunction) {
-                    KnownBuiltInFunction kfun = (KnownBuiltInFunction) fun;
-                    // Bug 405654 -- make the best effort to keep
-                    // Function.apply and Function.call within this
-                    // interpreter loop invocation
-                    if (BaseFunction.isApplyOrCall(kfun)) {
-                        // funThisObj becomes fun
-                        fun = ScriptRuntime.getCallable(funThisObj);
-                        // first arg becomes thisObj
-                        funThisObj =
-                                getApplyThis(
-                                        cx,
-                                        stack,
-                                        sDbl,
-                                        boundArgs,
-                                        state.stackTop + 1,
-                                        state.indexReg,
-                                        (Function) fun,
-                                        frame);
-                        if (BaseFunction.isApply(kfun)) {
-                            // Apply: second argument after new "this"
-                            // should be array-like
-                            // and we'll spread its elements on the stack
-                            final Object[] callArgs;
-                            if (blen > 1) {
-                                callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
-                            } else if (state.indexReg < 2) {
-                                callArgs = ScriptRuntime.emptyArgs;
-                            } else {
-                                callArgs =
-                                        ScriptRuntime.getApplyArguments(
-                                                cx, stack[state.stackTop - blen + 2]);
-                            }
-
-                            int alen = callArgs.length;
-                            // We're coming from the outside, so this
-                            // is replacing any bound args we might
-                            // have had already.
-                            boundArgs = callArgs;
-                            blen = alen;
-                            state.indexReg = alen;
+                if (BaseFunction.isApplyOrCall(fun)) {
+                    // funThisObj becomes fun
+                    var target = ScriptRuntime.getCallable(funThisObj);
+                    // first arg becomes thisObj
+                    funThisObj =
+                            getApplyThis(
+                                    cx,
+                                    stack,
+                                    sDbl,
+                                    boundArgs,
+                                    state.stackTop + 1,
+                                    state.indexReg,
+                                    (Function) target,
+                                    frame);
+                    if (BaseFunction.isApply(fun)) {
+                        // Apply: second argument after new "this"
+                        // should be array-like
+                        // and we'll spread its elements on the stack
+                        final Object[] callArgs;
+                        if (blen > 1) {
+                            callArgs = ScriptRuntime.getApplyArguments(cx, boundArgs[1]);
+                        } else if (state.indexReg < 2) {
+                            callArgs = ScriptRuntime.emptyArgs;
                         } else {
-                            // Call: shift args left, starting from 2nd
-                            if (state.indexReg > 0) {
-                                if (state.indexReg > 1 && blen == 0) {
-                                    System.arraycopy(
-                                            stack,
-                                            state.stackTop + 2,
-                                            stack,
-                                            state.stackTop + 1,
-                                            state.indexReg - 1);
-                                    System.arraycopy(
-                                            sDbl,
-                                            state.stackTop + 2,
-                                            sDbl,
-                                            state.stackTop + 1,
-                                            state.indexReg - 1);
-                                } else if (state.indexReg > 1) {
-                                    Object[] newBArgs = new Object[boundArgs.length - 1];
-                                    System.arraycopy(
-                                            boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
-                                    boundArgs = newBArgs;
-                                    blen = newBArgs.length;
-                                } else {
-                                    // Bound args is 1 long.
-                                    boundArgs = new Object[0];
-                                    blen = 0;
-                                }
-                                state.indexReg--;
-                            }
+                            callArgs =
+                                    ScriptRuntime.getApplyArguments(
+                                            cx, stack[state.stackTop - blen + 2]);
                         }
+
+                        int alen = callArgs.length;
+                        // We're coming from the outside, so this
+                        // is replacing any bound args we might
+                        // have had already.
+                        boundArgs = callArgs;
+                        blen = alen;
+                        state.indexReg = alen;
                     } else {
-                        // Some other IdFunctionObject we don't know how to
-                        // reduce.
-                        break;
+                        // Call: shift args left, starting from 2nd
+                        if (state.indexReg > 0) {
+                            if (state.indexReg > 1 && blen == 0) {
+                                System.arraycopy(
+                                        stack,
+                                        state.stackTop + 2,
+                                        stack,
+                                        state.stackTop + 1,
+                                        state.indexReg - 1);
+                                System.arraycopy(
+                                        sDbl,
+                                        state.stackTop + 2,
+                                        sDbl,
+                                        state.stackTop + 1,
+                                        state.indexReg - 1);
+                            } else if (state.indexReg > 1) {
+                                Object[] newBArgs = new Object[boundArgs.length - 1];
+                                System.arraycopy(boundArgs, 1, newBArgs, 0, boundArgs.length - 1);
+                                boundArgs = newBArgs;
+                                blen = newBArgs.length;
+                            } else {
+                                // Bound args is 1 long.
+                                boundArgs = new Object[0];
+                                blen = 0;
+                            }
+                            state.indexReg--;
+                        }
                     }
+                    fun = target;
                 } else if (fun instanceof LambdaConstructor) {
                     break;
                 } else if (fun instanceof LambdaFunction) {
@@ -4413,8 +4398,8 @@ public final class Interpreter extends Icode implements Evaluator {
             // indexReg: number of values in the literal
             NewLiteralStorage storage = NewLiteralStorage.create(cx, state.indexReg, false);
 
-            int skipIdx = 0xFF & frame.idata.itsICode[frame.pc];
-            ++frame.pc;
+            int skipIdx = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
 
             // fill in skip indexes in array literal storage
             if (skipIdx > 0) { // 0 - no skip index, otherwise subtract 1 from idx
@@ -4427,9 +4412,9 @@ public final class Interpreter extends Icode implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int skipIdx = 0xFF & ctx.idata.itsICode[ctx.pc];
+            int skipIdx = getIndex(ctx.idata.itsICode, ctx.pc);
             ctx.out.println(tname + " " + ctx.indexReg + " skipIdx=" + skipIdx);
-            ++ctx.pc;
+            ctx.pc += 2;
         }
     }
 
@@ -4487,14 +4472,23 @@ public final class Interpreter extends Icode implements Evaluator {
             --state.stackTop;
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
 
+            // Always consume the 2-byte operand to keep pc in sync.
+            int sourcePos = getIndex(frame.idata.itsICode, frame.pc);
+            frame.pc += 2;
+
             if (store.hasSkipIndexes()) {
-                int sourcePos = 0xFF & frame.idata.itsICode[frame.pc];
-                ++frame.pc;
                 store.spread(cx, frame.scope, source, sourcePos);
             } else {
                 store.spread(cx, frame.scope, source, 0);
             }
             return null;
+        }
+
+        @Override
+        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
+            int sourcePos = ctx.getIndex(ctx.pc);
+            ctx.out.println(tname + " sourcePos=" + sourcePos);
+            ctx.pc += 2;
         }
     }
 
@@ -5069,7 +5063,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // However, when called from interpretLoop() as part of
                 // restarting a continuation, it can also be a WIthScope if
                 // the continuation was captured within a "with" or "catch"
-                // block ("catch" implicitly uses NativeWith to create a scope
+                // block ("catch" implicitly uses WithScope to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
                     if (scope instanceof WithScope) {

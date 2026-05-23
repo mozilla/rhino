@@ -10,13 +10,14 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
-    private static final long serialVersionUID = -5332312783643935019L;
+    @Serial private static final long serialVersionUID = 8880062939740158370L;
 
     /**
      * Create a JavaScript function object from a Java method.
@@ -153,6 +154,7 @@ public class FunctionObject extends BaseFunction {
         if (type == ScriptRuntime.BooleanClass || type == Boolean.TYPE) return JAVA_BOOLEAN_TYPE;
         if (type == ScriptRuntime.DoubleClass || type == Double.TYPE) return JAVA_DOUBLE_TYPE;
         if (ScriptRuntime.ScriptableClass.isAssignableFrom(type)) return JAVA_SCRIPTABLE_TYPE;
+        if (ScriptRuntime.VarScopeClass.isAssignableFrom(type)) return JAVA_VARSCOPE_TYPE;
         if (type == ScriptRuntime.ObjectClass) return JAVA_OBJECT_TYPE;
 
         // Note that the long type is not supported; see the javadoc for
@@ -473,7 +475,7 @@ public class FunctionObject extends BaseFunction {
      * new objects.
      */
     @Override
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, VarScope scope) {
         if (member.isCtor() || parmsLength == VARARGS_CTOR) {
             return null;
         }
@@ -529,6 +531,7 @@ public class FunctionObject extends BaseFunction {
     public static final int JAVA_DOUBLE_TYPE = 4;
     public static final int JAVA_SCRIPTABLE_TYPE = 5;
     public static final int JAVA_OBJECT_TYPE = 6;
+    public static final int JAVA_VARSCOPE_TYPE = 7;
 
     MemberBox member;
     private String functionName;

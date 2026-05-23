@@ -207,7 +207,7 @@ public class ScriptRuntime {
                         : new LegacyCacheFactory.Concurrent();
         typeFactory.associate(scope);
 
-        LambdaConstructor function = BaseFunction.init(cx, scope, sealed);
+        JSFunction function = BaseFunction.init(cx, scope, sealed);
         JSFunction obj = NativeObject.init(cx, scope, sealed);
 
         ScriptableObject objectPrototype = (ScriptableObject) obj.getPrototypeProperty();
@@ -229,23 +229,23 @@ public class ScriptRuntime {
             // representation
             NativeArray.setMaximumInitialCapacity(200000);
         }
-        NativeString.init(scope, sealed);
+        NativeString.init(cx, scope, sealed);
         NativeBoolean.init(cx, scope, sealed);
-        NativeNumber.init(scope, sealed);
+        NativeNumber.init(cx, scope, sealed);
         NativeDate.init(cx, scope, sealed);
         new LazilyLoadedCtor<>(scope, "Math", sealed, true, NativeMath::init);
         new LazilyLoadedCtor<>(scope, "JSON", sealed, true, NativeJSON::init);
 
-        NativeScript.init(cx, scope, sealed);
+        NativeScript.initLambda(cx, scope, sealed);
 
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
-        NativeArrayIterator.init(scope, sealed);
-        NativeStringIterator.init(scope, sealed);
+        NativeArrayIterator.init(cx, scope, sealed);
+        NativeStringIterator.init(cx, scope, sealed);
         registerRegExp(cx, scope, sealed);
 
-        NativeJavaObject.init(scope, sealed);
-        NativeJavaMap.init(scope, sealed);
+        NativeJavaObject.init(cx, scope, sealed);
+        NativeJavaMap.init(cx, scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -282,8 +282,6 @@ public class ScriptRuntime {
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
-            NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
-            NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
             new LazilyLoadedCtor<>(scope, "Map", sealed, true, NativeMap::init);
             new LazilyLoadedCtor<>(scope, "Promise", sealed, true, NativePromise::init);
             new LazilyLoadedCtor<>(scope, "Set", sealed, true, NativeSet::init);
@@ -302,7 +300,7 @@ public class ScriptRuntime {
     private static void registerRegExp(Context cx, TopLevel scope, boolean sealed) {
         RegExpProxy regExpProxy = getRegExpProxy(cx);
         if (regExpProxy != null) {
-            regExpProxy.register(scope, sealed);
+            regExpProxy.register(cx, scope, sealed);
         }
     }
 
@@ -990,7 +988,7 @@ public class ScriptRuntime {
             }
         } else if (id instanceof String) {
             String propName = (String) id;
-            value = getObjectProp(source, propName, cx, (VarScope) scope);
+            value = getObjectProp(source, propName, cx, scope);
             if (value != Scriptable.NOT_FOUND) {
                 result.put(propName, result, value);
             }
@@ -2618,7 +2616,7 @@ public class ScriptRuntime {
     }
 
     public static Object setConst(VarScope bound, Object value, Context cx, String id) {
-        ScriptableObject.putConstProperty((VarScope) bound, id, value);
+        ScriptableObject.putConstProperty(bound, id, value);
         return value;
     }
 
@@ -2635,7 +2633,7 @@ public class ScriptRuntime {
      * if a given property has already been enumerated.
      */
     private static class IdEnumeration implements Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -8685189816346084720L;
         Scriptable obj;
         Object[] ids;
         HashSet<Object> used;
@@ -2817,6 +2815,7 @@ public class ScriptRuntime {
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
+            new Error(String.format("%s", v)).printStackTrace();
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
@@ -2984,7 +2983,9 @@ public class ScriptRuntime {
                 }
                 throw notFunctionError(result, name);
             }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            // Top scope is not a with scope or an activation frame,
+            // the called function will resolve `globalThis` in its
+            // realm.
             storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
             return (Callable) result;
         }
@@ -3024,7 +3025,9 @@ public class ScriptRuntime {
                     throw notFoundError(scope, name);
                 }
             }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            // If the scope is a wtih scope then `this` will be its
+            // object, otherwise the callee will resolve `globalThis`
+            // in its realm.
             return new LookupResult(
                     result,
                     scope instanceof WithScope
@@ -3442,7 +3445,7 @@ public class ScriptRuntime {
 
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
-                return evalSpecial(cx, (VarScope) scope, callerThis, args, filename, lineNumber);
+                return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
             }
         } else {
             throw Kit.codeBug();
@@ -5393,6 +5396,12 @@ public class ScriptRuntime {
         obj.setParentScope(s);
     }
 
+    public static void setBuiltinProtoAndParent(
+            ScriptableObject obj, JSFunction f, Object nt, VarScope s, TopLevel.NativeErrors type) {
+        obj.setPrototype((Scriptable) f.getPrototypeProperty());
+        obj.setParentScope(s);
+    }
+
     public static void initFunction(
             Context cx, VarScope scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
@@ -6188,7 +6197,7 @@ public class ScriptRuntime {
         } else if (callThisArg == null) {
             return null;
         }
-        return ScriptRuntime.toObject((VarScope) scope, callThisArg);
+        return ScriptRuntime.toObject(scope, callThisArg);
     }
 
     /**

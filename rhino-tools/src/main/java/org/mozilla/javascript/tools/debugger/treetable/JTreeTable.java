@@ -37,6 +37,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.util.EventObject;
 import javax.swing.JTable;
 import javax.swing.JTree;
@@ -63,7 +64,7 @@ import javax.swing.tree.TreePath;
  */
 public class JTreeTable extends JTable {
     /** */
-    private static final long serialVersionUID = -2103973006456695515L;
+    @Serial private static final long serialVersionUID = -2103973006456695515L;
 
     /** A subclass of JTree. */
     protected TreeTableCellRenderer tree;
@@ -143,7 +144,7 @@ public class JTreeTable extends JTable {
 
     /** A TreeCellRenderer that displays a JTree. */
     public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
-        private static final long serialVersionUID = -193867880014600717L;
+        @Serial private static final long serialVersionUID = -193867880014600717L;
 
         /** Last table/tree row asked to renderer. */
         protected int visibleRow;
@@ -275,7 +276,7 @@ public class JTreeTable extends JTable {
      * paths are updated in the DefaultTreeSelectionModel.
      */
     public class ListToTreeSelectionModelWrapper extends DefaultTreeSelectionModel {
-        private static final long serialVersionUID = 8168140829623071131L;
+        @Serial private static final long serialVersionUID = 8168140829623071131L;
 
         /** Set to true when we are updating the ListSelectionModel. */
         protected boolean updatingListSelectionModel;

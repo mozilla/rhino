@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
@@ -16,7 +17,7 @@ import org.mozilla.javascript.Undefined;
  * affect all.
  */
 public abstract class NativeArrayBufferView extends ScriptableObject {
-    private static final long serialVersionUID = 6884475582973958419L;
+    @Serial private static final long serialVersionUID = 6884475582973958419L;
 
     private static Boolean useLittleEndian = null;
 

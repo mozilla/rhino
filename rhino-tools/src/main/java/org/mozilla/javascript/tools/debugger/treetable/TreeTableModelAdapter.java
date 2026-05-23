@@ -33,6 +33,7 @@
 
 package org.mozilla.javascript.tools.debugger.treetable;
 
+import java.io.Serial;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TreeExpansionEvent;
@@ -52,7 +53,7 @@ import javax.swing.tree.TreePath;
  * @author Scott Violet
  */
 public class TreeTableModelAdapter extends AbstractTableModel {
-    private static final long serialVersionUID = 48741114609209052L;
+    @Serial private static final long serialVersionUID = 48741114609209052L;
     JTree tree;
     TreeTableModel treeTableModel;
 

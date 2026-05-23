@@ -35,7 +35,7 @@ public class Environment extends ScriptableObject {
         try {
             ScriptableObject.defineClass(scope, Environment.class);
         } catch (Exception e) {
-            throw new Error(e.getMessage());
+            throw new Error(e);
         }
     }
 

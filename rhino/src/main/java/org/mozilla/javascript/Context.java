@@ -28,13 +28,14 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
-import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
+import org.mozilla.classfile.ClassFileWriter.ClassSizeException;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
@@ -554,14 +555,14 @@ public class Context implements Closeable {
      */
     public static Object call(
             ContextFactory factory,
-            final Callable callable,
-            final Scriptable scope,
-            final Scriptable thisObj,
-            final Object[] args) {
+            Callable callable,
+            VarScope scope,
+            Scriptable thisObj,
+            Object[] args) {
         if (factory == null) {
             factory = ContextFactory.getGlobal();
         }
-        return call(factory, cx -> callable.call(cx, (VarScope) scope, thisObj, args));
+        return call(factory, cx -> callable.call(cx, scope, thisObj, args));
     }
 
     /** The method implements {@link ContextFactory#call(ContextAction)} logic. */
@@ -1191,6 +1192,27 @@ public class Context implements Closeable {
     }
 
     /**
+     * Compile and execute a script described by {@code spec} in the given scope.
+     *
+     * @return the result of evaluating the source, or null if compilation produced no script
+     */
+    public final Object evaluateScript(ScriptCompileSpec spec, VarScope scope) {
+        Script script = compileScript(spec);
+        if (script != null) {
+            return script.exec(
+                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
+        }
+        return null;
+    }
+
+    /**
+     * @see #evaluateScript(ScriptCompileSpec, VarScope)
+     */
+    public final Object evaluateScript(ScriptCompileSpec.Builder spec, VarScope scope) {
+        return evaluateScript(spec.build(), scope);
+    }
+
+    /**
      * Evaluate a JavaScript source string.
      *
      * <p>The provided source name and line number are used for error messages and for producing
@@ -1208,12 +1230,13 @@ public class Context implements Closeable {
      */
     public final Object evaluateString(
             VarScope scope, String source, String sourceName, int lineno, Object securityDomain) {
-        Script script = compileString(source, sourceName, lineno, securityDomain);
-        if (script != null) {
-            return script.exec(
-                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
-        }
-        return null;
+        return evaluateScript(
+                ScriptCompileSpec.fromSource(source)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .build(),
+                scope);
     }
 
     /**
@@ -1234,12 +1257,13 @@ public class Context implements Closeable {
     public final Object evaluateReader(
             VarScope scope, Reader in, String sourceName, int lineno, Object securityDomain)
             throws IOException {
-        Script script = compileReader(in, sourceName, lineno, securityDomain);
-        if (script != null) {
-            return script.exec(
-                    this, scope, ScriptableObject.getTopLevelScope(scope).getGlobalThis());
-        }
-        return null;
+        return evaluateScript(
+                ScriptCompileSpec.fromReader(in)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .build(),
+                scope);
     }
 
     /**
@@ -1306,7 +1330,8 @@ public class Context implements Closeable {
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall(script, this, scope, scope, isStrict);
+        return ScriptRuntime.doTopCall(
+                script, this, scope, Undefined.SCRIPTABLE_UNDEFINED, isStrict);
     }
 
     public Object callFunctionWithContinuations(Callable callable, VarScope scope, Object[] args)
@@ -1436,22 +1461,13 @@ public class Context implements Closeable {
             Object securityDomain,
             Consumer<CompilerEnvirons> compilerEnvironsProcessor)
             throws IOException {
-        if (lineno < 0) {
-            // For compatibility IllegalArgumentException can not be thrown here
-            lineno = 0;
-        }
-
-        return (Script)
-                compileImpl(
-                        null,
-                        Kit.readReader(in),
-                        sourceName,
-                        lineno,
-                        securityDomain,
-                        false,
-                        null,
-                        null,
-                        compilerEnvironsProcessor);
+        return compileScript(
+                ScriptCompileSpec.fromReader(in)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .compilerEnvironsProcessor(compilerEnvironsProcessor)
+                        .build());
     }
 
     /**
@@ -1471,10 +1487,6 @@ public class Context implements Closeable {
      */
     public final Script compileString(
             String source, String sourceName, int lineno, Object securityDomain) {
-        if (lineno < 0) {
-            // For compatibility IllegalArgumentException can not be thrown here
-            lineno = 0;
-        }
         return compileString(source, null, null, sourceName, lineno, securityDomain, null);
     }
 
@@ -1486,17 +1498,15 @@ public class Context implements Closeable {
             int lineno,
             Object securityDomain,
             Consumer<CompilerEnvirons> compilerEnvironsProcessor) {
-        return (Script)
-                compileImpl(
-                        null,
-                        source,
-                        sourceName,
-                        lineno,
-                        securityDomain,
-                        false,
-                        compiler,
-                        compilationErrorReporter,
-                        compilerEnvironsProcessor);
+        return compileScript(
+                ScriptCompileSpec.fromSource(source)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .compiler(compiler)
+                        .compilationErrorReporter(compilationErrorReporter)
+                        .compilerEnvironsProcessor(compilerEnvironsProcessor)
+                        .build());
     }
 
     /**
@@ -1528,17 +1538,38 @@ public class Context implements Closeable {
             String sourceName,
             int lineno,
             Object securityDomain) {
-        return (Function)
-                compileImpl(
-                        scope,
-                        source,
-                        sourceName,
-                        lineno,
-                        securityDomain,
-                        true,
-                        compiler,
-                        compilationErrorReporter,
-                        null);
+        return compileFunction(
+                FunctionCompileSpec.fromSource(source, scope)
+                        .sourceName(sourceName)
+                        .lineno(lineno)
+                        .securityDomain(securityDomain)
+                        .compiler(compiler)
+                        .compilationErrorReporter(compilationErrorReporter)
+                        .build());
+    }
+
+    /** Compile a script described by {@code spec}. */
+    public final Script compileScript(ScriptCompileSpec spec) {
+        return compileScriptImpl(spec);
+    }
+
+    /**
+     * @see #compileScript(ScriptCompileSpec)
+     */
+    public final Script compileScript(ScriptCompileSpec.Builder spec) {
+        return compileScriptImpl(spec.build());
+    }
+
+    /** Compile a function described by {@code spec}. */
+    public final Function compileFunction(FunctionCompileSpec spec) {
+        return compileFunctionImpl(spec);
+    }
+
+    /**
+     * @see #compileFunction(FunctionCompileSpec)
+     */
+    public final Function compileFunction(FunctionCompileSpec.Builder spec) {
+        return compileFunctionImpl(spec.build());
     }
 
     /**
@@ -2540,33 +2571,86 @@ public class Context implements Closeable {
         return cx;
     }
 
-    protected Object compileImpl(
-            VarScope scope,
+    protected Script compileScriptImpl(ScriptCompileSpec spec) {
+        Compiled<JSScript> compiled =
+                compileImpl(
+                        spec.getSource(),
+                        spec.getSourceName(),
+                        spec.getLineno(),
+                        spec.getSecurityDomain(),
+                        spec.getCompiler(),
+                        spec.getCompilationErrorReporter(),
+                        spec.getCompilerEnvironsProcessor(),
+                        spec.getSourceMapper(),
+                        false,
+                        Evaluator::compileScript);
+        return compiled.evaluator.createScriptObject(compiled.result, spec.getSecurityDomain());
+    }
+
+    protected Function compileFunctionImpl(FunctionCompileSpec spec) {
+        Compiled<JSFunction> compiled =
+                compileImpl(
+                        spec.getSource(),
+                        spec.getSourceName(),
+                        spec.getLineno(),
+                        spec.getSecurityDomain(),
+                        spec.getCompiler(),
+                        spec.getCompilationErrorReporter(),
+                        spec.getCompilerEnvironsProcessor(),
+                        spec.getSourceMapper(),
+                        true,
+                        Evaluator::compileFunction);
+        return compiled.evaluator.createFunctionObject(
+                this, spec.getScope(), compiled.result, spec.getSecurityDomain());
+    }
+
+    @FunctionalInterface
+    private interface CompileFn<T extends ScriptOrFn<T>> {
+        CompilationResult<T> compile(
+                Evaluator evaluator, CompilerEnvirons env, ScriptNode tree, String rawSource);
+    }
+
+    private static final class Compiled<T extends ScriptOrFn<T>> {
+        private final Evaluator evaluator;
+        private final CompilationResult<T> result;
+
+        private Compiled(Evaluator evaluator, CompilationResult<T> result) {
+            this.evaluator = evaluator;
+            this.result = result;
+        }
+    }
+
+    private <T extends ScriptOrFn<T>> Compiled<T> compileImpl(
             String sourceString,
             String sourceName,
             int lineno,
             Object securityDomain,
-            boolean returnFunction,
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
-            Consumer<CompilerEnvirons> compilerEnvironProcessor) {
+            Consumer<CompilerEnvirons> compilerEnvironProcessor,
+            SourceMapper sourceMapper,
+            boolean returnFunction,
+            CompileFn<T> compileFn) {
         if (sourceName == null) {
             sourceName = "unnamed script";
         }
+
         if (securityDomain != null && getSecurityController() == null) {
             throw new IllegalArgumentException(
                     "securityDomain should be null if setSecurityController() was never called");
         }
 
-        // scope should be given if and only if compiling function
-        if (!(scope == null ^ returnFunction)) Kit.codeBug();
-
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
         compilerEnv.setSecurityDomain(securityDomain);
+        if (sourceMapper != null) {
+            compilerEnv.setSourceMapper(sourceMapper);
+        }
+
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
         }
+
         if (compilerEnvironProcessor != null) {
             compilerEnvironProcessor.accept(compilerEnv);
         }
@@ -2580,14 +2664,14 @@ public class Context implements Closeable {
                         compilationErrorReporter,
                         returnFunction);
 
-        Object bytecode;
+        CompilationResult<T> result;
         try {
             if (compiler == null) {
                 compiler = createCompiler();
             }
 
-            bytecode = compiler.compile(compilerEnv, tree, sourceString, returnFunction);
-        } catch (ClassFileFormatException e) {
+            result = compileFn.compile(compiler, compilerEnv, tree, sourceString);
+        } catch (ClassSizeException e) {
             // we hit some class file limit, fall back to interpreter or report
 
             // we have to recreate the tree because the compile call might have changed the tree
@@ -2602,27 +2686,28 @@ public class Context implements Closeable {
                             returnFunction);
 
             compiler = createInterpreter();
-            bytecode = compiler.compile(compilerEnv, tree, sourceString, returnFunction);
+            result = compileFn.compile(compiler, compilerEnv, tree, sourceString);
         }
 
         if (debugger != null) {
             if (sourceString == null) Kit.codeBug();
-            DebuggableScript dscript = compiler.getDebuggableScript(bytecode);
+            DebuggableScript dscript = result.getDebuggableScript();
             if (dscript != null) {
-                notifyDebugger_r(this, dscript, sourceString);
+                String debugSource = sourceString;
+                SourceMapper mapper = compilerEnv.getSourceMapper();
+                if (mapper != null) {
+                    String original = mapper.getOriginalSource();
+                    if (original != null) {
+                        debugSource = original;
+                    }
+                }
+                notifyDebugger_r(this, dscript, debugSource);
             } else {
                 throw new RuntimeException("NOT SUPPORTED");
             }
         }
 
-        Object result;
-        if (returnFunction) {
-            result = compiler.createFunctionObject(this, scope, bytecode, securityDomain);
-        } else {
-            result = compiler.createScriptObject(bytecode, securityDomain);
-        }
-
-        return result;
+        return new Compiled<>(compiler, result);
     }
 
     private ScriptNode parse(

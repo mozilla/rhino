@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -29,7 +30,7 @@ import org.mozilla.javascript.lc.type.VariableTypeInfo;
  */
 public class NativeJavaMethod extends BaseFunction {
 
-    private static final long serialVersionUID = -3440381785576412928L;
+    @Serial private static final long serialVersionUID = -3440381785576412928L;
 
     // TODO: serialization support by read/write class and method name
     final ExecutableBox[] methods;

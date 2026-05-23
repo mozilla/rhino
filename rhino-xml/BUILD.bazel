@@ -1,0 +1,75 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test")
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "rhino-xml",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = ["//rhino"],
+)
+
+java_library(
+    name = "rhino-xml-tests",
+    srcs = glob(["src/test/java/**/*.java"]),
+    deps = [
+        ":rhino-xml",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ],
+)
+
+# This module has a weird two-way dependency between a test helper class
+# and a test class itself, so it's easiest to build the library above and
+# just define the rules for the three test files it has, which are also
+# unlikely to grow!
+
+java_junit5_test(
+    name = "XMLSecureParserTest",
+    size = "small",
+    srcs = glob(["**/XMLSecureParserTest.java"]),
+    tags = ["no-agent"],
+    test_class = "org.mozilla.javascript.tests.XMLSecureParserTest",
+    deps = [
+        ":rhino-xml",
+        ":rhino-xml-tests",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)
+
+java_junit5_test(
+    name = "E4XBasicTest",
+    size = "small",
+    srcs = glob(["**/E4XBasicTest.java"]),
+    tags = ["no-agent"],
+    test_class = "org.mozilla.javascript.xmlimpl.tests.E4XBasicTest",
+    deps = [
+        ":rhino-xml",
+        ":rhino-xml-tests",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)
+
+java_junit5_test(
+    name = "XmlNonResettableDocumentBuilderTest",
+    size = "small",
+    srcs = glob(["**/XmlNonResettableDocumentBuilderTest.java"]),
+    tags = ["no-agent"],
+    test_class = "org.mozilla.javascript.xmlimpl.tests.XmlNonResettableDocumentBuilderTest",
+    deps = [
+        ":rhino-xml",
+        ":rhino-xml-tests",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)

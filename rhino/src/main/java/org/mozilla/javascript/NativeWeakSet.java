@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.util.WeakHashMap;
 
 /**
@@ -17,7 +18,7 @@ import java.util.WeakHashMap;
  * the "value" that we put in the WeakHashMap here is not one that contains the key.
  */
 public class NativeWeakSet extends ScriptableObject {
-    private static final long serialVersionUID = 2065753364224029534L;
+    @Serial private static final long serialVersionUID = 2065753364224029534L;
 
     private static final String CLASS_NAME = "WeakSet";
 

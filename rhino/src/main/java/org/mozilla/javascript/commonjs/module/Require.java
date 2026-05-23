@@ -5,6 +5,7 @@
 package org.mozilla.javascript.commonjs.module;
 
 import java.io.File;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -39,13 +40,13 @@ import org.mozilla.javascript.VarScope;
  * <p>&lt;h1&gt;Making it available&lt;/h1&gt;
  *
  * <p>In order to make the require() function available to your JavaScript program, you need to
- * invoke either {@link #install(Scriptable)} or {@link #requireMain(Context, String)}.
+ * invoke either {@link #install(VarScope)} or {@link #requireMain(Context, String)}.
  *
  * @author Attila Szegedi
  * @version $Id: Require.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
 public class Require extends BaseFunction {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 5682218649242405574L;
     private final ModuleScriptProvider moduleScriptProvider;
     private final TopLevel nativeScope;
     private final Scriptable paths;
@@ -65,7 +66,7 @@ public class Require extends BaseFunction {
 
     /**
      * Creates a new instance of the require() function. Upon constructing it, you will either want
-     * to install it in the global (or some other) scope using {@link #install(Scriptable)}, or
+     * to install it in the global (or some other) scope using {@link #install(VarScope)}, or
      * alternatively, you can load the program's main module using {@link #requireMain(Context,
      * String)} and then act on the main module's exports.
      *
@@ -169,7 +170,7 @@ public class Require extends BaseFunction {
      *
      * @param scope the scope where the require() function is to be installed.
      */
-    public void install(Scriptable scope) {
+    public void install(VarScope scope) {
         ScriptableObject.putProperty(scope, "require", this);
     }
 

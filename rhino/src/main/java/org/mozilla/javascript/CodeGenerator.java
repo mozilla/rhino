@@ -16,6 +16,8 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
@@ -255,14 +257,20 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
-        if (lineno != lineNumber && lineno >= 0) {
-            if (itsData.firstLinePC < 0) {
-                itsData.firstLinePC = lineno;
-            }
-            lineNumber = lineno;
-            addIcode(Icode_LINE);
-            addUint16(lineno & 0xFFFF);
+        if (lineno < 0) return;
+        SourceMapper mapper = compilerEnv.getSourceMapper();
+        if (mapper != null) {
+            Position mapped = mapper.mapPosition(lineno, node.getColumn());
+            if (mapped == null) return;
+            lineno = mapped.getLine();
         }
+        if (lineno == lineNumber) return;
+        if (itsData.firstLinePC < 0) {
+            itsData.firstLinePC = lineno;
+        }
+        lineNumber = lineno;
+        addIcode(Icode_LINE);
+        addUint16(lineno & 0xFFFF);
     }
 
     private static RuntimeException badTree(Node node) {
@@ -1494,6 +1502,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 if (((Node) propertyId).type == Token.DOTDOTDOT) {
                     // It's actually a spread! We need to do a "continue" to avoid setting it as key
                     addIcode(Icode_SPREAD);
+                    // Always emit a 2-byte operand so Icode_SPREAD is fixed-width (3 bytes).
+                    // Object-literal spread never uses sourcePositions, so emit 0.
+                    addUint16(0);
                     stackChange(-1);
                     child = child.getNext();
                     i++;
@@ -1595,7 +1606,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         }
 
         addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
-        addUint8(skipIndexesId + 1);
+        addUint16(skipIndexesId + 1);
         stackChange(1);
 
         int childIdx = 0;
@@ -1604,7 +1615,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child.getFirstChild(), 0);
                 addIcode(Icode_SPREAD);
                 if (skipIndexes != null) {
-                    addUint8(sourcePositions[childIdx]);
+                    addUint16(sourcePositions[childIdx]);
+                } else {
+                    addUint16(0);
                 }
                 stackChange(-1);
             } else {

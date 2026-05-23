@@ -4,5 +4,4 @@ module org.mozilla.rhino.engine.test {
     requires org.mozilla.rhino.engine;
     requires org.mozilla.rhino;
     requires org.mozilla.rhino.testutils;
-    requires org.junit.jupiter.params;
 }

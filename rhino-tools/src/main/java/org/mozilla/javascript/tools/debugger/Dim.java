@@ -579,7 +579,7 @@ public class Dim {
         }
 
         Scriptable proto = scriptable.getPrototype();
-        Scriptable parent = scriptable.getParentScope();
+        VarScope parent = scriptable.getParentScope();
         int extra = 0;
         if (proto != null) {
             ++extra;

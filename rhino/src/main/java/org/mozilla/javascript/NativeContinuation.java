@@ -6,10 +6,11 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.Objects;
 
 public final class NativeContinuation extends IdScriptableObject implements Function {
-    private static final long serialVersionUID = 1794167133757605367L;
+    @Serial private static final long serialVersionUID = 1794167133757605367L;
 
     private static final Object FTAG = "Continuation";
 

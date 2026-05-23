@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 import org.mozilla.javascript.lc.member.ExecutableBox;
@@ -24,18 +25,18 @@ import org.mozilla.javascript.lc.type.TypeInfo;
  * @see NativeJavaPackage
  */
 public class NativeJavaClass extends NativeJavaObject implements Function {
-    private static final long serialVersionUID = -6460763940409461664L;
+    @Serial private static final long serialVersionUID = -6460763940409461664L;
 
     // Special property for getting the underlying Java class object.
     static final String javaClassPropertyName = "__javaObject__";
 
     public NativeJavaClass() {}
 
-    public NativeJavaClass(Scriptable scope, Class<?> cl) {
+    public NativeJavaClass(VarScope scope, Class<?> cl) {
         this(scope, cl, false);
     }
 
-    public NativeJavaClass(Scriptable scope, Class<?> cl, boolean isAdapter) {
+    public NativeJavaClass(VarScope scope, Class<?> cl, boolean isAdapter) {
         super(scope, cl, TypeInfo.NONE, isAdapter);
     }
 

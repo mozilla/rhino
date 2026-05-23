@@ -6,19 +6,30 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public class NativeSet extends ScriptableObject {
-    private static final long serialVersionUID = -8442212766987072986L;
+    @Serial private static final long serialVersionUID = -8442212766987072986L;
     private static final String CLASS_NAME = "Set";
     static final String ITERATOR_TAG = "Set Iterator";
 
     static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]", Symbol.Kind.REGULAR);
 
+    private static final ClassDescriptor ITER_DESCRIPTOR =
+            ES6Iterator.makeDescriptor(ITERATOR_TAG, ITERATOR_TAG);
+
     private final Hashtable entries = new Hashtable();
 
     private boolean instanceOfSet = false;
 
-    static Object init(Context cx, VarScope s, boolean sealed) {
-        TopLevel scope = (TopLevel) s;
+    static Object init(Context cx, VarScope scope, boolean sealed) {
+        ES6Iterator.initialize(
+                ITER_DESCRIPTOR,
+                cx,
+                (TopLevel) scope,
+                new NativeCollectionIterator(ITERATOR_TAG),
+                sealed,
+                ITERATOR_TAG);
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,

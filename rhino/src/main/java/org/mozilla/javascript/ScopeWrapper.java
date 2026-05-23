@@ -1,11 +1,13 @@
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public class ScopeWrapper extends ScriptableObject {
-    private static final long serialVersionUID = -7471457301304454454L;
+    @Serial private static final long serialVersionUID = -3481312197060837332L;
 
-    private final Scriptable scope;
+    private final VarScope scope;
 
-    public ScopeWrapper(Scriptable scope) {
+    public ScopeWrapper(VarScope scope) {
         this.scope = scope;
     }
 
@@ -39,7 +41,7 @@ public class ScopeWrapper extends ScriptableObject {
         return "scope";
     }
 
-    public Scriptable getScope() {
+    public VarScope getScope() {
         return scope;
     }
 }

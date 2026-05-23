@@ -1,7 +1,9 @@
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public class FunctionScope extends DeclarationScope {
-    private static final long serialVersionUID = -7471457301304454454L;
+    @Serial private static final long serialVersionUID = 4760825497832652202L;
 
     public FunctionScope(ScopeObject parentScope) {
         super(parentScope);

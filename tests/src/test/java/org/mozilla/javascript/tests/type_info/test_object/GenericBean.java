@@ -1,12 +1,13 @@
 package org.mozilla.javascript.tests.type_info.test_object;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
  * @author ZZZank
  */
 public class GenericBean<M extends Number> implements Serializable {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     private M value;
 

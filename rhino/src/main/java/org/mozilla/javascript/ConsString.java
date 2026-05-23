@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 
@@ -25,7 +26,7 @@ import java.util.ArrayDeque;
  */
 public class ConsString implements CharSequence, Serializable {
 
-    private static final long serialVersionUID = -8432806714471372570L;
+    @Serial private static final long serialVersionUID = -8432806714471372570L;
 
     private CharSequence left, right;
     private final int length;

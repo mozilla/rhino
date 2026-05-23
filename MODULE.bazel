@@ -1,0 +1,47 @@
+module(
+    name = "rhino",
+    version = "2.0.0-SNAPSHOT",
+)
+
+bazel_dep(name = "rules_java", version = "9.6.1")
+bazel_dep(name = "rules_jvm_external", version = "7.0")
+bazel_dep(name = "contrib_rules_jvm", version = "0.33.0")
+bazel_dep(name = "rules_kotlin", version = "2.3.20")
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+
+# Whenever you change this you must run:
+#    REPIN=1 bazel run @maven//:pin
+maven.install(
+    artifacts = [
+        "org.junit.jupiter:junit-jupiter:5.10.3",
+        "org.junit.jupiter:junit-jupiter-api:5.10.3",
+        "org.junit.jupiter:junit-jupiter-engine:5.10.3",
+        "org.junit.jupiter:junit-jupiter-params:5.10.3",
+        "org.junit.platform:junit-platform-launcher:1.10.3",
+        "org.junit.platform:junit-platform-console:1.10.3",
+        "org.junit.platform:junit-platform-console-standalone:1.10.3",
+        "org.junit.platform:junit-platform-runner:1.10.3",
+        "org.junit.platform:junit-platform-reporting:1.10.3",
+        "org.hamcrest:hamcrest:3.0",
+        "org.jline:jline-terminal:3.30.6",
+        "org.jline:jline-reader:3.30.6",
+        "org.jline:jline-terminal-ffm:3.30.6",
+        "org.jline:jline-terminal-jni:3.30.6",
+        "com.tngtech.archunit:archunit:1.4.1",
+        "com.tngtech.archunit:archunit-junit4:1.4.1",
+        "org.slf4j:slf4j-simple:2.0.17",
+        "org.yaml:snakeyaml:2.6",
+        "javax.xml.soap:javax.xml.soap-api:1.4.0",
+        "javax.activation:javax.activation-api:1.2.0",
+        "org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.20",
+    ],
+    known_contributing_modules = ["protobuf"],
+    lock_file = "//:maven_install.json",
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+)
+use_repo(maven, "maven")

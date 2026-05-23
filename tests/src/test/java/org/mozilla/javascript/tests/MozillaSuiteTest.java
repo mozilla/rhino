@@ -22,6 +22,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.testutils.Sharding;
 import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
@@ -87,7 +88,7 @@ public class MozillaSuiteTest {
         return interpretedMode ? "interpreted.tests" : "compiled.tests";
     }
 
-    private static File[] getTestFiles(boolean interpretedMode) throws IOException {
+    private static List<File> getTestFiles(boolean interpretedMode) throws IOException {
         File testDir = getTestDir();
         String[] tests = TestUtils.loadTestsFromResource("/" + getTestFilename(interpretedMode));
         if (tests.length == 0) {
@@ -98,9 +99,13 @@ public class MozillaSuiteTest {
         }
 
         Arrays.sort(tests);
-        File[] files = new File[tests.length];
-        for (int i = 0; i < files.length; i++) {
-            files[i] = new File(testDir, tests[i]);
+
+        var shards = Sharding.getSharding();
+        ArrayList<File> files = new ArrayList<>();
+        for (int i = 0; i < tests.length; i++) {
+            if (shards == null || i % shards.total == shards.index) {
+                files.add(new File(testDir, tests[i]));
+            }
         }
         return files;
     }
@@ -108,7 +113,7 @@ public class MozillaSuiteTest {
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         for (boolean im : new boolean[] {false, true}) {
-            File[] tests = getTestFiles(im);
+            var tests = getTestFiles(im);
             for (File f : tests) {
                 result.add(new Object[] {f, im});
             }
@@ -200,8 +205,8 @@ public class MozillaSuiteTest {
                                         }
                                     });
                     HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
-                    File testFiles[] = getTestFiles(interpretedMode);
-                    diff.removeAll(Arrays.asList(testFiles));
+                    var testFiles = getTestFiles(interpretedMode);
+                    diff.removeAll(testFiles);
                     ArrayList<String> skippedPassed = new ArrayList<String>();
                     int absolutePathLength = testDir.getAbsolutePath().length() + 1;
                     for (File testFile : diff) {

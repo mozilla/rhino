@@ -9,7 +9,9 @@
 package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
+import java.io.Serial;
 import java.util.ArrayList;
 
 /**
@@ -47,7 +49,7 @@ import java.util.ArrayList;
  * @author Norris Boyd
  */
 public class ImporterTopLevel extends TopLevel {
-    private static final long serialVersionUID = -9095380847465315412L;
+    @Serial private static final long serialVersionUID = -9095380847465315412L;
 
     private static final ClassDescriptor DESCRIPTOR;
 
@@ -136,11 +138,6 @@ public class ImporterTopLevel extends TopLevel {
     private ImporterTopLevel(ScriptableObject scope) {
         super(scope);
         topScopeFlag = true;
-    }
-
-    @Override
-    public String getClassName() {
-        return topScopeFlag ? "global" : "JavaImporter";
     }
 
     public static void init(Context cx, VarScope scope, boolean sealed) {

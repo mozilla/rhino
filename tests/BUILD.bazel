@@ -1,0 +1,131 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test", "java_test_suite")
+load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:sharded_test.bzl", "sharded_parameterized_test")
+
+filegroup(
+    name = "testsrc",
+    srcs = glob(["testsrc/**"]),
+    visibility = ["//visibility:public"],
+)
+
+# Because the legacy test code here wasn't designed with Bazel in mind,
+# this rule picks up any test classes required by other tests that end in
+# "Test.java", plus a few other files, so that the java_test_suite rule
+# below can actually work.
+java_library(
+    name = "rhino-tests-lib",
+    srcs = [
+        "src/test/java/org/mozilla/javascript/testing/TestErrorReporter.java",
+        "src/test/java/org/mozilla/javascript/tests/DoctestsTest.java",
+        "src/test/java/org/mozilla/javascript/tests/ParserTest.java",
+    ] + glob([
+        "src/test/java/org/mozilla/javascript/tests/type_info/**/*.java",
+        "src/test/java/org/mozilla/javascript/tests/commonjs/**/*.java",
+        "src/test/java/org/mozilla/javascript/drivers/**/*.java",
+    ]),
+    deps = [
+        "//rhino",
+        "//rhino-tools",
+        "//rhino-xml",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+        "@maven//:org_opentest4j_opentest4j",
+    ],
+)
+
+# This rule will generate a test target for every file that ends in "Test.java"
+# and also incorporate any files that don't match the pattern into a library
+# so that they may be shared by the other tests.
+# Exclude our two big multi-test tests for special treatment...
+java_test_suite(
+    name = "rhino-tests",
+    size = "small",
+    srcs = glob(
+        ["src/test/java/**/*.java"],
+        exclude = [
+            "src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java",
+            "src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java",
+        ],
+    ),
+    data = [":testsrc"],
+    jvm_flags = [
+        "-Xmx1g",
+        "-Djava.awt.headless=true",
+        "--add-opens",
+        "java.desktop/javax.swing.table=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang=ALL-UNNAMED",
+    ],
+    resources = glob(["src/test/resources/**"]),
+    runner = "junit5",
+    tags = ["no-agent"],
+    test_suffixes = ["Test.java"],
+    deps = [
+        ":rhino-tests-lib",
+        "//examples",
+        "//rhino",
+        "//rhino-tools",
+        "//rhino-xml",
+        "//testutils",
+        "@maven//:com_tngtech_archunit_archunit",
+        "@maven//:com_tngtech_archunit_archunit_junit4",
+        "@maven//:javax_xml_soap_javax_xml_soap_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+        "@maven//:org_opentest4j_opentest4j",
+        "@maven//:org_yaml_snakeyaml",
+    ] + JUNIT5_DEPS,
+)
+
+sharded_parameterized_test(
+    name = "MozillaSuiteTest",
+    # "small" will result in build timeouts on GitHub Actions runners
+    size = "medium",
+    srcs = ["src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java"],
+    data = [":testsrc"],
+    jvm_flags = [
+        "-Xmx1g",
+        "-Xss4m",
+        "-Djava.awt.headless=true",
+        "-Dmozilla.js.tests.timeout=60000",
+    ],
+    resources = glob(["src/test/resources/**"]),
+    shard_count = 16,
+    tags = ["no-agent"],
+    test_class = "org.mozilla.javascript.tests.MozillaSuiteTest",
+    deps = [
+        ":rhino-tests-lib",
+        "//rhino",
+        "//rhino-tools",
+        "//rhino-xml",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)
+
+sharded_parameterized_test(
+    name = "Test262SuiteTest",
+    # "small" will result in build timeouts on GitHub Actions runners
+    size = "medium",
+    srcs = ["src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java"],
+    data = [":testsrc"] + glob(["test262/**"]),
+    jvm_flags = [
+        "-Xmx1g",
+    ],
+    shard_count = 32,
+    tags = ["no-agent"],
+    test_class = "org.mozilla.javascript.tests.Test262SuiteTest",
+    deps = [
+        ":rhino-tests-lib",
+        "//rhino",
+        "//rhino-tools",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+        "@maven//:org_yaml_snakeyaml",
+    ] + JUNIT5_DEPS,
+)

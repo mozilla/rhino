@@ -87,7 +87,7 @@ import org.mozilla.javascript.config.RhinoConfig;
  *     }
  *
  *     // Override {@link #doTopCall(Callable,
- * Context, Scriptable,
+ * Context, VarScope,
  * Scriptable, Object[])}
  *     protected Object doTopCall(Callable callable,
  *                                Context cx, Scriptable scope,
@@ -323,8 +323,8 @@ public class ContextFactory {
      * perform the real call. In this way execution of any script happens inside this function.
      */
     protected Object doTopCall(
-            Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        Object result = callable.call(cx, (VarScope) scope, thisObj, args);
+            Callable callable, Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        Object result = callable.call(cx, scope, thisObj, args);
         return result instanceof ConsString ? result.toString() : result;
     }
 

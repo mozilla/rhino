@@ -1,8 +1,10 @@
 package org.mozilla.javascript.tests.type_info.test_object;
 
+import java.io.Serial;
+
 /**
  * @author ZZZank
  */
 public class IntegerGenericBean extends GenericBean<Integer> {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 }

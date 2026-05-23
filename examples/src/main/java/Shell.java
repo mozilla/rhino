@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Function;
@@ -27,7 +28,7 @@ import org.mozilla.javascript.WrappedException;
  * @author Norris Boyd
  */
 public class Shell extends ScriptableObject {
-    private static final long serialVersionUID = -5638074146250193112L;
+    @Serial private static final long serialVersionUID = -5638074146250193112L;
 
     @Override
     public String getClassName() {

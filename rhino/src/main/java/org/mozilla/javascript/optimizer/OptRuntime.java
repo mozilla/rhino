@@ -14,11 +14,11 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.NativeIterator;
 import org.mozilla.javascript.NewLiteralStorage;
-import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 
@@ -247,7 +247,7 @@ public final class OptRuntime extends ScriptRuntime {
         ContextFactory.getGlobal()
                 .call(
                         cx -> {
-                            ScopeObject global = getGlobal(cx);
+                            TopLevel global = getGlobal(cx);
 
                             // get the command line arguments and define "arguments"
                             // array in the top-level object
@@ -255,7 +255,7 @@ public final class OptRuntime extends ScriptRuntime {
                             System.arraycopy(args, 0, argsCopy, 0, args.length);
                             Scriptable argsObj = cx.newArray(global, argsCopy);
                             global.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
-                            script.exec(cx, global, global);
+                            script.exec(cx, global, global.getGlobalThis());
                             return null;
                         });
     }
@@ -333,10 +333,10 @@ public final class OptRuntime extends ScriptRuntime {
         public final Scriptable thisObj;
 
         @SuppressWarnings("unused")
-        public final Scriptable activationFrame;
+        public final VarScope activationFrame;
 
         static final String activationFrame_NAME = "activationFrame";
-        static final String activationFrame_TYPE = "Lorg/mozilla/javascript/Scriptable;";
+        static final String activationFrame_TYPE = "Lorg/mozilla/javascript/VarScope;";
         static final String thisObj_NAME = "thisObj";
         static final String thisObj_TYPE = "Lorg/mozilla/javascript/Scriptable;";
 
@@ -346,8 +346,7 @@ public final class OptRuntime extends ScriptRuntime {
         int maxStack;
         Object returnValue;
 
-        GeneratorState(
-                Scriptable activationFrame, Scriptable thisObj, int maxLocals, int maxStack) {
+        GeneratorState(VarScope activationFrame, Scriptable thisObj, int maxLocals, int maxStack) {
             this.activationFrame = activationFrame;
             this.thisObj = thisObj;
             this.maxLocals = maxLocals;

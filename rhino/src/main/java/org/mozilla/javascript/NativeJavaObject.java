@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -33,21 +34,21 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
 
-    private static final long serialVersionUID = -6948590651130498591L;
+    @Serial private static final long serialVersionUID = -6948590651130498591L;
 
-    static void init(TopLevel scope, boolean sealed) {
-        JavaIterableIterator.init(scope, sealed);
+    static void init(Context cx, TopLevel scope, boolean sealed) {
+        JavaIterableIterator.init(cx, scope, sealed);
     }
 
     public NativeJavaObject() {}
 
-    public NativeJavaObject(Scriptable scope, Object javaObject, TypeInfo staticType) {
+    public NativeJavaObject(VarScope scope, Object javaObject, TypeInfo staticType) {
         this(scope, javaObject, staticType, false);
     }
 
     public NativeJavaObject(
-            Scriptable scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
-        this.parent = (VarScope) scope;
+            VarScope scope, Object javaObject, TypeInfo staticType, boolean isAdapter) {
+        this.parent = scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
         this.isAdapter = isAdapter;
@@ -852,6 +853,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 "msg.conversion.not.allowed", String.valueOf(value), type);
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
 
@@ -877,6 +879,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
 
@@ -916,11 +919,15 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             };
 
     private static final class JavaIterableIterator extends ES6Iterator {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = -2636492890037940863L;
         private static final String ITERATOR_TAG = "JavaIterableIterator";
 
-        static void init(TopLevel scope, boolean sealed) {
-            ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
+        private static final ClassDescriptor DESCRIPTOR =
+                ES6Iterator.makeDescriptor(ITERATOR_TAG, "Java Iterable Iterator");
+
+        static void init(Context cx, TopLevel scope, boolean sealed) {
+            ES6Iterator.initialize(
+                    DESCRIPTOR, cx, scope, new JavaIterableIterator(), sealed, ITERATOR_TAG);
         }
 
         /** Only for constructing the prototype object. */

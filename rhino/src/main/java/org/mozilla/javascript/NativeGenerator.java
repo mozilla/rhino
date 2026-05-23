@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * This class implements generator objects. See <a
  * href="http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Generators">Generators</a>
@@ -13,7 +15,7 @@ package org.mozilla.javascript;
  * @author Norris Boyd
  */
 public final class NativeGenerator extends IdScriptableObject {
-    private static final long serialVersionUID = 1645892441041347273L;
+    @Serial private static final long serialVersionUID = -1383456283657974338L;
 
     private static final Object GENERATOR_TAG = "Generator";
 
@@ -217,7 +219,7 @@ public final class NativeGenerator extends IdScriptableObject {
     private boolean locked;
 
     public static class GeneratorClosedException extends RuntimeException {
-        private static final long serialVersionUID = 2561315658662379681L;
+        @Serial private static final long serialVersionUID = 2561315658662379681L;
         private final Object value;
 
         public GeneratorClosedException() {

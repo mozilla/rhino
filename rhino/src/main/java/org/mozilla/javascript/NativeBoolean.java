@@ -8,13 +8,15 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
+
 /**
  * This class implements the Boolean native object. See ECMA 15.6.
  *
  * @author Norris Boyd
  */
 final class NativeBoolean extends ScriptableObject {
-    private static final long serialVersionUID = -3716996899943880933L;
+    @Serial private static final long serialVersionUID = -3716996899943880933L;
 
     private static final String CLASS_NAME = "Boolean";
 
@@ -37,7 +39,7 @@ final class NativeBoolean extends ScriptableObject {
 
     static void init(Context cx, VarScope scope, boolean sealed) {
         // Boolean is an unusual object in that the prototype is itself a Boolean
-        DESCRIPTOR.buildConstructor(cx, (VarScope) scope, new NativeBoolean(false), sealed);
+        DESCRIPTOR.buildConstructor(cx, scope, new NativeBoolean(false), sealed);
     }
 
     NativeBoolean(boolean b) {

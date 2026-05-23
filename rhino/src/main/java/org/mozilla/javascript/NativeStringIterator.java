@@ -6,12 +6,18 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 public final class NativeStringIterator extends ES6Iterator {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 6709689999500242078L;
     private static final String ITERATOR_TAG = "StringIterator";
 
-    static void init(TopLevel scope, boolean sealed) {
-        ES6Iterator.init(scope, sealed, new NativeStringIterator(), ITERATOR_TAG);
+    private static final ClassDescriptor DESCRIPTOR =
+            ES6Iterator.makeDescriptor(ITERATOR_TAG, "String Iterator");
+
+    static void init(Context cx, VarScope scope, boolean sealed) {
+        ES6Iterator.initialize(
+                DESCRIPTOR, cx, (TopLevel) scope, new NativeStringIterator(), sealed, ITERATOR_TAG);
     }
 
     /** Only for constructing the prototype object. */

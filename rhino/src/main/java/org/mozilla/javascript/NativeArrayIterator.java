@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import org.mozilla.javascript.typedarrays.NativeTypedArrayView;
 
 public final class NativeArrayIterator extends ES6Iterator {
@@ -15,13 +16,17 @@ public final class NativeArrayIterator extends ES6Iterator {
         VALUES
     }
 
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 3370645355934941865L;
     private static final String ITERATOR_TAG = "ArrayIterator";
+
+    private static final ClassDescriptor DESCRIPTOR =
+            ES6Iterator.makeDescriptor(ITERATOR_TAG, "Array Iterator");
 
     private ARRAY_ITERATOR_TYPE type;
 
-    static void init(TopLevel scope, boolean sealed) {
-        ES6Iterator.init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
+    static void init(Context cx, VarScope scope, boolean sealed) {
+        ES6Iterator.initialize(
+                DESCRIPTOR, cx, (TopLevel) scope, new NativeArrayIterator(), sealed, ITERATOR_TAG);
     }
 
     /** Only for constructing the prototype object. */

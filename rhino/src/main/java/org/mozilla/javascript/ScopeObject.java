@@ -7,10 +7,11 @@ import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 
-public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, Serializable {
-    private static final long serialVersionUID = -7471457301304454454L;
+public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Serializable {
+    @Serial private static final long serialVersionUID = 2283542168979106620L;
 
     private final VarScope parentScope;
 
@@ -41,7 +42,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @param value value to set the property to
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, VarScope start, Object value) {
         if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
@@ -55,7 +56,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      *
      * @param isThrow if true, throw an exception as if in strict mode
      */
-    protected boolean putOwnProperty(String name, Scriptable start, Object value, boolean isThrow) {
+    protected boolean putOwnProperty(String name, VarScope start, Object value, boolean isThrow) {
         return putImpl(name, 0, start, value, isThrow);
     }
 
@@ -68,7 +69,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      */
     @SuppressWarnings("resource")
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, VarScope start, Object value) {
         if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
@@ -82,13 +83,13 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      *
      * @param isThrow if true, throw an exception as if in strict mode
      */
-    protected boolean putOwnProperty(int index, Scriptable start, Object value, boolean isThrow) {
+    protected boolean putOwnProperty(int index, VarScope start, Object value, boolean isThrow) {
         return putImpl(null, index, start, value, isThrow);
     }
 
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public void put(Symbol key, VarScope start, Object value) {
         if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
 
         if (start == this) throw Kit.codeBug();
@@ -102,7 +103,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      *
      * @param isThrow if true, throw an exception as if in strict mode
      */
-    protected boolean putOwnProperty(Symbol key, Scriptable start, Object value, boolean isThrow) {
+    protected boolean putOwnProperty(Symbol key, VarScope start, Object value, boolean isThrow) {
         return putImpl(key, 0, start, value, isThrow);
     }
 
@@ -115,9 +116,8 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @return false if this != start and no slot was found. true if this == start or this != start
      *     and a READONLY slot was found.
      */
-    private boolean putImpl(
-            Object key, int index, Scriptable start, Object value, boolean isThrow) {
-        Slot<Scriptable> slot;
+    private boolean putImpl(Object key, int index, VarScope start, Object value, boolean isThrow) {
+        Slot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(key, index);
             if (slot == null) {
@@ -137,7 +137,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @return true if and only if the property was found in the object
      */
     @Override
-    public boolean has(String name, Scriptable start) {
+    public boolean has(String name, VarScope start) {
         return null != getMap().query(name, 0);
     }
 
@@ -149,13 +149,13 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @return true if and only if the property was found in the object
      */
     @Override
-    public boolean has(int index, Scriptable start) {
+    public boolean has(int index, VarScope start) {
         return null != getMap().query(null, index);
     }
 
     /** A version of "has" that supports symbols. */
     @Override
-    public boolean has(Symbol key, Scriptable start) {
+    public boolean has(Symbol key, VarScope start) {
         return null != getMap().query(key, 0);
     }
 
@@ -169,7 +169,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @return the value of the property (may be null), or NOT_FOUND
      */
     @Override
-    public Object get(String name, Scriptable start) {
+    public Object get(String name, VarScope start) {
         var slot = getMap().query(name, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -185,7 +185,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @return the value of the property (may be null), or NOT_FOUND
      */
     @Override
-    public Object get(int index, Scriptable start) {
+    public Object get(int index, VarScope start) {
         var slot = getMap().query(null, index);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -195,7 +195,7 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
 
     /** Another version of Get that supports Symbol keyed properties. */
     @Override
-    public Object get(Symbol key, Scriptable start) {
+    public Object get(Symbol key, VarScope start) {
         var slot = getMap().query(key, 0);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -216,11 +216,6 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
     @Override
     public void delete(Symbol key) {
         getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
-    }
-
-    @Override
-    public Object[] getIds() {
-        return new Object[0];
     }
 
     /**
@@ -296,28 +291,20 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      * @param value value to set the property to
      */
     @Override
-    public void putConst(String name, Scriptable start, Object value) {
+    public void putConst(String name, VarScope start, Object value) {
         if (putConstImpl(name, 0, start, value, ScriptableObject.READONLY)) return;
 
         if (start == this) throw Kit.codeBug();
-        if (start instanceof ConstProperties) {
-            @SuppressWarnings("unchecked")
-            var cstart = ((ConstProperties<Scriptable>) start);
-            cstart.putConst(name, start, value);
-        } else start.put(name, start, value);
+        start.putConst(name, start, value);
     }
 
     @Override
-    public void defineConst(String name, Scriptable start) {
+    public void defineConst(String name, VarScope start) {
         if (putConstImpl(name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
             return;
 
         if (start == this) throw Kit.codeBug();
-        if (start instanceof ConstProperties) {
-            @SuppressWarnings("unchecked")
-            var cstart = ((ConstProperties<Scriptable>) start);
-            cstart.defineConst(name, start);
-        }
+        start.defineConst(name, start);
     }
 
     /**
@@ -346,9 +333,9 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
      *     and a READONLY slot was found.
      */
     private boolean putConstImpl(
-            String name, int index, Scriptable start, Object value, int constFlag) {
+            String name, int index, VarScope start, Object value, int constFlag) {
         assert (constFlag != ScriptableObject.EMPTY);
-        Slot<Scriptable> slot;
+        Slot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(name, index);
             if (slot == null) {
@@ -371,11 +358,13 @@ public class ScopeObject extends SlotMapOwner<Scriptable> implements VarScope, S
         return slot.setValue(value, this, start);
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         writeMaps(out);
     }
 
+    @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         readMaps(in);

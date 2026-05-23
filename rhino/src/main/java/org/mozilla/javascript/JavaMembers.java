@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import static java.lang.reflect.Modifier.isProtected;
 import static java.lang.reflect.Modifier.isPublic;
 
+import java.io.Serial;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -137,11 +138,6 @@ class JavaMembers {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
         var type = field.type();
-        if (scope instanceof NativeJavaObject) {
-            type =
-                    TypeInfoFactory.GLOBAL.consolidateType(
-                            type, ((NativeJavaObject) scope).staticType);
-        }
         // Need to wrap the object before we return it.
         return cx.getWrapFactory().wrap(cx, ScriptableObject.getTopLevelScope(scope), got, type);
     }
@@ -913,7 +909,7 @@ final class BeanProperty {
 }
 
 class FieldAndMethods extends NativeJavaMethod {
-    private static final long serialVersionUID = -9222428244284796755L;
+    @Serial private static final long serialVersionUID = -9222428244284796755L;
 
     FieldAndMethods(VarScope scope, ExecutableOverload.WithField withField) {
         super(withField.methods, withField.name);

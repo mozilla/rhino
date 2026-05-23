@@ -8,6 +8,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * Java reflection of JavaScript exceptions. Instances of this class are thrown by the JavaScript
  * 'throw' keyword.
@@ -15,7 +17,7 @@ package org.mozilla.javascript;
  * @author Mike McCabe
  */
 public class JavaScriptException extends RhinoException {
-    private static final long serialVersionUID = -7666130513694669293L;
+    @Serial private static final long serialVersionUID = -7666130513694669293L;
 
     /**
      * @deprecated Use {@link WrappedException#WrappedException(Throwable)} to report exceptions in

@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.UserDataHandler;
 
 class XmlNode implements Serializable {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 7498300745525888082L;
 
     private static final String XML_NAMESPACES_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
@@ -310,7 +311,7 @@ class XmlNode implements Serializable {
     }
 
     static class XmlNodeUserDataHandler implements UserDataHandler, Serializable {
-        private static final long serialVersionUID = 4666895518900769588L;
+        @Serial private static final long serialVersionUID = 4666895518900769588L;
 
         @Override
         public void handle(short operation, String key, Object data, Node src, Node dest) {}
@@ -572,7 +573,7 @@ class XmlNode implements Serializable {
     static class Namespace implements Serializable {
 
         /** Serial version id for Namespace with fields prefix and uri */
-        private static final long serialVersionUID = 4073904386884677090L;
+        @Serial private static final long serialVersionUID = 4073904386884677090L;
 
         static Namespace create(String prefix, String uri) {
             if (prefix == null) {
@@ -654,7 +655,7 @@ class XmlNode implements Serializable {
 
     //    TODO    Where is this class used?  No longer using it in QName implementation
     static class QName implements Serializable {
-        private static final long serialVersionUID = -6587069811691451077L;
+        @Serial private static final long serialVersionUID = -6587069811691451077L;
 
         static QName create(Namespace namespace, String localName) {
             //    A null namespace indicates a wild-card match for any namespace
@@ -782,7 +783,7 @@ class XmlNode implements Serializable {
     }
 
     static class InternalList implements Serializable {
-        private static final long serialVersionUID = -3633151157292048978L;
+        @Serial private static final long serialVersionUID = -3633151157292048978L;
         private List<XmlNode> list;
 
         InternalList() {

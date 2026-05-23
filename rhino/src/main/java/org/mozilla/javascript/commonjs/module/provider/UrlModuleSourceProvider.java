@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -30,7 +31,7 @@ import java.util.List;
  * @version $Id: UrlModuleSourceProvider.java,v 1.4 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 6253848745572187376L;
     private final Iterable<URI> privilegedUris;
     private final Iterable<URI> fallbackUris;
     private final UrlConnectionSecurityDomainProvider urlConnectionSecurityDomainProvider;
@@ -213,7 +214,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
     }
 
     private static class URLValidator implements Serializable {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = -832296617758674059L;
         private final URI uri;
         private final long lastModified;
         private final String entityTags;

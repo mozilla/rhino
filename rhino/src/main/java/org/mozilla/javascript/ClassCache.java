@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ClassCache implements Serializable {
 
-    private static final long serialVersionUID = -8866246036237312215L;
+    @Serial private static final long serialVersionUID = -8866246036237312215L;
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
     private transient volatile Map<CacheKey, JavaMembers> classTable;

@@ -1,0 +1,42 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test")
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+    name = "rhino-kotlin",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rhino",
+        "@maven//:org_jetbrains_kotlin_kotlin_metadata_jvm",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+)
+
+java_library(
+    name = "rhino-kotlin-java",
+    srcs = ["src/test/java/org/mozilla/kotlin/tests/JavaClass.java"],
+)
+
+kt_jvm_library(
+    name = "rhino-kotlin-kotlin",
+    srcs = glob(["src/test/java/**/*.kt"]),
+)
+
+java_junit5_test(
+    name = "rhino-kotlin_test",
+    size = "small",
+    srcs = ["src/test/java/org/mozilla/kotlin/tests/KotlinNullabilityDetectorTest.java"],
+    tags = ["no-agent"],
+    test_class = "org.mozilla.kotlin.tests.KotlinNullabilityDetectorTest",
+    deps = [
+        ":rhino-kotlin",
+        ":rhino-kotlin-java",
+        ":rhino-kotlin-kotlin",
+        "//rhino",
+        "@maven//:org_jetbrains_kotlin_kotlin_metadata_jvm",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ] + JUNIT5_DEPS,
+)

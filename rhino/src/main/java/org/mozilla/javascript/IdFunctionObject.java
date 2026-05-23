@@ -8,10 +8,11 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.Objects;
 
 public class IdFunctionObject extends BaseFunction {
-    private static final long serialVersionUID = -5332312783643935019L;
+    @Serial private static final long serialVersionUID = 4323463961654640261L;
 
     public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, int arity) {
         if (arity < 0) throw new IllegalArgumentException();
@@ -60,7 +61,7 @@ public class IdFunctionObject extends BaseFunction {
         setImmunePrototypeProperty(prototypeProperty);
     }
 
-    public final void addAsProperty(Scriptable target) {
+    public final <T extends PropHolder<T>> void addAsProperty(T target) {
         ScriptableObject.defineProperty(target, functionName, this, ScriptableObject.DONTENUM);
     }
 
@@ -123,9 +124,7 @@ public class IdFunctionObject extends BaseFunction {
             }
             if (result.getParentScope() == null) {
                 VarScope parent = getParentScope();
-                if (result != parent) {
-                    result.setParentScope(parent);
-                }
+                result.setParentScope(parent);
             }
         } else {
             Object val = call(cx, scope, result, args);
@@ -137,7 +136,7 @@ public class IdFunctionObject extends BaseFunction {
     }
 
     @Override
-    public Scriptable createObject(Context cx, Scriptable scope) {
+    public Scriptable createObject(Context cx, VarScope scope) {
         if (useCallAsConstructor) {
             return null;
         }

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * The class for results of the Function.bind() operation EcmaScript 5 spec, 15.3.4.5
  *
@@ -13,7 +15,7 @@ package org.mozilla.javascript;
  */
 public class BoundFunction extends BaseFunction {
 
-    private static final long serialVersionUID = 2118137342826470729L;
+    @Serial private static final long serialVersionUID = 2118137342826470729L;
 
     private final Callable targetFunction;
     private final Scriptable boundThis;

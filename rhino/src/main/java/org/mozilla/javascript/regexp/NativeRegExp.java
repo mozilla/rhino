@@ -9,6 +9,7 @@ package org.mozilla.javascript.regexp;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ import org.mozilla.javascript.config.RhinoConfig;
  * @author Norris Boyd
  */
 public class NativeRegExp extends ScriptableObject {
-    private static final long serialVersionUID = 4965263491464903264L;
+    @Serial private static final long serialVersionUID = 4965263491464903264L;
 
     private static final Object REGEXP_TAG = new Object();
 
@@ -251,7 +252,7 @@ public class NativeRegExp extends ScriptableObject {
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
 
-        return DESCRIPTOR.buildConstructor(cx, (VarScope) scope, proto, sealed);
+        return DESCRIPTOR.buildConstructor(cx, scope, proto, sealed);
     }
 
     static ClassDescriptor.Builder makeCtorBuilder() {
@@ -4745,8 +4746,7 @@ public class NativeRegExp extends ScriptableObject {
         }
 
         Scriptable callThis = ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, replaceFunction);
-        Object replacementValue =
-                replaceFunction.call(cx, (VarScope) scope, callThis, replacerArgs);
+        Object replacementValue = replaceFunction.call(cx, scope, callThis, replacerArgs);
         return ScriptRuntime.toString(replacementValue);
     }
 
@@ -4990,7 +4990,7 @@ public class NativeRegExp extends ScriptableObject {
 } // class NativeRegExp
 
 class RECompiled implements Serializable {
-    private static final long serialVersionUID = -6144956577595844213L;
+    @Serial private static final long serialVersionUID = -6144956577595844213L;
 
     final char[] source; /* locked source string, sans // */
     int parenCount; /* number of parenthesized submatches */
@@ -5180,7 +5180,7 @@ class REGlobalData {
  *
  */
 final class RECharSet implements Serializable {
-    private static final long serialVersionUID = 7931787979395898394L;
+    @Serial private static final long serialVersionUID = 7931787979395898394L;
     ArrayList<Integer> unicodeProps = new ArrayList<Integer>();
     ArrayList<Integer> negUnicodeProps = new ArrayList<Integer>();
 

@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import java.io.Serial;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
@@ -52,7 +53,7 @@ import org.mozilla.javascript.annotations.JSGetter;
  * @author Norris Boyd
  */
 public class Foo extends ScriptableObject {
-    private static final long serialVersionUID = -3833489808933339159L;
+    @Serial private static final long serialVersionUID = -3833489808933339159L;
 
     /**
      * The zero-parameter constructor.

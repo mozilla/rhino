@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.commonjs.module.provider;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URLConnection;
 
@@ -19,7 +20,7 @@ import java.net.URLConnection;
  */
 public class DefaultUrlConnectionExpiryCalculator
         implements UrlConnectionExpiryCalculator, Serializable {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 6649125723317726741L;
     private final long relativeExpiry;
 
     /** Creates a new default expiry calculator with one minute relative expiry. */

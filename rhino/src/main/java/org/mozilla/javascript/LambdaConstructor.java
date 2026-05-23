@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * This class implements a JavaScript function that may be used as a constructor by delegating to an
  * interface that can be easily implemented as a lambda. The LambdaFunction class may be used to add
@@ -20,7 +22,7 @@ package org.mozilla.javascript;
  */
 public class LambdaConstructor extends LambdaFunction {
 
-    private static final long serialVersionUID = 2691205302914111400L;
+    @Serial private static final long serialVersionUID = 2691205302914111400L;
 
     /** If this flag is set, the constructor may be invoked as an ordinary function */
     public static final int CONSTRUCTOR_FUNCTION = 1;

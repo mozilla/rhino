@@ -281,4 +281,74 @@ class ArrayLiteralSpreadTest {
                         + "}";
         Utils.assertWithAllModes_ES6("Next failed", script);
     }
+
+    @Test
+    void testSpreadNonIterableObjectThrowsTypeError() {
+        // Per ecma-262 13.2.5.5, spreading an object without @@iterator throws TypeError.
+        String script =
+                "try {\n"
+                        + "  var result = [...{a: 1, b: 2}];\n"
+                        + "  'should not reach here';\n"
+                        + "} catch (e) {\n"
+                        + "  e instanceof TypeError ? 'TypeError' : 'wrong: ' + e;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    void testSpreadArrayWithoutPrototypeIteratorThrowsTypeError() {
+        // Removing Array.prototype[Symbol.iterator] should make array spread throw too.
+        String script =
+                "var arr = [1, 2, 3];\n"
+                        + "var saved = Array.prototype[Symbol.iterator];\n"
+                        + "delete Array.prototype[Symbol.iterator];\n"
+                        + "var outcome;\n"
+                        + "try {\n"
+                        + "  var result = [...arr];\n"
+                        + "  outcome = 'should not reach here';\n"
+                        + "} catch (e) {\n"
+                        + "  outcome = e instanceof TypeError ? 'TypeError' : 'wrong: ' + e;\n"
+                        + "} finally {\n"
+                        + "  Array.prototype[Symbol.iterator] = saved;\n"
+                        + "}\n"
+                        + "outcome;";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    void testSpreadNullThrowsTypeError() {
+        String script =
+                "try {\n"
+                        + "  var result = [...null];\n"
+                        + "  'should not reach here';\n"
+                        + "} catch (e) {\n"
+                        + "  e instanceof TypeError ? 'TypeError' : 'wrong: ' + e;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    void testSpreadUndefinedThrowsTypeError() {
+        String script =
+                "try {\n"
+                        + "  var result = [...undefined];\n"
+                        + "  'should not reach here';\n"
+                        + "} catch (e) {\n"
+                        + "  e instanceof TypeError ? 'TypeError' : 'wrong: ' + e;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    void testMultiSpreadsWithSkipWhenSpreadAddsMultipleElements() {
+        String script =
+                "var a = [...[1], , ...[2,3], , ...[4]];\n"
+                        + "a[0] + '/'"
+                        + " + ((1 in a) ? 'present' : 'absent') + '/'"
+                        + " + a[2] + '/'"
+                        + " + a[3] + '/'"
+                        + " + ((4 in a) ? 'present' : 'absent') + '/'"
+                        + " + a[5];\n";
+        Utils.assertWithAllModes_ES6("1/absent/2/3/absent/4", script);
+    }
 }

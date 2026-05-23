@@ -13,9 +13,11 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import org.mozilla.javascript.PropHolder;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.UniqueTag;
+import org.mozilla.javascript.VarScope;
 
 /**
  * Class ScriptableOutputStream is an ObjectOutputStream used to serialize JavaScript objects and
@@ -40,7 +42,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
      * @param out the OutputStream to write to.
      * @param scope the scope containing the object.
      */
-    public ScriptableOutputStream(OutputStream out, Scriptable scope) throws IOException {
+    public ScriptableOutputStream(OutputStream out, VarScope scope) throws IOException {
         super(out);
         this.scope = scope;
         table = new HashMap<>();
@@ -145,13 +147,17 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         }
     }
 
-    static Object lookupQualifiedName(Scriptable scope, String qualifiedName) {
+    static Object lookupQualifiedName(VarScope scope, String qualifiedName) {
         StringTokenizer st = new StringTokenizer(qualifiedName, ".");
         Object result = scope;
         while (st.hasMoreTokens()) {
             String s = st.nextToken();
-            result = ScriptableObject.getProperty((Scriptable) result, s);
-            if (result == null || !(result instanceof Scriptable)) break;
+            if (result instanceof VarScope) {
+                result = ScriptableObject.getProperty((VarScope) result, s);
+            } else {
+                result = ScriptableObject.getProperty((Scriptable) result, s);
+            }
+            if (result == null || !(result instanceof PropHolder)) break;
         }
         return result;
     }
@@ -178,6 +184,6 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         return new PendingLookup(name);
     }
 
-    private Scriptable scope;
+    private VarScope scope;
     private Map<Object, String> table;
 }

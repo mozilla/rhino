@@ -24,12 +24,4 @@ public class TestSourceTest {
         assertTrue(Files.exists(Path.of(path)));
         assertTrue(Files.isDirectory(Path.of(path)));
     }
-
-    @Test
-    public void testPrefixTestDirectories() {
-        String path = TestSource.resolveDirectories("testsrc/assert.js", 2);
-        assertNotNull(path);
-        assertTrue(Files.exists(Path.of(path)));
-        assertTrue(Files.isDirectory(Path.of(path)));
-    }
 }

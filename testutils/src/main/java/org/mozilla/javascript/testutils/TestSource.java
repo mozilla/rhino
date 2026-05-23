@@ -1,7 +1,10 @@
 package org.mozilla.javascript.testutils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.regex.Pattern;
 
 /**
  * This class is used to locate the "testsrc" directory and other testing-related resources in the
@@ -13,32 +16,20 @@ public class TestSource {
     private static final TestSource SELF = new TestSource();
 
     private TestSource() {
-        resolver = new Resolver();
+        if (BazelResolver.isBazel()) {
+            resolver = new BazelResolver();
+        } else {
+            resolver = new NativeResolver();
+        }
     }
 
     /**
      * Return the actual location of the specified file, or throw an AssertionError if the file
      * cannot be found. This method must be used so that file lookup is portable across platforms
-     * and build systems, rather than referring directly to files.
-     *
-     * <p>Typically, "path" in this case will start with either "testsrc" or "test262". This class
-     * will locate the "testsrc" directory, which will typically be in a separate location on
-     * different modules and build systems.
+     * and build systems.
      */
     public static String resolve(String path) {
         return SELF.resolver.resolve(path);
-    }
-
-    /**
-     * Return an optional prefix that should be inserted when trying to find files in the "testsrc"
-     * directory specifically. This allows scripts to reference files like "testsrc/foo" in all
-     * cases and have them resolve.
-     *
-     * @return the prefix that must be prepended to all file lookups in the "testsrc" directory, or
-     *     null if no prefix is necessary.
-     */
-    public static String getPrefix() {
-        return SELF.resolver.getPrefix();
     }
 
     /**
@@ -53,38 +44,33 @@ public class TestSource {
     }
 
     /**
-     * Like resolveDirectory, but go up "lvl" levels to get the parent of a well-known file multiple
-     * levels up.
+     * Return the prefix that should be added to methods like "load" so that they can put this
+     * before a file name like "testsrc/assert.js" and end up in the right place.
      */
-    public static String resolveDirectories(String path, int lvl) {
-        var p = Path.of(SELF.resolver.resolve(path));
-        for (int i = 0; p != null && i < lvl; i++) {
-            p = p.getParent();
-        }
-        return p == null ? "" : p.toString();
+    public static String getPrefix() {
+        return SELF.resolver.getPrefix();
     }
 
-    /**
-     * A class to do the actual resolution. Is is abstracted out to support additional test
-     * environments in the future.
-     */
-    private static class Resolver {
+    private abstract static class Resolver {
+        abstract String resolve(String path);
+
+        abstract String getPrefix();
+    }
+
+    private static class NativeResolver extends Resolver {
         private final String prefix;
 
-        Resolver() {
-            // Look where Gradle will put the files in the "tests" module
+        NativeResolver() {
             var testSrc = Path.of("./testsrc");
             if (Files.isDirectory(testSrc)) {
                 prefix = null;
                 return;
             }
-            // Look where Bazel will eventually put the files
             testSrc = Path.of("./tests/testsrc");
             if (Files.isDirectory(testSrc)) {
                 prefix = "./tests";
                 return;
             }
-            // Look where Gradle will put the files in other modules
             testSrc = Path.of("../tests/testsrc");
             if (Files.isDirectory(testSrc)) {
                 prefix = "../tests";
@@ -93,6 +79,7 @@ public class TestSource {
             prefix = "NOTFOUND";
         }
 
+        @Override
         String resolve(String path) {
             if (prefix == null) {
                 return path;
@@ -100,8 +87,65 @@ public class TestSource {
             return prefix + '/' + path;
         }
 
+        @Override
         String getPrefix() {
             return prefix;
+        }
+    }
+
+    private static class BazelResolver extends Resolver {
+        private static final Pattern WS = Pattern.compile("\\s");
+
+        private final HashMap<String, String> manifest = new HashMap<>();
+        private final String workspace;
+
+        static boolean isBazel() {
+            var mani = System.getenv("RUNFILES_MANIFEST_FILE");
+            if (mani == null) {
+                return false;
+            }
+            return Files.isReadable(Path.of(mani));
+        }
+
+        BazelResolver() {
+            String ws = System.getenv("TEST_WORKSPACE");
+            workspace = ws != null ? ws : "";
+            String maniPath = System.getenv("RUNFILES_MANIFEST_FILE");
+            assert maniPath != null;
+            try {
+                for (String line : Files.readAllLines(Path.of(maniPath))) {
+                    String[] parts = WS.split(line, 2);
+                    if (parts.length == 2) {
+                        manifest.put(parts[0], parts[1]);
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error reading Bazel manifest file: " + e);
+            }
+        }
+
+        @Override
+        String resolve(String path) {
+            // Handle cases where the test directory might be in other places
+            String p = manifest.get(workspace + '/' + path);
+            if (p == null) {
+                p = manifest.get(workspace + "/tests/" + path);
+            }
+            if (p == null) {
+                throw new AssertionError("Can't find test file " + path);
+            }
+            return p;
+        }
+
+        @Override
+        String getPrefix() {
+            // Find a well-known file and go up from there
+            var p = Path.of(resolve("testsrc/assert.js"));
+            p = p.getParent();
+            if (p != null) {
+                p = p.getParent();
+            }
+            return p == null ? null : p.toString();
         }
     }
 }

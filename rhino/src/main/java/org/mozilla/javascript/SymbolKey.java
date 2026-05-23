@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.Symbol.Kind.BUILT_IN;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -10,7 +11,7 @@ import java.io.Serializable;
  * NativeSymbol objects with the same key are equal.
  */
 public class SymbolKey implements Symbol, Serializable {
-    private static final long serialVersionUID = -6019782713330994754L;
+    @Serial private static final long serialVersionUID = -6019782713330994754L;
 
     // These are common SymbolKeys that are equivalent to well-known symbols
     // defined in ECMAScript.

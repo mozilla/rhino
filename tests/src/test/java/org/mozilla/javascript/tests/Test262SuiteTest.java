@@ -54,6 +54,7 @@ import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.testutils.Sharding;
 import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -252,7 +253,7 @@ public class Test262SuiteTest {
             return instance;
         }
 
-        private static Object gc(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        private static Object gc(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             System.gc();
             return Undefined.instance;
         }
@@ -271,7 +272,7 @@ public class Test262SuiteTest {
         }
 
         public static $262 createRealm(
-                Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
             TopLevel realm = cx.initSafeStandardObjects(new TopLevel());
             return install(realm, thisObj.getPrototype());
         }
@@ -468,7 +469,12 @@ public class Test262SuiteTest {
 
                     if (!topLevelFolder.exists()) {
                         throw new RuntimeException(
-                                "Non-existing '" + path + "' at the line #" + lineNo);
+                                "Non-existing '"
+                                        + path
+                                        + "' at the line #"
+                                        + lineNo
+                                        + " topLevel = "
+                                        + topLevelFolder);
                     } else if (!topLevelFolder.isDirectory()) {
                         throw new RuntimeException(
                                 "Unexpected file '"
@@ -587,8 +593,18 @@ public class Test262SuiteTest {
         Map<File, String> failingFiles = new HashMap<File, String>();
         addTestFiles(testFiles, failingFiles);
 
+        var shards = Sharding.getSharding();
+        System.out.println("Sharding: " + shards);
+
+        int i = 0;
         fileLoop:
         for (File testFile : testFiles) {
+            if (shards != null) {
+                if (i++ % shards.total != shards.index) {
+                    continue;
+                }
+            }
+
             String caseShortPath = testDir.toPath().relativize(testFile.toPath()).toString();
             boolean markedAsFailing = failingFiles.containsKey(testFile);
             String comment = markedAsFailing ? failingFiles.get(testFile) : null;

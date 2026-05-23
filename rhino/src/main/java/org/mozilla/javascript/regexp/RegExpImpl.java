@@ -22,8 +22,8 @@ import org.mozilla.javascript.VarScope;
 public class RegExpImpl implements RegExpProxy {
 
     @Override
-    public void register(TopLevel scope, boolean sealed) {
-        NativeRegExpStringIterator.init(scope, sealed);
+    public void register(Context cx, TopLevel scope, boolean sealed) {
+        NativeRegExpStringIterator.init(cx, scope, sealed);
         new LazilyLoadedCtor<>(scope, "RegExp", sealed, true, NativeRegExp::init);
     }
 

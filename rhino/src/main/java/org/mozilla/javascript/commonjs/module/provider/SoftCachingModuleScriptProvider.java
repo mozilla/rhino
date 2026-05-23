@@ -7,6 +7,7 @@ package org.mozilla.javascript.commonjs.module.provider;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.net.URI;
@@ -30,7 +31,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  *     $
  */
 public class SoftCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 523398435792363456L;
     private transient ReferenceQueue<Script> scriptRefQueue = new ReferenceQueue<>();
     private transient ConcurrentMap<String, ScriptReference> scripts =
             new ConcurrentHashMap<>(16, .75f, getConcurrencyLevel());
@@ -111,6 +112,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
         }
     }
 
+    @Serial
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         scriptRefQueue = new ReferenceQueue<>();
@@ -125,6 +127,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
         }
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
         final Map<String, CachedModuleScript> serScripts = new HashMap<>();
         for (Map.Entry<String, ScriptReference> entry : scripts.entrySet()) {

@@ -154,7 +154,7 @@ public class WrapFactory {
      * @return the wrapped value which shall not be null
      * @since 1.7R3
      */
-    public Scriptable wrapJavaClass(Context cx, Scriptable scope, Class<?> javaClass) {
+    public Scriptable wrapJavaClass(Context cx, VarScope scope, Class<?> javaClass) {
         return new NativeJavaClass(scope, javaClass);
     }
 

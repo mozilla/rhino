@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -16,7 +17,7 @@ import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
  * @author Ronald Brill
  */
 final class NativeReflect extends ScriptableObject {
-    private static final long serialVersionUID = 2920773905356325445L;
+    @Serial private static final long serialVersionUID = 2920773905356325445L;
 
     private static final String REFLECT_TAG = "Reflect";
 

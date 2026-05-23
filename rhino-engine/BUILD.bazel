@@ -1,0 +1,30 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "rhino-engine",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = ["//rhino"],
+)
+
+java_test_suite(
+    name = "rhino-engine-tests",
+    size = "small",
+    srcs = glob(
+        ["src/test/java/**/*.java"],
+        exclude = ["**/module-info.java"],
+    ),
+    data = ["//tests:testsrc"],
+    runner = "junit5",
+    tags = ["no-agent"],
+    test_suffixes = ["Test.java"],
+    deps = [
+        ":rhino-engine",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)

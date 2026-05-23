@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -25,11 +26,11 @@ import java.io.Serializable;
  * scopeInit or fillConstructorProperties methods.
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
-    private static final long serialVersionUID = -3744239272168621609L;
+    @Serial private static final long serialVersionUID = -3744239272168621609L;
     private transient PrototypeValues prototypeValues;
 
     private static final class PrototypeValues implements Serializable {
-        private static final long serialVersionUID = 3038645279153854371L;
+        @Serial private static final long serialVersionUID = 3038645279153854371L;
 
         private static final int NAME_SLOT = 1;
         private static final int SLOT_SPAN = 2;
@@ -722,7 +723,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     public final IdFunctionObject exportAsJSClass(
             int maxPrototypeId, VarScope scope, boolean sealed) {
         // Set scope and prototype unless this is top level scope itself
-        if (scope != this && scope != null) {
+        if (scope != null) {
             setParentScope(scope);
             setPrototype(getObjectPrototype(scope));
         }
@@ -1002,6 +1003,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return null;
     }
 
+    @Serial
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         int maxPrototypeId = stream.readInt();
@@ -1010,6 +1012,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         }
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
         int maxPrototypeId = 0;

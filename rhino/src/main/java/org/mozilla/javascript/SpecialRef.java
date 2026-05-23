@@ -6,8 +6,10 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 class SpecialRef extends Ref {
-    private static final long serialVersionUID = -7521596632456797847L;
+    @Serial private static final long serialVersionUID = -7521596632456797847L;
 
     private static final int SPECIAL_NONE = 0;
     private static final int SPECIAL_PROTO = 1;
@@ -62,7 +64,7 @@ class SpecialRef extends Ref {
         }
     }
 
-    private static Scriptable getScriptableForScope(Scriptable scope) {
+    private static Scriptable getScriptableForScope(VarScope scope) {
         if (scope instanceof WithScope) {
             return ((WithScope) scope).getObject();
         } else if (scope != null) {
@@ -80,7 +82,7 @@ class SpecialRef extends Ref {
     }
 
     @Override
-    public Object set(Context cx, Scriptable owner, Object value) {
+    public Object set(Context cx, VarScope owner, Object value) {
         switch (type) {
             case SPECIAL_NONE:
                 return ScriptRuntime.setObjectProp(target, name, value, cx);
@@ -95,50 +97,43 @@ class SpecialRef extends Ref {
                             if (search == target) {
                                 throw Context.reportRuntimeErrorById("msg.cyclic.value", name);
                             }
-                            if (type == SPECIAL_PROTO) {
-                                search = search.getPrototype();
-                            } else {
-                                search = search.getParentScope();
-                            }
+                            search = search.getPrototype();
                         } while (search != null);
                     }
-                    if (type == SPECIAL_PROTO) {
-                        if (target instanceof ScriptableObject
-                                && !((ScriptableObject) target).isExtensible()
-                                && cx.getLanguageVersion() >= Context.VERSION_1_8) {
-                            throw ScriptRuntime.typeErrorById("msg.not.extensible");
-                        }
+                    if (target instanceof ScriptableObject
+                            && !((ScriptableObject) target).isExtensible()
+                            && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+                        throw ScriptRuntime.typeErrorById("msg.not.extensible");
+                    }
 
-                        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-                            final String typeOfTarget = ScriptRuntime.typeof(target);
-                            if ("function".equals(typeOfTarget)) {
-                                if (value == null) {
-                                    target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
-                                    return value;
-                                }
-
-                                final String typeOfValue = ScriptRuntime.typeof(value);
-                                if ("object".equals(typeOfValue)
-                                        || "function".equals(typeOfValue)) {
-                                    target.setPrototype(obj);
-                                }
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                        final String typeOfTarget = ScriptRuntime.typeof(target);
+                        if ("function".equals(typeOfTarget)) {
+                            if (value == null) {
+                                target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
                                 return value;
                             }
 
                             final String typeOfValue = ScriptRuntime.typeof(value);
-                            if (NativeSymbol.TYPE_NAME.equals(typeOfTarget)) {
-                                return value;
+                            if ("object".equals(typeOfValue) || "function".equals(typeOfValue)) {
+                                target.setPrototype(obj);
                             }
-
-                            if ((value != null && !"object".equals(typeOfValue))
-                                    || !"object".equals(typeOfTarget)) {
-                                return Undefined.instance;
-                            }
-
-                            target.setPrototype(obj);
-                        } else {
-                            target.setPrototype(obj);
+                            return value;
                         }
+
+                        final String typeOfValue = ScriptRuntime.typeof(value);
+                        if (NativeSymbol.TYPE_NAME.equals(typeOfTarget)) {
+                            return value;
+                        }
+
+                        if ((value != null && !"object".equals(typeOfValue))
+                                || !"object".equals(typeOfTarget)) {
+                            return Undefined.instance;
+                        }
+
+                        target.setPrototype(obj);
+                    } else {
+                        target.setPrototype(obj);
                     }
                     return obj;
                 }

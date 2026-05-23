@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -19,7 +20,7 @@ import java.io.Serializable;
  * method because of the multiple internal representations.
  */
 public class Undefined implements Serializable {
-    private static final long serialVersionUID = 9195680630202616767L;
+    @Serial private static final long serialVersionUID = 9195680630202616767L;
 
     /**
      * This is the standard value for "undefined" in Rhino. Java code that needs to represent
@@ -100,7 +101,7 @@ public class Undefined implements Serializable {
         }
 
         @Override
-        public VarScope getPrototype() {
+        public Scriptable getPrototype() {
             return null;
         }
 

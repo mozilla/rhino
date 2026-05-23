@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serial;
+
 /**
  * This class reflects Java packages into the JavaScript environment. We lazily reflect classes and
  * subpackages, and use a caching/sharing system to ensure that members reflected into one
@@ -18,7 +20,7 @@ package org.mozilla.javascript;
  * @see NativeJavaClass
  */
 public class NativeJavaTopPackage extends NativeJavaPackage implements Function, IdFunctionCall {
-    private static final long serialVersionUID = -1455787259477709999L;
+    @Serial private static final long serialVersionUID = -1455787259477709999L;
 
     // we know these are packages so we can skip the class check
     // note that this is ok even if the package isn't present.
@@ -114,7 +116,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage implements Function,
         throw f.unknown();
     }
 
-    private Scriptable js_getClass(Context cx, Scriptable scope, Object[] args) {
+    private Scriptable js_getClass(Context cx, VarScope scope, Object[] args) {
         if (args.length > 0 && args[0] instanceof Wrapper) {
             Scriptable result = this;
             Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();

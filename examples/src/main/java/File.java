@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.Context;
@@ -53,7 +54,7 @@ import org.mozilla.javascript.annotations.JSGetter;
  */
 public class File extends ScriptableObject {
     /** Serial version UID for serialization compatibility. */
-    private static final long serialVersionUID = 2549960399774237828L;
+    @Serial private static final long serialVersionUID = 2549960399774237828L;
 
     /**
      * The zero-parameter constructor.

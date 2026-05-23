@@ -1,0 +1,69 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+
+java_library(
+    name = "rhino-tools",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rhino",
+        "@maven//:org_jline_jline_reader",
+        "@maven//:org_jline_jline_terminal",
+    ],
+)
+
+java_binary(
+    name = "shell",
+    main_class = "org.mozilla.javascript.tools.shell.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":rhino-tools",
+        "//rhino",
+        "//rhino-xml",
+        "@maven//:org_jline_jline_reader",
+        "@maven//:org_jline_jline_terminal",
+        "@maven//:org_jline_jline_terminal_ffm",
+        "@maven//:org_jline_jline_terminal_jni",
+    ],
+)
+
+java_binary(
+    name = "debugger",
+    main_class = "org.mozilla.javascript.tools.debugger.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":rhino-tools",
+        "//rhino",
+        "//rhino-xml",
+    ],
+)
+
+java_binary(
+    name = "jsc",
+    main_class = "org.mozilla.javascript.tools.jsc.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":rhino-tools",
+        "//rhino",
+    ],
+)
+
+java_test_suite(
+    name = "rhino-tools-tests",
+    size = "small",
+    srcs = glob(
+        ["src/test/java/**/*.java"],
+        exclude = ["**/module-info.java"],
+    ),
+    runner = "junit5",
+    tags = ["no-agent"],
+    test_suffixes = ["Test.java"],
+    deps = [
+        ":rhino-tools",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)
