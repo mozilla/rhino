@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -24,6 +23,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.mozilla.javascript.testutils.TestSource;
 
 /**
  * Runs the <a href="https://github.com/tc39/source-map-tests">tc39/source-map-tests</a> suite
@@ -57,11 +57,12 @@ import org.junit.jupiter.api.TestFactory;
  */
 class SourceMapSpecSuiteTest {
 
-    private static final Path SUITE_ROOT = Paths.get("source-map-tests");
-    private static final Path TESTS_JSON = SUITE_ROOT.resolve("source-map-spec-tests.json");
+    private static final Path TESTS_JSON =
+            Path.of(TestSource.resolve("source-map-tests/source-map-spec-tests.json"));
+    private static final Path SUITE_ROOT = TESTS_JSON.getParent();
     private static final Path RESOURCES = SUITE_ROOT.resolve("resources");
     private static final Path EXCLUDELIST =
-            Paths.get("testsrc", "source-map-tests-excludelist.txt");
+            Path.of(TestSource.resolve("testsrc/source-map-tests-excludelist.txt"));
 
     private static final boolean UPDATE_MODE =
             System.getProperty("updateSourceMapTestsExcludelist") != null;
