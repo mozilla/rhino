@@ -224,16 +224,18 @@ public class Test262SuiteTest {
                     "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+"
                             + "(?:"
                             + buildTestModeNames()
-                            + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
+                            + "\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:(?:"
+                            + buildTestModeNames()
+                            + "|unsupported: \\[.*\\]),?)+\\}))?[^\\S\\r\\n]*(.*)");
 
     private static String buildTestModeNames() {
         var sb = new StringBuilder();
-        sb.append("strict|non-strict|");
+        sb.append("strict|non-strict");
         for (var mode : TestMode.values()) {
             if (mode.shouldRun()) {
-                sb.append(mode.keyPart()).append('|');
+                sb.append('|').append(mode.keyPart()).append('|');
                 sb.append(mode.keyPart()).append("-strict").append('|');
-                sb.append(mode.keyPart()).append("-non-strict").append('|');
+                sb.append(mode.keyPart()).append("-non-strict");
             }
         }
         return sb.toString();
