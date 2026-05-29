@@ -662,4 +662,89 @@ public class NativeReflectTest {
                         + "'' + viaCall + ' ' + viaReflect;";
         Utils.assertWithAllModes_ES6("true true", js);
     }
+
+    @Test
+    public void definePropertyReturnsFalseWhenTrapReturnsFalse() {
+        // On a proxy whose defineProperty trap returns false, Reflect.defineProperty
+        // must return false — this is the legitimate false path, not an error.
+        String js =
+                "var p = new Proxy({}, {\n"
+                        + "  defineProperty() { return false; }\n"
+                        + "});\n"
+                        + "'' + Reflect.defineProperty(p, 'x', { value: 1 });";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void definePropertyReturnsTrueOnSuccess() {
+        String js =
+                "var o = {};\n"
+                        + "'' + Reflect.defineProperty(o, 'p', { value: 42, configurable: true });";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverDefaultsToTarget() {
+        // When no receiver is supplied, getter sees target as 'this'.
+        String js =
+                "var o = {};\n"
+                        + "Object.defineProperty(o, 'p', {\n"
+                        + "  get() { return this === o; }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(o, 'p');";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverPassedToGetter() {
+        // When a receiver is supplied, getter sees receiver as 'this', not target.
+        String js =
+                "var target = {};\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(target, 'p', {\n"
+                        + "  get() { return this === receiver; }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(target, 'p', receiver);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverPassedToGetterOnPrototype() {
+        // Getter is on the prototype, receiver is the leaf object — 'this' must
+        // still be the receiver, not the prototype where the getter lives.
+        String js =
+                "var receiver = {};\n"
+                        + "var proto = {};\n"
+                        + "Object.defineProperty(proto, 'p', {\n"
+                        + "  get() { return this === receiver; }\n"
+                        + "});\n"
+                        + "var target = Object.create(proto);\n"
+                        + "'' + Reflect.get(target, 'p', receiver);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverDoesNotAffectDataProperty() {
+        // Receiver has no effect on plain data property reads — value comes from
+        // the prototype chain of target, not receiver.
+        String js =
+                "var target = { p: 42 };\n"
+                        + "var receiver = { p: 99 };\n"
+                        + "'' + Reflect.get(target, 'p', receiver);";
+        Utils.assertWithAllModes_ES6("42", js);
+    }
+
+    @Test
+    public void getReceiverWithSymbolKey() {
+        // Receiver must also be forwarded for Symbol-keyed getters.
+        String js =
+                "var sym = Symbol('test');\n"
+                        + "var target = {};\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(target, sym, {\n"
+                        + "  get() { return this === receiver; }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(target, sym, receiver);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
 }

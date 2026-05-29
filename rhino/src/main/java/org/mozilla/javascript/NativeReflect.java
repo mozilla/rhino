@@ -201,18 +201,17 @@ final class NativeReflect extends ScriptableObject {
         DescriptorInfo desc = new DescriptorInfo(ScriptableObject.ensureScriptableObject(args[2]));
 
         Object key = args[1];
-
         try {
             if (key instanceof Symbol) {
                 return target.defineOwnProperty(cx, key, desc);
-            } else {
-                String propertyKey =
-                        ScriptRuntime.toString(
-                                ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
-                return target.defineOwnProperty(cx, propertyKey, desc);
             }
-
+            String propertyKey =
+                    ScriptRuntime.toString(
+                            ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
+            return target.defineOwnProperty(cx, propertyKey, desc);
         } catch (EcmaError e) {
+            // Rhino throws where the spec says [[DefineOwnProperty]] should return false.
+            // Map those back to the spec-correct false return value.
             return false;
         }
     }
@@ -255,20 +254,30 @@ final class NativeReflect extends ScriptableObject {
          */
         ScriptableObject target = checkTarget(args);
 
-        if (args.length > 1) {
-            if (ScriptRuntime.isSymbol(args[1])) {
-                Object prop = ScriptableObject.getProperty(target, (Symbol) args[1]);
-                return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
-            }
-            if (args[1] instanceof Number) {
-                Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toIndex(args[1]));
-                return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
-            }
+        if (args.length < 2) {
+            return Undefined.SCRIPTABLE_UNDEFINED;
+        }
 
-            Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toString(args[1]));
+        // Step 3: default receiver to target when not supplied.
+        Scriptable receiver =
+                (args.length > 2 && args[2] instanceof Scriptable) ? (Scriptable) args[2] : target;
+
+        if (ScriptRuntime.isSymbol(args[1])) {
+            Object prop = ScriptableObject.getSuperProperty(target, receiver, (Symbol) args[1]);
             return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
         }
-        return Undefined.SCRIPTABLE_UNDEFINED;
+
+        if (args[1] instanceof Number) {
+            Object prop =
+                    ScriptableObject.getSuperProperty(
+                            target, receiver, ScriptRuntime.toIndex(args[1]));
+            return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
+        }
+
+        Object prop =
+                ScriptableObject.getSuperProperty(
+                        target, receiver, ScriptRuntime.toString(args[1]));
+        return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
     }
 
     /**
