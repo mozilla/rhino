@@ -152,6 +152,16 @@ class MappingsDecoderTest {
     }
 
     @Test
+    void rejectsVlqWithTooManyContinuationBytes() {
+        // 13 'g' digits (continuation bit set, value 0) push the shift past 64, then a
+        // terminating 'E' (value 4). Without a shift guard, Java masks the long shift amount
+        // (65 & 63 == 1) so the value wraps into low bits and silently decodes to genCol=4
+        // instead of being rejected as a malformed, over-long VLQ.
+        assertThrows(
+                SourceMapException.class, () -> MappingsDecoder.decode("gggggggggggggE", 0, 0));
+    }
+
+    @Test
     void rejectsInvalidBase64Char() {
         assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("@", 0, 0));
     }

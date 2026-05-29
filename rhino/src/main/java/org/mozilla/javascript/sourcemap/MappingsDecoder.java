@@ -167,6 +167,10 @@ final class MappingsDecoder {
                 throw new SourceMapException(
                         "invalid Base64 character '" + c + "' at line " + line);
             }
+            if (shift >= 64) {
+                throw new SourceMapException(
+                        "VLQ overflow (too many continuation bytes) at line " + line);
+            }
             continuation = (digit & VLQ_CONTINUATION_BIT) != 0;
             long chunk = digit & VLQ_BASE_MASK;
             result |= chunk << shift;
