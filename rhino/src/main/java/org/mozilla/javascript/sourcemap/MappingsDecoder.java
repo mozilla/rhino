@@ -167,12 +167,15 @@ final class MappingsDecoder {
                 throw new SourceMapException(
                         "invalid Base64 character '" + c + "' at line " + line);
             }
-            if (shift >= 64) {
-                throw new SourceMapException(
-                        "VLQ overflow (too many continuation bytes) at line " + line);
-            }
             continuation = (digit & VLQ_CONTINUATION_BIT) != 0;
             long chunk = digit & VLQ_BASE_MASK;
+            // A non-zero chunk at shift >= 64 would wrap (Java masks the long shift to shift & 63)
+            // and silently corrupt the result. Zero chunks at that shift are harmless padding,
+            // which the spec allows, so only reject when actual value bits would be lost.
+            if (chunk != 0 && shift >= 64) {
+                throw new SourceMapException(
+                        "VLQ overflow (value exceeds 32 bits) at line " + line);
+            }
             result |= chunk << shift;
             shift += VLQ_BASE_SHIFT;
         } while (continuation);
