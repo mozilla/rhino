@@ -84,13 +84,10 @@ final class NativeReflect extends ScriptableObject {
                     Integer.toString(args.length));
         }
 
-        Scriptable callable = ScriptableObject.ensureScriptable(args[0]);
-
-        if (args[1] instanceof Scriptable) {
-            thisObj = (Scriptable) args[1];
-        } else if (ScriptRuntime.isPrimitive(args[1])) {
-            thisObj = cx.newObject(s, "Object", new Object[] {args[1]});
+        if (!(args[0] instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(args[0]);
         }
+        Scriptable callable = (Scriptable) args[0];
 
         if (ScriptRuntime.isSymbol(args[2])) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(args[2]));
@@ -98,7 +95,7 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject argumentsList = ScriptableObject.ensureScriptableObject(args[2]);
 
         return ScriptRuntime.applyOrCall(
-                true, cx, s, callable, new Object[] {thisObj, argumentsList});
+                true, cx, s, callable, new Object[] {args[1], argumentsList});
     }
 
     /**

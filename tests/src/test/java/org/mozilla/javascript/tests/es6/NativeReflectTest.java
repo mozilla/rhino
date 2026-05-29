@@ -607,4 +607,59 @@ public class NativeReflectTest {
                         + "'' + Reflect.set(p, 'attr', 'foo');";
         Utils.assertWithAllModes_ES6("true", js);
     }
+
+    @Test
+    public void applyThisArgumentMatchesCall_number() {
+        // Reflect.apply must not add extra boxing on top of what the call
+        // machinery does. Whatever typeof this fn.call(42) gives,
+        // Reflect.apply(fn, 42, []) must give the same result.
+        String js =
+                "function getThis() { 'use strict'; return typeof this; }\n"
+                        + "var viaCall    = getThis.call(42);\n"
+                        + "var viaReflect = Reflect.apply(getThis, 42, []);\n"
+                        + "'' + (viaCall === viaReflect);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void applyThisArgumentMatchesCall_string() {
+        String js =
+                "function getThis() { 'use strict'; return typeof this; }\n"
+                        + "var viaCall    = getThis.call('hello');\n"
+                        + "var viaReflect = Reflect.apply(getThis, 'hello', []);\n"
+                        + "'' + (viaCall === viaReflect);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void applyThisArgumentMatchesCall_null() {
+        String js =
+                "function getThis() { 'use strict'; return this === null; }\n"
+                        + "var viaCall    = getThis.call(null);\n"
+                        + "var viaReflect = Reflect.apply(getThis, null, []);\n"
+                        + "'' + (viaCall === viaReflect);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void applyThisArgumentMatchesCall_undefined() {
+        String js =
+                "function getThis() { 'use strict'; return this === undefined; }\n"
+                        + "var viaCall    = getThis.call(undefined);\n"
+                        + "var viaReflect = Reflect.apply(getThis, undefined, []);\n"
+                        + "'' + (viaCall === viaReflect);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void applyThisArgumentMatchesCall_object() {
+        // Object thisArg: must be the exact same reference in both cases.
+        String js =
+                "var obj = {};\n"
+                        + "function getThis() { 'use strict'; return this === obj; }\n"
+                        + "var viaCall    = getThis.call(obj);\n"
+                        + "var viaReflect = Reflect.apply(getThis, obj, []);\n"
+                        + "'' + viaCall + ' ' + viaReflect;";
+        Utils.assertWithAllModes_ES6("true true", js);
+    }
 }
