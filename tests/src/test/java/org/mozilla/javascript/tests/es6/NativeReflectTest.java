@@ -460,4 +460,151 @@ public class NativeReflectTest {
                         + "+ ' ' + Reflect.setPrototypeOf(o3, proto)";
         Utils.assertWithAllModes_ES6("true true true", js);
     }
+
+    @Test
+    public void setWithoutReceiver() {
+        // Basic sanity: no receiver argument, value lands on target.
+        String js = "var o = { p: 0 };\n" + "Reflect.set(o, 'p', 42);\n" + "'' + o.p;";
+        Utils.assertWithAllModes_ES6("42", js);
+    }
+
+    @Test
+    public void setWithReceiverSameAsTarget() {
+        // receiver === target: ordinary path, value lands on the object.
+        String js = "var o = { p: 0 };\n" + "'' + Reflect.set(o, 'p', 99, o) + ' ' + o.p;";
+        Utils.assertWithAllModes_ES6("true 99", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_writableDataProp() {
+        // OrdinarySetWithOwnDescriptor step 1.d.iii:
+        // target has writable data property, receiver is a different object.
+        // Value must be written to the receiver via [[DefineOwnProperty]], not [[Set]].
+        String js =
+                "var target = { p: 0 };\n"
+                        + "var receiver = { p: 10 };\n"
+                        + "var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "'' + result + ' ' + target.p + ' ' + receiver.p;";
+        // target unchanged, receiver updated, returns true
+        Utils.assertWithAllModes_ES6("true 0 42", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_newPropOnReceiver() {
+        // OrdinarySetWithOwnDescriptor step 1.e (CreateDataProperty):
+        // target has writable data property, receiver does NOT own that property yet.
+        String js =
+                "var target = { p: 0 };\n"
+                        + "var receiver = {};\n"
+                        + "var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "'' + result + ' ' + target.p + ' ' + receiver.p;";
+        // target unchanged, new property created on receiver
+        Utils.assertWithAllModes_ES6("true 0 42", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_nonWritableOwnDescOnTarget() {
+        // OrdinarySetWithOwnDescriptor step 1.a: target property is non-writable → false.
+        String js =
+                "var target = {};\n"
+                        + "Object.defineProperty(target, 'p', { value: 0, writable: false, configurable: true });\n"
+                        + "var receiver = {};\n"
+                        + "'' + Reflect.set(target, 'p', 42, receiver);";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_nonWritableOwnDescOnReceiver() {
+        // OrdinarySetWithOwnDescriptor step 1.d.ii:
+        // receiver already owns the property but it is non-writable → false.
+        String js =
+                "var target = { p: 0 };\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(receiver, 'p', { value: 1, writable: false, configurable: true });\n"
+                        + "'' + Reflect.set(target, 'p', 42, receiver);";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_accessorDescOnReceiverReturnsFalse() {
+        // OrdinarySetWithOwnDescriptor step 1.d.i:
+        // receiver owns an accessor for that property → false.
+        String js =
+                "var target = { p: 0 };\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(receiver, 'p', { get() { return 1; }, configurable: true });\n"
+                        + "'' + Reflect.set(target, 'p', 42, receiver);";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_accessorWithSetter() {
+        // OrdinarySetWithOwnDescriptor step 3: target has accessor with setter,
+        // setter must be called with receiver as 'this'.
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "Object.defineProperty(target, 'p', {\n"
+                        + "  get() { return 0; },\n"
+                        + "  set(v) { log.push(this === receiver ? 'receiver' : 'other', v); },\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var receiver = {};\n"
+                        + "var result = Reflect.set(target, 'p', 7, receiver);\n"
+                        + "'' + result + ' ' + log;";
+        Utils.assertWithAllModes_ES6("true receiver,7", js);
+    }
+
+    @Test
+    public void setWithReceiverDifferentFromTarget_accessorNoSetterReturnsFalse() {
+        // OrdinarySetWithOwnDescriptor step 4: target has accessor with no setter → false.
+        String js =
+                "var target = {};\n"
+                        + "Object.defineProperty(target, 'p', { get() { return 0; }, configurable: true });\n"
+                        + "var receiver = {};\n"
+                        + "'' + Reflect.set(target, 'p', 7, receiver);";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void setWithReceiverPreservesExistingAttributesOnReceiver() {
+        // When receiver already owns the (writable) property, [[DefineOwnProperty]]
+        // with {[[Value]]: V} must preserve writable/enumerable/configurable.
+        String js =
+                "var target = { p: 0 };\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(receiver, 'p', {\n"
+                        + "  value: 1, writable: true, enumerable: false, configurable: false\n"
+                        + "});\n"
+                        + "Reflect.set(target, 'p', 42, receiver);\n"
+                        + "var d = Object.getOwnPropertyDescriptor(receiver, 'p');\n"
+                        + "'' + d.value + ' ' + d.writable + ' ' + d.enumerable + ' ' + d.configurable;";
+        // value updated, other attributes unchanged
+        Utils.assertWithAllModes_ES6("42 true false false", js);
+    }
+
+    @Test
+    public void setTrapReturnsTrueForConfigurableNonWritableProperty() {
+        // Reflect.set(proxy, "attr", "foo") must return true when the
+        // set trap returns true and the target property is configurable (even though
+        // it is non-writable). The OrdinarySetWithOwnDescriptor non-writable check
+        // must NOT run when the target itself is the proxy — the trap result is final.
+        // See: ECMAScript [[Set]] 10.5.9 step 11 — invariant only applies when
+        // targetDesc.[[Configurable]] is false.
+        String js =
+                "var target = {};\n"
+                        + "var handler = {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "};\n"
+                        + "var p = new Proxy(target, handler);\n"
+                        + "Object.defineProperty(target, 'attr', {\n"
+                        + "  configurable: true,\n"
+                        + "  writable: false,\n"
+                        + "  value: 'foo'\n"
+                        + "});\n"
+                        + "'' + Reflect.set(p, 'attr', 'foo');";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
 }

@@ -1005,4 +1005,127 @@ public class NativeProxyTest {
                         + "'' + (_receiver === proxy) + ' ' + target[sym]";
         Utils.assertWithAllModes_ES6("true hello", js);
     }
+
+    @Test
+    public void setTrapWithProxyAsReceiverViaWith() {
+        // similar to what is done in set-mutable-binding-idref-with-proxy-env.js
+        // 'with (proxy)' uses the proxy as both the
+        // scope object and the receiver. Reflect.set(env, "p", 1, proxy) must
+        // call proxy.[[DefineOwnProperty]] not proxy.[[Set]].
+        String js =
+                "var log = [];\n"
+                        + "var env = { p: 0 };\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  has(t, pk) {\n"
+                        + "    log.push('has:' + String(pk));\n"
+                        + "    return Reflect.has(t, pk);\n"
+                        + "  },\n"
+                        + "  get(t, pk, r) {\n"
+                        + "    log.push('get:' + String(pk));\n"
+                        + "    return Reflect.get(t, pk, r);\n"
+                        + "  },\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    log.push('set:' + String(pk));\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "  getOwnPropertyDescriptor(t, pk) {\n"
+                        + "    log.push('getOwnPropertyDescriptor:' + String(pk));\n"
+                        + "    return Reflect.getOwnPropertyDescriptor(t, pk);\n"
+                        + "  },\n"
+                        + "  defineProperty(t, pk, d) {\n"
+                        + "    log.push('defineProperty:' + String(pk));\n"
+                        + "    return Reflect.defineProperty(t, pk, d);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "with (proxy) {\n"
+                        + "  p = 1;\n"
+                        + "}\n"
+                        + "'' + log";
+
+        // finally should be
+        // "has:p,get:Symbol(Symbol.unscopables),has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p"
+        Utils.assertWithAllModes_ES6(
+                "has:p,has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p", js);
+    }
+
+    @Test
+    public void setTrapWithProxyAsReceiverValueWrittenToProxy() {
+        // Verify the value ends up on the proxy's target, not lost.
+        String js =
+                "var env = { p: 0 };\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "with (proxy) {\n"
+                        + "  p = 42;\n"
+                        + "}\n"
+                        + "'' + env.p;";
+
+        Utils.assertWithAllModes_ES6("42", js);
+    }
+
+    @Test
+    public void setTrapWithProxyAsReceiverAccessorOnTarget() {
+        // Accessor property on target: setter should be called with the proxy as receiver.
+        String js =
+                "var log = [];\n"
+                        + "var env = {};\n"
+                        + "Object.defineProperty(env, 'p', {\n"
+                        + "  get() { return 0; },\n"
+                        + "  set(v) { log.push('setter:' + v); },\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "with (proxy) {\n"
+                        + "  p = 7;\n"
+                        + "}\n"
+                        + "'' + log;";
+
+        Utils.assertWithAllModes_ES6("setter:7", js);
+    }
+
+    @Test
+    public void setTrapWithProxyAsReceiverNoSetterReturnsFalse() {
+        // Accessor property with no setter: Reflect.set must return false (not throw).
+        String js =
+                "var env = {};\n"
+                        + "Object.defineProperty(env, 'p', {\n"
+                        + "  get() { return 0; },\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "'' + Reflect.set(proxy, 'p', 7);";
+
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void setTrapWithProxyAsReceiverNonWritableReturnsFalse() {
+        // Non-writable data property on target: Reflect.set must return false.
+        String js =
+                "var env = {};\n"
+                        + "Object.defineProperty(env, 'p', {\n"
+                        + "  value: 0,\n"
+                        + "  writable: false,\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "'' + Reflect.set(proxy, 'p', 7);";
+
+        Utils.assertWithAllModes_ES6("false", js);
+    }
 }

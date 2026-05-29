@@ -537,6 +537,13 @@ class NativeProxy extends ScriptableObject {
      */
     @Override
     public void put(String name, Scriptable start, Object value) {
+        putAndReturn(name, start, value);
+    }
+
+    /**
+     * Workaround for the missing return value of method {@link #put(String, Scriptable, Object)}
+     */
+    boolean putAndReturn(String name, Scriptable start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -564,7 +571,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, name, value, this}));
             if (!booleanTrapResult) {
-                return; // false
+                return false;
             }
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
@@ -581,13 +588,14 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-            return; // true
+            return true;
         }
 
         if (start == this) {
             start = target;
         }
         target.put(name, start, value);
+        return true; // still no result from put
     }
 
     /**
@@ -597,6 +605,11 @@ class NativeProxy extends ScriptableObject {
      */
     @Override
     public void put(int index, Scriptable start, Object value) {
+        putAndReturn(index, start, value);
+    }
+
+    /** Workaround for the missing return value of method {@link #put(int, Scriptable, Object)} */
+    boolean putAndReturn(int index, Scriptable start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -628,7 +641,7 @@ class NativeProxy extends ScriptableObject {
                                         target, ScriptRuntime.toString(index), value, this
                                     }));
             if (!booleanTrapResult) {
-                return; // false
+                return false;
             }
 
             DescriptorInfo targetDesc =
@@ -646,13 +659,14 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-            return; // true
+            return true;
         }
 
         if (start == this) {
             start = target;
         }
         target.put(index, start, value);
+        return true; // still no result from put
     }
 
     /**
@@ -662,6 +676,13 @@ class NativeProxy extends ScriptableObject {
      */
     @Override
     public void put(Symbol key, Scriptable start, Object value) {
+        putAndReturn(key, start, value);
+    }
+
+    /**
+     * Workaround for the missing return value of method {@link #put(Symbol, Scriptable, Object)}
+     */
+    boolean putAndReturn(Symbol key, Scriptable start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -689,7 +710,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, key, value, this}));
             if (!booleanTrapResult) {
-                return; // false
+                return false;
             }
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
@@ -706,7 +727,7 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-            return; // true
+            return true;
         }
 
         if (start == this) {
@@ -714,6 +735,7 @@ class NativeProxy extends ScriptableObject {
         }
         SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
         symbolScriptableTarget.put(key, start, value);
+        return true; // still no result from put
     }
 
     /**
