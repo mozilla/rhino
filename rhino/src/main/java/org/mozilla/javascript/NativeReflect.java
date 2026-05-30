@@ -64,8 +64,18 @@ final class NativeReflect extends ScriptableObject {
         return "Reflect";
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.apply">28.1.1 Reflect.apply
+     * ( target, thisArgument, argumentsList )</a>
+     */
     private static Object apply(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If IsCallable(target) is false, throw a TypeError exception.
+         * 2. Let args be ? CreateListFromArrayLike(argumentsList).
+         * 3. Perform PrepareForTailCall().
+         * 4. Return ? Call(target, thisArgument, args).
+         */
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -170,8 +180,18 @@ final class NativeReflect extends ScriptableObject {
         return newScriptable;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.defineproperty">28.1.3
+     * Reflect.defineProperty ( target, propertyKey, attributes )</a>
+     */
     private static Object defineProperty(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Let desc be ? ToPropertyDescriptor(attributes).
+         * 4. Return ? target.[[DefineOwnProperty]](key, desc).
+         */
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -200,8 +220,17 @@ final class NativeReflect extends ScriptableObject {
         }
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.deleteproperty">28.1.4
+     * Reflect.deleteProperty ( target, propertyKey )</a>
+     */
     private static Object deleteProperty(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Return ? target.[[Delete]](key).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -214,8 +243,19 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.get">28.1.5 Reflect.get (
+     * target, propertyKey [ , receiver ] )</a>
+     */
     private static Object get(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. If receiver is not present, then
+         *    a. Set receiver to target.
+         * 4. Return ? target.[[Get]](key, receiver).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -234,8 +274,19 @@ final class NativeReflect extends ScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
+    /**
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-reflect.getownpropertydescriptor">28.1.6
+     * Reflect.getOwnPropertyDescriptor ( target, propertyKey )</a>
+     */
     private static Scriptable getOwnPropertyDescriptor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Let desc be ? target.[[GetOwnProperty]](key).
+         * 4. Return FromPropertyDescriptor(desc).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -250,15 +301,32 @@ final class NativeReflect extends ScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.getprototypeof">28.1.7
+     * Reflect.getPrototypeOf ( target )</a>
+     */
     private static Scriptable getPrototypeOf(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Return ? target.[[GetPrototypeOf]]().
+         */
         ScriptableObject target = checkTarget(args);
 
         return target.getPrototype();
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.has">28.1.8 Reflect.has (
+     * target, propertyKey )</a>
+     */
     private static Object has(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Return ? target.[[HasProperty]](key).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -271,14 +339,31 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.isextensible">28.1.9
+     * Reflect.isExtensible ( target )</a>
+     */
     private static Object isExtensible(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Return ? IsExtensible(target).
+         */
         ScriptableObject target = checkTarget(args);
         return target.isExtensible();
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.ownkeys">28.1.10
+     * Reflect.ownKeys ( target )</a>
+     */
     private static Scriptable ownKeys(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let keys be ? target.[[OwnPropertyKeys]]().
+         * 3. Return CreateArrayFromList(keys).
+         */
         ScriptableObject target = checkTarget(args);
 
         final List<Object> strings = new ArrayList<>();
@@ -303,15 +388,34 @@ final class NativeReflect extends ScriptableObject {
         return cx.newArray(s, keys);
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.preventextensions">28.1.11
+     * Reflect.preventExtensions ( target )</a>
+     */
     private static Object preventExtensions(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Return ? target.[[PreventExtensions]]().
+         */
         ScriptableObject target = checkTarget(args);
 
         return target.preventExtensions();
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.set">28.1.12 Reflect.set (
+     * target, propertyKey, V [ , receiver ] )</a>
+     */
     private static Object set(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. If receiver is not present, then
+         *    a. Set receiver to target.
+         * 4. Return ? target.[[Set]](key, V, receiver).
+         */
         ScriptableObject target = checkTarget(args);
         if (args.length < 2) {
             return true;
@@ -348,8 +452,17 @@ final class NativeReflect extends ScriptableObject {
         return true;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.setprototypeof">28.1.13
+     * Reflect.setPrototypeOf ( target, proto )</a>
+     */
     private static Object setPrototypeOf(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. If Type(proto) is not Object and proto is not null, throw a TypeError exception.
+         * 3. Return ? target.[[SetPrototypeOf]](proto).
+         */
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
