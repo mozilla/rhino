@@ -773,7 +773,8 @@ public class NativeReflectTest {
     @Test
     public void setPlainFallbackNoOwnPropCreatesOwnOnReceiver() {
         // Neither target nor receiver has own 'p'. No proto chain interference.
-        // Spec: target.[[Set]] → no own on target (or proto) → CreateDataProperty(receiver, 'p', 42).
+        // Spec: target.[[Set]] → no own on target (or proto)
+        // → CreateDataProperty(receiver, 'p', 42).
         // receiver must end up with its own 'p'; target must be untouched.
         String js =
                 "var target = {};\n"
