@@ -433,6 +433,9 @@ final class NativeReflect extends ScriptableObject {
             return true;
         }
 
+        // A missing value must be treated as undefined
+        final Object value = args.length > 2 ? args[2] : Undefined.instance;
+
         // Step 3: default receiver to target when not supplied (args[3]).
         // Note: receiver is intentionally typed as Scriptable, not ScriptableObject,
         // because the caller may pass any object (e.g. a Proxy) as the receiver.
@@ -444,6 +447,17 @@ final class NativeReflect extends ScriptableObject {
             key = args[1]; // Symbol — used as-is
         } else {
             key = ScriptRuntime.toString(args[1]); // coerce to String
+        }
+
+        if (receiver != target && target instanceof NativeProxy proxyTarget) {
+            if (key instanceof Symbol) {
+                return proxyTarget.putAndReturn((Symbol) key, receiver, args[2]);
+            }
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(key);
+            if (soi.stringId == null) {
+                return proxyTarget.putAndReturn(soi.index, receiver, args[2]);
+            }
+            return proxyTarget.putAndReturn(soi.stringId, receiver, args[2]);
         }
 
         if (receiver != target) {
@@ -473,7 +487,7 @@ final class NativeReflect extends ScriptableObject {
                 }
                 if (ownDesc != null) {
                     // Found the property somewhere in target's chain.
-                    return ordinarySetWithOwnDescriptor(cx, s, receiver, key, args[2], ownDesc);
+                    return ordinarySetWithOwnDescriptor(cx, s, receiver, key, value, ownDesc);
                 }
                 current = current.getPrototype();
             }
@@ -481,7 +495,7 @@ final class NativeReflect extends ScriptableObject {
             // Spec step 2c: no descriptor found anywhere in target's chain.
             // Treat as writable data → CreateDataProperty(receiver, key, V).
             if (receiver instanceof ScriptableObject receiverObj) {
-                DescriptorInfo newDesc = new DescriptorInfo(true, true, true, args[2]);
+                DescriptorInfo newDesc = new DescriptorInfo(true, true, true, value);
                 receiverObj.defineOwnProperty(cx, key, newDesc);
             }
             return true;
@@ -491,26 +505,26 @@ final class NativeReflect extends ScriptableObject {
         // For a NativeProxy, we use putAndReturn() to capture the result.
         if (target instanceof NativeProxy proxyTarget) {
             if (key instanceof Symbol) {
-                return proxyTarget.putAndReturn((Symbol) key, receiver, args[2]);
+                return proxyTarget.putAndReturn((Symbol) key, receiver, value);
             }
 
             StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(key);
             if (soi.stringId == null) {
-                return proxyTarget.putAndReturn(soi.index, receiver, args[2]);
+                return proxyTarget.putAndReturn(soi.index, receiver, value);
             }
-            return proxyTarget.putAndReturn(soi.stringId, receiver, args[2]);
+            return proxyTarget.putAndReturn(soi.stringId, receiver, value);
         }
 
         // For a plain ScriptableObject put() has no return value, we
         // assume true.
         if (key instanceof Symbol) {
-            receiver.put((Symbol) key, receiver, args[2]);
+            receiver.put((Symbol) key, receiver, value);
         } else {
             StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(key);
             if (soi.stringId == null) {
-                receiver.put(soi.index, receiver, args[2]);
+                receiver.put(soi.index, receiver, value);
             } else {
-                receiver.put(soi.stringId, receiver, args[2]);
+                receiver.put(soi.stringId, receiver, value);
             }
         }
         return true;
@@ -580,18 +594,27 @@ final class NativeReflect extends ScriptableObject {
                 if (existingDesc.isWritable(false)) {
                     return false;
                 }
-                // Step 1.d.iii — { [[Value]]: V } only; all other fields NOT_FOUND so that
-                // defineOwnProperty preserves the existing writable/enumerable/configurable.
+                // Step 1.d.iii
                 DescriptorInfo valueDesc =
                         new DescriptorInfo(
                                 NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, value);
-                receiverObj.defineOwnProperty(cx, key, valueDesc);
+                try {
+                    receiverObj.defineOwnProperty(cx, key, valueDesc);
+                } catch (EcmaError e) {
+                    // Rhino throws where spec says [[DefineOwnProperty]] returns false.
+                    return false;
+                }
                 return true;
             }
 
-            // Step 1.e — CreateDataProperty: {writable:true, enumerable:true, configurable:true}
+            // Step 1.e — CreateDataProperty
             DescriptorInfo newDesc = new DescriptorInfo(true, true, true, value);
-            receiverObj.defineOwnProperty(cx, key, newDesc);
+            try {
+                receiverObj.defineOwnProperty(cx, key, newDesc);
+            } catch (EcmaError e) {
+                // Rhino throws where spec says [[DefineOwnProperty]] returns false.
+                return false;
+            }
             return true;
         }
 

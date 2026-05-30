@@ -865,4 +865,193 @@ public class NativeReflectTest {
                         + "'' + result + ' ' + receiver.hasOwnProperty('p');";
         Utils.assertWithAllModes_ES6("false false", js);
     }
+
+    @Test
+    public void setMissingValueArgumentTreatedAsUndefined() {
+        // Reflect.set(target, key) — value argument is omitted.
+        // Spec: missing arguments are undefined, so this is equivalent to
+        // Reflect.set(target, 'p', undefined).
+        String js =
+                "var target = {};\n"
+                        + "var result = Reflect.set(target, 'p');\n"
+                        + "'' + result + ' ' + target.p + ' ' + (target.p === undefined);";
+        Utils.assertWithAllModes_ES6("true undefined true", js);
+    }
+
+    @Test
+    public void setMissingValueWithReceiverTreatedAsUndefined() {
+        // Reflect.set(target, key, <missing>, receiver) is not reachable from JS
+        // (you cannot pass a 4th arg without a 3rd), but the missing-value case
+        // with an explicit receiver via Reflect.set(target, key) still applies.
+        // Verifies the set trap also receives undefined as the value.
+        String js =
+                "var log = [];\n"
+                        + "var proxy = new Proxy({}, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push(value === undefined);\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, 'p');\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setTrapCalledWhenReceiverDiffersFromProxy_stringKey() {
+        // Reflect.set(proxy, 'p', 42, otherReceiver) — receiver != proxy.
+        // The proxy's set trap MUST still be invoked, with otherReceiver as
+        // the 4th trap argument.
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push('trap:' + prop + ':' + value\n"
+                        + "             + ':' + (receiver === otherReceiver));\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, 'p', 42, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("trap:p:42:true", js);
+    }
+
+    @Test
+    public void setTrapCalledWhenReceiverDiffersFromProxy_indexKey() {
+        // Same as above but with an integer key.
+        String js =
+                "var log = [];\n"
+                        + "var target = [];\n"
+                        + "var otherReceiver = [];\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push('trap:' + prop + ':' + value\n"
+                        + "             + ':' + (receiver === otherReceiver));\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, 0, 99, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("trap:0:99:true", js);
+    }
+
+    @Test
+    public void setTrapCalledWhenReceiverDiffersFromProxy_symbolKey() {
+        // Same as above but with a Symbol key.
+        String js =
+                "var log = [];\n"
+                        + "var sym = Symbol('s');\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    if (prop === sym) {\n"
+                        + "      log.push('trap:' + value\n"
+                        + "               + ':' + (receiver === otherReceiver));\n"
+                        + "    }\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, sym, 42, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("trap:42:true", js);
+    }
+
+    @Test
+    public void setTrapReturnFalseHonouredWhenReceiverDiffers() {
+        // When the set trap returns false, Reflect.set must return false —
+        // even when receiver != proxy.
+        String js =
+                "var target = {};\n"
+                        + "var otherReceiver = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    return false;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "'' + Reflect.set(proxy, 'p', 42, otherReceiver);";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void setTrapNotCalledWhenNoTrapAndReceiverDiffers() {
+        // No set trap defined — the value must still end up written correctly.
+        String js =
+                "var target = { p: 1 };\n"
+                        + "var otherReceiver = {};\n"
+                        + "var proxy = new Proxy(target, {});\n"
+                        + "var result = Reflect.set(proxy, 'p', 42, otherReceiver);\n"
+                        + "'' + result\n"
+                        + "+ ' target=' + target.p\n"
+                        + "+ ' receiver=' + otherReceiver.p;";
+        Utils.assertWithAllModes_ES6("true target=1 receiver=42", js);
+    }
+
+    @Test
+    public void setReturnsFlaseNotThrowWhenReceiverDefinePropertyWouldThrow_nonExtensible() {
+        // target has own writable 'p'. receiver is non-extensible and does NOT
+        // have own 'p'. OrdinarySetWithOwnDescriptor step 1.e calls
+        // CreateDataProperty(receiver, 'p', 42) → Receiver.[[DefineOwnProperty]].
+        // On a non-extensible receiver that has no own 'p', [[DefineOwnProperty]]
+        // must return false per spec. Rhino throws an EcmaError instead, so
+        // Reflect.set must catch it and return false rather than propagating the throw.
+        String js =
+                "var target = { p: 1 };\n"
+                        + "var receiver = Object.preventExtensions({});\n"
+                        + "try {\n"
+                        + "  var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "  '' + result + ' ' + receiver.hasOwnProperty('p');\n"
+                        + "} catch(e) {\n"
+                        + "  'threw: ' + e;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("false false", js);
+    }
+
+    @Test
+    public void setReturnsFalseNotThrowWhenReceiverDefinePropertyWouldThrow_nonConfigurable() {
+        // target has own writable 'p'. receiver has own non-writable non-configurable 'p'.
+        // OrdinarySetWithOwnDescriptor step 1.d.iii calls [[DefineOwnProperty]] with
+        // { [[Value]]: 42 } on receiver. The existing slot is non-configurable and
+        // non-writable so [[DefineOwnProperty]] must return false. Rhino throws instead.
+        String js =
+                "var target = { p: 1 };\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(receiver, 'p', {\n"
+                        + "  value: 0, writable: false, configurable: false\n"
+                        + "});\n"
+                        + "try {\n"
+                        + "  var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "  '' + result + ' ' + receiver.p;\n"
+                        + "} catch(e) {\n"
+                        + "  'threw: ' + e;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("false 0", js);
+    }
+
+    @Test
+    public void setReturnsFalseNotThrowWhenCreateDataPropertyFailsOnNonExtensibleReceiver() {
+        // target has own writable 'p'. receiver is non-extensible with NO own 'p'.
+        //
+        // OrdinarySetWithOwnDescriptor flow:
+        //   - ownDesc (from target) is writable data         → step 1.a passes
+        //   - receiver is a ScriptableObject                 → step 1.b passes
+        //   - existingDesc on receiver is null (no own 'p')  → step 1.d skipped
+        //   - step 1.e: CreateDataProperty(receiver, 'p', 42)
+        //     → Receiver.[[DefineOwnProperty]] on a non-extensible object
+        //     → spec: returns false
+        //     → Rhino: throws EcmaError
+        //   → Reflect.set must return false, not propagate the throw.
+        String js =
+                "var target = { p: 1 };\n"
+                        + "var receiver = Object.preventExtensions({});\n"
+                        + "try {\n"
+                        + "  var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "  '' + result + ' ' + receiver.hasOwnProperty('p');\n"
+                        + "} catch(e) {\n"
+                        + "  'threw: ' + e;\n"
+                        + "}";
+        Utils.assertWithAllModes_ES6("false false", js);
+    }
 }
