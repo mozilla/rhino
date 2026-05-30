@@ -64,8 +64,18 @@ final class NativeReflect extends ScriptableObject {
         return "Reflect";
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.apply">28.1.1 Reflect.apply
+     * ( target, thisArgument, argumentsList )</a>
+     */
     private static Object apply(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If IsCallable(target) is false, throw a TypeError exception.
+         * 2. Let args be ? CreateListFromArrayLike(argumentsList).
+         * 3. Perform PrepareForTailCall().
+         * 4. Return ? Call(target, thisArgument, args).
+         */
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -74,13 +84,10 @@ final class NativeReflect extends ScriptableObject {
                     Integer.toString(args.length));
         }
 
-        Scriptable callable = ScriptableObject.ensureScriptable(args[0]);
-
-        if (args[1] instanceof Scriptable) {
-            thisObj = (Scriptable) args[1];
-        } else if (ScriptRuntime.isPrimitive(args[1])) {
-            thisObj = cx.newObject(s, "Object", new Object[] {args[1]});
+        if (!(args[0] instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(args[0]);
         }
+        Scriptable callable = (Scriptable) args[0];
 
         if (ScriptRuntime.isSymbol(args[2])) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(args[2]));
@@ -88,7 +95,7 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject argumentsList = ScriptableObject.ensureScriptableObject(args[2]);
 
         return ScriptRuntime.applyOrCall(
-                true, cx, s, callable, new Object[] {thisObj, argumentsList});
+                true, cx, s, callable, new Object[] {args[1], argumentsList});
     }
 
     /**
@@ -170,8 +177,18 @@ final class NativeReflect extends ScriptableObject {
         return newScriptable;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.defineproperty">28.1.3
+     * Reflect.defineProperty ( target, propertyKey, attributes )</a>
+     */
     private static Object defineProperty(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Let desc be ? ToPropertyDescriptor(attributes).
+         * 4. Return ? target.[[DefineOwnProperty]](key, desc).
+         */
         if (args.length < 3) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -184,24 +201,32 @@ final class NativeReflect extends ScriptableObject {
         DescriptorInfo desc = new DescriptorInfo(ScriptableObject.ensureScriptableObject(args[2]));
 
         Object key = args[1];
-
         try {
             if (key instanceof Symbol) {
                 return target.defineOwnProperty(cx, key, desc);
-            } else {
-                String propertyKey =
-                        ScriptRuntime.toString(
-                                ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
-                return target.defineOwnProperty(cx, propertyKey, desc);
             }
-
+            String propertyKey =
+                    ScriptRuntime.toString(
+                            ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass));
+            return target.defineOwnProperty(cx, propertyKey, desc);
         } catch (EcmaError e) {
+            // Rhino throws where the spec says [[DefineOwnProperty]] should return false.
+            // Map those back to the spec-correct false return value.
             return false;
         }
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.deleteproperty">28.1.4
+     * Reflect.deleteProperty ( target, propertyKey )</a>
+     */
     private static Object deleteProperty(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Return ? target.[[Delete]](key).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -214,28 +239,60 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.get">28.1.5 Reflect.get (
+     * target, propertyKey [ , receiver ] )</a>
+     */
     private static Object get(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. If receiver is not present, then
+         *    a. Set receiver to target.
+         * 4. Return ? target.[[Get]](key, receiver).
+         */
         ScriptableObject target = checkTarget(args);
 
-        if (args.length > 1) {
-            if (ScriptRuntime.isSymbol(args[1])) {
-                Object prop = ScriptableObject.getProperty(target, (Symbol) args[1]);
-                return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
-            }
-            if (args[1] instanceof Number) {
-                Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toIndex(args[1]));
-                return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
-            }
+        if (args.length < 2) {
+            return Undefined.SCRIPTABLE_UNDEFINED;
+        }
 
-            Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toString(args[1]));
+        // Step 3: default receiver to target when not supplied.
+        Scriptable receiver =
+                (args.length > 2 && args[2] instanceof Scriptable) ? (Scriptable) args[2] : target;
+
+        if (ScriptRuntime.isSymbol(args[1])) {
+            Object prop = ScriptableObject.getSuperProperty(target, receiver, (Symbol) args[1]);
             return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
         }
-        return Undefined.SCRIPTABLE_UNDEFINED;
+
+        if (args[1] instanceof Number) {
+            Object prop =
+                    ScriptableObject.getSuperProperty(
+                            target, receiver, ScriptRuntime.toIndex(args[1]));
+            return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
+        }
+
+        Object prop =
+                ScriptableObject.getSuperProperty(
+                        target, receiver, ScriptRuntime.toString(args[1]));
+        return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
     }
 
+    /**
+     * see <a
+     * href="https://262.ecma-international.org/12.0/#sec-reflect.getownpropertydescriptor">28.1.6
+     * Reflect.getOwnPropertyDescriptor ( target, propertyKey )</a>
+     */
     private static Scriptable getOwnPropertyDescriptor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Let desc be ? target.[[GetOwnProperty]](key).
+         * 4. Return FromPropertyDescriptor(desc).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -250,15 +307,32 @@ final class NativeReflect extends ScriptableObject {
         return Undefined.SCRIPTABLE_UNDEFINED;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.getprototypeof">28.1.7
+     * Reflect.getPrototypeOf ( target )</a>
+     */
     private static Scriptable getPrototypeOf(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Return ? target.[[GetPrototypeOf]]().
+         */
         ScriptableObject target = checkTarget(args);
 
         return target.getPrototype();
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.has">28.1.8 Reflect.has (
+     * target, propertyKey )</a>
+     */
     private static Object has(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. Return ? target.[[HasProperty]](key).
+         */
         ScriptableObject target = checkTarget(args);
 
         if (args.length > 1) {
@@ -271,14 +345,31 @@ final class NativeReflect extends ScriptableObject {
         return false;
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.isextensible">28.1.9
+     * Reflect.isExtensible ( target )</a>
+     */
     private static Object isExtensible(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Return ? IsExtensible(target).
+         */
         ScriptableObject target = checkTarget(args);
         return target.isExtensible();
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.ownkeys">28.1.10
+     * Reflect.ownKeys ( target )</a>
+     */
     private static Scriptable ownKeys(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let keys be ? target.[[OwnPropertyKeys]]().
+         * 3. Return CreateArrayFromList(keys).
+         */
         ScriptableObject target = checkTarget(args);
 
         final List<Object> strings = new ArrayList<>();
@@ -303,53 +394,252 @@ final class NativeReflect extends ScriptableObject {
         return cx.newArray(s, keys);
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.preventextensions">28.1.11
+     * Reflect.preventExtensions ( target )</a>
+     */
     private static Object preventExtensions(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Return ? target.[[PreventExtensions]]().
+         */
         ScriptableObject target = checkTarget(args);
 
         return target.preventExtensions();
     }
 
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.set">28.1.12 Reflect.set (
+     * target, propertyKey, V [ , receiver ] )</a>
+     */
     private static Object set(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. Let key be ? ToPropertyKey(propertyKey).
+         * 3. If receiver is not present, then
+         *    a. Set receiver to target.
+         * 4. Return ? target.[[Set]](key, V, receiver).
+         *
+         * Note: we cannot simply call target.put(key, receiver, value) to implement
+         * target.[[Set]] because Rhino's put() does not correctly propagate the receiver —
+         * it would either write to the wrong object or re-enter a proxy set trap on the
+         * receiver causing infinite recursion. Instead, we inline OrdinarySet /
+         * OrdinarySetWithOwnDescriptor below.
+         */
         ScriptableObject target = checkTarget(args);
         if (args.length < 2) {
             return true;
         }
 
-        ScriptableObject receiver =
-                args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
-        if (receiver != target) {
-            DescriptorInfo descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
-            if (descriptor != null) {
-                Object setter = descriptor.setter;
-                if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter).call(cx, s, receiver, new Object[] {args[2]});
-                    return true;
-                }
+        // A missing value must be treated as undefined
+        final Object value = args.length > 2 ? args[2] : Undefined.instance;
 
-                if (descriptor.isConfigurable(false)) {
-                    return false;
-                }
-            }
-        }
+        // Step 3: default receiver to target when not supplied (args[3]).
+        // Note: receiver is intentionally typed as Scriptable, not ScriptableObject,
+        // because the caller may pass any object (e.g. a Proxy) as the receiver.
+        Scriptable receiver = args.length > 3 ? ScriptableObject.ensureScriptable(args[3]) : target;
 
+        // Normalize the property key once so we can reuse it below.
+        final Object key;
         if (ScriptRuntime.isSymbol(args[1])) {
-            receiver.put((Symbol) args[1], receiver, args[2]);
+            key = args[1]; // Symbol — used as-is
         } else {
-            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
-            if (soi.stringId == null) {
-                receiver.put(soi.index, receiver, args[2]);
-            } else {
-                receiver.put(soi.stringId, receiver, args[2]);
-            }
+            key = ScriptRuntime.toString(args[1]); // coerce to String
         }
 
+        if (receiver != target && target instanceof NativeProxy proxyTarget) {
+            if (key instanceof Symbol) {
+                return proxyTarget.putAndReturn((Symbol) key, receiver, args[2]);
+            }
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(key);
+            if (soi.stringId == null) {
+                return proxyTarget.putAndReturn(soi.index, receiver, args[2]);
+            }
+            return proxyTarget.putAndReturn(soi.stringId, receiver, args[2]);
+        }
+
+        if (receiver != target) {
+            /*
+             * OrdinarySet ( O, P, V, Receiver ):
+             *   1. Let ownDesc be ? O.[[GetOwnProperty]](P).
+             *   2. If ownDesc is undefined, then
+             *      a. Let parent be ? O.[[GetPrototypeOf]]().
+             *      b. If parent is not null, return ? parent.[[Set]](P, V, Receiver).
+             *      c. Else, let ownDesc be the PropertyDescriptor
+             *         { [[Value]]: undefined, [[Writable]]: true,
+             *           [[Enumerable]]: true, [[Configurable]]: true }.
+             *   3. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
+             *
+             * We walk target's prototype chain ourselves, calling getOwnPropertyDescriptor
+             * at each node. getSuperProperty() cannot be reused here because it calls
+             * obj.get() (invoking getters) rather than retrieving descriptors.
+             */
+            Scriptable current = target;
+            while (current != null) {
+                DescriptorInfo ownDesc = null;
+                if (current instanceof ScriptableObject so) {
+                    ownDesc =
+                            (key instanceof Symbol)
+                                    ? so.getOwnPropertyDescriptor(cx, key)
+                                    : so.getOwnPropertyDescriptor(cx, (String) key);
+                }
+                if (ownDesc != null) {
+                    // Found the property somewhere in target's chain.
+                    return ordinarySetWithOwnDescriptor(cx, s, receiver, key, value, ownDesc);
+                }
+                current = current.getPrototype();
+            }
+
+            // Spec step 2c: no descriptor found anywhere in target's chain.
+            // Treat as writable data → CreateDataProperty(receiver, key, V).
+            if (receiver instanceof ScriptableObject receiverObj) {
+                DescriptorInfo newDesc = new DescriptorInfo(true, true, true, value);
+                receiverObj.defineOwnProperty(cx, key, newDesc);
+            }
+            return true;
+        }
+
+        // receiver == target:
+        // For a NativeProxy, we use putAndReturn() to capture the result.
+        if (target instanceof NativeProxy proxyTarget) {
+            if (key instanceof Symbol) {
+                return proxyTarget.putAndReturn((Symbol) key, receiver, value);
+            }
+
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(key);
+            if (soi.stringId == null) {
+                return proxyTarget.putAndReturn(soi.index, receiver, value);
+            }
+            return proxyTarget.putAndReturn(soi.stringId, receiver, value);
+        }
+
+        // For a plain ScriptableObject put() has no return value, we
+        // assume true.
+        if (key instanceof Symbol) {
+            receiver.put((Symbol) key, receiver, value);
+        } else {
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(key);
+            if (soi.stringId == null) {
+                receiver.put(soi.index, receiver, value);
+            } else {
+                receiver.put(soi.stringId, receiver, value);
+            }
+        }
         return true;
     }
 
+    /**
+     * Implements the OrdinarySetWithOwnDescriptor abstract operation.
+     *
+     * <p>see <a href="https://262.ecma-international.org/14.0/#sec-ordinarysetwithowndescriptor">
+     * OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )</a>
+     *
+     * <p>IMPORTANT: when the property is a writable data descriptor this method calls {@code
+     * Receiver.[[DefineOwnProperty]]} — <em>not</em> {@code Receiver.[[Set]]}. The spec mandates
+     * the former. Using {@code receiver.put()} (i.e. {@code [[Set]]}) would re-trigger any proxy
+     * set trap installed on the receiver, causing infinite recursion when the receiver is a {@code
+     * Proxy} object (e.g. {@code with (proxy) { p = 1; }}).
+     */
+    private static boolean ordinarySetWithOwnDescriptor(
+            Context cx,
+            VarScope s,
+            Scriptable receiver,
+            Object key,
+            Object value,
+            DescriptorInfo ownDesc) {
+        /*
+         * 1. If IsDataDescriptor(ownDesc) is true, then
+         *    a. If ownDesc.[[Writable]] is false, return false.
+         *    b. If Type(Receiver) is not Object, return false.
+         *    c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
+         *    d. If existingDescriptor is not undefined, then
+         *       i.  If IsAccessorDescriptor(existingDescriptor) is true, return false.
+         *       ii. If existingDescriptor.[[Writable]] is false, return false.
+         *       iii.Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
+         *           Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
+         *    e. Else,
+         *       Return ? CreateDataProperty(Receiver, P, V).
+         * 2. Assert: IsAccessorDescriptor(ownDesc) is true.
+         * 3. Let setter be ownDesc.[[Set]].
+         * 4. If setter is undefined, return false.
+         * 5. Perform ? Call(setter, Receiver, « V »).
+         * 6. Return true.
+         */
+
+        // Step 1: data descriptor
+        if (ownDesc.isDataDescriptor()) {
+            // Step 1.a
+            if (ownDesc.isWritable(false)) {
+                return false;
+            }
+            // Step 1.b
+            if (!(receiver instanceof ScriptableObject receiverObj)) {
+                return false;
+            }
+
+            // Step 1.c
+            DescriptorInfo existingDesc =
+                    (key instanceof Symbol)
+                            ? receiverObj.getOwnPropertyDescriptor(cx, key)
+                            : receiverObj.getOwnPropertyDescriptor(cx, (String) key);
+
+            if (existingDesc != null) {
+                // Step 1.d.i
+                if (existingDesc.isAccessorDescriptor()) {
+                    return false;
+                }
+                // Step 1.d.ii
+                if (existingDesc.isWritable(false)) {
+                    return false;
+                }
+                // Step 1.d.iii
+                DescriptorInfo valueDesc =
+                        new DescriptorInfo(
+                                NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, value);
+                try {
+                    receiverObj.defineOwnProperty(cx, key, valueDesc);
+                } catch (EcmaError e) {
+                    // Rhino throws where spec says [[DefineOwnProperty]] returns false.
+                    return false;
+                }
+                return true;
+            }
+
+            // Step 1.e — CreateDataProperty
+            DescriptorInfo newDesc = new DescriptorInfo(true, true, true, value);
+            try {
+                receiverObj.defineOwnProperty(cx, key, newDesc);
+            } catch (EcmaError e) {
+                // Rhino throws where spec says [[DefineOwnProperty]] returns false.
+                return false;
+            }
+            return true;
+        }
+
+        // Steps 2–6: accessor descriptor
+        Object setter = ownDesc.setter;
+        // Step 4
+        if (setter == null || setter == NOT_FOUND || Undefined.isUndefined(setter)) {
+            return false;
+        }
+        // Step 5
+        ((Function) setter).call(cx, s, receiver, new Object[] {value});
+        return true;
+    }
+
+    /**
+     * see <a href="https://262.ecma-international.org/12.0/#sec-reflect.setprototypeof">28.1.13
+     * Reflect.setPrototypeOf ( target, proto )</a>
+     */
     private static Object setPrototypeOf(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        /*
+         * 1. If Type(target) is not Object, throw a TypeError exception.
+         * 2. If Type(proto) is not Object and proto is not null, throw a TypeError exception.
+         * 3. Return ? target.[[SetPrototypeOf]](proto).
+         */
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
