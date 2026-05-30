@@ -421,6 +421,9 @@ final class NativeReflect extends ScriptableObject {
             return true;
         }
 
+        // A missing value must be treated as undefined
+        final Object value = args.length > 2 ? args[2] : Undefined.instance;
+
         ScriptableObject receiver =
                 args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
         if (receiver != target) {
@@ -428,7 +431,7 @@ final class NativeReflect extends ScriptableObject {
             if (descriptor != null) {
                 Object setter = descriptor.setter;
                 if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter).call(cx, s, receiver, new Object[] {args[2]});
+                    ((Function) setter).call(cx, s, receiver, new Object[] {value});
                     return true;
                 }
 
@@ -439,13 +442,13 @@ final class NativeReflect extends ScriptableObject {
         }
 
         if (ScriptRuntime.isSymbol(args[1])) {
-            receiver.put((Symbol) args[1], receiver, args[2]);
+            receiver.put((Symbol) args[1], receiver, value);
         } else {
             StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
             if (soi.stringId == null) {
-                receiver.put(soi.index, receiver, args[2]);
+                receiver.put(soi.index, receiver, value);
             } else {
-                receiver.put(soi.stringId, receiver, args[2]);
+                receiver.put(soi.stringId, receiver, value);
             }
         }
 

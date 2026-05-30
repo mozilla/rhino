@@ -460,4 +460,28 @@ public class NativeReflectTest {
                         + "+ ' ' + Reflect.setPrototypeOf(o3, proto)";
         Utils.assertWithAllModes_ES6("true true true", js);
     }
+
+    @Test
+    public void setMissingValueArgumentTreatedAsUndefined() {
+        String js =
+                "var target = {};\n"
+                        + "var result = Reflect.set(target, 'p');\n"
+                        + "'' + result + ' ' + target.p + ' ' + (target.p === undefined);";
+        Utils.assertWithAllModes_ES6("true undefined true", js);
+    }
+
+    @Test
+    public void setMissingValueWithReceiverTreatedAsUndefined() {
+        String js =
+                "var log = [];\n"
+                        + "var proxy = new Proxy({}, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push(value === undefined);\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, 'p');\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
 }
