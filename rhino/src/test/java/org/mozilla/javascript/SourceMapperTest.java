@@ -21,16 +21,20 @@ import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapV3;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.testutils.Utils;
 
 class SourceMapperTest {
 
     /**
-     * Maps target line N to source line {@code 100 + N} and column M to {@code 200 + M}. Returns
-     * null for any target line in {@code skipLines} so we can exercise the skip-on-null path.
+     * Maps target line N to source line {@code 100 + N} and column M to {@code 200 + M}, using a
+     * fixed source path. Returns null for any target line in {@code skipLines} so we can exercise
+     * the skip-on-null path.
      */
     private static final class TestMapper implements SourceMapper {
+        private static final String SOURCE_PATH = "original.js";
+
         private final Set<Integer> skipLines;
         private final String originalSource;
         private final List<String> originalLines;
@@ -47,19 +51,20 @@ class SourceMapperTest {
         @Override
         public Position mapPosition(int targetLine, int targetColumn) {
             if (skipLines.contains(targetLine)) return null;
-            return new Position(100 + targetLine, 200 + targetColumn);
+            return new Position(SOURCE_PATH, 100 + targetLine, 200 + targetColumn);
         }
 
         @Override
-        public String getOriginalSource() {
+        public String getPrimarySourceContent() {
             return originalSource;
         }
 
         @Override
-        public String getSourceLineText(int sourceLine) {
+        public String getSourceLineText(String sourcePath, int lineNumber) {
+            if (!SOURCE_PATH.equals(sourcePath)) return null;
             // mapPosition emits source lines starting at 101 (target line 1 → 101). Honor the
             // same offset here so the source space is internally consistent.
-            int idx = sourceLine - 101;
+            int idx = lineNumber - 101;
             if (idx < 0 || idx >= originalLines.size()) return null;
             return originalLines.get(idx);
         }
@@ -117,6 +122,59 @@ class SourceMapperTest {
                     return null;
                 },
                 true);
+    }
+
+    // ---- compiled-only tests (BodyCodegen path) ----
+
+    @Test
+    void compiledModeRemapsStackTraceLine() {
+        Utils.runWithMode(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    SourceMapper mapper = new TestMapper("throw 'err';\n");
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource("throw 'err';\n")
+                                            .sourceName("transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
+                    assertEquals(101, ex.lineNumber(), "compiled mode should remap line");
+                    return null;
+                },
+                false);
+    }
+
+    @Test
+    void compiledModeSkippedLineFallsBackToPreviousMappedLine() {
+        Utils.runWithMode(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    SourceMapper mapper = new TestMapper("var x = 1;\nthrow 'err';\n", 2);
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource("var x = 1;\nthrow 'err';\n")
+                                            .sourceName("transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
+                    assertEquals(
+                            101,
+                            ex.lineNumber(),
+                            "compiled mode: unmapped line should fall back to last mapped line");
+                    return null;
+                },
+                false);
     }
 
     // ---- mode-agnostic tests ----
@@ -310,6 +368,71 @@ class SourceMapperTest {
                 true);
     }
 
+    // ---- end-to-end SourceMapV3 integration ----
+
+    @Test
+    void realSourceMapV3RemapsStackTraceLine() {
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    // Generated source: 1 line, "throw 'err';\n".
+                    // Source map: maps generated line 1 col 0 → orig.js line 5 col 0.
+                    // VLQ "AAKA" = (genCol=0, srcIdx=0, srcLine=5, srcCol=0).
+                    String mapJson =
+                            "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                    + "\"sourcesContent\":[\"line1\\nline2\\nline3\\nline4\\nthrow 'err';\"],"
+                                    + "\"mappings\":\"AAKA\"}";
+                    SourceMapV3 mapper = SourceMapV3.parse(mapJson);
+
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource("throw 'err';\n")
+                                            .sourceName("transpiled.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
+                    assertEquals(6, ex.lineNumber(), "expected source line 6 (5 zero-indexed + 1)");
+                    return null;
+                });
+    }
+
+    @Test
+    void realSourceMapV3SurfacesPrimarySourceToDebugger() {
+        Utils.runWithMode(
+                cx -> {
+                    String original = "var primary = true;\n";
+                    String mapJson =
+                            "{\"version\":3,\"sources\":[\"orig.js\"],"
+                                    + "\"sourcesContent\":[\""
+                                    + original.replace("\n", "\\n")
+                                    + "\"],"
+                                    + "\"mappings\":\"\"}";
+                    SourceMapV3 mapper = SourceMapV3.parse(mapJson);
+
+                    RecordingDebugger debugger = new RecordingDebugger();
+                    cx.setDebugger(debugger, null);
+                    try {
+                        cx.compileScript(
+                                ScriptCompileSpec.fromSource("var x = 1;\n")
+                                        .sourceName("transpiled.js")
+                                        .lineno(1)
+                                        .sourceMapper(mapper)
+                                        .build());
+                    } finally {
+                        cx.setDebugger(null, null);
+                    }
+
+                    assertEquals(original, debugger.sources.iterator().next());
+                    return null;
+                },
+                true);
+    }
+
     // ---- realistic source-map integration test ----
 
     @Test
@@ -325,19 +448,20 @@ class SourceMapperTest {
                     public Position mapPosition(int targetLine, int targetColumn) {
                         if (targetLine != 1) return null;
                         return targetColumn < 9
-                                ? new Position(1, targetColumn)
-                                : new Position(2, targetColumn - 8);
+                                ? new Position("source.js", 1, targetColumn)
+                                : new Position("source.js", 2, targetColumn - 8);
                     }
 
                     @Override
-                    public String getOriginalSource() {
+                    public String getPrimarySourceContent() {
                         return originalSource;
                     }
 
                     @Override
-                    public String getSourceLineText(int sourceLine) {
-                        if (sourceLine == 1) return "var x = 1;";
-                        if (sourceLine == 2) return "throw new Error(\"oops\");";
+                    public String getSourceLineText(String sourcePath, int lineNumber) {
+                        if (!"source.js".equals(sourcePath)) return null;
+                        if (lineNumber == 1) return "var x = 1;";
+                        if (lineNumber == 2) return "throw new Error(\"oops\");";
                         return null;
                     }
                 };
@@ -376,17 +500,18 @@ class SourceMapperTest {
                 new SourceMapper() {
                     @Override
                     public Position mapPosition(int targetLine, int targetColumn) {
-                        return new Position(1, targetColumn); // both lines originate from line 1
+                        return new Position(
+                                null, 1, targetColumn); // both lines originate from line 1
                     }
 
                     @Override
-                    public String getOriginalSource() {
+                    public String getPrimarySourceContent() {
                         return originalSource;
                     }
 
                     @Override
-                    public String getSourceLineText(int sourceLine) {
-                        return sourceLine == 1 ? "var obj = {[\"x\"]: 1}; throw \"done\";" : null;
+                    public String getSourceLineText(String sourcePath, int lineNumber) {
+                        return lineNumber == 1 ? "var obj = {[\"x\"]: 1}; throw \"done\";" : null;
                     }
                 };
 

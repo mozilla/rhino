@@ -46,6 +46,7 @@ java_test_suite(
         exclude = [
             "src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java",
             "src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java",
+            "src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java",
         ],
     ),
     data = [":testsrc"],
@@ -104,6 +105,23 @@ sharded_parameterized_test(
         "//testutils",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)
+
+java_junit5_test(
+    name = "SourceMapSpecSuiteTest",
+    size = "small",
+    srcs = ["src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java"],
+    data = [":testsrc"] + glob(["source-map-tests/**"]),
+    jvm_flags = [
+        "-Xmx1g",
+    ],
+    tags = ["no-agent"],
+    test_class = "org.mozilla.javascript.sourcemap.SourceMapSpecSuiteTest",
+    deps = [
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
     ] + JUNIT5_DEPS,
 )
 

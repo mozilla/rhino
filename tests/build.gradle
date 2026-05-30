@@ -96,6 +96,9 @@ test {
         }
         systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
     }
+    if (System.getProperty('updateSourceMapTestsExcludelist') != null) {
+        systemProperty 'updateSourceMapTestsExcludelist', System.getProperty('updateSourceMapTestsExcludelist')
+    }
 
     System.properties.each { k,v->
         if (k.startsWith("rhino.")) {
