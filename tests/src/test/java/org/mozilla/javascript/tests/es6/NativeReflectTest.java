@@ -747,4 +747,122 @@ public class NativeReflectTest {
                         + "'' + Reflect.get(target, sym, receiver);";
         Utils.assertWithAllModes_ES6("true", js);
     }
+
+    @Test
+    public void setPlainFallbackConsultsTargetChainNotReceiverChain() {
+        // target has no own 'p'. 'p' lives on target's prototype (writable).
+        // receiver has no own 'p'. receiver's prototype has a non-writable 'p'.
+        //
+        // Spec: target.[[Set]]('p', 42, receiver)
+        //   → no own desc on target → walk target's proto chain
+        //   → finds writable 'p' on targetProto → OrdinarySetWithOwnDescriptor
+        //   → receiver has no own 'p' → CreateDataProperty(receiver, 'p', 42) ← own write
+        String js =
+                "var targetProto = { p: 1 };\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var receiverProto = {};\n"
+                        + "Object.defineProperty(receiverProto, 'p', {\n"
+                        + "  value: 0, writable: false, configurable: true\n"
+                        + "});\n"
+                        + "var receiver = Object.create(receiverProto);\n"
+                        + "var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "'' + result + ' ' + receiver.hasOwnProperty('p') + ' ' + receiver.p;";
+        Utils.assertWithAllModes_ES6("true true 42", js);
+    }
+
+    @Test
+    public void setPlainFallbackNoOwnPropCreatesOwnOnReceiver() {
+        // Neither target nor receiver has own 'p'. No proto chain interference.
+        // Spec: target.[[Set]] → no own on target (or proto) → CreateDataProperty(receiver, 'p', 42).
+        // receiver must end up with its own 'p'; target must be untouched.
+        String js =
+                "var target = {};\n"
+                        + "var receiver = {};\n"
+                        + "var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "'' + result\n"
+                        + "+ ' ' + receiver.hasOwnProperty('p')\n"
+                        + "+ ' ' + receiver.p\n"
+                        + "+ ' ' + target.hasOwnProperty('p');";
+        Utils.assertWithAllModes_ES6("true true 42 false", js);
+    }
+
+    @Test
+    public void setPlainFallbackIndexKeyConsultsTargetChain() {
+        // Same as setPlainFallbackConsultsTargetChainNotReceiverChain but with integer key.
+        String js =
+                "var targetProto = [, , 99];\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var receiverProto = [];\n"
+                        + "Object.defineProperty(receiverProto, '2', {\n"
+                        + "  value: 0, writable: false, configurable: true\n"
+                        + "});\n"
+                        + "var receiver = Object.create(receiverProto);\n"
+                        + "var result = Reflect.set(target, 2, 42, receiver);\n"
+                        + "'' + result + ' ' + receiver.hasOwnProperty('2') + ' ' + receiver[2];";
+        Utils.assertWithAllModes_ES6("true true 42", js);
+    }
+
+    @Test
+    public void setPlainFallbackSymbolKeyConsultsTargetChain() {
+        // Same scenario for Symbol keys.
+        String js =
+                "var sym = Symbol('p');\n"
+                        + "var targetProto = {};\n"
+                        + "targetProto[sym] = 1;\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var receiverProto = {};\n"
+                        + "Object.defineProperty(receiverProto, sym, {\n"
+                        + "  value: 0, writable: false, configurable: true\n"
+                        + "});\n"
+                        + "var receiver = Object.create(receiverProto);\n"
+                        + "var result = Reflect.set(target, sym, 42, receiver);\n"
+                        + "'' + result + ' ' + receiver.hasOwnProperty(sym) + ' ' + receiver[sym];";
+        Utils.assertWithAllModes_ES6("true true 42", js);
+    }
+
+    @Test
+    public void setFallbackShouldCallSetterFromTargetProtoNotCreateOwnOnReceiver() {
+        // target has no own 'p'. target's prototype has an accessor (setter) for 'p'.
+        // receiver has no own 'p' and is extensible.
+        //
+        // Spec: target.[[Set]]('p', 42, receiver)
+        //   → no own desc on target → walk target's proto chain
+        //   → finds accessor on targetProto → call setter with receiver as 'this'
+        //   → return true, receiver gets NO own 'p' (setter was called instead)
+        String js =
+                "var log = [];\n"
+                        + "var targetProto = {};\n"
+                        + "Object.defineProperty(targetProto, 'p', {\n"
+                        + "  set: function(v) { log.push('setter:' + v); },\n"
+                        + "  configurable: true\n"
+                        + "});\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var receiver = {};\n"
+                        + "var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        // setter must be called, receiver must NOT get an own 'p'
+                        + "'' + result + ' ' + log + ' ' + receiver.hasOwnProperty('p');";
+        Utils.assertWithAllModes_ES6("true setter:42 false", js);
+    }
+
+    @Test
+    public void setFallbackShouldReturnFalseForNonWritableOnTargetProto() {
+        // target has no own 'p'. target's prototype has a NON-WRITABLE 'p'.
+        // receiver has no own 'p'.
+        //
+        // Spec: target.[[Set]]('p', 42, receiver)
+        //   → no own on target → walk target's proto chain
+        //   → finds non-writable data 'p' on targetProto
+        //   → OrdinarySetWithOwnDescriptor: writable=false → return false
+        //   → receiver gets NO own 'p'
+        String js =
+                "var targetProto = {};\n"
+                        + "Object.defineProperty(targetProto, 'p', {\n"
+                        + "  value: 1, writable: false, configurable: true\n"
+                        + "});\n"
+                        + "var target = Object.create(targetProto);\n"
+                        + "var receiver = {};\n"
+                        + "var result = Reflect.set(target, 'p', 42, receiver);\n"
+                        + "'' + result + ' ' + receiver.hasOwnProperty('p');";
+        Utils.assertWithAllModes_ES6("false false", js);
+    }
 }

@@ -446,31 +446,48 @@ final class NativeReflect extends ScriptableObject {
             key = ScriptRuntime.toString(args[1]); // coerce to String
         }
 
-        // OrdinarySetWithOwnDescriptor is only needed when receiver != target.
-        // When receiver == target we must call target.[[Set]] directly via put(),
-        // which correctly invokes any proxy set trap on target.
-        // Inlining OrdinarySetWithOwnDescriptor when receiver == target would
-        // bypass the proxy trap and apply the plain-object non-writable check
-        // incorrectly (e.g. a configurable+non-writable property where the trap
-        // returns true would wrongly return false).
         if (receiver != target) {
-            // OrdinarySet step 1:
-            //   Let ownDesc be ? O.[[GetOwnProperty]](P).
-            DescriptorInfo ownDesc =
-                    (key instanceof Symbol)
-                            ? target.getOwnPropertyDescriptor(cx, key)
-                            : target.getOwnPropertyDescriptor(cx, (String) key);
-
-            if (ownDesc != null) {
-                // Target owns the property: delegate to OrdinarySetWithOwnDescriptor.
-                return ordinarySetWithOwnDescriptor(cx, s, receiver, key, args[2], ownDesc);
+            /*
+             * OrdinarySet ( O, P, V, Receiver ):
+             *   1. Let ownDesc be ? O.[[GetOwnProperty]](P).
+             *   2. If ownDesc is undefined, then
+             *      a. Let parent be ? O.[[GetPrototypeOf]]().
+             *      b. If parent is not null, return ? parent.[[Set]](P, V, Receiver).
+             *      c. Else, let ownDesc be the PropertyDescriptor
+             *         { [[Value]]: undefined, [[Writable]]: true,
+             *           [[Enumerable]]: true, [[Configurable]]: true }.
+             *   3. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
+             *
+             * We walk target's prototype chain ourselves, calling getOwnPropertyDescriptor
+             * at each node. getSuperProperty() cannot be reused here because it calls
+             * obj.get() (invoking getters) rather than retrieving descriptors.
+             */
+            Scriptable current = target;
+            while (current != null) {
+                DescriptorInfo ownDesc = null;
+                if (current instanceof ScriptableObject so) {
+                    ownDesc =
+                            (key instanceof Symbol)
+                                    ? so.getOwnPropertyDescriptor(cx, key)
+                                    : so.getOwnPropertyDescriptor(cx, (String) key);
+                }
+                if (ownDesc != null) {
+                    // Found the property somewhere in target's chain.
+                    return ordinarySetWithOwnDescriptor(cx, s, receiver, key, args[2], ownDesc);
+                }
+                current = current.getPrototype();
             }
+
+            // Spec step 2c: no descriptor found anywhere in target's chain.
+            // Treat as writable data → CreateDataProperty(receiver, key, V).
+            if (receiver instanceof ScriptableObject receiverObj) {
+                DescriptorInfo newDesc = new DescriptorInfo(true, true, true, args[2]);
+                receiverObj.defineOwnProperty(cx, key, newDesc);
+            }
+            return true;
         }
 
-        // receiver == target (or target has no own property P):
-        // delegate to [[Set]] on the receiver, which correctly fires any proxy
-        // set trap when receiver/target is a Proxy.
-
+        // receiver == target:
         // For a NativeProxy, we use putAndReturn() to capture the result.
         if (target instanceof NativeProxy proxyTarget) {
             if (key instanceof Symbol) {
@@ -544,10 +561,9 @@ final class NativeReflect extends ScriptableObject {
                 return false;
             }
             // Step 1.b
-            if (!(receiver instanceof ScriptableObject)) {
+            if (!(receiver instanceof ScriptableObject receiverObj)) {
                 return false;
             }
-            ScriptableObject receiverObj = (ScriptableObject) receiver;
 
             // Step 1.c
             DescriptorInfo existingDesc =
