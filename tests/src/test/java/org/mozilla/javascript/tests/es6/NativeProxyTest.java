@@ -1128,4 +1128,150 @@ public class NativeProxyTest {
 
         Utils.assertWithAllModes_ES6("false", js);
     }
+
+    @Test
+    public void setTrapReceivesCorrectReceiverWhenDifferentFromProxy() {
+        // Reflect.set(proxy, 'p', value, otherReceiver) must forward otherReceiver
+        // as the 4th argument to the set trap — NOT the proxy itself.
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, 'p', 42, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void setTrapReceivesProxyAsReceiverWhenNoExplicitReceiverGiven() {
+        // When no receiver is supplied to Reflect.set, it defaults to the proxy itself.
+        // The trap must receive the proxy as the 4th argument.
+        String js =
+                "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    return receiver === proxy;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "'' + Reflect.set(proxy, 'p', 42);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setTrapReceiverIsStartNotProxy_directAssignment() {
+        // Even for a direct assignment (proxy.p = v), the set trap's receiver
+        // must be the object where the assignment began (the proxy itself here),
+        // not the underlying target.
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push(receiver === proxy ? 'proxy' : 'other');\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "proxy.p = 1;\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("proxy", js);
+    }
+
+    @Test
+    public void getTrapReceivesCorrectReceiverWhenDifferentFromProxy() {
+        // Reflect.get(proxy, 'p', otherReceiver) must forward otherReceiver
+        // as the 3rd argument to the get trap — NOT the proxy itself.
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    return 42;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.get(proxy, 'p', otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void getTrapReceivesProxyAsReceiverWhenNoExplicitReceiverGiven() {
+        // When no receiver is supplied to Reflect.get, it defaults to the proxy.
+        // The trap must receive the proxy as the 3rd argument.
+        String js =
+                "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    return receiver === proxy;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(proxy, 'p');";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getTrapReceiverIsProxyForDirectPropertyRead() {
+        // Direct read proxy.p — the trap's receiver must be the proxy,
+        // not the underlying target.
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    log.push(receiver === proxy ? 'proxy' : 'other');\n"
+                        + "    return 1;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var _ = proxy.p;\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("proxy", js);
+    }
+
+    @Test
+    public void getTrapReceivesCorrectReceiverWithIndexKey() {
+        // Same bug exists for the int-key overload.
+        String js =
+                "var log = [];\n"
+                        + "var target = [];\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    if (prop === '0') {\n"
+                        + "      log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    }\n"
+                        + "    return undefined;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.get(proxy, 0, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void getTrapReceivesCorrectReceiverWithSymbolKey() {
+        // Same bug exists for the Symbol-key overload.
+        String js =
+                "var log = [];\n"
+                        + "var sym = Symbol('test');\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    if (prop === sym) {\n"
+                        + "      log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    }\n"
+                        + "    return undefined;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.get(proxy, sym, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
 }
