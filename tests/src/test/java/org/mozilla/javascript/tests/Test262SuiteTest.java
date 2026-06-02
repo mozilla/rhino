@@ -843,6 +843,13 @@ public class Test262SuiteTest {
                 cx -> {
                     cx.setEvaluationMethod(EvaluationMethod.Interpreter);
                 }),
+        INTERPRETEDV2(
+                "interpretedV2",
+                true,
+                false,
+                cx -> {
+                    cx.setEvaluationMethod(EvaluationMethod.InterpreterV2);
+                }),
         COMPILED(
                 "compiled",
                 true,
@@ -856,6 +863,14 @@ public class Test262SuiteTest {
                 true,
                 cx -> {
                     cx.setEvaluationMethod(EvaluationMethod.Interpreter);
+                    cx.setDebugger(new NoOpDebugger(), null);
+                }),
+        DEBUGGER_INTERPRETEDV2(
+                "debuggerV2",
+                true,
+                true,
+                cx -> {
+                    cx.setEvaluationMethod(EvaluationMethod.InterpreterV2);
                     cx.setDebugger(new NoOpDebugger(), null);
                 }),
         SKIPPED("skipped", false, false, cx -> {});
