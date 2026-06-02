@@ -23,7 +23,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     boolean frozen;
 
     final ScriptOrFn<?> fnOrScript;
-    final InterpreterData<?> idata;
+    final InterpreterData<?> compilerData;
 
     // Stack structure
     // stack[0 <= i < localShift]: arguments and local variables
@@ -65,14 +65,14 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
             InterpreterData code,
             CallFrame parentFrame,
             ACallFrame previousInterpreterFrame) {
-        idata = code;
+        compilerData = code;
         debuggerFrame =
                 cx.debugger != null ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor()) : null;
         useActivation = fnOrScript.getDescriptor().requiresActivationFrame();
 
-        emptyStackTop = (short) (idata.itsMaxVars + idata.itsMaxLocals - 1);
-        int maxFrameArray = idata.itsMaxFrameArray;
-        if (maxFrameArray != emptyStackTop + idata.itsMaxStack + 1) Kit.codeBug();
+        emptyStackTop = (short) (compilerData.itsMaxVars + compilerData.itsMaxLocals - 1);
+        int maxFrameArray = compilerData.itsMaxFrameArray;
+        if (maxFrameArray != emptyStackTop + compilerData.itsMaxStack + 1) Kit.codeBug();
 
         stack = new Object[maxFrameArray];
         stackAttributes = new byte[maxFrameArray];
@@ -100,7 +100,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         // Initialize initial values of variables that change during
         // interpretation.
         result = Undefined.instance;
-        pcSourceLineStart = idata.firstLinePC;
+        pcSourceLineStart = compilerData.firstLinePC;
 
         stackTop = emptyStackTop;
     }
@@ -137,7 +137,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         }
 
         fnOrScript = original.fnOrScript;
-        idata = original.idata;
+        compilerData = original.compilerData;
 
         varSource = original.varSource;
         emptyStackTop = original.emptyStackTop;
@@ -189,7 +189,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         }
 
         fnOrScript = original.fnOrScript;
-        idata = original.idata;
+        compilerData = original.compilerData;
 
         varSource = original.varSource;
         emptyStackTop = original.emptyStackTop;
@@ -301,7 +301,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         if (argdoubleStack != null) {
             System.arraycopy(argdoubleStack, argShift, doubleStack, blen, definedArgs - blen);
         }
-        for (int i = definedArgs; i != idata.itsMaxVars; ++i) {
+        for (int i = definedArgs; i != compilerData.itsMaxVars; ++i) {
             stack[i] = Undefined.instance;
         }
 
@@ -389,7 +389,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         CallFrame f = this;
         int h = 0;
         do {
-            h = 31 * (31 * h + f.pc) + f.idata.icodeHashCode();
+            h = 31 * (31 * h + f.pc) + f.compilerData.icodeHashCode();
             f = f.parentFrame;
         } while (f != null && depth++ < 8);
         return h;
