@@ -26,4 +26,9 @@ module org.mozilla.rhino {
     requires java.compiler;
     requires jdk.dynalink;
     requires transitive java.desktop;
+    requires java.logging;
+
+    exports org.mozilla.javascript.interpreterv2;
+    exports org.mozilla.javascript.interpreterv2.instruction;
+    exports org.mozilla.javascript.interpreterv2.operand;
 }
