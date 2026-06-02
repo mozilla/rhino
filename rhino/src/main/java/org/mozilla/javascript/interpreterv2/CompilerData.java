@@ -11,6 +11,7 @@ import java.util.List;
 import org.mozilla.javascript.ACompilerData;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.InstructionArray;
+import org.mozilla.javascript.InterpreterV2;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.ScriptOrFn;
 import org.mozilla.javascript.Scriptable;
@@ -254,7 +255,8 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
             VarScope scope,
             Object thisObj,
             Object[] args) {
-        throw new UnsupportedOperationException();
+        return InterpreterV2.interpret(
+                executableObject, this, cx, scope, (Scriptable) thisObj, args);
     }
 
     @Override
@@ -265,7 +267,7 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
             VarScope scope,
             int operation,
             Object value) {
-        throw new UnsupportedOperationException();
+        return InterpreterV2.resumeGenerator(cx, scope, operation, state, value);
     }
 
     @Override
