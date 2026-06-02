@@ -20,7 +20,7 @@ public class SunSpiderBenchmark {
         Script script;
         String fileName;
 
-        @Param({"Interpreter", "Compiler"})
+        @Param({"Interpreter", "InterpreterV2", "Compiler"})
         public EvaluationMethod evalMethod;
 
         AbstractState(String fileName) {
