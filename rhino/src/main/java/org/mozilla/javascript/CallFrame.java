@@ -29,11 +29,11 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     // stack[0 <= i < localShift]: arguments and local variables
     // stack[localShift <= i <= emptyStackTop]: used for local temporaries
     // stack[emptyStackTop < i < stack.length]: stack data
-    // sDbl[i]: if stack[i] is UniqueTag.DOUBLE_MARK, sDbl[i] holds the number value
+    // doubleStack[i]: if stack[i] is UniqueTag.DOUBLE_MARK, doubleStack[i] holds the number value
 
     final Object[] stack;
     final byte[] stackAttributes;
-    final double[] sDbl;
+    final double[] doubleStack;
 
     final CallFrame varSource; // defaults to this unless continuation frame
     final short emptyStackTop;
@@ -76,7 +76,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
 
         stack = new Object[maxFrameArray];
         stackAttributes = new byte[maxFrameArray];
-        sDbl = new double[maxFrameArray];
+        doubleStack = new double[maxFrameArray];
 
         this.fnOrScript = fnOrScript;
         varSource = this;
@@ -120,7 +120,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
 
         stack = Arrays.copyOf(original.stack, original.stack.length);
         stackAttributes = Arrays.copyOf(original.stackAttributes, original.stackAttributes.length);
-        sDbl = Arrays.copyOf(original.sDbl, original.sDbl.length);
+        doubleStack = Arrays.copyOf(original.doubleStack, original.doubleStack.length);
 
         frozen = false;
         this.parentFrame = parentFrame;
@@ -172,7 +172,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
 
         stack = original.stack;
         stackAttributes = original.stackAttributes;
-        sDbl = original.sDbl;
+        doubleStack = original.doubleStack;
 
         frozen = keepFrozen;
         this.parentFrame = parentFrame;
@@ -216,7 +216,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
             Context cx,
             VarScope callerScope,
             Object[] args,
-            double[] argsDbl,
+            double[] argdoubleStack,
             Object[] boundArgs,
             int argShift,
             int argCount,
@@ -225,12 +225,14 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         if (useActivation) {
             // Copy args to new array to pass to enterActivationFunction
             // or debuggerFrame.onEnter
-            if (argsDbl != null || boundArgs != null) {
+            if (argdoubleStack != null || boundArgs != null) {
                 int blen = boundArgs == null ? 0 : boundArgs.length;
-                args = Interpreter.getArgsArray(args, argsDbl, boundArgs, blen, argShift, argCount);
+                args =
+                        Interpreter.getArgsArray(
+                                args, argdoubleStack, boundArgs, blen, argShift, argCount);
             }
             argShift = 0;
-            argsDbl = null;
+            argdoubleStack = null;
             boundArgs = null;
         }
 
@@ -296,8 +298,8 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         }
 
         System.arraycopy(args, argShift, stack, blen, definedArgs - blen);
-        if (argsDbl != null) {
-            System.arraycopy(argsDbl, argShift, sDbl, blen, definedArgs - blen);
+        if (argdoubleStack != null) {
+            System.arraycopy(argdoubleStack, argShift, doubleStack, blen, definedArgs - blen);
         }
         for (int i = definedArgs; i != idata.itsMaxVars; ++i) {
             stack[i] = Undefined.instance;
@@ -313,7 +315,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
                 for (int valsIdx = 0; valsIdx != vals.length; ++argShift, ++valsIdx) {
                     Object val = args[argShift];
                     if (val == UniqueTag.DOUBLE_MARK) {
-                        val = ScriptRuntime.wrapNumber(argsDbl[argShift]);
+                        val = ScriptRuntime.wrapNumber(argdoubleStack[argShift]);
                     }
                     vals[valsIdx] = val;
                 }
@@ -432,7 +434,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
                 && Interpreter.compareDescs(
                         fnOrScript.getDescriptor(), other.fnOrScript.getDescriptor())
                 && equal.equalGraphs(varSource.stack, other.varSource.stack)
-                && Arrays.equals(varSource.sDbl, other.varSource.sDbl)
+                && Arrays.equals(varSource.doubleStack, other.varSource.doubleStack)
                 && equal.equalGraphs(thisObj, other.thisObj)
                 && equal.equalGraphs(fnOrScript, other.fnOrScript)
                 && equal.equalGraphs(scope, other.scope);
@@ -445,7 +447,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     Object getFromVars(int offset) {
         Object value = stack[offset];
         if (value == UniqueTag.DOUBLE_MARK) {
-            return sDbl[offset];
+            return doubleStack[offset];
         } else {
             return value;
         }
@@ -454,7 +456,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     void setInVars(int offset, Object value) {
         if (value instanceof Double && Double.isFinite((Double) value)) {
             stack[offset] = UniqueTag.DOUBLE_MARK;
-            sDbl[offset] = ((Double) value);
+            doubleStack[offset] = ((Double) value);
         } else {
             stack[offset] = value;
         }
