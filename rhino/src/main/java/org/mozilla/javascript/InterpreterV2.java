@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
+import org.mozilla.javascript.interpreterv2.Compiler;
 import org.mozilla.javascript.interpreterv2.CompilerData;
 import org.mozilla.javascript.interpreterv2.GeneratorState;
 import org.mozilla.javascript.interpreterv2.instruction.JumpInstruction;
@@ -571,13 +572,17 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
     @Override
     public CompilationResult<JSScript> compileScript(
             CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
-        throw new UnsupportedOperationException();
+        var compiler = new Compiler<JSScript>();
+        var res = compiler.compile(compilerEnv, tree, rawSource, false);
+        return new V2CompilationResult<>(res, compilerEnv.homeObject());
     }
 
     @Override
     public CompilationResult<JSFunction> compileFunction(
             CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
-        throw new UnsupportedOperationException();
+        var compiler = new Compiler<JSFunction>();
+        var res = compiler.compile(compilerEnv, tree, rawSource, true);
+        return new V2CompilationResult<>(res, compilerEnv.homeObject());
     }
 
     @Override

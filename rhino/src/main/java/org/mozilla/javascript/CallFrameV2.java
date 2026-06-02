@@ -1,6 +1,6 @@
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.Interpreter.initFunction;
+import static org.mozilla.javascript.InterpreterV2.initFunction;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
 import java.io.Serializable;
