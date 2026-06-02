@@ -70,9 +70,9 @@ class CallFrame implements Cloneable, Serializable {
                 cx.debugger != null ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor()) : null;
         useActivation = fnOrScript.getDescriptor().requiresActivationFrame();
 
-        emptyStackTop = (short) (compilerData.itsMaxVars + compilerData.itsMaxLocals - 1);
-        int maxFrameArray = compilerData.itsMaxFrameArray;
-        if (maxFrameArray != emptyStackTop + compilerData.itsMaxStack + 1) Kit.codeBug();
+        emptyStackTop = (short) (compilerData.maxVars + compilerData.maxLocals - 1);
+        int maxFrameArray = compilerData.maxFrameArray;
+        if (maxFrameArray != emptyStackTop + compilerData.maxStack + 1) Kit.codeBug();
 
         stack = new Object[maxFrameArray];
         stackAttributes = new byte[maxFrameArray];
@@ -306,7 +306,7 @@ class CallFrame implements Cloneable, Serializable {
         if (argdoubleStack != null) {
             System.arraycopy(argdoubleStack, argShift, doubleStack, blen, definedArgs - blen);
         }
-        for (int i = definedArgs; i != compilerData.itsMaxVars; ++i) {
+        for (int i = definedArgs; i != compilerData.maxVars; ++i) {
             stack[i] = Undefined.instance;
         }
 
