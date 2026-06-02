@@ -193,10 +193,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             itsData.itsExceptionTable = tmp;
         }
 
-        itsData.itsMaxVars = scriptOrFn.getParamAndVarCount();
-        // itsMaxFrameArray: interpret method needs this amount for its
+        itsData.maxVars = scriptOrFn.getParamAndVarCount();
+        // maxFrameArray: interpret method needs this amount for its
         // stack and sDbl arrays
-        itsData.itsMaxFrameArray = itsData.itsMaxVars + itsData.itsMaxLocals + itsData.itsMaxStack;
+        itsData.maxFrameArray = itsData.maxVars + itsData.maxLocals + itsData.maxStack;
 
         if (literalIds.size() != 0) {
             itsData.literalIds = literalIds.toArray();
@@ -706,8 +706,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         // ref_call: f, thisObj, args -> ref
                         stackChange(-1 - argCount);
                     }
-                    if (argCount > itsData.itsMaxCalleeArgs) {
-                        itsData.itsMaxCalleeArgs = argCount;
+                    if (argCount > itsData.maxCalleeArgs) {
+                        itsData.maxCalleeArgs = argCount;
                     }
 
                     if (completeOptionalCallJump != null) {
@@ -1994,8 +1994,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             stackDepth += change;
         } else {
             int newDepth = stackDepth + change;
-            if (newDepth > itsData.itsMaxStack) {
-                itsData.itsMaxStack = newDepth;
+            if (newDepth > itsData.maxStack) {
+                itsData.maxStack = newDepth;
             }
             stackDepth = newDepth;
         }
@@ -2004,8 +2004,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private int allocLocal() {
         int localSlot = localTop;
         ++localTop;
-        if (localTop > itsData.itsMaxLocals) {
-            itsData.itsMaxLocals = localTop;
+        if (localTop > itsData.maxLocals) {
+            itsData.maxLocals = localTop;
         }
         return localSlot;
     }
