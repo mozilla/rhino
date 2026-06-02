@@ -6,28 +6,21 @@
 
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.ScriptableObject.PERMANENT;
-import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
-import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.PrintStream;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 
-public final class Interpreter implements Evaluator {
+public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?>> {
 
     static final int EXCEPTION_TRY_START_SLOT = 0;
     static final int EXCEPTION_TRY_END_SLOT = 1;
@@ -39,190 +32,8 @@ public final class Interpreter implements Evaluator {
     //            exception local and scope local
     static final int EXCEPTION_SLOT_SIZE = 6;
 
-    /**
-     * This class is intended as proxy to give {@link DebugFrame} access to the contents of local
-     * variables. We take this approach rather than forcing the interpreter to introduce activation
-     * frames because it is faster (assuming local variable manipulation by the interpreter is more
-     * common than inspection by the debugger) and it reduces the chance that programs might
-     * evexcute differently in debug mode.
-     */
-    private static class DebugScope implements VarScope {
-        private final CallFrame frame;
-        private volatile Map<String, Integer> offsets;
-
-        /** Create a new debug scope associated with a particular call frame. */
-        private DebugScope(CallFrame frame) {
-            this.frame = frame;
-        }
-
-        /**
-         * Populate the map associating names to variable indices. Most names should have been made
-         * unique as part of the compilation process, but arguments with duplicate names will not
-         * have been.The map is build so that duplicate argument names resolve to the last index as
-         * this is also what the compiler does - at least once we are past setting default values.
-         */
-        private Map<String, Integer> getOffsets() {
-            if (offsets == null) {
-                offsets = buildOffsets(frame);
-            }
-            return offsets;
-        }
-
-        private static Map<String, Integer> buildOffsets(CallFrame frame) {
-            var desc = frame.fnOrScript.getDescriptor();
-            int varCount = desc.getParamAndVarCount();
-            var map = new HashMap<String, Integer>();
-            for (int i = 0; i < varCount; i++) {
-                map.put(desc.getParamOrVarName(i), i);
-            }
-            return map;
-        }
-
-        @Override
-        public void delete(String name) {}
-
-        @Override
-        public void delete(int index) {}
-
-        @Override
-        public void delete(Symbol key) {}
-
-        @Override
-        public Object get(String name, VarScope scope) {
-            int offset = getOffsets().getOrDefault(name, -1);
-            return offset >= 0 ? frame.getFromVars(offset) : NOT_FOUND;
-        }
-
-        @Override
-        public Object get(int index, VarScope scope) {
-            return NOT_FOUND;
-        }
-
-        @Override
-        public Object get(Symbol key, VarScope scope) {
-            return NOT_FOUND;
-        }
-
-        @Override
-        public Object[] getIds() {
-            return getOffsets().keySet().toArray();
-        }
-
-        @Override
-        public VarScope getParentScope() {
-            return frame.scope;
-        }
-
-        @Override
-        public boolean has(String name, VarScope start) {
-            return getOffsets().containsKey(name);
-        }
-
-        @Override
-        public boolean has(int index, VarScope start) {
-            return false;
-        }
-
-        @Override
-        public boolean has(Symbol key, VarScope start) {
-            return false;
-        }
-
-        @Override
-        public void put(String name, VarScope start, Object value) {
-            int offset = getOffsets().getOrDefault(name, -1);
-            if (offset >= 0) {
-                frame.setInVars(offset, value);
-            }
-        }
-
-        @Override
-        public void put(int index, VarScope start, Object value) {
-            // Do nothing.
-        }
-
-        @Override
-        public void put(Symbol key, VarScope start, Object value) {
-            // Do nothing.
-        }
-
-        @Override
-        public void defineConst(String name, VarScope start) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public boolean isConst(String name) {
-            int offset = getOffsets().getOrDefault(name, -1);
-            if (offset >= 0) {
-                return (frame.stackAttributes[offset] & (PERMANENT | READONLY))
-                        == (PERMANENT | READONLY);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public void putConst(String name, VarScope start, Object value) {
-            // TODO Auto-generated method stub
-
-        }
-    }
-
     static boolean compareDescs(JSDescriptor i1, JSDescriptor i2) {
         return i1 == i2 || Objects.equals(getRawSource(i1), getRawSource(i2));
-    }
-
-    private static final class ContinuationJump implements Serializable {
-        private static final long serialVersionUID = 7687739156004308247L;
-
-        CallFrame capturedFrame;
-        CallFrame branchFrame;
-        Object result;
-        double resultDbl;
-
-        ContinuationJump(NativeContinuation c, CallFrame current) {
-            this.capturedFrame = (CallFrame) c.getImplementation();
-            if (this.capturedFrame == null || current == null) {
-                // Continuation and current execution does not share
-                // any frames if there is nothing to capture or
-                // if there is no currently executed frames
-                this.branchFrame = null;
-            } else {
-                // Search for branch frame where parent frame chains starting
-                // from captured and current meet.
-                CallFrame chain1 = this.capturedFrame;
-                CallFrame chain2 = current;
-
-                // First work parents of chain1 or chain2 until the same
-                // frame depth.
-                int diff = chain1.frameIndex - chain2.frameIndex;
-                if (diff != 0) {
-                    if (diff < 0) {
-                        // swap to make sure that
-                        // chain1.frameIndex > chain2.frameIndex and diff > 0
-                        chain1 = current;
-                        chain2 = this.capturedFrame;
-                        diff = -diff;
-                    }
-                    do {
-                        chain1 = chain1.parentFrame;
-                    } while (--diff != 0);
-                    if (chain1.frameIndex != chain2.frameIndex) Kit.codeBug();
-                }
-
-                // Now walk parents in parallel until a shared frame is found
-                // or until the root is reached.
-                while (!Objects.equals(chain1, chain2) && chain1 != null) {
-                    chain1 = chain1.parentFrame;
-                    chain2 = chain2.parentFrame;
-                }
-
-                this.branchFrame = chain1;
-                if (this.branchFrame != null && !this.branchFrame.frozen) Kit.codeBug();
-            }
-        }
     }
 
     private static CallFrame captureFrameForGenerator(CallFrame frame) {
@@ -246,6 +57,8 @@ public final class Interpreter implements Evaluator {
             System.err.println(str);
             throw new IllegalStateException(str);
         }
+
+        RhinoException.registerInterpreterMethod(Interpreter.class, "interpretLoop");
     }
 
     private static class InterpreterCompilationResult<T extends ScriptOrFn<T>>
@@ -562,155 +375,23 @@ public final class Interpreter implements Evaluator {
         return ret;
     }
 
-    @Override
-    public void captureStackInfo(RhinoException ex) {
-        Context cx = Context.getCurrentContext();
-        if (cx == null || cx.lastInterpreterFrame == null) {
-            // No interpreter invocations
-            ex.interpreterStackInfo = null;
-        } else {
-            ex.interpreterStackInfo = cx.lastInterpreterFrame;
-            ex.interpreterLineData = ((CallFrame) cx.lastInterpreterFrame).pcSourceLineStart;
-        }
-    }
-
-    @Override
-    public String getSourcePositionFromStack(Context cx, int[] linep) {
-        CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
-        InterpreterData idata = frame.compilerData;
-        JSDescriptor desc = frame.fnOrScript.getDescriptor();
-        if (frame.pcSourceLineStart >= 0) {
-            linep[0] = getIndex(idata.itsICode, frame.pcSourceLineStart);
-        } else {
-            linep[0] = 0;
-        }
-        return desc.getSourceName();
-    }
-
-    @Override
-    public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
-        String tag = "org.mozilla.javascript.Interpreter.interpretLoop";
-        StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
-        String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
-
-        CallFrame calleeFrame = null;
-        CallFrame frame = (CallFrame) ex.interpreterStackInfo;
-        int offset = 0;
-        while (frame != null) {
-            CallFrame callerFrame = frame;
-            int pos = nativeStackTrace.indexOf(tag, offset);
-            if (pos < 0) {
-                break;
-            }
-
-            // Skip tag length
-            pos += tag.length();
-            // Skip until the end of line
-            for (; pos != nativeStackTrace.length(); ++pos) {
-                char c = nativeStackTrace.charAt(pos);
-                if (c == '\n' || c == '\r') {
-                    break;
-                }
-            }
-            sb.append(nativeStackTrace, offset, pos);
-            offset = pos;
-
-            while (callerFrame != null) {
-                InterpreterData idata = callerFrame.compilerData;
-                JSDescriptor desc = callerFrame.fnOrScript.getDescriptor();
-                sb.append(lineSeparator);
-                sb.append("\tat script");
-                if (desc.getName() != null && desc.getName().length() != 0) {
-                    sb.append('.');
-                    sb.append(desc.getName());
-                }
-                sb.append('(');
-                sb.append(desc.getSourceName());
-                int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
-                if (pc >= 0) {
-                    // Include line info only if available
-                    sb.append(':');
-                    sb.append(getIndex(idata.itsICode, pc));
-                }
-                sb.append(')');
-                calleeFrame = callerFrame;
-                callerFrame = callerFrame.parentFrame;
-            }
-            frame = (CallFrame) calleeFrame.previousInterpreterFrame;
-        }
-        sb.append(nativeStackTrace.substring(offset));
-
-        return sb.toString();
-    }
-
-    @Override
-    public List<String> getScriptStack(RhinoException ex) {
-        ScriptStackElement[][] stack = getScriptStackElements(ex);
-        List<String> list = new ArrayList<>(stack.length);
-        String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
-        for (ScriptStackElement[] group : stack) {
-            StringBuilder sb = new StringBuilder();
-            for (ScriptStackElement elem : group) {
-                elem.renderJavaStyle(sb);
-                sb.append(lineSeparator);
-            }
-            list.add(sb.toString());
-        }
-        return list;
-    }
-
-    public ScriptStackElement[][] getScriptStackElements(RhinoException ex) {
-        if (ex.interpreterStackInfo == null) {
-            return null;
-        }
-
-        List<ScriptStackElement[]> list = new ArrayList<>();
-
-        CallFrame calleeFrame = null;
-        CallFrame frame = (CallFrame) ex.interpreterStackInfo;
-        while (frame != null) {
-            CallFrame callerFrame = frame;
-            List<ScriptStackElement> group = new ArrayList<>();
-            while (callerFrame != null) {
-                InterpreterData idata = callerFrame.compilerData;
-                JSDescriptor desc = callerFrame.fnOrScript.getDescriptor();
-                String fileName = desc.getSourceName();
-                String functionName = null;
-                int lineNumber = -1;
-                int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
-                if (pc >= 0) {
-                    lineNumber = getIndex(idata.itsICode, pc);
-                }
-                if (desc.getName() != null && desc.getName().length() != 0) {
-                    functionName = desc.getName();
-                }
-                calleeFrame = callerFrame;
-                callerFrame = callerFrame.parentFrame;
-                group.add(new ScriptStackElement(fileName, functionName, lineNumber));
-            }
-            list.add(group.toArray(new ScriptStackElement[0]));
-            frame = (CallFrame) calleeFrame.previousInterpreterFrame;
-        }
-        return list.toArray(new ScriptStackElement[list.size()][]);
-    }
-
-    static String getRawSource(JSDescriptor desc) {
+    static String getRawSource(JSDescriptor<?> desc) {
         if (desc.getRawSource() == null) {
             return null;
         }
         return desc.getRawSource();
     }
 
-    static void initFunction(Context cx, VarScope scope, JSDescriptor parent, int index) {
+    static void initFunction(Context cx, VarScope scope, JSDescriptor<?> parent, int index) {
         JSFunction fn;
         fn = JSFunction.createFunction(cx, scope, parent, index, null);
         var desc = fn.getDescriptor();
         ScriptRuntime.initFunction(cx, scope, fn, desc.getFunctionType(), parent.isEvalFunction());
     }
 
-    static Object interpret(
-            ScriptOrFn ifun,
-            InterpreterData idata,
+    static <T extends ScriptOrFn<T>> Object interpret(
+            ScriptOrFn<T> ifun,
+            InterpreterData<T> idata,
             Context cx,
             VarScope scope,
             Scriptable thisObj,
@@ -783,7 +464,7 @@ public final class Interpreter implements Evaluator {
     public static Object resumeGenerator(
             Context cx, VarScope scope, int operation, Object savedState, Object value) {
         CallFrame frame = (CallFrame) savedState;
-        CallFrame activeFrame = frame.shallowCloneFrozen((CallFrame) cx.lastInterpreterFrame);
+        CallFrame activeFrame = frame.shallowCloneFrozen(cx.lastInterpreterFrame);
         try {
             GeneratorState generatorState = new GeneratorState(operation, value);
             if (operation == NativeGenerator.GENERATOR_CLOSE) {
@@ -825,7 +506,7 @@ public final class Interpreter implements Evaluator {
             return arg;
         }
 
-        ContinuationJump cjump = new ContinuationJump(c, null);
+        var cjump = new ContinuationJump<CallFrame, InterpreterData<?>>(c, null);
 
         cjump.result = arg;
         return interpretLoop(cx, null, cjump);
@@ -1125,7 +806,7 @@ public final class Interpreter implements Evaluator {
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
-        final Object oldFrame = cx.lastInterpreterFrame;
+        var oldFrame = cx.lastInterpreterFrame;
         try {
             // throwable holds exception object to rethrow or catch
             // It is also used for continuation restart in which case
@@ -1384,7 +1065,7 @@ public final class Interpreter implements Evaluator {
 
             // Use local variables for constant values in frame
             // for faster access
-            final byte[] iCode = frame.compilerData.itsICode;
+            final byte[] iCode = ((InterpreterData) frame.compilerData).itsICode;
 
             state.generatorState = genState;
             state.throwable = tble;
@@ -3144,8 +2825,7 @@ public final class Interpreter implements Evaluator {
 
             if (fun instanceof NativeContinuation) {
                 // Jump to the captured continuation
-                ContinuationJump cjump;
-                cjump = new ContinuationJump((NativeContinuation) fun, frame);
+                var cjump = new ContinuationJump<>((NativeContinuation) fun, frame);
 
                 // continuation result is the first argument if any
                 // of continuation call
@@ -4338,16 +4018,14 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.stringReg =
-                    frame.compilerData
-                            .itsStringTable[0xFF & frame.compilerData.itsICode[frame.pc]];
+                    frame.compilerData.itsStringTable[0xFF & frame.compilerData.itsICode[frame.pc]];
             ++frame.pc;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str =
-                    ctx.idata.itsStringTable[0xFF & ctx.idata.itsICode[ctx.pc]];
+            String str = ctx.idata.itsStringTable[0xFF & ctx.idata.itsICode[ctx.pc]];
             ctx.out.println(tname + " \"" + str + '"');
             ++ctx.pc;
         }
@@ -4410,16 +4088,14 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.bigIntReg =
-                    frame.compilerData
-                            .itsBigIntTable[0xFF & frame.compilerData.itsICode[frame.pc]];
+                    frame.compilerData.itsBigIntTable[0xFF & frame.compilerData.itsICode[frame.pc]];
             ++frame.pc;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt =
-                    ctx.idata.itsBigIntTable[0xFF & ctx.idata.itsICode[ctx.pc]];
+            BigInteger bigInt = ctx.idata.itsBigIntTable[0xFF & ctx.idata.itsICode[ctx.pc]];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ++ctx.pc;
         }
@@ -4513,7 +4189,8 @@ public final class Interpreter implements Evaluator {
             throwable = null;
         } else {
             // Continuation restoration
-            ContinuationJump cjump = (ContinuationJump) throwable;
+            @SuppressWarnings("unchecked")
+            var cjump = (ContinuationJump<CallFrame, InterpreterData<?>>) throwable;
 
             // Clear throwable to indicate that exceptions are OK
             throwable = null;
@@ -4533,9 +4210,9 @@ public final class Interpreter implements Evaluator {
             }
 
             int enterCount = 0;
-            CallFrame[] enterFrames = null;
+            ACallFrame<?, ?>[] enterFrames = null;
 
-            CallFrame x = cjump.capturedFrame;
+            ACallFrame<?, ?> x = cjump.capturedFrame;
             for (int i = 0; i != rewindCount; ++i) {
                 if (!x.frozen) Kit.codeBug();
                 if (x.useActivation) {
@@ -4543,7 +4220,7 @@ public final class Interpreter implements Evaluator {
                         // Allocate enough space to store the rest
                         // of rewind frames in case all of them
                         // would require to enter
-                        enterFrames = new CallFrame[rewindCount - i];
+                        enterFrames = new ACallFrame[rewindCount - i];
                     }
                     enterFrames[enterCount] = x;
                     ++enterCount;
@@ -4564,7 +4241,7 @@ public final class Interpreter implements Evaluator {
             // points to the call to the function that captured
             // continuation, so clone capturedFrame and
             // emulate return that function with the suplied result
-            frame = cjump.capturedFrame.cloneFrozen();
+            frame = (CallFrame) cjump.capturedFrame.cloneFrozen();
             setCallResult(frame, cjump.result, cjump.resultDbl);
             // restart the execution
         }
@@ -4606,8 +4283,8 @@ public final class Interpreter implements Evaluator {
             Object[] boundArgs,
             int argShift,
             int argCount,
-            ScriptOrFn fnOrScript,
-            InterpreterData code,
+            ScriptOrFn<?> fnOrScript,
+            InterpreterData<?> code,
             CallFrame parentFrame) {
         CallFrame frame =
                 new CallFrame(
@@ -4617,95 +4294,12 @@ public final class Interpreter implements Evaluator {
                         code,
                         parentFrame,
                         parentFrame == null
-                                ? (CallFrame) cx.lastInterpreterFrame
+                                ? cx.lastInterpreterFrame
                                 : parentFrame.previousInterpreterFrame);
         frame.initializeArgs(
                 cx, callerScope, args, argsDbl, boundArgs, argShift, argCount, homeObj);
         enterFrame(cx, frame, args, false);
         return frame;
-    }
-
-    private static void enterFrame(
-            Context cx, CallFrame frame, Object[] args, boolean continuationRestart) {
-        boolean usesActivation = frame.fnOrScript.getDescriptor().requiresActivationFrame();
-        boolean isDebugged = frame.debuggerFrame != null;
-        if (usesActivation) {
-            VarScope scope = frame.scope;
-            if (scope == null) {
-                Kit.codeBug();
-            } else if (continuationRestart) {
-                // Walk the parent chain of frame.scope until a NativeCall is
-                // found. Normally, frame.scope is a NativeCall when called
-                // from initFrame() for a debugged or activatable function.
-                // However, when called from interpretLoop() as part of
-                // restarting a continuation, it can also be a WIthScope if
-                // the continuation was captured within a "with" or "catch"
-                // block ("catch" implicitly uses WithScope to create a scope
-                // to expose the exception variable).
-                for (; ; ) {
-                    if (scope instanceof WithScope) {
-                        scope = scope.getParentScope();
-                        if (scope == null
-                                || (frame.parentFrame != null
-                                        && frame.parentFrame.scope == scope)) {
-                            // If we get here, we didn't find a NativeCall in
-                            // the call chain before reaching parent frame's
-                            // scope. This should not be possible.
-                            Kit.codeBug();
-                            break; // Never reached, but keeps the static analyzer
-                            // happy about "scope" not being null 5 lines above.
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            }
-            if (isDebugged) {
-                frame.debuggerFrame.onEnter(cx, scope, frame.thisObj, args);
-            }
-            ScriptRuntime.enterActivationFunction(cx, scope);
-        } else if (isDebugged) {
-            frame.debuggerFrame.onEnter(cx, new DebugScope(frame), frame.thisObj, args);
-        }
-    }
-
-    private static void exitFrame(Context cx, CallFrame frame, Object throwable) {
-        if (frame.fnOrScript.getDescriptor().requiresActivationFrame()) {
-            ScriptRuntime.exitActivationFunction(cx);
-        }
-
-        if (frame.fnOrScript.getDescriptor().getFunctionType() != 0) {
-            ScriptRuntime.exitFunctionStrictness(cx, frame.parentStrictness);
-        }
-
-        if (frame.debuggerFrame != null) {
-            try {
-                if (throwable instanceof Throwable) {
-                    frame.debuggerFrame.onExit(cx, true, throwable);
-                } else {
-                    Object result;
-                    ContinuationJump cjump = (ContinuationJump) throwable;
-                    if (cjump == null) {
-                        result = frame.result;
-                    } else {
-                        result = cjump.result;
-                    }
-                    if (result == DOUBLE_MARK) {
-                        double resultDbl;
-                        if (cjump == null) {
-                            resultDbl = frame.resultDbl;
-                        } else {
-                            resultDbl = cjump.resultDbl;
-                        }
-                        result = ScriptRuntime.wrapNumber(resultDbl);
-                    }
-                    frame.debuggerFrame.onExit(cx, false, result);
-                }
-            } catch (Throwable ex) {
-                System.err.println("RHINO USAGE WARNING: onExit terminated with exception");
-                ex.printStackTrace(System.err);
-            }
-        }
     }
 
     private static void setCallResult(CallFrame frame, Object callResult, double callResultDbl) {

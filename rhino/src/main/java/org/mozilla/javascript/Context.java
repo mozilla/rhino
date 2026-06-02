@@ -3030,7 +3030,7 @@ public class Context implements Closeable {
 
     // For the interpreter to store the last frame for error reports
     // etc. Previous frames can all be derived from this.
-    Object lastInterpreterFrame;
+    public ACallFrame<?, ?> lastInterpreterFrame;
 
     // For instruction counting (interpreter only)
     int instructionCount;
