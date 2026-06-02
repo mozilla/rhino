@@ -22,7 +22,7 @@ public class BuiltinBenchmark {
     @State(Scope.Thread)
     public static class AbstractClassState {
 
-        @Param({"Interpreter", "Compiler"})
+        @Param({"Interpreter", "InterpreterV2", "Compiler"})
         public EvaluationMethod evalMethod;
 
         public void init()
