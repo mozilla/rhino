@@ -56,7 +56,7 @@ public final class Interpreter implements Evaluator {
         boolean frozen;
 
         final ScriptOrFn<?> fnOrScript;
-        final InterpreterData<?> idata;
+        final InterpreterData<?> compilerData;
 
         // Stack structure
         // stack[0 <= i < localShift]: arguments and local variables
@@ -98,16 +98,16 @@ public final class Interpreter implements Evaluator {
                 InterpreterData code,
                 CallFrame parentFrame,
                 CallFrame previousInterpreterFrame) {
-            idata = code;
+            compilerData = code;
             debuggerFrame =
                     cx.debugger != null
                             ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor())
                             : null;
             useActivation = fnOrScript.getDescriptor().requiresActivationFrame();
 
-            emptyStackTop = (short) (idata.itsMaxVars + idata.itsMaxLocals - 1);
-            int maxFrameArray = idata.itsMaxFrameArray;
-            if (maxFrameArray != emptyStackTop + idata.itsMaxStack + 1) Kit.codeBug();
+            emptyStackTop = (short) (compilerData.itsMaxVars + compilerData.itsMaxLocals - 1);
+            int maxFrameArray = compilerData.itsMaxFrameArray;
+            if (maxFrameArray != emptyStackTop + compilerData.itsMaxStack + 1) Kit.codeBug();
 
             stack = new Object[maxFrameArray];
             stackAttributes = new byte[maxFrameArray];
@@ -135,7 +135,7 @@ public final class Interpreter implements Evaluator {
             // Initialize initial values of variables that change during
             // interpretation.
             result = Undefined.instance;
-            pcSourceLineStart = idata.firstLinePC;
+            pcSourceLineStart = compilerData.firstLinePC;
 
             stackTop = emptyStackTop;
         }
@@ -173,7 +173,7 @@ public final class Interpreter implements Evaluator {
             }
 
             fnOrScript = original.fnOrScript;
-            idata = original.idata;
+            compilerData = original.compilerData;
 
             varSource = original.varSource;
             emptyStackTop = original.emptyStackTop;
@@ -225,7 +225,7 @@ public final class Interpreter implements Evaluator {
             }
 
             fnOrScript = original.fnOrScript;
-            idata = original.idata;
+            compilerData = original.compilerData;
 
             varSource = original.varSource;
             emptyStackTop = original.emptyStackTop;
@@ -335,7 +335,7 @@ public final class Interpreter implements Evaluator {
             if (argsDbl != null) {
                 System.arraycopy(argsDbl, argShift, doubleStack, blen, definedArgs - blen);
             }
-            for (int i = definedArgs; i != idata.itsMaxVars; ++i) {
+            for (int i = definedArgs; i != compilerData.itsMaxVars; ++i) {
                 stack[i] = Undefined.instance;
             }
 
@@ -423,7 +423,7 @@ public final class Interpreter implements Evaluator {
             CallFrame f = this;
             int h = 0;
             do {
-                h = 31 * (31 * h + f.pc) + f.idata.icodeHashCode();
+                h = 31 * (31 * h + f.pc) + f.compilerData.icodeHashCode();
                 f = f.parentFrame;
             } while (f != null && depth++ < 8);
             return h;
@@ -771,7 +771,7 @@ public final class Interpreter implements Evaluator {
     }
 
     private static int getExceptionHandler(CallFrame frame, boolean onlyFinally) {
-        int[] exceptionTable = frame.idata.itsExceptionTable;
+        int[] exceptionTable = frame.compilerData.itsExceptionTable;
         if (exceptionTable == null) {
             // No exception handlers
             return -1;
@@ -814,18 +814,18 @@ public final class Interpreter implements Evaluator {
     static PrintStream interpreterBytecodePrintStream = System.out;
 
     static <T extends ScriptOrFn<T>> void dumpICode(
-            InterpreterData.Builder<T> idata, JSDescriptor.Builder<T> desc) {
+            InterpreterData.Builder<T> compilerData, JSDescriptor.Builder<T> desc) {
         if (!Token.printICode) {
             return;
         }
 
-        byte[] iCode = idata.itsICode;
+        byte[] iCode = compilerData.itsICode;
         int iCodeLength = iCode.length;
         PrintStream out = interpreterBytecodePrintStream;
         out.println("ICode dump, for " + desc.name + ", length = " + iCodeLength);
-        out.println("MaxStack = " + idata.itsMaxStack);
+        out.println("MaxStack = " + compilerData.itsMaxStack);
 
-        ICodeDumpContext ctx = new ICodeDumpContext(out, idata);
+        ICodeDumpContext ctx = new ICodeDumpContext(out, compilerData);
 
         for (int pc = 0; pc < iCodeLength; ) {
             out.flush();
@@ -840,7 +840,7 @@ public final class Interpreter implements Evaluator {
             pc += icodeLength;
         }
 
-        int[] table = idata.itsExceptionTable;
+        int[] table = compilerData.itsExceptionTable;
         if (table != null) {
             out.println("Exception handlers: " + table.length / EXCEPTION_SLOT_SIZE);
             for (int i = 0; i != table.length; i += EXCEPTION_SLOT_SIZE) {
@@ -1034,10 +1034,10 @@ public final class Interpreter implements Evaluator {
     @Override
     public String getSourcePositionFromStack(Context cx, int[] linep) {
         CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
-        InterpreterData idata = frame.idata;
+        InterpreterData compilerData = frame.compilerData;
         JSDescriptor desc = frame.fnOrScript.getDescriptor();
         if (frame.pcSourceLineStart >= 0) {
-            linep[0] = getIndex(idata.itsICode, frame.pcSourceLineStart);
+            linep[0] = getIndex(compilerData.itsICode, frame.pcSourceLineStart);
         } else {
             linep[0] = 0;
         }
@@ -1073,7 +1073,7 @@ public final class Interpreter implements Evaluator {
             offset = pos;
 
             while (callerFrame != null) {
-                InterpreterData idata = callerFrame.idata;
+                InterpreterData compilerData = callerFrame.compilerData;
                 JSDescriptor desc = callerFrame.fnOrScript.getDescriptor();
                 sb.append(lineSeparator);
                 sb.append("\tat script");
@@ -1087,7 +1087,7 @@ public final class Interpreter implements Evaluator {
                 if (pc >= 0) {
                     // Include line info only if available
                     sb.append(':');
-                    sb.append(getIndex(idata.itsICode, pc));
+                    sb.append(getIndex(compilerData.itsICode, pc));
                 }
                 sb.append(')');
                 calleeFrame = callerFrame;
@@ -1129,14 +1129,14 @@ public final class Interpreter implements Evaluator {
             CallFrame callerFrame = frame;
             List<ScriptStackElement> group = new ArrayList<>();
             while (callerFrame != null) {
-                InterpreterData idata = callerFrame.idata;
+                InterpreterData compilerData = callerFrame.compilerData;
                 JSDescriptor desc = callerFrame.fnOrScript.getDescriptor();
                 String fileName = desc.getSourceName();
                 String functionName = null;
                 int lineNumber = -1;
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    lineNumber = getIndex(idata.itsICode, pc);
+                    lineNumber = getIndex(compilerData.itsICode, pc);
                 }
                 if (desc.getName() != null && desc.getName().length() != 0) {
                     functionName = desc.getName();
@@ -1167,7 +1167,7 @@ public final class Interpreter implements Evaluator {
 
     static Object interpret(
             ScriptOrFn ifun,
-            InterpreterData idata,
+            InterpreterData compilerData,
             Context cx,
             VarScope scope,
             Scriptable thisObj,
@@ -1218,7 +1218,7 @@ public final class Interpreter implements Evaluator {
                         0,
                         args.length,
                         ifun,
-                        idata,
+                        compilerData,
                         null);
         frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
         cx.isContinuationsTopCall = false;
@@ -1358,26 +1358,26 @@ public final class Interpreter implements Evaluator {
 
     private static class ICodeDumpContext {
         final PrintStream out;
-        final InterpreterData.Builder<?> idata;
+        final InterpreterData.Builder<?> compilerData;
 
         int pc;
         int indexReg;
 
-        ICodeDumpContext(PrintStream out, InterpreterData.Builder<?> idata) {
+        ICodeDumpContext(PrintStream out, InterpreterData.Builder<?> compilerData) {
             this.out = out;
-            this.idata = idata;
+            this.compilerData = compilerData;
         }
 
         int getShort(int pc) {
-            return Interpreter.getShort(idata.itsICode, pc);
+            return Interpreter.getShort(compilerData.itsICode, pc);
         }
 
         int getIndex(int pc) {
-            return Interpreter.getIndex(idata.itsICode, pc);
+            return Interpreter.getIndex(compilerData.itsICode, pc);
         }
 
         int getInt(int pc) {
-            return Interpreter.getInt(idata.itsICode, pc);
+            return Interpreter.getInt(compilerData.itsICode, pc);
         }
     }
 
@@ -1842,7 +1842,7 @@ public final class Interpreter implements Evaluator {
 
             // Use local variables for constant values in frame
             // for faster access
-            final byte[] iCode = frame.idata.itsICode;
+            final byte[] iCode = frame.compilerData.itsICode;
 
             state.generatorState = genState;
             state.throwable = tble;
@@ -1876,7 +1876,7 @@ public final class Interpreter implements Evaluator {
                         // -1 accounts for pc pointing to jump opcode + 1
                         frame.pc += offset - 1;
                     } else {
-                        frame.pc = frame.idata.longJumps.get(frame.pc);
+                        frame.pc = frame.compilerData.longJumps.get(frame.pc);
                     }
                     if (instructionCounting) {
                         frame.pcPrevBranch = frame.pc;
@@ -1994,7 +1994,7 @@ public final class Interpreter implements Evaluator {
             CallFrame frame, InterpreterState state, GeneratorState generatorState, int op) {
         // we are resuming execution
         frame.frozen = false;
-        int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+        int sourceLine = getIndex(frame.compilerData.itsICode, frame.pc);
         frame.pc += 2; // skip line number data
         if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
             // processing a call to <generator>.throw(exception): must
@@ -2046,7 +2046,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // throw StopIteration
             frame.frozen = true;
-            int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+            int sourceLine = getIndex(frame.compilerData.itsICode, frame.pc);
             state.generatorState.returnedException =
                     new JavaScriptException(
                             NativeIterator.getStopIterationObject(frame.scope),
@@ -2077,7 +2077,7 @@ public final class Interpreter implements Evaluator {
                                     ? Double.valueOf(frame.resultDbl)
                                     : frame.result);
 
-            int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+            int sourceLine = getIndex(frame.compilerData.itsICode, frame.pc);
             state.generatorState.returnedException =
                     new JavaScriptException(
                             si, frame.fnOrScript.getDescriptor().getSourceName(), sourceLine);
@@ -2095,7 +2095,7 @@ public final class Interpreter implements Evaluator {
     private static class DoRethrow extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
             state.throwable = frame.stack[state.indexReg];
             return BREAK_WITHOUT_EXTENSION;
         }
@@ -2109,8 +2109,8 @@ public final class Interpreter implements Evaluator {
                             frame,
                             frame.stack,
                             frame.doubleStack,
-                            frame.idata,
-                            frame.idata.itsICode,
+                            frame.compilerData,
+                            frame.compilerData.itsICode,
                             state);
             --frame.stackTop;
             return BREAK_WITHOUT_EXTENSION;
@@ -2120,7 +2120,7 @@ public final class Interpreter implements Evaluator {
                 CallFrame frame,
                 final Object[] stack,
                 final double[] sDbl,
-                final InterpreterData iData,
+                final InterpreterData compilerData,
                 final byte[] iCode,
                 InterpreterState state) {
             Object throwable;
@@ -2405,10 +2405,10 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.doubleStack;
-            final InterpreterData iData = frame.idata;
+            final InterpreterData compilerData = frame.compilerData;
             if (frame.stackTop == frame.emptyStackTop + 1) {
                 // Call from Icode.GOSUB: store return PC address in the local
-                state.indexReg += iData.itsMaxVars;
+                state.indexReg += compilerData.itsMaxVars;
                 stack[state.indexReg] = stack[frame.stackTop];
                 sDbl[state.indexReg] = sDbl[frame.stackTop];
                 --frame.stackTop;
@@ -2429,7 +2429,7 @@ public final class Interpreter implements Evaluator {
             if (state.instructionCounting) {
                 addInstructionCount(cx, frame, 0);
             }
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
             Object value = frame.stack[state.indexReg];
             if (value != DOUBLE_MARK) {
                 // Invocation from exception handler, restore object to
@@ -3008,7 +3008,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.doubleStack;
-            final byte[] iCode = frame.idata.itsICode;
+            final byte[] iCode = frame.compilerData.itsICode;
             Object lhs = stack[frame.stackTop];
             if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             stack[frame.stackTop] =
@@ -3020,7 +3020,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.compilerData.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3128,7 +3128,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.doubleStack;
-            final byte[] iCode = frame.idata.itsICode;
+            final byte[] iCode = frame.compilerData.itsICode;
             Object rhs = stack[frame.stackTop];
             if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             --frame.stackTop;
@@ -3142,7 +3142,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.compilerData.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3185,7 +3185,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            final byte[] iCode = frame.idata.itsICode;
+            final byte[] iCode = frame.compilerData.itsICode;
             Ref ref = (Ref) stack[frame.stackTop];
             stack[frame.stackTop] =
                     ScriptRuntime.refIncrDecr(ref, cx, frame.scope, iCode[frame.pc]);
@@ -3195,7 +3195,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.compilerData.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3205,9 +3205,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.doubleStack;
-            final InterpreterData iData = frame.idata;
+            final InterpreterData compilerData = frame.compilerData;
             ++frame.stackTop;
-            state.indexReg += iData.itsMaxVars;
+            state.indexReg += compilerData.itsMaxVars;
             stack[frame.stackTop] = stack[state.indexReg];
             sDbl[frame.stackTop] = sDbl[state.indexReg];
             return null;
@@ -3218,8 +3218,8 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            final InterpreterData iData = frame.idata;
-            state.indexReg += iData.itsMaxVars;
+            final InterpreterData compilerData = frame.compilerData;
+            state.indexReg += compilerData.itsMaxVars;
             stack[state.indexReg] = null;
             return null;
         }
@@ -3332,7 +3332,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.doubleStack;
-            byte[] iCode = frame.idata.itsICode;
+            byte[] iCode = frame.compilerData.itsICode;
             boolean isOptionalChainingCall = (op == Icode.CALLSPECIAL_OPTIONAL);
 
             if (state.instructionCounting) {
@@ -3382,8 +3382,8 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int callType = ctx.idata.itsICode[ctx.pc] & 0xFF;
-            boolean isNew = (ctx.idata.itsICode[ctx.pc + 1] != 0);
+            int callType = ctx.compilerData.itsICode[ctx.pc] & 0xFF;
+            boolean isNew = (ctx.compilerData.itsICode[ctx.pc + 1] != 0);
             int line = ctx.getIndex(ctx.pc + 2);
             ctx.out.println(tname + " " + callType + " " + isNew + " " + ctx.indexReg + " " + line);
             ctx.pc += 4;
@@ -3549,7 +3549,7 @@ public final class Interpreter implements Evaluator {
                 JSFunction ifun = (JSFunction) fun;
 
                 JSDescriptor<JSFunction> desc = ifun.getDescriptor();
-                var idata = (InterpreterData<JSFunction>) desc.getCode();
+                var compilerData = (InterpreterData<JSFunction>) desc.getCode();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     CallFrame callParentFrame = frame;
@@ -3590,7 +3590,7 @@ public final class Interpreter implements Evaluator {
                                     frame.stackTop + 1,
                                     state.indexReg,
                                     ifun,
-                                    idata,
+                                    compilerData,
                                     callParentFrame);
                     if (op != Icode.TAIL_CALL) {
                         frame.savedCallOp = op;
@@ -3666,7 +3666,7 @@ public final class Interpreter implements Evaluator {
                 JSFunction f = (JSFunction) lhs;
 
                 JSDescriptor<JSFunction> desc = f.getDescriptor();
-                var idata = (InterpreterData<JSFunction>) desc.getConstructor();
+                var compilerData = (InterpreterData<JSFunction>) desc.getConstructor();
                 if (frame.fnOrScript.getDescriptor().getSecurityDomain()
                         == desc.getSecurityDomain()) {
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6
@@ -3690,7 +3690,7 @@ public final class Interpreter implements Evaluator {
                                     frame.stackTop + 1,
                                     state.indexReg,
                                     f,
-                                    idata,
+                                    compilerData,
                                     frame);
 
                     frame.stack[frame.stackTop] = newInstance;
@@ -3760,7 +3760,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             ++frame.stackTop;
             frame.stack[frame.stackTop] = DOUBLE_MARK;
-            frame.doubleStack[frame.stackTop] = getShort(frame.idata.itsICode, frame.pc);
+            frame.doubleStack[frame.stackTop] = getShort(frame.compilerData.itsICode, frame.pc);
             frame.pc += 2;
             return null;
         }
@@ -3778,7 +3778,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             ++frame.stackTop;
             frame.stack[frame.stackTop] = DOUBLE_MARK;
-            frame.doubleStack[frame.stackTop] = getInt(frame.idata.itsICode, frame.pc);
+            frame.doubleStack[frame.stackTop] = getInt(frame.compilerData.itsICode, frame.pc);
             frame.pc += 4;
             return null;
         }
@@ -3796,13 +3796,13 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             ++frame.stackTop;
             frame.stack[frame.stackTop] = DOUBLE_MARK;
-            frame.doubleStack[frame.stackTop] = frame.idata.itsDoubleTable[state.indexReg];
+            frame.doubleStack[frame.stackTop] = frame.compilerData.itsDoubleTable[state.indexReg];
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            double value = ctx.idata.itsDoubleTable[ctx.indexReg];
+            double value = ctx.compilerData.itsDoubleTable[ctx.indexReg];
             ctx.out.println(tname + " " + value);
         }
     }
@@ -3828,14 +3828,17 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.stack[++frame.stackTop] =
                     ScriptRuntime.nameIncrDecr(
-                            frame.scope, state.stringReg, cx, frame.idata.itsICode[frame.pc]);
+                            frame.scope,
+                            state.stringReg,
+                            cx,
+                            frame.compilerData.itsICode[frame.pc]);
             ++frame.pc;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.compilerData.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -3843,7 +3846,7 @@ public final class Interpreter implements Evaluator {
     private static class DoSetConstVar1 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = frame.idata.itsICode[frame.pc++];
+            state.indexReg = frame.compilerData.itsICode[frame.pc++];
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
@@ -3862,7 +3865,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = ctx.idata.itsICode[ctx.pc];
+            ctx.indexReg = ctx.compilerData.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -3891,7 +3894,7 @@ public final class Interpreter implements Evaluator {
     private static class DoSetVar1 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = frame.idata.itsICode[frame.pc++];
+            state.indexReg = frame.compilerData.itsICode[frame.pc++];
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
@@ -3904,7 +3907,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = ctx.idata.itsICode[ctx.pc];
+            ctx.indexReg = ctx.compilerData.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -3927,7 +3930,7 @@ public final class Interpreter implements Evaluator {
     private static class DoGetVar1 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = frame.idata.itsICode[frame.pc++];
+            state.indexReg = frame.compilerData.itsICode[frame.pc++];
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
             ++frame.stackTop;
@@ -3938,7 +3941,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = ctx.idata.itsICode[ctx.pc];
+            ctx.indexReg = ctx.compilerData.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -3964,7 +3967,7 @@ public final class Interpreter implements Evaluator {
             var varDbls = frame.varSource.doubleStack;
             // indexReg : varindex
             ++frame.stackTop;
-            int incrDecrMask = frame.idata.itsICode[frame.pc];
+            int incrDecrMask = frame.compilerData.itsICode[frame.pc];
             Object varValue = vars[state.indexReg];
             double d = 0.0;
             BigInteger bi = null;
@@ -4024,7 +4027,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.idata.itsICode[ctx.pc]);
+            ctx.out.println(tname + " " + ctx.compilerData.itsICode[ctx.pc]);
             ++ctx.pc;
         }
     }
@@ -4146,9 +4149,9 @@ public final class Interpreter implements Evaluator {
             // state.stringReg: name of exception variable
             // state.indexReg: local for exception scope
             --frame.stackTop;
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
 
-            boolean afterFirstScope = (frame.idata.itsICode[frame.pc] != 0);
+            boolean afterFirstScope = (frame.compilerData.itsICode[frame.pc] != 0);
             Throwable caughtException = (Throwable) frame.stack[frame.stackTop + 1];
             Scriptable lastCatchScope;
             if (!afterFirstScope) {
@@ -4165,7 +4168,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            boolean afterFisrtFlag = (ctx.idata.itsICode[ctx.pc] != 0);
+            boolean afterFisrtFlag = (ctx.compilerData.itsICode[ctx.pc] != 0);
             ctx.out.println(tname + " " + afterFisrtFlag);
             ++ctx.pc;
         }
@@ -4177,7 +4180,7 @@ public final class Interpreter implements Evaluator {
             Object lhs = frame.stack[frame.stackTop];
             if (lhs == DOUBLE_MARK)
                 lhs = ScriptRuntime.wrapNumber(frame.doubleStack[frame.stackTop]);
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
             int enumType =
                     op == Token.ENUM_INIT_KEYS
                             ? cx.getLanguageVersion() <= Context.VERSION_1_8
@@ -4197,7 +4200,7 @@ public final class Interpreter implements Evaluator {
     private static class DoEnumOp extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
             Object val = frame.stack[state.indexReg];
             frame.stack[++frame.stackTop] =
                     (op == Token.ENUM_NEXT)
@@ -4285,7 +4288,7 @@ public final class Interpreter implements Evaluator {
     private static class DoScopeLoad extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
             frame.scope = (VarScope) frame.stack[state.indexReg];
             return null;
         }
@@ -4294,7 +4297,7 @@ public final class Interpreter implements Evaluator {
     private static class DoScopeSave extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg += frame.idata.itsMaxVars;
+            state.indexReg += frame.compilerData.itsMaxVars;
             frame.stack[state.indexReg] = frame.scope;
             return null;
         }
@@ -4345,21 +4348,21 @@ public final class Interpreter implements Evaluator {
     private static class DoRegExp extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object re = frame.idata.itsRegExpLiterals[state.indexReg];
+            Object re = frame.compilerData.itsRegExpLiterals[state.indexReg];
             frame.stack[++frame.stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " " + ctx.idata.itsRegExpLiterals[ctx.indexReg]);
+            ctx.out.println(tname + " " + ctx.compilerData.itsRegExpLiterals[ctx.indexReg]);
         }
     }
 
     private static class DoTemplateLiteralCallSite extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object[] templateLiterals = frame.idata.itsTemplateLiterals;
+            Object[] templateLiterals = frame.compilerData.itsTemplateLiterals;
             frame.stack[++frame.stackTop] =
                     ScriptRuntime.getTemplateLiteralCallSite(
                             cx, frame.scope, templateLiterals, state.indexReg);
@@ -4381,8 +4384,8 @@ public final class Interpreter implements Evaluator {
                 frame.stack[frame.stackTop] =
                         NewLiteralStorage.create(cx, -state.indexReg - 1, true);
             } else {
-                Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
-                boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
+                Object[] ids = (Object[]) frame.compilerData.literalIds[state.indexReg];
+                boolean copyArray = frame.compilerData.itsICode[frame.pc] != 0;
                 frame.stack[frame.stackTop] =
                         NewLiteralStorage.create(
                                 cx, copyArray ? Arrays.copyOf(ids, ids.length) : ids);
@@ -4393,11 +4396,11 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            boolean copyArray = ctx.idata.itsICode[ctx.pc] != 0;
+            boolean copyArray = ctx.compilerData.itsICode[ctx.pc] != 0;
             if (ctx.indexReg < 0) {
                 ctx.out.println(tname + " length: " + (-ctx.indexReg - 1));
             } else {
-                Object[] keys = (Object[]) ctx.idata.literalIds[ctx.indexReg];
+                Object[] keys = (Object[]) ctx.compilerData.literalIds[ctx.indexReg];
                 ctx.out.println(tname + " " + Arrays.toString(keys) + " " + copyArray);
             }
             ++ctx.pc;
@@ -4410,12 +4413,12 @@ public final class Interpreter implements Evaluator {
             // indexReg: number of values in the literal
             NewLiteralStorage storage = NewLiteralStorage.create(cx, state.indexReg, false);
 
-            int skipIdx = getIndex(frame.idata.itsICode, frame.pc);
+            int skipIdx = getIndex(frame.compilerData.itsICode, frame.pc);
             frame.pc += 2;
 
             // fill in skip indexes in array literal storage
             if (skipIdx > 0) { // 0 - no skip index, otherwise subtract 1 from idx
-                storage.setSkipIndexes((int[]) frame.idata.literalIds[skipIdx - 1]);
+                storage.setSkipIndexes((int[]) frame.compilerData.literalIds[skipIdx - 1]);
             }
 
             frame.stack[++frame.stackTop] = storage;
@@ -4424,7 +4427,7 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int skipIdx = getIndex(ctx.idata.itsICode, ctx.pc);
+            int skipIdx = getIndex(ctx.compilerData.itsICode, ctx.pc);
             ctx.out.println(tname + " " + ctx.indexReg + " skipIdx=" + skipIdx);
             ctx.pc += 2;
         }
@@ -4487,7 +4490,7 @@ public final class Interpreter implements Evaluator {
             NewLiteralStorage store = (NewLiteralStorage) frame.stack[frame.stackTop];
 
             // Always consume the 2-byte operand to keep pc in sync.
-            int sourcePos = getIndex(frame.idata.itsICode, frame.pc);
+            int sourcePos = getIndex(frame.compilerData.itsICode, frame.pc);
             frame.pc += 2;
 
             if (store.hasSkipIndexes()) {
@@ -4510,17 +4513,17 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg contains the literalId for static key indices array
-            int computedKeyCount = frame.idata.itsICode[frame.pc++] & 0xFF;
+            int computedKeyCount = frame.compilerData.itsICode[frame.pc++] & 0xFF;
 
             // Get static key indices from literalIds using indexReg
-            int[] staticKeyIndices = (int[]) frame.idata.literalIds[state.indexReg];
+            int[] staticKeyIndices = (int[]) frame.compilerData.literalIds[state.indexReg];
             int staticKeyCount = staticKeyIndices.length;
 
             Object[] excludeKeys = new Object[staticKeyCount + computedKeyCount];
 
             // Fill static keys from the strings table using stored indices
             for (int i = 0; i < staticKeyCount; i++) {
-                excludeKeys[i] = frame.idata.itsStringTable[staticKeyIndices[i]];
+                excludeKeys[i] = frame.compilerData.itsStringTable[staticKeyIndices[i]];
             }
 
             // Pop computed keys from stack: [source, computed_key_1, ..., computed_key_N]
@@ -4547,16 +4550,16 @@ public final class Interpreter implements Evaluator {
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int computedKeyCount = ctx.idata.itsICode[ctx.pc] & 0xFF;
+            int computedKeyCount = ctx.compilerData.itsICode[ctx.pc] & 0xFF;
             ++ctx.pc;
             if (ctx.indexReg >= 0) {
-                int[] staticKeyIndices = (int[]) ctx.idata.literalIds[ctx.indexReg];
+                int[] staticKeyIndices = (int[]) ctx.compilerData.literalIds[ctx.indexReg];
                 StringBuilder keys = new StringBuilder();
                 keys.append("[static: ");
                 for (int i = 0; i < staticKeyIndices.length; i++) {
                     if (i > 0) keys.append(", ");
                     keys.append("\"")
-                            .append(ctx.idata.itsStringTable[staticKeyIndices[i]])
+                            .append(ctx.compilerData.itsStringTable[staticKeyIndices[i]])
                             .append("\"");
                 }
                 keys.append("; computed: ").append(computedKeyCount).append("]");
@@ -4597,7 +4600,7 @@ public final class Interpreter implements Evaluator {
             if (op == Icode.SPARE_ARRAYLIT) {
                 skipIndexes = store.getAdjustedSkipIndexes();
                 if (skipIndexes == null) {
-                    skipIndexes = (int[]) frame.idata.literalIds[state.indexReg];
+                    skipIndexes = (int[]) frame.compilerData.literalIds[state.indexReg];
                 }
             }
             frame.stack[frame.stackTop] =
@@ -4608,7 +4611,7 @@ public final class Interpreter implements Evaluator {
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             if (op == Icode.SPARE_ARRAYLIT) {
-                ctx.out.println(tname + " " + ctx.idata.literalIds[ctx.indexReg]);
+                ctx.out.println(tname + " " + ctx.compilerData.literalIds[ctx.indexReg]);
             } else {
                 ctx.out.println(tname);
             }
@@ -4697,7 +4700,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.pcSourceLineStart = frame.pc;
             if (frame.debuggerFrame != null) {
-                int line = getIndex(frame.idata.itsICode, frame.pc);
+                int line = getIndex(frame.compilerData.itsICode, frame.pc);
                 frame.debuggerFrame.onLineChange(cx, line);
             }
             frame.pc += 2;
@@ -4729,14 +4732,14 @@ public final class Interpreter implements Evaluator {
     private static class DoRegIndex1 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = 0xFF & frame.idata.itsICode[frame.pc];
+            state.indexReg = 0xFF & frame.compilerData.itsICode[frame.pc];
             ++frame.pc;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.indexReg = 0xFF & ctx.idata.itsICode[ctx.pc];
+            ctx.indexReg = 0xFF & ctx.compilerData.itsICode[ctx.pc];
             ctx.out.println(tname + " " + ctx.indexReg);
             ++ctx.pc;
         }
@@ -4745,7 +4748,7 @@ public final class Interpreter implements Evaluator {
     private static class DoRegIndex2 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = getIndex(frame.idata.itsICode, frame.pc);
+            state.indexReg = getIndex(frame.compilerData.itsICode, frame.pc);
             frame.pc += 2;
             return null;
         }
@@ -4761,7 +4764,7 @@ public final class Interpreter implements Evaluator {
     private static class DoRegIndex4 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.indexReg = getInt(frame.idata.itsICode, frame.pc);
+            state.indexReg = getInt(frame.compilerData.itsICode, frame.pc);
             frame.pc += 4;
             return null;
         }
@@ -4777,13 +4780,13 @@ public final class Interpreter implements Evaluator {
     private static class DoStringCn extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.stringReg = frame.idata.itsStringTable[Icode.REG_STR_C0 - op];
+            state.stringReg = frame.compilerData.itsStringTable[Icode.REG_STR_C0 - op];
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.idata.itsStringTable[Icode.REG_STR_C0 - op];
+            String str = ctx.compilerData.itsStringTable[Icode.REG_STR_C0 - op];
             ctx.out.println(tname + " \"" + str + '"');
         }
     }
@@ -4791,14 +4794,15 @@ public final class Interpreter implements Evaluator {
     private static class DoRegString1 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.stringReg = frame.idata.itsStringTable[0xFF & frame.idata.itsICode[frame.pc]];
+            state.stringReg =
+                    frame.compilerData.itsStringTable[0xFF & frame.compilerData.itsICode[frame.pc]];
             ++frame.pc;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.idata.itsStringTable[0xFF & ctx.idata.itsICode[ctx.pc]];
+            String str = ctx.compilerData.itsStringTable[0xFF & ctx.compilerData.itsICode[ctx.pc]];
             ctx.out.println(tname + " \"" + str + '"');
             ++ctx.pc;
         }
@@ -4807,14 +4811,16 @@ public final class Interpreter implements Evaluator {
     private static class DoRegString2 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.stringReg = frame.idata.itsStringTable[getIndex(frame.idata.itsICode, frame.pc)];
+            state.stringReg =
+                    frame.compilerData
+                            .itsStringTable[getIndex(frame.compilerData.itsICode, frame.pc)];
             frame.pc += 2;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.idata.itsStringTable[ctx.getIndex(ctx.pc)];
+            String str = ctx.compilerData.itsStringTable[ctx.getIndex(ctx.pc)];
             ctx.out.println(tname + " \"" + str + '"');
             ctx.pc += 2;
         }
@@ -4823,14 +4829,16 @@ public final class Interpreter implements Evaluator {
     private static class DoRegString4 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.stringReg = frame.idata.itsStringTable[getInt(frame.idata.itsICode, frame.pc)];
+            state.stringReg =
+                    frame.compilerData
+                            .itsStringTable[getInt(frame.compilerData.itsICode, frame.pc)];
             frame.pc += 4;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            String str = ctx.idata.itsStringTable[ctx.getInt(ctx.pc)];
+            String str = ctx.compilerData.itsStringTable[ctx.getInt(ctx.pc)];
             ctx.out.println(tname + " \"" + str + '"');
             ctx.pc += 4;
         }
@@ -4839,7 +4847,7 @@ public final class Interpreter implements Evaluator {
     private static class DoBigIntCn extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.bigIntReg = frame.idata.itsBigIntTable[Icode.REG_BIGINT_C0 - op];
+            state.bigIntReg = frame.compilerData.itsBigIntTable[Icode.REG_BIGINT_C0 - op];
             return null;
         }
 
@@ -4848,7 +4856,7 @@ public final class Interpreter implements Evaluator {
             ctx.out.println(
                     tname
                             + " "
-                            + ctx.idata.itsBigIntTable[Icode.REG_BIGINT_C0 - op].toString()
+                            + ctx.compilerData.itsBigIntTable[Icode.REG_BIGINT_C0 - op].toString()
                             + 'n');
         }
     }
@@ -4856,14 +4864,16 @@ public final class Interpreter implements Evaluator {
     private static class DoRegBigInt1 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.bigIntReg = frame.idata.itsBigIntTable[0xFF & frame.idata.itsICode[frame.pc]];
+            state.bigIntReg =
+                    frame.compilerData.itsBigIntTable[0xFF & frame.compilerData.itsICode[frame.pc]];
             ++frame.pc;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt = ctx.idata.itsBigIntTable[0xFF & ctx.idata.itsICode[ctx.pc]];
+            BigInteger bigInt =
+                    ctx.compilerData.itsBigIntTable[0xFF & ctx.compilerData.itsICode[ctx.pc]];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ++ctx.pc;
         }
@@ -4872,14 +4882,16 @@ public final class Interpreter implements Evaluator {
     private static class DoRegBigInt2 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.bigIntReg = frame.idata.itsBigIntTable[getIndex(frame.idata.itsICode, frame.pc)];
+            state.bigIntReg =
+                    frame.compilerData
+                            .itsBigIntTable[getIndex(frame.compilerData.itsICode, frame.pc)];
             frame.pc += 2;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt = ctx.idata.itsBigIntTable[ctx.getIndex(ctx.pc)];
+            BigInteger bigInt = ctx.compilerData.itsBigIntTable[ctx.getIndex(ctx.pc)];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ctx.pc += 2;
         }
@@ -4888,14 +4900,16 @@ public final class Interpreter implements Evaluator {
     private static class DoRegBigInt4 extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.bigIntReg = frame.idata.itsBigIntTable[getInt(frame.idata.itsICode, frame.pc)];
+            state.bigIntReg =
+                    frame.compilerData
+                            .itsBigIntTable[getInt(frame.compilerData.itsICode, frame.pc)];
             frame.pc += 4;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            BigInteger bigInt = ctx.idata.itsBigIntTable[ctx.getInt(ctx.pc)];
+            BigInteger bigInt = ctx.compilerData.itsBigIntTable[ctx.getInt(ctx.pc)];
             ctx.out.println(tname + " " + bigInt.toString() + 'n');
             ctx.pc += 4;
         }
@@ -4935,7 +4949,7 @@ public final class Interpreter implements Evaluator {
                 frame = frame.cloneFrozen();
             }
 
-            int[] table = frame.idata.itsExceptionTable;
+            int[] table = frame.compilerData.itsExceptionTable;
 
             frame.stackTop = frame.emptyStackTop;
 
@@ -4944,7 +4958,7 @@ public final class Interpreter implements Evaluator {
                 frame.pcPrevBranch = frame.pc;
             }
 
-            int localShift = frame.idata.itsMaxVars;
+            int localShift = frame.compilerData.itsMaxVars;
             int scopeLocal = localShift + table[indexReg + EXCEPTION_SCOPE_SLOT];
             int exLocal = localShift + table[indexReg + EXCEPTION_LOCAL_SLOT];
             frame.scope = (VarScope) frame.stack[scopeLocal];
