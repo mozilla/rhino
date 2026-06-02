@@ -16,7 +16,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>>
     int pcPrevBranch;
     int pcSourceLineStart;
 
-    int stackTop;
     int savedCallOp;
 
     CallFrame(
