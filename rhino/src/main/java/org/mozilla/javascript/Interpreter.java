@@ -886,7 +886,6 @@ public final class Interpreter implements Evaluator {
     private static final NewState BREAK_WITHOUT_EXTENSION = new NewState() {};
 
     private static class InterpreterState {
-        int stackTop;
         int indexReg;
         BigInteger bigIntReg;
         String stringReg;
@@ -894,8 +893,7 @@ public final class Interpreter implements Evaluator {
         GeneratorState generatorState;
         Object throwable;
 
-        InterpreterState(int stackTop, int indexReg, boolean instructionCounting) {
-            this.stackTop = stackTop;
+        InterpreterState(int indexReg, boolean instructionCounting) {
             this.indexReg = indexReg;
             this.instructionCounting = instructionCounting;
         }
@@ -1379,8 +1377,7 @@ public final class Interpreter implements Evaluator {
             GeneratorState genState,
             int iReg,
             boolean instructionCounting) {
-        final InterpreterState state =
-                new InterpreterState(frame.savedStackTop, iReg, instructionCounting);
+        final InterpreterState state = new InterpreterState(iReg, instructionCounting);
 
         withoutExceptions:
         try {
@@ -1522,9 +1519,8 @@ public final class Interpreter implements Evaluator {
         }
         // return to our caller (which should be a method of NativeGenerator)
         frame.frozen = true;
-        frame.result = frame.stack[state.stackTop];
-        frame.resultDbl = frame.sDbl[state.stackTop];
-        frame.savedStackTop = state.stackTop;
+        frame.result = frame.stack[frame.stackTop];
+        frame.resultDbl = frame.sDbl[frame.stackTop];
         frame.pc--; // we want to come back here when we resume
         ScriptRuntime.exitActivationFunction(cx);
         final Object result =
@@ -1556,7 +1552,7 @@ public final class Interpreter implements Evaluator {
         }
         if (generatorState.operation != NativeGenerator.GENERATOR_SEND) throw Kit.codeBug();
         if ((op == Token.YIELD) || (op == Icode.YIELD_STAR)) {
-            frame.stack[state.stackTop] = generatorState.value;
+            frame.stack[frame.stackTop] = generatorState.value;
         }
         return Scriptable.NOT_FOUND;
     }
@@ -1615,8 +1611,8 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // throw StopIteration with the value of "return"
             frame.frozen = true;
-            frame.result = frame.stack[state.stackTop];
-            frame.resultDbl = frame.sDbl[state.stackTop--];
+            frame.result = frame.stack[frame.stackTop];
+            frame.resultDbl = frame.sDbl[frame.stackTop--];
 
             NativeIterator.StopIteration si =
                     new NativeIterator.StopIteration(
@@ -1659,7 +1655,7 @@ public final class Interpreter implements Evaluator {
                             frame.idata,
                             frame.idata.itsICode,
                             state);
-            --state.stackTop;
+            --frame.stackTop;
             return BREAK_WITHOUT_EXTENSION;
         }
 
@@ -1671,8 +1667,8 @@ public final class Interpreter implements Evaluator {
                 final byte[] iCode,
                 InterpreterState state) {
             Object throwable;
-            Object value = stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object value = stack[frame.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
 
             int sourceLine = getIndex(iCode, frame.pc);
             throwable =
@@ -1694,13 +1690,13 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            Object lhs = stack[--state.stackTop];
+            Object rhs = stack[frame.stackTop];
+            Object lhs = stack[--frame.stackTop];
             boolean valBln;
             if (lhs == DOUBLE_MARK && rhs == DOUBLE_MARK) {
                 valBln =
-                        ScriptRuntime.compareTo(sDbl[state.stackTop], sDbl[state.stackTop + 1], op);
-                stack[state.stackTop] = valBln;
+                        ScriptRuntime.compareTo(sDbl[frame.stackTop], sDbl[frame.stackTop + 1], op);
+                stack[frame.stackTop] = valBln;
                 return null;
             }
             object_compare:
@@ -1709,11 +1705,11 @@ public final class Interpreter implements Evaluator {
                 {
                     Number rNum, lNum;
                     if (rhs == DOUBLE_MARK) {
-                        rNum = sDbl[state.stackTop + 1];
-                        lNum = stack_numeric(frame, state.stackTop);
+                        rNum = sDbl[frame.stackTop + 1];
+                        lNum = stack_numeric(frame, frame.stackTop);
                     } else if (lhs == DOUBLE_MARK) {
                         rNum = ScriptRuntime.toNumeric(rhs);
-                        lNum = sDbl[state.stackTop];
+                        lNum = sDbl[frame.stackTop];
                     } else {
                         break number_compare;
                     }
@@ -1722,7 +1718,7 @@ public final class Interpreter implements Evaluator {
                 }
                 valBln = ScriptRuntime.compare(lhs, rhs, op);
             }
-            stack[state.stackTop] = valBln;
+            stack[frame.stackTop] = valBln;
             return null;
         }
     }
@@ -1732,17 +1728,17 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            Object lhs = stack[--state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            Object lhs = stack[--frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             boolean valBln;
             if (op == Token.IN) {
                 valBln = ScriptRuntime.in(lhs, rhs, cx);
             } else {
                 valBln = ScriptRuntime.instanceOf(lhs, rhs, cx);
             }
-            stack[state.stackTop] = valBln;
+            stack[frame.stackTop] = valBln;
             return null;
         }
     }
@@ -1752,8 +1748,8 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            final boolean res = doEquals(state, stack, sDbl);
-            stack[state.stackTop] = res;
+            final boolean res = doEquals(frame, stack, sDbl);
+            stack[frame.stackTop] = res;
             return null;
         }
     }
@@ -1763,24 +1759,24 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            final boolean res = doEquals(state, stack, sDbl);
-            stack[state.stackTop] = !res;
+            final boolean res = doEquals(frame, stack, sDbl);
+            stack[frame.stackTop] = !res;
             return null;
         }
     }
 
-    private static boolean doEquals(InterpreterState state, Object[] stack, double[] sDbl) {
-        final Object rhs = stack[state.stackTop--];
-        final Object lhs = stack[state.stackTop];
+    private static boolean doEquals(CallFrame frame, Object[] stack, double[] sDbl) {
+        final Object rhs = stack[frame.stackTop--];
+        final Object lhs = stack[frame.stackTop];
         final boolean res;
         if (rhs == DOUBLE_MARK) {
             if (lhs == DOUBLE_MARK) {
-                res = (sDbl[state.stackTop] == sDbl[state.stackTop + 1]);
+                res = (sDbl[frame.stackTop] == sDbl[frame.stackTop + 1]);
             } else {
-                res = ScriptRuntime.eqNumber(sDbl[state.stackTop + 1], lhs);
+                res = ScriptRuntime.eqNumber(sDbl[frame.stackTop + 1], lhs);
             }
         } else if (lhs == DOUBLE_MARK) {
-            res = ScriptRuntime.eqNumber(sDbl[state.stackTop], rhs);
+            res = ScriptRuntime.eqNumber(sDbl[frame.stackTop], rhs);
         } else {
             res = ScriptRuntime.eq(lhs, rhs);
         }
@@ -1792,8 +1788,8 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            final boolean res = doShallowEquals(state, stack, sDbl);
-            stack[state.stackTop] = res;
+            final boolean res = doShallowEquals(frame, stack, sDbl);
+            stack[frame.stackTop] = res;
             return null;
         }
     }
@@ -1803,27 +1799,27 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            final boolean res = doShallowEquals(state, stack, sDbl);
-            stack[state.stackTop] = !res;
+            final boolean res = doShallowEquals(frame, stack, sDbl);
+            stack[frame.stackTop] = !res;
             return null;
         }
     }
 
-    private static boolean doShallowEquals(InterpreterState state, Object[] stack, double[] sDbl) {
-        final Object rhs = stack[state.stackTop--];
-        final Object lhs = stack[state.stackTop];
+    private static boolean doShallowEquals(CallFrame frame, Object[] stack, double[] sDbl) {
+        final Object rhs = stack[frame.stackTop--];
+        final Object lhs = stack[frame.stackTop];
         final boolean res;
         if (rhs == DOUBLE_MARK) {
-            double rDbl = sDbl[state.stackTop + 1];
+            double rDbl = sDbl[frame.stackTop + 1];
             if (lhs == DOUBLE_MARK) {
-                res = rDbl == sDbl[state.stackTop];
+                res = rDbl == sDbl[frame.stackTop];
             } else if (lhs instanceof Number && !(lhs instanceof BigInteger)) {
                 res = rDbl == ((Number) lhs).doubleValue();
             } else {
                 res = false;
             }
         } else if (lhs == DOUBLE_MARK) {
-            double ldbl = sDbl[state.stackTop];
+            double ldbl = sDbl[frame.stackTop];
             if (rhs instanceof Number && !(rhs instanceof BigInteger)) {
                 res = ldbl == ((Number) rhs).doubleValue();
             } else {
@@ -1838,7 +1834,7 @@ public final class Interpreter implements Evaluator {
     private static class DoIfNE extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            if (stack_boolean(frame, state.stackTop--)) {
+            if (stack_boolean(frame, frame.stackTop--)) {
                 frame.pc += 2;
                 return null;
             }
@@ -1854,7 +1850,7 @@ public final class Interpreter implements Evaluator {
     private static class DoIfEQ extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            if (!stack_boolean(frame, state.stackTop--)) {
+            if (!stack_boolean(frame, frame.stackTop--)) {
                 frame.pc += 2;
                 return null;
             }
@@ -1870,11 +1866,11 @@ public final class Interpreter implements Evaluator {
     private static class DoIfEQPop extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            if (!stack_boolean(frame, state.stackTop--)) {
+            if (!stack_boolean(frame, frame.stackTop--)) {
                 frame.pc += 2;
                 return null;
             }
-            frame.stack[state.stackTop--] = null;
+            frame.stack[frame.stackTop--] = null;
             return BREAK_JUMPLESSRUN;
         }
 
@@ -1887,8 +1883,8 @@ public final class Interpreter implements Evaluator {
     private static class DoIfNullUndef extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object val = frame.stack[state.stackTop];
-            --state.stackTop;
+            Object val = frame.stack[frame.stackTop];
+            --frame.stackTop;
             if (val != null && !Undefined.isUndefined(val)) {
                 frame.pc += 2;
                 return null;
@@ -1905,8 +1901,8 @@ public final class Interpreter implements Evaluator {
     private static class DoIfNotNullUndef extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object val = frame.stack[state.stackTop];
-            --state.stackTop;
+            Object val = frame.stack[frame.stackTop];
+            --frame.stackTop;
             if (val == null || Undefined.isUndefined(val)) {
                 frame.pc += 2;
                 return null;
@@ -1935,9 +1931,9 @@ public final class Interpreter implements Evaluator {
     private static class DoGosub extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ++state.stackTop;
-            frame.stack[state.stackTop] = DOUBLE_MARK;
-            frame.sDbl[state.stackTop] = frame.pc + 2;
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = DOUBLE_MARK;
+            frame.sDbl[frame.stackTop] = frame.pc + 2;
             return BREAK_JUMPLESSRUN;
         }
 
@@ -1953,17 +1949,17 @@ public final class Interpreter implements Evaluator {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
             final InterpreterData iData = frame.idata;
-            if (state.stackTop == frame.emptyStackTop + 1) {
+            if (frame.stackTop == frame.emptyStackTop + 1) {
                 // Call from Icode.GOSUB: store return PC address in the local
                 state.indexReg += iData.itsMaxVars;
-                stack[state.indexReg] = stack[state.stackTop];
-                sDbl[state.indexReg] = sDbl[state.stackTop];
-                --state.stackTop;
+                stack[state.indexReg] = stack[frame.stackTop];
+                sDbl[state.indexReg] = sDbl[frame.stackTop];
+                --frame.stackTop;
             } else {
                 // Call from exception handler: exception object is already
                 // stored
                 // in the local
-                if (state.stackTop != frame.emptyStackTop) Kit.codeBug();
+                if (frame.stackTop != frame.emptyStackTop) Kit.codeBug();
             }
             return null;
         }
@@ -1997,8 +1993,8 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            stack[state.stackTop] = null;
-            state.stackTop--;
+            stack[frame.stackTop] = null;
+            frame.stackTop--;
             return null;
         }
     }
@@ -2008,10 +2004,10 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            frame.result = stack[state.stackTop];
-            frame.resultDbl = sDbl[state.stackTop];
-            stack[state.stackTop] = null;
-            --state.stackTop;
+            frame.result = stack[frame.stackTop];
+            frame.resultDbl = sDbl[frame.stackTop];
+            stack[frame.stackTop] = null;
+            --frame.stackTop;
             return null;
         }
     }
@@ -2021,9 +2017,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            stack[state.stackTop + 1] = stack[state.stackTop];
-            sDbl[state.stackTop + 1] = sDbl[state.stackTop];
-            state.stackTop++;
+            stack[frame.stackTop + 1] = stack[frame.stackTop];
+            sDbl[frame.stackTop + 1] = sDbl[frame.stackTop];
+            frame.stackTop++;
             return null;
         }
     }
@@ -2033,11 +2029,11 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            stack[state.stackTop + 1] = stack[state.stackTop - 1];
-            sDbl[state.stackTop + 1] = sDbl[state.stackTop - 1];
-            stack[state.stackTop + 2] = stack[state.stackTop];
-            sDbl[state.stackTop + 2] = sDbl[state.stackTop];
-            state.stackTop += 2;
+            stack[frame.stackTop + 1] = stack[frame.stackTop - 1];
+            sDbl[frame.stackTop + 1] = sDbl[frame.stackTop - 1];
+            stack[frame.stackTop + 2] = stack[frame.stackTop];
+            sDbl[frame.stackTop + 2] = sDbl[frame.stackTop];
+            frame.stackTop += 2;
             return null;
         }
     }
@@ -2047,12 +2043,12 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object o = stack[state.stackTop];
-            stack[state.stackTop] = stack[state.stackTop - 1];
-            stack[state.stackTop - 1] = o;
-            double d = sDbl[state.stackTop];
-            sDbl[state.stackTop] = sDbl[state.stackTop - 1];
-            sDbl[state.stackTop - 1] = d;
+            Object o = stack[frame.stackTop];
+            stack[frame.stackTop] = stack[frame.stackTop - 1];
+            stack[frame.stackTop - 1] = o;
+            double d = sDbl[frame.stackTop];
+            sDbl[frame.stackTop] = sDbl[frame.stackTop - 1];
+            sDbl[frame.stackTop - 1] = d;
             return null;
         }
     }
@@ -2062,9 +2058,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            frame.result = stack[state.stackTop];
-            frame.resultDbl = sDbl[state.stackTop];
-            --state.stackTop;
+            frame.result = stack[frame.stackTop];
+            frame.resultDbl = sDbl[frame.stackTop];
+            --frame.stackTop;
             return BREAK_LOOP;
         }
     }
@@ -2089,13 +2085,13 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            Number value = stack_numeric(frame, state.stackTop);
+            Number value = stack_numeric(frame, frame.stackTop);
             Number result = ScriptRuntime.bitwiseNOT(value);
             if (result instanceof BigInteger) {
-                stack[state.stackTop] = result;
+                stack[frame.stackTop] = result;
             } else {
-                stack[state.stackTop] = DOUBLE_MARK;
-                sDbl[state.stackTop] = result.doubleValue();
+                stack[frame.stackTop] = DOUBLE_MARK;
+                sDbl[frame.stackTop] = result.doubleValue();
             }
             return null;
         }
@@ -2106,13 +2102,13 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            if (stack[state.stackTop] == DOUBLE_MARK && stack[state.stackTop - 1] == DOUBLE_MARK) {
+            if (stack[frame.stackTop] == DOUBLE_MARK && stack[frame.stackTop - 1] == DOUBLE_MARK) {
                 doFastBitOp(cx, frame, state, op);
                 return null;
             }
-            Number lValue = stack_numeric(frame, state.stackTop - 1);
-            Number rValue = stack_numeric(frame, state.stackTop);
-            state.stackTop--;
+            Number lValue = stack_numeric(frame, frame.stackTop - 1);
+            Number rValue = stack_numeric(frame, frame.stackTop);
+            frame.stackTop--;
 
             Number result = null;
             switch (op) {
@@ -2134,10 +2130,10 @@ public final class Interpreter implements Evaluator {
             }
 
             if (result instanceof BigInteger) {
-                stack[state.stackTop] = result;
+                stack[frame.stackTop] = result;
             } else {
-                stack[state.stackTop] = DOUBLE_MARK;
-                sDbl[state.stackTop] = result.doubleValue();
+                stack[frame.stackTop] = DOUBLE_MARK;
+                sDbl[frame.stackTop] = result.doubleValue();
             }
             return null;
         }
@@ -2146,9 +2142,9 @@ public final class Interpreter implements Evaluator {
                 Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            double lValue = sDbl[state.stackTop - 1];
-            double rValue = sDbl[state.stackTop];
-            state.stackTop--;
+            double lValue = sDbl[frame.stackTop - 1];
+            double rValue = sDbl[frame.stackTop];
+            frame.stackTop--;
 
             double result = 0.0;
             switch (op) {
@@ -2169,8 +2165,8 @@ public final class Interpreter implements Evaluator {
                     break;
             }
 
-            stack[state.stackTop] = DOUBLE_MARK;
-            sDbl[state.stackTop] = result;
+            stack[frame.stackTop] = DOUBLE_MARK;
+            sDbl[frame.stackTop] = result;
             return null;
         }
     }
@@ -2180,10 +2176,10 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            double lDbl = stack_double(frame, state.stackTop - 1);
-            int rIntValue = stack_int32(frame, state.stackTop) & 0x1F;
-            stack[--state.stackTop] = DOUBLE_MARK;
-            sDbl[state.stackTop] = ScriptRuntime.toUint32(lDbl) >>> rIntValue;
+            double lDbl = stack_double(frame, frame.stackTop - 1);
+            int rIntValue = stack_int32(frame, frame.stackTop) & 0x1F;
+            stack[--frame.stackTop] = DOUBLE_MARK;
+            sDbl[frame.stackTop] = ScriptRuntime.toUint32(lDbl) >>> rIntValue;
             return null;
         }
     }
@@ -2193,9 +2189,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            double rDbl = stack_double(frame, state.stackTop);
-            stack[state.stackTop] = DOUBLE_MARK;
-            sDbl[state.stackTop] = rDbl;
+            double rDbl = stack_double(frame, frame.stackTop);
+            stack[frame.stackTop] = DOUBLE_MARK;
+            sDbl[frame.stackTop] = rDbl;
             return null;
         }
     }
@@ -2205,13 +2201,13 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Number rNum = stack_numeric(frame, state.stackTop);
+            Number rNum = stack_numeric(frame, frame.stackTop);
             Number rNegNum = ScriptRuntime.negate(rNum);
             if (rNegNum instanceof BigInteger) {
-                stack[state.stackTop] = rNegNum;
+                stack[frame.stackTop] = rNegNum;
             } else {
-                stack[state.stackTop] = DOUBLE_MARK;
-                sDbl[state.stackTop] = rNegNum.doubleValue();
+                stack[frame.stackTop] = DOUBLE_MARK;
+                sDbl[frame.stackTop] = rNegNum.doubleValue();
             }
             return null;
         }
@@ -2220,40 +2216,40 @@ public final class Interpreter implements Evaluator {
     private static class DoAdd extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object rhs = frame.stack[state.stackTop];
-            Object lhs = frame.stack[--state.stackTop];
+            Object rhs = frame.stack[frame.stackTop];
+            Object lhs = frame.stack[--frame.stackTop];
             double d;
             boolean leftRightOrder;
             if (rhs == DOUBLE_MARK) {
-                d = frame.sDbl[state.stackTop + 1];
+                d = frame.sDbl[frame.stackTop + 1];
                 if (lhs == DOUBLE_MARK) {
-                    frame.sDbl[state.stackTop] += d;
+                    frame.sDbl[frame.stackTop] += d;
                     return null;
                 }
                 leftRightOrder = true;
                 // fallthrough to object + number code
             } else if (lhs == DOUBLE_MARK) {
-                d = frame.sDbl[state.stackTop];
+                d = frame.sDbl[frame.stackTop];
                 lhs = rhs;
                 leftRightOrder = false;
                 // fallthrough to object + number code
             } else {
                 if (lhs instanceof Scriptable || rhs instanceof Scriptable) {
-                    frame.stack[state.stackTop] = ScriptRuntime.add(lhs, rhs, cx);
+                    frame.stack[frame.stackTop] = ScriptRuntime.add(lhs, rhs, cx);
 
                     // the next two else if branches are a bit more tricky
                     // to reduce method calls
                 } else if (lhs instanceof CharSequence) {
                     if (rhs instanceof CharSequence) {
-                        frame.stack[state.stackTop] =
+                        frame.stack[frame.stackTop] =
                                 new ConsString((CharSequence) lhs, (CharSequence) rhs);
                     } else {
-                        frame.stack[state.stackTop] =
+                        frame.stack[frame.stackTop] =
                                 new ConsString(
                                         (CharSequence) lhs, ScriptRuntime.toCharSequence(rhs));
                     }
                 } else if (rhs instanceof CharSequence) {
-                    frame.stack[state.stackTop] =
+                    frame.stack[frame.stackTop] =
                             new ConsString(ScriptRuntime.toCharSequence(lhs), (CharSequence) rhs);
 
                 } else {
@@ -2263,12 +2259,12 @@ public final class Interpreter implements Evaluator {
                             (rhs instanceof Number) ? (Number) rhs : ScriptRuntime.toNumeric(rhs);
 
                     if (lNum instanceof BigInteger && rNum instanceof BigInteger) {
-                        frame.stack[state.stackTop] = ((BigInteger) lNum).add((BigInteger) rNum);
+                        frame.stack[frame.stackTop] = ((BigInteger) lNum).add((BigInteger) rNum);
                     } else if (lNum instanceof BigInteger || rNum instanceof BigInteger) {
                         throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
                     } else {
-                        frame.stack[state.stackTop] = DOUBLE_MARK;
-                        frame.sDbl[state.stackTop] = lNum.doubleValue() + rNum.doubleValue();
+                        frame.stack[frame.stackTop] = DOUBLE_MARK;
+                        frame.sDbl[frame.stackTop] = lNum.doubleValue() + rNum.doubleValue();
                     }
                 }
                 return null;
@@ -2282,21 +2278,21 @@ public final class Interpreter implements Evaluator {
                     lhs = rhs;
                     rhs = tmp;
                 }
-                frame.stack[state.stackTop] = ScriptRuntime.add(lhs, rhs, cx);
+                frame.stack[frame.stackTop] = ScriptRuntime.add(lhs, rhs, cx);
             } else if (lhs instanceof CharSequence) {
                 CharSequence rstr = ScriptRuntime.numberToString(d, 10);
                 if (leftRightOrder) {
-                    frame.stack[state.stackTop] = new ConsString((CharSequence) lhs, rstr);
+                    frame.stack[frame.stackTop] = new ConsString((CharSequence) lhs, rstr);
                 } else {
-                    frame.stack[state.stackTop] = new ConsString(rstr, (CharSequence) lhs);
+                    frame.stack[frame.stackTop] = new ConsString(rstr, (CharSequence) lhs);
                 }
             } else {
                 Number lNum = (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
                 if (lNum instanceof BigInteger) {
                     throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
                 } else {
-                    frame.stack[state.stackTop] = DOUBLE_MARK;
-                    frame.sDbl[state.stackTop] = lNum.doubleValue() + d;
+                    frame.stack[frame.stackTop] = DOUBLE_MARK;
+                    frame.sDbl[frame.stackTop] = lNum.doubleValue() + d;
                 }
             }
             return null;
@@ -2308,14 +2304,14 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            if (stack[state.stackTop] == DOUBLE_MARK && stack[state.stackTop - 1] == DOUBLE_MARK) {
+            if (stack[frame.stackTop] == DOUBLE_MARK && stack[frame.stackTop - 1] == DOUBLE_MARK) {
                 doFastArithemtic(cx, frame, state, op);
                 return null;
             }
 
-            Number lNum = stack_numeric(frame, state.stackTop - 1);
-            Number rNum = stack_numeric(frame, state.stackTop);
-            --state.stackTop;
+            Number lNum = stack_numeric(frame, frame.stackTop - 1);
+            Number rNum = stack_numeric(frame, frame.stackTop);
+            --frame.stackTop;
 
             Number result = null;
             switch (op) {
@@ -2337,10 +2333,10 @@ public final class Interpreter implements Evaluator {
             }
 
             if (result instanceof BigInteger) {
-                stack[state.stackTop] = result;
+                stack[frame.stackTop] = result;
             } else {
-                stack[state.stackTop] = DOUBLE_MARK;
-                sDbl[state.stackTop] = result.doubleValue();
+                stack[frame.stackTop] = DOUBLE_MARK;
+                sDbl[frame.stackTop] = result.doubleValue();
             }
             return null;
         }
@@ -2349,9 +2345,9 @@ public final class Interpreter implements Evaluator {
                 Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            double lNum = sDbl[state.stackTop - 1];
-            double rNum = sDbl[state.stackTop];
-            state.stackTop--;
+            double lNum = sDbl[frame.stackTop - 1];
+            double rNum = sDbl[frame.stackTop];
+            frame.stackTop--;
 
             double result = 0.0;
             switch (op) {
@@ -2372,8 +2368,8 @@ public final class Interpreter implements Evaluator {
                     break;
             }
 
-            stack[state.stackTop] = DOUBLE_MARK;
-            sDbl[state.stackTop] = result;
+            stack[frame.stackTop] = DOUBLE_MARK;
+            sDbl[frame.stackTop] = result;
             return null;
         }
     }
@@ -2382,7 +2378,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            stack[state.stackTop] = !stack_boolean(frame, state.stackTop);
+            stack[frame.stackTop] = !stack_boolean(frame, frame.stackTop);
             return null;
         }
     }
@@ -2391,7 +2387,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            stack[++state.stackTop] = ScriptRuntime.bind(cx, frame.scope, state.stringReg);
+            stack[++frame.stackTop] = ScriptRuntime.bind(cx, frame.scope, state.stringReg);
             return null;
         }
     }
@@ -2401,15 +2397,15 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            VarScope lhs = (VarScope) stack[state.stackTop - 1];
-            stack[state.stackTop - 1] =
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            VarScope lhs = (VarScope) stack[frame.stackTop - 1];
+            stack[frame.stackTop - 1] =
                     op == Token.SETNAME
                             ? ScriptRuntime.setName(lhs, rhs, cx, frame.scope, state.stringReg)
                             : ScriptRuntime.strictSetName(
                                     lhs, rhs, cx, frame.scope, state.stringReg);
-            --state.stackTop;
+            --frame.stackTop;
             return null;
         }
     }
@@ -2417,18 +2413,18 @@ public final class Interpreter implements Evaluator {
     private static class DoStringConcat extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object rhs = frame.stack[state.stackTop];
-            Object lhs = frame.stack[state.stackTop - 1];
+            Object rhs = frame.stack[frame.stackTop];
+            Object lhs = frame.stack[frame.stackTop - 1];
 
             if (rhs == DOUBLE_MARK) {
-                rhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                rhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
             }
             if (lhs == DOUBLE_MARK) {
-                lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop - 1]);
+                lhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop - 1]);
             }
 
-            frame.stack[state.stackTop - 1] = ScriptRuntime.concat(lhs, rhs);
-            --state.stackTop;
+            frame.stack[frame.stackTop - 1] = ScriptRuntime.concat(lhs, rhs);
+            --frame.stackTop;
             return null;
         }
     }
@@ -2439,11 +2435,11 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            VarScope lhs = (VarScope) stack[state.stackTop - 1];
-            stack[state.stackTop - 1] = ScriptRuntime.setConst(lhs, rhs, cx, state.stringReg);
-            --state.stackTop;
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            VarScope lhs = (VarScope) stack[frame.stackTop - 1];
+            stack[frame.stackTop - 1] = ScriptRuntime.setConst(lhs, rhs, cx, state.stringReg);
+            --frame.stackTop;
             return null;
         }
     }
@@ -2451,12 +2447,12 @@ public final class Interpreter implements Evaluator {
     private static class DoDelName extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object rhs = frame.stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            Object lhs = frame.stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] =
+            Object rhs = frame.stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            Object lhs = frame.stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] =
                     ScriptRuntime.delete(lhs, rhs, cx, frame.scope, op == Icode.DELNAME);
             return null;
         }
@@ -2466,8 +2462,8 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            state.stackTop -= 1;
-            stack[state.stackTop] = Boolean.FALSE;
+            frame.stackTop -= 1;
+            stack[frame.stackTop] = Boolean.FALSE;
             ScriptRuntime.throwDeleteOnSuperPropertyNotAllowed();
             return null;
         }
@@ -2478,9 +2474,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object lhs = stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] =
+            Object lhs = stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] =
                     ScriptRuntime.getObjectPropNoWarn(lhs, state.stringReg, cx, frame.scope);
             return null;
         }
@@ -2491,9 +2487,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object lhs = stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] =
+            Object lhs = stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] =
                     ScriptRuntime.getObjectProp(lhs, state.stringReg, cx, frame.scope);
             return null;
         }
@@ -2503,9 +2499,9 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            Object superObject = stack[state.stackTop];
+            Object superObject = stack[frame.stackTop];
             if (superObject == DOUBLE_MARK) Kit.codeBug();
-            stack[state.stackTop] =
+            stack[frame.stackTop] =
                     ScriptRuntime.getSuperProp(
                             superObject,
                             state.stringReg,
@@ -2522,11 +2518,11 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            Object lhs = stack[state.stackTop - 1];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
-            stack[--state.stackTop] =
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            Object lhs = stack[frame.stackTop - 1];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop - 1]);
+            stack[--frame.stackTop] =
                     ScriptRuntime.setObjectProp(lhs, state.stringReg, rhs, cx, frame.scope);
             return null;
         }
@@ -2537,11 +2533,11 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            Object superObject = stack[state.stackTop - 1];
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            Object superObject = stack[frame.stackTop - 1];
             if (superObject == DOUBLE_MARK) Kit.codeBug();
-            stack[--state.stackTop] =
+            stack[--frame.stackTop] =
                     ScriptRuntime.setSuperProp(
                             superObject, state.stringReg, rhs, cx, frame.scope, frame.thisObj);
             return null;
@@ -2554,9 +2550,9 @@ public final class Interpreter implements Evaluator {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
             final byte[] iCode = frame.idata.itsICode;
-            Object lhs = stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] =
+            Object lhs = stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] =
                     ScriptRuntime.propIncrDecr(
                             lhs, state.stringReg, cx, frame.scope, iCode[frame.pc]);
             ++frame.pc;
@@ -2575,19 +2571,19 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object lhs = stack[--state.stackTop];
+            Object lhs = stack[--frame.stackTop];
             if (lhs == DOUBLE_MARK) {
-                lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+                lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             }
             Object value;
-            Object id = stack[state.stackTop + 1];
+            Object id = stack[frame.stackTop + 1];
             if (id != DOUBLE_MARK) {
                 value = ScriptRuntime.getObjectElem(lhs, id, cx, frame.scope);
             } else {
-                double d = sDbl[state.stackTop + 1];
+                double d = sDbl[frame.stackTop + 1];
                 value = ScriptRuntime.getObjectIndex(lhs, d, cx, frame.scope);
             }
-            stack[state.stackTop] = value;
+            stack[frame.stackTop] = value;
             return null;
         }
     }
@@ -2597,17 +2593,17 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object superObject = stack[--state.stackTop];
+            Object superObject = stack[--frame.stackTop];
             if (superObject == DOUBLE_MARK) Kit.codeBug();
             Object value;
-            Object id = stack[state.stackTop + 1];
+            Object id = stack[frame.stackTop + 1];
             if (id != DOUBLE_MARK) {
                 value = ScriptRuntime.getSuperElem(superObject, id, cx, frame.scope, frame.thisObj);
             } else {
-                double d = sDbl[state.stackTop + 1];
+                double d = sDbl[frame.stackTop + 1];
                 value = ScriptRuntime.getSuperIndex(superObject, d, cx, frame.scope, frame.thisObj);
             }
-            stack[state.stackTop] = value;
+            stack[frame.stackTop] = value;
             return null;
         }
     }
@@ -2617,24 +2613,24 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
+            Object rhs = stack[frame.stackTop];
             if (rhs == DOUBLE_MARK) {
-                rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+                rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             }
-            state.stackTop -= 2;
-            Object lhs = stack[state.stackTop];
+            frame.stackTop -= 2;
+            Object lhs = stack[frame.stackTop];
             if (lhs == DOUBLE_MARK) {
-                lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+                lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             }
             Object value;
-            Object id = stack[state.stackTop + 1];
+            Object id = stack[frame.stackTop + 1];
             if (id != DOUBLE_MARK) {
                 value = ScriptRuntime.setObjectElem(lhs, id, rhs, cx, frame.scope);
             } else {
-                double d = sDbl[state.stackTop + 1];
+                double d = sDbl[frame.stackTop + 1];
                 value = ScriptRuntime.setObjectIndex(lhs, d, rhs, cx, frame.scope);
             }
-            stack[state.stackTop] = value;
+            stack[frame.stackTop] = value;
             return null;
         }
     }
@@ -2644,26 +2640,26 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object rhs = stack[state.stackTop];
+            Object rhs = stack[frame.stackTop];
             if (rhs == DOUBLE_MARK) {
-                rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+                rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             }
-            state.stackTop -= 2;
-            Object superObject = stack[state.stackTop];
+            frame.stackTop -= 2;
+            Object superObject = stack[frame.stackTop];
             if (superObject == DOUBLE_MARK) Kit.codeBug();
             Object value;
-            Object id = stack[state.stackTop + 1];
+            Object id = stack[frame.stackTop + 1];
             if (id != DOUBLE_MARK) {
                 value =
                         ScriptRuntime.setSuperElem(
                                 superObject, id, rhs, cx, frame.scope, frame.thisObj);
             } else {
-                double d = sDbl[state.stackTop + 1];
+                double d = sDbl[frame.stackTop + 1];
                 value =
                         ScriptRuntime.setSuperIndex(
                                 superObject, d, rhs, cx, frame.scope, frame.thisObj);
             }
-            stack[state.stackTop] = value;
+            stack[frame.stackTop] = value;
             return null;
         }
     }
@@ -2674,12 +2670,12 @@ public final class Interpreter implements Evaluator {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
             final byte[] iCode = frame.idata.itsICode;
-            Object rhs = stack[state.stackTop];
-            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            --state.stackTop;
-            Object lhs = stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] =
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK) rhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            --frame.stackTop;
+            Object lhs = stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] =
                     ScriptRuntime.elemIncrDecr(lhs, rhs, cx, frame.scope, iCode[frame.pc]);
             ++frame.pc;
             return null;
@@ -2696,9 +2692,9 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            Ref ref = (Ref) stack[state.stackTop];
+            Ref ref = (Ref) stack[frame.stackTop];
             var res = ScriptRuntime.refGet(ref, cx);
-            stack[state.stackTop] = res;
+            stack[frame.stackTop] = res;
             return null;
         }
     }
@@ -2708,10 +2704,10 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object value = stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            Ref ref = (Ref) stack[state.stackTop - 1];
-            stack[--state.stackTop] = ScriptRuntime.refSet(ref, value, cx, frame.scope);
+            Object value = stack[frame.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            Ref ref = (Ref) stack[frame.stackTop - 1];
+            stack[--frame.stackTop] = ScriptRuntime.refSet(ref, value, cx, frame.scope);
             return null;
         }
     }
@@ -2720,8 +2716,8 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            Ref ref = (Ref) stack[state.stackTop];
-            stack[state.stackTop] = ScriptRuntime.refDel(ref, cx);
+            Ref ref = (Ref) stack[frame.stackTop];
+            stack[frame.stackTop] = ScriptRuntime.refDel(ref, cx);
             return null;
         }
     }
@@ -2731,8 +2727,8 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final byte[] iCode = frame.idata.itsICode;
-            Ref ref = (Ref) stack[state.stackTop];
-            stack[state.stackTop] =
+            Ref ref = (Ref) stack[frame.stackTop];
+            stack[frame.stackTop] =
                     ScriptRuntime.refIncrDecr(ref, cx, frame.scope, iCode[frame.pc]);
             ++frame.pc;
             return null;
@@ -2751,10 +2747,10 @@ public final class Interpreter implements Evaluator {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
             final InterpreterData iData = frame.idata;
-            ++state.stackTop;
+            ++frame.stackTop;
             state.indexReg += iData.itsMaxVars;
-            stack[state.stackTop] = stack[state.indexReg];
-            sDbl[state.stackTop] = sDbl[state.indexReg];
+            stack[frame.stackTop] = stack[state.indexReg];
+            sDbl[frame.stackTop] = sDbl[state.indexReg];
             return null;
         }
     }
@@ -2775,7 +2771,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             // stringReg: name
-            stack[++state.stackTop] =
+            stack[++frame.stackTop] =
                     ScriptRuntime.getNameAndThis(state.stringReg, cx, frame.scope);
             return null;
         }
@@ -2785,7 +2781,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
-            stack[++state.stackTop] =
+            stack[++frame.stackTop] =
                     ScriptRuntime.getNameAndThisOptional(state.stringReg, cx, frame.scope);
             return null;
         }
@@ -2796,10 +2792,10 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object obj = stack[state.stackTop];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object obj = stack[frame.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             // stringReg: property
-            stack[state.stackTop] =
+            stack[frame.stackTop] =
                     ScriptRuntime.getPropAndThis(obj, state.stringReg, cx, frame.scope);
             return null;
         }
@@ -2810,10 +2806,10 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object obj = stack[state.stackTop];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
+            Object obj = stack[frame.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             // stringReg: property
-            stack[state.stackTop] =
+            stack[frame.stackTop] =
                     ScriptRuntime.getPropAndThisOptional(obj, state.stringReg, cx, frame.scope);
             return null;
         }
@@ -2824,11 +2820,11 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object obj = stack[state.stackTop - 1];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
-            Object id = stack[state.stackTop];
-            if (id == DOUBLE_MARK) id = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[--state.stackTop] = ScriptRuntime.getElemAndThis(obj, id, cx, frame.scope);
+            Object obj = stack[frame.stackTop - 1];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[frame.stackTop - 1]);
+            Object id = stack[frame.stackTop];
+            if (id == DOUBLE_MARK) id = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[--frame.stackTop] = ScriptRuntime.getElemAndThis(obj, id, cx, frame.scope);
             return null;
         }
     }
@@ -2838,11 +2834,11 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object obj = stack[state.stackTop - 1];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[state.stackTop - 1]);
-            Object id = stack[state.stackTop];
-            if (id == DOUBLE_MARK) id = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[--state.stackTop] =
+            Object obj = stack[frame.stackTop - 1];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(sDbl[frame.stackTop - 1]);
+            Object id = stack[frame.stackTop];
+            if (id == DOUBLE_MARK) id = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[--frame.stackTop] =
                     ScriptRuntime.getElemAndThisOptional(obj, id, cx, frame.scope);
             return null;
         }
@@ -2853,9 +2849,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             final Object[] stack = frame.stack;
             final double[] sDbl = frame.sDbl;
-            Object value = stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] = ScriptRuntime.getValueAndThis(value, cx);
+            Object value = stack[frame.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] = ScriptRuntime.getValueAndThis(value, cx);
             return null;
         }
     }
@@ -2865,9 +2861,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            Object value = stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] = ScriptRuntime.getValueAndThisOptional(value, cx);
+            Object value = stack[frame.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] = ScriptRuntime.getValueAndThisOptional(value, cx);
             return null;
         }
     }
@@ -2890,25 +2886,25 @@ public final class Interpreter implements Evaluator {
             // indexReg: number of arguments
             if (isNew) {
                 // stack change: function arg0 .. argN -> newResult
-                state.stackTop -= state.indexReg;
+                frame.stackTop -= state.indexReg;
 
-                Object function = stack[state.stackTop];
+                Object function = stack[frame.stackTop];
                 if (function == DOUBLE_MARK)
-                    function = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-                Object[] outArgs = getArgsArray(stack, sDbl, state.stackTop + 1, state.indexReg);
-                stack[state.stackTop] =
+                    function = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+                Object[] outArgs = getArgsArray(stack, sDbl, frame.stackTop + 1, state.indexReg);
+                stack[frame.stackTop] =
                         ScriptRuntime.newSpecial(cx, function, outArgs, frame.scope, callType);
             } else {
                 // stack change: function thisObj arg0 .. argN -> result
-                state.stackTop -= state.indexReg;
+                frame.stackTop -= state.indexReg;
 
                 // Call code generation ensure that stack here
                 // is ... Callable Scriptable
                 ScriptRuntime.LookupResult result =
-                        (ScriptRuntime.LookupResult) stack[state.stackTop];
-                Object[] outArgs = getArgsArray(stack, sDbl, state.stackTop + 1, state.indexReg);
+                        (ScriptRuntime.LookupResult) stack[frame.stackTop];
+                Object[] outArgs = getArgsArray(stack, sDbl, frame.stackTop + 1, state.indexReg);
                 Callable function = result.getCallable();
-                stack[state.stackTop] =
+                stack[frame.stackTop] =
                         ScriptRuntime.callSpecial(
                                 cx,
                                 function,
@@ -2949,8 +2945,8 @@ public final class Interpreter implements Evaluator {
             }
             // stack change: lookup_result arg0 .. argN -> result
             // indexReg: number of arguments
-            state.stackTop -= state.indexReg;
-            ScriptRuntime.LookupResult result = (ScriptRuntime.LookupResult) stack[state.stackTop];
+            frame.stackTop -= state.indexReg;
+            ScriptRuntime.LookupResult result = (ScriptRuntime.LookupResult) stack[frame.stackTop];
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
@@ -2966,8 +2962,8 @@ public final class Interpreter implements Evaluator {
             }
 
             if (op == Token.REF_CALL) {
-                Object[] outArgs = getArgsArray(stack, sDbl, state.stackTop + 1, state.indexReg);
-                stack[state.stackTop] =
+                Object[] outArgs = getArgsArray(stack, sDbl, frame.stackTop + 1, state.indexReg);
+                stack[frame.stackTop] =
                         ScriptRuntime.callRef(
                                 fun, funThisObj,
                                 outArgs, cx);
@@ -2992,7 +2988,7 @@ public final class Interpreter implements Evaluator {
                                     stack,
                                     sDbl,
                                     boundArgs,
-                                    state.stackTop + 1,
+                                    frame.stackTop + 1,
                                     state.indexReg,
                                     (Function) target,
                                     frame);
@@ -3008,7 +3004,7 @@ public final class Interpreter implements Evaluator {
                         } else {
                             callArgs =
                                     ScriptRuntime.getApplyArguments(
-                                            cx, stack[state.stackTop - blen + 2]);
+                                            cx, stack[frame.stackTop - blen + 2]);
                         }
 
                         int alen = callArgs.length;
@@ -3024,15 +3020,15 @@ public final class Interpreter implements Evaluator {
                             if (state.indexReg > 1 && blen == 0) {
                                 System.arraycopy(
                                         stack,
-                                        state.stackTop + 2,
+                                        frame.stackTop + 2,
                                         stack,
-                                        state.stackTop + 1,
+                                        frame.stackTop + 1,
                                         state.indexReg - 1);
                                 System.arraycopy(
                                         sDbl,
-                                        state.stackTop + 2,
+                                        frame.stackTop + 2,
                                         sDbl,
-                                        state.stackTop + 1,
+                                        frame.stackTop + 1,
                                         state.indexReg - 1);
                             } else if (state.indexReg > 1) {
                                 Object[] newBArgs = new Object[boundArgs.length - 1];
@@ -3072,7 +3068,7 @@ public final class Interpreter implements Evaluator {
                                     sDbl,
                                     boundArgs,
                                     blen,
-                                    state.stackTop + 1,
+                                    frame.stackTop + 1,
                                     state.indexReg);
                     fun = nsmfun.noSuchMethodMethod;
                     boundArgs = new Object[2];
@@ -3132,13 +3128,12 @@ public final class Interpreter implements Evaluator {
                                     stack,
                                     sDbl,
                                     boundArgs,
-                                    state.stackTop + 1,
+                                    frame.stackTop + 1,
                                     state.indexReg,
                                     ifun,
                                     idata,
                                     callParentFrame);
                     if (op != Icode.TAIL_CALL) {
-                        frame.savedStackTop = state.stackTop;
                         frame.savedCallOp = op;
                     }
                     return new StateContinueResult(calleeFrame, state.indexReg);
@@ -3155,8 +3150,8 @@ public final class Interpreter implements Evaluator {
                 if (state.indexReg == 0) {
                     cjump.result = undefined;
                 } else {
-                    cjump.result = stack[state.stackTop + 1];
-                    cjump.resultDbl = sDbl[state.stackTop + 1];
+                    cjump.result = stack[frame.stackTop + 1];
+                    cjump.resultDbl = sDbl[frame.stackTop + 1];
                 }
 
                 // Start the real unwind job
@@ -3168,14 +3163,13 @@ public final class Interpreter implements Evaluator {
                 var ifun = (JSFunction) fun;
 
                 if (NativeContinuation.isContinuationConstructor(ifun)) {
-                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
+                    frame.stack[frame.stackTop] = captureContinuation(cx, frame.parentFrame, false);
                     return null;
                 }
             }
 
             frame.savedCallOp = op;
-            frame.savedStackTop = state.stackTop;
-            stack[state.stackTop] =
+            stack[frame.stackTop] =
                     fun.call(
                             cx,
                             callerScope,
@@ -3185,7 +3179,7 @@ public final class Interpreter implements Evaluator {
                                     sDbl,
                                     boundArgs,
                                     blen,
-                                    state.stackTop + 1,
+                                    frame.stackTop + 1,
                                     state.indexReg));
 
             return null;
@@ -3205,9 +3199,9 @@ public final class Interpreter implements Evaluator {
             }
             // stack change: function arg0 .. argN -> newResult
             // state.indexReg: number of arguments
-            state.stackTop -= state.indexReg;
+            frame.stackTop -= state.indexReg;
 
-            Object lhs = frame.stack[state.stackTop];
+            Object lhs = frame.stack[frame.stackTop];
             if (lhs instanceof JSFunction
                     && ((JSFunction) lhs).getConstructor() instanceof InterpreterData) {
                 JSFunction f = (JSFunction) lhs;
@@ -3234,14 +3228,13 @@ public final class Interpreter implements Evaluator {
                                     frame.stack,
                                     frame.sDbl,
                                     null,
-                                    state.stackTop + 1,
+                                    frame.stackTop + 1,
                                     state.indexReg,
                                     f,
                                     idata,
                                     frame);
 
-                    frame.stack[state.stackTop] = newInstance;
-                    frame.savedStackTop = state.stackTop;
+                    frame.stack[frame.stackTop] = newInstance;
                     frame.savedCallOp = op;
                     return new StateContinueResult(calleeFrame, state.indexReg);
                 }
@@ -3250,20 +3243,20 @@ public final class Interpreter implements Evaluator {
                 var f = (JSFunction) lhs;
 
                 if (NativeContinuation.isContinuationConstructor(f)) {
-                    frame.stack[state.stackTop] = captureContinuation(cx, frame.parentFrame, false);
+                    frame.stack[frame.stackTop] = captureContinuation(cx, frame.parentFrame, false);
                     return null;
                 }
             }
 
             if (!(lhs instanceof Constructable)) {
-                if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
                 throw ScriptRuntime.notFunctionError(lhs);
             }
             Constructable ctor = (Constructable) lhs;
 
             Object[] outArgs =
-                    getArgsArray(frame.stack, frame.sDbl, state.stackTop + 1, state.indexReg);
-            frame.stack[state.stackTop] = ctor.construct(cx, frame.scope, outArgs);
+                    getArgsArray(frame.stack, frame.sDbl, frame.stackTop + 1, state.indexReg);
+            frame.stack[frame.stackTop] = ctor.construct(cx, frame.scope, outArgs);
             return null;
         }
 
@@ -3278,9 +3271,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] stack = frame.stack;
             double[] sDbl = frame.sDbl;
-            Object lhs = stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[state.stackTop]);
-            stack[state.stackTop] = ScriptRuntime.typeof(lhs);
+            Object lhs = stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            stack[frame.stackTop] = ScriptRuntime.typeof(lhs);
             return null;
         }
     }
@@ -3288,7 +3281,7 @@ public final class Interpreter implements Evaluator {
     private static class DoTypeOfName extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = ScriptRuntime.typeofName(frame.scope, state.stringReg);
+            frame.stack[++frame.stackTop] = ScriptRuntime.typeofName(frame.scope, state.stringReg);
             return null;
         }
     }
@@ -3296,7 +3289,7 @@ public final class Interpreter implements Evaluator {
     private static class DoString extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = state.stringReg;
+            frame.stack[++frame.stackTop] = state.stringReg;
             return null;
         }
     }
@@ -3304,9 +3297,9 @@ public final class Interpreter implements Evaluator {
     private static class DoShortNumber extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ++state.stackTop;
-            frame.stack[state.stackTop] = DOUBLE_MARK;
-            frame.sDbl[state.stackTop] = getShort(frame.idata.itsICode, frame.pc);
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = DOUBLE_MARK;
+            frame.sDbl[frame.stackTop] = getShort(frame.idata.itsICode, frame.pc);
             frame.pc += 2;
             return null;
         }
@@ -3322,9 +3315,9 @@ public final class Interpreter implements Evaluator {
     private static class DoIntNumber extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ++state.stackTop;
-            frame.stack[state.stackTop] = DOUBLE_MARK;
-            frame.sDbl[state.stackTop] = getInt(frame.idata.itsICode, frame.pc);
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = DOUBLE_MARK;
+            frame.sDbl[frame.stackTop] = getInt(frame.idata.itsICode, frame.pc);
             frame.pc += 4;
             return null;
         }
@@ -3340,9 +3333,9 @@ public final class Interpreter implements Evaluator {
     private static class DoNumber extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ++state.stackTop;
-            frame.stack[state.stackTop] = DOUBLE_MARK;
-            frame.sDbl[state.stackTop] = frame.idata.itsDoubleTable[state.indexReg];
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = DOUBLE_MARK;
+            frame.sDbl[frame.stackTop] = frame.idata.itsDoubleTable[state.indexReg];
             return null;
         }
 
@@ -3356,7 +3349,7 @@ public final class Interpreter implements Evaluator {
     private static class DoBigInt extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = state.bigIntReg;
+            frame.stack[++frame.stackTop] = state.bigIntReg;
             return null;
         }
     }
@@ -3364,7 +3357,7 @@ public final class Interpreter implements Evaluator {
     private static class DoName extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = ScriptRuntime.name(cx, frame.scope, state.stringReg);
+            frame.stack[++frame.stackTop] = ScriptRuntime.name(cx, frame.scope, state.stringReg);
             return null;
         }
     }
@@ -3372,7 +3365,7 @@ public final class Interpreter implements Evaluator {
     private static class DoNameIncDec extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] =
+            frame.stack[++frame.stackTop] =
                     ScriptRuntime.nameIncrDecr(
                             frame.scope, state.stringReg, cx, frame.idata.itsICode[frame.pc]);
             ++frame.pc;
@@ -3399,9 +3392,9 @@ public final class Interpreter implements Evaluator {
                         frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
-                vars[state.indexReg] = frame.stack[state.stackTop];
+                vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
-                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                varDbls[state.indexReg] = frame.sDbl[frame.stackTop];
             }
             return null;
         }
@@ -3426,9 +3419,9 @@ public final class Interpreter implements Evaluator {
                         frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
-                vars[state.indexReg] = frame.stack[state.stackTop];
+                vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
-                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                varDbls[state.indexReg] = frame.sDbl[frame.stackTop];
             }
             return null;
         }
@@ -3442,8 +3435,8 @@ public final class Interpreter implements Evaluator {
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
             if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                vars[state.indexReg] = frame.stack[state.stackTop];
-                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                vars[state.indexReg] = frame.stack[frame.stackTop];
+                varDbls[state.indexReg] = frame.sDbl[frame.stackTop];
             }
             return null;
         }
@@ -3463,8 +3456,8 @@ public final class Interpreter implements Evaluator {
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
             if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
-                vars[state.indexReg] = frame.stack[state.stackTop];
-                varDbls[state.indexReg] = frame.sDbl[state.stackTop];
+                vars[state.indexReg] = frame.stack[frame.stackTop];
+                varDbls[state.indexReg] = frame.sDbl[frame.stackTop];
             }
             return null;
         }
@@ -3476,9 +3469,9 @@ public final class Interpreter implements Evaluator {
             state.indexReg = frame.idata.itsICode[frame.pc++];
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
-            ++state.stackTop;
-            frame.stack[state.stackTop] = vars[state.indexReg];
-            frame.sDbl[state.stackTop] = varDbls[state.indexReg];
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = vars[state.indexReg];
+            frame.sDbl[frame.stackTop] = varDbls[state.indexReg];
             return null;
         }
 
@@ -3495,9 +3488,9 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
-            ++state.stackTop;
-            frame.stack[state.stackTop] = vars[state.indexReg];
-            frame.sDbl[state.stackTop] = varDbls[state.indexReg];
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = vars[state.indexReg];
+            frame.sDbl[frame.stackTop] = varDbls[state.indexReg];
             return null;
         }
     }
@@ -3509,7 +3502,7 @@ public final class Interpreter implements Evaluator {
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.sDbl;
             // indexReg : varindex
-            ++state.stackTop;
+            ++frame.stackTop;
             int incrDecrMask = frame.idata.itsICode[frame.pc];
             Object varValue = vars[state.indexReg];
             double d = 0.0;
@@ -3533,14 +3526,14 @@ public final class Interpreter implements Evaluator {
                         vars[state.indexReg] = DOUBLE_MARK;
                     }
                     varDbls[state.indexReg] = d2;
-                    frame.stack[state.stackTop] = DOUBLE_MARK;
-                    frame.sDbl[state.stackTop] = post ? d : d2;
+                    frame.stack[frame.stackTop] = DOUBLE_MARK;
+                    frame.sDbl[frame.stackTop] = post ? d : d2;
                 } else {
                     if (post && varValue != DOUBLE_MARK) {
-                        frame.stack[state.stackTop] = varValue;
+                        frame.stack[frame.stackTop] = varValue;
                     } else {
-                        frame.stack[state.stackTop] = DOUBLE_MARK;
-                        frame.sDbl[state.stackTop] = post ? d : d2;
+                        frame.stack[frame.stackTop] = DOUBLE_MARK;
+                        frame.sDbl[frame.stackTop] = post ? d : d2;
                     }
                 }
             } else {
@@ -3555,12 +3548,12 @@ public final class Interpreter implements Evaluator {
                 boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
                 if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
                     vars[state.indexReg] = result;
-                    frame.stack[state.stackTop] = post ? bi : result;
+                    frame.stack[frame.stackTop] = post ? bi : result;
                 } else {
                     if (post && varValue != DOUBLE_MARK) {
-                        frame.stack[state.stackTop] = varValue;
+                        frame.stack[frame.stackTop] = varValue;
                     } else {
-                        frame.stack[state.stackTop] = post ? bi : result;
+                        frame.stack[frame.stackTop] = post ? bi : result;
                     }
                 }
             }
@@ -3578,8 +3571,8 @@ public final class Interpreter implements Evaluator {
     private static class DoZero extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ++state.stackTop;
-            frame.stack[state.stackTop] = Integer.valueOf(0);
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = Integer.valueOf(0);
             return null;
         }
     }
@@ -3587,8 +3580,8 @@ public final class Interpreter implements Evaluator {
     private static class DoOne extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ++state.stackTop;
-            frame.stack[state.stackTop] = Integer.valueOf(1);
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = Integer.valueOf(1);
             return null;
         }
     }
@@ -3596,7 +3589,7 @@ public final class Interpreter implements Evaluator {
     private static class DoNull extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = null;
+            frame.stack[++frame.stackTop] = null;
             return null;
         }
     }
@@ -3604,7 +3597,7 @@ public final class Interpreter implements Evaluator {
     private static class DoThis extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = frame.thisObj;
+            frame.stack[++frame.stackTop] = frame.thisObj;
             return null;
         }
     }
@@ -3624,9 +3617,9 @@ public final class Interpreter implements Evaluator {
                 // how the home object will ever be null since `super` is
                 // legal _only_ in method definitions, where we do have a
                 // home object!
-                frame.stack[++state.stackTop] = Undefined.instance;
+                frame.stack[++frame.stackTop] = Undefined.instance;
             } else {
-                frame.stack[++state.stackTop] = homeObject.getPrototype();
+                frame.stack[++frame.stackTop] = homeObject.getPrototype();
             }
             return null;
         }
@@ -3635,7 +3628,7 @@ public final class Interpreter implements Evaluator {
     private static class DoThisFunction extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = frame.fnOrScript;
+            frame.stack[++frame.stackTop] = frame.fnOrScript;
             return null;
         }
     }
@@ -3643,7 +3636,7 @@ public final class Interpreter implements Evaluator {
     private static class DoFalse extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = Boolean.FALSE;
+            frame.stack[++frame.stackTop] = Boolean.FALSE;
             return null;
         }
     }
@@ -3651,7 +3644,7 @@ public final class Interpreter implements Evaluator {
     private static class DoTrue extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = Boolean.TRUE;
+            frame.stack[++frame.stackTop] = Boolean.TRUE;
             return null;
         }
     }
@@ -3659,7 +3652,7 @@ public final class Interpreter implements Evaluator {
     private static class DoUndef extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++state.stackTop] = undefined;
+            frame.stack[++frame.stackTop] = undefined;
             return null;
         }
     }
@@ -3667,10 +3660,10 @@ public final class Interpreter implements Evaluator {
     private static class DoEnterWith extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object lhs = frame.stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            Object lhs = frame.stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
             frame.scope = ScriptRuntime.enterWith(lhs, cx, frame.scope);
-            state.stackTop--;
+            frame.stackTop--;
             return null;
         }
     }
@@ -3690,11 +3683,11 @@ public final class Interpreter implements Evaluator {
             // stack top: exception object
             // state.stringReg: name of exception variable
             // state.indexReg: local for exception scope
-            --state.stackTop;
+            --frame.stackTop;
             state.indexReg += frame.idata.itsMaxVars;
 
             boolean afterFirstScope = (frame.idata.itsICode[frame.pc] != 0);
-            Throwable caughtException = (Throwable) frame.stack[state.stackTop + 1];
+            Throwable caughtException = (Throwable) frame.stack[frame.stackTop + 1];
             Scriptable lastCatchScope;
             if (!afterFirstScope) {
                 lastCatchScope = null;
@@ -3719,8 +3712,8 @@ public final class Interpreter implements Evaluator {
     private static class DoEnumInit extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object lhs = frame.stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            Object lhs = frame.stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
             state.indexReg += frame.idata.itsMaxVars;
             int enumType =
                     op == Token.ENUM_INIT_KEYS
@@ -3733,7 +3726,7 @@ public final class Interpreter implements Evaluator {
                                             ? ScriptRuntime.ENUMERATE_VALUES_IN_ORDER
                                             : ScriptRuntime.ENUMERATE_ARRAY;
             frame.stack[state.indexReg] = ScriptRuntime.enumInit(lhs, cx, frame.scope, enumType);
-            --state.stackTop;
+            --frame.stackTop;
             return null;
         }
     }
@@ -3743,7 +3736,7 @@ public final class Interpreter implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.indexReg += frame.idata.itsMaxVars;
             Object val = frame.stack[state.indexReg];
-            frame.stack[++state.stackTop] =
+            frame.stack[++frame.stackTop] =
                     (op == Token.ENUM_NEXT)
                             ? ScriptRuntime.enumNext(val, cx)
                             : ScriptRuntime.enumId(val, cx);
@@ -3755,9 +3748,9 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // stringReg: name of special property
-            Object obj = frame.stack[state.stackTop];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] =
+            Object obj = frame.stack[frame.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] =
                     ScriptRuntime.specialRef(obj, state.stringReg, cx, frame.scope);
             return null;
         }
@@ -3766,12 +3759,12 @@ public final class Interpreter implements Evaluator {
     private static class DoRefMember extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object elem = frame.stack[state.stackTop];
-            if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            Object obj = frame.stack[state.stackTop];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] = ScriptRuntime.memberRef(obj, elem, cx, state.indexReg);
+            Object elem = frame.stack[frame.stackTop];
+            if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            Object obj = frame.stack[frame.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] = ScriptRuntime.memberRef(obj, elem, cx, state.indexReg);
             return null;
         }
     }
@@ -3779,15 +3772,15 @@ public final class Interpreter implements Evaluator {
     private static class DoRefNsMember extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object elem = frame.stack[state.stackTop];
-            if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            Object ns = frame.stack[state.stackTop];
-            if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            Object obj = frame.stack[state.stackTop];
-            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] =
+            Object elem = frame.stack[frame.stackTop];
+            if (elem == DOUBLE_MARK) elem = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            Object ns = frame.stack[frame.stackTop];
+            if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            Object obj = frame.stack[frame.stackTop];
+            if (obj == DOUBLE_MARK) obj = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] =
                     ScriptRuntime.memberRef(obj, ns, elem, cx, state.indexReg);
             return null;
         }
@@ -3797,9 +3790,9 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // indexReg: flags
-            Object name = frame.stack[state.stackTop];
-            if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] =
+            Object name = frame.stack[frame.stackTop];
+            if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] =
                     ScriptRuntime.nameRef(name, cx, frame.scope, state.indexReg);
             return null;
         }
@@ -3808,12 +3801,12 @@ public final class Interpreter implements Evaluator {
     private static class DoRefNsName extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object name = frame.stack[state.stackTop];
-            if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            Object ns = frame.stack[state.stackTop];
-            if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] =
+            Object name = frame.stack[frame.stackTop];
+            if (name == DOUBLE_MARK) name = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            Object ns = frame.stack[frame.stackTop];
+            if (ns == DOUBLE_MARK) ns = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] =
                     ScriptRuntime.nameRef(ns, name, cx, frame.scope, state.indexReg);
             return null;
         }
@@ -3841,7 +3834,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             JSFunction fn = createClosure(cx, frame, state.indexReg);
-            frame.stack[++state.stackTop] = fn;
+            frame.stack[++frame.stackTop] = fn;
             return null;
         }
 
@@ -3854,9 +3847,9 @@ public final class Interpreter implements Evaluator {
     private static class DoMethodExpr extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Scriptable homeObject = (Scriptable) frame.stack[state.stackTop - 1];
+            Scriptable homeObject = (Scriptable) frame.stack[frame.stackTop - 1];
             JSFunction fn = createMethod(cx, frame, state.indexReg, homeObject);
-            frame.stack[++state.stackTop] = fn;
+            frame.stack[++frame.stackTop] = fn;
             return null;
         }
 
@@ -3883,7 +3876,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object re = frame.idata.itsRegExpLiterals[state.indexReg];
-            frame.stack[++state.stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
+            frame.stack[++frame.stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
             return null;
         }
 
@@ -3897,7 +3890,7 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object[] templateLiterals = frame.idata.itsTemplateLiterals;
-            frame.stack[++state.stackTop] =
+            frame.stack[++frame.stackTop] =
                     ScriptRuntime.getTemplateLiteralCallSite(
                             cx, frame.scope, templateLiterals, state.indexReg);
             return null;
@@ -3908,19 +3901,19 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             ++frame.pc;
-            ++state.stackTop;
-            frame.stack[state.stackTop] = cx.newObject(frame.scope);
-            ++state.stackTop;
+            ++frame.stackTop;
+            frame.stack[frame.stackTop] = cx.newObject(frame.scope);
+            ++frame.stackTop;
 
             // indexReg > 0: index of constant with the keys
             // indexReg < 0: we have a spread, so no keys array, but we know the length
             if (state.indexReg < 0) {
-                frame.stack[state.stackTop] =
+                frame.stack[frame.stackTop] =
                         NewLiteralStorage.create(cx, -state.indexReg - 1, true);
             } else {
                 Object[] ids = (Object[]) frame.idata.literalIds[state.indexReg];
                 boolean copyArray = frame.idata.itsICode[frame.pc] != 0;
-                frame.stack[state.stackTop] =
+                frame.stack[frame.stackTop] =
                         NewLiteralStorage.create(
                                 cx, copyArray ? Arrays.copyOf(ids, ids.length) : ids);
             }
@@ -3955,7 +3948,7 @@ public final class Interpreter implements Evaluator {
                 storage.setSkipIndexes((int[]) frame.idata.literalIds[skipIdx - 1]);
             }
 
-            frame.stack[++state.stackTop] = storage;
+            frame.stack[++frame.stackTop] = storage;
             return null;
         }
 
@@ -3970,10 +3963,10 @@ public final class Interpreter implements Evaluator {
     private static class DoLiteralSet extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object value = frame.stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            Object value = frame.stack[frame.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            var store = (NewLiteralStorage) frame.stack[frame.stackTop];
             store.pushValue(value);
             return null;
         }
@@ -3982,9 +3975,9 @@ public final class Interpreter implements Evaluator {
     private static class DoLiteralGetter extends InstructionClass {
         @Override
         NewState execute(Context cs, CallFrame frame, InterpreterState state, int op) {
-            Object value = frame.stack[state.stackTop];
-            --state.stackTop;
-            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            Object value = frame.stack[frame.stackTop];
+            --frame.stackTop;
+            var store = (NewLiteralStorage) frame.stack[frame.stackTop];
             store.pushGetter(value);
             return null;
         }
@@ -3993,9 +3986,9 @@ public final class Interpreter implements Evaluator {
     private static class DoLiteralSetter extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object value = frame.stack[state.stackTop];
-            --state.stackTop;
-            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            Object value = frame.stack[frame.stackTop];
+            --frame.stackTop;
+            var store = (NewLiteralStorage) frame.stack[frame.stackTop];
             store.pushSetter(value);
             return null;
         }
@@ -4004,10 +3997,10 @@ public final class Interpreter implements Evaluator {
     private static class DoLiteralKeySet extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object key = frame.stack[state.stackTop];
-            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            --state.stackTop;
-            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            Object key = frame.stack[frame.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            --frame.stackTop;
+            var store = (NewLiteralStorage) frame.stack[frame.stackTop];
             store.pushKey(key);
             return null;
         }
@@ -4017,9 +4010,9 @@ public final class Interpreter implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // stack: [..., NewLiteralStorage, sourceObj]
-            Object source = frame.stack[state.stackTop];
-            --state.stackTop;
-            NewLiteralStorage store = (NewLiteralStorage) frame.stack[state.stackTop];
+            Object source = frame.stack[frame.stackTop];
+            --frame.stackTop;
+            NewLiteralStorage store = (NewLiteralStorage) frame.stack[frame.stackTop];
 
             // Always consume the 2-byte operand to keep pc in sync.
             int sourcePos = getIndex(frame.idata.itsICode, frame.pc);
@@ -4060,23 +4053,23 @@ public final class Interpreter implements Evaluator {
 
             // Pop computed keys from stack: [source, computed_key_1, ..., computed_key_N]
             for (int i = computedKeyCount - 1; i >= 0; i--) {
-                Object computedKey = frame.stack[state.stackTop];
+                Object computedKey = frame.stack[frame.stackTop];
                 if (computedKey == DOUBLE_MARK) {
-                    computedKey = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                    computedKey = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
                 }
                 excludeKeys[staticKeyCount + i] = ScriptRuntime.toString(computedKey);
-                state.stackTop--;
+                frame.stackTop--;
             }
 
-            Object source = frame.stack[state.stackTop];
+            Object source = frame.stack[frame.stackTop];
             if (source == DOUBLE_MARK) {
-                source = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+                source = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
             }
 
             // Create rest object
             Scriptable result = ScriptRuntime.doObjectRest(cx, frame.scope, source, excludeKeys);
 
-            frame.stack[state.stackTop] = result;
+            frame.stack[frame.stackTop] = result;
             return null;
         }
 
@@ -4110,9 +4103,9 @@ public final class Interpreter implements Evaluator {
     private static class DoObjectLit extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            var store = (NewLiteralStorage) frame.stack[state.stackTop];
-            --state.stackTop;
-            Scriptable object = (Scriptable) frame.stack[state.stackTop];
+            var store = (NewLiteralStorage) frame.stack[frame.stackTop];
+            --frame.stackTop;
+            Scriptable object = (Scriptable) frame.stack[frame.stackTop];
             ScriptRuntime.fillObjectLiteral(
                     object,
                     store.getKeys(),
@@ -4127,7 +4120,7 @@ public final class Interpreter implements Evaluator {
     private static class DoArrayLiteral extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            var store = (NewLiteralStorage) frame.stack[state.stackTop];
+            var store = (NewLiteralStorage) frame.stack[frame.stackTop];
             int[] skipIndexes = null;
             if (op == Icode.SPARE_ARRAYLIT) {
                 skipIndexes = store.getAdjustedSkipIndexes();
@@ -4135,7 +4128,7 @@ public final class Interpreter implements Evaluator {
                     skipIndexes = (int[]) frame.idata.literalIds[state.indexReg];
                 }
             }
-            frame.stack[state.stackTop] =
+            frame.stack[frame.stackTop] =
                     ScriptRuntime.newArrayLiteral(store.getValues(), skipIndexes, cx, frame.scope);
             return null;
         }
@@ -4153,10 +4146,10 @@ public final class Interpreter implements Evaluator {
     private static class DoEnterDotQuery extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object lhs = frame.stack[state.stackTop];
-            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            Object lhs = frame.stack[frame.stackTop];
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
             frame.scope = ScriptRuntime.enterDotQuery(lhs, frame.scope);
-            state.stackTop--;
+            frame.stackTop--;
             return null;
         }
     }
@@ -4164,16 +4157,16 @@ public final class Interpreter implements Evaluator {
     private static class DoLeaveDotQuery extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            boolean valBln = stack_boolean(frame, state.stackTop);
+            boolean valBln = stack_boolean(frame, frame.stackTop);
             Object x = ScriptRuntime.updateDotQuery(valBln, frame.scope);
             if (x != null) {
-                frame.stack[state.stackTop] = x;
+                frame.stack[frame.stackTop] = x;
                 frame.scope = ScriptRuntime.leaveDotQuery(frame.scope);
                 frame.pc += 2;
                 return null;
             }
             // reset stack and PC to code after ENTERDQ
-            --state.stackTop;
+            --frame.stackTop;
             return BREAK_JUMPLESSRUN;
         }
 
@@ -4186,9 +4179,9 @@ public final class Interpreter implements Evaluator {
     private static class DoDefaultNamespace extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object value = frame.stack[state.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
-            frame.stack[state.stackTop] = ScriptRuntime.setDefaultNamespace(value, cx);
+            Object value = frame.stack[frame.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[frame.stackTop]);
+            frame.stack[frame.stackTop] = ScriptRuntime.setDefaultNamespace(value, cx);
             return null;
         }
     }
@@ -4196,9 +4189,9 @@ public final class Interpreter implements Evaluator {
     private static class DoEscXMLAttr extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object value = frame.stack[state.stackTop];
+            Object value = frame.stack[frame.stackTop];
             if (value != DOUBLE_MARK) {
-                frame.stack[state.stackTop] = ScriptRuntime.escapeAttributeValue(value, cx);
+                frame.stack[frame.stackTop] = ScriptRuntime.escapeAttributeValue(value, cx);
             }
             return null;
         }
@@ -4207,9 +4200,9 @@ public final class Interpreter implements Evaluator {
     private static class DoEscXMLText extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object value = frame.stack[state.stackTop];
+            Object value = frame.stack[frame.stackTop];
             if (value != DOUBLE_MARK) {
-                frame.stack[state.stackTop] = ScriptRuntime.escapeTextValue(value, cx);
+                frame.stack[frame.stackTop] = ScriptRuntime.escapeTextValue(value, cx);
             }
             return null;
         }
@@ -4470,12 +4463,13 @@ public final class Interpreter implements Evaluator {
 
             int[] table = frame.idata.itsExceptionTable;
 
+            frame.stackTop = frame.emptyStackTop;
+
             frame.pc = table[indexReg + EXCEPTION_HANDLER_SLOT];
             if (instructionCounting) {
                 frame.pcPrevBranch = frame.pc;
             }
 
-            frame.savedStackTop = frame.emptyStackTop;
             int localShift = frame.idata.itsMaxVars;
             int scopeLocal = localShift + table[indexReg + EXCEPTION_SCOPE_SLOT];
             int exLocal = localShift + table[indexReg + EXCEPTION_LOCAL_SLOT];
@@ -4682,14 +4676,14 @@ public final class Interpreter implements Evaluator {
 
     private static void setCallResult(CallFrame frame, Object callResult, double callResultDbl) {
         if (frame.savedCallOp == Token.CALL || frame.savedCallOp == Icode.CALL_ON_SUPER) {
-            frame.stack[frame.savedStackTop] = callResult;
-            frame.sDbl[frame.savedStackTop] = callResultDbl;
+            frame.stack[frame.stackTop] = callResult;
+            frame.sDbl[frame.stackTop] = callResultDbl;
         } else if (frame.savedCallOp == Token.NEW) {
             // If construct returns scriptable,
             // then it replaces on stack top saved original instance
             // of the object.
             if (callResult instanceof Scriptable) {
-                frame.stack[frame.savedStackTop] = callResult;
+                frame.stack[frame.stackTop] = callResult;
             }
         } else {
             Kit.codeBug();
@@ -4715,14 +4709,14 @@ public final class Interpreter implements Evaluator {
         while (x != null && !x.frozen) {
             x.frozen = true;
             // Allow to GC unused stack space
-            for (int i = x.savedStackTop + 1; i != x.stack.length; ++i) {
+            for (int i = x.stackTop + 1; i != x.stack.length; ++i) {
                 // Allow to GC unused stack space
                 x.stack[i] = null;
                 x.stackAttributes[i] = ScriptableObject.EMPTY;
             }
             if (x.savedCallOp == Token.CALL || x.savedCallOp == Icode.CALL_ON_SUPER) {
                 // the call will always overwrite the stack top with the result
-                x.stack[x.savedStackTop] = null;
+                x.stack[x.stackTop] = null;
             } else {
                 if (x.savedCallOp != Token.NEW) Kit.codeBug();
                 // the new operator uses stack top to store the constructed

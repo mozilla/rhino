@@ -53,7 +53,7 @@ class CallFrame implements Cloneable, Serializable {
     int pcSourceLineStart;
     VarScope scope;
 
-    int savedStackTop;
+    int stackTop;
     int savedCallOp;
     Object throwable;
     boolean parentStrictness;
@@ -102,7 +102,7 @@ class CallFrame implements Cloneable, Serializable {
         result = Undefined.instance;
         pcSourceLineStart = idata.firstLinePC;
 
-        savedStackTop = emptyStackTop;
+        stackTop = emptyStackTop;
     }
 
     private CallFrame(CallFrame original, boolean makeOrphan) {
@@ -157,7 +157,7 @@ class CallFrame implements Cloneable, Serializable {
         pcSourceLineStart = original.pcSourceLineStart;
         scope = original.scope;
 
-        savedStackTop = original.savedStackTop;
+        stackTop = original.stackTop;
         savedCallOp = original.savedCallOp;
         throwable = original.throwable;
     }
@@ -211,7 +211,7 @@ class CallFrame implements Cloneable, Serializable {
         pcSourceLineStart = original.pcSourceLineStart;
         scope = original.scope;
 
-        savedStackTop = original.savedStackTop;
+        stackTop = original.stackTop;
         savedCallOp = original.savedCallOp;
         throwable = original.throwable;
     }
@@ -347,7 +347,7 @@ class CallFrame implements Cloneable, Serializable {
         otherFrame.pcSourceLineStart = pcSourceLineStart;
         otherFrame.scope = scope;
 
-        otherFrame.savedStackTop = savedStackTop;
+        otherFrame.stackTop = stackTop;
         otherFrame.savedCallOp = savedCallOp;
         otherFrame.throwable = throwable;
     }
