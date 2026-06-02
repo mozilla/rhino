@@ -1,105 +1,32 @@
 package org.mozilla.javascript;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 
 /** Class to hold data corresponding to one interpreted call stack frame. */
-final class CallFrame extends ACallFrame implements Cloneable, Serializable {
+final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>>
+        implements Cloneable {
     private static final long serialVersionUID = -2843792508994958978L;
 
-    // fields marked "final" in a comment are effectively final except when they're modified
-    // immediately after cloning.
-
-    final CallFrame parentFrame;
-    // amount of stack frames before this one on the interpretation stack
-    final short frameIndex;
-    // The frame that the iterator was executing.
-    final ACallFrame previousInterpreterFrame;
-    final int parentPC;
-    // If true indicates read-only frame that is a part of continuation
-    boolean frozen;
-
-    final ScriptOrFn<?> fnOrScript;
-    final InterpreterData<?> compilerData;
-
-    // Stack structure
-    // stack[0 <= i < localShift]: arguments and local variables
-    // stack[localShift <= i <= emptyStackTop]: used for local temporaries
-    // stack[emptyStackTop < i < stack.length]: stack data
-    // doubleStack[i]: if stack[i] is UniqueTag.DOUBLE_MARK, doubleStack[i] holds the number value
-
-    final Object[] stack;
-    final byte[] stackAttributes;
-    final double[] doubleStack;
-
-    final CallFrame varSource; // defaults to this unless continuation frame
-    final short emptyStackTop;
-
-    final DebugFrame debuggerFrame;
-    final boolean useActivation;
     boolean isContinuationsTopFrame;
-
-    final Scriptable thisObj;
 
     // The values that change during interpretation
 
-    Object result;
-    double resultDbl;
-    int pc;
     int pcPrevBranch;
     int pcSourceLineStart;
-    VarScope scope;
 
     int stackTop;
     int savedCallOp;
-    Object throwable;
-    boolean parentStrictness;
 
     CallFrame(
             Context cx,
             Scriptable thisObj,
-            ScriptOrFn fnOrScript,
-            InterpreterData code,
+            ScriptOrFn<?> fnOrScript,
+            InterpreterData<?> code,
             CallFrame parentFrame,
-            ACallFrame previousInterpreterFrame) {
-        compilerData = code;
-        debuggerFrame =
-                cx.debugger != null ? cx.debugger.getFrame(cx, fnOrScript.getDescriptor()) : null;
-        useActivation = fnOrScript.getDescriptor().requiresActivationFrame();
-
-        emptyStackTop = (short) (compilerData.maxVars + compilerData.maxLocals - 1);
-        int maxFrameArray = compilerData.maxFrameArray;
-        if (maxFrameArray != emptyStackTop + compilerData.maxStack + 1) Kit.codeBug();
-
-        stack = new Object[maxFrameArray];
-        stackAttributes = new byte[maxFrameArray];
-        doubleStack = new double[maxFrameArray];
-
-        this.fnOrScript = fnOrScript;
-        varSource = this;
-        this.thisObj = thisObj;
-
-        this.parentFrame = parentFrame;
-        if (parentFrame == null) {
-            this.parentPC =
-                    previousInterpreterFrame == null
-                            ? -1
-                            : previousInterpreterFrame.getPcSourceLineStart();
-        } else {
-            this.parentPC = parentFrame.pcSourceLineStart;
-        }
-        this.previousInterpreterFrame = previousInterpreterFrame;
-        frameIndex = (short) ((parentFrame == null) ? 0 : parentFrame.frameIndex + 1);
-        if (frameIndex > cx.getMaximumInterpreterStackDepth()) {
-            throw Context.reportRuntimeError("Exceeded maximum stack depth");
-        }
-
-        // Initialize initial values of variables that change during
-        // interpretation.
-        result = Undefined.instance;
+            ACallFrame<?, ?> previousInterpreterFrame) {
+        super(cx, thisObj, fnOrScript, code, parentFrame, previousInterpreterFrame);
         pcSourceLineStart = compilerData.firstLinePC;
 
         stackTop = emptyStackTop;
@@ -114,46 +41,13 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
 
     /* Copy the frame for *continuations*. Here we want to make
     fresh copies of the stack and everything related to it. */
-    private CallFrame(
-            CallFrame original, CallFrame parentFrame, ACallFrame previousInterpreterFrame) {
-        if (!original.frozen) Kit.codeBug();
-
-        stack = Arrays.copyOf(original.stack, original.stack.length);
-        stackAttributes = Arrays.copyOf(original.stackAttributes, original.stackAttributes.length);
-        doubleStack = Arrays.copyOf(original.doubleStack, original.doubleStack.length);
-
-        frozen = false;
-        this.parentFrame = parentFrame;
-        this.previousInterpreterFrame = previousInterpreterFrame;
-        if (parentFrame == null) {
-            frameIndex = 0;
-            parentPC =
-                    previousInterpreterFrame == null
-                            ? -1
-                            : previousInterpreterFrame.getPcSourceLineStart();
-        } else {
-            frameIndex = original.frameIndex;
-            parentPC = parentFrame.pcSourceLineStart;
-        }
-
-        fnOrScript = original.fnOrScript;
-        compilerData = original.compilerData;
-
-        varSource = original.varSource;
-        emptyStackTop = original.emptyStackTop;
-
-        debuggerFrame = original.debuggerFrame;
-        useActivation = original.useActivation;
+    CallFrame(
+            CallFrame original, CallFrame parentFrame, ACallFrame<?, ?> previousInterpreterFrame) {
+        super(original, parentFrame, previousInterpreterFrame);
         isContinuationsTopFrame = original.isContinuationsTopFrame;
 
-        thisObj = original.thisObj;
-
-        result = original.result;
-        resultDbl = original.resultDbl;
-        pc = original.pc;
-        pcPrevBranch = original.pcPrevBranch;
         pcSourceLineStart = original.pcSourceLineStart;
-        scope = original.scope;
+        pcPrevBranch = original.pcPrevBranch;
 
         stackTop = original.stackTop;
         savedCallOp = original.savedCallOp;
@@ -163,49 +57,16 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     /* Copy the stack for running a generator. We're only doing
     this to maintain the correct chain of parents for exception
     stacks, so we'll reuse the existing stack arrays. */
-    private CallFrame(
+    CallFrame(
             CallFrame original,
             CallFrame parentFrame,
-            ACallFrame previousInterpreterFrame,
+            ACallFrame<?, ?> previousInterpreterFrame,
             boolean keepFrozen) {
-        if (!original.frozen) Kit.codeBug();
-
-        stack = original.stack;
-        stackAttributes = original.stackAttributes;
-        doubleStack = original.doubleStack;
-
-        frozen = keepFrozen;
-        this.parentFrame = parentFrame;
-        this.previousInterpreterFrame = previousInterpreterFrame;
-        if (parentFrame == null) {
-            frameIndex = 0;
-            parentPC =
-                    previousInterpreterFrame == null
-                            ? -1
-                            : previousInterpreterFrame.getPcSourceLineStart();
-        } else {
-            frameIndex = original.frameIndex;
-            parentPC = parentFrame.pcSourceLineStart;
-        }
-
-        fnOrScript = original.fnOrScript;
-        compilerData = original.compilerData;
-
-        varSource = original.varSource;
-        emptyStackTop = original.emptyStackTop;
-
-        debuggerFrame = original.debuggerFrame;
-        useActivation = original.useActivation;
+        super(original, parentFrame, previousInterpreterFrame, false, keepFrozen);
         isContinuationsTopFrame = original.isContinuationsTopFrame;
 
-        thisObj = original.thisObj;
-
-        result = original.result;
-        resultDbl = original.resultDbl;
-        pc = original.pc;
-        pcPrevBranch = original.pcPrevBranch;
         pcSourceLineStart = original.pcSourceLineStart;
-        scope = original.scope;
+        pcPrevBranch = original.pcPrevBranch;
 
         stackTop = original.stackTop;
         savedCallOp = original.savedCallOp;
@@ -216,7 +77,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
             Context cx,
             VarScope callerScope,
             Object[] args,
-            double[] argdoubleStack,
+            double[] argsDbl,
             Object[] boundArgs,
             int argShift,
             int argCount,
@@ -225,20 +86,17 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         if (useActivation) {
             // Copy args to new array to pass to enterActivationFunction
             // or debuggerFrame.onEnter
-            if (argdoubleStack != null || boundArgs != null) {
+            if (argsDbl != null || boundArgs != null) {
                 int blen = boundArgs == null ? 0 : boundArgs.length;
-                args =
-                        Interpreter.getArgsArray(
-                                args, argdoubleStack, boundArgs, blen, argShift, argCount);
+                args = Interpreter.getArgsArray(args, argsDbl, boundArgs, blen, argShift, argCount);
             }
             argShift = 0;
-            argdoubleStack = null;
+            argsDbl = null;
             boundArgs = null;
         }
 
         if (desc.getFunctionType() != 0) {
             scope = fnOrScript.getDeclarationScope();
-            this.parentStrictness = ScriptRuntime.enterFunctionStrictness(cx, desc.isStrict());
 
             if (useActivation) {
                 if (desc.getFunctionType() == FunctionNode.ARROW_FUNCTION) {
@@ -273,7 +131,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         if (desc.getFunctionCount() != 0 && !desc.isES6Generator()) {
             if (desc.getFunctionType() != 0 && !desc.requiresActivationFrame()) Kit.codeBug();
             for (int i = 0; i < desc.getFunctionCount(); i++) {
-                JSDescriptor fdesc = desc.getFunction(i);
+                JSDescriptor<?> fdesc = desc.getFunction(i);
                 if (fdesc.getFunctionType() == FunctionNode.FUNCTION_STATEMENT) {
                     Interpreter.initFunction(cx, scope, fnOrScript.getDescriptor(), i);
                 }
@@ -298,8 +156,8 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         }
 
         System.arraycopy(args, argShift, stack, blen, definedArgs - blen);
-        if (argdoubleStack != null) {
-            System.arraycopy(argdoubleStack, argShift, doubleStack, blen, definedArgs - blen);
+        if (argsDbl != null) {
+            System.arraycopy(argsDbl, argShift, doubleStack, blen, definedArgs - blen);
         }
         for (int i = definedArgs; i != compilerData.maxVars; ++i) {
             stack[i] = Undefined.instance;
@@ -315,7 +173,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
                 for (int valsIdx = 0; valsIdx != vals.length; ++argShift, ++valsIdx) {
                     Object val = args[argShift];
                     if (val == UniqueTag.DOUBLE_MARK) {
-                        val = ScriptRuntime.wrapNumber(argdoubleStack[argShift]);
+                        val = ScriptRuntime.wrapNumber(argsDbl[argShift]);
                     }
                     vals[valsIdx] = val;
                 }
@@ -326,11 +184,12 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         }
     }
 
+    @Override
     CallFrame cloneFrozen() {
         return new CallFrame(this, false);
     }
 
-    CallFrame shallowCloneFrozen(ACallFrame newPreviousInterpreeterFrame) {
+    CallFrame shallowCloneFrozen(ACallFrame<?,?> newPreviousInterpreeterFrame) {
         return new CallFrame(this, this.parentFrame, newPreviousInterpreeterFrame, true);
     }
 
@@ -444,24 +303,6 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         return new CallFrame(this, true);
     }
 
-    Object getFromVars(int offset) {
-        Object value = stack[offset];
-        if (value == UniqueTag.DOUBLE_MARK) {
-            return doubleStack[offset];
-        } else {
-            return value;
-        }
-    }
-
-    void setInVars(int offset, Object value) {
-        if (value instanceof Double && Double.isFinite((Double) value)) {
-            stack[offset] = UniqueTag.DOUBLE_MARK;
-            doubleStack[offset] = ((Double) value);
-        } else {
-            stack[offset] = value;
-        }
-    }
-
     // ACallFrame implementation
 
     @Override
@@ -470,7 +311,7 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
     }
 
     @Override
-    public ACallFrame getParentFrame() {
+    public CallFrame getParentFrame() {
         return parentFrame;
     }
 
@@ -484,14 +325,17 @@ final class CallFrame extends ACallFrame implements Cloneable, Serializable {
         return fnOrScript.getDescriptor();
     }
 
+    @Override
     public int getParentPC() {
         return parentPC;
     }
 
-    public ACallFrame getPreviousInterpreterFrame() {
+    @Override
+    public ACallFrame<?, ?> getPreviousInterpreterFrame() {
         return previousInterpreterFrame;
     }
 
+    @Override
     public ScriptOrFn<?> getFnOrScript() {
         return fnOrScript;
     }
