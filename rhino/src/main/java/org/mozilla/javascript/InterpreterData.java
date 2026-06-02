@@ -29,11 +29,11 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             Object[] itsTemplateLiterals,
             byte[] itsICode,
             int[] itsExceptionTable,
-            int itsMaxVars,
-            int itsMaxLocals,
-            int itsMaxStack,
-            int itsMaxFrameArray,
-            int itsMaxCalleeArgs,
+            int maxVars,
+            int maxLocals,
+            int maxStack,
+            int maxFrameArray,
+            int maxCalleeArgs,
             Object[] literalIds,
             Map<Integer, Integer> longJumps,
             int firstLinePC) {
@@ -45,11 +45,11 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
         this.itsTemplateLiterals = itsTemplateLiterals;
         this.itsICode = itsICode;
         this.itsExceptionTable = itsExceptionTable;
-        this.itsMaxVars = itsMaxVars;
-        this.itsMaxLocals = itsMaxLocals;
-        this.itsMaxStack = itsMaxStack;
-        this.itsMaxFrameArray = itsMaxFrameArray;
-        this.itsMaxCalleeArgs = itsMaxCalleeArgs;
+        this.maxVars = maxVars;
+        this.maxLocals = maxLocals;
+        this.maxStack = maxStack;
+        this.maxFrameArray = maxFrameArray;
+        this.maxCalleeArgs = maxCalleeArgs;
         this.literalIds = literalIds;
         this.longJumps = longJumps;
         this.firstLinePC = firstLinePC;
@@ -66,12 +66,12 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
 
     final int[] itsExceptionTable;
 
-    final int itsMaxVars;
-    final int itsMaxLocals;
-    final int itsMaxStack;
-    final int itsMaxFrameArray;
+    final int maxVars;
+    final int maxLocals;
+    final int maxStack;
+    final int maxFrameArray;
 
-    final int itsMaxCalleeArgs;
+    final int maxCalleeArgs;
 
     final Object[] literalIds;
 
@@ -128,12 +128,12 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
 
         int[] itsExceptionTable;
 
-        int itsMaxVars;
-        int itsMaxLocals;
-        int itsMaxStack;
-        int itsMaxFrameArray;
+        int maxVars;
+        int maxLocals;
+        int maxStack;
+        int maxFrameArray;
 
-        int itsMaxCalleeArgs;
+        int maxCalleeArgs;
 
         Object[] literalIds;
 
@@ -163,11 +163,11 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
                                 itsTemplateLiterals,
                                 itsICode,
                                 itsExceptionTable,
-                                itsMaxVars,
-                                itsMaxLocals,
-                                itsMaxStack,
-                                itsMaxFrameArray,
-                                itsMaxCalleeArgs,
+                                maxVars,
+                                maxLocals,
+                                maxStack,
+                                maxFrameArray,
+                                maxCalleeArgs,
                                 literalIds,
                                 jumpMap,
                                 firstLinePC);
