@@ -3781,11 +3781,13 @@ class BodyCodegen {
                 return;
             }
         }
+        cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(node.getString());
         addScriptRuntimeInvoke(
                 "typeofName",
-                "(Lorg/mozilla/javascript/VarScope;"
+                "(Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/VarScope;"
                         + "Ljava/lang/String;"
                         + ")Ljava/lang/String;");
     }

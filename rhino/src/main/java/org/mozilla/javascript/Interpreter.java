@@ -2968,7 +2968,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoTypeOfName extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.stack[++frame.stackTop] = ScriptRuntime.typeofName(frame.scope, state.stringReg);
+            frame.stack[++frame.stackTop] =
+                    ScriptRuntime.typeofName(cx, frame.scope, state.stringReg);
             return null;
         }
     }
