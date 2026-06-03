@@ -593,6 +593,14 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
         }
     }
 
+    public static void addInstructionCost(Context cx, int cost) {
+        cx.instructionCount += cost;
+        if (cx.instructionCount > cx.instructionThreshold) {
+            cx.observeInstructionCount(cx.instructionCount);
+            cx.instructionCount = 0;
+        }
+    }
+
     private static class V2CompilationResult<T extends ScriptOrFn<T>>
             implements CompilationResult<T> {
         private final JSDescriptor<T> data;
