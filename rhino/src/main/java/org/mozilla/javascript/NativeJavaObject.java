@@ -341,10 +341,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     return 1;
                 } else if (to.isInstance(fromObj)) {
                     return 2;
+                } else if (to.isCharacter()) {
+                    return 3;
                 } else if (to.isPrimitive()) {
-                    if (to.isCharacter()) {
-                        return 3;
-                    } else if (!to.isBoolean()) {
+                    if (!to.isBoolean()) {
                         return 4;
                     }
                 }
