@@ -258,20 +258,26 @@ final class NativeReflect extends ScriptableObject {
          */
         ScriptableObject target = checkTarget(args);
 
-        if (args.length > 1) {
-            if (ScriptRuntime.isSymbol(args[1])) {
-                Object prop = ScriptableObject.getProperty(target, (Symbol) args[1]);
-                return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
-            }
-            if (args[1] instanceof Number) {
-                Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toIndex(args[1]));
-                return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
-            }
-
-            Object prop = ScriptableObject.getProperty(target, ScriptRuntime.toString(args[1]));
-            return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
+        if (args.length < 2) {
+            return Undefined.SCRIPTABLE_UNDEFINED;
         }
-        return Undefined.SCRIPTABLE_UNDEFINED;
+
+        Scriptable receiver =
+                (args.length > 2 && args[2] instanceof Scriptable) ? (Scriptable) args[2] : target;
+
+        Object prop;
+        if (ScriptRuntime.isSymbol(args[1])) {
+            prop = ScriptableObject.getSuperProperty(target, receiver, (Symbol) args[1]);
+        } else if (args[1] instanceof Number) {
+            prop =
+                    ScriptableObject.getSuperProperty(
+                            target, receiver, ScriptRuntime.toIndex(args[1]));
+        } else {
+            prop =
+                    ScriptableObject.getSuperProperty(
+                            target, receiver, ScriptRuntime.toString(args[1]));
+        }
+        return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
     }
 
     /**
