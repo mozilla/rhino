@@ -392,7 +392,7 @@ class NativeProxy extends ScriptableObject {
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc != null && targetDesc.isConfigurable(false)) {
                 if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
-                    if (!Objects.equals(trapResult, targetDesc.value)) {
+                    if (!ScriptRuntime.shallowEq(trapResult, targetDesc.value)) {
                         throw ScriptRuntime.typeError(
                                 "proxy get has to return the same value as the plain call");
                     }
