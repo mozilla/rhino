@@ -88,6 +88,12 @@ test {
     jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
 
     systemProperty 'test262properties', System.getProperty('test262properties')
+    if (System.getProperty('runTest262Debug') != null) {
+        systemProperty 'runTest262Debug', System.getProperty('runTest262Debug')
+    }
+    if (System.getProperty('runTest262NonDebug') != null) {
+        systemProperty 'runTest262NonDebug', System.getProperty('runTest262NonDebug')
+    }
     if (System.getProperty('updateTest262properties') != null) {
         if (System.getenv("RHINO_TEST_JAVA_VERSION") != "17") {
             System.out.println("Test262 properties update is only accurate on Java 17 and you have " + JavaVersion.current())
