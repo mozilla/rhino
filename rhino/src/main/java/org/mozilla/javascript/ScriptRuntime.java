@@ -3699,8 +3699,7 @@ public class ScriptRuntime {
     }
 
     /** The typeof operator that correctly handles the undefined case */
-    public static String typeofName(VarScope scope, String id) {
-        Context cx = Context.getContext();
+    public static String typeofName(Context cx, VarScope scope, String id) {
         VarScope val = bind(cx, scope, id);
         if (val == null) return "undefined";
         return typeof(getObjectProp(val, id, cx));
@@ -4849,33 +4848,27 @@ public class ScriptRuntime {
     }
 
     private static <T> boolean compareTo(Comparable<T> val1, T val2, int op) {
-        switch (op) {
-            case Token.GE:
-                return val1.compareTo(val2) >= 0;
-            case Token.LE:
-                return val1.compareTo(val2) <= 0;
-            case Token.GT:
-                return val1.compareTo(val2) > 0;
-            case Token.LT:
-                return val1.compareTo(val2) < 0;
-            default:
+        return switch (op) {
+            case Token.GE -> val1.compareTo(val2) >= 0;
+            case Token.LE -> val1.compareTo(val2) <= 0;
+            case Token.GT -> val1.compareTo(val2) > 0;
+            case Token.LT -> val1.compareTo(val2) < 0;
+            default -> {
                 throw Kit.codeBug();
-        }
+            }
+        };
     }
 
-    static boolean compareTo(double d1, double d2, int op) {
-        switch (op) {
-            case Token.GE:
-                return d1 >= d2;
-            case Token.LE:
-                return d1 <= d2;
-            case Token.GT:
-                return d1 > d2;
-            case Token.LT:
-                return d1 < d2;
-            default:
+    public static boolean compareTo(double d1, double d2, int op) {
+        return switch (op) {
+            case Token.GE -> d1 >= d2;
+            case Token.LE -> d1 <= d2;
+            case Token.GT -> d1 > d2;
+            case Token.LT -> d1 < d2;
+            default -> {
                 throw Kit.codeBug();
-        }
+            }
+        };
     }
 
     // ------------------
