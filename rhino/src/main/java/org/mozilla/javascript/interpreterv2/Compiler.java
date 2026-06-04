@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
@@ -1995,12 +1994,13 @@ public class Compiler<T extends ScriptOrFn<T>> {
     private Operand getSafeOperand(Node node, int contextFlags, boolean preferPeek) {
         updateLineNumber(node);
         switch (node.getType()) {
-            case Token.NUMBER: {
-                double num = node.getDouble();
-                int inum = (int) num;
+            case Token.NUMBER:
+                {
+                    double num = node.getDouble();
+                    int inum = (int) num;
 
-                return new DoubleOperand(num);
-            }
+                    return new DoubleOperand(num);
+                }
             case Token.STRING:
                 return new StringOperand(node.getString());
             case Token.NULL:
@@ -2029,10 +2029,9 @@ public class Compiler<T extends ScriptOrFn<T>> {
     }
 
     /**
-     * Returns operands for literals, otherwise returns a peek or pop
-       operand. We limit ourselves to these simple cases because
-       anything more complex requires more careful application to
-       maintain correct evaluation order.
+     * Returns operands for literals, otherwise returns a peek or pop operand. We limit ourselves to
+     * these simple cases because anything more complex requires more careful application to
+     * maintain correct evaluation order.
      */
     private Operand getOperand(Node node, int contextFlags, boolean preferPeek) {
         switch (node.getType()) {

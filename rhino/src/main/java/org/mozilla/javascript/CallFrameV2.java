@@ -4,7 +4,6 @@ import static org.mozilla.javascript.InterpreterV2.initFunction;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
 import java.io.Serializable;
-
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.interpreterv2.CompilerData;
@@ -29,7 +28,12 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
             ScriptOrFn<?> fnOrScript,
             CallFrameV2 parentFrame,
             ACallFrame<?, ?> previousInterpreterFrame) {
-        super(cx, thisObj, fnOrScript, (CompilerData<?>) fnOrScript.getDescriptor().getCode(), parentFrame,
+        super(
+                cx,
+                thisObj,
+                fnOrScript,
+                (CompilerData<?>) fnOrScript.getDescriptor().getCode(),
+                parentFrame,
                 previousInterpreterFrame);
         stackTop = emptyStackTop;
 
@@ -148,7 +152,9 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
 
     // Full copy with new linkage
     private CallFrameV2(
-            CallFrameV2 original, CallFrameV2 parentFrame, ACallFrame<?,?> previousInterpreterFrame) {
+            CallFrameV2 original,
+            CallFrameV2 parentFrame,
+            ACallFrame<?, ?> previousInterpreterFrame) {
         super(original, parentFrame, previousInterpreterFrame);
         pcPrevBranch = original.pcPrevBranch;
         shouldYieldToParent = original.shouldYieldToParent;
@@ -159,7 +165,7 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
     private CallFrameV2(
             CallFrameV2 original,
             CallFrameV2 parentFrame,
-            ACallFrame<?,?> previousInterpreterFrame,
+            ACallFrame<?, ?> previousInterpreterFrame,
             boolean keepFrozen) {
         super(original, parentFrame, previousInterpreterFrame, false, keepFrozen);
         pcPrevBranch = original.pcPrevBranch;
@@ -326,8 +332,7 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
         return args;
     }
 
-    private static Object[] wrapArguments(
-            Object[] stack, double[] sDbl, int shift, int count) {
+    private static Object[] wrapArguments(Object[] stack, double[] sDbl, int shift, int count) {
         if (count == 0) {
             return ScriptRuntime.emptyArgs;
         }

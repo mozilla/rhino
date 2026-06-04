@@ -20,11 +20,14 @@ public class EnumInitKeys extends Instruction {
         frame.pc += 1;
 
         var lhs = obj.retrieveAndWrap(cx, frame);
-        var inited = ScriptRuntime.enumInit(
-            lhs, cx, frame.scope,
-            cx.getLanguageVersion() <= Context.VERSION_1_8
-                ? ScriptRuntime.ENUMERATE_KEYS
-                : ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR);
+        var inited =
+                ScriptRuntime.enumInit(
+                        lhs,
+                        cx,
+                        frame.scope,
+                        cx.getLanguageVersion() <= Context.VERSION_1_8
+                                ? ScriptRuntime.ENUMERATE_KEYS
+                                : ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR);
         frame.setLocal(index, inited);
     }
 

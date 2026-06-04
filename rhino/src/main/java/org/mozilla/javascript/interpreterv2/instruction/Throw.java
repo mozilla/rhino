@@ -20,7 +20,8 @@ public class Throw extends Instruction {
         Object value = this.value.retrieveAndWrap(cx, frame);
 
         frame.throwable =
-                new JavaScriptException(value, frame.fnOrScript.getDescriptor().getSourceName(), lineNumber);
+                new JavaScriptException(
+                        value, frame.fnOrScript.getDescriptor().getSourceName(), lineNumber);
     }
 
     @Override

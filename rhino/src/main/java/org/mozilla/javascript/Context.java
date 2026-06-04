@@ -2954,6 +2954,7 @@ public class Context implements Closeable {
 
         private final int optimizationLevel;
         private final boolean isInterpreted;
+
         @SuppressWarnings("Immutable")
         private final Constructor<? extends Evaluator> constructor;
 

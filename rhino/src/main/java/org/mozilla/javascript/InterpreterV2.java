@@ -65,7 +65,7 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
                 @SuppressWarnings("unchecked")
                 var cjump =
                         frame.throwable instanceof ContinuationJump
-                            ? (ContinuationJump<CallFrameV2, CompilerData<?>>) frame.throwable
+                                ? (ContinuationJump<CallFrameV2, CompilerData<?>>) frame.throwable
                                 : null;
                 exState = handleDebugAndInstructionCount(cx, frame, exState);
                 if (exState == EX_NO_JS_STATE) {

@@ -37,12 +37,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             Object[] literalIds,
             Map<Integer, Integer> longJumps,
             int firstLinePC) {
-        super(
-                itsMaxVars,
-                itsMaxLocals,
-                itsMaxStack,
-                itsMaxFrameArray,
-                exceptionTable);
+        super(itsMaxVars, itsMaxLocals, itsMaxStack, itsMaxFrameArray, exceptionTable);
         this.itsStringTable = itsStringTable;
         this.itsDoubleTable = itsDoubleTable;
         this.itsBigIntTable = itsBigIntTable;
@@ -76,7 +71,8 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     @Override
     public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
         if (pcSourceLineStart >= 0) {
-            return ((itsICode[pcSourceLineStart] & 0xFF) << 8) | (itsICode[pcSourceLineStart + 1] & 0xFF);
+            return ((itsICode[pcSourceLineStart] & 0xFF) << 8)
+                    | (itsICode[pcSourceLineStart + 1] & 0xFF);
         } else {
             return 0;
         }

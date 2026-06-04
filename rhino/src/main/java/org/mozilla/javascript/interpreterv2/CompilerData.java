@@ -7,7 +7,6 @@ import static org.mozilla.javascript.ast.FunctionNode.FUNCTION_STATEMENT;
 
 import java.io.PrintStream;
 import java.util.List;
-
 import org.mozilla.javascript.ACompilerData;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.InstructionArray;
@@ -20,7 +19,7 @@ import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.interpreterv2.instruction.Instruction;
 
-public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, CompilerData<?>>  {
+public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, CompilerData<?>> {
 
     static boolean shouldDumpInstructions = RhinoConfig.get("rhino.printICodeV2", false);
 
@@ -71,12 +70,7 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
     public final boolean declaredAsFunctionExpression;
 
     private CompilerData(Builder<T> b) {
-        super(
-                b.maxVars,
-                b.maxLocals,
-                b.maxStack,
-                b.maxFrameSize,
-                b.exceptionTable);
+        super(b.maxVars, b.maxLocals, b.maxStack, b.maxFrameSize, b.exceptionTable);
         this.languageVersion = b.languageVersion;
         this.sourceFile = b.sourceFile;
         this.isStrict = b.isStrict;

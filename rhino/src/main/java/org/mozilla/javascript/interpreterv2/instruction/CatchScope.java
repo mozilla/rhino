@@ -35,8 +35,8 @@ public class CatchScope extends Instruction {
         } else {
             lastCatchScope = null;
         }
-        var newCatchScope = ScriptRuntime.newCatchScope(
-            caughtException, lastCatchScope, name, cx, frame.scope);
+        var newCatchScope =
+                ScriptRuntime.newCatchScope(caughtException, lastCatchScope, name, cx, frame.scope);
 
         frame.stack[frame.localShift + localIndex] = newCatchScope;
     }

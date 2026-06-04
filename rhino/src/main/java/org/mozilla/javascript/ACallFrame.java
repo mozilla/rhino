@@ -92,8 +92,9 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
 
         var desc = fnOrScript.getDescriptor();
         if (desc.getFunctionType() != 0) {
-            this.parentStrictness = ScriptRuntime.enterFunctionStrictness(
-                    cx, fnOrScript.getDescriptor().isStrict());
+            this.parentStrictness =
+                    ScriptRuntime.enterFunctionStrictness(
+                            cx, fnOrScript.getDescriptor().isStrict());
         } else {
             this.parentStrictness = false;
         }

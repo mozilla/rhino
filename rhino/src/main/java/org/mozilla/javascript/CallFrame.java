@@ -5,8 +5,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 
 /** Class to hold data corresponding to one interpreted call stack frame. */
-final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>>
-        implements Cloneable {
+final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implements Cloneable {
     private static final long serialVersionUID = -2843792508994958978L;
 
     boolean isContinuationsTopFrame;
@@ -188,7 +187,7 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>>
         return new CallFrame(this, false);
     }
 
-    CallFrame shallowCloneFrozen(ACallFrame<?,?> newPreviousInterpreeterFrame) {
+    CallFrame shallowCloneFrozen(ACallFrame<?, ?> newPreviousInterpreeterFrame) {
         return new CallFrame(this, this.parentFrame, newPreviousInterpreeterFrame, true);
     }
 

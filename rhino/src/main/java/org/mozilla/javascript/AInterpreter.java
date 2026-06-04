@@ -194,16 +194,13 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         }
 
         @Override
-        public void delete(String name) {
-        }
+        public void delete(String name) {}
 
         @Override
-        public void delete(int index) {
-        }
+        public void delete(int index) {}
 
         @Override
-        public void delete(Symbol key) {
-        }
+        public void delete(Symbol key) {}
 
         @Override
         public Object get(String name, VarScope scope) {
@@ -274,7 +271,8 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         public boolean isConst(String name) {
             int offset = getOffsets().getOrDefault(name, -1);
             if (offset >= 0) {
-                return (frame.stackAttributes[offset] & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
+                return (frame.stackAttributes[offset] & (PERMANENT | READONLY))
+                        == (PERMANENT | READONLY);
             } else {
                 return false;
             }

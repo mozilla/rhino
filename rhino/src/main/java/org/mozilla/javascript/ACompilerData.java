@@ -14,11 +14,7 @@ public abstract class ACompilerData<T extends ScriptOrFn<T>, U extends ACompiler
     public final int maxFrameSize;
 
     protected ACompilerData(
-            int maxVars,
-            int maxLocals,
-            int maxStack,
-            int maxFrameSize,
-            int[] exceptionTable) {
+            int maxVars, int maxLocals, int maxStack, int maxFrameSize, int[] exceptionTable) {
         this.maxVars = maxVars;
         this.maxLocals = maxLocals;
         this.maxStack = maxStack;

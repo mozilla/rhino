@@ -35,7 +35,9 @@ public class ThawFrame extends Instruction {
             // processing a call to <generator>.throw(exception): must
             // act as if exception was thrown from resumption point.
             return new JavaScriptException(
-                    generatorState.value, frame.fnOrScript.getDescriptor().getSourceName(), sourceLine);
+                    generatorState.value,
+                    frame.fnOrScript.getDescriptor().getSourceName(),
+                    sourceLine);
         }
         if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
             return generatorState.value;
