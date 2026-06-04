@@ -28,7 +28,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
             Object[] itsRegExpLiterals,
             Object[] itsTemplateLiterals,
             byte[] itsICode,
-            int[] itsExceptionTable,
+            int[] exceptionTable,
             int maxVars,
             int maxLocals,
             int maxStack,
@@ -44,7 +44,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
         this.itsRegExpLiterals = itsRegExpLiterals;
         this.itsTemplateLiterals = itsTemplateLiterals;
         this.itsICode = itsICode;
-        this.itsExceptionTable = itsExceptionTable;
+        this.exceptionTable = exceptionTable;
         this.maxVars = maxVars;
         this.maxLocals = maxLocals;
         this.maxStack = maxStack;
@@ -64,7 +64,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
 
     final byte[] itsICode;
 
-    final int[] itsExceptionTable;
+    final int[] exceptionTable;
 
     final int maxVars;
     final int maxLocals;
@@ -126,7 +126,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
 
         byte[] itsICode;
 
-        int[] itsExceptionTable;
+        int[] exceptionTable;
 
         int maxVars;
         int maxLocals;
@@ -162,7 +162,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends JSCode<T> implement
                                 itsRegExpLiterals,
                                 itsTemplateLiterals,
                                 itsICode,
-                                itsExceptionTable,
+                                exceptionTable,
                                 maxVars,
                                 maxLocals,
                                 maxStack,
