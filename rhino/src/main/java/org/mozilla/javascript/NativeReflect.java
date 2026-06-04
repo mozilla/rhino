@@ -95,7 +95,7 @@ final class NativeReflect extends ScriptableObject {
         if (ScriptRuntime.isSymbol(args[2])) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(args[2]));
         }
-        ScriptableObject argumentsList = ScriptableObject.ensureScriptableObject(args[2]);
+        Scriptable argumentsList = ScriptableObject.ensureScriptable(args[2]);
 
         return ScriptRuntime.applyOrCall(
                 true, cx, s, callable, new Object[] {thisObj, argumentsList});
@@ -430,8 +430,8 @@ final class NativeReflect extends ScriptableObject {
         // A missing value must be treated as undefined
         final Object value = args.length > 2 ? args[2] : Undefined.instance;
 
-        ScriptableObject receiver =
-                args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
+        Scriptable receiver =
+                args.length > 3 ? ScriptableObject.ensureScriptable(args[3]) : target;
         if (receiver != target) {
             DescriptorInfo descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
             if (descriptor != null) {
@@ -499,7 +499,7 @@ final class NativeReflect extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(args[0]));
         }
 
-        ScriptableObject proto = ScriptableObject.ensureScriptableObject(args[1]);
+        Scriptable proto = ScriptableObject.ensureScriptable(args[1]);
         if (target.getPrototype() == proto) {
             return true;
         }
