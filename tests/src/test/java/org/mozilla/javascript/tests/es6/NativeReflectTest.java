@@ -549,4 +549,60 @@ public class NativeReflectTest {
                         + "'' + log;";
         Utils.assertWithAllModes_ES6("true", js);
     }
+
+    @Test
+    public void setReceiverDefaultsToTarget() {
+        String js =
+                "  var o = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(o, 'p', {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  Reflect.set(o, 'p', 1);\n"
+                        + "  '' + (receivedReceiver === o);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setReceiverPassedToSetter() {
+        String js =
+                "  var target = {};\n"
+                        + "  var receiver = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(target, 'p', {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  Reflect.set(target, 'p', 1, receiver);\n"
+                        + "  '' + (receivedReceiver === receiver);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setReceiverAffectsWhereDataPropertyIsWritten() {
+        String js =
+                "  var target = { p: 1 };\n"
+                        + "  var receiver = { p: 0 };\n"
+                        + "  Reflect.set(target, 'p', 99, receiver);\n"
+                        + "  '' + receiver.p;\n";
+
+        Utils.assertWithAllModes_ES6("99", js);
+    }
+
+    @Test
+    public void setReceiverWithSymbolKey() {
+        String js =
+                "  var sym = Symbol('test');\n"
+                        + "  var target = {};\n"
+                        + "  var receiver = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(target, sym, {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  Reflect.set(target, sym, 1, receiver);\n"
+                        + "  '' + (receivedReceiver === receiver);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
 }

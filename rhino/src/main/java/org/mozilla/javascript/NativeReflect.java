@@ -448,13 +448,13 @@ final class NativeReflect extends ScriptableObject {
         }
 
         if (ScriptRuntime.isSymbol(args[1])) {
-            receiver.put((Symbol) args[1], receiver, value);
+            target.put((Symbol) args[1], receiver, value);
         } else {
             StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
             if (soi.stringId == null) {
-                receiver.put(soi.index, receiver, value);
+                target.put(soi.index, receiver, value);
             } else {
-                receiver.put(soi.stringId, receiver, value);
+                target.put(soi.stringId, receiver, value);
             }
         }
 
