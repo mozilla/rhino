@@ -187,10 +187,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 itsData.itsBigIntTable[index] = bigInt;
             }
         }
-        if (exceptionTableTop != 0 && itsData.itsExceptionTable.length != exceptionTableTop) {
+        if (exceptionTableTop != 0 && itsData.exceptionTable.length != exceptionTableTop) {
             int[] tmp = new int[exceptionTableTop];
-            System.arraycopy(itsData.itsExceptionTable, 0, tmp, 0, exceptionTableTop);
-            itsData.itsExceptionTable = tmp;
+            System.arraycopy(itsData.exceptionTable, 0, tmp, 0, exceptionTableTop);
+            itsData.exceptionTable = tmp;
         }
 
         itsData.maxVars = scriptOrFn.getParamAndVarCount();
@@ -1955,15 +1955,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             int exceptionObjectLocal,
             int scopeLocal) {
         int top = exceptionTableTop;
-        int[] table = itsData.itsExceptionTable;
+        int[] table = itsData.exceptionTable;
         if (table == null) {
             if (top != 0) Kit.codeBug();
             table = new int[Interpreter.EXCEPTION_SLOT_SIZE * 2];
-            itsData.itsExceptionTable = table;
+            itsData.exceptionTable = table;
         } else if (table.length == top) {
             table = new int[table.length * 2];
-            System.arraycopy(itsData.itsExceptionTable, 0, table, 0, top);
-            itsData.itsExceptionTable = table;
+            System.arraycopy(itsData.exceptionTable, 0, table, 0, top);
+            itsData.exceptionTable = table;
         }
         table[top + Interpreter.EXCEPTION_TRY_START_SLOT] = icodeStart;
         table[top + Interpreter.EXCEPTION_TRY_END_SLOT] = icodeEnd;

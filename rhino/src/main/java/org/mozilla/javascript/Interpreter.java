@@ -314,7 +314,7 @@ public final class Interpreter implements Evaluator {
     }
 
     private static int getExceptionHandler(CallFrame frame, boolean onlyFinally) {
-        int[] exceptionTable = frame.compilerData.itsExceptionTable;
+        int[] exceptionTable = frame.compilerData.exceptionTable;
         if (exceptionTable == null) {
             // No exception handlers
             return -1;
@@ -383,7 +383,7 @@ public final class Interpreter implements Evaluator {
             pc += icodeLength;
         }
 
-        int[] table = idata.itsExceptionTable;
+        int[] table = idata.exceptionTable;
         if (table != null) {
             out.println("Exception handlers: " + table.length / EXCEPTION_SLOT_SIZE);
             for (int i = 0; i != table.length; i += EXCEPTION_SLOT_SIZE) {
@@ -4495,7 +4495,7 @@ public final class Interpreter implements Evaluator {
                 frame = frame.cloneFrozen();
             }
 
-            int[] table = frame.compilerData.itsExceptionTable;
+            int[] table = frame.compilerData.exceptionTable;
 
             frame.stackTop = frame.emptyStackTop;
 
