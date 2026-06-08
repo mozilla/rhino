@@ -176,6 +176,14 @@ public class ArrayLikeAbstractOperations {
     static Scriptable arraySpeciesCreate(Context cx, VarScope scope, Object o, int length) {
         if (o instanceof NativeArray) {
             Object c = ScriptableObject.getProperty((Scriptable) o, "constructor");
+            if (c instanceof Function f && f.isConstructor()) {
+                VarScope ctorScope = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
+                if (ctorScope != ScriptableObject.getTopLevelScope(scope)
+                        && c == ScriptableObject.getProperty(ctorScope, "Array")) {
+                    c = Undefined.instance;
+                }
+            }
+
             if (c instanceof Scriptable) {
                 c = ScriptableObject.getProperty((Scriptable) c, SymbolKey.SPECIES);
                 if (c == null || c == NOT_FOUND) {
