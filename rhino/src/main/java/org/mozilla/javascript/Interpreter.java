@@ -1659,6 +1659,7 @@ public final class Interpreter implements Evaluator {
                         interpreterResultDbl = frame.resultDbl;
                         break StateLoop;
                     } else if (result instanceof YieldResult) {
+                        exitFrame(cx, frame, null);
                         return ((YieldResult) result).yielding;
                     } else if (result instanceof ThrowableResult) {
                         ThrowableResult tr = (ThrowableResult) result;
@@ -1983,7 +1984,6 @@ public final class Interpreter implements Evaluator {
         frame.resultDbl = frame.sDbl[state.stackTop];
         frame.savedStackTop = state.stackTop;
         frame.pc--; // we want to come back here when we resume
-        ScriptRuntime.exitActivationFunction(cx);
         final Object result =
                 (frame.result != DOUBLE_MARK)
                         ? frame.result
