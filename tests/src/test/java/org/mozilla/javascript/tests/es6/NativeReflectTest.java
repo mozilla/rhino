@@ -416,6 +416,71 @@ public class NativeReflectTest {
     }
 
     @Test
+    public void getReceiverDefaultsToTarget() {
+        // When no receiver is supplied, getter sees target as 'this'.
+        String js =
+                "var o = {};\n"
+                        + "Object.defineProperty(o, 'p', {\n"
+                        + "  get() { return this === o; }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(o, 'p');";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverPassedToGetter() {
+        // When a receiver is supplied, getter sees receiver as 'this', not target.
+        String js =
+                "var target = {};\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(target, 'p', {\n"
+                        + "  get() { return this === receiver; }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(target, 'p', receiver);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverPassedToGetterOnPrototype() {
+        // Getter is on the prototype, receiver is the leaf object — 'this' must
+        // still be the receiver, not the prototype where the getter lives.
+        String js =
+                "var receiver = {};\n"
+                        + "var proto = {};\n"
+                        + "Object.defineProperty(proto, 'p', {\n"
+                        + "  get() { return this === receiver; }\n"
+                        + "});\n"
+                        + "var target = Object.create(proto);\n"
+                        + "'' + Reflect.get(target, 'p', receiver);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getReceiverDoesNotAffectDataProperty() {
+        // Receiver has no effect on plain data property reads — value comes from
+        // the prototype chain of target, not receiver.
+        String js =
+                "var target = { p: 42 };\n"
+                        + "var receiver = { p: 99 };\n"
+                        + "'' + Reflect.get(target, 'p', receiver);";
+        Utils.assertWithAllModes_ES6("42", js);
+    }
+
+    @Test
+    public void getReceiverWithSymbolKey() {
+        // Receiver must also be forwarded for Symbol-keyed getters.
+        String js =
+                "var sym = Symbol('test');\n"
+                        + "var target = {};\n"
+                        + "var receiver = {};\n"
+                        + "Object.defineProperty(target, sym, {\n"
+                        + "  get() { return this === receiver; }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(target, sym, receiver);";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
     public void setPrototypeOf() {
         String js =
                 "var o1 = {};\n"
@@ -459,5 +524,29 @@ public class NativeReflectTest {
                         + "+ ' ' + Reflect.setPrototypeOf(o2, null)"
                         + "+ ' ' + Reflect.setPrototypeOf(o3, proto)";
         Utils.assertWithAllModes_ES6("true true true", js);
+    }
+
+    @Test
+    public void setMissingValueArgumentTreatedAsUndefined() {
+        String js =
+                "var target = {};\n"
+                        + "var result = Reflect.set(target, 'p');\n"
+                        + "'' + result + ' ' + target.p + ' ' + (target.p === undefined);";
+        Utils.assertWithAllModes_ES6("true undefined true", js);
+    }
+
+    @Test
+    public void setMissingValueWithReceiverTreatedAsUndefined() {
+        String js =
+                "var log = [];\n"
+                        + "var proxy = new Proxy({}, {\n"
+                        + "  set: function(t, prop, value, receiver) {\n"
+                        + "    log.push(value === undefined);\n"
+                        + "    return true;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.set(proxy, 'p');\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("true", js);
     }
 }

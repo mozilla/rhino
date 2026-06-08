@@ -24,19 +24,22 @@ public interface SourceMapper {
     Position mapPosition(int targetLine, int targetColumn);
 
     /**
-     * Returns the full text of the original source so the debugger can display it during
-     * compilation handoff.
+     * Returns the text of the given line within the named original source file. Used to populate
+     * parser error messages with the offending line from the original source.
      *
-     * @return the original source, or {@code null} if it is not available
+     * @param sourcePath the resolved source path (as returned in {@link Position#sourcePath()})
+     * @param lineNumber 1-indexed line number in the original source
+     * @return the line text, or {@code null} if the source is unknown, the line is out of range, or
+     *     no original-source content is available
      */
-    String getOriginalSource();
+    String getSourceLineText(String sourcePath, int lineNumber);
 
     /**
-     * Returns the text of the given line of the original source. Used to populate parser error
-     * messages with the offending line from the original source.
+     * Returns the full text of the primary original source so the debugger can display it during
+     * compilation handoff. When the underlying source map references multiple sources, an
+     * implementation must pick one (typically the first) — this method does not enumerate them.
      *
-     * @param sourceLine 1-indexed line number in the original source
-     * @return the line text, or {@code null} if the line is out of range or unavailable
+     * @return the primary original source content, or {@code null} if it is not available
      */
-    String getSourceLineText(int sourceLine);
+    String getPrimarySourceContent();
 }

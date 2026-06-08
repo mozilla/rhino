@@ -8,12 +8,26 @@ import java.util.Objects;
 
 /** A 1-indexed line and column position in a source file. */
 public final class Position {
+    /**
+     * the path of the source file (may be {@code null} when the mapper has no source associated
+     * with the position)
+     */
+    private final String sourcePath;
+
+    /* 1-indexed line number */
     private final int line;
+
+    /** 1-indexed column number */
     private final int column;
 
-    public Position(int line, int column) {
+    public Position(String sourcePath, int line, int column) {
+        this.sourcePath = sourcePath;
         this.line = line;
         this.column = column;
+    }
+
+    public String getSourcePath() {
+        return sourcePath;
     }
 
     public int getLine() {
@@ -29,16 +43,26 @@ public final class Position {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (Position) obj;
-        return this.line == that.line && this.column == that.column;
+        return Objects.equals(sourcePath, that.sourcePath)
+                && this.line == that.line
+                && this.column == that.column;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(line, column);
+        return Objects.hash(sourcePath, line, column);
     }
 
     @Override
     public String toString() {
-        return "Position[" + "line=" + line + ", " + "column=" + column + ']';
+        return "Position["
+                + "sourcePath='"
+                + sourcePath
+                + '\''
+                + ", line="
+                + line
+                + ", column="
+                + column
+                + ']';
     }
 }

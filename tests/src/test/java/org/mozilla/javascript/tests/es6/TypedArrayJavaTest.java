@@ -101,6 +101,9 @@ public class TypedArrayJavaTest {
 
     private static void allTypes(String script, String expected) throws Exception {
         String[] allNativeTypes = {
+            "BigInt64Array",
+            "BigUint64Array",
+            "Float16Array",
             "Float32Array",
             "Float64Array",
             "Int8Array",

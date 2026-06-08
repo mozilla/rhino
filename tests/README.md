@@ -93,6 +93,17 @@ Note: the tests must actually run for the .properties file to be updated. If gra
 changed since the last time the `test` command was run, it won't run the tests. The `--rerun-tasks` argument forces
 gradle to run all tests 
 
+## Running the tests from the official ECMAScript Test Suite (test262) in debug mode
+
+You can run the tests in debug mode by setting the `runTest262Debug` property. By default this disables running the tests outside the debugger, but that can be overridden by setting `runTest262NonDebug`. For example the following will run the tests in debugger mode:
+```
+./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest -DrunTest262Debug
+```
+and this will run the tests in all modes
+```
+./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest -DrunTest262Debug -DrunTest262NonDebug
+```
+
 ## Running specific tests from the official ECMAScript Test Suite (test262)
 The default setup for running the test262 test suite is defined in [test262.properties](test262.properties).
 

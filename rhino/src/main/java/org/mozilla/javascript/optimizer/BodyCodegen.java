@@ -487,7 +487,7 @@ class BodyCodegen {
             cfw.addAStore(popvLocal);
 
             int linenum = scriptOrFn.getEndLineno();
-            if (linenum != -1) addRemappedLineEntry(linenum, 0);
+            if (linenum != -1) addRemappedLineEntry(linenum, 1);
 
         } else {
             if (fnCurrent.itsContainsCalls0) {
@@ -834,7 +834,10 @@ class BodyCodegen {
                 cfw.addALoad(variableObjectLocal);
                 int enumType =
                         type == Token.ENUM_INIT_KEYS
-                                ? ScriptRuntime.ENUMERATE_KEYS
+                                ? Context.getCurrentContext().getLanguageVersion()
+                                                <= Context.VERSION_1_8
+                                        ? ScriptRuntime.ENUMERATE_KEYS
+                                        : ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR
                                 : type == Token.ENUM_INIT_VALUES
                                         ? ScriptRuntime.ENUMERATE_VALUES
                                         : type == Token.ENUM_INIT_VALUES_IN_ORDER

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,6 +38,19 @@ class NativeProxy extends ScriptableObject {
     private static final String TRAP_APPLY = "apply";
     private static final String TRAP_CONSTRUCT = "construct";
 
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                PROXY_TAG,
+                                2,
+                                ClassDescriptor.typeError(),
+                                NativeProxy::js_constructor)
+                        .withMethod(CTOR, "revocable", 2, NativeProxy::revocable)
+                        .build();
+    }
+
     private ScriptableObject targetObj;
     private Scriptable handlerObj;
     private final String typeOf;
@@ -59,31 +74,7 @@ class NativeProxy extends ScriptableObject {
     }
 
     public static Object init(Context cx, VarScope scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        PROXY_TAG,
-                        2,
-                        null, // Proxy constructor has *no* prototype
-                        null, // Proxy constructor may not be called as a function.
-                        NativeProxy::constructor) {
-
-                    @Override
-                    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
-                        NativeProxy obj =
-                                (NativeProxy) getTargetConstructor().construct(cx, scope, args);
-                        // avoid getting trapped
-                        obj.setPrototypeDirect(getClassPrototype());
-                        obj.setParentScope(scope);
-                        return obj;
-                    }
-                };
-
-        constructor.defineConstructorMethod(scope, "revocable", 2, NativeProxy::revocable);
-        if (sealed) {
-            constructor.sealObject();
-        }
-        return constructor;
+        return DESCRIPTOR.buildConstructor(cx, scope, null, sealed);
     }
 
     private NativeProxy(ScriptableObject target, Scriptable handler) {
@@ -396,7 +387,7 @@ class NativeProxy extends ScriptableObject {
 
         Function trap = getTrap(TRAP_GET);
         if (trap != null) {
-            Object trapResult = callTrap(trap, new Object[] {target, name, this});
+            Object trapResult = callTrap(trap, new Object[] {target, name, start});
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc != null && targetDesc.isConfigurable(false)) {
@@ -452,7 +443,7 @@ class NativeProxy extends ScriptableObject {
         Function trap = getTrap(TRAP_GET);
         if (trap != null) {
             Object trapResult =
-                    callTrap(trap, new Object[] {target, ScriptRuntime.toString(index), this});
+                    callTrap(trap, new Object[] {target, ScriptRuntime.toString(index), start});
 
             DescriptorInfo targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
@@ -510,7 +501,7 @@ class NativeProxy extends ScriptableObject {
 
         Function trap = getTrap(TRAP_GET);
         if (trap != null) {
-            Object trapResult = callTrap(trap, new Object[] {target, key, this});
+            Object trapResult = callTrap(trap, new Object[] {target, key, start});
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc != null
@@ -1225,7 +1216,8 @@ class NativeProxy extends ScriptableObject {
         target.setPrototype(prototype);
     }
 
-    private static NativeProxy constructor(Context cx, VarScope scope, Object[] args) {
+    private static NativeProxy js_constructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (args.length < 2) {
             throw ScriptRuntime.typeErrorById(
                     "msg.method.missing.parameter",
@@ -1243,22 +1235,23 @@ class NativeProxy extends ScriptableObject {
             proxy = new NativeProxy(target, handler);
         }
 
-        proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(scope, PROXY_TAG));
-        proxy.setParentScope(scope);
+        proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(s, PROXY_TAG));
+        proxy.setParentScope(s);
         return proxy;
     }
 
     // Proxy.revocable
-    private static Object revocable(Context cx, VarScope scope, Object thisObj, Object[] args) {
+    private static Object revocable(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
-        NativeProxy proxy = constructor(cx, scope, args);
+        NativeProxy proxy = js_constructor(cx, f, nt, s, thisObj, args);
 
-        NativeObject revocable = (NativeObject) cx.newObject(scope);
+        NativeObject revocable = (NativeObject) cx.newObject(s);
 
         revocable.put("proxy", revocable, proxy);
-        revocable.put("revoke", revocable, new LambdaFunction(scope, "", 0, new Revoker(proxy)));
+        revocable.put("revoke", revocable, new LambdaFunction(s, "", 0, new Revoker(proxy)));
         return revocable;
     }
 

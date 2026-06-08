@@ -70,14 +70,22 @@ jobs:
             test-java-version: "21"
             name: "Java 21 Build and Test"
             multithread: false
+            debug: false
           - java-version: "25"
             test-java-version: "25"
             name: "Java 25 Build and Test"
             multithread: false
+            debug: false
           - java-version: "25"
             test-java-version: "25"
             name: "Java 25 Multithreaded"
             multithread: true
+            debug: false
+          - java-version: "25"
+            test-java-version: "25"
+            name: "Java 25 Debug"
+            multithread: false
+            debug: true
     name: ${{ matrix.name }}
     steps:
     - name: Check out Rhino
@@ -95,7 +103,7 @@ jobs:
       env:
         RHINO_TEST_JAVA_VERSION: ${{ matrix.test-java-version }}
       run: >-
-        ./gradlew check ${{ matrix.multithread && '-Drhino.useThreadSafeObjectsByDefault=true' || '' }}
+        ./gradlew check ${{ matrix.multithread && '-Drhino.useThreadSafeObjectsByDefault=true' || '' }} ${{ matrix.debug && '-DrunTest262Debug' || '' }}
     - name: Upload results ${{ matrix.name }}
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: ${{ always() }}

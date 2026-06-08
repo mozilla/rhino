@@ -362,7 +362,7 @@ public class Parser {
             if (mapped != null) {
                 line = mapped.getLine();
                 offset = mapped.getColumn();
-                String mappedLine = mapper.getSourceLineText(line);
+                String mappedLine = mapper.getSourceLineText(mapped.getSourcePath(), line);
                 if (mappedLine != null) {
                     lineSource = mappedLine;
                 }
