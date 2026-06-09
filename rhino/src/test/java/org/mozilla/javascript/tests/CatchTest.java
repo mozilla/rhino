@@ -10,6 +10,7 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -51,7 +52,7 @@ public class CatchTest {
 
         return factory.call(
                 context -> {
-                    context.setInterpretedMode(true);
+                    context.setEvaluationMethod(EvaluationMethod.Interpreter);
                     if (shutter != null) {
                         context.setClassShutter(shutter);
                     }

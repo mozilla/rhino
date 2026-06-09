@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
@@ -740,10 +741,10 @@ public class Dim {
         String resultString;
         Debugger saved_debugger = cx.getDebugger();
         Object saved_data = cx.getDebuggerContextData();
-        boolean wasInterpreted = cx.isInterpretedMode();
+        EvaluationMethod wasMethod = cx.getEvaluationMethod();
 
         cx.setDebugger(null, null);
-        cx.setInterpretedMode(false);
+        cx.setEvaluationMethod(EvaluationMethod.Interpreter);
         cx.setGeneratingDebug(false);
         try {
             VarScope scope = (VarScope) frame.scope;
@@ -764,7 +765,7 @@ public class Dim {
             resultString = exc.getMessage();
         } finally {
             cx.setGeneratingDebug(true);
-            cx.setInterpretedMode(wasInterpreted);
+            cx.setEvaluationMethod(wasMethod);
             cx.setDebugger(saved_debugger, saved_data);
         }
         if (resultString == null) {
@@ -883,7 +884,7 @@ public class Dim {
             Debugger debugger = new DimIProxy(dim, IPROXY_DEBUG);
             cx.setDebugger(debugger, contextData);
             cx.setGeneratingDebug(true);
-            cx.setInterpretedMode(true);
+            cx.setEvaluationMethod(EvaluationMethod.Interpreter);
         }
 
         /** Called when a Context is destroyed. */

@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
@@ -410,7 +411,10 @@ public class Context implements Closeable {
         }
         this.factory = factory;
         version = VERSION_ES6;
-        interpretedMode = codegenClass == null;
+        evaluationMethod =
+                EvaluationMethod.Compiler.isValid()
+                        ? EvaluationMethod.Compiler
+                        : EvaluationMethod.Interpreter;
         maximumInterpreterStackDepth = Integer.MAX_VALUE;
     }
 
@@ -2019,15 +2023,15 @@ public class Context implements Closeable {
     /**
      * Get the current optimization level.
      *
-     * <p>The optimization level is expressed as an integer between -1 and 9. Rhino now has only one
-     * optimization level, and we will always return either -1 or 9 here.
+     * <p>The optimization level is expressed as an integer between -1 and 9. Rhino now has only a
+     * few optimization levels: -1 for Interpreter, and 9 for compiled mode.
      *
      * @since 1.3
-     * @deprecated As of 1.8.0, use {@link #isInterpretedMode()} instead.
+     * @deprecated As of 1.8.0, use {@link #getEvaluationMethod()} instead.
      */
     @Deprecated
     public final int getOptimizationLevel() {
-        return interpretedMode ? -1 : 9;
+        return evaluationMethod.level();
     }
 
     /**
@@ -2035,22 +2039,31 @@ public class Context implements Closeable {
      * bytecode, but runs much more slowly. Some platforms, notably Android, use this mode.
      */
     public final boolean isInterpretedMode() {
-        return interpretedMode;
+        return evaluationMethod != EvaluationMethod.Compiler;
+    }
+
+    /**
+     * Get the current evaluation method used for running JavaScript code.
+     *
+     * @return the current evaluation method
+     */
+    public final EvaluationMethod getEvaluationMethod() {
+        return evaluationMethod;
     }
 
     /**
      * Set the current optimization level.
      *
-     * <p>This function previously set multiple modes today. Any value less than zero sets up
-     * interpreted mode, and otherwise we run in compiled mode.
+     * <p>The optimization level determines which execution method Rhino uses: -2 for InterpreterV2,
+     * -1 for the original Interpreter, and 0-9 for compiled mode.
      *
      * @param optimizationLevel an integer indicating the level of optimization to perform
      * @since 1.3
-     * @deprecated As of 1.8.0, use {@link #setInterpretedMode(boolean)} instead.
+     * @deprecated As of 1.8.0, use {@link #setEvaluationMethod(EvaluationMethod)} instead.
      */
     @Deprecated
     public final void setOptimizationLevel(int optimizationLevel) {
-        setInterpretedMode(optimizationLevel < 0);
+        setEvaluationMethod(EvaluationMethod.forLevel(optimizationLevel));
     }
 
     /**
@@ -2059,8 +2072,21 @@ public class Context implements Closeable {
      * cannot generate bytecode.
      */
     public final void setInterpretedMode(boolean interpretedMode) {
+        if (interpretedMode) {
+            setEvaluationMethod(EvaluationMethod.Interpreter);
+        } else {
+            setEvaluationMethod(EvaluationMethod.Compiler);
+        }
+    }
+
+    /**
+     * Set the evaluation method used for running JavaScript code.
+     *
+     * @param evaluationMethod the evaluation method to use
+     */
+    public final void setEvaluationMethod(EvaluationMethod evaluationMethod) {
         if (sealed) onSealedMutation();
-        this.interpretedMode = interpretedMode;
+        this.evaluationMethod = evaluationMethod;
     }
 
     /**
@@ -2068,7 +2094,12 @@ public class Context implements Closeable {
      */
     @Deprecated
     public static boolean isValidOptimizationLevel(int optimizationLevel) {
-        return -1 <= optimizationLevel && optimizationLevel <= 9;
+        for (var e : EvaluationMethod.values()) {
+            if (e.level() == optimizationLevel) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -2080,7 +2111,7 @@ public class Context implements Closeable {
             return;
         }
         throw new IllegalArgumentException(
-                "Optimization level outside [-1..9]: " + optimizationLevel);
+                "Optimization level outside [-2..9]: " + optimizationLevel);
     }
 
     /**
@@ -2115,7 +2146,7 @@ public class Context implements Closeable {
      */
     public final void setMaximumInterpreterStackDepth(int max) {
         if (sealed) onSealedMutation();
-        if (!interpretedMode) {
+        if (evaluationMethod == EvaluationMethod.Compiler) {
             throw new IllegalStateException(
                     "Cannot set maximumInterpreterStackDepth outside interpreted mode");
         }
@@ -2754,33 +2785,43 @@ public class Context implements Closeable {
         }
     }
 
-    private static Class<?> codegenClass =
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Evaluator> CodegenClass =
             ScriptRuntime.androidApi > 0
                     ? null
-                    : Kit.classOrNull("org.mozilla.javascript.optimizer.Codegen");
-    private static Class<?> interpreterClass =
-            Kit.classOrNull("org.mozilla.javascript.Interpreter");
+                    : (Class<? extends Evaluator>)
+                            Kit.classOrNull("org.mozilla.javascript.optimizer.Codegen");
+
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Evaluator> InterpreterClass =
+            (Class<? extends Evaluator>) Kit.classOrNull("org.mozilla.javascript.Interpreter");
 
     private Evaluator createCompiler() {
-        Evaluator result = null;
-        if (!interpretedMode && codegenClass != null) {
-            result = (Evaluator) Kit.newInstanceOrNull(codegenClass);
-        }
-        if (result == null) {
-            result = createInterpreter();
-        }
-        return result;
+        return evaluationMethod.createEvaluator();
     }
 
     static Evaluator createInterpreter() {
-        return (Evaluator) Kit.newInstanceOrNull(interpreterClass);
+        return EvaluationMethod.Interpreter.createEvaluator();
+    }
+
+    /**
+     * Get the appropriate interpreter evaluator based on the current evaluation method. This is
+     * used for stack trace generation and other interpreter-specific operations.
+     *
+     * @return the interpreter evaluator for the current evaluation method
+     */
+    Evaluator getInterpreterForCurrentMethod() {
+        if (evaluationMethod.isInterpreted()) {
+            return evaluationMethod.createEvaluator();
+        }
+        return EvaluationMethod.Interpreter.createEvaluator();
     }
 
     static String getSourcePositionFromStack(int[] linep) {
         Context cx = getCurrentContext();
         if (cx == null) return null;
         if (cx.lastInterpreterFrame != null) {
-            Evaluator evaluator = createInterpreter();
+            Evaluator evaluator = cx.getInterpreterForCurrentMethod();
             if (evaluator != null) return evaluator.getSourcePositionFromStack(cx, linep);
         }
 
@@ -2898,6 +2939,66 @@ public class Context implements Closeable {
 
     int version;
 
+    /** Enumeration of evaluation methods supported by Rhino. */
+    public enum EvaluationMethod {
+        /** Original bytecode-based interpreter. */
+        Interpreter(-1, true, InterpreterClass),
+        /** JVM bytecode compiler. */
+        Compiler(9, false, CodegenClass);
+
+        private final int optimizationLevel;
+        private final boolean isInterpreted;
+        private final Constructor<? extends Evaluator> constructor;
+
+        private EvaluationMethod(
+                int level, boolean isInterpreted, Class<? extends Evaluator> clazz) {
+            this.optimizationLevel = level;
+            this.isInterpreted = isInterpreted;
+            Constructor<? extends Evaluator> ctor = null;
+            if (clazz != null) {
+                try {
+                    ctor = clazz.getDeclaredConstructor();
+                } catch (NoSuchMethodException e) {
+                }
+            }
+            this.constructor = ctor;
+        }
+
+        public int level() {
+            return optimizationLevel;
+        }
+
+        public boolean isInterpreted() {
+            return isInterpreted;
+        }
+
+        public boolean isValid() {
+            return constructor != null;
+        }
+
+        public Evaluator createEvaluator() {
+            if (constructor == null) {
+                return null;
+            }
+            try {
+                return constructor.newInstance();
+            } catch (InstantiationException
+                    | IllegalAccessException
+                    | InvocationTargetException x) {
+            }
+            return null;
+        }
+
+        public static EvaluationMethod forLevel(int level) {
+            for (var e : EvaluationMethod.values()) {
+                if (e.optimizationLevel == level) {
+                    return e;
+                }
+            }
+            throw new IllegalStateException("Unknown optimization level.");
+        }
+    }
+
     private SecurityController securityController;
     private boolean hasClassShutter;
     private ClassShutter classShutter;
@@ -2909,7 +3010,8 @@ public class Context implements Closeable {
     private boolean generatingDebugChanged;
     private boolean generatingSource = true;
     boolean useDynamicScope;
-    private boolean interpretedMode;
+    // interpreted mode defaulted to false, so we keep compatibility with that.
+    private EvaluationMethod evaluationMethod = EvaluationMethod.Compiler;
     private int maximumInterpreterStackDepth;
     private WrapFactory wrapFactory;
     Debugger debugger;

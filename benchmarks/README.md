@@ -18,6 +18,13 @@ For example, to run only the SunSpider and V8 benchmarks, you can run:
 
 Running all the benchmarks takes about half an hour, so this is a valuable thing to do!
 
+If you want to run benchmarks in one mode (Interpreter or Compiler)
+then that can be done using the `EVALMODE` environment variable. For example:
+```
+EVALMODE=Compiler BENCHMARK=V8 ./gradlew jmh
+```
+will run all the V8 benchmarks, but only in compiled mode.
+
 ## How the Benchmarks work
 
 Java, with its just-in-time compilation pipeline, bytecode generation in Rhino, and

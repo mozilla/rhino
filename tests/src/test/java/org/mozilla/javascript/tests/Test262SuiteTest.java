@@ -42,6 +42,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.RhinoException;
@@ -840,21 +841,21 @@ public class Test262SuiteTest {
                 true,
                 false,
                 cx -> {
-                    cx.setInterpretedMode(true);
+                    cx.setEvaluationMethod(EvaluationMethod.Interpreter);
                 }),
         COMPILED(
                 "compiled",
                 true,
                 false,
                 cx -> {
-                    cx.setInterpretedMode(false);
+                    cx.setEvaluationMethod(EvaluationMethod.Compiler);
                 }),
         DEBUGGER_INTERPRETED(
                 "debugger",
                 true,
                 true,
                 cx -> {
-                    cx.setInterpretedMode(true);
+                    cx.setEvaluationMethod(EvaluationMethod.Interpreter);
                     cx.setDebugger(new NoOpDebugger(), null);
                 }),
         SKIPPED("skipped", false, false, cx -> {});

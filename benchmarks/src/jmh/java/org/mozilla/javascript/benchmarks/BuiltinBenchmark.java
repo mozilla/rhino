@@ -3,6 +3,7 @@ package org.mozilla.javascript.benchmarks;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.LambdaConstructor;
@@ -21,13 +22,13 @@ public class BuiltinBenchmark {
     @State(Scope.Thread)
     public static class AbstractClassState {
 
-        @Param({"false", "true"})
-        public boolean interpreted;
+        @Param({"Interpreter", "Compiler"})
+        public EvaluationMethod evalMethod;
 
         public void init()
                 throws IllegalAccessException, InvocationTargetException, InstantiationException {
             cx = Context.enter();
-            cx.setInterpretedMode(interpreted);
+            cx.setEvaluationMethod(evalMethod);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             scope = cx.initStandardObjects();

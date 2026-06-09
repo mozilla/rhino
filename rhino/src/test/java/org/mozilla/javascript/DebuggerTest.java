@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.debug.DebugFrame;
 import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
@@ -85,7 +86,7 @@ public class DebuggerTest {
             cx.setDebugger(debugger, cx);
             cx.setGeneratingSource(true);
             cx.setGeneratingDebug(true);
-            cx.setInterpretedMode(true);
+            cx.setEvaluationMethod(EvaluationMethod.Interpreter);
             Script script = cx.compileString(TEST_SCRIPT, "this-klass", 0, null);
             Object res = script.exec(cx, scope, scope.getGlobalThis());
             Assertions.assertNotNull(res);

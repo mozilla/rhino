@@ -24,6 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.WrapFactory;
 import org.mozilla.javascript.WrappedException;
 import org.mozilla.javascript.config.RhinoConfig;
@@ -243,7 +244,7 @@ public class GlobalRunCommandTest {
                     assertEquals(bytes, stdOut.bytes);
                     return null;
                 },
-                true);
+                EvaluationMethod.Interpreter);
     }
 
     /** Tests, what happens, when the process closes the inputStream after a given amount of data */
@@ -310,7 +311,7 @@ public class GlobalRunCommandTest {
                     assertEquals(expected, stdOut.bytes);
                     return null;
                 },
-                true);
+                EvaluationMethod.Interpreter);
     }
 
     /**

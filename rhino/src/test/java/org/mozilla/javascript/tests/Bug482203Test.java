@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
@@ -19,7 +20,7 @@ public class Bug482203Test {
     @Test
     public void jsApi() throws Exception {
         try (Context cx = Context.enter()) {
-            cx.setInterpretedMode(true);
+            cx.setEvaluationMethod(EvaluationMethod.Interpreter);
             InputStreamReader in =
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
@@ -42,7 +43,7 @@ public class Bug482203Test {
     @Test
     public void javaApi() throws Exception {
         try (Context cx = Context.enter()) {
-            cx.setInterpretedMode(true);
+            cx.setEvaluationMethod(EvaluationMethod.Interpreter);
             InputStreamReader in =
                     new InputStreamReader(Bug482203Test.class.getResourceAsStream("Bug482203.js"));
             Script script = cx.compileReader(in, "", 1, null);
