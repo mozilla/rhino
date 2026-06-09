@@ -881,8 +881,9 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     CompleteOptionalCallJump completeOptionalCallJump = null;
                     // We get a function for news, and lookup result for normal calls
                     Operand lookupResultOrFunction;
+                    var lines = new ArrayList<Integer>();
                     if (op == Token.NEW) {
-                        lookupResultOrFunction = getOperand(child, 0);
+                        lookupResultOrFunction = getOperand(child, 0, false, lines);
                     } else {
                         completeOptionalCallJump =
                                 generateCallFunAndThis(child, isOptionalChainingCall);
@@ -893,10 +894,11 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     }
                     List<Operand> args = new ArrayList<>();
                     while ((child = child.getNext()) != null) {
-                        updateLineNumber(child);
-                        args.add(getOperand(child, 0));
+                        args.add(getOperand(child, 0, false, lines));
                     }
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
+                    updateLineNumber(node);
+                    updateLineNumbers(lines);
                     if (op != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
                         if (op == Token.NEW) {
                             addInstruction(
@@ -2025,7 +2027,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
     }
 
     private Operand getOperand(Node node, int contextFlags) {
-        return getOperand(node, contextFlags, false);
+        return getOperand(node, contextFlags, false, null);
     }
 
     /**
@@ -2034,60 +2036,84 @@ public class Compiler<T extends ScriptOrFn<T>> {
      * maintain correct evaluation order.
      */
     private Operand getOperand(Node node, int contextFlags, boolean preferPeek) {
+        return getOperand(node, contextFlags, preferPeek, null);
+    }
+
+    private Operand getOperand(
+        Node node, int contextFlags, boolean preferPeek, ArrayList<Integer> lines) {
+        addLineNumber(node, lines);
         switch (node.getType()) {
-            case Token.NUMBER:
-                {
-                    updateLineNumber(node);
+            case Token.NUMBER: {
+                double num = node.getDouble();
+                int inum = (int) num;
 
-                    double num = node.getDouble();
-                    int inum = (int) num;
-
-                    return new DoubleOperand(num);
-                }
+                return new DoubleOperand(num);
+            }
             case Token.STRING:
-                updateLineNumber(node);
                 return new StringOperand(node.getString());
             case Token.NULL:
-                updateLineNumber(node);
                 return NullOperand.instance;
             case Token.UNDEFINED:
-                updateLineNumber(node);
                 return UndefinedOperand.instance;
             case Token.TRUE:
-                updateLineNumber(node);
                 return BooleanOperand.TRUE;
             case Token.FALSE:
-                updateLineNumber(node);
                 return BooleanOperand.FALSE;
             case Token.THIS:
-                updateLineNumber(node);
                 return ThisOperand.instance;
             case Token.SUPER:
-                updateLineNumber(node);
                 return SuperOperand.instance;
-            default:
-                {
-                    visitExpression(node, contextFlags);
-                    if (preferPeek) {
-                        return PeekOperand.instance;
-                    }
-                    return PopOperand.instance;
+            default: {
+                visitExpression(node, contextFlags);
+                if (preferPeek) {
+                    return PeekOperand.instance;
                 }
+                return PopOperand.instance;
+            }
         }
     }
 
-    private void updateLineNumber(Node node) {
+    private void addLineNumber(Node node, ArrayList<Integer> lines) {
+        if (lines == null) {
+            updateLineNumber(node);
+            return;
+        }
         int lineno = node.getLineno();
         if (lineno < 0) return;
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper != null) {
             Position mapped = mapper.mapPosition(lineno, node.getColumn());
-            if (mapped == null) return;
+            if (mapped == null)
+                return;
+            lineno = mapped.getLine();
+        }
+        lines.add(lineno);
+    }
+
+    private void updateLineNumber(Node node) {
+        int lineno = node.getLineno();
+        if (lineno < 0)
+            return;
+        SourceMapper mapper = compilerEnv.getSourceMapper();
+        if (mapper != null) {
+            Position mapped = mapper.mapPosition(lineno, node.getColumn());
+            if (mapped == null)
+                return;
             lineno = mapped.getLine();
         }
 
         // Token.printColumns and SourceMapper not in open-source
 
+        updateLineNumber(lineno);
+    }
+
+    private void updateLineNumbers(ArrayList<Integer> lines) {
+        for (int i : lines) {
+            updateLineNumber(i);
+        }
+    }
+
+    private void updateLineNumber(int lineno) {
         if (lineNumber == lineno) return;
 
         lineNumber = lineno;
