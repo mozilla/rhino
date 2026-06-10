@@ -260,9 +260,9 @@ public abstract class RhinoException extends RuntimeException {
         List<ScriptStackElement> list = new ArrayList<>();
         ScriptStackElement[][] interpreterStack = null;
         if (interpreterStackInfo != null) {
-            Evaluator interpreter = Context.createInterpreter();
-            if (interpreter instanceof Interpreter)
-                interpreterStack = ((Interpreter) interpreter).getScriptStackElements(this);
+            Evaluator eval = Context.createInterpreter();
+            if (eval instanceof AInterpreter<?, ?> interpreter)
+                interpreterStack = interpreter.getScriptStackElements(this);
         }
 
         int interpreterStackIndex = 0;
@@ -293,8 +293,7 @@ public abstract class RhinoException extends RuntimeException {
                     count++;
                 }
 
-            } else if ("org.mozilla.javascript.Interpreter".equals(e.getClassName())
-                    && "interpretLoop".equals(e.getMethodName())
+            } else if (isInterpreterMethod(e)
                     && interpreterStack != null
                     && interpreterStack.length > interpreterStackIndex) {
 
@@ -309,6 +308,31 @@ public abstract class RhinoException extends RuntimeException {
             }
         }
         return list.toArray(new ScriptStackElement[0]);
+    }
+
+    private static final class InterpreterMethod {
+        private final String className;
+        private final String methodName;
+
+        InterpreterMethod(String className, String methodName) {
+            this.className = className;
+            this.methodName = methodName;
+        }
+    }
+
+    private static final ArrayList<InterpreterMethod> interpreters = new ArrayList<>();
+
+    public static void registerInterpreterMethod(
+            Class<? extends AInterpreter> clazz, String methodName) {
+        interpreters.add(new InterpreterMethod(clazz.getName(), methodName));
+    }
+
+    private boolean isInterpreterMethod(StackTraceElement e) {
+        for (var i : interpreters) {
+            if (i.className.equals(e.getClassName()) && i.methodName.equals(e.getMethodName()))
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -383,6 +407,6 @@ public abstract class RhinoException extends RuntimeException {
     private String lineSource;
     private int columnNumber;
 
-    Object interpreterStackInfo;
+    ACallFrame<?, ?> interpreterStackInfo;
     int interpreterLineData;
 }

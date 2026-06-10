@@ -122,6 +122,18 @@ decycle {
     // accepted cycle: o.m.j.ast is strongly coupled to o.m.j
     ignoring from: "org.mozilla.javascript.*", to: "org.mozilla.javascript.ast.*"
 
+    // accepted cycle: o.m.j.interpreterv2 is strongly coupled to o.m.j
+    ignoring from: "org.mozilla.javascript.*", to: "org.mozilla.javascript.interpreterv2.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.*", to: "org.mozilla.javascript.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.instruction.*", to: "org.mozilla.javascript.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.operand.*", to: "org.mozilla.javascript.*"
+    // accepted cycle: interpreterv2 sub-packages are tightly coupled
+    ignoring from: "org.mozilla.javascript.interpreterv2.*", to: "org.mozilla.javascript.interpreterv2.instruction.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.*", to: "org.mozilla.javascript.interpreterv2.operand.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.instruction.*", to: "org.mozilla.javascript.interpreterv2.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.instruction.*", to: "org.mozilla.javascript.interpreterv2.operand.*"
+    ignoring from: "org.mozilla.javascript.interpreterv2.operand.*", to: "org.mozilla.javascript.interpreterv2.*"
+
     // accepted cycle: typedarrays are strongly coupled. (See #1893 of an idea, how to remove)
     ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.typedarrays.*"
     ignoring from: "org.mozilla.javascript.NativeArrayIterator", to: "org.mozilla.javascript.typedarrays.NativeTypedArrayView"

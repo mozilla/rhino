@@ -7,10 +7,10 @@ import org.mozilla.javascript.*;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
- * Regression tests for fixed-width Icode_SPREAD encoding in sparse array literals.
+ * Regression tests for fixed-width Icode.SPREAD encoding in sparse array literals.
  *
- * <p>Before the fix, Icode_SPREAD inside a sparse array literal emitted a conditional 2-byte
- * operand — present only when skipIndexes != null. bytecodeSpan(Icode_SPREAD) returned 1, so
+ * <p>Before the fix, Icode.SPREAD inside a sparse array literal emitted a conditional 2-byte
+ * operand — present only when skipIndexes != null. bytecodeSpan(Icode.SPREAD) returned 1, so
  * getLineNumbers() and dumpICode() were out of sync for any script containing a spread inside a
  * sparse array.
  *
@@ -50,7 +50,7 @@ public class SpreadSparseArrayBytecodeTest {
 
     // ------------------------------------------------------------------
     // 2. Code *after* the spread must execute correctly.
-    //    If bytecodeSpan(Icode_SPREAD) returns 1 instead of 3, the 2
+    //    If bytecodeSpan(Icode.SPREAD) returns 1 instead of 3, the 2
     //    operand bytes are misread as the next opcode(s), breaking any
     //    computation that follows.
     // ------------------------------------------------------------------
@@ -88,7 +88,7 @@ public class SpreadSparseArrayBytecodeTest {
 
     @Test
     public void testTwoSparseSpreadsBytecodeConsistent() {
-        // Two Icode_SPREAD instructions: 4 extra bytes if span == 1.
+        // Two Icode.SPREAD instructions: 4 extra bytes if span == 1.
         Utils.assertWithAllModes_ES6(
                 "10/absent/20",
                 "var a = [...[10], , ...[20]];\n"
@@ -109,7 +109,7 @@ public class SpreadSparseArrayBytecodeTest {
             cx.setLanguageVersion(Context.VERSION_ES6);
             cx.evaluateString(
                     cx.initStandardObjects(),
-                    "var a = [...[1], , 2];\n" // line 1 (Icode_SPREAD here)
+                    "var a = [...[1], , 2];\n" // line 1 (Icode.SPREAD here)
                             + "undefinedVar;\n", // line 2 ← must be reported
                     "test",
                     1,
@@ -120,7 +120,7 @@ public class SpreadSparseArrayBytecodeTest {
                     2,
                     e.lineNumber(),
                     "ReferenceError must be on line 2; "
-                            + "wrong line means bytecodeSpan(Icode_SPREAD) is incorrect");
+                            + "wrong line means bytecodeSpan(Icode.SPREAD) is incorrect");
         } finally {
             Context.exit();
         }
@@ -161,8 +161,8 @@ public class SpreadSparseArrayBytecodeTest {
                     cx.initStandardObjects(),
                     "var obj = {x:1};\n" // line 1
                             + "var arr = [1,2];\n" // line 2
-                            + "var sparse = [...arr, , 9];\n" // line 3 (array Icode_SPREAD)
-                            + "var merged = {...obj, y:2};\n" // line 4 (object Icode_SPREAD)
+                            + "var sparse = [...arr, , 9];\n" // line 3 (array Icode.SPREAD)
+                            + "var merged = {...obj, y:2};\n" // line 4 (object Icode.SPREAD)
                             + "undefinedVar;\n", // line 5 ← must be reported
                     "test",
                     1,

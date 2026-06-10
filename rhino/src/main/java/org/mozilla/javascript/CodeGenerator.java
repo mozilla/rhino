@@ -20,7 +20,7 @@ import org.mozilla.javascript.sourcemap.Position;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /** Generates bytecode for the Interpreter. */
-class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
+class CodeGenerator<T extends ScriptOrFn<T>> {
 
     private static final int MIN_LABEL_TABLE_SIZE = 32;
     private static final int MIN_FIXUP_TABLE_SIZE = 40;
@@ -105,7 +105,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         if (theFunction.isGenerator()) {
             // For generators with default parameters, generate parameter initialization
-            // bytecode BEFORE Icode_GENERATOR so defaults are evaluated before generator
+            // bytecode BEFORE Icode.GENERATOR so defaults are evaluated before generator
             // object creation. Ref: Ecma 2026, 10.2.11 FunctionDeclarationInstantiation
             Node paramInitBlock = theFunction.getGeneratorParamInitBlock();
             if (paramInitBlock != null) {
@@ -125,12 +125,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 for (int i = 0; i < functionCount; i++) {
                     FunctionNode fn = theFunction.getFunctionNode(i);
                     if (fn.getFunctionType() == FunctionNode.FUNCTION_STATEMENT) {
-                        addIndexOp(Icode_CLOSURE_STMT, i);
+                        addIndexOp(Icode.CLOSURE_STMT, i);
                     }
                 }
             }
 
-            addIcode(Icode_GENERATOR);
+            addIcode(Icode.GENERATOR);
             addUint16(theFunction.getBaseLineno() & 0xFFFF);
         }
 
@@ -187,16 +187,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 itsData.itsBigIntTable[index] = bigInt;
             }
         }
-        if (exceptionTableTop != 0 && itsData.itsExceptionTable.length != exceptionTableTop) {
+        if (exceptionTableTop != 0 && itsData.exceptionTable.length != exceptionTableTop) {
             int[] tmp = new int[exceptionTableTop];
-            System.arraycopy(itsData.itsExceptionTable, 0, tmp, 0, exceptionTableTop);
-            itsData.itsExceptionTable = tmp;
+            System.arraycopy(itsData.exceptionTable, 0, tmp, 0, exceptionTableTop);
+            itsData.exceptionTable = tmp;
         }
 
-        itsData.itsMaxVars = scriptOrFn.getParamAndVarCount();
-        // itsMaxFrameArray: interpret method needs this amount for its
+        itsData.maxVars = scriptOrFn.getParamAndVarCount();
+        // maxFrameArray: interpret method needs this amount for its
         // stack and sDbl arrays
-        itsData.itsMaxFrameArray = itsData.itsMaxVars + itsData.itsMaxLocals + itsData.itsMaxStack;
+        itsData.maxFrameArray = itsData.maxVars + itsData.maxLocals + itsData.maxStack;
 
         if (literalIds.size() != 0) {
             itsData.literalIds = literalIds.toArray();
@@ -269,7 +269,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             itsData.firstLinePC = lineno;
         }
         lineNumber = lineno;
-        addIcode(Icode_LINE);
+        addIcode(Icode.LINE);
         addUint16(lineno & 0xFFFF);
     }
 
@@ -292,7 +292,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     // In addition, function expressions can not be present here
                     // at statement level, they must only be present as expressions.
                     if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
-                        addIndexOp(Icode_CLOSURE_STMT, fnIndex);
+                        addIndexOp(Icode.CLOSURE_STMT, fnIndex);
                     } else {
                         if (fnType != FunctionNode.FUNCTION_STATEMENT) {
                             throw Kit.codeBug();
@@ -307,9 +307,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         // For example, eval("function () {}") should return a
                         // function, not undefined.
                         if (!itsInFunctionFlag) {
-                            addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                            addIndexOp(Icode.CLOSURE_EXPR, fnIndex);
                             stackChange(1);
-                            addIcode(Icode_POP_RESULT);
+                            addIcode(Icode.POP_RESULT);
                             stackChange(-1);
                         }
                     }
@@ -349,13 +349,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         visitStatement(child, initialStackDepth);
                         child = child.getNext();
                     }
-                    addIndexOp(Icode_LOCAL_CLEAR, local);
+                    addIndexOp(Icode.LOCAL_CLEAR, local);
                     releaseLocal(local);
                 }
                 break;
 
             case Token.DEBUGGER:
-                addIcode(Icode_DEBUGGER);
+                addIcode(Icode.DEBUGGER);
                 break;
 
             case Token.SWITCH:
@@ -369,17 +369,17 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                             caseNode = (Jump) caseNode.getNext()) {
                         if (caseNode.getType() != Token.CASE) throw badTree(caseNode);
                         Node test = caseNode.getFirstChild();
-                        addIcode(Icode_DUP);
+                        addIcode(Icode.DUP);
                         stackChange(1);
                         visitExpression(test, 0);
                         addToken(Token.SHEQ);
                         stackChange(-1);
-                        // If true, Icode_IFEQ_POP will jump and remove case
+                        // If true, Icode.IFEQ_POP will jump and remove case
                         // value from stack
-                        addGoto(caseNode.target, Icode_IFEQ_POP);
+                        addGoto(caseNode.target, Icode.IFEQ_POP);
                         stackChange(-1);
                     }
-                    addIcode(Icode_POP);
+                    addIcode(Icode.POP);
                     stackChange(-1);
                 }
                 break;
@@ -408,7 +408,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.JSR:
                 {
                     Node target = ((Jump) node).target;
-                    addGoto(target, Icode_GOSUB);
+                    addGoto(target, Icode.GOSUB);
                 }
                 break;
 
@@ -417,13 +417,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     // Account for incomming GOTOSUB address
                     stackChange(1);
                     int finallyRegister = getLocalBlockRef(node);
-                    addIndexOp(Icode_STARTSUB, finallyRegister);
+                    addIndexOp(Icode.STARTSUB, finallyRegister);
                     stackChange(-1);
                     while (child != null) {
                         visitStatement(child, initialStackDepth);
                         child = child.getNext();
                     }
-                    addIndexOp(Icode_RETSUB, finallyRegister);
+                    addIndexOp(Icode.RETSUB, finallyRegister);
                 }
                 break;
 
@@ -431,7 +431,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.EXPR_RESULT:
                 updateLineNumber(node);
                 visitExpression(child, 0);
-                addIcode((type == Token.EXPR_VOID) ? Icode_POP : Icode_POP_RESULT);
+                addIcode((type == Token.EXPR_VOID) ? Icode.POP : Icode.POP_RESULT);
                 stackChange(-1);
                 break;
 
@@ -441,7 +441,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     int exceptionObjectLocal = getLocalBlockRef(tryNode);
                     int scopeLocal = allocLocal();
 
-                    addIndexOp(Icode_SCOPE_SAVE, scopeLocal);
+                    addIndexOp(Icode.SCOPE_SAVE, scopeLocal);
 
                     int tryStart = iCodeTop;
                     boolean savedFlag = itsInTryFlag;
@@ -475,7 +475,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                                 scopeLocal);
                     }
 
-                    addIndexOp(Icode_LOCAL_CLEAR, scopeLocal);
+                    addIndexOp(Icode.LOCAL_CLEAR, scopeLocal);
                     releaseLocal(scopeLocal);
                 }
                 break;
@@ -515,18 +515,18 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                             || (compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
                         // End generator function with no result, or old language version
                         // in which generators never return a result.
-                        addIcode(Icode_GENERATOR_END);
+                        addIcode(Icode.GENERATOR_END);
                         addUint16(lineNumber & 0xFFFF);
                     } else {
                         visitExpression(child, ECF_TAIL);
-                        addIcode(Icode_GENERATOR_RETURN);
+                        addIcode(Icode.GENERATOR_RETURN);
                         addUint16(lineNumber & 0xFFFF);
                         stackChange(-1);
                     }
 
                 } else {
                     if (child == null) {
-                        addIcode(Icode_RETUNDEF);
+                        addIcode(Icode.RETUNDEF);
                     } else {
                         visitExpression(child, ECF_TAIL);
                         addToken(Token.RETURN);
@@ -549,7 +549,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 stackChange(-1);
                 break;
 
-            case Icode_GENERATOR:
+            case Icode.GENERATOR:
                 break;
 
             default:
@@ -576,9 +576,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         throw Kit.codeBug();
                     }
                     if (fn.isMethodDefinition()) {
-                        addIndexOp(Icode_METHOD_EXPR, fnIndex);
+                        addIndexOp(Icode.METHOD_EXPR, fnIndex);
                     } else {
-                        addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                        addIndexOp(Icode.CLOSURE_EXPR, fnIndex);
                     }
                     stackChange(1);
                 }
@@ -597,7 +597,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     Node lastChild = node.getLastChild();
                     while (child != lastChild) {
                         visitExpression(child, 0);
-                        addIcode(Icode_POP);
+                        addIcode(Icode.POP);
                         stackChange(-1);
                         child = child.getNext();
                     }
@@ -647,8 +647,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         }
                     }
 
-                    // Bytecode: [Icode_OBJECT_REST] [literalId:index] [computedKeyCount:uint8]
-                    addIndexOp(Icode_OBJECT_REST, staticKeysLiteralId);
+                    // Bytecode: [Icode.OBJECT_REST] [literalId:index] [computedKeyCount:uint8]
+                    addIndexOp(Icode.OBJECT_REST, staticKeysLiteralId);
                     addUint8(computedKeyCount);
 
                     stackChange(-computedKeyCount); // Computed keys removed from stack
@@ -679,12 +679,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
                         // embed line number and source filename
-                        addIndexOp(Icode_CALLSPECIAL, argCount);
+                        addIndexOp(Icode.CALLSPECIAL, argCount);
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
                         addUint16(lineNumber & 0xFFFF);
                     } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-                        addIndexOp(Icode_CALL_ON_SUPER, argCount);
+                        addIndexOp(Icode.CALL_ON_SUPER, argCount);
                     } else {
                         // Only use the tail call optimization if we're not in a try
                         // or we're not generating debug info (since the
@@ -693,7 +693,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                                 && (contextFlags & ECF_TAIL) != 0
                                 && !compilerEnv.isGenerateDebugInfo()
                                 && !itsInTryFlag) {
-                            type = Icode_TAIL_CALL;
+                            type = Icode.TAIL_CALL;
                         }
                         addIndexOp(type, argCount);
                     }
@@ -706,8 +706,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         // ref_call: f, thisObj, args -> ref
                         stackChange(-1 - argCount);
                     }
-                    if (argCount > itsData.itsMaxCalleeArgs) {
-                        itsData.itsMaxCalleeArgs = argCount;
+                    if (argCount > itsData.maxCalleeArgs) {
+                        itsData.maxCalleeArgs = argCount;
                     }
 
                     if (completeOptionalCallJump != null) {
@@ -720,13 +720,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.OR:
                 {
                     visitExpression(child, 0);
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
                     int afterSecondJumpStart = iCodeTop;
                     int jump = (type == Token.AND) ? Token.IFNE : Token.IFEQ;
                     addGotoOp(jump);
                     stackChange(-1);
-                    addIcode(Icode_POP);
+                    addIcode(Icode.POP);
                     stackChange(-1);
                     child = child.getNext();
                     // Preserve tail context flag if any
@@ -761,10 +761,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 child = child.getNext();
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // Jump if null or undefined
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
                     int putUndefinedLabel = iCodeTop;
-                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    addGotoOp(Icode.IF_NULL_UNDEF);
                     stackChange(-1);
 
                     // Access property
@@ -774,8 +774,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
-                    addIcode(Icode_POP);
-                    addIcode(Icode_UNDEF);
+                    addIcode(Icode.POP);
+                    addIcode(Icode.UNDEF);
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     addStringOp(
@@ -792,10 +792,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 child = child.getNext();
                 visitExpression(child, 0);
                 if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-                    addIcode(Icode_DELPROP_SUPER);
+                    addIcode(Icode.DELPROP_SUPER);
                 } else if (isName) {
                     // special handling for delete name
-                    addIcode(Icode_DELNAME);
+                    addIcode(Icode.DELNAME);
                 } else {
                     addToken(Token.DELPROP);
                 }
@@ -806,10 +806,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child, 0);
                 child = child.getNext();
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
                     int putUndefinedLabel = iCodeTop;
-                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    addGotoOp(Icode.IF_NULL_UNDEF);
                     stackChange(-1);
 
                     // Infix op
@@ -819,8 +819,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
-                    addIcode(Icode_POP);
-                    addIcode(Icode_UNDEF);
+                    addIcode(Icode.POP);
+                    addIcode(Icode.UNDEF);
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     visitExpression(child, 0);
@@ -876,8 +876,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.VOID:
                 visitExpression(child, 0);
                 if (type == Token.VOID) {
-                    addIcode(Icode_POP);
-                    addIcode(Icode_UNDEF);
+                    addIcode(Icode.POP);
+                    addIcode(Icode.UNDEF);
                 } else {
                     addToken(type);
                 }
@@ -888,12 +888,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child, 0);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // On the stack we'll have either the Ref or undefined
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
 
                     // If it's null or undefined, just jump ahead
                     int afterLabel = iCodeTop;
-                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    addGotoOp(Icode.IF_NULL_UNDEF);
                     stackChange(-1);
 
                     // Otherwise do the GET_REF
@@ -913,7 +913,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     String property = child.getString();
                     child = child.getNext();
                     if (type == Token.SETPROP_OP) {
-                        addIcode(Icode_DUP);
+                        addIcode(Icode.DUP);
                         stackChange(1);
                         addStringOp(Token.GETPROP, property);
                         // Compensate for the following USE_STACK
@@ -936,7 +936,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child, 0);
                 child = child.getNext();
                 if (type == Token.SETELEM_OP) {
-                    addIcode(Icode_DUP2);
+                    addIcode(Icode.DUP2);
                     stackChange(2);
                     addToken(Token.GETELEM);
                     stackChange(-1);
@@ -956,7 +956,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child, 0);
                 child = child.getNext();
                 if (type == Token.SET_REF_OP) {
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
                     addToken(Token.GET_REF);
                     // Compensate for the following USE_STACK
@@ -985,7 +985,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     visitExpression(child, 0);
                     child = child.getNext();
                     visitExpression(child, 0);
-                    addStringOp(Icode_SETCONST, name);
+                    addStringOp(Icode.SETCONST, name);
                     stackChange(-1);
                 }
                 break;
@@ -998,7 +998,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     if (itsInFunctionFlag && !builder.requiresActivationFrame)
                         index = scriptOrFn.getIndexForNameNode(node);
                     if (index == -1) {
-                        addStringOp(Icode_TYPEOFNAME, node.getString());
+                        addStringOp(Icode.TYPEOFNAME, node.getString());
                         stackChange(1);
                     } else {
                         addVarOp(Token.GETVAR, index);
@@ -1067,7 +1067,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 break;
 
             case Token.UNDEFINED:
-                addIcode(Icode_UNDEF);
+                addIcode(Icode.UNDEF);
                 stackChange(1);
                 break;
 
@@ -1103,10 +1103,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(child, 0);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // Jump if null or undefined
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
                     int putUndefinedLabel = iCodeTop;
-                    addGotoOp(Icode.Icode_IF_NULL_UNDEF);
+                    addGotoOp(Icode.IF_NULL_UNDEF);
                     stackChange(-1);
 
                     // Access property
@@ -1116,8 +1116,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                     // Put undefined
                     resolveForwardGoto(putUndefinedLabel);
-                    addIcode(Icode_POP);
-                    addIcode(Icode_UNDEF);
+                    addIcode(Icode.POP);
+                    addIcode(Icode.UNDEF);
                     resolveForwardGoto(afterLabel);
                 } else {
                     addStringOp(type, (String) node.getProp(Node.NAME_PROP));
@@ -1147,11 +1147,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     int queryPC;
                     updateLineNumber(node);
                     visitExpression(child, 0);
-                    addIcode(Icode_ENTERDQ);
+                    addIcode(Icode.ENTERDQ);
                     stackChange(-1);
                     queryPC = iCodeTop;
                     visitExpression(child.getNext(), 0);
-                    addBackwardGoto(Icode_LEAVEDQ, queryPC);
+                    addBackwardGoto(Icode.LEAVEDQ, queryPC);
                 }
                 break;
 
@@ -1167,13 +1167,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 if (child != null) {
                     visitExpression(child, 0);
                 } else {
-                    addIcode(Icode_UNDEF);
+                    addIcode(Icode.UNDEF);
                     stackChange(1);
                 }
                 if (type == Token.YIELD) {
                     addToken(Token.YIELD);
                 } else {
-                    addIcode(Icode_YIELD_STAR);
+                    addIcode(Icode.YIELD_STAR);
                 }
                 addUint16(node.getLineno() & 0xFFFF);
                 break;
@@ -1199,13 +1199,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     visitExpression(child, 0);
                     child = child.getNext();
 
-                    addIcode(Icode_DUP);
+                    addIcode(Icode.DUP);
                     stackChange(1);
                     int end = iCodeTop;
-                    addGotoOp(Icode.Icode_IF_NOT_NULL_UNDEF);
+                    addGotoOp(Icode.IF_NOT_NULL_UNDEF);
                     stackChange(-1);
 
-                    addIcode(Icode_POP);
+                    addIcode(Icode.POP);
                     visitExpression(child, 0);
                     stackChange(-1);
 
@@ -1225,19 +1225,19 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         int inum = (int) num;
         if (inum == num) {
             if (inum == 0) {
-                addIcode(Icode_ZERO);
+                addIcode(Icode.ZERO);
                 // Check for negative zero
                 if (1.0 / num < 0.0) {
                     addToken(Token.NEG);
                 }
             } else if (inum == 1) {
-                addIcode(Icode_ONE);
+                addIcode(Icode.ONE);
             } else if ((short) inum == inum) {
-                addIcode(Icode_SHORTNUMBER);
+                addIcode(Icode.SHORTNUMBER);
                 // write short as uin16 bit pattern
                 addUint16(inum & 0xFFFF);
             } else {
-                addIcode(Icode_INTNUMBER);
+                addIcode(Icode.INTNUMBER);
                 addInt(inum);
             }
         } else {
@@ -1263,11 +1263,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     String name = left.getString();
                     // stack: ... -> ... function thisObj
                     if (isOptionalChainingCall) {
-                        addStringOp(Icode_NAME_AND_THIS_OPTIONAL, name);
+                        addStringOp(Icode.NAME_AND_THIS_OPTIONAL, name);
                         stackChange(2);
                         return completeOptionalCallJump();
                     } else {
-                        addStringOp(Icode_NAME_AND_THIS, name);
+                        addStringOp(Icode.NAME_AND_THIS, name);
                         stackChange(2);
                     }
                     break;
@@ -1282,21 +1282,21 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
                         if (isOptionalChainingCall) {
-                            addStringOp(Icode_PROP_AND_THIS_OPTIONAL, property);
+                            addStringOp(Icode.PROP_AND_THIS_OPTIONAL, property);
                             stackChange(1);
                             return completeOptionalCallJump();
                         } else {
-                            addStringOp(Icode_PROP_AND_THIS, property);
+                            addStringOp(Icode.PROP_AND_THIS, property);
                             stackChange(1);
                         }
                     } else {
                         visitExpression(id, 0);
                         // stack: ... target id -> ... function thisObj
                         if (isOptionalChainingCall) {
-                            addIcode(Icode_ELEM_AND_THIS_OPTIONAL);
+                            addIcode(Icode.ELEM_AND_THIS_OPTIONAL);
                             return completeOptionalCallJump();
                         } else {
-                            addIcode(Icode_ELEM_AND_THIS);
+                            addIcode(Icode.ELEM_AND_THIS);
                         }
                     }
                     break;
@@ -1306,11 +1306,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 visitExpression(left, 0);
                 // stack: ... value -> ... function thisObj
                 if (isOptionalChainingCall) {
-                    addIcode(Icode_VALUE_AND_THIS_OPTIONAL);
+                    addIcode(Icode.VALUE_AND_THIS_OPTIONAL);
                     stackChange(1);
                     return completeOptionalCallJump();
                 } else {
-                    addIcode(Icode_VALUE_AND_THIS);
+                    addIcode(Icode.VALUE_AND_THIS);
                     stackChange(1);
                 }
                 break;
@@ -1320,15 +1320,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
     private CompleteOptionalCallJump completeOptionalCallJump() {
         // If it's null or undefined, pop undefined and skip the arguments and call
-        addIcode(Icode_DUP);
+        addIcode(Icode.DUP);
         stackChange(1);
         int putArgsAndDoCallLabel = iCodeTop;
-        addGotoOp(Icode.Icode_IF_NOT_NULL_UNDEF);
+        addGotoOp(Icode.IF_NOT_NULL_UNDEF);
         stackChange(-1);
 
         // Put undefined
-        addIcode(Icode_POP);
-        addIcode(Icode_UNDEF);
+        addIcode(Icode.POP);
+        addIcode(Icode.UNDEF);
         int afterLabel = iCodeTop;
         addGotoOp(Token.GOTO);
 
@@ -1349,7 +1349,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 {
                     if (builder.requiresActivationFrame) Kit.codeBug();
                     int i = scriptOrFn.getIndexForNameNode(child);
-                    addVarOp(Icode_VAR_INC_DEC, i);
+                    addVarOp(Icode.VAR_INC_DEC, i);
                     addUint8(incrDecrMask);
                     stackChange(1);
                     break;
@@ -1357,7 +1357,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.NAME:
                 {
                     String name = child.getString();
-                    addStringOp(Icode_NAME_INC_DEC, name);
+                    addStringOp(Icode.NAME_INC_DEC, name);
                     addUint8(incrDecrMask);
                     stackChange(1);
                     break;
@@ -1367,7 +1367,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     Node object = child.getFirstChild();
                     visitExpression(object, 0);
                     String property = object.getNext().getString();
-                    addStringOp(Icode_PROP_INC_DEC, property);
+                    addStringOp(Icode.PROP_INC_DEC, property);
                     addUint8(incrDecrMask);
                     break;
                 }
@@ -1377,7 +1377,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                     visitExpression(object, 0);
                     Node index = object.getNext();
                     visitExpression(index, 0);
-                    addIcode(Icode_ELEM_INC_DEC);
+                    addIcode(Icode.ELEM_INC_DEC);
                     addUint8(incrDecrMask);
                     stackChange(-1);
                     break;
@@ -1386,7 +1386,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 {
                     Node ref = child.getFirstChild();
                     visitExpression(ref, 0);
-                    addIcode(Icode_REF_INC_DEC);
+                    addIcode(Icode.REF_INC_DEC);
                     addUint8(incrDecrMask);
                     break;
                 }
@@ -1425,17 +1425,17 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         // If it's a postfix expression, we copy the old value
         // If it's postfix, we only need the _new_ value on the stack
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
-            addIcode(Icode_DUP); // stack: postfix [p, p], prefix: [p]
+            addIcode(Icode.DUP); // stack: postfix [p, p], prefix: [p]
             stackChange(+1);
         }
 
         // We need, in order, super and then the new value
         addToken(Token.SUPER); // stack: postfix [p, p, super], prefix: [p, super]
         stackChange(+1);
-        addIcode(Icode_SWAP); // stack: postfix [p, super, p], prefix: [super, p]
+        addIcode(Icode.SWAP); // stack: postfix [p, super, p], prefix: [super, p]
 
         // Increment or decrement the new value
-        addIcode(Icode_ONE); // stack: prefix  [p, super, p, 1], postfix: [super, p, 1]
+        addIcode(Icode.ONE); // stack: prefix  [p, super, p, 1], postfix: [super, p, 1]
         stackChange(+1);
         if ((incrDecrMask & Node.DECR_FLAG) == 0) {
             addToken(Token.ADD); // stack: prefix [p, super, p+1], postfix: [super, p+1]
@@ -1465,7 +1465,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         // If it was a postfix, just drop the new value
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
-            addIcode(Icode_POP); // stack: [p]
+            addIcode(Icode.POP); // stack: [p]
             stackChange(-1);
         }
     }
@@ -1483,9 +1483,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
     private void visitObjectLiteralWithSpread(
             Node node, Node child, Object[] propertyIds, int count) {
-        addIcode(Icode_REG_IND4);
+        addIcode(Icode.REG_IND4);
         addInt(-count - 1); // -1 to enforce it's negative even for {...x}
-        addIcode(Icode_LITERAL_NEW_OBJECT);
+        addIcode(Icode.LITERAL_NEW_OBJECT);
         addUint8(0); // unused
         stackChange(+2);
 
@@ -1501,8 +1501,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
                 if (((Node) propertyId).type == Token.DOTDOTDOT) {
                     // It's actually a spread! We need to do a "continue" to avoid setting it as key
-                    addIcode(Icode_SPREAD);
-                    // Always emit a 2-byte operand so Icode_SPREAD is fixed-width (3 bytes).
+                    addIcode(Icode.SPREAD);
+                    // Always emit a 2-byte operand so Icode.SPREAD is fixed-width (3 bytes).
                     // Object-literal spread never uses sourcePositions, so emit 0.
                     addUint16(0);
                     stackChange(-1);
@@ -1518,7 +1518,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             } else {
                 throw badTree(node);
             }
-            addIcode(Icode_LITERAL_KEY_SET);
+            addIcode(Icode.LITERAL_KEY_SET);
             stackChange(-1);
             // Value
             visitLiteralValue(child);
@@ -1546,7 +1546,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         int nextLiteralIndex = literalIds.size();
         literalIds.add(propertyIds);
 
-        addIndexOp(Icode_LITERAL_NEW_OBJECT, nextLiteralIndex);
+        addIndexOp(Icode.LITERAL_NEW_OBJECT, nextLiteralIndex);
         addUint8(hasAnyComputedProperty ? 1 : 0);
         stackChange(2);
 
@@ -1558,7 +1558,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
                 // Will be a node of type Token.COMPUTED_PROPERTY wrapping the actual expression
                 Node computedPropertyNode = (Node) propertyId;
                 visitExpression(computedPropertyNode.first, 0);
-                addIcode(Icode_LITERAL_KEY_SET);
+                addIcode(Icode.LITERAL_KEY_SET);
                 stackChange(-1);
             }
 
@@ -1605,7 +1605,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             literalIds.add(skipIndexes);
         }
 
-        addIndexOp(Icode_LITERAL_NEW_ARRAY, count - numberOfSpread);
+        addIndexOp(Icode.LITERAL_NEW_ARRAY, count - numberOfSpread);
         addUint16(skipIndexesId + 1);
         stackChange(1);
 
@@ -1613,7 +1613,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         while (child != null) {
             if (child.getType() == Token.DOTDOTDOT) {
                 visitExpression(child.getFirstChild(), 0);
-                addIcode(Icode_SPREAD);
+                addIcode(Icode.SPREAD);
                 if (skipIndexes != null) {
                     addUint16(sourcePositions[childIdx]);
                 } else {
@@ -1630,7 +1630,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         if (skipIndexes == null) {
             addToken(Token.ARRAYLIT);
         } else {
-            addIndexOp(Icode_SPARE_ARRAYLIT, skipIndexesId);
+            addIndexOp(Icode.SPARE_ARRAYLIT, skipIndexesId);
         }
     }
 
@@ -1638,23 +1638,23 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         int childType = child.getType();
         if (childType == Token.GET) {
             visitExpression(child.getFirstChild(), 0);
-            addIcode(Icode_LITERAL_GETTER);
+            addIcode(Icode.LITERAL_GETTER);
         } else if (childType == Token.SET) {
             visitExpression(child.getFirstChild(), 0);
-            addIcode(Icode_LITERAL_SETTER);
+            addIcode(Icode.LITERAL_SETTER);
         } else if (childType == Token.METHOD) {
             visitExpression(child.getFirstChild(), 0);
-            addIcode(Icode_LITERAL_SET);
+            addIcode(Icode.LITERAL_SET);
         } else {
             visitExpression(child, 0);
-            addIcode(Icode_LITERAL_SET);
+            addIcode(Icode.LITERAL_SET);
         }
         stackChange(-1);
     }
 
     private void visitTemplateLiteral(Node node) {
         int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
-        addIndexOp(Icode_TEMPLATE_LITERAL_CALLSITE, index);
+        addIndexOp(Icode.TEMPLATE_LITERAL_CALLSITE, index);
         stackChange(1);
     }
 
@@ -1851,21 +1851,21 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         switch (op) {
             case Token.SETCONSTVAR:
                 if (varIndex < 128) {
-                    addIcode(Icode_SETCONSTVAR1);
+                    addIcode(Icode.SETCONSTVAR1);
                     addUint8(varIndex);
                     return;
                 }
-                addIndexOp(Icode_SETCONSTVAR, varIndex);
+                addIndexOp(Icode.SETCONSTVAR, varIndex);
                 return;
             case Token.GETVAR:
             case Token.SETVAR:
                 if (varIndex < 128) {
-                    addIcode(op == Token.GETVAR ? Icode_GETVAR1 : Icode_SETVAR1);
+                    addIcode(op == Token.GETVAR ? Icode.GETVAR1 : Icode.SETVAR1);
                     addUint8(varIndex);
                     return;
                 }
             // fallthrough
-            case Icode_VAR_INC_DEC:
+            case Icode.VAR_INC_DEC:
                 addIndexOp(op, varIndex);
                 return;
         }
@@ -1897,15 +1897,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             strings.put(str, index);
         }
         if (index < 4) {
-            addIcode(Icode_REG_STR_C0 - index);
+            addIcode(Icode.REG_STR_C0 - index);
         } else if (index <= 0xFF) {
-            addIcode(Icode_REG_STR1);
+            addIcode(Icode.REG_STR1);
             addUint8(index);
         } else if (index <= 0xFFFF) {
-            addIcode(Icode_REG_STR2);
+            addIcode(Icode.REG_STR2);
             addUint16(index);
         } else {
-            addIcode(Icode_REG_STR4);
+            addIcode(Icode.REG_STR4);
             addInt(index);
         }
     }
@@ -1917,15 +1917,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             bigInts.put(n, index);
         }
         if (index < 4) {
-            addIcode(Icode_REG_BIGINT_C0 - index);
+            addIcode(Icode.REG_BIGINT_C0 - index);
         } else if (index <= 0xFF) {
-            addIcode(Icode_REG_BIGINT1);
+            addIcode(Icode.REG_BIGINT1);
             addUint8(index);
         } else if (index <= 0xFFFF) {
-            addIcode(Icode_REG_BIGINT2);
+            addIcode(Icode.REG_BIGINT2);
             addUint16(index);
         } else {
-            addIcode(Icode_REG_BIGINT4);
+            addIcode(Icode.REG_BIGINT4);
             addInt(index);
         }
         addToken(Token.BIGINT);
@@ -1934,15 +1934,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     private void addIndexPrefix(int index) {
         if (index < 0) Kit.codeBug();
         if (index < 6) {
-            addIcode(Icode_REG_IND_C0 - index);
+            addIcode(Icode.REG_IND_C0 - index);
         } else if (index <= 0xFF) {
-            addIcode(Icode_REG_IND1);
+            addIcode(Icode.REG_IND1);
             addUint8(index);
         } else if (index <= 0xFFFF) {
-            addIcode(Icode_REG_IND2);
+            addIcode(Icode.REG_IND2);
             addUint16(index);
         } else {
-            addIcode(Icode_REG_IND4);
+            addIcode(Icode.REG_IND4);
             addInt(index);
         }
     }
@@ -1955,15 +1955,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             int exceptionObjectLocal,
             int scopeLocal) {
         int top = exceptionTableTop;
-        int[] table = itsData.itsExceptionTable;
+        int[] table = itsData.exceptionTable;
         if (table == null) {
             if (top != 0) Kit.codeBug();
             table = new int[Interpreter.EXCEPTION_SLOT_SIZE * 2];
-            itsData.itsExceptionTable = table;
+            itsData.exceptionTable = table;
         } else if (table.length == top) {
             table = new int[table.length * 2];
-            System.arraycopy(itsData.itsExceptionTable, 0, table, 0, top);
-            itsData.itsExceptionTable = table;
+            System.arraycopy(itsData.exceptionTable, 0, table, 0, top);
+            itsData.exceptionTable = table;
         }
         table[top + Interpreter.EXCEPTION_TRY_START_SLOT] = icodeStart;
         table[top + Interpreter.EXCEPTION_TRY_END_SLOT] = icodeEnd;
@@ -1994,8 +1994,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             stackDepth += change;
         } else {
             int newDepth = stackDepth + change;
-            if (newDepth > itsData.itsMaxStack) {
-                itsData.itsMaxStack = newDepth;
+            if (newDepth > itsData.maxStack) {
+                itsData.maxStack = newDepth;
             }
             stackDepth = newDepth;
         }
@@ -2004,8 +2004,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     private int allocLocal() {
         int localSlot = localTop;
         ++localTop;
-        if (localTop > itsData.itsMaxLocals) {
-            itsData.itsMaxLocals = localTop;
+        if (localTop > itsData.maxLocals) {
+            itsData.maxLocals = localTop;
         }
         return localSlot;
     }
