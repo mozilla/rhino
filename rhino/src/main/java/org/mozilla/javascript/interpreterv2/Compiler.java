@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
@@ -492,11 +494,8 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     return;
                 }
             case Token.ENTERWITH:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new EnterWith(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new EnterWith(obj));
+                return;
             case Token.LEAVEWITH:
                 {
                     addInstruction(LeaveWith.instance);
@@ -624,12 +623,8 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     return;
                 }
             case Token.EXPR_VOID:
-                {
-                    updateLineNumber(node);
-                    var obj = getOperand(child, 0);
-                    addInstruction(new VoidInstruction(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new VoidInstruction(obj));
+                return;
             case Token.EXPR_RESULT:
                 {
                     updateLineNumber(node);
@@ -692,12 +687,8 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     return;
                 }
             case Token.THROW:
-                {
-                    updateLineNumber(node);
-                    var value = getOperand(child, 0);
-                    addInstruction(new Throw(value, (short) lineNumber));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new Throw(obj, (short) lineNumber));
+                return;
             case Token.RETHROW:
                 {
                     updateLineNumber(node);
@@ -735,29 +726,17 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     return;
                 }
             case Token.ENUM_INIT_KEYS:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new EnumInitKeys(obj, getLocalBlockRef(node)));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new EnumInitKeys(obj, getLocalBlockRef(node)));
+                return;
             case Token.ENUM_INIT_VALUES:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new EnumInitValues(obj, getLocalBlockRef(node)));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new EnumInitValues(obj, getLocalBlockRef(node)));
+                return;
             case Token.ENUM_INIT_ARRAY:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new EnumInitArray(obj, getLocalBlockRef(node)));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new EnumInitArray(obj, getLocalBlockRef(node)));
+                return;
             case Token.ENUM_INIT_VALUES_IN_ORDER:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new EnumInitValuesInOrder(obj, getLocalBlockRef(node)));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new EnumInitValuesInOrder(obj, getLocalBlockRef(node)));
+                return;
 
             default:
                 throw badTree(node);
@@ -1019,39 +998,21 @@ public class Compiler<T extends ScriptOrFn<T>> {
                         addInstruction(new Name("undefined"));
                         resolveForwardGoto(afterLabel);
                     } else {
-                        var lhs = getOperand(firstChild, 0);
-                        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-                            addInstruction(
-                                    new GetPropSuper(
-                                            lhs, child.getString(), op == Token.GETPROPNOWARN));
-                        } else {
-                            addInstruction(
-                                    new GetProp(lhs, child.getString(), op == Token.GETPROPNOWARN));
-                        }
+                        boolean noWarn = op == Token.GETPROPNOWARN;
+                        var propName = child.getString();
+                        visitUnaryOperation(firstChild, lhs ->
+                            (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1)
+                                ? new GetPropSuper(lhs, propName, noWarn)
+                                : new GetProp(lhs, propName, noWarn));
                     }
                     return;
                 }
             case Token.DELPROP:
                 {
                     boolean isName = child.getType() == Token.BINDNAME;
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-                        addInstruction(new DelPropSuper(lhs, rhs));
-                    } else if (isName) {
-                        // special handling for delete name
-                        addInstruction(new DelName(lhs, rhs));
-                    } else {
-                        addInstruction(new DelProp(lhs, rhs));
-                    }
+                    visitBinaryOperation(child, (l, r) ->
+                        (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1)
+                        ? new DelPropSuper(l,r) : isName ? new DelName(l, r) : new DelProp(l, r));
                     return;
                 }
             case Token.GETELEM:
@@ -1085,338 +1046,83 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     return;
                 }
             case Token.BITAND:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new BitAnd(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new BitAnd(l, r));
+                return;
             case Token.BITOR:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new BitOr(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new BitOr(l, r));
+                return;
             case Token.BITXOR:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new BitXor(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new BitXor(l, r));
+                return;
             case Token.LSH:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new LeftShift(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new LeftShift(l, r));
+                return;
             case Token.RSH:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new RightShift(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new RightShift(l, r));
+                return;
             case Token.URSH:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new UnsignedRightShift(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new UnsignedRightShift(l, r));
+                return;
             case Token.ADD:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Add(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Add(l, r));
+                return;
             case Token.STRING_CONCAT:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new StringConcat(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new StringConcat(l, r));
+                return;
             case Token.SUB:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Subtract(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Subtract(l, r));
+                return;
             case Token.MOD:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Mod(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Mod(l, r));
+                return;
             case Token.DIV:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Divide(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Divide(l, r));
+                return;
             case Token.MUL:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Multiply(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Multiply(l, r));
+                return;
             case Token.EXP:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Exponentiate(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Exponentiate(l, r));
+                return;
             case Token.EQ:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Equal(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Equal(l, r));
+                return;
             case Token.NE:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new NotEqual(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new NotEqual(l, r));
+                return;
             case Token.SHEQ:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new ShallowEqual(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new ShallowEqual(l, r));
+                return;
             case Token.SHNE:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new ShallowNotEqual(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new ShallowNotEqual(l, r));
+                return;
             case Token.IN:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new In(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new In(l, r));
+                return;
             case Token.INSTANCEOF:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Instanceof(lhs, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Instanceof(l, r));
+                return;
             case Token.LE:
             case Token.LT:
             case Token.GE:
             case Token.GT:
-                {
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new Comparison(lhs, op, rhs));
-                    return;
-                }
+                visitBinaryOperation(child, (l, r) -> new Comparison(l, op, r));
+                return;
             case Token.POS:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new Pos(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new Pos(obj));
+                return;
             case Token.NEG:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new Neg(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new Neg(obj));
+                return;
             case Token.NOT:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new Not(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new Not(obj));
+                return;
             case Token.BITNOT:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new BitNot(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new BitNot(obj));
+                return;
             case Token.TYPEOF:
-                {
-                    var obj = getOperand(child, 0);
-                    addInstruction(new Typeof(obj));
-                    return;
-                }
+                visitUnaryOperation(child, obj -> new Typeof(obj));
+                return;
             case Token.VOID:
                 {
                     visitExpression(child, 0);
@@ -1510,49 +1216,19 @@ public class Compiler<T extends ScriptOrFn<T>> {
             case Token.SETNAME:
                 {
                     String name = child.getString();
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new SetName(lhs, name, rhs));
+                    visitBinaryOperation(child, (l, r) -> new SetName(l, name, r));
                     return;
                 }
             case Token.STRICT_SETNAME:
                 {
                     String name = child.getString();
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new StrictSetName(lhs, name, rhs));
+                    visitBinaryOperation(child, (l, r) -> new StrictSetName(l, name, r));
                     return;
                 }
             case Token.SETCONST:
                 {
                     String name = child.getString();
-                    Operand lhs, rhs;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, false);
-                        child = child.getNext();
-                        rhs = getSafeOperand(child, 0, false);
-                    } else {
-                        lhs = getOperand(child, 0);
-                        child = child.getNext();
-                        rhs = getOperand(child, 0);
-                    }
-                    addInstruction(new SetConst(lhs, name, rhs));
+                    visitBinaryOperation(child, (l, r) -> new SetConst(l, name, r));
                     return;
                 }
             case Token.TYPEOFNAME:
@@ -1840,8 +1516,8 @@ public class Compiler<T extends ScriptOrFn<T>> {
                         addInstruction(new Name("undefined"));
                         resolveForwardGoto(afterLabel);
                     } else {
-                        var lhs = getOperand(child, 0);
-                        addInstruction(new RefSpecial(lhs, (String) node.getProp(Node.NAME_PROP)));
+                        var name = (String) node.getProp(Node.NAME_PROP);
+                        visitUnaryOperation(child, obj -> new RefSpecial(obj, name));
                     }
                     return;
                 }
@@ -1938,6 +1614,30 @@ public class Compiler<T extends ScriptOrFn<T>> {
                             "Unknown op: " + Token.typeToName(op), op);
                 }
         }
+    }
+
+    private void visitUnaryOperation(Node child, Function<Operand, Instruction> instruction) {
+        var obj = getOperand(child, 0);
+        var lines = new ArrayList<Integer>();
+        updateLineNumbers(lines);
+        addInstruction(instruction.apply(obj));
+    }
+
+    private void visitBinaryOperation(
+            Node child, BiFunction<Operand, Operand, Instruction> instruction) {
+        Operand lhs, rhs;
+        var lines = new ArrayList<Integer>();
+        if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
+            lhs = getSafeOperand(child, 0, false);
+            child = child.getNext();
+            rhs = getSafeOperand(child, 0, false);
+        } else {
+            lhs = getOperand(child, 0, false, lines);
+            child = child.getNext();
+            rhs = getOperand(child, 0, false, lines);
+        }
+        updateLineNumbers(lines);
+        addInstruction(instruction.apply(lhs, rhs));
     }
 
     private Instruction getE4xInstruction(int op) {
@@ -2040,15 +1740,16 @@ public class Compiler<T extends ScriptOrFn<T>> {
     }
 
     private Operand getOperand(
-        Node node, int contextFlags, boolean preferPeek, ArrayList<Integer> lines) {
+            Node node, int contextFlags, boolean preferPeek, ArrayList<Integer> lines) {
         addLineNumber(node, lines);
         switch (node.getType()) {
-            case Token.NUMBER: {
-                double num = node.getDouble();
-                int inum = (int) num;
+            case Token.NUMBER:
+                {
+                    double num = node.getDouble();
+                    int inum = (int) num;
 
-                return new DoubleOperand(num);
-            }
+                    return new DoubleOperand(num);
+                }
             case Token.STRING:
                 return new StringOperand(node.getString());
             case Token.NULL:
@@ -2063,13 +1764,14 @@ public class Compiler<T extends ScriptOrFn<T>> {
                 return ThisOperand.instance;
             case Token.SUPER:
                 return SuperOperand.instance;
-            default: {
-                visitExpression(node, contextFlags);
-                if (preferPeek) {
-                    return PeekOperand.instance;
+            default:
+                {
+                    visitExpression(node, contextFlags);
+                    if (preferPeek) {
+                        return PeekOperand.instance;
+                    }
+                    return PopOperand.instance;
                 }
-                return PopOperand.instance;
-            }
         }
     }
 
@@ -2083,8 +1785,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper != null) {
             Position mapped = mapper.mapPosition(lineno, node.getColumn());
-            if (mapped == null)
-                return;
+            if (mapped == null) return;
             lineno = mapped.getLine();
         }
         lines.add(lineno);
@@ -2092,13 +1793,11 @@ public class Compiler<T extends ScriptOrFn<T>> {
 
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
-        if (lineno < 0)
-            return;
+        if (lineno < 0) return;
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper != null) {
             Position mapped = mapper.mapPosition(lineno, node.getColumn());
-            if (mapped == null)
-                return;
+            if (mapped == null) return;
             lineno = mapped.getLine();
         }
 
