@@ -1065,6 +1065,22 @@ public class Test262SuiteTest {
         void write(Writer writer, boolean statsEnabled, boolean rollUpEnabled) throws IOException {
             writer.write(
                     "# This is a configuration file for Test262SuiteTest.java. See ./README.md for more info about this file\n");
+
+            if (statsEnabled) {
+                long failures = 0;
+                long tests = 0;
+
+                for (Node node : rootNode.childNodes.values()) {
+                    if (node instanceof DirectoryNode directoryNode) {
+                        tests += directoryNode.testDeepCount;
+                        failures += directoryNode.failureDeepCount;
+                    }
+                }
+                writer.write("#\n# Overall failures: ");
+                writer.write(DirectoryNode.statsText(statsEnabled, tests, failures));
+                writer.write("\n\n");
+            }
+
             rootNode.writeChildNodes(writer, null, statsEnabled, rollUpEnabled, false);
         }
 
