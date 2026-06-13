@@ -247,6 +247,11 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return ScriptRuntime.isGeneratedScript(sourceFile);
     }
 
+    /** Is the script interpreted (or is it the result of compilation)? */
+    public boolean isInterpreted() {
+        return code instanceof InterpreterData;
+    }
+
     @Override
     public int[] getLineNumbers() {
         return Interpreter.getLineNumbers(this);
