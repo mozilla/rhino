@@ -133,7 +133,6 @@ sharded_parameterized_test(
     size = "medium",
     srcs = ["src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java"],
     data = ["testsrc/test262.properties"] + glob(["test262/**"]),
-    javacopts = TEST_OPTS,
     jvm_flags = [
         "-Xmx1g",
     ],
