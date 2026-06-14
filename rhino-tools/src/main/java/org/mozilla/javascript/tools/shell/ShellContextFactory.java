@@ -49,6 +49,7 @@ public class ShellContextFactory extends ContextFactory {
             cx.setErrorReporter(errorReporter);
         }
         cx.setGeneratingDebug(generatingDebug);
+        cx.setFinalizationEnabled(true);
         super.onContextCreated(cx);
     }
 
