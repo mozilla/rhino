@@ -16,6 +16,8 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -508,7 +510,7 @@ public class Context implements Closeable {
         }
         if (cx.enterCount < 1) Kit.codeBug();
         if (--cx.enterCount == 0) {
-            releaseContext(cx);
+            cx.releaseContext();
         }
     }
 
@@ -518,15 +520,17 @@ public class Context implements Closeable {
         if (--enterCount == 0) {
             assert (currentContext.get() == this)
                     : "currentContext: " + currentContext.get() + ", this: " + this;
-            releaseContext(this);
+            releaseContext();
         }
     }
 
-    private static void releaseContext(Context cx) {
+    private void releaseContext() {
+        // Drain the reference queue to prevent memory leaks
+        cleanUpReferences();
         // do not use contextLocal.remove() here, as this might be much slower, when the same thread
         // creates a new context. See ContextThreadLocalBenchmark.
         currentContext.set(null);
-        cx.factory.onContextReleased(cx);
+        factory.onContextReleased(this);
     }
 
     /**
@@ -2530,16 +2534,39 @@ public class Context implements Closeable {
      * Run all the microtasks for the current context to completion. This is called by the various
      * "evaluate" functions. Frameworks that call Function objects directly should call this
      * function to ensure that everything completes if they want all Promises to eventually resolve.
-     * This function is idempotent, but the microtask queue is not thread-safe.
+     * This function is idempotent, but the microtask queue is not thread-safe. If references are
+     * registered using a FinalizationRegistry, finalization callbacks will be called in this method
+     * as well.
      *
      * <p>Nothing will happen if suspendMicrotaskProcessing was called.
      *
      * @see #suspendMicrotaskProcessing()
      */
     public void processMicrotasks() {
+        if (microtaskSuspendCount > 0) {
+            return;
+        }
+        // Clean up references in a microtask in case a finalization call
+        // registers a microtask
+        microtasks.add(this::cleanUpReferences);
         Runnable head;
-        while (microtaskSuspendCount == 0 && (head = microtasks.poll()) != null) {
+        while ((head = microtasks.poll()) != null) {
             head.run();
+        }
+    }
+
+    /**
+     * Clean up an item that has been removed from the reference queue and check if there are more.
+     */
+    private void cleanUpReferences() {
+        Reference<?> ref;
+        while ((ref = referenceQueue.poll()) != null) {
+            if (ref instanceof NativeFinalizationRegistry.Registration registration) {
+                var registry = registration.getRegistry();
+                if (registry != null) {
+                    registry.cleanup(this, registration);
+                }
+            }
         }
     }
 
@@ -2571,6 +2598,10 @@ public class Context implements Closeable {
         }
     }
 
+    ReferenceQueue<Object> getReferenceQueue() {
+        return referenceQueue;
+    }
+
     /**
      * Control whether to track unhandled promise rejections. If "track" is set to true, then the
      * tracker returned by "getUnhandledPromiseTracker" must be periodically used to process the
@@ -2589,6 +2620,23 @@ public class Context implements Closeable {
      */
     public UnhandledRejectionTracker getUnhandledPromiseTracker() {
         return unhandledPromises;
+    }
+
+    /**
+     * Control whether finalization callbacks are dispatched when registered targets are garbage
+     * collected. Defaults to false. If set to true, then "processMicrotasks" must periodically be
+     * called to ensure that finalization callbacks are fired, or a memory leak may result.
+     * (Microtasks are always processed before scripts exit and as a normal part of handling
+     * Promises.) It set to false (the default) then the FinalizationRegistry API will still work as
+     * the spec describes but callbacks will never fire.
+     */
+    public void setFinalizationEnabled(boolean enabled) {
+        finalizationEnabled = enabled;
+    }
+
+    /** Returns whether cleanup callbacks will be dispatched at microtask checkpoints. */
+    public boolean isFinalizationEnabled() {
+        return finalizationEnabled;
     }
 
     /* ******** end of API ********* */
@@ -3024,8 +3072,10 @@ public class Context implements Closeable {
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
     private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
+    private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
     private int microtaskSuspendCount;
     private final UnhandledRejectionTracker unhandledPromises = new UnhandledRejectionTracker();
+    private boolean finalizationEnabled = false;
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;

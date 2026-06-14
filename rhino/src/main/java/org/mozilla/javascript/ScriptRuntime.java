@@ -305,6 +305,8 @@ public class ScriptRuntime {
             new LazilyLoadedCtor<>(scope, "Proxy", sealed, true, NativeProxy::init);
             new LazilyLoadedCtor<>(scope, "Reflect", sealed, true, NativeReflect::init);
             new LazilyLoadedCtor<>(scope, "WeakRef", sealed, true, NativeWeakRef::init);
+            new LazilyLoadedCtor<>(
+                    scope, "FinalizationRegistry", sealed, true, NativeFinalizationRegistry::init);
         }
 
         scope.cacheBuiltins(sealed);
