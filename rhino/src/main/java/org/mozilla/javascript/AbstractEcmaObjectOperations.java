@@ -9,6 +9,8 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
+import static org.mozilla.javascript.Scriptable.NOT_FOUND;
+
 /**
  * Abstract Object Operations as defined by EcmaScript
  *
@@ -199,7 +201,7 @@ public class AbstractEcmaObjectOperations {
         8. Throw a TypeError exception.
          */
         Object constructor = ScriptableObject.getProperty((Scriptable) s, "constructor");
-        if (constructor == Scriptable.NOT_FOUND || Undefined.isUndefined(constructor)) {
+        if (constructor == NOT_FOUND || Undefined.isUndefined(constructor)) {
             return defaultConstructor;
         }
         if (!ScriptRuntime.isObject(constructor)) {
@@ -207,7 +209,7 @@ public class AbstractEcmaObjectOperations {
                     "msg.arg.not.object", ScriptRuntime.typeof(constructor));
         }
         Object species = ScriptableObject.getProperty((Scriptable) constructor, SymbolKey.SPECIES);
-        if (species == Scriptable.NOT_FOUND || species == null || Undefined.isUndefined(species)) {
+        if (species == NOT_FOUND || species == null || Undefined.isUndefined(species)) {
             return defaultConstructor;
         }
         if (!(species instanceof Constructable)) {
@@ -547,5 +549,102 @@ public class AbstractEcmaObjectOperations {
             return true;
         }
         return false;
+    }
+    /**
+     * Implements the OrdinarySetWithOwnDescriptor abstract operation.
+     *
+     * <p>see <a href="https://262.ecma-international.org/14.0/#sec-ordinaryset">OrdinarySet ( O, P,
+     * V, Receiver )</a>
+     */
+    public static boolean ordinarySet(
+            Context cx, VarScope s, ScriptableObject o, Object p, Object v, Scriptable receiver) {
+        /*
+         * 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
+         * 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
+         */
+        DescriptorInfo ownDesc =
+                (ScriptRuntime.isSymbol(p))
+                        ? o.getOwnPropertyDescriptor(cx, p)
+                        : o.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
+
+        if (ownDesc != null) {
+            // Target owns the property: delegate to OrdinarySetWithOwnDescriptor.
+            return ordinarySetWithOwnDescriptor(cx, s, o, p, v, receiver, ownDesc);
+        }
+        return false;
+    }
+
+    /**
+     * Implements the OrdinarySetWithOwnDescriptor abstract operation.
+     *
+     * <p>see <a href="https://262.ecma-international.org/14.0/#sec-ordinarysetwithowndescriptor">
+     * OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )</a>
+     */
+    private static boolean ordinarySetWithOwnDescriptor(
+            Context cx,
+            VarScope s,
+            Scriptable o,
+            Object p,
+            Object v,
+            Scriptable receiver,
+            DescriptorInfo ownDesc) {
+        /*
+         * 1. If IsDataDescriptor(ownDesc) is true, then
+         *    a. If ownDesc.[[Writable]] is false, return false.
+         *    b. If Type(Receiver) is not Object, return false.
+         *    c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
+         *    d. If existingDescriptor is not undefined, then
+         *       i.  If IsAccessorDescriptor(existingDescriptor) is true, return false.
+         *       ii. If existingDescriptor.[[Writable]] is false, return false.
+         *       iii.Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
+         *           Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
+         *    e. Else,
+         *       Return ? CreateDataProperty(Receiver, P, V).
+         * 2. Assert: IsAccessorDescriptor(ownDesc) is true.
+         * 3. Let setter be ownDesc.[[Set]].
+         * 4. If setter is undefined, return false.
+         * 5. Perform ? Call(setter, Receiver, « V »).
+         * 6. Return true.
+         */
+
+        if (ownDesc.isDataDescriptor()) {
+            if (ownDesc.isWritable(false)) {
+                return false;
+            }
+            if (!(receiver instanceof ScriptableObject)) {
+                return false;
+            }
+            ScriptableObject receiverObj = (ScriptableObject) receiver;
+
+            DescriptorInfo existingDesc =
+                    (ScriptRuntime.isSymbol(p))
+                            ? receiverObj.getOwnPropertyDescriptor(cx, p)
+                            : receiverObj.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
+
+            if (existingDesc != null) {
+                if (existingDesc.isAccessorDescriptor()) {
+                    return false;
+                }
+                if (existingDesc.isWritable(false)) {
+                    return false;
+                }
+                DescriptorInfo valueDesc =
+                        new DescriptorInfo(
+                                NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, v);
+                receiverObj.defineOwnProperty(cx, p, valueDesc);
+                return true;
+            }
+
+            DescriptorInfo newDesc = new DescriptorInfo(true, true, true, v);
+            receiverObj.defineOwnProperty(cx, p, newDesc);
+            return true;
+        }
+
+        Object setter = ownDesc.setter;
+        if (setter == null || setter == NOT_FOUND || Undefined.isUndefined(setter)) {
+            return false;
+        }
+        ((Function) setter).call(cx, s, receiver, new Object[] {v});
+        return true;
     }
 }

@@ -430,23 +430,24 @@ final class NativeReflect extends ScriptableObject {
         // A missing value must be treated as undefined
         final Object value = args.length > 2 ? args[2] : Undefined.instance;
 
-        Scriptable receiver =
-                args.length > 3 ? ScriptableObject.ensureScriptable(args[3]) : target;
-        if (receiver != target) {
-            DescriptorInfo descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
-            if (descriptor != null) {
-                Object setter = descriptor.setter;
-                if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter).call(cx, s, receiver, new Object[] {value});
-                    return true;
-                }
+        Scriptable receiver = args.length > 3 ? ScriptableObject.ensureScriptable(args[3]) : target;
 
-                if (descriptor.isConfigurable(false)) {
-                    return false;
-                }
+        // OrdinarySet is only needed when receiver != target.
+        // When receiver == target we must call target.[[Set]] directly via put(),
+        // which correctly invokes any proxy set trap on target.
+        // Inlining OrdinarySet when receiver == target would
+        // bypass the proxy trap and apply the plain-object non-writable check
+        // incorrectly (e.g. a configurable+non-writable property where the trap
+        // returns true would wrongly return false).
+        if (receiver != target) {
+            if (AbstractEcmaObjectOperations.ordinarySet(cx, s, target, args[1], args[2], receiver)) {
+                return true;
             }
         }
 
+        // receiver == target (or target has no own property P):
+        // delegate to [[Set]] on the receiver, which correctly fires any proxy
+        // set trap when receiver/target is a Proxy.
         if (ScriptRuntime.isSymbol(args[1])) {
             target.put((Symbol) args[1], receiver, value);
         } else {
