@@ -564,7 +564,7 @@ public class AbstractEcmaObjectOperations {
          * 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
          */
         DescriptorInfo ownDesc =
-                (ScriptRuntime.isSymbol(p))
+                ScriptRuntime.isSymbol(p)
                         ? o.getOwnPropertyDescriptor(cx, p)
                         : o.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
 
@@ -629,7 +629,7 @@ public class AbstractEcmaObjectOperations {
             ScriptableObject receiverObj = (ScriptableObject) receiver;
 
             DescriptorInfo existingDesc =
-                    (ScriptRuntime.isSymbol(p))
+                    ScriptRuntime.isSymbol(p)
                             ? receiverObj.getOwnPropertyDescriptor(cx, p)
                             : receiverObj.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
 
