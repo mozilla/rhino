@@ -440,9 +440,22 @@ final class NativeReflect extends ScriptableObject {
         // incorrectly (e.g. a configurable+non-writable property where the trap
         // returns true would wrongly return false).
         if (receiver != target) {
-            if (AbstractEcmaObjectOperations.ordinarySet(cx, s, target, args[1], args[2], receiver)) {
+            if (target instanceof NativeProxy) {
+                if (ScriptRuntime.isSymbol(args[1])) {
+                    target.put((Symbol) args[1], receiver, value);
+                } else {
+                    StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
+                    if (soi.stringId == null) {
+                        target.put(soi.index, receiver, value);
+                    } else {
+                        target.put(soi.stringId, receiver, value);
+                    }
+                }
                 return true;
             }
+
+            AbstractEcmaObjectOperations.ordinarySet(cx, s, target, args[1], args[2], receiver);
+            return true;
         }
 
         // receiver == target (or target has no own property P):

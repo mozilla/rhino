@@ -261,8 +261,16 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             if (num.isPresent()) {
                 int idx = num.get().intValue();
                 if (checkIndex(idx)) {
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.typed.array.index.out.of.bounds", idx, 0, getLength());
+                    if (checkValid) {
+                        throw ScriptRuntime.typeErrorById(
+                                "msg.typed.array.index.out.of.bounds", idx, 0, getLength());
+                    }
+
+                    // Out-of-bounds: coerce value then return false.
+                    if (desc.hasValue()) {
+                        toNumeric(desc.value);
+                    }
+                    return false;
                 }
                 if (desc.isConfigurable(false)) {
                     return false;
@@ -290,8 +298,16 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             if (s.getStringId() == null) {
                 int idx = s.getIndex();
                 if (checkIndex(idx)) {
-                    throw ScriptRuntime.typeErrorById(
-                            "msg.typed.array.index.out.of.bounds", idx, 0, getLength());
+                    if (checkValid) {
+                        throw ScriptRuntime.typeErrorById(
+                                "msg.typed.array.index.out.of.bounds", idx, 0, getLength());
+                    }
+
+                    // Out-of-bounds: coerce value then return false.
+                    if (desc.hasValue()) {
+                        toNumeric(desc.value);
+                    }
+                    return false;
                 }
                 if (desc.hasValue()) {
                     js_set(idx, desc.value);

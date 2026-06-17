@@ -605,4 +605,94 @@ public class NativeReflectTest {
 
         Utils.assertWithAllModes_ES6("true", js);
     }
+
+    @Test
+    public void reflectSetTypedArray() {
+        String js =
+                "let res = '';\n"
+                        + "let receiver = {};\n"
+                        + "let typedArray = new Int32Array(10);\n"
+                        + "let valueOfCalled = 0;\n"
+                        + "let value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "res += Reflect.set(typedArray, 0, value, receiver);\n"
+                        + "res += ' / ';\n"
+                        + "res += valueOfCalled;\n"
+                        + "res += ' / ';\n"
+                        + "res += receiver[0] === value;\n";
+
+        Utils.assertWithAllModes_ES6("true / 0 / true", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayInvalidIndex() {
+        String js =
+                "let res = '';\n"
+                        + "let receiver = new Int32Array(10);\n"
+                        + "let obj = Object.create(receiver);\n"
+                        + "let valueOfCalled = 0;\n"
+                        + "let value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "res += Reflect.set(obj, 100, value, receiver);\n"
+                        + "res += ' / ';\n"
+                        + "res += valueOfCalled;\n";
+
+        Utils.assertWithAllModes_ES6("true / 1", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayReceiverOobCoercesValue() {
+        String js =
+                "var receiver = new Int32Array(10);\n"
+                        + "var obj = Object.create(receiver);\n"
+                        + "var valueOfCalled = 0;\n"
+                        + "var value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "var result = Reflect.set(obj, 100, value, receiver);\n"
+                        + "'' + result + ' / ' + valueOfCalled;";
+        Utils.assertWithAllModes_ES6("true / 1", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayReceiverInBoundsCoercesAndWrites() {
+        String js =
+                "var receiver = new Int32Array(10);\n"
+                        + "var obj = Object.create(receiver);\n"
+                        + "var valueOfCalled = 0;\n"
+                        + "var value = { valueOf() { valueOfCalled++; return 42; } };\n"
+                        + "var result = Reflect.set(obj, 0, value, receiver);\n"
+                        + "'' + result + ' / ' + valueOfCalled + ' / ' + receiver[0];";
+        Utils.assertWithAllModes_ES6("true / 1 / 42", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayTargetPlainReceiverDoesNotCoerce() {
+        String js =
+                "var result = '';\n"
+                        + "var receiver = {};\n"
+                        + "var typedArray = new Int32Array(10);\n"
+                        + "var valueOfCalled = 0;\n"
+                        + "var value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "result += Reflect.set(typedArray, 0, value, receiver);\n"
+                        + "result += ' / ';\n"
+                        + "result += valueOfCalled;\n"
+                        + "result += ' / ';\n"
+                        + "result += receiver[0] === value;";
+        Utils.assertWithAllModes_ES6("true / 0 / true", js);
+    }
+
+    @Test
+    public void defineOwnPropertyOutOfBoundsDoesNotThrowViaReflect() {
+        String js =
+                "var ta = new Int32Array(4);\n"
+                        + "'' + Reflect.defineProperty(ta, '10', { value: 1 });";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void defineOwnPropertyOutOfBoundsWriteIsDiscarded() {
+        String js =
+                "var ta = new Int32Array(4);\n"
+                        + "var value = { valueOf() { return 99; } };\n"
+                        + "Reflect.defineProperty(ta, '10', { value: value });\n"
+                        + "'' + ta[10];";
+        Utils.assertWithAllModes_ES6("undefined", js);
+    }
 }

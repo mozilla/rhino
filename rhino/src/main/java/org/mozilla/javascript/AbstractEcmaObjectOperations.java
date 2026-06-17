@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.Scriptable.NOT_FOUND;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -8,8 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
-
-import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 
 /**
  * Abstract Object Operations as defined by EcmaScript
@@ -550,6 +550,7 @@ public class AbstractEcmaObjectOperations {
         }
         return false;
     }
+
     /**
      * Implements the OrdinarySetWithOwnDescriptor abstract operation.
      *
@@ -571,7 +572,18 @@ public class AbstractEcmaObjectOperations {
             // Target owns the property: delegate to OrdinarySetWithOwnDescriptor.
             return ordinarySetWithOwnDescriptor(cx, s, o, p, v, receiver, ownDesc);
         }
-        return false;
+
+        // ownDesc is null (undefined in spec terms): target has no own property.
+        // Per OrdinarySetWithOwnDescriptor step for undefined ownDesc:
+        // treat as a writable data property and CreateDataProperty(Receiver, P, V).
+        if (!(receiver instanceof ScriptableObject)) {
+            return false;
+        }
+
+        ScriptableObject receiverObj = (ScriptableObject) receiver;
+        DescriptorInfo newDesc = new DescriptorInfo(true, true, true, v);
+        receiverObj.defineOwnProperty(cx, p, newDesc, false);
+        return true;
     }
 
     /**
