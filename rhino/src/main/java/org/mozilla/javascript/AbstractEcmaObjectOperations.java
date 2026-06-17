@@ -620,10 +620,7 @@ public class AbstractEcmaObjectOperations {
          */
 
         if (ownDesc.isDataDescriptor()) {
-            if (ownDesc.isWritable(false)) {
-                return false;
-            }
-            if (!(receiver instanceof ScriptableObject)) {
+            if (ownDesc.isWritable(false) || !(receiver instanceof ScriptableObject)) {
                 return false;
             }
             ScriptableObject receiverObj = (ScriptableObject) receiver;
@@ -634,17 +631,13 @@ public class AbstractEcmaObjectOperations {
                             : receiverObj.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
 
             if (existingDesc != null) {
-                if (existingDesc.isAccessorDescriptor()) {
-                    return false;
-                }
-                if (existingDesc.isWritable(false)) {
+                if (existingDesc.isAccessorDescriptor() || existingDesc.isWritable(false)) {
                     return false;
                 }
                 DescriptorInfo valueDesc =
                         new DescriptorInfo(
                                 NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, v);
-                receiverObj.defineOwnProperty(cx, p, valueDesc);
-                return true;
+                return receiverObj.defineOwnProperty(cx, p, valueDesc);
             }
 
             DescriptorInfo newDesc = new DescriptorInfo(true, true, true, v);
