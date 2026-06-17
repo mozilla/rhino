@@ -580,6 +580,22 @@ public class NativeReflectTest {
     }
 
     @Test
+    public void setReceiverPassedToSetterOnPrototype() {
+        String js =
+                "  var receiver = {};\n"
+                        + "  var proto = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(proto, 'p', {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  var target = Object.create(proto);\n"
+                        + "  Reflect.set(target, 'p', 1, receiver);\n"
+                        + "  '' + (receivedReceiver === receiver);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
     public void setReceiverAffectsWhereDataPropertyIsWritten() {
         String js =
                 "  var target = { p: 1 };\n"

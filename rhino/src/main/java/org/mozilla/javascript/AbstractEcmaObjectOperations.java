@@ -568,22 +568,7 @@ public class AbstractEcmaObjectOperations {
                         ? o.getOwnPropertyDescriptor(cx, p)
                         : o.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
 
-        if (ownDesc != null) {
-            // Target owns the property: delegate to OrdinarySetWithOwnDescriptor.
-            return ordinarySetWithOwnDescriptor(cx, s, o, p, v, receiver, ownDesc);
-        }
-
-        // ownDesc is null (undefined in spec terms): target has no own property.
-        // Per OrdinarySetWithOwnDescriptor step for undefined ownDesc:
-        // treat as a writable data property and CreateDataProperty(Receiver, P, V).
-        if (!(receiver instanceof ScriptableObject)) {
-            return false;
-        }
-
-        ScriptableObject receiverObj = (ScriptableObject) receiver;
-        DescriptorInfo newDesc = new DescriptorInfo(true, true, true, v);
-        receiverObj.defineOwnProperty(cx, p, newDesc, false);
-        return true;
+        return ordinarySetWithOwnDescriptor(cx, s, o, p, v, receiver, ownDesc);
     }
 
     /**
@@ -601,7 +586,13 @@ public class AbstractEcmaObjectOperations {
             Scriptable receiver,
             DescriptorInfo ownDesc) {
         /*
-         * 1. If IsDataDescriptor(ownDesc) is true, then
+         * 1. If ownDesc is undefined, then
+         *    a. Let parent be ? O.[[GetPrototypeOf]]().
+         *    b. If parent is not null, then
+         *       i. Return ? parent.[[Set]](P, V, Receiver).
+         *    c. Else,
+         *       i. Set ownDesc to the PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
+         * 2. If IsDataDescriptor(ownDesc) is true, then
          *    a. If ownDesc.[[Writable]] is false, return false.
          *    b. If Type(Receiver) is not Object, return false.
          *    c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
@@ -612,12 +603,31 @@ public class AbstractEcmaObjectOperations {
          *           Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
          *    e. Else,
          *       Return ? CreateDataProperty(Receiver, P, V).
-         * 2. Assert: IsAccessorDescriptor(ownDesc) is true.
-         * 3. Let setter be ownDesc.[[Set]].
-         * 4. If setter is undefined, return false.
-         * 5. Perform ? Call(setter, Receiver, « V »).
-         * 6. Return true.
+         * 3. Assert: IsAccessorDescriptor(ownDesc) is true.
+         * 4. Let setter be ownDesc.[[Set]].
+         * 5. If setter is undefined, return false.
+         * 6. Perform ? Call(setter, Receiver, « V »).
+         * 7. Return true.
          */
+
+        if (ownDesc == null || Undefined.isUndefined(ownDesc)) {
+            Scriptable parent = o.getPrototype();
+            if (parent != null) {
+                if (ScriptRuntime.isSymbol(p)) {
+                    parent.put((Symbol) p, receiver, v);
+                } else {
+                    ScriptRuntime.StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(p);
+                    if (soi.stringId == null) {
+                        parent.put(soi.index, receiver, v);
+                    } else {
+                        parent.put(soi.stringId, receiver, v);
+                    }
+                }
+                return true;
+            }
+
+            ownDesc = new DescriptorInfo(true, true, true, Undefined.instance);
+        }
 
         if (ownDesc.isDataDescriptor()) {
             if (ownDesc.isWritable(false) || !(receiver instanceof ScriptableObject)) {
