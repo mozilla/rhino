@@ -14,7 +14,6 @@ LIBRARY_OPTS = DEFAULT_OPTS + [
     "-Xep:AssignmentExpression:OFF",
     "-Xep:DuplicateBranches:OFF",
     "-Xep:PatternMatchingInstanceof:OFF",
-    "-Xep:RedundantControlFlow:OFF",
     "-Xep:StatementSwitchToExpressionSwitch:OFF",
     "-Xep:EmptyBlockTag:OFF",
     "-Xep:EscapedEntity:OFF",
@@ -32,7 +31,8 @@ LIBRARY_OPTS = DEFAULT_OPTS + [
     # Additional useful checks
     "-Xep:RemoveUnusedImports:WARN",
     "-Xep:RemoveWildcardImport:WARN",
-    "-Xep:UnusedMethod:WARN", 
+    "-Xep:UnusedMethod:WARN",
+    "-Xep:RedundantControlFlow:WARN",
 ]
 
 TEST_OPTS = DEFAULT_OPTS + [
