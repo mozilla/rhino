@@ -550,13 +550,11 @@ public class NativeObject extends ScriptableObject implements Map {
         }
         for (Object key : ids) {
             var desc = obj.getOwnPropertyDescriptor(cx, key);
-            if (desc == null) {
-                continue;
-            } else if (key instanceof Symbol) {
+            if (key instanceof Symbol) {
                 descs.put((Symbol) key, descs, desc.toObject(s));
             } else if (key instanceof Integer) {
                 descs.put((Integer) key, descs, desc.toObject(s));
-            } else {
+            } else if (desc != null) {
                 descs.put(ScriptRuntime.toString(key), descs, desc.toObject(s));
             }
         }

@@ -69,8 +69,9 @@ public interface TypeFormatContext {
     /**
      * Format a type and push the result to provided {@link StringBuilder}.
      *
-     * @implNote Implementations are encouraged to override {@link #append(StringBuilder, TypeInfo,
-     *     boolean)} , instead of this method
+     * <p>Note that implementations are encouraged to override {@link #append(StringBuilder,
+     * TypeInfo, boolean)} , instead of this method
+     *
      * @param builder Formatted string of {@code type} will be pushed to this builder
      * @param type The type to be formatted
      */

@@ -27,7 +27,7 @@ public interface SourceMapper {
      * Returns the text of the given line within the named original source file. Used to populate
      * parser error messages with the offending line from the original source.
      *
-     * @param sourcePath the resolved source path (as returned in {@link Position#sourcePath()})
+     * @param sourcePath the resolved source path (as returned in {@link Position#getSourcePath()})
      * @param lineNumber 1-indexed line number in the original source
      * @return the line text, or {@code null} if the source is unknown, the line is out of range, or
      *     no original-source content is available

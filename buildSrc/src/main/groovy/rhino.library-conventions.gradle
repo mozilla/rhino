@@ -31,7 +31,6 @@ tasks.withType(JavaCompile).configureEach {
                 "AssignmentExpression",
                 "DuplicateBranches",
                 "PatternMatchingInstanceof",
-                "RedundantControlFlow",
                 "StatementSwitchToExpressionSwitch",
                 "ImmutableEnumChecker",
                 "DoNotCallSuggester",
@@ -51,7 +50,7 @@ tasks.withType(JavaCompile).configureEach {
                 // or spuriously for local variables in my opinion.
                 "UnusedVariable",
                 // This requires annotations that are difficult to incorporate
-                // without adding a dependency for everyon who uses Rhino.
+                // without adding a dependency for everyone who uses Rhino.
                 "AnnotateFormatMethod"
         )
         options.errorprone.enable(

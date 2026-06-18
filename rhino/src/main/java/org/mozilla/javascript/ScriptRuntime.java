@@ -4638,7 +4638,6 @@ public class ScriptRuntime {
                     }
                 }
                 y = toPrimitive(y);
-                continue;
             } else {
                 warnAboutNonJSObject(y);
                 return false;
