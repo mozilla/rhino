@@ -166,22 +166,6 @@ public class NativeDataView extends NativeArrayBufferView {
         return arrayBuffer.getLength() - offset;
     }
 
-    private static Object js_getByteOffset(Scriptable thisObj) {
-        NativeDataView self = realThis(thisObj);
-        if (self.isDataViewOutOfBounds()) {
-            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
-        }
-        return self.offset;
-    }
-
-    private static Object js_getByteLength(Scriptable thisObj) {
-        NativeDataView self = realThis(thisObj);
-        if (self.isDataViewOutOfBounds()) {
-            throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
-        }
-        return self.getByteLength();
-    }
-
     private static Object js_getInt8(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeDataView realThis = realThis(thisObj);

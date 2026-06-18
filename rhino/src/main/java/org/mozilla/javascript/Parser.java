@@ -259,18 +259,6 @@ public class Parser {
             this.offset = offset;
         }
 
-        public int getLine() {
-            return line;
-        }
-
-        public String getLineSource() {
-            return lineSource;
-        }
-
-        public int getOffset() {
-            return offset;
-        }
-
         @Override
         public boolean equals(Object obj) {
             if (obj == this) return true;

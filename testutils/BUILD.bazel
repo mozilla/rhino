@@ -1,9 +1,11 @@
 load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test")
 load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
 
 java_library(
     name = "testutils",
     srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = LIBRARY_OPTS,
     visibility = ["//visibility:public"],
     deps = [
         "//rhino",
@@ -16,6 +18,7 @@ java_junit5_test(
     size = "small",
     srcs = glob(["**/TestSourceTest.java"]),
     data = ["//tests:testsrc"],
+    javacopts = TEST_OPTS,
     tags = ["no-agent"],
     test_class = "org.mozilla.javascript.testutils.tests.TestSourceTest",
     deps = [

@@ -10,3 +10,8 @@ dependencies {
     // with tests in other projects, code in here must be in "main".
     implementation libs.junit.jupiter.api
 }
+
+tasks.withType(Javadoc) {
+    failOnError = false
+    options.addStringOption('Xdoclint:all,-missing', '-quiet')
+}

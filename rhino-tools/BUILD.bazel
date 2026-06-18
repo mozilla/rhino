@@ -1,9 +1,11 @@
 load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
 load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
 
 java_library(
     name = "rhino-tools",
     srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = LIBRARY_OPTS,
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
     deps = [
@@ -15,6 +17,7 @@ java_library(
 
 java_binary(
     name = "shell",
+    javacopts = LIBRARY_OPTS,
     main_class = "org.mozilla.javascript.tools.shell.Main",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -30,6 +33,7 @@ java_binary(
 
 java_binary(
     name = "debugger",
+    javacopts = LIBRARY_OPTS,
     main_class = "org.mozilla.javascript.tools.debugger.Main",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -41,6 +45,7 @@ java_binary(
 
 java_binary(
     name = "jsc",
+    javacopts = LIBRARY_OPTS,
     main_class = "org.mozilla.javascript.tools.jsc.Main",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -56,8 +61,8 @@ java_test_suite(
         ["src/test/java/**/*.java"],
         exclude = ["**/module-info.java"],
     ),
+    javacopts = TEST_OPTS,
     runner = "junit5",
-    tags = ["no-agent"],
     test_suffixes = ["Test.java"],
     deps = [
         ":rhino-tools",

@@ -7,9 +7,10 @@ import org.mozilla.javascript.lc.type.impl.ClassNameFormatContext;
  */
 public interface TypeFormatContext {
     /**
-     * Full feature formatting context
+     *
      *
      * <table>
+     *   <caption>Full feature formatting context</caption>
      *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
      *   <tr><td>Class</td><td>java.lang.String</td><td>java.lang.String</td></tr>
      *   <tr><td>Primitive Class</td><td>char</td><td>char</td></tr>
@@ -24,9 +25,10 @@ public interface TypeFormatContext {
     TypeFormatContext DEFAULT = Class::getName;
 
     /**
-     * Full feature formatting context with class name simplified
+     *
      *
      * <table>
+     *   <caption>Full feature formatting context with class name simplified</caption>
      *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
      *   <tr><td>Class</td><td>java.lang.String</td><td>String</td></tr>
      *   <tr><td>Primitive Class</td><td>char</td><td>char</td></tr>
@@ -43,9 +45,10 @@ public interface TypeFormatContext {
     TypeFormatContext SIMPLE = Class::getSimpleName;
 
     /**
-     * Formatting context that formats every type as the result of {@code type.asClass().getName()}
+     *
      *
      * <table>
+     *   <caption>Formatting context that formats every type as the result of {@code type.asClass().getName()}</caption>
      *   <tr><th>Type</th><th>Full representation</th><th>Representation using this context</th></tr>
      *   <tr><td>Class</td><td>java.lang.String</td><td>java.lang.String</td></tr>
      *   <tr><td>Primitive Class</td><td>char</td><td>char</td></tr>
