@@ -95,7 +95,7 @@ final class NativeReflect extends ScriptableObject {
         if (ScriptRuntime.isSymbol(args[2])) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(args[2]));
         }
-        ScriptableObject argumentsList = ScriptableObject.ensureScriptableObject(args[2]);
+        Scriptable argumentsList = ScriptableObject.ensureScriptable(args[2]);
 
         return ScriptRuntime.applyOrCall(
                 true, cx, s, callable, new Object[] {thisObj, argumentsList});
@@ -430,31 +430,45 @@ final class NativeReflect extends ScriptableObject {
         // A missing value must be treated as undefined
         final Object value = args.length > 2 ? args[2] : Undefined.instance;
 
-        ScriptableObject receiver =
-                args.length > 3 ? ScriptableObject.ensureScriptableObject(args[3]) : target;
-        if (receiver != target) {
-            DescriptorInfo descriptor = target.getOwnPropertyDescriptor(cx, args[1]);
-            if (descriptor != null) {
-                Object setter = descriptor.setter;
-                if (setter != null && setter != NOT_FOUND) {
-                    ((Function) setter).call(cx, s, receiver, new Object[] {value});
-                    return true;
-                }
+        Scriptable receiver = args.length > 3 ? ScriptableObject.ensureScriptable(args[3]) : target;
 
-                if (descriptor.isConfigurable(false)) {
-                    return false;
+        // OrdinarySet is only needed when receiver != target.
+        // When receiver == target we must call target.[[Set]] directly via put(),
+        // which correctly invokes any proxy set trap on target.
+        // Inlining OrdinarySet when receiver == target would
+        // bypass the proxy trap and apply the plain-object non-writable check
+        // incorrectly (e.g. a configurable+non-writable property where the trap
+        // returns true would wrongly return false).
+        if (receiver != target) {
+            if (target instanceof NativeProxy) {
+                if (ScriptRuntime.isSymbol(args[1])) {
+                    target.put((Symbol) args[1], receiver, value);
+                } else {
+                    StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
+                    if (soi.stringId == null) {
+                        target.put(soi.index, receiver, value);
+                    } else {
+                        target.put(soi.stringId, receiver, value);
+                    }
                 }
+                return true;
             }
+
+            AbstractEcmaObjectOperations.ordinarySet(cx, s, target, args[1], args[2], receiver);
+            return true;
         }
 
+        // receiver == target (or target has no own property P):
+        // delegate to [[Set]] on the receiver, which correctly fires any proxy
+        // set trap when receiver/target is a Proxy.
         if (ScriptRuntime.isSymbol(args[1])) {
-            receiver.put((Symbol) args[1], receiver, value);
+            target.put((Symbol) args[1], receiver, value);
         } else {
             StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
             if (soi.stringId == null) {
-                receiver.put(soi.index, receiver, value);
+                target.put(soi.index, receiver, value);
             } else {
-                receiver.put(soi.stringId, receiver, value);
+                target.put(soi.stringId, receiver, value);
             }
         }
 
@@ -499,7 +513,7 @@ final class NativeReflect extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(args[0]));
         }
 
-        ScriptableObject proto = ScriptableObject.ensureScriptableObject(args[1]);
+        Scriptable proto = ScriptableObject.ensureScriptable(args[1]);
         if (target.getPrototype() == proto) {
             return true;
         }

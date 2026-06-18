@@ -549,4 +549,166 @@ public class NativeReflectTest {
                         + "'' + log;";
         Utils.assertWithAllModes_ES6("true", js);
     }
+
+    @Test
+    public void setReceiverDefaultsToTarget() {
+        String js =
+                "  var o = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(o, 'p', {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  Reflect.set(o, 'p', 1);\n"
+                        + "  '' + (receivedReceiver === o);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setReceiverPassedToSetter() {
+        String js =
+                "  var target = {};\n"
+                        + "  var receiver = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(target, 'p', {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  Reflect.set(target, 'p', 1, receiver);\n"
+                        + "  '' + (receivedReceiver === receiver);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setReceiverPassedToSetterOnPrototype() {
+        String js =
+                "  var receiver = {};\n"
+                        + "  var proto = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(proto, 'p', {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  var target = Object.create(proto);\n"
+                        + "  Reflect.set(target, 'p', 1, receiver);\n"
+                        + "  '' + (receivedReceiver === receiver);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void setReceiverAffectsWhereDataPropertyIsWritten() {
+        String js =
+                "  var target = { p: 1 };\n"
+                        + "  var receiver = { p: 0 };\n"
+                        + "  Reflect.set(target, 'p', 99, receiver);\n"
+                        + "  '' + receiver.p;\n";
+
+        Utils.assertWithAllModes_ES6("99", js);
+    }
+
+    @Test
+    public void setReceiverWithSymbolKey() {
+        String js =
+                "  var sym = Symbol('test');\n"
+                        + "  var target = {};\n"
+                        + "  var receiver = {};\n"
+                        + "  var receivedReceiver;\n"
+                        + "  Object.defineProperty(target, sym, {\n"
+                        + "    set(v) { receivedReceiver = this; }\n"
+                        + "  });\n"
+                        + "  Reflect.set(target, sym, 1, receiver);\n"
+                        + "  '' + (receivedReceiver === receiver);\n";
+
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void reflectSetTypedArray() {
+        String js =
+                "let res = '';\n"
+                        + "let receiver = {};\n"
+                        + "let typedArray = new Int32Array(10);\n"
+                        + "let valueOfCalled = 0;\n"
+                        + "let value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "res += Reflect.set(typedArray, 0, value, receiver);\n"
+                        + "res += ' / ';\n"
+                        + "res += valueOfCalled;\n"
+                        + "res += ' / ';\n"
+                        + "res += receiver[0] === value;\n";
+
+        Utils.assertWithAllModes_ES6("true / 0 / true", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayInvalidIndex() {
+        String js =
+                "let res = '';\n"
+                        + "let receiver = new Int32Array(10);\n"
+                        + "let obj = Object.create(receiver);\n"
+                        + "let valueOfCalled = 0;\n"
+                        + "let value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "res += Reflect.set(obj, 100, value, receiver);\n"
+                        + "res += ' / ';\n"
+                        + "res += valueOfCalled;\n";
+
+        Utils.assertWithAllModes_ES6("true / 1", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayReceiverOobCoercesValue() {
+        String js =
+                "var receiver = new Int32Array(10);\n"
+                        + "var obj = Object.create(receiver);\n"
+                        + "var valueOfCalled = 0;\n"
+                        + "var value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "var result = Reflect.set(obj, 100, value, receiver);\n"
+                        + "'' + result + ' / ' + valueOfCalled;";
+        Utils.assertWithAllModes_ES6("true / 1", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayReceiverInBoundsCoercesAndWrites() {
+        String js =
+                "var receiver = new Int32Array(10);\n"
+                        + "var obj = Object.create(receiver);\n"
+                        + "var valueOfCalled = 0;\n"
+                        + "var value = { valueOf() { valueOfCalled++; return 42; } };\n"
+                        + "var result = Reflect.set(obj, 0, value, receiver);\n"
+                        + "'' + result + ' / ' + valueOfCalled + ' / ' + receiver[0];";
+        Utils.assertWithAllModes_ES6("true / 1 / 42", js);
+    }
+
+    @Test
+    public void reflectSetTypedArrayTargetPlainReceiverDoesNotCoerce() {
+        String js =
+                "var result = '';\n"
+                        + "var receiver = {};\n"
+                        + "var typedArray = new Int32Array(10);\n"
+                        + "var valueOfCalled = 0;\n"
+                        + "var value = { valueOf() { valueOfCalled++; return 1; } };\n"
+                        + "result += Reflect.set(typedArray, 0, value, receiver);\n"
+                        + "result += ' / ';\n"
+                        + "result += valueOfCalled;\n"
+                        + "result += ' / ';\n"
+                        + "result += receiver[0] === value;";
+        Utils.assertWithAllModes_ES6("true / 0 / true", js);
+    }
+
+    @Test
+    public void defineOwnPropertyOutOfBoundsDoesNotThrowViaReflect() {
+        String js =
+                "var ta = new Int32Array(4);\n"
+                        + "'' + Reflect.defineProperty(ta, '10', { value: 1 });";
+        Utils.assertWithAllModes_ES6("false", js);
+    }
+
+    @Test
+    public void defineOwnPropertyOutOfBoundsWriteIsDiscarded() {
+        String js =
+                "var ta = new Int32Array(4);\n"
+                        + "var value = { valueOf() { return 99; } };\n"
+                        + "Reflect.defineProperty(ta, '10', { value: value });\n"
+                        + "'' + ta[10];";
+        Utils.assertWithAllModes_ES6("undefined", js);
+    }
 }

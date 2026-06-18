@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.Scriptable.NOT_FOUND;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -199,7 +201,7 @@ public class AbstractEcmaObjectOperations {
         8. Throw a TypeError exception.
          */
         Object constructor = ScriptableObject.getProperty((Scriptable) s, "constructor");
-        if (constructor == Scriptable.NOT_FOUND || Undefined.isUndefined(constructor)) {
+        if (constructor == NOT_FOUND || Undefined.isUndefined(constructor)) {
             return defaultConstructor;
         }
         if (!ScriptRuntime.isObject(constructor)) {
@@ -207,7 +209,7 @@ public class AbstractEcmaObjectOperations {
                     "msg.arg.not.object", ScriptRuntime.typeof(constructor));
         }
         Object species = ScriptableObject.getProperty((Scriptable) constructor, SymbolKey.SPECIES);
-        if (species == Scriptable.NOT_FOUND || species == null || Undefined.isUndefined(species)) {
+        if (species == NOT_FOUND || species == null || Undefined.isUndefined(species)) {
             return defaultConstructor;
         }
         if (!(species instanceof Constructable)) {
@@ -547,5 +549,117 @@ public class AbstractEcmaObjectOperations {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Implements the OrdinarySetWithOwnDescriptor abstract operation.
+     *
+     * <p>see <a href="https://262.ecma-international.org/14.0/#sec-ordinaryset">OrdinarySet ( O, P,
+     * V, Receiver )</a>
+     */
+    public static boolean ordinarySet(
+            Context cx, VarScope s, ScriptableObject o, Object p, Object v, Scriptable receiver) {
+        /*
+         * 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
+         * 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
+         */
+        DescriptorInfo ownDesc =
+                ScriptRuntime.isSymbol(p)
+                        ? o.getOwnPropertyDescriptor(cx, p)
+                        : o.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
+
+        return ordinarySetWithOwnDescriptor(cx, s, o, p, v, receiver, ownDesc);
+    }
+
+    /**
+     * Implements the OrdinarySetWithOwnDescriptor abstract operation.
+     *
+     * <p>see <a href="https://262.ecma-international.org/14.0/#sec-ordinarysetwithowndescriptor">
+     * OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )</a>
+     */
+    private static boolean ordinarySetWithOwnDescriptor(
+            Context cx,
+            VarScope s,
+            Scriptable o,
+            Object p,
+            Object v,
+            Scriptable receiver,
+            DescriptorInfo ownDesc) {
+        /*
+         * 1. If ownDesc is undefined, then
+         *    a. Let parent be ? O.[[GetPrototypeOf]]().
+         *    b. If parent is not null, then
+         *       i. Return ? parent.[[Set]](P, V, Receiver).
+         *    c. Else,
+         *       i. Set ownDesc to the PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
+         * 2. If IsDataDescriptor(ownDesc) is true, then
+         *    a. If ownDesc.[[Writable]] is false, return false.
+         *    b. If Type(Receiver) is not Object, return false.
+         *    c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
+         *    d. If existingDescriptor is not undefined, then
+         *       i.  If IsAccessorDescriptor(existingDescriptor) is true, return false.
+         *       ii. If existingDescriptor.[[Writable]] is false, return false.
+         *       iii.Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
+         *           Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
+         *    e. Else,
+         *       Return ? CreateDataProperty(Receiver, P, V).
+         * 3. Assert: IsAccessorDescriptor(ownDesc) is true.
+         * 4. Let setter be ownDesc.[[Set]].
+         * 5. If setter is undefined, return false.
+         * 6. Perform ? Call(setter, Receiver, « V »).
+         * 7. Return true.
+         */
+
+        if (ownDesc == null || Undefined.isUndefined(ownDesc)) {
+            Scriptable parent = o.getPrototype();
+            if (parent != null) {
+                if (ScriptRuntime.isSymbol(p)) {
+                    parent.put((Symbol) p, receiver, v);
+                } else {
+                    ScriptRuntime.StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(p);
+                    if (soi.stringId == null) {
+                        parent.put(soi.index, receiver, v);
+                    } else {
+                        parent.put(soi.stringId, receiver, v);
+                    }
+                }
+                return true;
+            }
+
+            ownDesc = new DescriptorInfo(true, true, true, Undefined.instance);
+        }
+
+        if (ownDesc.isDataDescriptor()) {
+            if (ownDesc.isWritable(false) || !(receiver instanceof ScriptableObject)) {
+                return false;
+            }
+            ScriptableObject receiverObj = (ScriptableObject) receiver;
+
+            DescriptorInfo existingDesc =
+                    ScriptRuntime.isSymbol(p)
+                            ? receiverObj.getOwnPropertyDescriptor(cx, p)
+                            : receiverObj.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
+
+            if (existingDesc != null) {
+                if (existingDesc.isAccessorDescriptor() || existingDesc.isWritable(false)) {
+                    return false;
+                }
+                DescriptorInfo valueDesc =
+                        new DescriptorInfo(
+                                NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, v);
+                return receiverObj.defineOwnProperty(cx, p, valueDesc);
+            }
+
+            DescriptorInfo newDesc = new DescriptorInfo(true, true, true, v);
+            receiverObj.defineOwnProperty(cx, p, newDesc);
+            return true;
+        }
+
+        Object setter = ownDesc.setter;
+        if (setter == null || setter == NOT_FOUND || Undefined.isUndefined(setter)) {
+            return false;
+        }
+        ((Function) setter).call(cx, s, receiver, new Object[] {v});
+        return true;
     }
 }

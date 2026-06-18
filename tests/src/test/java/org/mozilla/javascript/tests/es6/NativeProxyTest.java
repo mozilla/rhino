@@ -817,6 +817,96 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void setTrapReceivesCorrectReceiverWhenDifferentFromProxy() {
+        String js =
+                "  var res = [];\n"
+                        + "  var target = {};\n"
+                        + "  var otherReceiver = { label: 'other' };\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      res.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, 'p', 1, otherReceiver);\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void setTrapReceivesProxyAsReceiverWhenNoExplicitReceiverGiven() {
+        String js =
+                "  var target = {};\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      return receiver === proxy;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, 'p', 1);\n";
+
+        Utils.assertWithAllModes_ES6(true, js);
+    }
+
+    @Test
+    public void setTrapReceiverIsProxyForDirectPropertyWrite() {
+        String js =
+                "  var res = [];\n"
+                        + "  var target = {};\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      res.push(receiver === proxy ? 'proxy' : 'other');\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  proxy.p = 1;\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("proxy", js);
+    }
+
+    @Test
+    public void setTrapReceivesCorrectReceiverWithIndexKey() {
+        String js =
+                "  var res = [];\n"
+                        + "  var target = [];\n"
+                        + "  var otherReceiver = { label: 'other' };\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      if (prop === '0') {\n"
+                        + "        res.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "      }\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, 0, 42, otherReceiver);\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void setTrapReceivesCorrectReceiverWithSymbolKey() {
+        String js =
+                "  var res = [];\n"
+                        + "  var sym = Symbol('test');\n"
+                        + "  var target = {};\n"
+                        + "  var otherReceiver = { label: 'other' };\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      if (prop === sym) {\n"
+                        + "        res.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "      }\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, sym, 42, otherReceiver);\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
     public void getPropertyByIntWithoutHandler() {
         String js = "var a = ['zero', 'one'];" + "var proxy1 = new Proxy(a, {});\n" + "proxy1[1];";
         Utils.assertWithAllModes_ES6("one", js);
@@ -1037,5 +1127,46 @@ public class NativeProxyTest {
                         + "}";
 
         Utils.assertWithAllModes_ES6(true, js);
+    }
+
+    @Test
+    public void setTrapWithProxyAsReceiverViaWith() {
+        // 'with (proxy)' uses the proxy as both the
+        // scope object and the receiver. Reflect.set(env, "p", 1, proxy) must
+        // call proxy.[[DefineOwnProperty]].
+        String js =
+                "var log = [];\n"
+                        + "var env = { p: 0 };\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  has(t, pk) {\n"
+                        + "    log.push('has:' + String(pk));\n"
+                        + "    return Reflect.has(t, pk);\n"
+                        + "  },\n"
+                        + "  get(t, pk, r) {\n"
+                        + "    log.push('get:' + String(pk));\n"
+                        + "    return Reflect.get(t, pk, r);\n"
+                        + "  },\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    log.push('set:' + String(pk));\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "  getOwnPropertyDescriptor(t, pk) {\n"
+                        + "    log.push('getOwnPropertyDescriptor:' + String(pk));\n"
+                        + "    return Reflect.getOwnPropertyDescriptor(t, pk);\n"
+                        + "  },\n"
+                        + "  defineProperty(t, pk, d) {\n"
+                        + "    log.push('defineProperty:' + String(pk));\n"
+                        + "    return Reflect.defineProperty(t, pk, d);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "with (proxy) {\n"
+                        + "  p = 1;\n"
+                        + "}\n"
+                        + "'' + log";
+
+        // finally should be
+        // "has:p,get:Symbol(Symbol.unscopables),has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p"
+        Utils.assertWithAllModes_ES6(
+                "has:p,has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p", js);
     }
 }
