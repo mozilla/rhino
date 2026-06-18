@@ -14,10 +14,8 @@ import java.io.Serial;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
-import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
@@ -75,10 +73,6 @@ public class NativeFloat16Array extends NativeTypedArrayView<Float> {
     @Override
     public int getBytesPerElement() {
         return BYTES_PER_ELEMENT;
-    }
-
-    private static NativeFloat16Array realThis(Scriptable thisObj) {
-        return LambdaConstructor.convertThisObject(thisObj, NativeFloat16Array.class);
     }
 
     @Override

@@ -33,13 +33,13 @@ tasks.withType(JavaCompile).configureEach {
                 "PatternMatchingInstanceof",
                 "RedundantControlFlow",
                 "StatementSwitchToExpressionSwitch",
+                "ImmutableEnumChecker",
+                "DoNotCallSuggester",
                 // JavaDoc stuff -- not going to fix unless we do a big JavaDoc update
-                "AlmostJavadoc",
                 "EmptyBlockTag",
                 "EscapedEntity",
                 "MissingSummary",
                 "InvalidBlockTag",
-                "NotJavadoc",
                 "UnicodeEscape",
                 // Stuff that we just love to do but should do less of eventually
                 "EmptyCatch",

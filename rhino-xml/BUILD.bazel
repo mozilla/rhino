@@ -1,9 +1,11 @@
 load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test")
 load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
 
 java_library(
     name = "rhino-xml",
     srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = LIBRARY_OPTS,
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
     deps = ["//rhino"],
@@ -12,6 +14,7 @@ java_library(
 java_library(
     name = "rhino-xml-tests",
     srcs = glob(["src/test/java/**/*.java"]),
+    javacopts = TEST_OPTS,
     deps = [
         ":rhino-xml",
         "//rhino",
@@ -30,6 +33,7 @@ java_junit5_test(
     name = "XMLSecureParserTest",
     size = "small",
     srcs = glob(["**/XMLSecureParserTest.java"]),
+    javacopts = TEST_OPTS,
     tags = ["no-agent"],
     test_class = "org.mozilla.javascript.tests.XMLSecureParserTest",
     deps = [
@@ -46,7 +50,7 @@ java_junit5_test(
     name = "E4XBasicTest",
     size = "small",
     srcs = glob(["**/E4XBasicTest.java"]),
-    tags = ["no-agent"],
+    javacopts = TEST_OPTS,
     test_class = "org.mozilla.javascript.xmlimpl.tests.E4XBasicTest",
     deps = [
         ":rhino-xml",
@@ -62,7 +66,7 @@ java_junit5_test(
     name = "XmlNonResettableDocumentBuilderTest",
     size = "small",
     srcs = glob(["**/XmlNonResettableDocumentBuilderTest.java"]),
-    tags = ["no-agent"],
+    javacopts = TEST_OPTS,
     test_class = "org.mozilla.javascript.xmlimpl.tests.XmlNonResettableDocumentBuilderTest",
     deps = [
         ":rhino-xml",

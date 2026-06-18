@@ -1,5 +1,6 @@
 load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test", "java_test_suite")
 load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:errorprone.bzl", "TEST_OPTS")
 load("//bazel:sharded_test.bzl", "sharded_parameterized_test")
 
 filegroup(
@@ -23,6 +24,7 @@ java_library(
         "src/test/java/org/mozilla/javascript/tests/commonjs/**/*.java",
         "src/test/java/org/mozilla/javascript/drivers/**/*.java",
     ]),
+    javacopts = TEST_OPTS,
     deps = [
         "//rhino",
         "//rhino-tools",
@@ -50,6 +52,7 @@ java_test_suite(
         ],
     ),
     data = [":testsrc"],
+    javacopts = TEST_OPTS,
     jvm_flags = [
         "-Xmx1g",
         "-Djava.awt.headless=true",
@@ -62,7 +65,6 @@ java_test_suite(
     ],
     resources = glob(["src/test/resources/**"]),
     runner = "junit5",
-    tags = ["no-agent"],
     test_suffixes = ["Test.java"],
     deps = [
         ":rhino-tests-lib",
@@ -87,6 +89,7 @@ sharded_parameterized_test(
     size = "medium",
     srcs = ["src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java"],
     data = [":testsrc"],
+    javacopts = TEST_OPTS,
     jvm_flags = [
         "-Xmx1g",
         "-Xss4m",
@@ -95,7 +98,6 @@ sharded_parameterized_test(
     ],
     resources = glob(["src/test/resources/**"]),
     shard_count = 16,
-    tags = ["no-agent"],
     test_class = "org.mozilla.javascript.tests.MozillaSuiteTest",
     deps = [
         ":rhino-tests-lib",
@@ -112,11 +114,11 @@ java_junit5_test(
     name = "SourceMapSpecSuiteTest",
     size = "small",
     srcs = ["src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java"],
-    data = [":testsrc"] + glob(["source-map-tests/**"]),
+    data = ["testsrc/source-map-tests-excludelist.txt"] + glob(["source-map-tests/**"]),
+    javacopts = TEST_OPTS,
     jvm_flags = [
         "-Xmx1g",
     ],
-    tags = ["no-agent"],
     test_class = "org.mozilla.javascript.sourcemap.SourceMapSpecSuiteTest",
     deps = [
         "//rhino",
@@ -130,12 +132,12 @@ sharded_parameterized_test(
     # "small" will result in build timeouts on GitHub Actions runners
     size = "medium",
     srcs = ["src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java"],
-    data = [":testsrc"] + glob(["test262/**"]),
+    data = ["testsrc/test262.properties"] + glob(["test262/**"]),
+    javacopts = TEST_OPTS,
     jvm_flags = [
         "-Xmx1g",
     ],
     shard_count = 32,
-    tags = ["no-agent"],
     test_class = "org.mozilla.javascript.tests.Test262SuiteTest",
     deps = [
         ":rhino-tests-lib",

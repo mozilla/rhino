@@ -91,9 +91,9 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
+    /** Implement x.property() call shrinking optimizer code. */
     @Deprecated(since = "1.8.1", forRemoval = true)
     @SuppressWarnings("removal")
-    /** Implement x.property() call shrinking optimizer code. */
     public static Object callProp0(Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);

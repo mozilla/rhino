@@ -1,9 +1,11 @@
 load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
 load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
 
 java_library(
     name = "rhino",
     srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = LIBRARY_OPTS,
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
 )
@@ -16,9 +18,9 @@ java_test_suite(
         "//:rhino-test.config",
         "//tests:testsrc",
     ],
+    javacopts = TEST_OPTS,
     resources = glob(["src/test/resources/**"]),
     runner = "junit5",
-    tags = ["no-agent"],
     test_suffixes = ["Test.java"],
     deps = [
         ":rhino",

@@ -99,7 +99,7 @@ public class Shell extends ScriptableObject {
             if (arg.equals("-version")) {
                 if (++i == args.length) usage(arg);
                 double d = Context.toNumber(args[i]);
-                if (d != d) usage(arg);
+                if (Double.isNaN(d)) usage(arg);
                 cx.setLanguageVersion((int) d);
                 continue;
             }
