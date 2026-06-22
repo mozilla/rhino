@@ -49,6 +49,7 @@ import org.mozilla.javascript.interpreterv2.instruction.ElemAndThis;
 import org.mozilla.javascript.interpreterv2.instruction.ElemAndThisOptional;
 import org.mozilla.javascript.interpreterv2.instruction.ElemIncDec;
 import org.mozilla.javascript.interpreterv2.instruction.EnterDotQuery;
+import org.mozilla.javascript.interpreterv2.instruction.EnterScope;
 import org.mozilla.javascript.interpreterv2.instruction.EnterWith;
 import org.mozilla.javascript.interpreterv2.instruction.EnumId;
 import org.mozilla.javascript.interpreterv2.instruction.EnumInitArray;
@@ -82,7 +83,7 @@ import org.mozilla.javascript.interpreterv2.instruction.Instruction;
 import org.mozilla.javascript.interpreterv2.instruction.Int;
 import org.mozilla.javascript.interpreterv2.instruction.JumpInstruction;
 import org.mozilla.javascript.interpreterv2.instruction.LeaveDotQuery;
-import org.mozilla.javascript.interpreterv2.instruction.LeaveWith;
+import org.mozilla.javascript.interpreterv2.instruction.LeaveScope;
 import org.mozilla.javascript.interpreterv2.instruction.LeftShift;
 import org.mozilla.javascript.interpreterv2.instruction.LitPush;
 import org.mozilla.javascript.interpreterv2.instruction.LitSetAt;
@@ -269,7 +270,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
     }
 
     private void addInstruction(int index, Instruction instruction) {
-        stackChange(instruction.stackChange());
+        stackChange(instruction);
         instructions.add(index, instruction);
     }
 
@@ -399,7 +400,8 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     // at script/function start. In addition, function expressions can not be
                     // present here at statement level, they must only be present as expressions.
 
-                    if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
+                    if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT
+                        || fnType == FunctionNode.FUNCTION_BLOCK_SCOPED) {
                         addInstruction(new ClosureStatement(fnIndex));
                     } else {
                         if (fnType != FunctionNode.FUNCTION_STATEMENT) {
@@ -410,6 +412,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
                 }
             case Token.LABEL:
             case Token.BLOCK:
+            case Token.SCOPE_BLOCK:
                 {
                     updateLineNumber(node);
                     // No Nop for BLOCK/LABEL - child instructions will carry the line number.
@@ -440,9 +443,13 @@ public class Compiler<T extends ScriptOrFn<T>> {
             case Token.ENTERWITH:
                 visitUnaryOperation(child, obj -> new EnterWith(obj));
                 return;
-            case Token.LEAVEWITH:
+            case Token.ENTER_SCOPE:
+                visitEnterScope(node, child);
+                return;
+
+            case Token.LEAVE_SCOPE:
                 {
-                    addInstruction(LeaveWith.instance);
+                    addInstruction(LeaveScope.instance);
                     return;
                 }
             case Token.LOCAL_BLOCK:
@@ -720,6 +727,20 @@ public class Compiler<T extends ScriptOrFn<T>> {
         jumpTargets.add(handlerStart);
     }
 
+    private void visitEnterScope(Node node, Node child) {
+        addInstruction(EnterScope.instance);
+        Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        int i = 0;
+        while (child != null) {
+            visitExpression(child, 0);
+            addInstruction(new SetName(PeekOperand.instance, (String) names[i], PopOperand.instance));
+            addInstruction(Pop.instance);
+            child = child.getNext();
+            i++;
+        }
+        addInstruction(Pop.instance);
+    }
+
     private void visitExpression(Node node, int contextFlags) {
         updateLineNumber(node);
         int op = node.getType();
@@ -946,6 +967,9 @@ public class Compiler<T extends ScriptOrFn<T>> {
                 return;
             case Token.WITHEXPR:
                 visitWithExpr(node);
+                return;
+            case Token.SCOPEEXPR:
+                visitScopeExpr(node);
                 return;
             case Token.TEMPLATE_LITERAL:
                 visitTemplateLiteral(node);
@@ -1321,7 +1345,15 @@ public class Compiler<T extends ScriptOrFn<T>> {
         var enterObj = getOperand(enterWith.getFirstChild(), 0);
         addInstruction(new EnterWith(enterObj));
         visitExpression(with.getFirstChild(), 0);
-        addInstruction(LeaveWith.instance);
+        addInstruction(LeaveScope.instance);
+    }
+
+    private void visitScopeExpr(Node node) {
+        Node enterScope = node.getFirstChild();
+        Node expr = enterScope.getNext();
+        visitEnterScope(enterScope, enterScope.getFirstChild());
+        visitExpression(expr.getFirstChild(), 0);
+        addInstruction(LeaveScope.instance);
     }
 
     private void visitTemplateLiteral(Node node) {
@@ -1847,7 +1879,8 @@ public class Compiler<T extends ScriptOrFn<T>> {
         lineNumberTable.add(instructions.size(), lineNumber, lineNumber);
     }
 
-    public void stackChange(int change) {
+    public void stackChange(Instruction inst) {
+        int change = inst.stackChange();
         if (change <= 0) {
             stackDepth += change;
         } else {

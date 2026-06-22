@@ -4,6 +4,7 @@ import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 import org.mozilla.javascript.interpreterv2.operand.Operand;
 
@@ -28,15 +29,16 @@ public class CatchScope extends Instruction {
 
         boolean afterFirstScope = scopeIndex > 0;
         Throwable caughtException = (Throwable) exception.retrieve(cx, frame);
-        Scriptable lastCatchScope;
+        VarScope lastCatchScope;
         if (afterFirstScope) {
-            lastCatchScope = (Scriptable) frame.stack[frame.localShift + localIndex];
+            lastCatchScope = (VarScope) frame.stack[frame.localShift + localIndex];
         } else {
             lastCatchScope = null;
         }
         var newCatchScope =
                 ScriptRuntime.newCatchScope(caughtException, lastCatchScope, name, cx, frame.scope);
 
+        frame.scope = newCatchScope;
         frame.stack[frame.localShift + localIndex] = newCatchScope;
         frame.pc += 1;
     }

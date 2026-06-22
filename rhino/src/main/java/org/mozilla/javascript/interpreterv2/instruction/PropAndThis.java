@@ -29,6 +29,6 @@ public class PropAndThis extends Instruction {
 
     @Override
     public String toDebugString() {
-        return InstructionFormatter.formatInstruction(this, "name", property);
+        return InstructionFormatter.formatInstruction(this, "name", property, "op", obj);
     }
 }

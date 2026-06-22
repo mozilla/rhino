@@ -5,14 +5,14 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 
-public class LeaveWith extends Instruction {
-    public static final LeaveWith instance = new LeaveWith();
+public class LeaveScope extends Instruction {
+    public static final LeaveScope instance = new LeaveScope();
 
-    private LeaveWith() {}
+    private LeaveScope() {}
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        frame.scope = ScriptRuntime.leaveWith(frame.scope);
+        frame.scope = ScriptRuntime.leaveScope(frame.scope);
 
         frame.pc += 1;
     }
