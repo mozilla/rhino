@@ -157,7 +157,8 @@ public class NodeTransformer {
                     break;
                 }
 
-                case Token.SCOPE_BLOCK: {
+            case Token.SCOPE_BLOCK:
+                {
                     loops.push(node);
                     Node leave = node.getNext();
                     if (leave.getType() != Token.LEAVE_SCOPE) {
@@ -167,7 +168,7 @@ public class NodeTransformer {
                     break;
                 }
 
-                case Token.TRY:
+            case Token.TRY:
                 {
                     Jump jump = (Jump) node;
                     Node finallytarget = jump.getFinally();
