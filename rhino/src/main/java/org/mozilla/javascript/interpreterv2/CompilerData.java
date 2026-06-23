@@ -113,7 +113,7 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
         return LineNumberTable.getFirstLineNumber(lineNumberTable);
     }
 
-    public short getPcFirstLineNumber() {
+    public int getPcFirstLineNumber() {
         return LineNumberTable.getPcFirstLineNumber(lineNumberTable);
     }
 
