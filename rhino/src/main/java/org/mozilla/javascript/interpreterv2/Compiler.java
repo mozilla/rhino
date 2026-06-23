@@ -1740,7 +1740,6 @@ public class Compiler<T extends ScriptOrFn<T>> {
 
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
-        if (lineno < 0) return;
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper != null) {
             Position mapped = mapper.mapPosition(lineno, node.getColumn());
@@ -1748,7 +1747,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
             lineno = mapped.getLine();
         }
 
-        // Token.printColumns and SourceMapper not in open-source
+        if (lineno < 0) return;
 
         updateLineNumber(lineno);
     }
