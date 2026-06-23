@@ -77,4 +77,32 @@ public class CompilerDataLineNumberTest {
         assertEquals(6, cData.getLineNumberFromPc(8, 0));
         assertEquals(6, cData.getLineNumberFromPc(99, 0));
     }
+
+    @Test
+    public void lineNumberTableReallyLarge() {
+        LineNumberTable.Builder lineNumberTable = new LineNumberTable.Builder();
+        for (int i = 1; i < 20; i = i + 4) {
+            var instruciton = 1 << i;
+            var start = 4 * i;
+            var end = 3 + (4 * i);
+            lineNumberTable.add(instruciton, start, end);
+        }
+        CompilerData<?> cData = build(lineNumberTable);
+        assertEquals(4, cData.getFirstLineNumber());
+        assertEquals(2, cData.getPcFirstLineNumber());
+        assertEquals(
+                "[2 -> [4, 5, 6, 7],  "
+                        + "32 -> [20, 21, 22, 23],  "
+                        + "512 -> [36, 37, 38, 39],  "
+                        + "8192 -> [52, 53, 54, 55],  "
+                        + "131072 -> [68, 69, 70, 71]]",
+                cData.getLineNumberTableForDebug());
+        assertEquals(-1, cData.getLineNumberFromPc(0, 0));
+        assertEquals(-1, cData.getLineNumberFromPc(1, 0));
+        assertEquals(7, cData.getLineNumberFromPc(2, 0));
+        assertEquals(23, cData.getLineNumberFromPc(32, 0));
+        assertEquals(39, cData.getLineNumberFromPc(512, 0));
+        assertEquals(55, cData.getLineNumberFromPc(8192, 0));
+        assertEquals(71, cData.getLineNumberFromPc(131072, 0));
+    }
 }
