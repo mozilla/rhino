@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
@@ -16,8 +17,11 @@ import org.mozilla.javascript.testutils.Utils;
  */
 public class NativeJavaMethodTest {
 
-    public static class MethodDummy {
+    public abstract static class CaptureDummy {
         public final List<String> captured = new ArrayList<>();
+    }
+
+    public static class MethodDummy extends CaptureDummy {
 
         public void f1(String s) {
             captured.add("1");
@@ -44,21 +48,50 @@ public class NativeJavaMethodTest {
         }
     }
 
-    private static void expect(List<String> expected, String... lines) {
+    public abstract static class NonVarArgParent extends CaptureDummy {
+        public void someMethod(int i) {
+            captured.add("NonVarArgParent.someMethod");
+        }
+    }
+
+    public static class VarArgAtSubclass extends NonVarArgParent {
+        public void someMethod(int i, int... extra) {
+            captured.add("VarArgAtSubclass.someMethod");
+        }
+    }
+
+    public abstract static class VarArgParent extends CaptureDummy {
+        public void someMethod(int i, int... extra) {
+            captured.add("VarArgParent.someMethod");
+        }
+    }
+
+    public static class VarArgAtParent extends VarArgParent {
+        public void someMethod(int i) {
+            captured.add("VarArgAtParent.someMethod");
+        }
+    }
+
+    public static void expect(List<String> expected, String... lines) {
+        expect(expected, MethodDummy::new, lines);
+    }
+
+    public static void expect(
+            List<String> expected, Supplier<CaptureDummy> beanSupplier, String... lines) {
         Utils.runWithAllModes(
                 cx -> {
-                    final var methodDummy = new MethodDummy();
-                    final var scope = initContext(cx, methodDummy);
+                    final var bean = beanSupplier.get();
+                    final var scope = initContext(cx, bean);
 
                     cx.evaluateString(
                             scope, String.join("\n", lines), "NativeJavaMethodTest.js", 0, null);
 
-                    Assertions.assertEquals(expected, methodDummy.captured);
+                    Assertions.assertEquals(expected, bean.captured);
                     return null;
                 });
     }
 
-    private static ScopeObject initContext(Context cx, MethodDummy methodDummy) {
+    private static ScopeObject initContext(Context cx, CaptureDummy methodDummy) {
         cx.setLanguageVersion(Context.VERSION_ES6);
         final var scope = cx.initStandardObjects();
         ScriptableObject.putProperty(scope, "d", Context.javaToJS(methodDummy, scope));
@@ -105,6 +138,21 @@ public class NativeJavaMethodTest {
                 "d.f1('x', 'y');",
                 "d.f1('x', 3);",
                 "d.f1('x', '3');");
+    }
+
+    @Test
+    void overloadMethodOrdering() {
+        expect(
+                List.of("NonVarArgParent.someMethod", "VarArgAtSubclass.someMethod"),
+                VarArgAtSubclass::new,
+                "d.someMethod(1);",
+                "d.someMethod(1, 2);");
+
+        expect(
+                List.of("VarArgAtParent.someMethod", "VarArgParent.someMethod"),
+                VarArgAtParent::new,
+                "d.someMethod(1);",
+                "d.someMethod(1, 2);");
     }
 
     @Test
