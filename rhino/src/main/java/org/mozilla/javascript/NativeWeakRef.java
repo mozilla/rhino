@@ -76,7 +76,7 @@ public class NativeWeakRef extends ScriptableObject {
         return nr;
     }
 
-    private static boolean canBeHeldWeakly(Object o) {
+    static boolean canBeHeldWeakly(Object o) {
         return ScriptRuntime.isObject(o)
                 || (o instanceof Symbol s && s.getKind() != Symbol.Kind.REGISTERED);
     }
