@@ -16,6 +16,8 @@ public class NativeWeakRef extends ScriptableObject {
 
     private static final ClassDescriptor DESCRIPTOR;
 
+    private boolean instanceOfWeakRef = false;
+
     private final WeakReference<Object> target;
 
     static {
@@ -53,6 +55,7 @@ public class NativeWeakRef extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.weakref.cant.hold.weakly");
         }
         var w = new NativeWeakRef(target);
+        w.instanceOfWeakRef = true;
         w.setParentScope(f.getDeclarationScope());
         w.setPrototype((Scriptable) f.getPrototypeProperty());
         return w;
@@ -60,9 +63,17 @@ public class NativeWeakRef extends ScriptableObject {
 
     private static Object deref(
             Context cx, JSFunction f, Object nt, VarScope s, Object to, Object[] args) {
-        var self = LambdaConstructor.convertThisObject(to, NativeWeakRef.class);
+        NativeWeakRef self = realThis(to, "deref");
         var val = self.target.get();
         return (val == null ? Undefined.instance : val);
+    }
+
+    private static NativeWeakRef realThis(Object thisObj, String name) {
+        NativeWeakRef nr = LambdaConstructor.convertThisObject(thisObj, NativeWeakRef.class);
+        if (!nr.instanceOfWeakRef) {
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", name);
+        }
+        return nr;
     }
 
     private static boolean canBeHeldWeakly(Object o) {
