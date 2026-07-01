@@ -1,6 +1,6 @@
 [versions]
 jline = '3.30.6'
-junit5 = '5.10.3'
+junit5 = '6.1.1'
 
 [libraries]
 archunit = { group = 'com.tngtech.archunit', name = 'archunit-junit5', version = '1.4.1' }
