@@ -65,7 +65,7 @@ public class AccessorSlot extends Slot<Scriptable> {
                             ScriptableObject.NOT_FOUND, attr, getter == null && setter == null);
         }
 
-        String fName = name == null ? "f" : name.toString();
+        String fName = getName() == null ? "f" : getName().toString();
         if (getter != null) {
             Function f = getter.asGetterFunction(fName, scope);
             desc.getter = f == null ? Undefined.instance : f;

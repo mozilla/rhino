@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolder<T> {
 
@@ -214,7 +213,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
-            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+            if (slot.keyMatches(key, indexOrHash)) {
                 return slot;
             }
             Slot<T> newSlot = new Slot<T>(key, index, attributes);
@@ -226,7 +225,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         public Slot<T> query(Object key, int index) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
-            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+            if (slot.keyMatches(key, indexOrHash)) {
                 return slot;
             }
             return null;
@@ -823,8 +822,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
         for (var slot : map) {
             if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
-                    && (getSymbols || !(slot.name instanceof Symbol))) {
-                a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);
+                    && (getSymbols || !(slot.getName() instanceof Symbol))) {
+                a[c++] = slot.getKey();
             }
         }
 

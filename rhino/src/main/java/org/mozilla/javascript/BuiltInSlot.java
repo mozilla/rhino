@@ -139,7 +139,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
     public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
         if ((getAttributes() & ScriptableObject.READONLY) != 0) {
             if (isThrow) {
-                throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
+                throw ScriptRuntime.typeErrorById("msg.modify.readonly", getName());
             }
             return true;
         }

@@ -88,7 +88,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         int indexOrHash = (key != null ? key.hashCode() : index);
         int slotIndex = getSlotIndex(slots.length, indexOrHash);
         for (Slot<T> slot = slots[slotIndex]; slot != null; slot = slot.next) {
-            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+            if (slot.keyMatches(key, indexOrHash)) {
                 return slot;
             }
         }
@@ -109,7 +109,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         if (slots != null) {
             final int slotIndex = getSlotIndex(slots.length, indexOrHash);
             for (slot = slots[slotIndex]; slot != null; slot = slot.next) {
-                if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                if (slot.keyMatches(key, indexOrHash)) {
                     break;
                 }
             }
@@ -164,7 +164,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
             final int slotIndex = getSlotIndex(slots.length, indexOrHash);
             Slot<T> prev = slots[slotIndex];
             for (slot = prev; slot != null; slot = slot.next) {
-                if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+                if (slot.keyMatches(key, indexOrHash)) {
                     break;
                 }
                 prev = slot;
@@ -259,7 +259,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
             firstAdded = newSlot;
         }
         lastAdded = newSlot;
-        if (newSlot.name == null) hasIndex = true;
+        if (newSlot.getName() == null) hasIndex = true;
         addKnownAbsentSlot(slots, newSlot);
     }
 
@@ -309,7 +309,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
      */
     private static <T extends PropHolder<T>> void addKnownAbsentSlot(
             Slot<T>[] addSlots, Slot<T> slot) {
-        final int insertPos = getSlotIndex(addSlots.length, slot.indexOrHash);
+        final int insertPos = getSlotIndex(addSlots.length, slot.getIndexOrHash());
         slot.next = addSlots[insertPos];
         addSlots[insertPos] = slot;
     }
