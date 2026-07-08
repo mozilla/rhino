@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
  */
 public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
-    private final LinkedHashMap<Object, Slot<T>> map;
+    private final LinkedHashMap<Object, ASlot<T>> map;
 
     public HashSlotMap() {
         map = new LinkedHashMap<>();
@@ -29,14 +29,14 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
     public HashSlotMap(SlotMap<T> oldMap) {
         map = new LinkedHashMap<>(oldMap.size());
-        for (Slot<T> n : oldMap) {
+        for (var n : oldMap) {
             add(null, n.copySlot());
         }
     }
 
-    public HashSlotMap(SlotMap<T> oldMap, Slot<T> newSlot) {
+    public HashSlotMap(SlotMap<T> oldMap, ASlot<T> newSlot) {
         map = new LinkedHashMap<>(oldMap.dirtySize() + 1);
-        for (Slot<T> n : oldMap) {
+        for (var n : oldMap) {
             add(null, n.copySlot());
         }
         add(null, newSlot);
@@ -53,40 +53,40 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     }
 
     @Override
-    public Slot<T> query(Object key, int index) {
+    public ASlot<T> query(Object key, int index) {
         Object name = makeKey(key, index);
         return map.get(name);
     }
 
     @Override
-    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         Object name = makeKey(key, index);
         return map.computeIfAbsent(name, n -> new Slot<T>(key, index, attributes));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <S extends Slot<T>> S compute(
+    public <S extends ASlot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> compoundOp,
             Object key,
             int index,
             SlotComputer<S, T> c) {
         Object name = makeKey(key, index);
-        Slot<T> ret =
+        var ret =
                 map.compute(
                         name, (n, existing) -> c.compute(key, index, existing, compoundOp, owner));
         return (S) ret;
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
         Object name = makeKey(newSlot);
         map.put(name, newSlot);
     }
 
     @Override
-    public Iterator<Slot<T>> iterator() {
+    public Iterator<ASlot<T>> iterator() {
         return map.values().iterator();
     }
 
@@ -94,7 +94,7 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         return name == null ? String.valueOf(index) : name;
     }
 
-    private Object makeKey(Slot<T> slot) {
+    private Object makeKey(ASlot<T> slot) {
         return slot.getKey();
     }
 }

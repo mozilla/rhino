@@ -20,7 +20,7 @@ public class LambdaSlot extends Slot<Scriptable> {
         super(name, index, 0);
     }
 
-    LambdaSlot(Slot<Scriptable> oldSlot) {
+    LambdaSlot(ASlot<Scriptable> oldSlot) {
         super(oldSlot);
     }
 

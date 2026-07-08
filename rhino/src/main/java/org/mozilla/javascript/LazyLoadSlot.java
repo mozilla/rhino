@@ -9,7 +9,7 @@ public class LazyLoadSlot<T extends PropHolder<T>> extends Slot<T> {
         super(name, index, 0);
     }
 
-    LazyLoadSlot(Slot<T> oldSlot) {
+    LazyLoadSlot(ASlot<T> oldSlot) {
         super(oldSlot);
     }
 

@@ -117,7 +117,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      *     and a READONLY slot was found.
      */
     private boolean putImpl(Object key, int index, VarScope start, Object value, boolean isThrow) {
-        Slot<VarScope> slot;
+        ASlot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(key, index);
             if (slot == null) {
@@ -267,14 +267,14 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      */
     @Override
     public void setAttributes(String name, int attributes) {
-        Slot attrSlot = getMap().modify(this, name, 0, 0);
+        var attrSlot = getMap().modify(this, name, 0, 0);
         attrSlot.setAttributes(attributes);
     }
 
     /** Set attributes of a Symbol-keyed property. */
     @Override
     public void setAttributes(Symbol key, int attributes) {
-        Slot attrSlot = getMap().modify(this, key, 0, 0);
+        var attrSlot = getMap().modify(this, key, 0, 0);
         attrSlot.setAttributes(attributes);
     }
 
@@ -315,7 +315,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      */
     @Override
     public boolean isConst(String name) {
-        Slot slot = getMap().query(name, 0);
+        var slot = getMap().query(name, 0);
         if (slot == null) {
             return false;
         }
@@ -335,7 +335,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     private boolean putConstImpl(
             String name, int index, VarScope start, Object value, int constFlag) {
         assert (constFlag != ScriptableObject.EMPTY);
-        Slot<VarScope> slot;
+        ASlot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(name, index);
             if (slot == null) {

@@ -23,7 +23,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
         super(name, index, 0);
     }
 
-    LambdaAccessorSlot(Slot<Scriptable> oldSlot) {
+    LambdaAccessorSlot(ASlot<Scriptable> oldSlot) {
         super(oldSlot);
     }
 
