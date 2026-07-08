@@ -938,7 +938,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return desc;
     }
 
-    private Slot queryOrFakeSlot(Context cx, Object id) {
+    private ASlot<?> queryOrFakeSlot(Context cx, Object id) {
         var slot = querySlot(cx, id);
         if (slot == null) {
             if (id instanceof String) {
@@ -961,7 +961,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
     }
 
-    private Slot getBuiltInSlot(String name) {
+    private ASlot<?> getBuiltInSlot(String name) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);

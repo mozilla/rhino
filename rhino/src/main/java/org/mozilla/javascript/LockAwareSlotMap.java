@@ -13,16 +13,16 @@ interface LockAwareSlotMap<T extends PropHolder<T>> extends SlotMap<T> {
     boolean isEmptyWithLock();
 
     /** The equivalent of {@link SlotMap#modify(SlotMapOwner, Object, int, int)}. */
-    Slot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes);
+    ASlot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes);
 
     /** The equivalent of {@link SlotMap#query(Object, int)}. */
-    Slot<T> queryWithLock(Object key, int index);
+    ASlot<T> queryWithLock(Object key, int index);
 
     /**
      * The equivalent of {@link SlotMap#compute(SlotMapOwner, Object, int,
      * org.mozilla.javascript.SlotMap.SlotComputer)}.
      */
-    <S extends Slot<T>> S computeWithLock(
+    <S extends ASlot<T>> S computeWithLock(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> compoundOp,
             Object key,
@@ -30,7 +30,7 @@ interface LockAwareSlotMap<T extends PropHolder<T>> extends SlotMap<T> {
             SlotComputer<S, T> compute);
 
     /** The equivalent of {@link SlotMap#add(SlotMapOwner, Slot)}. */
-    void addWithLock(SlotMapOwner<T> owner, Slot<T> newSlot);
+    void addWithLock(SlotMapOwner<T> owner, ASlot<T> newSlot);
 
     long getReadLock();
 

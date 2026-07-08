@@ -52,7 +52,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
     private static class EmptySlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
         @Override
-        public Iterator<Slot<T>> iterator() {
+        public Iterator<ASlot<T>> iterator() {
             return Collections.emptyIterator();
         }
 
@@ -67,7 +67,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+        public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
             var newSlot = new Slot<T>(key, index, attributes);
             var map = new SingleEntrySlotMap<T>(newSlot);
             owner.setMap(map);
@@ -75,12 +75,12 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public Slot<T> query(Object key, int index) {
+        public ASlot<T> query(Object key, int index) {
             return null;
         }
 
         @Override
-        public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
+        public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
             if (newSlot != null) {
                 var map = new SingleEntrySlotMap<T>(newSlot);
                 owner.setMap(map);
@@ -88,7 +88,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public <S extends Slot<T>> S compute(
+        public <S extends ASlot<T>> S compute(
                 SlotMapOwner<T> owner,
                 CompoundOperationMap<T> compoundOp,
                 Object key,
@@ -113,7 +113,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
             extends EmptySlotMap<T> {
 
         @Override
-        public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+        public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
             var newSlot = new Slot<T>(key, index, attributes);
             var currentMap = replaceMapAndAddSlot(owner, newSlot);
             if (currentMap != this) {
@@ -123,7 +123,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
+        public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
             if (newSlot != null) {
                 var currentMap = replaceMapAndAddSlot(owner, newSlot);
                 if (currentMap != this) {
@@ -133,7 +133,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public <S extends Slot<T>> S compute(
+        public <S extends ASlot<T>> S compute(
                 SlotMapOwner<T> owner,
                 CompoundOperationMap<T> compoundOp,
                 Object key,
@@ -149,7 +149,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
             return newSlot;
         }
 
-        private SlotMap<T> replaceMapAndAddSlot(SlotMapOwner<T> owner, Slot<T> newSlot) {
+        private SlotMap<T> replaceMapAndAddSlot(SlotMapOwner<T> owner, ASlot<T> newSlot) {
             var map = new ThreadSafeSingleEntrySlotMap<T>(newSlot);
             return ThreadedAccess.checkAndReplaceMap(owner, this, map);
         }
@@ -162,10 +162,10 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
     }
 
-    private static final class Iter<T extends PropHolder<T>> implements Iterator<Slot<T>> {
-        private Slot<T> next;
+    private static final class Iter<T extends PropHolder<T>> implements Iterator<ASlot<T>> {
+        private ASlot<T> next;
 
-        Iter(Slot<T> slot) {
+        Iter(ASlot<T> slot) {
             next = slot;
         }
 
@@ -175,8 +175,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public Slot<T> next() {
-            Slot<T> ret = next;
+        public ASlot<T> next() {
+            ASlot<T> ret = next;
             if (ret == null) {
                 throw new NoSuchElementException();
             }
@@ -187,15 +187,15 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
     static class SingleEntrySlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
-        SingleEntrySlotMap(Slot<T> slot) {
+        SingleEntrySlotMap(ASlot<T> slot) {
             assert (slot != null);
             this.slot = slot;
         }
 
-        protected final Slot<T> slot;
+        protected final ASlot<T> slot;
 
         @Override
-        public Iterator<Slot<T>> iterator() {
+        public Iterator<ASlot<T>> iterator() {
             return new Iter<T>(slot);
         }
 
@@ -210,7 +210,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+        public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
             if (slot.keyMatches(key, indexOrHash)) {
@@ -222,7 +222,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public Slot<T> query(Object key, int index) {
+        public ASlot<T> query(Object key, int index) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
             if (slot.keyMatches(key, indexOrHash)) {
@@ -232,7 +232,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
+        public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
             if (owner == null) {
                 throw new IllegalStateException();
             } else {
@@ -244,7 +244,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public <S extends Slot<T>> S compute(
+        public <S extends ASlot<T>> S compute(
                 SlotMapOwner<T> owner,
                 CompoundOperationMap<T> compoundOp,
                 Object key,
@@ -260,12 +260,12 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
     static final class ThreadSafeSingleEntrySlotMap<T extends PropHolder<T>>
             extends SingleEntrySlotMap<T> {
 
-        ThreadSafeSingleEntrySlotMap(Slot<T> slot) {
+        ThreadSafeSingleEntrySlotMap(ASlot<T> slot) {
             super(slot);
         }
 
         @Override
-        public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
+        public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
             if (owner == null) {
                 throw new IllegalStateException();
             } else {
@@ -281,7 +281,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
 
         @Override
-        public <S extends Slot<T>> S compute(
+        public <S extends ASlot<T>> S compute(
                 SlotMapOwner<T> owner,
                 CompoundOperationMap<T> compoundOp,
                 Object key,
@@ -462,7 +462,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
     @Override
     public void put(String name, T start, Object value) {
-        Slot<T> slot;
+        ASlot<T> slot;
         if (this != start) {
             slot = getMap().query(name, 0);
             if (slot == null) {
@@ -477,7 +477,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
     @Override
     public void put(int index, T start, Object value) {
-        Slot<T> slot;
+        ASlot<T> slot;
         if (this != start) {
             slot = getMap().query(null, index);
             if (slot == null) {
@@ -491,7 +491,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
     @Override
     public void put(Symbol name, T start, Object value) {
-        Slot<T> slot;
+        ASlot<T> slot;
         if (this != start) {
             slot = getMap().query(name, 0);
             if (slot == null) {
@@ -693,7 +693,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
      */
     public void setAttributes(String name, int attributes) {
         checkNotSealed(name, 0);
-        Slot attrSlot = getMap().modify(this, name, 0, 0);
+        var attrSlot = getMap().modify(this, name, 0, 0);
         attrSlot.setAttributes(attributes);
     }
 
@@ -711,19 +711,19 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
      */
     public void setAttributes(int index, int attributes) {
         checkNotSealed(null, index);
-        Slot attrSlot = getMap().modify(this, null, index, 0);
+        var attrSlot = getMap().modify(this, null, index, 0);
         attrSlot.setAttributes(attributes);
     }
 
     /** Set attributes of a Symbol-keyed property. */
     public void setAttributes(Symbol key, int attributes) {
         checkNotSealed(key, 0);
-        Slot attrSlot = getMap().modify(this, key, 0, 0);
+        var attrSlot = getMap().modify(this, key, 0, 0);
         attrSlot.setAttributes(attributes);
     }
 
-    private Slot getAttributeSlot(String name, int index) {
-        Slot slot = getMap().query(name, index);
+    private ASlot<T> getAttributeSlot(String name, int index) {
+        var slot = getMap().query(name, index);
         if (slot == null) {
             String str = (name != null ? name : Integer.toString(index));
             throw Context.reportRuntimeErrorById("msg.prop.not.found", str);
@@ -731,8 +731,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         return slot;
     }
 
-    private Slot getAttributeSlot(Symbol key) {
-        Slot slot = getMap().query(key, 0);
+    private ASlot<T> getAttributeSlot(Symbol key) {
+        var slot = getMap().query(key, 0);
         if (slot == null) {
             throw Context.reportRuntimeErrorById("msg.prop.not.found", key);
         }
@@ -747,7 +747,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
                 out.writeInt(0);
             } else {
                 out.writeInt(objectsCount);
-                for (Slot slot : getMap()) {
+                for (var slot : getMap()) {
                     out.writeObject(slot);
                 }
             }

@@ -3,9 +3,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serial;
-import java.io.Serializable;
 import java.util.Objects;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * A Slot is the base class for all properties stored in the ScriptableObject class. There are a
@@ -13,19 +11,16 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * primitive type or another object. Separate classes are used to represent properties that have
  * various types of getter and setter methods.
  */
-public class Slot<T extends PropHolder<T>> implements Serializable {
+public class Slot<T extends PropHolder<T>> extends ASlot<T> {
     @Serial private static final long serialVersionUID = -6090581677123995491L;
     private final Object name;
     private int indexOrHash;
     private short attributes;
-    Object value;
-    transient Slot<T> next; // next in hash table bucket
-    transient Slot<T> orderedNext; // next in linked list
 
     Slot(Object name, int index, int attributes) {
+        super(attributes);
         this.name = name;
         this.indexOrHash = name == null ? index : name.hashCode();
-        this.attributes = (short) attributes;
     }
 
     Slot<T> copySlot() {
@@ -50,13 +45,10 @@ public class Slot<T extends PropHolder<T>> implements Serializable {
         return false;
     }
 
-    protected Slot(Slot<T> oldSlot) {
-        name = oldSlot.name;
-        indexOrHash = oldSlot.indexOrHash;
-        attributes = oldSlot.attributes;
-        value = oldSlot.value;
-        next = oldSlot.next;
-        orderedNext = oldSlot.orderedNext;
+    protected Slot(ASlot<T> oldSlot) {
+        super(oldSlot);
+        name = oldSlot.getName();
+        indexOrHash = oldSlot.getIndexOrHash();
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -66,39 +58,8 @@ public class Slot<T extends PropHolder<T>> implements Serializable {
         }
     }
 
-    public final boolean setValue(Object value, T owner, T start) {
-        return setValue(value, owner, start, Context.isCurrentContextStrict());
-    }
-
-    public boolean setValue(Object value, T owner, T start, boolean isThrow) {
-        if ((attributes & ScriptableObject.READONLY) != 0) {
-            if (isThrow) {
-                throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
-            }
-            return true;
-        }
-        if (owner == start) {
-            this.value = value;
-            return true;
-        }
-        return false;
-    }
-
     public Object getValue(T start) {
         return value;
-    }
-
-    int getAttributes() {
-        return attributes;
-    }
-
-    void setAttributes(int value) {
-        ScriptableObject.checkValidAttributes(value);
-        attributes = (short) value;
-    }
-
-    DescriptorInfo getPropertyDescriptor(Context cx, T scope) {
-        return ScriptableObject.buildDataDescriptor(value, attributes);
     }
 
     protected void throwNoSetterException(T start, Object newValue) {

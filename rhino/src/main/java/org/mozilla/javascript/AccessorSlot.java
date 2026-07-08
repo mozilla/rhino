@@ -15,7 +15,7 @@ public class AccessorSlot extends Slot<Scriptable> {
         super(name, index, 0);
     }
 
-    AccessorSlot(Slot<Scriptable> oldSlot) {
+    AccessorSlot(ASlot<Scriptable> oldSlot) {
         super(oldSlot);
     }
 
