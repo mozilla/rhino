@@ -135,7 +135,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
             this.getterFunction =
                     new LambdaFunction(
                             scope,
-                            "get " + super.name,
+                            "get " + super.getName(),
                             0,
                             (cx1, scope1, thisObj, args) -> getter.apply((Scriptable) thisObj),
                             false);
@@ -148,7 +148,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
             this.setterFunction =
                     new LambdaFunction(
                             scope,
-                            "set " + super.name,
+                            "set " + super.getName(),
                             1,
                             (cx1, scope1, thisObj, args) -> {
                                 setter.accept(

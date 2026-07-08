@@ -2926,7 +2926,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         int c = externalLen;
         for (var slot : map) {
             if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
-                    && (getSymbols || !(slot.name instanceof Symbol))) {
+                    && (getSymbols || !(slot.getName() instanceof Symbol))) {
                 if (c == externalLen) {
                     // Special handling to combine external array with additional properties
                     Object[] oldA = a;
@@ -2935,7 +2935,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                         System.arraycopy(oldA, 0, a, 0, externalLen);
                     }
                 }
-                a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);
+                a[c++] = slot.getKey();
             }
         }
 

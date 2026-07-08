@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
@@ -14,8 +15,8 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  */
 public class Slot<T extends PropHolder<T>> implements Serializable {
     @Serial private static final long serialVersionUID = -6090581677123995491L;
-    Object name; // This can change due to caching
-    int indexOrHash;
+    private final Object name;
+    private int indexOrHash;
     private short attributes;
     Object value;
     transient Slot<T> next; // next in hash table bucket
@@ -143,5 +144,21 @@ public class Slot<T extends PropHolder<T>> implements Serializable {
     /** Same for the "getter" function. */
     boolean isSameGetterFunction(Object function) {
         return false;
+    }
+
+    public final boolean keyMatches(Object key, int indexOrHash) {
+        return indexOrHash == this.indexOrHash && Objects.equals(this.name, key);
+    }
+
+    public final Object getKey() {
+        return name != null ? name : indexOrHash;
+    }
+
+    public final Object getName() {
+        return name;
+    }
+
+    public final int getIndexOrHash() {
+        return indexOrHash;
     }
 }

@@ -95,6 +95,6 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     }
 
     private Object makeKey(Slot<T> slot) {
-        return slot.name == null ? String.valueOf(slot.indexOrHash) : slot.name;
+        return slot.getKey();
     }
 }
