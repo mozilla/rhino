@@ -60,7 +60,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     public EmbeddedSlotMap(int capacity) {
         int n = -1 >>> Integer.numberOfLeadingZeros(capacity - 1);
         n = (n < 0) ? 1 : n + 1;
-        slots = new Slot[n];
+        slots = new ASlot[n];
     }
 
     @Override
@@ -137,7 +137,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
                 promoteMap(owner, newSlot);
                 return;
             }
-            Slot<T>[] newSlots = new Slot[slots.length * 2];
+            ASlot<T>[] newSlots = new ASlot[slots.length * 2];
             copyTable(slots, newSlots);
             slots = newSlots;
         }
@@ -244,7 +244,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     @SuppressWarnings("unchecked")
     public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
         if (slots == null) {
-            slots = new Slot[INITIAL_SLOT_SIZE];
+            slots = new ASlot[INITIAL_SLOT_SIZE];
         }
         createNewSlot(owner, newSlot);
     }
