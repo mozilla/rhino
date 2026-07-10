@@ -1,6 +1,7 @@
 package org.mozilla.javascript;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -94,6 +95,20 @@ public class SlotMapTest {
         } else {
             assertFalse(obj.getMap().isEmpty());
         }
+    }
+
+    @MethodSource("mapTypes")
+    @ParameterizedTest
+    public void oneBuiltIn(Supplier<SlotMap<Scriptable>> mapSupplier) {
+        initSlotMapTest(mapSupplier);
+        assertNull(obj.getMap().query("foo", 0));
+        createBuiltInSlot(obj, "foo");
+        assertEquals(1 + startingSize, obj.getMap().size());
+        assertFalse(obj.getMap().isEmpty());
+        var foundNewSlot = obj.getMap().query("foo", 0);
+        assertNotNull(foundNewSlot);
+        assertTrue(foundNewSlot instanceof BuiltInSlot);
+        assertEquals("foo_result", foundNewSlot.getValue(obj));
     }
 
     @MethodSource("mapTypes")
@@ -290,6 +305,10 @@ public class SlotMapTest {
             }
             assertFalse(it.hasNext());
         }
+    }
+
+    private void createBuiltInSlot(ScriptableObject obj, String name) {
+        ScriptableObject.defineBuiltInProperty(obj, name, DONTENUM, (b, s) -> name + "_result");
     }
 
     // These keys come from the hash collision test and may help ensure that we have a few

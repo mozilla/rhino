@@ -3118,6 +3118,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     public static <T extends ScriptableObject> void defineBuiltInProperty(
+            T owner, int attributes, BuiltInSlot.Descriptor<T> descriptor) {
+        owner.getMap().add(owner, new BuiltInSlot<T>(descriptor, attributes, owner));
+    }
+
+    public static <T extends ScriptableObject> void defineBuiltInProperty(
             T owner,
             Object name,
             int attributes,

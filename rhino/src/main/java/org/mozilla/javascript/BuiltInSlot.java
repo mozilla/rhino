@@ -1,6 +1,10 @@
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
@@ -22,7 +26,8 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * map from which a slot was fetched. We store it in the slot's value field as this is not used for
  * any real value storage on a built in slot.
  */
-public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
+public class BuiltInSlot<T extends ScriptableObject> extends ASlot<Scriptable> {
+    @Serial private static final long serialVersionUID = 8728562620206845355L;
 
     public interface Getter<T extends ScriptableObject> extends Serializable {
         Object apply(T builtIn, Scriptable start);
@@ -47,10 +52,40 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
                 int index);
     }
 
-    private final Getter<T> getter;
-    private final Setter<T> setter;
-    private final AttributeSetter<T> attrUpdater;
-    private final PropDescriptionSetter<T> propDescSetter;
+    public static class Descriptor<T extends ScriptableObject> implements Serializable {
+        @Serial private static final long serialVersionUID = 8728562620206845355L;
+
+        private final Object name;
+        private int indexOrHash;
+        private final Getter<T> getter;
+        private final Setter<T> setter;
+        private final AttributeSetter<T> attrUpdater;
+        private final PropDescriptionSetter<T> propDescSetter;
+
+        public Descriptor(
+                Object name,
+                int indexOrHash,
+                Getter<T> getter,
+                Setter<T> setter,
+                AttributeSetter<T> attrUpdater,
+                PropDescriptionSetter<T> propDescSetter) {
+            this.name = name;
+            this.indexOrHash = name == null ? indexOrHash : name.hashCode();
+            this.getter = getter;
+            this.setter = setter;
+            this.attrUpdater = attrUpdater;
+            this.propDescSetter = propDescSetter;
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            if (name != null) {
+                indexOrHash = name.hashCode();
+            }
+        }
+    }
+
+    private final Descriptor<T> descriptor;
 
     BuiltInSlot(Object name, int index, int attr, T builtIn, Getter<T> getter) {
         this(
@@ -104,24 +139,25 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
             Setter<T> setter,
             AttributeSetter<T> attrUpdater,
             PropDescriptionSetter<T> propDescSetter) {
-        super(name, index, attr);
+        this(
+                new Descriptor<>(name, index, getter, setter, attrUpdater, propDescSetter),
+                attr,
+                builtIn);
+    }
+
+    BuiltInSlot(Descriptor<T> descriptor, int attr, T builtIn) {
+        super(attr);
         this.value = builtIn;
-        this.getter = getter;
-        this.setter = setter;
-        this.attrUpdater = attrUpdater;
-        this.propDescSetter = propDescSetter;
+        this.descriptor = descriptor;
     }
 
     BuiltInSlot(BuiltInSlot<T> slot) {
         super(slot);
-        this.getter = slot.getter;
-        this.setter = slot.setter;
-        this.attrUpdater = slot.attrUpdater;
-        this.propDescSetter = slot.propDescSetter;
+        this.descriptor = slot.descriptor;
     }
 
     @Override
-    Slot<Scriptable> copySlot() {
+    ASlot<Scriptable> copySlot() {
         var res = new BuiltInSlot<T>(this);
         res.next = null;
         res.orderedNext = null;
@@ -131,7 +167,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
     @Override
     @SuppressWarnings("unchecked")
     public Object getValue(Scriptable start) {
-        return getter.apply(((T) this.value), start);
+        return descriptor.getter.apply(((T) this.value), start);
     }
 
     @Override
@@ -144,7 +180,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
             return true;
         }
         if (owner == start) {
-            return setter.apply(((T) this.value), value, owner, start, isThrow);
+            return descriptor.setter.apply(((T) this.value), value, owner, start, isThrow);
         }
         return false;
     }
@@ -154,13 +190,13 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
     @SuppressWarnings("unchecked")
     public void setValueFromDescriptor(
             Object value, Scriptable owner, Scriptable start, boolean isThrow) {
-        setter.apply(((T) this.value), value, owner, start, isThrow);
+        descriptor.setter.apply(((T) this.value), value, owner, start, isThrow);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     void setAttributes(int value) {
-        attrUpdater.apply(((T) this.value), value);
+        descriptor.attrUpdater.apply(((T) this.value), value);
         super.setAttributes(value);
     }
 
@@ -173,7 +209,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
     @SuppressWarnings("unchecked")
     boolean applyNewDescriptor(
             Object id, DescriptorInfo info, boolean checkValid, Object key, int index) {
-        return propDescSetter.apply(((T) this.value), this, id, info, checkValid, key, index);
+        return descriptor.propDescSetter.apply(
+                ((T) this.value), this, id, info, checkValid, key, index);
     }
 
     private static <T extends ScriptableObject> boolean defaultSetter(
@@ -197,5 +234,44 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot<Scriptable> {
             return ScriptableObject.defineOrdinaryProperty(
                     ScriptableObject::setSlotValue, builtIn, map, id, info, checkValid, key, index);
         }
+    }
+
+    @Override
+    protected void throwNoSetterException(Scriptable start, Object newValue) {
+        Context cx = Context.getContext();
+        if (cx.isStrictMode()
+                ||
+                // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+                // we should throw a TypeError in this case.
+                cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
+
+            String prop = "";
+            if (descriptor.name != null) {
+                prop = "[" + ((Scriptable) start).getClassName() + "]." + descriptor.name;
+            }
+            throw ScriptRuntime.typeErrorById(
+                    "msg.set.prop.no.setter", prop, Context.toString(newValue));
+        }
+    }
+
+    @Override
+    public boolean keyMatches(Object key, int indexOrHash) {
+        return indexOrHash == this.descriptor.indexOrHash
+                && Objects.equals(this.descriptor.name, key);
+    }
+
+    @Override
+    public Object getKey() {
+        return descriptor.name != null ? descriptor.name : descriptor.indexOrHash;
+    }
+
+    @Override
+    public Object getName() {
+        return descriptor.name;
+    }
+
+    @Override
+    public int getIndexOrHash() {
+        return descriptor.indexOrHash;
     }
 }

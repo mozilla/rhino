@@ -762,7 +762,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         setMap(createSlotMap(tableSize));
         for (int i = 0; i < tableSize; i++) {
             @SuppressWarnings("unchecked")
-            var slot = (Slot<T>) in.readObject();
+            var slot = (ASlot<T>) in.readObject();
             getMap().add(this, slot);
         }
     }
