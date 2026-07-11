@@ -41,6 +41,24 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final JSDescriptor<JSFunction> APPLY_DESCRIPTOR;
     private static final JSDescriptor<JSFunction> CALL_DESCRIPTOR;
 
+    private static final BuiltInSlot.Descriptor<BaseFunction> NAME_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    "name", BaseFunction::nameGetter, BaseFunction::nameSetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> LENGTH_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>("length", BaseFunction::lengthGetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> ARITY_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>("arity", BaseFunction::arityGetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> ARGUMENTS_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    "arguments", BaseFunction::argumentsGetter, BaseFunction::argumentsSetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> PROTOTYPE_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    PROTOTYPE_PROPERTY_NAME,
+                    BaseFunction::prototypeGetter,
+                    BaseFunction::prototypeSetter,
+                    BaseFunction::prototypeAttrSetter,
+                    BaseFunction::prototypeDescSetter);
+
     static {
         var builder =
                 new ClassDescriptor.Builder(
@@ -149,27 +167,17 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createProperties() {
-        ScriptableObject.defineBuiltInProperty(
-                this, "length", DONTENUM | READONLY, BaseFunction::lengthGetter);
-        ScriptableObject.defineBuiltInProperty(
-                this,
-                "name",
-                DONTENUM | READONLY,
-                BaseFunction::nameGetter,
-                BaseFunction::nameSetter);
+        ScriptableObject.defineBuiltInProperty(this, DONTENUM | READONLY, LENGTH_DESCRIPTOR);
+        ScriptableObject.defineBuiltInProperty(this, DONTENUM | READONLY, NAME_DESCRIPTOR);
 
         Context cx = Context.getCurrentContext();
         if (cx == null || !cx.isStrictMode()) {
             ScriptableObject.defineBuiltInProperty(
-                    this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
+                    this, PERMANENT | DONTENUM | READONLY, ARITY_DESCRIPTOR);
 
             if (cx == null || cx.getLanguageVersion() < Context.VERSION_ES6) {
                 ScriptableObject.defineBuiltInProperty(
-                        this,
-                        "arguments",
-                        PERMANENT | DONTENUM,
-                        BaseFunction::argumentsGetter,
-                        BaseFunction::argumentsSetter);
+                        this, PERMANENT | DONTENUM, ARGUMENTS_DESCRIPTOR);
             }
         }
     }
@@ -230,14 +238,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                 (k, i, s, m, o) -> {
                     if (s == null) {
                         return new BuiltInSlot<BaseFunction>(
-                                PROTOTYPE_PROPERTY_NAME,
-                                0,
-                                prototypePropertyAttributes,
-                                this,
-                                BaseFunction::prototypeGetter,
-                                BaseFunction::prototypeSetter,
-                                BaseFunction::prototypeAttrSetter,
-                                BaseFunction::prototypeDescSetter);
+                                PROTOTYPE_DESCRIPTOR, prototypePropertyAttributes, this);
                     }
                     return s;
                 });

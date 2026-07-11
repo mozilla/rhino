@@ -26,7 +26,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * map from which a slot was fetched. We store it in the slot's value field as this is not used for
  * any real value storage on a built in slot.
  */
-public class BuiltInSlot<T extends ScriptableObject> extends ASlot<Scriptable> {
+public class BuiltInSlot<T extends ScriptableObject> extends CompactSlot<Scriptable, T> {
     @Serial private static final long serialVersionUID = 8728562620206845355L;
 
     public interface Getter<T extends ScriptableObject> extends Serializable {
@@ -52,7 +52,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends ASlot<Scriptable> {
                 int index);
     }
 
-    public static class Descriptor<T extends ScriptableObject> implements Serializable {
+    public static class Descriptor<T extends ScriptableObject>
+            extends CompactSlot.Descriptor<BuiltInSlot<T>, Scriptable, T> implements Serializable {
         @Serial private static final long serialVersionUID = 8728562620206845355L;
 
         private final Object name;
@@ -61,6 +62,40 @@ public class BuiltInSlot<T extends ScriptableObject> extends ASlot<Scriptable> {
         private final Setter<T> setter;
         private final AttributeSetter<T> attrUpdater;
         private final PropDescriptionSetter<T> propDescSetter;
+
+        public Descriptor(Object name, Getter<T> getter) {
+            this(
+                    name,
+                    0,
+                    getter,
+                    BuiltInSlot::defaultSetter,
+                    BuiltInSlot::defaultAttrSetter,
+                    BuiltInSlot::defaultPropDescSetter);
+        }
+
+        public Descriptor(Object name, Getter<T> getter, Setter<T> setter) {
+            this(
+                    name,
+                    0,
+                    getter,
+                    setter,
+                    BuiltInSlot::defaultAttrSetter,
+                    BuiltInSlot::defaultPropDescSetter);
+        }
+
+        public Descriptor(
+                Object name, Getter<T> getter, Setter<T> setter, AttributeSetter<T> attrUpdater) {
+            this(name, 0, getter, setter, attrUpdater, BuiltInSlot::defaultPropDescSetter);
+        }
+
+        public Descriptor(
+                Object name,
+                Getter<T> getter,
+                Setter<T> setter,
+                AttributeSetter<T> attrUpdater,
+                PropDescriptionSetter<T> propDescSetter) {
+            this(name, 0, getter, setter, attrUpdater, propDescSetter);
+        }
 
         public Descriptor(
                 Object name,
@@ -82,6 +117,11 @@ public class BuiltInSlot<T extends ScriptableObject> extends ASlot<Scriptable> {
             if (name != null) {
                 indexOrHash = name.hashCode();
             }
+        }
+
+        @Override
+        public BuiltInSlot<T> createSlot(T owner, int attr) {
+            return new BuiltInSlot<>(this, attr, owner);
         }
     }
 
