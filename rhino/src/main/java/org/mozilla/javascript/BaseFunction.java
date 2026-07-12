@@ -167,19 +167,21 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createProperties() {
-        ScriptableObject.defineBuiltInProperty(this, DONTENUM | READONLY, LENGTH_DESCRIPTOR);
-        ScriptableObject.defineBuiltInProperty(this, DONTENUM | READONLY, NAME_DESCRIPTOR);
+        ASlot<Scriptable> lengthSlot = LENGTH_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
+        ASlot<Scriptable> nameSlot = NAME_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
+        ASlot<Scriptable> aritySlot = null;
+        ASlot<Scriptable> argsSlot = null;
 
         Context cx = Context.getCurrentContext();
         if (cx == null || !cx.isStrictMode()) {
-            ScriptableObject.defineBuiltInProperty(
-                    this, PERMANENT | DONTENUM | READONLY, ARITY_DESCRIPTOR);
+            aritySlot = ARITY_DESCRIPTOR.createSlot(this, PERMANENT | DONTENUM | READONLY);
 
             if (cx == null || cx.getLanguageVersion() < Context.VERSION_ES6) {
-                ScriptableObject.defineBuiltInProperty(
-                        this, PERMANENT | DONTENUM, ARGUMENTS_DESCRIPTOR);
+                argsSlot = ARGUMENTS_DESCRIPTOR.createSlot(this, PERMANENT | DONTENUM);
             }
         }
+
+        setMap(new ImmutableSmallSlotMap<>(lengthSlot, nameSlot, aritySlot, argsSlot));
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
