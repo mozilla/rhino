@@ -20,13 +20,13 @@ class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOp
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         ((LockAwareSlotMap<T>) map).addWithLock(owner, newSlot);
         touched = true;
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner, Object key, int index, SlotComputer<S, T> compute) {
         updateMap(true);
         S res = ((LockAwareSlotMap<T>) map).computeWithLock(owner, this, key, index, compute);
@@ -35,7 +35,7 @@ class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOp
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> compoundOp,
             Object key,
@@ -55,15 +55,15 @@ class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOp
     }
 
     @Override
-    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         updateMap(true);
-        ASlot<T> res = ((LockAwareSlotMap<T>) map).modifyWithLock(owner, key, index, attributes);
+        Slot<T> res = ((LockAwareSlotMap<T>) map).modifyWithLock(owner, key, index, attributes);
         touched = true;
         return res;
     }
 
     @Override
-    public ASlot<T> query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         updateMap(false);
         return ((LockAwareSlotMap<T>) map).queryWithLock(key, index);
     }
@@ -75,7 +75,7 @@ class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOp
     }
 
     @Override
-    public Iterator<ASlot<T>> iterator() {
+    public Iterator<Slot<T>> iterator() {
         updateMap(false);
         return new Iter<>(map.iterator());
     }
@@ -88,10 +88,10 @@ class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOp
         }
     }
 
-    private static class Iter<T extends PropHolder<T>> implements Iterator<ASlot<T>> {
-        private final Iterator<ASlot<T>> mapIterator;
+    private static class Iter<T extends PropHolder<T>> implements Iterator<Slot<T>> {
+        private final Iterator<Slot<T>> mapIterator;
 
-        private Iter(Iterator<ASlot<T>> mapIterator) {
+        private Iter(Iterator<Slot<T>> mapIterator) {
             this.mapIterator = mapIterator;
         }
 
@@ -101,7 +101,7 @@ class ThreadSafeCompoundOperationMap<T extends PropHolder<T>> extends CompoundOp
         }
 
         @Override
-        public ASlot<T> next() {
+        public Slot<T> next() {
             return mapIterator.next();
         }
     }

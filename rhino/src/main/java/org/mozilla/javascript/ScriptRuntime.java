@@ -106,10 +106,10 @@ public class ScriptRuntime {
             preventExtensions();
         }
 
-        private static <T extends PropHolder<T>> ASlot<T> removeWithoutChecking(
+        private static <T extends PropHolder<T>> Slot<T> removeWithoutChecking(
                 Object key,
                 int index,
-                ASlot<T> slot,
+                Slot<T> slot,
                 CompoundOperationMap<T> compoundOp,
                 SlotMapOwner<T> owner) {
             return null;

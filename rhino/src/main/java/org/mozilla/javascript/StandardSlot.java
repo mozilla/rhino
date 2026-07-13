@@ -11,7 +11,7 @@ import java.util.Objects;
  * primitive type or another object. Separate classes are used to represent properties that have
  * various types of getter and setter methods.
  */
-public class StandardSlot<T extends PropHolder<T>> extends ASlot<T> {
+public class StandardSlot<T extends PropHolder<T>> extends Slot<T> {
     @Serial private static final long serialVersionUID = -6090581677123995491L;
     private final Object name;
     private int indexOrHash;
@@ -45,7 +45,7 @@ public class StandardSlot<T extends PropHolder<T>> extends ASlot<T> {
         return false;
     }
 
-    protected StandardSlot(ASlot<T> oldSlot) {
+    protected StandardSlot(Slot<T> oldSlot) {
         super(oldSlot);
         name = oldSlot.getName();
         indexOrHash = oldSlot.getIndexOrHash();

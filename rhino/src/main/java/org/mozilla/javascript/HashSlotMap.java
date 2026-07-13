@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
  */
 public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
-    private final LinkedHashMap<Object, ASlot<T>> map;
+    private final LinkedHashMap<Object, Slot<T>> map;
 
     public HashSlotMap() {
         map = new LinkedHashMap<>();
@@ -34,7 +34,7 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         }
     }
 
-    public HashSlotMap(SlotMap<T> oldMap, ASlot<T> newSlot) {
+    public HashSlotMap(SlotMap<T> oldMap, Slot<T> newSlot) {
         map = new LinkedHashMap<>(oldMap.dirtySize() + 1);
         for (var n : oldMap) {
             add(null, n.copySlot());
@@ -53,20 +53,20 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     }
 
     @Override
-    public ASlot<T> query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         Object name = makeKey(key, index);
         return map.get(name);
     }
 
     @Override
-    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         Object name = makeKey(key, index);
         return map.computeIfAbsent(name, n -> new StandardSlot<T>(key, index, attributes));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> compoundOp,
             Object key,
@@ -80,13 +80,13 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         Object name = makeKey(newSlot);
         map.put(name, newSlot);
     }
 
     @Override
-    public Iterator<ASlot<T>> iterator() {
+    public Iterator<Slot<T>> iterator() {
         return map.values().iterator();
     }
 
@@ -94,7 +94,7 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         return name == null ? String.valueOf(index) : name;
     }
 
-    private Object makeKey(ASlot<T> slot) {
+    private Object makeKey(Slot<T> slot) {
         return slot.getKey();
     }
 }

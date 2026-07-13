@@ -167,10 +167,10 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createProperties() {
-        ASlot<Scriptable> lengthSlot = LENGTH_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
-        ASlot<Scriptable> nameSlot = NAME_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
-        ASlot<Scriptable> aritySlot = null;
-        ASlot<Scriptable> argsSlot = null;
+        Slot<Scriptable> lengthSlot = LENGTH_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
+        Slot<Scriptable> nameSlot = NAME_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
+        Slot<Scriptable> aritySlot = null;
+        Slot<Scriptable> argsSlot = null;
 
         Context cx = Context.getCurrentContext();
         if (cx == null || !cx.isStrictMode()) {

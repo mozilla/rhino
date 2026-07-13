@@ -549,13 +549,13 @@ public class NativeArray extends ScriptableObject implements List {
         builtIn.lengthAttr = attrs;
     }
 
-    private static ASlot<Scriptable> lengthDescSetValue(
+    private static Slot<Scriptable> lengthDescSetValue(
             ScriptableObject owner,
             DescriptorInfo info,
             Object key,
-            ASlot<Scriptable> existing,
+            Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
-            ASlot<Scriptable> slot) {
+            Slot<Scriptable> slot) {
         ((NativeArray) owner).setLength(map, (Double) info.value);
         return slot;
     }

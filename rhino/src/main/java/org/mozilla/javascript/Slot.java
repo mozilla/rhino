@@ -9,17 +9,17 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * primitive type or another object. Separate classes are used to represent properties that have
  * various types of getter and setter methods.
  */
-public abstract class ASlot<T extends PropHolder<T>> implements Serializable {
+public abstract class Slot<T extends PropHolder<T>> implements Serializable {
     private short attributes;
     Object value;
-    transient ASlot<T> next; // next in hash table bucket
-    transient ASlot<T> orderedNext; // next in linked list
+    transient Slot<T> next; // next in hash table bucket
+    transient Slot<T> orderedNext; // next in linked list
 
-    ASlot(int attributes) {
+    Slot(int attributes) {
         this.attributes = (short) attributes;
     }
 
-    abstract ASlot<T> copySlot();
+    abstract Slot<T> copySlot();
 
     /**
      * Return true if this is a base-class "Slot". Sadly too much code breaks if we try to do this
@@ -36,7 +36,7 @@ public abstract class ASlot<T extends PropHolder<T>> implements Serializable {
         return false;
     }
 
-    protected ASlot(ASlot<T> oldSlot) {
+    protected Slot(Slot<T> oldSlot) {
         attributes = oldSlot.attributes;
         value = oldSlot.value;
         next = oldSlot.next;

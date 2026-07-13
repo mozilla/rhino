@@ -56,7 +56,7 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         final long stamp = lock.writeLock();
         try {
             return current.modifyWithLock(owner, key, index, attributes);
@@ -66,7 +66,7 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> mutableMap,
             Object key,
@@ -76,9 +76,9 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    public ASlot<T> query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         long stamp = lock.tryOptimisticRead();
-        ASlot<T> s = current.queryWithLock(key, index);
+        Slot<T> s = current.queryWithLock(key, index);
         if (lock.validate(stamp)) {
             return s;
         }
@@ -92,7 +92,7 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         final long stamp = lock.writeLock();
         try {
             current.addWithLock(owner, newSlot);
@@ -102,12 +102,12 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    public void addWithLock(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void addWithLock(SlotMapOwner<T> owner, Slot<T> newSlot) {
         super.add(owner, newSlot);
     }
 
     @Override
-    public <S extends ASlot<T>> S computeWithLock(
+    public <S extends Slot<T>> S computeWithLock(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> mutableMap,
             Object key,
@@ -122,12 +122,12 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    public ASlot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         return super.modify(owner, key, index, attributes);
     }
 
     @Override
-    public ASlot<T> queryWithLock(Object key, int index) {
+    public Slot<T> queryWithLock(Object key, int index) {
         return super.query(key, index);
     }
 
@@ -152,7 +152,7 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
     }
 
     @Override
-    protected void promoteMap(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    protected void promoteMap(SlotMapOwner<T> owner, Slot<T> newSlot) {
         // We can use `setMap` here as this promotion can only be done
         // by the lock holder and the operation will be being done on
         // the "current" map.
