@@ -30,13 +30,13 @@ public class CompoundOperationMap<T extends PropHolder<T>> implements SlotMap<T>
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         map.add(owner, newSlot);
         touched = true;
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner, Object key, int index, SlotComputer<S, T> compute) {
         updateMap(true);
         var res = map.compute(owner, this, key, index, compute);
@@ -45,7 +45,7 @@ public class CompoundOperationMap<T extends PropHolder<T>> implements SlotMap<T>
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> compoundOp,
             Object key,
@@ -71,7 +71,7 @@ public class CompoundOperationMap<T extends PropHolder<T>> implements SlotMap<T>
     }
 
     @Override
-    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         updateMap(true);
         var res = map.modify(owner, key, index, attributes);
         touched = true;
@@ -79,7 +79,7 @@ public class CompoundOperationMap<T extends PropHolder<T>> implements SlotMap<T>
     }
 
     @Override
-    public ASlot<T> query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         updateMap(false);
         return map.query(key, index);
     }
@@ -91,7 +91,7 @@ public class CompoundOperationMap<T extends PropHolder<T>> implements SlotMap<T>
     }
 
     @Override
-    public Iterator<ASlot<T>> iterator() {
+    public Iterator<Slot<T>> iterator() {
         updateMap(false);
         return map.iterator();
     }

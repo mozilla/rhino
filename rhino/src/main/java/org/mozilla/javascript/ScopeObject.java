@@ -117,7 +117,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      *     and a READONLY slot was found.
      */
     private boolean putImpl(Object key, int index, VarScope start, Object value, boolean isThrow) {
-        ASlot<VarScope> slot;
+        Slot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(key, index);
             if (slot == null) {
@@ -335,7 +335,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     private boolean putConstImpl(
             String name, int index, VarScope start, Object value, int constFlag) {
         assert (constFlag != ScriptableObject.EMPTY);
-        ASlot<VarScope> slot;
+        Slot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(name, index);
             if (slot == null) {

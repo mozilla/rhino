@@ -1,7 +1,7 @@
 package org.mozilla.javascript;
 
 public abstract class CompactSlot<T extends PropHolder<T>, O extends ScriptableObject>
-        extends ASlot<T> {
+        extends Slot<T> {
 
     public abstract static class Descriptor<
             T extends CompactSlot<U, O>, U extends PropHolder<U>, O extends ScriptableObject> {

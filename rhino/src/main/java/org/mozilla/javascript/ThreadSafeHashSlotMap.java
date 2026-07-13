@@ -28,7 +28,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
         }
     }
 
-    public ThreadSafeHashSlotMap(StampedLock lock, SlotMap<T> oldMap, ASlot<T> newSlot) {
+    public ThreadSafeHashSlotMap(StampedLock lock, SlotMap<T> oldMap, Slot<T> newSlot) {
         super(oldMap.dirtySize() + 1);
         this.lock = lock;
         for (var n : oldMap) {
@@ -76,7 +76,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     }
 
     @Override
-    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         final long stamp = lock.writeLock();
         try {
             return super.modify(owner, key, index, attributes);
@@ -86,7 +86,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> mutableMap,
             Object key,
@@ -101,7 +101,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     }
 
     @Override
-    public ASlot<T> query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         long stamp = lock.tryOptimisticRead();
         var s = super.query(key, index);
         if (lock.validate(stamp)) {
@@ -117,7 +117,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         final long stamp = lock.writeLock();
         try {
             super.add(owner, newSlot);
@@ -127,12 +127,12 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     }
 
     @Override
-    public void addWithLock(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void addWithLock(SlotMapOwner<T> owner, Slot<T> newSlot) {
         super.add(owner, newSlot);
     }
 
     @Override
-    public <S extends ASlot<T>> S computeWithLock(
+    public <S extends Slot<T>> S computeWithLock(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> mutableMap,
             Object key,
@@ -147,12 +147,12 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     }
 
     @Override
-    public ASlot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modifyWithLock(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         return super.modify(owner, key, index, attributes);
     }
 
     @Override
-    public ASlot<T> queryWithLock(Object key, int index) {
+    public Slot<T> queryWithLock(Object key, int index) {
         return super.query(key, index);
     }
 

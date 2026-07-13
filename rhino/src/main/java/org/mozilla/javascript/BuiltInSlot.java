@@ -197,7 +197,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends CompactSlot<Scripta
     }
 
     @Override
-    ASlot<Scriptable> copySlot() {
+    Slot<Scriptable> copySlot() {
         var res = new BuiltInSlot<T>(this);
         res.next = null;
         res.orderedNext = null;

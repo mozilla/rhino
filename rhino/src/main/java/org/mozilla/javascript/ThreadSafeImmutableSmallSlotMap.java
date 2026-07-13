@@ -5,8 +5,7 @@ import org.mozilla.javascript.SlotMapOwner.ThreadedAccess;
 public class ThreadSafeImmutableSmallSlotMap<T extends PropHolder<T>>
         extends ImmutableSmallSlotMap<T> {
 
-    ThreadSafeImmutableSmallSlotMap(
-            ASlot<T> slot0, ASlot<T> slot1, ASlot<T> slot2, ASlot<T> slot3) {
+    ThreadSafeImmutableSmallSlotMap(Slot<T> slot0, Slot<T> slot1, Slot<T> slot2, Slot<T> slot3) {
         super(slot0, slot1, slot2, slot3);
     }
 

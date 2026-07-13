@@ -346,10 +346,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    protected static <T extends PropHolder<T>> ASlot<T> checkSlotRemoval(
+    protected static <T extends PropHolder<T>> Slot<T> checkSlotRemoval(
             Object key,
             int index,
-            ASlot<T> slot,
+            Slot<T> slot,
             CompoundOperationMap<T> compoundOp,
             SlotMapOwner<T> owner) {
         if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
@@ -1692,7 +1692,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                         owner.checkPropertyChangeForSlot(id, existing, info);
                     }
 
-                    ASlot<Scriptable> slot;
+                    Slot<Scriptable> slot;
                     int attributes;
 
                     if (existing == null) {
@@ -1723,22 +1723,22 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     interface PropDescValueSetter {
-        ASlot<Scriptable> execute(
+        Slot<Scriptable> execute(
                 ScriptableObject owner,
                 DescriptorInfo info,
                 Object key,
-                ASlot<Scriptable> existing,
+                Slot<Scriptable> existing,
                 CompoundOperationMap<Scriptable> map,
-                ASlot<Scriptable> slot);
+                Slot<Scriptable> slot);
     }
 
-    static ASlot<Scriptable> setSlotValue(
+    static Slot<Scriptable> setSlotValue(
             ScriptableObject owner,
             DescriptorInfo info,
             Object key,
-            ASlot<Scriptable> existing,
+            Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
-            ASlot<Scriptable> slot) {
+            Slot<Scriptable> slot) {
         if (info.accessorDescriptor) {
             AccessorSlot fslot;
             if (slot instanceof AccessorSlot) {
@@ -1892,7 +1892,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     private LambdaAccessorSlot replaceExistingLambdaSlot(
-            Context cx, Object key, ASlot<Scriptable> existing, LambdaAccessorSlot newSlot) {
+            Context cx, Object key, Slot<Scriptable> existing, LambdaAccessorSlot newSlot) {
         LambdaAccessorSlot replacedSlot;
         if (existing instanceof LambdaAccessorSlot) {
             replacedSlot = (LambdaAccessorSlot) existing;
@@ -1950,12 +1950,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     protected final void checkPropertyChangeForSlot(
-            Object id, ASlot<?> current, ScriptableObject desc) {
+            Object id, Slot<?> current, ScriptableObject desc) {
         checkPropertyChangeForSlot(id, current, new DescriptorInfo(desc));
     }
 
     protected final void checkPropertyChangeForSlot(
-            Object id, ASlot<?> current, DescriptorInfo info) {
+            Object id, Slot<?> current, DescriptorInfo info) {
 
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
@@ -2282,7 +2282,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         // to try to acquire a write lock while holding the read lock... and deadlock.
         // We do this in a loop because an initialization could add _other_ stuff to initialize.
 
-        List<ASlot<Scriptable>> toInitialize = new ArrayList<>();
+        List<Slot<Scriptable>> toInitialize = new ArrayList<>();
         while (!isSealed) {
             for (var slot : toInitialize) {
                 // Need to check the type again, because initializing one slot _could_ have
@@ -2825,7 +2825,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             Object key, int index, Scriptable start, Object value, boolean isThrow) {
         // This method is very hot (basically called on each assignment),
         // so we inline the extensible/sealed checks below.
-        ASlot<Scriptable> slot;
+        Slot<Scriptable> slot;
         if (this != start) {
             slot = getMap().query(key, index);
             if (!isExtensible
@@ -2877,7 +2877,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
             }
         }
-        ASlot<Scriptable> slot;
+        Slot<Scriptable> slot;
         if (this != start) {
             slot = getMap().query(name, index);
             if (slot == null) {
@@ -2963,7 +2963,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     private static AccessorSlot ensureAccessorSlot(
             Object name,
             int index,
-            ASlot<Scriptable> existing,
+            Slot<Scriptable> existing,
             SlotMap<Scriptable> compoundOp,
             SlotMapOwner<Scriptable> owner) {
         if (existing == null) {
@@ -2978,7 +2978,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     static <T extends PropHolder<T>> LazyLoadSlot<T> ensureLazySlot(
             Object name,
             int index,
-            ASlot<T> existing,
+            Slot<T> existing,
             SlotMap<T> compoundOp,
             SlotMapOwner<T> owner) {
         if (existing == null) {
@@ -2993,7 +2993,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     private static LambdaSlot ensureLambdaSlot(
             Object name,
             int index,
-            ASlot<Scriptable> existing,
+            Slot<Scriptable> existing,
             SlotMap<Scriptable> compoundOp,
             SlotMapOwner<Scriptable> owner) {
         if (existing == null) {
@@ -3023,7 +3023,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return slot.getPropertyDescriptor(cx, this);
     }
 
-    protected final ASlot<Scriptable> querySlot(Context cx, Object id) {
+    protected final Slot<Scriptable> querySlot(Context cx, Object id) {
         if (id instanceof Symbol) {
             return getMap().query(id, 0);
         }

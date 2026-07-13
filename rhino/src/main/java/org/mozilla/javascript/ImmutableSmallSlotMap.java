@@ -5,12 +5,12 @@ import java.util.NoSuchElementException;
 
 public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
-    protected final ASlot<T> slot0;
-    protected final ASlot<T> slot1;
-    protected final ASlot<T> slot2;
-    protected final ASlot<T> slot3;
+    protected final Slot<T> slot0;
+    protected final Slot<T> slot1;
+    protected final Slot<T> slot2;
+    protected final Slot<T> slot3;
 
-    public ImmutableSmallSlotMap(ASlot<T> slot0, ASlot<T> slot1, ASlot<T> slot2, ASlot<T> slot3) {
+    public ImmutableSmallSlotMap(Slot<T> slot0, Slot<T> slot1, Slot<T> slot2, Slot<T> slot3) {
         this.slot0 = slot0;
         if (slot0 != null) slot0.orderedNext = slot1;
         this.slot1 = slot1;
@@ -31,7 +31,7 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     }
 
     @Override
-    public void add(SlotMapOwner<T> owner, ASlot<T> newSlot) {
+    public void add(SlotMapOwner<T> owner, Slot<T> newSlot) {
         if (owner == null) {
             throw new IllegalStateException();
         } else {
@@ -40,7 +40,7 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     }
 
     @Override
-    public <S extends ASlot<T>> S compute(
+    public <S extends Slot<T>> S compute(
             SlotMapOwner<T> owner,
             CompoundOperationMap<T> mutableMap,
             Object key,
@@ -55,7 +55,7 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     }
 
     @Override
-    public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
+    public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         var slot = query(key, index);
         if (slot != null) return slot;
         var newSlot = new StandardSlot<T>(key, index, attributes);
@@ -64,7 +64,7 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     }
 
     @Override
-    public ASlot<T> query(Object key, int index) {
+    public Slot<T> query(Object key, int index) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
 
         if (slot0 != null && slot0.keyMatches(key, indexOrHash)) {
@@ -90,14 +90,14 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     }
 
     @Override
-    public Iterator<ASlot<T>> iterator() {
+    public Iterator<Slot<T>> iterator() {
         return new Iter<>(slot0);
     }
 
-    private static final class Iter<T extends PropHolder<T>> implements Iterator<ASlot<T>> {
-        private ASlot<T> next;
+    private static final class Iter<T extends PropHolder<T>> implements Iterator<Slot<T>> {
+        private Slot<T> next;
 
-        Iter(ASlot<T> slot) {
+        Iter(Slot<T> slot) {
             next = slot;
         }
 
@@ -107,7 +107,7 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
         }
 
         @Override
-        public ASlot<T> next() {
+        public Slot<T> next() {
             var ret = next;
             if (ret == null) {
                 throw new NoSuchElementException();
