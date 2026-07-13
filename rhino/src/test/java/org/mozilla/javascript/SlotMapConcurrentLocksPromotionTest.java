@@ -20,7 +20,7 @@ class SlotMapConcurrentLocksPromotionTest {
                         (key, index, existing, mutableMap, owner) -> {
                             assertSame(owner, obj);
 
-                            mutableMap.add(owner, new Slot("a", 1, 0));
+                            mutableMap.add(owner, new StandardSlot<>("a", 1, 0));
 
                             return null;
                         });
@@ -42,8 +42,8 @@ class SlotMapConcurrentLocksPromotionTest {
                         (key, index, existing, mutableMap, owner) -> {
                             assertSame(owner, obj);
 
-                            mutableMap.add(owner, new Slot("a", 1, 0));
-                            mutableMap.add(owner, new Slot("b", 2, 0));
+                            mutableMap.add(owner, new StandardSlot<>("a", 1, 0));
+                            mutableMap.add(owner, new StandardSlot<>("b", 2, 0));
 
                             return null;
                         });
@@ -54,7 +54,7 @@ class SlotMapConcurrentLocksPromotionTest {
     @Test
     public void singleThreadPromotionInCompute_oneToTwo() {
         ScriptableObject obj = new TestScriptableObject();
-        obj.setMap(new SlotMapOwner.SingleEntrySlotMap<>(new Slot<Scriptable>("a", 1, 0)));
+        obj.setMap(new SlotMapOwner.SingleEntrySlotMap<>(new StandardSlot<Scriptable>("a", 1, 0)));
 
         obj.getMap()
                 .compute(
@@ -64,7 +64,7 @@ class SlotMapConcurrentLocksPromotionTest {
                         (key, index, existing, mutableMap, owner) -> {
                             assertSame(owner, obj);
 
-                            mutableMap.add(owner, new Slot<>("b", 2, 0));
+                            mutableMap.add(owner, new StandardSlot<>("b", 2, 0));
 
                             return null;
                         });

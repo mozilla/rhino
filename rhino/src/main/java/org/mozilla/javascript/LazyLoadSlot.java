@@ -4,7 +4,7 @@ package org.mozilla.javascript;
  * This is a specialization of Slot to store values that are retrieved via calls to script
  * functions. It's used to load built-in objects more efficiently.
  */
-public class LazyLoadSlot<T extends PropHolder<T>> extends Slot<T> {
+public class LazyLoadSlot<T extends PropHolder<T>> extends StandardSlot<T> {
     LazyLoadSlot(Object name, int index) {
         super(name, index, 0);
     }

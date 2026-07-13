@@ -58,7 +58,7 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     public ASlot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         var slot = query(key, index);
         if (slot != null) return slot;
-        var newSlot = new Slot<T>(key, index, attributes);
+        var newSlot = new StandardSlot<T>(key, index, attributes);
         add(owner, newSlot);
         return newSlot;
     }

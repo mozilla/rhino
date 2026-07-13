@@ -13,7 +13,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * implementing properties that behave like any other JavaScript property but which are implemented
  * using some native functionality without using reflection.
  */
-public class LambdaSlot extends Slot<Scriptable> {
+public class LambdaSlot extends StandardSlot<Scriptable> {
     @Serial private static final long serialVersionUID = -3046681698806493052L;
 
     LambdaSlot(Object name, int index) {
