@@ -8,7 +8,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * using Java and JavaScript functions. Unlike LambdaSlot, the fact that these values are accessed
  * and mutated by functions is visible via the slot's property descriptor.
  */
-public class AccessorSlot extends Slot<Scriptable> {
+public class AccessorSlot extends StandardSlot<Scriptable> {
     @Serial private static final long serialVersionUID = 1677840254177335827L;
 
     AccessorSlot(Object name, int index) {

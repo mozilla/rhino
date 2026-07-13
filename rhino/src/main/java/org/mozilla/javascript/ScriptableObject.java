@@ -1696,7 +1696,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                     int attributes;
 
                     if (existing == null) {
-                        slot = new Slot<>(k, ix, 0);
+                        slot = new StandardSlot<>(k, ix, 0);
                         attributes =
                                 applyDescriptorToAttributeBitset(
                                         DONTENUM | READONLY | PERMANENT,
@@ -1767,7 +1767,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         } else {
             if (!slot.isValueSlot() && info.isDataDescriptor()) {
                 // Replace a non-base slot with a regular slot
-                slot = new Slot<>(slot);
+                slot = new StandardSlot<>(slot);
             }
 
             if (info.value != NOT_FOUND) {
@@ -1950,7 +1950,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     protected final void checkPropertyChangeForSlot(
-            Object id, Slot current, ScriptableObject desc) {
+            Object id, ASlot<?> current, ScriptableObject desc) {
         checkPropertyChangeForSlot(id, current, new DescriptorInfo(desc));
     }
 

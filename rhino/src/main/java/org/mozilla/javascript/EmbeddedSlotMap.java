@@ -118,7 +118,7 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
             }
         }
 
-        Slot<T> newSlot = new Slot<T>(key, index, attributes);
+        var newSlot = new StandardSlot<T>(key, index, attributes);
         createNewSlot(owner, newSlot);
         return newSlot;
     }
