@@ -24,8 +24,8 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflects fields
- * directly, and uses NativeJavaMethod objects to reflect (possibly overloaded) methods. It also
- * provides iterator support for all iterable objects.
+ * directly, and reflects (possibly overloaded) methods as {@link JSFunction} objects executed via
+ * {@link NativeJavaCode}. It also provides iterator support for all iterable objects.
  *
  * @author Mike Shaver
  * @see NativeJavaArray

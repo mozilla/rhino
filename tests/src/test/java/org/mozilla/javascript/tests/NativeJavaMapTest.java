@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.NativeJavaMethod;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
@@ -156,7 +156,7 @@ public class NativeJavaMapTest {
         map.put("a", "abc");
 
         assertThrows(EvaluatorException.class, () -> runScript("value[0]", map, false));
-        assertTrue(runScript("value.put", map, false) instanceof NativeJavaMethod);
+        assertTrue(runScript("value.put", map, false) instanceof JSFunction);
         assertThrows(EvaluatorException.class, () -> runScript("value['a'] = 0", map, false));
         assertEquals(false, runScript("'a' in value", map, false));
         assertEquals(true, runScript("Object.keys(value).includes('getClass')", map, false));
