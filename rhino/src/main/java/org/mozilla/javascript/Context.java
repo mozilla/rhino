@@ -1586,7 +1586,7 @@ public class Context implements Closeable {
      * @return a string representing the script source
      */
     public final String decompileScript(Script script, int indent) {
-        return ((JSScript) script).getDescriptor().getRawSource();
+        return ((JSScript) script).getDescriptor().getSource();
     }
 
     /**

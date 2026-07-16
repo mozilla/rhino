@@ -31,7 +31,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     static final int EXCEPTION_SLOT_SIZE = 6;
 
     static boolean compareDescs(JSDescriptor i1, JSDescriptor i2) {
-        return i1 == i2 || Objects.equals(getRawSource(i1), getRawSource(i2));
+        return i1 == i2 || Objects.equals(getSource(i1), getSource(i2));
     }
 
     private static CallFrame captureFrameForGenerator(CallFrame frame) {
@@ -373,11 +373,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         return ret;
     }
 
-    static String getRawSource(JSDescriptor<?> desc) {
-        if (desc.getRawSource() == null) {
+    static String getSource(JSDescriptor<?> desc) {
+        if (desc.getSource() == null) {
             return null;
         }
-        return desc.getRawSource();
+        return desc.getSource();
     }
 
     static void initFunction(Context cx, VarScope scope, JSDescriptor<?> parent, int index) {
