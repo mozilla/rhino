@@ -22,6 +22,7 @@ public final class ScriptCompileSpec {
     private final ErrorReporter compilationErrorReporter;
     private final Consumer<CompilerEnvirons> compilerEnvironsProcessor;
     private final SourceMapper sourceMapper;
+    private final SourceCodeSupplier sourceCodeSupplier;
 
     public ScriptCompileSpec(
             String source,
@@ -31,7 +32,8 @@ public final class ScriptCompileSpec {
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
             Consumer<CompilerEnvirons> compilerEnvironsProcessor,
-            SourceMapper sourceMapper) {
+            SourceMapper sourceMapper,
+            SourceCodeSupplier sourceCodeSupplier) {
         this.source = source;
         this.sourceName = sourceName;
         this.lineno = lineno;
@@ -40,6 +42,7 @@ public final class ScriptCompileSpec {
         this.compilationErrorReporter = compilationErrorReporter;
         this.compilerEnvironsProcessor = compilerEnvironsProcessor;
         this.sourceMapper = sourceMapper;
+        this.sourceCodeSupplier = sourceCodeSupplier;
     }
 
     public static Builder fromSource(String source) {
@@ -82,6 +85,10 @@ public final class ScriptCompileSpec {
         return sourceMapper;
     }
 
+    public SourceCodeSupplier getSourceCodeSupplier() {
+        return sourceCodeSupplier;
+    }
+
     public static final class Builder {
         private final String source;
         private String sourceName;
@@ -91,6 +98,7 @@ public final class ScriptCompileSpec {
         private ErrorReporter compilationErrorReporter;
         private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
         private SourceMapper sourceMapper;
+        private SourceCodeSupplier sourceCodeSupplier;
 
         private Builder(String source) {
             this.source = source;
@@ -132,6 +140,17 @@ public final class ScriptCompileSpec {
             return this;
         }
 
+        /**
+         * Can be used to set a lazy source code provider for the script being compiled - for
+         * example, something that will lookup the script from a database. If set, Rhino will avoid
+         * storing the encoded source code and thus save memory. The trade-off is, of course, that
+         * whenever someone does `Function.toString()` we will need to do a database lookup.
+         */
+        public Builder sourceCodeSupplier(SourceCodeSupplier sourceCodeSupplier) {
+            this.sourceCodeSupplier = sourceCodeSupplier;
+            return this;
+        }
+
         public ScriptCompileSpec build() {
             int normalizedLineno = Math.max(lineno, 0);
             return new ScriptCompileSpec(
@@ -142,7 +161,8 @@ public final class ScriptCompileSpec {
                     compiler,
                     compilationErrorReporter,
                     compilerEnvironsProcessor,
-                    sourceMapper);
+                    sourceMapper,
+                    sourceCodeSupplier);
         }
     }
 }
