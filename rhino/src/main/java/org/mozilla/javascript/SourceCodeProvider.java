@@ -7,7 +7,7 @@ public interface SourceCodeProvider {
     static SourceCodeProvider make(
             boolean generatingSource, SourceCodeSupplier sourceCodeSupplier, String rawSource) {
         if (!generatingSource) {
-            return null;
+            return NullSourceCodeProvider.NULL_PROVIDER;
         } else if (sourceCodeSupplier != null) {
             return new LazySourceCodeProvider(sourceCodeSupplier);
         } else {

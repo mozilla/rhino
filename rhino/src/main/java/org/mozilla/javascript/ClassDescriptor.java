@@ -762,9 +762,9 @@ public class ClassDescriptor {
             builder.paramAndVarNames = paramNames;
             builder.paramIsConst = new boolean[length];
             builder.paramAndVarCount = length;
-            builder.rawSource = String.format("function %s() {\n\t[native code]\n}", name);
-            builder.rawSourceStart = 0;
-            builder.rawSourceEnd = builder.rawSource.length();
+            builder.sourceCodeProvider = BuiltInSourceCodeProvider.INSTANCE;
+            builder.sourceStart = 0;
+            builder.sourceEnd = 0;
 
             builder.hasPrototype = true;
             return builder.build(desc -> {});

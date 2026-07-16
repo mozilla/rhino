@@ -92,7 +92,7 @@ public class CodeGenUtils {
             String rawSource,
             CompilerEnvirons compilerEnv) {
         builder.sourceFile = scriptOrFn.getSourceName();
-        builder.rawSource = rawSource;
+        builder.sourceCodeProvider = compilerEnv.getSourceCodeProvider();
         builder.isTopLevel = true;
         builder.isScript = true;
         builder.isEvalFunction = compilerEnv.isInEval();
@@ -114,8 +114,8 @@ public class CodeGenUtils {
         // Calculate arity (function.length) - count params before first default
         builder.arity = FunctionNode.calculateFunctionArity(scriptOrFn);
 
-        builder.rawSourceStart = scriptOrFn.getRawSourceStart();
-        builder.rawSourceEnd = scriptOrFn.getRawSourceEnd();
+        builder.sourceStart = scriptOrFn.getRawSourceStart();
+        builder.sourceEnd = scriptOrFn.getRawSourceEnd();
     }
 
     /** Configure the constructor appropriately based on a function's type. */
