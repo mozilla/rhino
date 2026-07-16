@@ -459,7 +459,7 @@ public class NativeGlobal implements Serializable {
     private static Object js_eval(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         TopLevel top = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
-        return ScriptRuntime.evalSpecial(cx, top, top.getGlobalThis(), args, "eval code", 1);
+        return ScriptRuntime.evalSpecial(cx, top, top.getGlobalThis(), args, "eval code", 1, false);
     }
 
     /**
