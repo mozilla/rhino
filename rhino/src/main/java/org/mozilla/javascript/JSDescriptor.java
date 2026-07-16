@@ -15,7 +15,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
  * function objects represented by {@link JSFunction}s become more lightweight in their creation.
  */
 public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable, DebuggableScript {
-    private static final long seria_ersio_ID = 5067677351589230234L;
+    private static final long serialVersionUID = 5067677351589230234L;
 
     private static final int IS_STRICT_FLAG = 1;
     private static final int IS_SCRIPT_FLAG = 1 << 1;
@@ -39,9 +39,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private final boolean[] paramIsConst;
     private final int flags;
     private final String sourceFile;
-    private final String rawSource;
-    private final int rawSourceStart;
-    private final int rawSourceEnd;
+    private final SourceCodeProvider sourceCodeProvider;
+    private final int sourceStart;
+    private final int sourceEnd;
     private final String name;
     private final int languageVersion;
     private final int paramAndVarCount;
@@ -67,9 +67,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             boolean isEvalFunction,
             boolean hasRestArg,
             String sourceFile,
-            String rawSource,
-            int rawSourceStart,
-            int rawSourceEnd,
+            SourceCodeProvider sourceCodeProvider,
+            int sourceStart,
+            int sourceEnd,
             String name,
             int languageVersion,
             int paramAndVarCount,
@@ -105,9 +105,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         this.flags = flags;
 
         this.sourceFile = sourceFile;
-        this.rawSource = rawSource;
-        this.rawSourceStart = rawSourceStart;
-        this.rawSourceEnd = rawSourceEnd;
+        this.sourceCodeProvider = sourceCodeProvider;
+        this.sourceStart = sourceStart;
+        this.sourceEnd = sourceEnd;
         this.name = name == null ? "" : name;
         this.languageVersion = languageVersion;
         this.paramAndVarCount = paramAndVarCount;
@@ -178,7 +178,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     }
 
     public String getRawSource() {
-        return rawSource.substring(rawSourceStart, rawSourceEnd);
+        return sourceCodeProvider.getSource(name, sourceStart, sourceEnd);
     }
 
     public String getName() {
@@ -303,9 +303,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public boolean isEvalFunction;
         public boolean hasRestArg;
         public String sourceFile;
-        public String rawSource;
-        public int rawSourceStart;
-        public int rawSourceEnd;
+        public SourceCodeProvider sourceCodeProvider;
+        public int sourceStart;
+        public int sourceEnd;
         public String name;
         public int languageVersion;
         public int paramAndVarCount;
@@ -324,7 +324,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         private Builder(Builder<?> parent) {
             this.parent = parent;
             this.languageVersion = parent.languageVersion;
-            this.rawSource = parent.rawSource;
+            this.sourceCodeProvider = parent.sourceCodeProvider;
             this.sourceFile = parent.sourceFile;
             this.isStrict = parent.isStrict;
             this.securityController = parent.securityController;
@@ -373,9 +373,9 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             isEvalFunction,
                             hasRestArg,
                             sourceFile,
-                            rawSource,
-                            rawSourceStart,
-                            rawSourceEnd,
+                            sourceCodeProvider,
+                            sourceStart,
+                            sourceEnd,
                             name == null ? null : name.intern(),
                             languageVersion,
                             paramAndVarCount,
