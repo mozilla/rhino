@@ -115,18 +115,7 @@ public class FunctionCompileSpecTest {
         var ex =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () ->
-                                new FunctionCompileSpec(
-                                        "function f() {}",
-                                        null,
-                                        null,
-                                        0,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null));
+                        () -> FunctionCompileSpec.fromSource("function f() {}", null).build());
         assertTrue(ex.getMessage().contains("scope is required"));
     }
 
