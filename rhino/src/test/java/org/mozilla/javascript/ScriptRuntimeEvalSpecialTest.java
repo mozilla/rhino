@@ -27,7 +27,7 @@ public class ScriptRuntimeEvalSpecialTest {
                     TopLevel scope = cx.initStandardObjects();
                     Object o =
                             ScriptRuntime.evalSpecial(
-                                    cx, scope, thisArg, new Object[] {"true"}, "", 0);
+                                    cx, scope, thisArg, new Object[] {"true"}, "", 0, false);
                     assertEquals(true, o);
                     return null;
                 });

@@ -3471,7 +3471,8 @@ public class ScriptRuntime {
 
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
-                return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
+                return evalSpecial(
+                        cx, scope, callerThis, args, filename, lineNumber, cx.isStrictMode());
             }
         } else {
             throw Kit.codeBug();
@@ -3602,7 +3603,8 @@ public class ScriptRuntime {
             Object thisArg,
             Object[] args,
             String filename,
-            int lineNumber) {
+            int lineNumber,
+            boolean isStrict) {
         if (args.length < 1) return Undefined.instance;
         Object x = args[0];
         if (!(x instanceof CharSequence)) {
@@ -3666,7 +3668,14 @@ public class ScriptRuntime {
                 thisArg == Undefined.instance
                         ? Undefined.SCRIPTABLE_UNDEFINED
                         : (Scriptable) thisArg;
-        return script.exec(cx, scope, thisObject);
+        VarScope evalScope;
+        if (isStrict
+                || (script instanceof JSScript && ((JSScript) script).getDescriptor().isStrict())) {
+            evalScope = new ScopeObject(scope);
+        } else {
+            evalScope = scope;
+        }
+        return script.exec(cx, evalScope, thisObject);
     }
 
     /** The typeof operator */
