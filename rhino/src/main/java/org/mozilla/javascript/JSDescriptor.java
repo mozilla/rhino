@@ -177,7 +177,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return sourceFile;
     }
 
-    public String getRawSource() {
+    public String getSource() {
         return sourceCodeProvider.getSource(name, sourceStart, sourceEnd);
     }
 

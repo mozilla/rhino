@@ -75,8 +75,8 @@ public class CodegenTest {
                                         .startsWith("org.mozilla.javascript.JSScript"),
                                 script.getClass().getName());
                         Assertions.assertTrue(
-                                script.getDescriptor().getRawSource().length() > 1000,
-                                "" + script.getDescriptor().getRawSource().length());
+                                script.getDescriptor().getSource().length() > 1000,
+                                "" + script.getDescriptor().getSource().length());
                         return null;
                     } catch (IOException e) {
                         Assertions.fail(e.getMessage());
@@ -144,8 +144,8 @@ public class CodegenTest {
                                     .startsWith("org.mozilla.javascript.JSScript"),
                             script.getClass().getName());
                     Assertions.assertTrue(
-                            script.getDescriptor().getRawSource().length() > 1000,
-                            "" + script.getDescriptor().getRawSource().length());
+                            script.getDescriptor().getSource().length() > 1000,
+                            "" + script.getDescriptor().getSource().length());
                     return null;
                 });
 
@@ -164,8 +164,8 @@ public class CodegenTest {
                                         .startsWith("org.mozilla.javascript.JSScript"),
                                 script.getClass().getName());
                         Assertions.assertTrue(
-                                script.getDescriptor().getRawSource().length() > 1000,
-                                "" + script.getDescriptor().getRawSource().length());
+                                script.getDescriptor().getSource().length() > 1000,
+                                "" + script.getDescriptor().getSource().length());
                         return null;
                     } catch (IOException e) {
                         Assertions.fail(e.getMessage());
@@ -215,8 +215,8 @@ public class CodegenTest {
                                     .startsWith("org.mozilla.javascript.JSScript"),
                             script.getClass().getName());
                     Assertions.assertTrue(
-                            script.getDescriptor().getRawSource().length() > 1000,
-                            "" + script.getDescriptor().getRawSource().length());
+                            script.getDescriptor().getSource().length() > 1000,
+                            "" + script.getDescriptor().getSource().length());
                     return null;
                 });
 
@@ -235,8 +235,8 @@ public class CodegenTest {
                                         .startsWith("org.mozilla.javascript.JSScript"),
                                 script.getClass().getName());
                         Assertions.assertTrue(
-                                script.getDescriptor().getRawSource().length() > 1000,
-                                "" + script.getDescriptor().getRawSource().length());
+                                script.getDescriptor().getSource().length() > 1000,
+                                "" + script.getDescriptor().getSource().length());
                         return null;
                     } catch (IOException e) {
                         Assertions.fail(e.getMessage());
@@ -282,8 +282,8 @@ public class CodegenTest {
                                     .startsWith("org.mozilla.javascript.JSScript"),
                             script.getClass().getName());
                     Assertions.assertTrue(
-                            script.getDescriptor().getRawSource().length() > 1000,
-                            "" + script.getDescriptor().getRawSource().length());
+                            script.getDescriptor().getSource().length() > 1000,
+                            "" + script.getDescriptor().getSource().length());
                     return null;
                 });
 
@@ -302,8 +302,8 @@ public class CodegenTest {
                                         .startsWith("org.mozilla.javascript.JSScript"),
                                 script.getClass().getName());
                         Assertions.assertTrue(
-                                script.getDescriptor().getRawSource().length() > 1000,
-                                "" + script.getDescriptor().getRawSource().length());
+                                script.getDescriptor().getSource().length() > 1000,
+                                "" + script.getDescriptor().getSource().length());
                         return null;
                     } catch (IOException e) {
                         Assertions.fail(e.getMessage());
