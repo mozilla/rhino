@@ -2613,6 +2613,7 @@ public class Context implements Closeable {
                         spec.getCompilationErrorReporter(),
                         spec.getCompilerEnvironsProcessor(),
                         spec.getSourceMapper(),
+                        spec.getSourceCodeSupplier(),
                         false,
                         Evaluator::compileScript);
         return compiled.evaluator.createScriptObject(compiled.result, spec.getSecurityDomain());
@@ -2629,6 +2630,7 @@ public class Context implements Closeable {
                         spec.getCompilationErrorReporter(),
                         spec.getCompilerEnvironsProcessor(),
                         spec.getSourceMapper(),
+                        spec.getSourceCodeSupplier(),
                         true,
                         Evaluator::compileFunction);
         return compiled.evaluator.createFunctionObject(
@@ -2660,6 +2662,7 @@ public class Context implements Closeable {
             ErrorReporter compilationErrorReporter,
             Consumer<CompilerEnvirons> compilerEnvironProcessor,
             SourceMapper sourceMapper,
+            SourceCodeSupplier sourceCodeSupplier,
             boolean returnFunction,
             CompileFn<T> compileFn) {
         if (sourceName == null) {
@@ -2670,6 +2673,9 @@ public class Context implements Closeable {
             throw new IllegalArgumentException(
                     "securityDomain should be null if setSecurityController() was never called");
         }
+
+        SourceCodeProvider sourceCodeProvider =
+                SourceCodeProvider.make(generatingSource, sourceCodeSupplier, sourceString);
 
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);

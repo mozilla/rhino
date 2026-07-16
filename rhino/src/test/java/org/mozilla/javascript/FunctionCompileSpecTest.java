@@ -125,6 +125,7 @@ public class FunctionCompileSpecTest {
                                         null,
                                         null,
                                         null,
+                                        null,
                                         null));
         assertTrue(ex.getMessage().contains("scope is required"));
     }

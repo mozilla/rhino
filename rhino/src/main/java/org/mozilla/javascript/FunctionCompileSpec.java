@@ -23,6 +23,7 @@ public final class FunctionCompileSpec {
     private final ErrorReporter compilationErrorReporter;
     private final Consumer<CompilerEnvirons> compilerEnvironsProcessor;
     private final SourceMapper sourceMapper;
+    private final SourceCodeSupplier sourceCodeSupplier;
 
     public FunctionCompileSpec(
             String source,
@@ -33,7 +34,8 @@ public final class FunctionCompileSpec {
             Evaluator compiler,
             ErrorReporter compilationErrorReporter,
             Consumer<CompilerEnvirons> compilerEnvironsProcessor,
-            SourceMapper sourceMapper) {
+            SourceMapper sourceMapper,
+            SourceCodeSupplier sourceCodeSupplier) {
         if (scope == null) {
             throw new IllegalArgumentException("scope is required for FunctionCompileSpec");
         }
@@ -46,6 +48,7 @@ public final class FunctionCompileSpec {
         this.compilationErrorReporter = compilationErrorReporter;
         this.compilerEnvironsProcessor = compilerEnvironsProcessor;
         this.sourceMapper = sourceMapper;
+        this.sourceCodeSupplier = sourceCodeSupplier;
     }
 
     public static Builder fromSource(String source, VarScope scope) {
@@ -92,6 +95,10 @@ public final class FunctionCompileSpec {
         return sourceMapper;
     }
 
+    public SourceCodeSupplier getSourceCodeSupplier() {
+        return sourceCodeSupplier;
+    }
+
     public static final class Builder {
         private final String source;
         private final VarScope scope;
@@ -102,6 +109,7 @@ public final class FunctionCompileSpec {
         private ErrorReporter compilationErrorReporter;
         private Consumer<CompilerEnvirons> compilerEnvironsProcessor;
         private SourceMapper sourceMapper;
+        private SourceCodeSupplier sourceCodeSupplier;
 
         private Builder(String source, VarScope scope) {
             if (scope == null) {
@@ -147,6 +155,17 @@ public final class FunctionCompileSpec {
             return this;
         }
 
+        /**
+         * Can be used to set a lazy source code provider for the script being compiled - for
+         * example, something that will lookup the script from a database. If set, Rhino will avoid
+         * storing the encoded source code and thus save memory. The trade-off is, of course, that
+         * whenever someone does `Function.toString()` we will need to do a database lookup.
+         */
+        public Builder sourceCodeSupplier(SourceCodeSupplier sourceCodeSupplier) {
+            this.sourceCodeSupplier = sourceCodeSupplier;
+            return this;
+        }
+
         public FunctionCompileSpec build() {
             int normalizedLineno = Math.max(lineno, 0);
             return new FunctionCompileSpec(
@@ -158,7 +177,8 @@ public final class FunctionCompileSpec {
                     compiler,
                     compilationErrorReporter,
                     compilerEnvironsProcessor,
-                    sourceMapper);
+                    sourceMapper,
+                    sourceCodeSupplier);
         }
     }
 }
