@@ -74,13 +74,13 @@ public class Codegen implements Evaluator {
         final JSDescriptor.Builder<T> builder;
         final String className;
         final byte[] bytecode;
-        final OptJSCode.BuilderEnv builderEnv;
+        final MHJSCode.BuilderEnv builderEnv;
 
         CodegenCompilationResult(
                 JSDescriptor.Builder<T> builder,
                 String className,
                 byte[] bytecode,
-                OptJSCode.BuilderEnv builderEnv) {
+                MHJSCode.BuilderEnv builderEnv) {
             this.builder = builder;
             this.className = className;
             this.bytecode = bytecode;
@@ -127,7 +127,7 @@ public class Codegen implements Evaluator {
         String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
         JSDescriptor.Builder<T> builder = new JSDescriptor.Builder<>();
-        OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv(mainClassName);
+        MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(mainClassName);
         byte[] mainClassBytes =
                 compileToClassFile(
                         compilerEnv,
@@ -202,7 +202,7 @@ public class Codegen implements Evaluator {
     public byte[] compileToClassFile(
             CompilerEnvirons compilerEnv,
             JSDescriptor.Builder<?> builder,
-            OptJSCode.BuilderEnv builderEnv,
+            MHJSCode.BuilderEnv builderEnv,
             String mainClassName,
             ScriptNode scriptOrFn,
             String rawSource,
@@ -281,7 +281,7 @@ public class Codegen implements Evaluator {
     private <U extends ScriptOrFn<U>> void initScriptNodesData(
             ScriptNode scriptOrFn,
             JSDescriptor.Builder<U> builder,
-            OptJSCode.BuilderEnv builderEnv) {
+            MHJSCode.BuilderEnv builderEnv) {
         ArrayList<ScriptNode> x = new ArrayList<>();
         ArrayList<JSDescriptor.Builder<?>> b = new ArrayList<>();
         collectScriptNodes_r(scriptOrFn, builder, builderEnv, x, b);
@@ -301,16 +301,16 @@ public class Codegen implements Evaluator {
     private <U extends ScriptOrFn<U>> void collectScriptNodes_r(
             ScriptNode n,
             JSDescriptor.Builder<U> builder,
-            OptJSCode.BuilderEnv builderEnv,
+            MHJSCode.BuilderEnv builderEnv,
             List<ScriptNode> x,
             List<JSDescriptor.Builder<?>> b) {
 
         @SuppressWarnings("unchecked")
-        OptJSCode.Builder<U> code =
-                (OptJSCode.Builder<U>)
+        MHJSCode.Builder<U> code =
+                (MHJSCode.Builder<U>)
                         ((n instanceof FunctionNode)
-                                ? new OptJSFunctionCode.Builder(builderEnv)
-                                : new OptJSScriptCode.Builder(builderEnv));
+                                ? new MHJSFunctionCode.Builder(builderEnv)
+                                : new MHJSScriptCode.Builder(builderEnv));
         code.index = x.size();
         code.methodName = getBodyMethodName(n, x.size());
         code.methodType = getNonDirectBodyMethodSIgnature(n);
