@@ -20,11 +20,12 @@ public class LazySourceCodeProvider implements SourceCodeProvider, Serializable 
 
     @Override
     public String getSource(String functionName, int start, int end) {
-        if (sourceCodeRef != null && sourceCodeRef.get() != null) {
-            String source = sourceCodeRef.get();
+        String source;
+        if (sourceCodeRef != null && (source = sourceCodeRef.get()) != null) {
+            source = sourceCodeRef.get();
             return source.substring(start, end);
         } else {
-            String source = sourceSupplier.get();
+            source = sourceSupplier.get();
             sourceCodeRef = new WeakReference<>(source);
             if (source != null) {
                 return source.substring(start, end);
