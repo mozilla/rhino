@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.TopLevel;
-import org.mozilla.javascript.optimizer.OptJSCode;
+import org.mozilla.javascript.optimizer.MHJSCode;
 import org.mozilla.javascript.testutils.Utils;
 
 /**
@@ -37,8 +37,8 @@ public class CodegenTest {
                     if (!_cx.isInterpretedMode()) {
                         Assertions.assertTrue(script instanceof JSScript, "Expected JSScript");
                         Assertions.assertTrue(
-                                script.getDescriptor().getCode() instanceof OptJSCode,
-                                "Expected OptJSCode");
+                                script.getDescriptor().getCode() instanceof MHJSCode,
+                                "Expected MHJSCode");
                     }
                     return null;
                 });
@@ -123,7 +123,7 @@ public class CodegenTest {
                     if (!_cx.isInterpretedMode()) {
                         Assertions.assertTrue(script instanceof JSScript, "Expected JSScript");
                         Assertions.assertTrue(
-                                script.getDescriptor().getCode() instanceof OptJSCode,
+                                script.getDescriptor().getCode() instanceof MHJSCode,
                                 "Expected JavaScriptFuncton");
                     }
                     return null;
@@ -191,7 +191,7 @@ public class CodegenTest {
                     if (!_cx.isInterpretedMode()) {
                         Assertions.assertTrue(script instanceof JSScript, "Expected JSScript");
                         Assertions.assertTrue(
-                                script.getDescriptor().getCode() instanceof OptJSCode,
+                                script.getDescriptor().getCode() instanceof MHJSCode,
                                 "Expected JavaScriptFuncton");
                     }
                     return null;
@@ -261,7 +261,7 @@ public class CodegenTest {
                     if (!_cx.isInterpretedMode()) {
                         Assertions.assertTrue(script instanceof JSScript, "Expected JSScript");
                         Assertions.assertTrue(
-                                script.getDescriptor().getCode() instanceof OptJSCode,
+                                script.getDescriptor().getCode() instanceof MHJSCode,
                                 "Expected JavaScriptFuncton");
                     }
                     return null;
