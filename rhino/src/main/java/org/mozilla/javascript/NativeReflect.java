@@ -157,12 +157,23 @@ final class NativeReflect extends ScriptableObject {
         // our Constructable interface does not support the newTarget;
         // therefore we use a cloned implementation that fixes
         // the prototype before executing call(..).
-        if (ctor instanceof BaseFunction && newTargetPrototype != null) {
+        if (newTargetPrototype != null && ctor instanceof BaseFunction) {
             BaseFunction ctorBaseFunction = (BaseFunction) ctor;
             Scriptable result = ctorBaseFunction.createObject(cx, s);
             if (result != null) {
-                result.setPrototype((Scriptable) newTargetPrototype);
+                if (ctorBaseFunction.isConstructor()
+                        && !(newTargetPrototype instanceof NativeArray)) {
+                    Scriptable newScriptable = ctorBaseFunction.construct(cx, s, callArgs);
 
+                    if (newScriptable instanceof NativeProxy) {
+                        newScriptable.setPrototype(ctorBaseFunction.getClassPrototype());
+                    } else {
+                        newScriptable.setPrototype((Scriptable) newTargetPrototype);
+                    }
+                    return newScriptable;
+                }
+
+                result.setPrototype((Scriptable) newTargetPrototype);
                 Object val = ctorBaseFunction.call(cx, s, result, callArgs);
                 if (val instanceof Scriptable) {
                     return (Scriptable) val;
