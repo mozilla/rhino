@@ -465,6 +465,9 @@ public class NativeJavaMethod extends BaseFunction {
                 break;
             }
         }
+        if (totalPreference == PREFERENCE_EQUAL && member1.isVarArgs() != member2.isVarArgs()) {
+            return member1.isVarArgs() ? PREFERENCE_SECOND_ARG : PREFERENCE_FIRST_ARG;
+        }
         return totalPreference;
     }
 
