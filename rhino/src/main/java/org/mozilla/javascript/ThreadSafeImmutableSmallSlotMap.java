@@ -9,6 +9,7 @@ public class ThreadSafeImmutableSmallSlotMap<T extends PropHolder<T>>
         super(slot0, slot1, slot2, slot3);
     }
 
+    @Override
     protected SlotMap<T> newMap(SlotMapOwner<T> owner, int expansion) {
         var newMap = new ThreadSafeEmbeddedSlotMap<T>(size() + expansion);
         owner.setMap(newMap);

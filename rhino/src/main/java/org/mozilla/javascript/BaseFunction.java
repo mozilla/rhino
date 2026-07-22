@@ -51,6 +51,27 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final BuiltInSlot.Descriptor<BaseFunction> ARGUMENTS_DESCRIPTOR =
             new BuiltInSlot.Descriptor<>(
                     "arguments", BaseFunction::argumentsGetter, BaseFunction::argumentsSetter);
+    private static final SlotMapDescriptor<Scriptable, BaseFunction> BASIC_MAP =
+            new SlotMapDescriptor.Builder<Scriptable, BaseFunction>()
+                    .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
+                    .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
+                    .build();
+
+    private static final SlotMapDescriptor<Scriptable, BaseFunction> ARITY_MAP =
+            new SlotMapDescriptor.Builder<Scriptable, BaseFunction>()
+                    .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
+                    .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
+                    .withSlot(ARITY_DESCRIPTOR, PERMANENT | DONTENUM | READONLY)
+                    .build();
+
+    private static final SlotMapDescriptor<Scriptable, BaseFunction> ARGUMENTS_MAP =
+            new SlotMapDescriptor.Builder<Scriptable, BaseFunction>()
+                    .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
+                    .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
+                    .withSlot(ARITY_DESCRIPTOR, PERMANENT | DONTENUM | READONLY)
+                    .withSlot(ARGUMENTS_DESCRIPTOR, PERMANENT | DONTENUM)
+                    .build();
+
     private static final BuiltInSlot.Descriptor<BaseFunction> PROTOTYPE_DESCRIPTOR =
             new BuiltInSlot.Descriptor<>(
                     PROTOTYPE_PROPERTY_NAME,
@@ -167,21 +188,20 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createProperties() {
-        Slot<Scriptable> lengthSlot = LENGTH_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
-        Slot<Scriptable> nameSlot = NAME_DESCRIPTOR.createSlot(this, DONTENUM | READONLY);
-        Slot<Scriptable> aritySlot = null;
-        Slot<Scriptable> argsSlot = null;
+        SlotMapDescriptor<Scriptable, BaseFunction> desc;
 
         Context cx = Context.getCurrentContext();
         if (cx == null || !cx.isStrictMode()) {
-            aritySlot = ARITY_DESCRIPTOR.createSlot(this, PERMANENT | DONTENUM | READONLY);
-
             if (cx == null || cx.getLanguageVersion() < Context.VERSION_ES6) {
-                argsSlot = ARGUMENTS_DESCRIPTOR.createSlot(this, PERMANENT | DONTENUM);
+                desc = ARGUMENTS_MAP;
+            } else {
+                desc = ARITY_MAP;
             }
+        } else {
+            desc = BASIC_MAP;
         }
 
-        setMap(new ImmutableSmallSlotMap<>(lengthSlot, nameSlot, aritySlot, argsSlot));
+        setMap(desc.buildMap(this));
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
