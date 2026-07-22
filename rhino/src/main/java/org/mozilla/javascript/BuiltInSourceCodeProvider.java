@@ -10,7 +10,7 @@ public class BuiltInSourceCodeProvider implements SourceCodeProvider, Serializab
     private BuiltInSourceCodeProvider() {}
 
     @Override
-    public String getSource(String functionName, int start, int end) {
-        return String.format("function %s() {\n\t[native code]\n}", functionName);
+    public String getSource(JSDescriptor<?> desc, int start, int end) {
+        return String.format("function %s() {\n\t[native code]\n}", desc.getFunctionName());
     }
 }
