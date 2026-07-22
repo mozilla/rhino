@@ -345,6 +345,19 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         }
     }
 
+    protected static <T extends PropHolder<T>, O extends ScriptableObject> SlotMap<T> createSlotMap(
+            CompactSlot<T, O> slot0,
+            CompactSlot<T, O> slot1,
+            CompactSlot<T, O> slot2,
+            CompactSlot<T, O> slot3) {
+        Context cx = Context.getCurrentContext();
+        if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
+            return new ThreadSafeImmutableSmallSlotMap<>(slot0, slot1, slot2, slot3);
+        } else {
+            return new ImmutableSmallSlotMap<>(slot0, slot1, slot2, slot3);
+        }
+    }
+
     SlotMap<T> getMap() {
         return slotMap;
     }
