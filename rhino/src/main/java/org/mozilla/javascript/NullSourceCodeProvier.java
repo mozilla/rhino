@@ -5,7 +5,8 @@ class NullSourceCodeProvider implements SourceCodeProvider {
 
     private NullSourceCodeProvider() {}
 
-    public String getSource(String functionName, int start, int end) {
-        return String.format("function %s() {\n\t/* Source unavailable */\n}", functionName);
+    public String getSource(JSDescriptor<?> desc, int start, int end) {
+        return String.format(
+                "function %s() {\n\t/* Source unavailable */\n}", desc.getFunctionName());
     }
 }

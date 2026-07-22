@@ -39,7 +39,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     private final boolean[] paramIsConst;
     private final int flags;
     private final String sourceFile;
-    private final SourceCodeProvider sourceCodeProvider;
+    private SourceCodeProvider sourceCodeProvider;
     private final int sourceStart;
     private final int sourceEnd;
     private final String name;
@@ -105,7 +105,10 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         this.flags = flags;
 
         this.sourceFile = sourceFile;
-        this.sourceCodeProvider = sourceCodeProvider;
+        this.sourceCodeProvider =
+                sourceCodeProvider != null
+                        ? sourceCodeProvider
+                        : NullSourceCodeProvider.NULL_PROVIDER;
         this.sourceStart = sourceStart;
         this.sourceEnd = sourceEnd;
         this.name = name == null ? "" : name;
@@ -178,7 +181,16 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     }
 
     public String getSource() {
-        return sourceCodeProvider.getSource(name, sourceStart, sourceEnd);
+        return sourceCodeProvider.getSource(this, sourceStart, sourceEnd);
+    }
+
+    // For testing purposes.
+    SourceCodeProvider getSourceProvider() {
+        return sourceCodeProvider;
+    }
+
+    void replaceSourceProvider(SourceCodeProvider newProvider) {
+        sourceCodeProvider = newProvider;
     }
 
     public String getName() {

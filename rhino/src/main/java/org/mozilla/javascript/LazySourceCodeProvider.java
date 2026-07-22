@@ -19,19 +19,37 @@ public class LazySourceCodeProvider implements SourceCodeProvider, Serializable 
     }
 
     @Override
-    public String getSource(String functionName, int start, int end) {
+    public String getSource(JSDescriptor<?> descriptor, int start, int end) {
         String source;
         if (sourceCodeRef != null && (source = sourceCodeRef.get()) != null) {
-            source = sourceCodeRef.get();
-            return source.substring(start, end);
+            var funcionSrc = source.substring(start, end);
+            descriptor.replaceSourceProvider(new ResolvedSourceProvider(funcionSrc));
+            return funcionSrc;
         } else {
             source = sourceSupplier.get();
-            sourceCodeRef = new WeakReference<>(source);
             if (source != null) {
-                return source.substring(start, end);
+                sourceCodeRef = new WeakReference<>(source);
+                var funcionSrc = source.substring(start, end);
+                descriptor.replaceSourceProvider(new ResolvedSourceProvider(funcionSrc));
+                return funcionSrc;
             } else {
-                return null;
+                descriptor.replaceSourceProvider(new ResolvedSourceProvider(""));
+                return "";
             }
+        }
+    }
+
+    static class ResolvedSourceProvider implements SourceCodeProvider {
+
+        private String source;
+
+        private ResolvedSourceProvider(String source) {
+            this.source = source;
+        }
+
+        @Override
+        public String getSource(JSDescriptor<?> functionName, int start, int end) {
+            return source;
         }
     }
 }

@@ -311,15 +311,17 @@ public class ClassCompiler {
         cfw.add(builder.hasRestArg ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.addLoadConstant(builder.sourceFile);
         if (compilerEnv.isGeneratingSource()) {
-            cfw.add(ByteCode.NEW, "org.mozilla.javascript.EagerSourceCodeProvider");
-            cfw.add(ByteCode.DUP);
-            cfw.addLoadConstant(
-                    root.sourceCodeProvider.getSource(root.name, root.sourceStart, root.sourceEnd));
-            cfw.addInvoke(
-                    ByteCode.INVOKESPECIAL,
-                    "org.mozilla.javascript.EagerSourceCodeProvider",
-                    "<init>",
-                    "(Ljava/lang/String;)V");
+            // cfw.add(ByteCode.NEW, "org.mozilla.javascript.EagerSourceCodeProvider");
+            // cfw.add(ByteCode.DUP);
+            // cfw.addLoadConstant(
+            //         root.sourceCodeProvider.getSource(root.name, root.sourceStart,
+            // root.sourceEnd));
+            // cfw.addInvoke(
+            //         ByteCode.INVOKESPECIAL,
+            //         "org.mozilla.javascript.EagerSourceCodeProvider",
+            //         "<init>",
+            //         "(Ljava/lang/String;)V");
+            cfw.add(ByteCode.ACONST_NULL);
         } else {
             cfw.add(ByteCode.ACONST_NULL);
         }

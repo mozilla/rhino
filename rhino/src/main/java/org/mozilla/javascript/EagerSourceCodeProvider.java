@@ -14,7 +14,7 @@ public class EagerSourceCodeProvider implements SourceCodeProvider, Serializable
     }
 
     @Override
-    public String getSource(String functionName, int start, int end) {
+    public String getSource(JSDescriptor<?> desc, int start, int end) {
         return rawSource.substring(start, end);
     }
 }
