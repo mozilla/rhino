@@ -51,24 +51,19 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final BuiltInSlot.Descriptor<BaseFunction> ARGUMENTS_DESCRIPTOR =
             new BuiltInSlot.Descriptor<>(
                     "arguments", BaseFunction::argumentsGetter, BaseFunction::argumentsSetter);
-    private static final SlotMapDescriptor<Scriptable, BaseFunction> BASIC_MAP =
-            new SlotMapDescriptor.Builder<Scriptable, BaseFunction>()
+    private static final SlotMapDescriptor<BaseFunction> BASIC_MAP =
+            new SlotMapDescriptor.Builder<BaseFunction>()
                     .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
                     .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
                     .build();
 
-    private static final SlotMapDescriptor<Scriptable, BaseFunction> ARITY_MAP =
-            new SlotMapDescriptor.Builder<Scriptable, BaseFunction>()
-                    .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
-                    .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
+    private static final SlotMapDescriptor<BaseFunction> ARITY_MAP =
+            SlotMapDescriptor.Builder.extending(BASIC_MAP)
                     .withSlot(ARITY_DESCRIPTOR, PERMANENT | DONTENUM | READONLY)
                     .build();
 
-    private static final SlotMapDescriptor<Scriptable, BaseFunction> ARGUMENTS_MAP =
-            new SlotMapDescriptor.Builder<Scriptable, BaseFunction>()
-                    .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
-                    .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
-                    .withSlot(ARITY_DESCRIPTOR, PERMANENT | DONTENUM | READONLY)
+    private static final SlotMapDescriptor<BaseFunction> ARGUMENTS_MAP =
+            SlotMapDescriptor.Builder.extending(ARITY_MAP)
                     .withSlot(ARGUMENTS_DESCRIPTOR, PERMANENT | DONTENUM)
                     .build();
 
@@ -188,7 +183,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createProperties() {
-        SlotMapDescriptor<Scriptable, BaseFunction> desc;
+        SlotMapDescriptor<BaseFunction> desc;
 
         Context cx = Context.getCurrentContext();
         if (cx == null || !cx.isStrictMode()) {
@@ -201,7 +196,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             desc = BASIC_MAP;
         }
 
-        setMap(desc.buildMap(this));
+        desc.installMap(this);
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {

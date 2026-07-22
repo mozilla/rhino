@@ -308,7 +308,10 @@ public class SlotMapTest {
     }
 
     private void createBuiltInSlot(ScriptableObject obj, String name) {
-        ScriptableObject.defineBuiltInProperty(obj, name, DONTENUM, (b, s) -> name + "_result");
+        ScriptableObject.defineBuiltInProperty(
+                obj,
+                DONTENUM,
+                new BuiltInSlot.Descriptor<ScriptableObject>(name, (b, s) -> name + "_result"));
     }
 
     // These keys come from the hash collision test and may help ensure that we have a few
