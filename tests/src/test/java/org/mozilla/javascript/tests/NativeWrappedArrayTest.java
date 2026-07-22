@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.BuiltInSlot;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.RhinoException;
@@ -171,11 +172,12 @@ public class NativeWrappedArrayTest {
         private void createLengthProp() {
             ScriptableObject.defineBuiltInProperty(
                     this,
-                    "length",
                     DONTENUM | PERMANENT,
-                    WrappedArray::lengthGetter,
-                    WrappedArray::lengthSetter,
-                    WrappedArray::lengthAttrSetter);
+                    new BuiltInSlot.Descriptor<>(
+                            "length",
+                            WrappedArray::lengthGetter,
+                            WrappedArray::lengthSetter,
+                            WrappedArray::lengthAttrSetter));
         }
 
         private static Object lengthGetter(WrappedArray array, Scriptable start) {

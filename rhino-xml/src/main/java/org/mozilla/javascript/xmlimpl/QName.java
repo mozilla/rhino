@@ -8,12 +8,14 @@ package org.mozilla.javascript.xmlimpl;
 
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import org.mozilla.javascript.BuiltInSlot;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SlotMapDescriptor;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 
@@ -24,6 +26,16 @@ final class QName extends ScriptableObject {
     private static final String QNAME_TAG = "QName";
 
     private static final ClassDescriptor DESCRIPTOR;
+
+    private static final SlotMapDescriptor<QName> INSTANCE_DESCRIPTOR =
+            new SlotMapDescriptor.Builder<QName>()
+                    .withSlot(
+                            new BuiltInSlot.Descriptor<>("localName", QName::getLocalName),
+                            PERMANENT | READONLY)
+                    .withSlot(
+                            new BuiltInSlot.Descriptor<>("uri", QName::getURI),
+                            PERMANENT | READONLY)
+                    .build();
 
     static {
         DESCRIPTOR =
@@ -80,9 +92,7 @@ final class QName extends ScriptableObject {
     }
 
     private void createNSProps() {
-        ScriptableObject.defineBuiltInProperty(
-                this, "localName", PERMANENT | READONLY, QName::getLocalName);
-        ScriptableObject.defineBuiltInProperty(this, "uri", PERMANENT | READONLY, QName::getURI);
+        INSTANCE_DESCRIPTOR.installMap(this);
     }
 
     private static Object getLocalName(QName qn, Scriptable start) {

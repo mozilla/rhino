@@ -115,17 +115,30 @@ public class ClassDescriptor {
     }
 
     private static class BuiltInPropDesc<T extends ScriptableObject> extends PropDesc {
-        private final BuiltInSlot.Getter<T> getter;
-        private final BuiltInSlot.Setter<T> setter;
-        private final BuiltInSlot.AttributeSetter<T> attrUpdater;
-        private final BuiltInSlot.PropDescriptionSetter<T> propDescSetter;
+        private final BuiltInSlot.Descriptor<T> desc;
+
+        BuiltInPropDesc(Object name, BuiltInSlot.Getter<T> getter, int attributes) {
+            super(name, attributes);
+            desc = new BuiltInSlot.Descriptor<>(name, getter);
+        }
 
         BuiltInPropDesc(
                 Object name,
                 BuiltInSlot.Getter<T> getter,
                 BuiltInSlot.Setter<T> setter,
                 int attributes) {
-            this(name, getter, setter, null, null, attributes);
+            super(name, attributes);
+            desc = new BuiltInSlot.Descriptor<>(name, getter, setter);
+        }
+
+        BuiltInPropDesc(
+                Object name,
+                BuiltInSlot.Getter<T> getter,
+                BuiltInSlot.Setter<T> setter,
+                BuiltInSlot.AttributeSetter<T> attrUpdater,
+                int attributes) {
+            super(name, attributes);
+            desc = new BuiltInSlot.Descriptor<>(name, getter, setter, attrUpdater);
         }
 
         BuiltInPropDesc(
@@ -136,24 +149,13 @@ public class ClassDescriptor {
                 BuiltInSlot.PropDescriptionSetter<T> propDescSetter,
                 int attributes) {
             super(name, attributes);
-            this.getter = getter;
-            this.setter = setter;
-            this.attrUpdater = attrUpdater;
-            this.propDescSetter = propDescSetter;
+            desc = new BuiltInSlot.Descriptor<>(name, getter, setter, attrUpdater, propDescSetter);
         }
 
         @Override
         @SuppressWarnings("unchecked")
         void makeProp(Context cx, VarScope scope, ScriptableObject obj) {
-            if (attrUpdater == null && propDescSetter == null) {
-                ScriptableObject.defineBuiltInProperty((T) obj, name, attributes, getter, setter);
-            } else if (propDescSetter == null) {
-                ScriptableObject.defineBuiltInProperty(
-                        (T) obj, obj, attributes, getter, setter, attrUpdater);
-            } else {
-                ScriptableObject.defineBuiltInProperty(
-                        (T) obj, name, attributes, getter, setter, attrUpdater, propDescSetter);
-            }
+            obj.getMap().add(obj, desc.createSlot((T) obj, attributes));
         }
     }
 

@@ -8,12 +8,14 @@ package org.mozilla.javascript.xmlimpl;
 
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import org.mozilla.javascript.BuiltInSlot;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SlotMapDescriptor;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 
@@ -24,6 +26,16 @@ class Namespace extends ScriptableObject {
     private static final String NAMESPACE_TAG = "Namespace";
 
     private static final ClassDescriptor DESCRIPTOR;
+
+    private static final SlotMapDescriptor<Namespace> INSTANCE_DESCRIPTOR =
+            new SlotMapDescriptor.Builder<Namespace>()
+                    .withSlot(
+                            new BuiltInSlot.Descriptor<>("prefix", Namespace::getPrefix),
+                            PERMANENT | READONLY)
+                    .withSlot(
+                            new BuiltInSlot.Descriptor<>("uri", Namespace::getURI),
+                            PERMANENT | READONLY)
+                    .build();
 
     static {
         DESCRIPTOR =
@@ -57,10 +69,7 @@ class Namespace extends ScriptableObject {
     }
 
     private void createNSProps() {
-        ScriptableObject.defineBuiltInProperty(
-                this, "prefix", PERMANENT | READONLY, Namespace::getPrefix);
-        ScriptableObject.defineBuiltInProperty(
-                this, "uri", PERMANENT | READONLY, Namespace::getURI);
+        INSTANCE_DESCRIPTOR.installMap(this);
     }
 
     private static Object getPrefix(Namespace ns, Scriptable start) {

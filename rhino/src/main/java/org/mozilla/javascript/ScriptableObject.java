@@ -3091,57 +3091,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     public static <T extends ScriptableObject> void defineBuiltInProperty(
-            T owner,
-            Object name,
-            int attributes,
-            BuiltInSlot.Getter<T> getter,
-            BuiltInSlot.Setter<T> setter) {
-        owner.getMap().add(owner, new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter));
-    }
-
-    public static <T extends ScriptableObject> void defineBuiltInProperty(
-            T owner,
-            Object name,
-            int attributes,
-            BuiltInSlot.Getter<T> getter,
-            BuiltInSlot.Setter<T> setter,
-            BuiltInSlot.AttributeSetter<T> attrSetter) {
-        owner.getMap()
-                .add(
-                        owner,
-                        new BuiltInSlot<T>(name, 0, attributes, owner, getter, setter, attrSetter));
-    }
-
-    public static <T extends ScriptableObject> void defineBuiltInProperty(
-            T owner, Object name, int attributes, BuiltInSlot.Getter<T> getter) {
-        owner.getMap().add(owner, new BuiltInSlot<T>(name, 0, attributes, owner, getter));
-    }
-
-    public static <T extends ScriptableObject> void defineBuiltInProperty(
             T owner, int attributes, BuiltInSlot.Descriptor<T> descriptor) {
         owner.getMap().add(owner, new BuiltInSlot<T>(descriptor, attributes, owner));
-    }
-
-    public static <T extends ScriptableObject> void defineBuiltInProperty(
-            T owner,
-            Object name,
-            int attributes,
-            BuiltInSlot.Getter<T> getter,
-            BuiltInSlot.Setter<T> setter,
-            BuiltInSlot.AttributeSetter<T> attrSetter,
-            BuiltInSlot.PropDescriptionSetter<T> propDescSetter) {
-        owner.getMap()
-                .add(
-                        owner,
-                        new BuiltInSlot<T>(
-                                name,
-                                0,
-                                attributes,
-                                owner,
-                                getter,
-                                setter,
-                                attrSetter,
-                                propDescSetter));
     }
 
     @SuppressWarnings("unchecked")
