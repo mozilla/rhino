@@ -20,7 +20,7 @@ class SlotMapPromotionTest {
         assertPromotes(
                 () ->
                         new SlotMapOwner.SingleEntrySlotMap<>(
-                                new Slot<Scriptable>(new Object(), 0, 0)),
+                                new StandardSlot<Scriptable>(new Object(), 0, 0)),
                 EmbeddedSlotMap.class);
     }
 
@@ -48,7 +48,7 @@ class SlotMapPromotionTest {
         assertPromotes(
                 () ->
                         new SlotMapOwner.ThreadSafeSingleEntrySlotMap<>(
-                                new Slot<Scriptable>(new Object(), 0, 0)),
+                                new StandardSlot<Scriptable>(new Object(), 0, 0)),
                 ThreadSafeEmbeddedSlotMap.class);
     }
 
@@ -65,7 +65,7 @@ class SlotMapPromotionTest {
 
     private static void fillToCapacity(int size, EmbeddedSlotMap<Scriptable> map) {
         for (int i = 0; i < size; ++i) {
-            map.add(null, new Slot<Scriptable>(Integer.toString(i), i, 0));
+            map.add(null, new StandardSlot<Scriptable>(Integer.toString(i), i, 0));
         }
     }
 

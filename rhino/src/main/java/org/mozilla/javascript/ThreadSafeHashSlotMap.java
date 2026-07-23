@@ -23,7 +23,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     public ThreadSafeHashSlotMap(StampedLock lock, SlotMap<T> oldMap) {
         super(oldMap.dirtySize());
         this.lock = lock;
-        for (Slot<T> n : oldMap) {
+        for (var n : oldMap) {
             addWithLock(null, n.copySlot());
         }
     }
@@ -31,7 +31,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     public ThreadSafeHashSlotMap(StampedLock lock, SlotMap<T> oldMap, Slot<T> newSlot) {
         super(oldMap.dirtySize() + 1);
         this.lock = lock;
-        for (Slot<T> n : oldMap) {
+        for (var n : oldMap) {
             addWithLock(null, n.copySlot());
         }
         addWithLock(null, newSlot);
@@ -103,7 +103,7 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     @Override
     public Slot<T> query(Object key, int index) {
         long stamp = lock.tryOptimisticRead();
-        Slot<T> s = super.query(key, index);
+        var s = super.query(key, index);
         if (lock.validate(stamp)) {
             return s;
         }

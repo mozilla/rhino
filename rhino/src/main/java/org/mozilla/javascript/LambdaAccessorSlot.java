@@ -13,7 +13,7 @@ import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
  * implementing properties that behave like standard JavaScript properties, but are implemented with
  * native functionality without the need for reflection.
  */
-public class LambdaAccessorSlot extends Slot<Scriptable> {
+public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
     private ScriptableObject.LambdaGetterFunction getter;
     private ScriptableObject.LambdaSetterFunction setter;
     private LambdaFunction getterFunction;
@@ -135,7 +135,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
             this.getterFunction =
                     new LambdaFunction(
                             scope,
-                            "get " + super.name,
+                            "get " + super.getName(),
                             0,
                             (cx1, scope1, thisObj, args) -> getter.apply((Scriptable) thisObj),
                             false);
@@ -148,7 +148,7 @@ public class LambdaAccessorSlot extends Slot<Scriptable> {
             this.setterFunction =
                     new LambdaFunction(
                             scope,
-                            "set " + super.name,
+                            "set " + super.getName(),
                             1,
                             (cx1, scope1, thisObj, args) -> {
                                 setter.accept(

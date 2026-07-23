@@ -938,7 +938,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return desc;
     }
 
-    private Slot queryOrFakeSlot(Context cx, Object id) {
+    private Slot<?> queryOrFakeSlot(Context cx, Object id) {
         var slot = querySlot(cx, id);
         if (slot == null) {
             if (id instanceof String) {
@@ -961,13 +961,13 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
     }
 
-    private Slot getBuiltInSlot(String name) {
+    private Slot<?> getBuiltInSlot(String name) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
             Object value = getInstanceIdValue(id);
             int attr = (info >>> 16);
-            var slot = new Slot(name, 0, attr);
+            var slot = new StandardSlot(name, 0, attr);
             slot.value = value;
             return slot;
         }
@@ -976,7 +976,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if (id != 0) {
                 Object value = prototypeValues.get(id);
                 int attr = prototypeValues.getAttributes(id);
-                var slot = new Slot(name, 0, attr);
+                var slot = new StandardSlot(name, 0, attr);
                 slot.value = value;
                 return slot;
             }
@@ -989,13 +989,13 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
     }
 
-    private Slot getBuiltInSlot(Symbol key) {
+    private StandardSlot getBuiltInSlot(Symbol key) {
         if (prototypeValues != null) {
             int id = prototypeValues.findId(key);
             if (id != 0) {
                 Object value = prototypeValues.get(id);
                 int attr = prototypeValues.getAttributes(id);
-                var slot = new Slot(key, 0, attr);
+                var slot = new StandardSlot(key, 0, attr);
                 slot.value = value;
                 return slot;
             }
