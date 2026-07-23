@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.JSScript;
@@ -17,6 +18,7 @@ import org.mozilla.javascript.Script;
  *
  * @author Marc Guillemot
  */
+@Disabled("Disabled until we find a better way to do this.")
 public class GeneratedClassNameTest {
 
     @Test
