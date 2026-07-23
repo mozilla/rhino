@@ -302,7 +302,7 @@ final class EqualObjectGraphs {
     }
 
     private static boolean equalJSFunctions(final ScriptOrFn<?> f1, final ScriptOrFn<?> f2) {
-        return Objects.equals(f1.getDescriptor().getRawSource(), f2.getDescriptor().getRawSource());
+        return Objects.equals(f1.getDescriptor().getSource(), f2.getDescriptor().getSource());
     }
 
     // Sort IDs deterministically

@@ -23,6 +23,7 @@ import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JavaAdapter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.SourceCodeProvider;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -128,6 +129,7 @@ public class ClassCompiler {
         if (compilerEnv.isGeneratingSource()) {
             tree.setRawSource(source);
             tree.setRawSourceBounds(0, source.length());
+            compilerEnv.setSourceCodeProvider(SourceCodeProvider.make(true, null, source));
         }
 
         // release reference to original parse tree & parser
@@ -196,7 +198,7 @@ public class ClassCompiler {
 
         var cfw = new ClassFileWriter(mainName, "java.lang.Object", "");
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
-        buildDescriptor(cfw, builder, classes, builders);
+        buildDescriptor(cfw, builder, builder, classes, builders);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);
         cfw.addLoadConstant(builders.size());
         cfw.add(ByteCode.ANEWARRAY, "org/mozilla/javascript/JSDescriptor");
@@ -258,6 +260,7 @@ public class ClassCompiler {
     private void buildDescriptor(
             ClassFileWriter cfw,
             JSDescriptor.Builder builder,
+            JSDescriptor.Builder root,
             Map<String, byte[]> classes,
             List<JSDescriptor.Builder<?>> builders) {
         builders.add(builder);
@@ -307,9 +310,23 @@ public class ClassCompiler {
         cfw.add(builder.isEvalFunction ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.add(builder.hasRestArg ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.addLoadConstant(builder.sourceFile);
-        cfw.addLoadConstant(builder.rawSource);
-        cfw.addLoadConstant(builder.rawSourceStart);
-        cfw.addLoadConstant(builder.rawSourceEnd);
+        if (compilerEnv.isGeneratingSource()) {
+            // cfw.add(ByteCode.NEW, "org.mozilla.javascript.EagerSourceCodeProvider");
+            // cfw.add(ByteCode.DUP);
+            // cfw.addLoadConstant(
+            //         root.sourceCodeProvider.getSource(root.name, root.sourceStart,
+            // root.sourceEnd));
+            // cfw.addInvoke(
+            //         ByteCode.INVOKESPECIAL,
+            //         "org.mozilla.javascript.EagerSourceCodeProvider",
+            //         "<init>",
+            //         "(Ljava/lang/String;)V");
+            cfw.add(ByteCode.ACONST_NULL);
+        } else {
+            cfw.add(ByteCode.ACONST_NULL);
+        }
+        cfw.addLoadConstant(builder.sourceStart);
+        cfw.addLoadConstant(builder.sourceEnd);
         if (builder.name == null) {
             cfw.add(ByteCode.ACONST_NULL);
         } else {
@@ -370,7 +387,7 @@ public class ClassCompiler {
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod(3);
         for (var child : builder.nestedFunctions) {
-            buildDescriptor(cfw, (JSDescriptor.Builder) child, classes, builders);
+            buildDescriptor(cfw, (JSDescriptor.Builder) child, root, classes, builders);
         }
     }
 

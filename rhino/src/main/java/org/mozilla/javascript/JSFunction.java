@@ -57,7 +57,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
 
     @Override
     final String decompile(int indent, EnumSet<DecompilerFlag> flags) {
-        return descriptor.getRawSource();
+        return descriptor.getSource();
     }
 
     public boolean isShorthand() {
@@ -117,7 +117,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     public String getRawSource() {
-        return descriptor.getRawSource();
+        return descriptor.getSource();
     }
 
     @Override
