@@ -1,7 +1,6 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SlotMapDescriptor<O extends ScriptableObject> {
@@ -35,7 +34,10 @@ public class SlotMapDescriptor<O extends ScriptableObject> {
 
         private Builder(SlotMapDescriptor<O> old) {
             slots = new ArrayList<>(old.slots);
-            attributes = new ArrayList<>(Arrays.stream(old.attributes).mapToObj(v -> v).toList());
+            attributes = new ArrayList<>(old.attributes.length * 2);
+            for (int i = 0; i < old.attributes.length; i++) {
+                attributes.add(old.attributes[i]);
+            }
         }
 
         public static <O extends ScriptableObject> Builder<O> extending(
