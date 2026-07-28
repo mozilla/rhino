@@ -89,6 +89,11 @@ class JavaMembers {
     Object get(Scriptable obj, VarScope scope, String name, Object javaObject, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
+        if (member instanceof FieldAndMethods fieldAndMethods) {
+            var fam = new FieldAndMethods(scope, fieldAndMethods.withField);
+            fam.javaObject = javaObject;
+            return fam;
+        }
         if (!isStatic && member == null) {
             // Try to get static member from instance (LC3)
             member = staticMembers.get(name);
@@ -893,7 +898,7 @@ class FieldAndMethods extends NativeJavaMethod {
 
     FieldAndMethods(VarScope scope, ExecutableOverload.WithField withField) {
         super(withField.methods, withField.name);
-        this.field = withField.field;
+        this.withField = withField;
         setParentScope(scope);
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
     }
@@ -901,6 +906,7 @@ class FieldAndMethods extends NativeJavaMethod {
     @Override
     public Object getDefaultValue(Class<?> hint) {
         if (hint == ScriptRuntime.FunctionClass) return this;
+        NativeJavaField field = this.withField.field;
         Object rval;
         try {
             rval = field.get(javaObject);
@@ -916,6 +922,6 @@ class FieldAndMethods extends NativeJavaMethod {
         return rval;
     }
 
-    NativeJavaField field;
+    ExecutableOverload.WithField withField;
     Object javaObject;
 }
