@@ -6,10 +6,9 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.lc.ReflectUtils;
-
 import java.lang.reflect.Method;
 import java.util.Map;
+import org.mozilla.javascript.lc.ReflectUtils;
 
 /** Version of {@link JavaMembers} for modular JDKs. */
 class JavaMembers_jdk11 extends JavaMembers {
@@ -36,7 +35,8 @@ class JavaMembers_jdk11 extends JavaMembers {
             return true;
         }
 
-        // `.getModule()` not present on Android, `.getPackageName()` not after API 31. Compatibility is ensured by gating it after IS_MODULAR_JAVA
+        // `.getModule()` not present on Android, `.getPackageName()` not after API 31.
+        // Android compatibility is ensured by gating it after IS_MODULAR_JAVA
         return clazz.getModule().isExported(clazz.getPackageName());
     }
 

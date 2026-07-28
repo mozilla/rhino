@@ -1,7 +1,6 @@
 package org.mozilla.javascript.lc;
 
 import java.util.List;
-
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
@@ -10,7 +9,8 @@ import org.mozilla.javascript.lc.type.TypeInfo;
 public abstract class ReflectUtils {
 
     /**
-     * {@code true} if we are on a "modular" version of Java (Java 11 or up, excluding Android). It does not use the SourceVersion class because this is not present on Android.
+     * {@code true} if we are on a "modular" version of Java (Java 11 or up, excluding Android). It
+     * does not use the SourceVersion class because this is not present on Android.
      */
     public static final boolean IS_MODULAR_JAVA;
 
