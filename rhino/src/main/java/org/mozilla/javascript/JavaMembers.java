@@ -57,9 +57,7 @@ class JavaMembers {
                 throw Context.reportRuntimeErrorById("msg.access.prohibited", cl.getName());
             }
             this.members = new HashMap<>();
-            this.fieldAndMethods = new HashMap<>();
             this.staticMembers = new HashMap<>();
-            this.staticFieldAndMethods = new HashMap<>();
             this.cl = cl;
             boolean includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
             reflect(cx, scope, includeProtected, includePrivate);
@@ -779,21 +777,6 @@ class JavaMembers {
         return null;
     }
 
-    Map<String, FieldAndMethods> getFieldAndMethodsObjects(
-            VarScope scope, Object javaObject, boolean isStatic) {
-        var ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
-
-        var expectedCapacity = (int) Math.ceil(ht.size() / 0.75);
-        var result = new HashMap<String, FieldAndMethods>(expectedCapacity);
-        for (var entry : ht.entrySet()) {
-            var fieldAndMethods = new FieldAndMethods(scope, entry.getValue());
-            fieldAndMethods.javaObject = javaObject;
-
-            result.put(entry.getKey(), fieldAndMethods);
-        }
-        return result;
-    }
-
     static JavaMembers lookupClass(
             VarScope scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
         JavaMembers members;
@@ -889,12 +872,9 @@ class JavaMembers {
      */
     private final Map<String, Object> members;
 
-    private final Map<String, ExecutableOverload.WithField> fieldAndMethods;
-
     /** All possible types of values in this map: same as {@link #members} */
     private final Map<String, Object> staticMembers;
 
-    private final Map<String, ExecutableOverload.WithField> staticFieldAndMethods;
     NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
 }
 

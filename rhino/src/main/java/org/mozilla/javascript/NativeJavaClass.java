@@ -44,7 +44,6 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     protected void initMembers() {
         Class<?> cl = (Class<?>) javaObject;
         members = JavaMembers.lookupClass(parent, cl, cl, isAdapter);
-        staticFieldAndMethods = members.getFieldAndMethodsObjects(parent, cl, true);
     }
 
     @Override
@@ -64,11 +63,6 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         // We don't really care what the object is, since we're returning
         // one constructed out of whole cloth, so we return null.
         if ("prototype".equals(name)) return null;
-
-        var staticFieldAndMethod = staticFieldAndMethods.get(name);
-        if (staticFieldAndMethod != null) {
-            return staticFieldAndMethod;
-        }
 
         if (members.has(name, true)) {
             return members.get(this, parent, name, javaObject, true);
@@ -232,8 +226,6 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         }
         return Kit.classOrNull(loader, nestedClassName);
     }
-
-    private Map<String, FieldAndMethods> staticFieldAndMethods;
 
     @Override
     public boolean equals(Object obj) {
