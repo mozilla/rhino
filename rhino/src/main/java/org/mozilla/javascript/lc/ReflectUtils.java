@@ -1,36 +1,13 @@
 package org.mozilla.javascript.lc;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
+
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
  * @author ZZZank
  */
 public abstract class ReflectUtils {
-
-    public static Iterator<Class<?>> walkSuperClasses(Class<?> start, boolean includeSelf) {
-        var c = includeSelf ? start : start.getSuperclass();
-        return new Iterator<>() {
-            private Class<?> current = c;
-
-            @Override
-            public boolean hasNext() {
-                return current != null;
-            }
-
-            @Override
-            public Class<?> next() {
-                var result = current;
-                if (result == null) {
-                    throw new NoSuchElementException();
-                }
-                current = current.getSuperclass();
-                return result;
-            }
-        };
-    }
 
     public static String javaSignature(Class<?> type) {
         int arrayDimension = 0;
