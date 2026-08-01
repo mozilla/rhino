@@ -7,16 +7,14 @@ import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSCodeExec;
-import org.mozilla.javascript.JSCodeResume;
 import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.VarScope;
 
 /** Subclass of {@link JSCode} for compiled Java methods. */
 public class MHJSScriptCode extends MHJSCode<JSScript> {
     private final JSCodeExec<JSScript> exec;
-    private final JSCodeResume<JSScript> resume;
 
-    protected MHJSScriptCode(MethodHandle execMH, MethodHandle resumeMH) {
+    protected MHJSScriptCode(MethodHandle execMH) {
         exec =
                 (cx, xobj, newTarget, scope, thisObj, args) -> {
                     try {
@@ -27,20 +25,6 @@ public class MHJSScriptCode extends MHJSCode<JSScript> {
                         throw (RuntimeException) e;
                     }
                 };
-        resume =
-                resumeMH != null
-                        ? (cx, xobj, state, scope, operation, value) -> {
-                            try {
-                                return execMH.invokeExact(cx, xobj, state, scope, operation, value);
-                            } catch (Error e) {
-                                throw e;
-                            } catch (Throwable e) {
-                                throw (RuntimeException) e;
-                            }
-                        }
-                        : (cx, xobj, state, scope, operation, value) -> {
-                            throw new UnsupportedOperationException();
-                        };
     }
 
     @Override
@@ -62,7 +46,7 @@ public class MHJSScriptCode extends MHJSCode<JSScript> {
             VarScope scope,
             int operation,
             Object value) {
-        return resume.resume(cx, executableObject, state, scope, operation, value);
+        throw new UnsupportedOperationException();
     }
 
     public static class Builder extends MHJSCode.Builder<JSScript> {
@@ -73,7 +57,7 @@ public class MHJSScriptCode extends MHJSCode<JSScript> {
 
         @Override
         protected MHJSCode<JSScript> buildCode(MethodHandle exec, MethodHandle resume) {
-            return new MHJSScriptCode(exec, resume);
+            return new MHJSScriptCode(exec);
         }
 
         @Override
@@ -109,7 +93,7 @@ public class MHJSScriptCode extends MHJSCode<JSScript> {
                             methodName,
                             MethodType.fromMethodDescriptorString(
                                     methodType, clazz.getClassLoader()));
-            return new MHJSScriptCode(exec, null);
+            return new MHJSScriptCode(exec);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new Error("Gnerated class did not contain expected methods", e);
         }
