@@ -3,10 +3,10 @@ module(
     version = "2.0.0-SNAPSHOT",
 )
 
-bazel_dep(name = "rules_java", version = "9.6.1")
-bazel_dep(name = "rules_jvm_external", version = "7.0")
-bazel_dep(name = "contrib_rules_jvm", version = "0.33.0")
-bazel_dep(name = "rules_kotlin", version = "2.3.20")
+bazel_dep(name = "rules_java", version = "9.7.0")
+bazel_dep(name = "rules_jvm_external", version = "7.1")
+bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
+bazel_dep(name = "rules_kotlin", version = "2.4.0")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 
@@ -37,6 +37,8 @@ maven.install(
         "org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.20",
         "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
         "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.20",
+        "org.openjdk.jmh:jmh-core:1.37",
+        "org.openjdk.jmh:jmh-generator-annprocess:1.37",
     ],
     known_contributing_modules = ["protobuf"],
     lock_file = "//:maven_install.json",

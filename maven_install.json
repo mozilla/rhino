@@ -27,6 +27,8 @@
     "org.junit.platform:junit-platform-launcher": -2122124083,
     "org.junit.platform:junit-platform-reporting": -1439949445,
     "org.junit.platform:junit-platform-runner": -1625579427,
+    "org.openjdk.jmh:jmh-core": 983716932,
+    "org.openjdk.jmh:jmh-generator-annprocess": -1162360421,
     "org.slf4j:slf4j-simple": -487947767,
     "org.yaml:snakeyaml": 359292282,
     "repositories": -1949687017
@@ -44,6 +46,8 @@
     "javax.activation:javax.activation-api": 1384047725,
     "javax.xml.soap:javax.xml.soap-api": 1888610974,
     "junit:junit": -1256429642,
+    "net.sf.jopt-simple:jopt-simple": -1677351973,
+    "org.apache.commons:commons-math3": -1383243934,
     "org.apiguardian:apiguardian-api": 1279798469,
     "org.checkerframework:checker-qual": -1533199059,
     "org.hamcrest:hamcrest": 1282317766,
@@ -71,6 +75,8 @@
     "org.junit.platform:junit-platform-runner": 1580955352,
     "org.junit.platform:junit-platform-suite-api": 1254742642,
     "org.junit.platform:junit-platform-suite-commons": 1867554596,
+    "org.openjdk.jmh:jmh-core": 262505124,
+    "org.openjdk.jmh:jmh-generator-annprocess": 554503664,
     "org.opentest4j:opentest4j": -1711174392,
     "org.slf4j:slf4j-api": -1521593912,
     "org.slf4j:slf4j-simple": -662389614,
@@ -151,6 +157,18 @@
         "jar": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3"
       },
       "version": "4.13.2"
+    },
+    "net.sf.jopt-simple:jopt-simple": {
+      "shasums": {
+        "jar": "df26cc58f235f477db07f753ba5a3ab243ebe5789d9f89ecf68dd62ea9a66c28"
+      },
+      "version": "5.0.4"
+    },
+    "org.apache.commons:commons-math3": {
+      "shasums": {
+        "jar": "1e56d7b058d28b65abd256b8458e3885b674c1d588fa43cd7d1cbb9c7ef2b308"
+      },
+      "version": "3.6.1"
     },
     "org.apiguardian:apiguardian-api": {
       "shasums": {
@@ -314,6 +332,18 @@
       },
       "version": "1.10.3"
     },
+    "org.openjdk.jmh:jmh-core": {
+      "shasums": {
+        "jar": "dc0eaf2bbf0036a70b60798c785d6e03a9daf06b68b8edb0f1ba9eb3421baeb3"
+      },
+      "version": "1.37"
+    },
+    "org.openjdk.jmh:jmh-generator-annprocess": {
+      "shasums": {
+        "jar": "6a5604b5b804e0daca1145df1077609321687734a8b49387e49f10557c186c77"
+      },
+      "version": "1.37"
+    },
     "org.opentest4j:opentest4j": {
       "shasums": {
         "jar": "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b"
@@ -439,6 +469,13 @@
       "org.junit.platform:junit-platform-engine",
       "org.junit.platform:junit-platform-launcher",
       "org.junit.platform:junit-platform-suite-api"
+    ],
+    "org.openjdk.jmh:jmh-core": [
+      "net.sf.jopt-simple:jopt-simple",
+      "org.apache.commons:commons-math3"
+    ],
+    "org.openjdk.jmh:jmh-generator-annprocess": [
+      "org.openjdk.jmh:jmh-core"
     ],
     "org.slf4j:slf4j-simple": [
       "org.slf4j:slf4j-api"
@@ -579,6 +616,88 @@
       "org.junit.runners.model",
       "org.junit.runners.parameterized",
       "org.junit.validator"
+    ],
+    "net.sf.jopt-simple:jopt-simple": [
+      "joptsimple",
+      "joptsimple.internal",
+      "joptsimple.util"
+    ],
+    "org.apache.commons:commons-math3": [
+      "org.apache.commons.math3",
+      "org.apache.commons.math3.analysis",
+      "org.apache.commons.math3.analysis.differentiation",
+      "org.apache.commons.math3.analysis.function",
+      "org.apache.commons.math3.analysis.integration",
+      "org.apache.commons.math3.analysis.integration.gauss",
+      "org.apache.commons.math3.analysis.interpolation",
+      "org.apache.commons.math3.analysis.polynomials",
+      "org.apache.commons.math3.analysis.solvers",
+      "org.apache.commons.math3.complex",
+      "org.apache.commons.math3.dfp",
+      "org.apache.commons.math3.distribution",
+      "org.apache.commons.math3.distribution.fitting",
+      "org.apache.commons.math3.exception",
+      "org.apache.commons.math3.exception.util",
+      "org.apache.commons.math3.filter",
+      "org.apache.commons.math3.fitting",
+      "org.apache.commons.math3.fitting.leastsquares",
+      "org.apache.commons.math3.fraction",
+      "org.apache.commons.math3.genetics",
+      "org.apache.commons.math3.geometry",
+      "org.apache.commons.math3.geometry.enclosing",
+      "org.apache.commons.math3.geometry.euclidean.oned",
+      "org.apache.commons.math3.geometry.euclidean.threed",
+      "org.apache.commons.math3.geometry.euclidean.twod",
+      "org.apache.commons.math3.geometry.euclidean.twod.hull",
+      "org.apache.commons.math3.geometry.hull",
+      "org.apache.commons.math3.geometry.partitioning",
+      "org.apache.commons.math3.geometry.partitioning.utilities",
+      "org.apache.commons.math3.geometry.spherical.oned",
+      "org.apache.commons.math3.geometry.spherical.twod",
+      "org.apache.commons.math3.linear",
+      "org.apache.commons.math3.ml.clustering",
+      "org.apache.commons.math3.ml.clustering.evaluation",
+      "org.apache.commons.math3.ml.distance",
+      "org.apache.commons.math3.ml.neuralnet",
+      "org.apache.commons.math3.ml.neuralnet.oned",
+      "org.apache.commons.math3.ml.neuralnet.sofm",
+      "org.apache.commons.math3.ml.neuralnet.sofm.util",
+      "org.apache.commons.math3.ml.neuralnet.twod",
+      "org.apache.commons.math3.ml.neuralnet.twod.util",
+      "org.apache.commons.math3.ode",
+      "org.apache.commons.math3.ode.events",
+      "org.apache.commons.math3.ode.nonstiff",
+      "org.apache.commons.math3.ode.sampling",
+      "org.apache.commons.math3.optim",
+      "org.apache.commons.math3.optim.linear",
+      "org.apache.commons.math3.optim.nonlinear.scalar",
+      "org.apache.commons.math3.optim.nonlinear.scalar.gradient",
+      "org.apache.commons.math3.optim.nonlinear.scalar.noderiv",
+      "org.apache.commons.math3.optim.nonlinear.vector",
+      "org.apache.commons.math3.optim.nonlinear.vector.jacobian",
+      "org.apache.commons.math3.optim.univariate",
+      "org.apache.commons.math3.optimization",
+      "org.apache.commons.math3.optimization.direct",
+      "org.apache.commons.math3.optimization.fitting",
+      "org.apache.commons.math3.optimization.general",
+      "org.apache.commons.math3.optimization.linear",
+      "org.apache.commons.math3.optimization.univariate",
+      "org.apache.commons.math3.primes",
+      "org.apache.commons.math3.random",
+      "org.apache.commons.math3.special",
+      "org.apache.commons.math3.stat",
+      "org.apache.commons.math3.stat.clustering",
+      "org.apache.commons.math3.stat.correlation",
+      "org.apache.commons.math3.stat.descriptive",
+      "org.apache.commons.math3.stat.descriptive.moment",
+      "org.apache.commons.math3.stat.descriptive.rank",
+      "org.apache.commons.math3.stat.descriptive.summary",
+      "org.apache.commons.math3.stat.inference",
+      "org.apache.commons.math3.stat.interval",
+      "org.apache.commons.math3.stat.ranking",
+      "org.apache.commons.math3.stat.regression",
+      "org.apache.commons.math3.transform",
+      "org.apache.commons.math3.util"
     ],
     "org.apiguardian:apiguardian-api": [
       "org.apiguardian.api"
@@ -939,6 +1058,25 @@
     "org.junit.platform:junit-platform-suite-commons": [
       "org.junit.platform.suite.commons"
     ],
+    "org.openjdk.jmh:jmh-core": [
+      "org.openjdk.jmh",
+      "org.openjdk.jmh.annotations",
+      "org.openjdk.jmh.generators.core",
+      "org.openjdk.jmh.infra",
+      "org.openjdk.jmh.profile",
+      "org.openjdk.jmh.results",
+      "org.openjdk.jmh.results.format",
+      "org.openjdk.jmh.runner",
+      "org.openjdk.jmh.runner.format",
+      "org.openjdk.jmh.runner.link",
+      "org.openjdk.jmh.runner.options",
+      "org.openjdk.jmh.util",
+      "org.openjdk.jmh.util.lines"
+    ],
+    "org.openjdk.jmh:jmh-generator-annprocess": [
+      "org.openjdk.jmh.generators",
+      "org.openjdk.jmh.generators.annotations"
+    ],
     "org.opentest4j:opentest4j": [
       "org.opentest4j"
     ],
@@ -990,6 +1128,8 @@
       "javax.activation:javax.activation-api",
       "javax.xml.soap:javax.xml.soap-api",
       "junit:junit",
+      "net.sf.jopt-simple:jopt-simple",
+      "org.apache.commons:commons-math3",
       "org.apiguardian:apiguardian-api",
       "org.checkerframework:checker-qual",
       "org.hamcrest:hamcrest",
@@ -1017,6 +1157,8 @@
       "org.junit.platform:junit-platform-runner",
       "org.junit.platform:junit-platform-suite-api",
       "org.junit.platform:junit-platform-suite-commons",
+      "org.openjdk.jmh:jmh-core",
+      "org.openjdk.jmh:jmh-generator-annprocess",
       "org.opentest4j:opentest4j",
       "org.slf4j:slf4j-api",
       "org.slf4j:slf4j-simple",
@@ -1088,6 +1230,11 @@
     "org.junit.platform:junit-platform-reporting": {
       "org.junit.platform.launcher.TestExecutionListener": [
         "org.junit.platform.reporting.open.xml.OpenTestReportGeneratingListener"
+      ]
+    },
+    "org.openjdk.jmh:jmh-generator-annprocess": {
+      "javax.annotation.processing.Processor": [
+        "org.openjdk.jmh.generators.BenchmarkProcessor"
       ]
     },
     "org.slf4j:slf4j-simple": {

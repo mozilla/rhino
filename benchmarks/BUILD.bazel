@@ -1,0 +1,46 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_plugin")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS")
+
+java_library(
+    name = "benchmarks",
+    srcs = glob(["src/jmh/**/*.java"]),
+    plugins = [":jmh_plugin"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rhino",
+        "//rhino-tools",
+        "@maven//:org_openjdk_jmh_jmh_core",
+    ],
+)
+
+java_plugin(
+    name = "jmh_plugin",
+    processor_class = "org.openjdk.jmh.generators.BenchmarkProcessor",
+    deps = ["@maven//:org_openjdk_jmh_jmh_generator_annprocess"],
+)
+
+java_binary(
+    name = "run",
+    args = [
+        "-f",
+        "1",
+        "-bm",
+        "avgt",
+        "-i",
+        "5",
+        "-wi",
+        "4",
+        "-r",
+        "2s",
+        "-w",
+        "5s",
+    ],
+    javacopts = LIBRARY_OPTS,
+    jvm_flags = ["-XX:-BackgroundCompilation"],
+    main_class = "org.openjdk.jmh.Main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":benchmarks",
+        "@maven//:org_openjdk_jmh_jmh_core",
+    ],
+)
