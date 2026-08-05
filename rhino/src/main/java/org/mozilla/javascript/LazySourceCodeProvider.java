@@ -39,6 +39,11 @@ public class LazySourceCodeProvider implements SourceCodeProvider, Serializable 
         }
     }
 
+    @Override
+    public String getRawSource() {
+        return sourceSupplier.get();
+    }
+
     static class ResolvedSourceProvider implements SourceCodeProvider {
 
         private String source;
@@ -49,6 +54,11 @@ public class LazySourceCodeProvider implements SourceCodeProvider, Serializable 
 
         @Override
         public String getSource(JSDescriptor<?> functionName, int start, int end) {
+            return source;
+        }
+
+        @Override
+        public String getRawSource() {
             return source;
         }
     }

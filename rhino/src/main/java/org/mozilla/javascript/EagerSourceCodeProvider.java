@@ -17,4 +17,9 @@ public class EagerSourceCodeProvider implements SourceCodeProvider, Serializable
     public String getSource(JSDescriptor<?> desc, int start, int end) {
         return rawSource.substring(start, end);
     }
+
+    // Escape hatch for class compilation.
+    public String getRawSource() {
+        return rawSource;
+    }
 }

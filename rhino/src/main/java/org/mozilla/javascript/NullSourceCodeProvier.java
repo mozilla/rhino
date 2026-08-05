@@ -9,4 +9,10 @@ class NullSourceCodeProvider implements SourceCodeProvider {
         return String.format(
                 "function %s() {\n\t/* Source unavailable */\n}", desc.getFunctionName());
     }
+
+    @Override
+    public String getRawSource() {
+        return String.format(
+                "/* Source unavailable */\n");
+    }
 }

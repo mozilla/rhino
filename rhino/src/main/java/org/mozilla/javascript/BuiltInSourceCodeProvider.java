@@ -13,4 +13,9 @@ public class BuiltInSourceCodeProvider implements SourceCodeProvider, Serializab
     public String getSource(JSDescriptor<?> desc, int start, int end) {
         return String.format("function %s() {\n\t[native code]\n}", desc.getFunctionName());
     }
+
+    @Override
+    public String getRawSource() {
+        return String.format("/*[native code]*/\n}");
+    }
 }
