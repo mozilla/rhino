@@ -5,8 +5,7 @@ public interface SourceCodeProvider {
     /** Return the source for this descriptor, betweeen the start and end offsets */
     String getSource(JSDescriptor<?> descriptor, int start, int end);
 
-    /** Return the raw source for this descriptor usually the entire
-        source file if availab le. */
+    /** Return the raw source for this descriptor usually the entire source file if availab le. */
     String getRawSource();
 
     static SourceCodeProvider make(

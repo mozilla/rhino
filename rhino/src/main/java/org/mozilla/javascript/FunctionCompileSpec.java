@@ -61,6 +61,7 @@ public final class FunctionCompileSpec extends CompileSpec<JSFunction> {
             return this;
         }
 
+        @Override
         public FunctionCompileSpec build() {
             return new FunctionCompileSpec(this);
         }

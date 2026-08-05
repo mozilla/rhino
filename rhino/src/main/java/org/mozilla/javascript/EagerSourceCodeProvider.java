@@ -18,7 +18,7 @@ public class EagerSourceCodeProvider implements SourceCodeProvider, Serializable
         return rawSource.substring(start, end);
     }
 
-    // Escape hatch for class compilation.
+    @Override
     public String getRawSource() {
         return rawSource;
     }

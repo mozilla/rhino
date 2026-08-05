@@ -6,12 +6,15 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /**
- * Parameters for compiling a JavaScript script (i.e. top-level program source). Build instances via
- * {@link #fromSource(String)} or {@link #fromReader(Reader)} and pass them to {@link
+ * Parameters for compiling a JavaScript script (i.e. top-level program source) or function. Build
+ * instances via {@link ScriptCompileSpec#fromSource(String)} or {@link
+ * ScriptCompileSpec#fromReader(Reader)} or {@link FunctionCompileSpec#fromSource(String)} or {@link
+ * FunctionCompileSpec#fromReader(Reader)} to create a {@link Builder}, set the other properties you
+ * need on that, and then pass the built compile spec to {@link
  * Context#compileScript(ScriptCompileSpec)} or {@link Context#evaluateScript(ScriptCompileSpec,
- * VarScope)}.
+ * VarScope)}, or the equivalent methods for compiling functions.
  *
- * @see FunctionCompileSpec
+ * @see FunctionCompileSpec ScriptCompileSpec
  */
 public abstract class CompileSpec<T extends ScriptOrFn<T>> {
     private final String source;

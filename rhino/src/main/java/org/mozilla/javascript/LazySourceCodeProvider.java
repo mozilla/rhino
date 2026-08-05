@@ -29,9 +29,9 @@ public class LazySourceCodeProvider implements SourceCodeProvider, Serializable 
             source = sourceSupplier.get();
             if (source != null) {
                 sourceCodeRef = new WeakReference<>(source);
-                var funcionSrc = source.substring(start, end);
-                descriptor.replaceSourceProvider(new ResolvedSourceProvider(funcionSrc));
-                return funcionSrc;
+                var functionSrc = source.substring(start, end);
+                descriptor.replaceSourceProvider(new ResolvedSourceProvider(functionSrc));
+                return functionSrc;
             } else {
                 descriptor.replaceSourceProvider(new ResolvedSourceProvider(""));
                 return "";

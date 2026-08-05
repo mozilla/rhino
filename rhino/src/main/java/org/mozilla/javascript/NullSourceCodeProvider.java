@@ -5,6 +5,7 @@ class NullSourceCodeProvider implements SourceCodeProvider {
 
     private NullSourceCodeProvider() {}
 
+    @Override
     public String getSource(JSDescriptor<?> desc, int start, int end) {
         return String.format(
                 "function %s() {\n\t/* Source unavailable */\n}", desc.getFunctionName());
@@ -12,7 +13,6 @@ class NullSourceCodeProvider implements SourceCodeProvider {
 
     @Override
     public String getRawSource() {
-        return String.format(
-                "/* Source unavailable */\n");
+        return String.format("/* Source unavailable */\n");
     }
 }

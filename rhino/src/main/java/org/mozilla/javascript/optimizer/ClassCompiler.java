@@ -17,7 +17,6 @@ import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.EagerSourceCodeProvider;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
@@ -193,7 +192,8 @@ public class ClassCompiler {
      * class descriptors, and the main method will create a {@link JSDescriptor} object based on the
      * first descriptor and pass that to the main method in the runtime.
      */
-    private Object[] buildDescriptorsAndMain(String mainClassName, JSDescriptor.Builder<?> builder) {
+    private Object[] buildDescriptorsAndMain(
+            String mainClassName, JSDescriptor.Builder<?> builder) {
         var classes = new HashMap<String, byte[]>();
         var mainName = mainClassName + "Main";
 
@@ -386,7 +386,8 @@ public class ClassCompiler {
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod(3);
         for (var child : builder.nestedFunctions) {
-            buildDescriptor(cfw, (JSDescriptor.Builder<?>) child, root, classes, builders, mainClassName);
+            buildDescriptor(
+                    cfw, (JSDescriptor.Builder<?>) child, root, classes, builders, mainClassName);
         }
     }
 
