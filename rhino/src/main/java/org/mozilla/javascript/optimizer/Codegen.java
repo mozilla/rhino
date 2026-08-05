@@ -350,10 +350,16 @@ public class Codegen implements Evaluator {
                                 ? "org.mozilla.javascript.optimizer.OptJSFunctionCode"
                                 : "org.mozilla.javascript.optimizer.OptJSScriptCode",
                         sourceFile);
+        installConstantDescribers(cfw);
         generateOptJSCodeCtor(cfw, isFunction);
         generateOptJSCodeExecute(cfw, mainClass, methodName, methodType);
         generateOptJSCodeResume(cfw, mainClass, resumeName, GENERATOR_METHOD_SIGNATURE);
         return cfw.toByteArray();
+    }
+
+    /** Teach a writer about the runtime types that can be emitted as dynamic constants. */
+    private static void installConstantDescribers(ClassFileWriter cfw) {
+        cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
     }
 
     private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
@@ -411,6 +417,7 @@ public class Codegen implements Evaluator {
 
         String sourceFile = scriptOrFnNodes[0].getSourceName();
         ClassFileWriter cfw = new ClassFileWriter(mainClassName, SUPER_CLASS_NAME, sourceFile);
+        installConstantDescribers(cfw);
         cfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
         cfw.addField(
                 DESCRIPTORS_FIELD_NAME,

@@ -4,13 +4,15 @@ import static org.mozilla.javascript.Symbol.Kind.BUILT_IN;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
+import org.mozilla.classfile.DynamicConstant;
 
 /**
  * A SymbolKey is one of the implementations of Symbol. It is really there so that we can easily use
  * pre-defined symbols as keys in native code. A SymbolKey has the special property that two
  * NativeSymbol objects with the same key are equal.
  */
-public class SymbolKey implements Symbol, Serializable {
+public class SymbolKey implements Symbol, Serializable, DynamicConstant {
     @Serial private static final long serialVersionUID = -6019782713330994754L;
 
     // These are common SymbolKeys that are equivalent to well-known symbols
@@ -80,5 +82,10 @@ public class SymbolKey implements Symbol, Serializable {
             return "Symbol()";
         }
         return "Symbol(" + name + ')';
+    }
+
+    public static SymbolKey symbolConstant(
+            MethodHandles.Lookup lookup, String name, Class<?> type, int dedupHash) {
+        return new SymbolKey(name, Kind.REGULAR);
     }
 }

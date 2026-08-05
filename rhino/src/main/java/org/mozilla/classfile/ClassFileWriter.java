@@ -10,9 +10,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.StackWalker.Option;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DynamicConstantDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.config.RhinoConfig;
 
@@ -917,17 +924,7 @@ public class ClassFileWriter {
         int newStack = itsStackTop + stackDiff;
         if (newStack < 0 || Short.MAX_VALUE < newStack) badStack(newStack);
 
-        BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
-
-        if (itsBootstrapMethods == null) {
-            itsBootstrapMethods = new ArrayList<>();
-        }
-        int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
-        if (bootstrapIndex == -1) {
-            bootstrapIndex = itsBootstrapMethods.size();
-            itsBootstrapMethods.add(bsmEntry);
-            itsBootstrapMethodsLength += bsmEntry.code.length;
-        }
+        int bootstrapIndex = getBootstrapMethodIndex(bsm, bsmArgs);
 
         short invokedynamicIndex =
                 itsConstantPool.addInvokeDynamic(methodName, methodType, bootstrapIndex);
@@ -941,6 +938,108 @@ public class ClassFileWriter {
         if (DEBUGSTACK) {
             System.err.println("After invokedynamic stack = " + itsStackTop);
         }
+    }
+
+    /**
+     * Register a describer that this writer will use to turn values of {@link
+     * DynamicConstantDescriber#describedType} into dynamic constants.
+     *
+     * <p>A value is matched to a describer by walking up its superclasses, so a describer also
+     * covers the subclasses of its type. Describers must therefore be keyed on a class rather than
+     * on an interface.
+     */
+    public <T extends DynamicConstant> void registerDynamicConstantDescriber(
+            DynamicConstantDescriber<T> describer) {
+        itsConstantDescribers.put(describer.describedType(), describer);
+    }
+
+    /**
+     * Generate the load constant bytecode for the given value, using the describer registered for
+     * its type. Both the constant and its bootstrap method are added to the constant pool, and the
+     * bootstrap method is shared with any invokedynamic instruction using the same one.
+     *
+     * @param constant the constant
+     */
+    public void addLoadDynamicConstant(DynamicConstant constant) {
+        // Class file version 55 is required for CONSTANT_Dynamic
+        if (MajorVersion < 55) {
+            throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
+        }
+
+        Class<?> type = constant.getClass();
+        DynamicConstantDescriber<?> describer = findConstantDescriber(type);
+        if (describer == null) {
+            throw new IllegalArgumentException("no dynamic constant describer for " + type);
+        }
+        DynamicConstantDesc<?> desc =
+                describe(describer, constant)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "value cannot be described as a dynamic constant: "
+                                                        + constant));
+        addLoadConstant(desc);
+    }
+
+    /** Generate the load constant bytecode for an already described constant. */
+    void addLoadConstant(ConstantDesc desc) {
+        int index = itsConstantPool.addConstantDesc(desc);
+        add(isTwoWordConstant(desc) ? ByteCode.LDC2_W : ByteCode.LDC, index);
+    }
+
+    /**
+     * Whether an "ldc" of the given constant pushes two words, and so must use "ldc2_w". Only
+     * dynamic constants can vary here; every other kind of description we can write is either
+     * always one word or has its own dedicated addLoadConstant overload.
+     */
+    private static boolean isTwoWordConstant(ConstantDesc desc) {
+        if (desc instanceof DynamicConstantDesc) {
+            ClassDesc type = ((DynamicConstantDesc<?>) desc).constantType();
+            return ConstantDescs.CD_long.equals(type) || ConstantDescs.CD_double.equals(type);
+        }
+        return desc instanceof Long || desc instanceof Double;
+    }
+
+    /** Find the describer registered for a type, or for its nearest described supertype. */
+    private DynamicConstantDescriber<?> findConstantDescriber(Class<?> type) {
+        return itsConstantDescribers.get(type);
+    }
+
+    /**
+     * The describer registry is a heterogeneous container: the registration API guarantees that
+     * each describer is keyed by the type it accepts, and lookup only ever reaches a describer
+     * whose key the value is assignable to, so the cast here is safe even though it cannot be
+     * expressed in the type system.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T extends DynamicConstant> Optional<DynamicConstantDesc<T>> describe(
+            DynamicConstantDescriber<T> describer, DynamicConstant value) {
+        return describer.describe((T) value);
+    }
+
+    /**
+     * The index in the BootstrapMethods attribute of the given bootstrap method, adding it if it is
+     * not already present. The attribute is shared between invokedynamic instructions and dynamic
+     * constants.
+     */
+    int getBootstrapMethodIndex(MHandle bsm, Object... bsmArgs) {
+        BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
+
+        if (itsBootstrapMethods == null) {
+            itsBootstrapMethods = new ArrayList<>();
+        }
+        int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
+        if (bootstrapIndex == -1) {
+            bootstrapIndex = itsBootstrapMethods.size();
+            itsBootstrapMethods.add(bsmEntry);
+            itsBootstrapMethodsLength += bsmEntry.code.length;
+        }
+        return bootstrapIndex;
+    }
+
+    int getBootstrapMethodIndex(DynamicConstantDesc<?> desc) {
+        DirectMethodHandleDesc bsm = desc.bootstrapMethod();
+        return getBootstrapMethodIndex(MHandle.of(bsm), (Object[]) desc.bootstrapArgs());
     }
 
     /**
@@ -2196,6 +2295,14 @@ public class ClassFileWriter {
                         case ConstantPool.CONSTANT_Class:
                             push(TypeInfo.OBJECT("java/lang/Class", itsConstantPool));
                             break;
+                        case ConstantPool.CONSTANT_Dynamic:
+                            String constDescriptor =
+                                    (String) itsConstantPool.getConstantData(index);
+                            push(
+                                    TypeInfo.fromType(
+                                            descriptorToInternalName(constDescriptor),
+                                            itsConstantPool));
+                            break;
                         default:
                             throw new IllegalArgumentException("bad const type " + constType);
                     }
@@ -2677,7 +2784,7 @@ public class ClassFileWriter {
      *
      * <p>For example, descriptor Ljava/lang/Object; becomes java/lang/Object.
      */
-    private static String classDescriptorToInternalName(String descriptor) {
+    static String classDescriptorToInternalName(String descriptor) {
         return descriptor.substring(1, descriptor.length() - 1);
     }
 
@@ -4520,12 +4627,35 @@ public class ClassFileWriter {
         final String owner;
         final String name;
         final String desc;
+        final boolean isInterface;
 
         public MHandle(byte tag, String owner, String name, String desc) {
+            this(tag, owner, name, desc, false);
+        }
+
+        /**
+         * @param isInterface whether the owner is an interface. This must be set for the static and
+         *     special reference kinds, whose tags do not otherwise distinguish an interface owner,
+         *     so that the handle refers to a CONSTANT_InterfaceMethodref.
+         */
+        public MHandle(byte tag, String owner, String name, String desc, boolean isInterface) {
             this.tag = tag;
             this.owner = owner;
             this.name = name;
             this.desc = desc;
+            this.isInterface = isInterface;
+        }
+
+        /** Convert a {@code java.lang.constant} method handle description into a handle. */
+        static MHandle of(DirectMethodHandleDesc desc) {
+            // Kind.refKind is the JVMS reference kind, which is exactly what ByteCode.MH_*
+            // holds, so the tag needs no translation.
+            return new MHandle(
+                    (byte) desc.kind().refKind,
+                    classDescriptorToInternalName(desc.owner().descriptorString()),
+                    desc.methodName(),
+                    desc.lookupDescriptor(),
+                    desc.isOwnerInterface());
         }
 
         @Override
@@ -4538,6 +4668,7 @@ public class ClassFileWriter {
             }
             MHandle mh = (MHandle) obj;
             return tag == mh.tag
+                    && isInterface == mh.isInterface
                     && owner.equals(mh.owner)
                     && name.equals(mh.name)
                     && desc.equals(mh.desc);
@@ -4615,6 +4746,8 @@ public class ClassFileWriter {
     private ArrayList<int[]> itsVarDescriptors;
     private ArrayList<BootstrapEntry> itsBootstrapMethods;
     private int itsBootstrapMethodsLength = 0;
+    private final Map<Class<?>, DynamicConstantDescriber<?>> itsConstantDescribers =
+            new HashMap<>();
 
     private char[] tmpCharBuffer = new char[64];
 }
