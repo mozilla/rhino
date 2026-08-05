@@ -74,6 +74,12 @@ public class Bootstrapper {
     }
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+    // Here we map keys to weak references to themselves because this
+    // is sadly the easiest way to de-duplicate them without holding
+    // on to a strong reference. Normally we would make each entry be
+    // a simple marker object, but unfortunately the compute
+    // implementations pass the original key through to the compute
+    // function rather than the key object stored in the map.
     private static final WeakHashMap<CallSiteDescriptor, WeakReference<CallSiteDescriptor>>
             CALLSITE_DESC_CACHE = new WeakHashMap<>();
 
