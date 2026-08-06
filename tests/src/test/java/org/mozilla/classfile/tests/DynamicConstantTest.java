@@ -7,6 +7,7 @@
 package org.mozilla.classfile.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +24,6 @@ import java.lang.constant.MethodTypeDesc;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
@@ -93,19 +93,17 @@ public class DynamicConstantTest {
                 }
 
                 @Override
-                public Optional<DynamicConstantDesc<StringConstant>> describe(
-                        StringConstant value) {
-                    return Optional.of(
-                            DynamicConstantDesc.ofNamed(
-                                    bootstrap(
-                                            "stringBootstrap",
-                                            MethodTypeDesc.of(
-                                                    ConstantDescs.CD_String,
-                                                    ConstantDescs.CD_MethodHandles_Lookup,
-                                                    ConstantDescs.CD_String,
-                                                    ConstantDescs.CD_Class)),
-                                    value.value,
-                                    ConstantDescs.CD_String));
+                public DynamicConstantDesc<StringConstant> describe(StringConstant value) {
+                    return DynamicConstantDesc.ofNamed(
+                            bootstrap(
+                                    "stringBootstrap",
+                                    MethodTypeDesc.of(
+                                            ConstantDescs.CD_String,
+                                            ConstantDescs.CD_MethodHandles_Lookup,
+                                            ConstantDescs.CD_String,
+                                            ConstantDescs.CD_Class)),
+                            value.value,
+                            ConstantDescs.CD_String);
                 }
             };
 
@@ -117,18 +115,17 @@ public class DynamicConstantTest {
                 }
 
                 @Override
-                public Optional<DynamicConstantDesc<LongConstant>> describe(LongConstant value) {
-                    return Optional.of(
-                            DynamicConstantDesc.ofNamed(
-                                    bootstrap(
-                                            "longBootstrap",
-                                            MethodTypeDesc.of(
-                                                    ConstantDescs.CD_long,
-                                                    ConstantDescs.CD_MethodHandles_Lookup,
-                                                    ConstantDescs.CD_String,
-                                                    ConstantDescs.CD_Class)),
-                                    Long.toString(value.value),
-                                    ConstantDescs.CD_long));
+                public DynamicConstantDesc<LongConstant> describe(LongConstant value) {
+                    return DynamicConstantDesc.ofNamed(
+                            bootstrap(
+                                    "longBootstrap",
+                                    MethodTypeDesc.of(
+                                            ConstantDescs.CD_long,
+                                            ConstantDescs.CD_MethodHandles_Lookup,
+                                            ConstantDescs.CD_String,
+                                            ConstantDescs.CD_Class)),
+                            Long.toString(value.value),
+                            ConstantDescs.CD_long);
                 }
             };
 
@@ -143,21 +140,19 @@ public class DynamicConstantTest {
                 }
 
                 @Override
-                public Optional<DynamicConstantDesc<MethodTypeConstant>> describe(
-                        MethodTypeConstant value) {
-                    return Optional.of(
-                            DynamicConstantDesc.ofNamed(
-                                    bootstrap(
-                                            "methodTypeBootstrap",
-                                            MethodTypeDesc.of(
-                                                    ConstantDescs.CD_String,
-                                                    ConstantDescs.CD_MethodHandles_Lookup,
-                                                    ConstantDescs.CD_String,
-                                                    ConstantDescs.CD_Class,
-                                                    ConstantDescs.CD_MethodType)),
-                                    "unused",
-                                    ConstantDescs.CD_String,
-                                    DESCRIBED_METHOD_TYPE));
+                public DynamicConstantDesc<MethodTypeConstant> describe(MethodTypeConstant value) {
+                    return DynamicConstantDesc.ofNamed(
+                            bootstrap(
+                                    "methodTypeBootstrap",
+                                    MethodTypeDesc.of(
+                                            ConstantDescs.CD_String,
+                                            ConstantDescs.CD_MethodHandles_Lookup,
+                                            ConstantDescs.CD_String,
+                                            ConstantDescs.CD_Class,
+                                            ConstantDescs.CD_MethodType)),
+                            "unused",
+                            ConstantDescs.CD_String,
+                            DESCRIBED_METHOD_TYPE);
                 }
             };
 
@@ -169,9 +164,9 @@ public class DynamicConstantTest {
                 }
 
                 @Override
-                public Optional<DynamicConstantDesc<UndescribableConstant>> describe(
+                public DynamicConstantDesc<UndescribableConstant> describe(
                         UndescribableConstant value) {
-                    return Optional.empty();
+                    throw new IllegalStateException("");
                 }
             };
 
@@ -303,24 +298,23 @@ public class DynamicConstantTest {
         cfw.registerDynamicConstantDescriber(EMPTY_DESCRIBER);
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
 
-        IllegalArgumentException e =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () -> cfw.addLoadDynamicConstant(new UndescribableConstant()));
-        assertTrue(e.getMessage().contains("cannot be described"), e.getMessage());
+        assertThrows(
+            IllegalStateException.class,
+            () -> cfw.addLoadDynamicConstant(new UndescribableConstant()));
     }
 
     @Test
     public void regularSymbolsAreDescribable() {
         SymbolKeyDescriber describer = new SymbolKeyDescriber();
 
-        assertTrue(describer.describe(SymbolKey.ITERATOR).isPresent());
-        assertTrue(describer.describe(SymbolKey.TO_PRIMITIVE).isPresent());
+        assertNotNull(describer.describe(SymbolKey.ITERATOR));
+        assertNotNull(describer.describe(SymbolKey.TO_PRIMITIVE));
         // A symbol from "Symbol()" has an identity that cannot be reconstructed, and one from
         // "Symbol.for" belongs to the global registry.
-        assertTrue(describer.describe(new SymbolKey("regular", Symbol.Kind.REGULAR)).isPresent());
-        assertTrue(
-                describer.describe(new SymbolKey("registered", Symbol.Kind.REGISTERED)).isEmpty());
+        assertNotNull(describer.describe(new SymbolKey("regular", Symbol.Kind.REGULAR)));
+        assertThrows(
+                IllegalStateException.class,
+                () -> describer.describe(new SymbolKey("registered", Symbol.Kind.REGISTERED)));
     }
 
     // ---------------------------------------------------------------- helpers
