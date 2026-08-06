@@ -56,6 +56,22 @@ public class CompilerEnvirons {
         this.errorReporter = errorReporter;
     }
 
+    public void setSourceMapper(SourceMapper sourceMapper) {
+        this.sourceMapper = sourceMapper;
+    }
+
+    public SourceMapper getSourceMapper() {
+        return sourceMapper;
+    }
+
+    public SourceCodeProvider getSourceCodeProvider() {
+        return sourceCodeProvider;
+    }
+
+    public void setSourceCodeProvider(SourceCodeProvider sourceCodeProvider) {
+        this.sourceCodeProvider = sourceCodeProvider;
+    }
+
     public final int getLanguageVersion() {
         return languageVersion;
     }
@@ -282,14 +298,6 @@ public class CompilerEnvirons {
         return securityDomain;
     }
 
-    public void setSourceMapper(SourceMapper sourceMapper) {
-        this.sourceMapper = sourceMapper;
-    }
-
-    public SourceMapper getSourceMapper() {
-        return sourceMapper;
-    }
-
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
      * features are enabled by default. The {@link ErrorReporter} is set to an {@link
@@ -309,6 +317,8 @@ public class CompilerEnvirons {
     }
 
     private ErrorReporter errorReporter;
+    private SourceMapper sourceMapper;
+    private SourceCodeProvider sourceCodeProvider;
 
     private int languageVersion;
     private boolean generateDebugInfo;
@@ -332,5 +342,4 @@ public class CompilerEnvirons {
     private Scriptable homeObjecgt;
     private SecurityController securityController;
     private Object securityDomain;
-    private SourceMapper sourceMapper;
 }

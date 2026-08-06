@@ -1590,7 +1590,7 @@ public class Context implements Closeable {
      * @return a string representing the script source
      */
     public final String decompileScript(Script script, int indent) {
-        return ((JSScript) script).getDescriptor().getRawSource();
+        return ((JSScript) script).getDescriptor().getSource();
     }
 
     /**
@@ -2651,42 +2651,14 @@ public class Context implements Closeable {
     }
 
     protected Script compileScriptImpl(ScriptCompileSpec spec) {
-        Compiled<JSScript> compiled =
-                compileImpl(
-                        spec.getSource(),
-                        spec.getSourceName(),
-                        spec.getLineno(),
-                        spec.getSecurityDomain(),
-                        spec.getCompiler(),
-                        spec.getCompilationErrorReporter(),
-                        spec.getCompilerEnvironsProcessor(),
-                        spec.getSourceMapper(),
-                        false,
-                        Evaluator::compileScript);
+        Compiled<JSScript> compiled = compileImpl(spec);
         return compiled.evaluator.createScriptObject(compiled.result, spec.getSecurityDomain());
     }
 
     protected Function compileFunctionImpl(FunctionCompileSpec spec) {
-        Compiled<JSFunction> compiled =
-                compileImpl(
-                        spec.getSource(),
-                        spec.getSourceName(),
-                        spec.getLineno(),
-                        spec.getSecurityDomain(),
-                        spec.getCompiler(),
-                        spec.getCompilationErrorReporter(),
-                        spec.getCompilerEnvironsProcessor(),
-                        spec.getSourceMapper(),
-                        true,
-                        Evaluator::compileFunction);
+        Compiled<JSFunction> compiled = compileImpl(spec);
         return compiled.evaluator.createFunctionObject(
                 this, spec.getScope(), compiled.result, spec.getSecurityDomain());
-    }
-
-    @FunctionalInterface
-    private interface CompileFn<T extends ScriptOrFn<T>> {
-        CompilationResult<T> compile(
-                Evaluator evaluator, CompilerEnvirons env, ScriptNode tree, String rawSource);
     }
 
     private static final class Compiled<T extends ScriptOrFn<T>> {
@@ -2699,40 +2671,45 @@ public class Context implements Closeable {
         }
     }
 
-    private <T extends ScriptOrFn<T>> Compiled<T> compileImpl(
-            String sourceString,
-            String sourceName,
-            int lineno,
-            Object securityDomain,
-            Evaluator compiler,
-            ErrorReporter compilationErrorReporter,
-            Consumer<CompilerEnvirons> compilerEnvironProcessor,
-            SourceMapper sourceMapper,
-            boolean returnFunction,
-            CompileFn<T> compileFn) {
+    private <T extends ScriptOrFn<T>> Compiled<T> compileImpl(CompileSpec<T> spec) {
+        String sourceString = spec.getSource();
+
+        String sourceName = spec.getSourceName();
         if (sourceName == null) {
             sourceName = "unnamed script";
         }
 
+        var securityDomain = spec.getSecurityDomain();
         if (securityDomain != null && getSecurityController() == null) {
             throw new IllegalArgumentException(
                     "securityDomain should be null if setSecurityController() was never called");
         }
 
+        SourceCodeProvider sourceCodeProvider =
+                SourceCodeProvider.make(
+                        generatingSource, spec.getSourceCodeSupplier(), sourceString);
+
+        VarScope scope = spec.getScope();
+        boolean returnFunction = spec.returnFunction();
+
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
         compilerEnv.setSecurityDomain(securityDomain);
-        if (sourceMapper != null) {
-            compilerEnv.setSourceMapper(sourceMapper);
-        }
+        compilerEnv.setSourceMapper(spec.getSourceMapper());
+        compilerEnv.setSourceCodeProvider(sourceCodeProvider);
 
+        ErrorReporter compilationErrorReporter = spec.getCompilationErrorReporter();
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
         }
 
+        Consumer<CompilerEnvirons> compilerEnvironProcessor = spec.getCompilerEnvironsProcessor();
         if (compilerEnvironProcessor != null) {
             compilerEnvironProcessor.accept(compilerEnv);
         }
+
+        int lineno = spec.getLineno();
+        SourceMapper sourceMapper = spec.getSourceMapper();
 
         ScriptNode tree =
                 parse(
@@ -2743,13 +2720,14 @@ public class Context implements Closeable {
                         compilationErrorReporter,
                         returnFunction);
 
+        Evaluator compiler = spec.getCompiler();
         CompilationResult<T> result;
         try {
             if (compiler == null) {
                 compiler = createCompiler();
             }
 
-            result = compileFn.compile(compiler, compilerEnv, tree, sourceString);
+            result = spec.compilationFunction().compile(compiler, compilerEnv, tree, sourceString);
         } catch (ClassSizeException e) {
             // we hit some class file limit, fall back to interpreter or report
 
@@ -2765,7 +2743,7 @@ public class Context implements Closeable {
                             returnFunction);
 
             compiler = createInterpreter();
-            result = compileFn.compile(compiler, compilerEnv, tree, sourceString);
+            result = spec.compilationFunction().compile(compiler, compilerEnv, tree, sourceString);
         }
 
         if (debugger != null) {
