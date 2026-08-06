@@ -16,6 +16,9 @@ import java.util.Map;
 public class FieldBasedBean implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
 
+    public char primitiveChar = 0;
+    public Character complexChar = null;
+
     public List<Integer> integers = new ArrayList<>();
     private List<Double> doubles = new ArrayList<>();
 
