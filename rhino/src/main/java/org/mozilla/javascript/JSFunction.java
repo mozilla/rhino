@@ -28,7 +28,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         }
     }
 
-    JSFunction(
+    public JSFunction(
             VarScope scope,
             JSDescriptor<JSFunction> descriptor,
             Scriptable lexicalThis,

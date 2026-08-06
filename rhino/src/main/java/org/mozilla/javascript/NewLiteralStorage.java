@@ -60,6 +60,24 @@ public abstract class NewLiteralStorage {
         }
     }
 
+    public void setKeyAt(int idx, Object key) {
+        keys[idx] = key;
+    }
+
+    public void setValueAt(int idx, Object value) {
+        values[idx] = value;
+    }
+
+    public void setGetterAt(int idx, Object value) {
+        getterSetters[idx] = -1;
+        values[idx] = value;
+    }
+
+    public void setSetterAt(int idx, Object value) {
+        getterSetters[idx] = +1;
+        values[idx] = value;
+    }
+
     public void spread(Context cx, VarScope scope, Object source, int sourcePosition) {
         int indexBefore = index;
         if (keys == null) {
@@ -231,44 +249,57 @@ public abstract class NewLiteralStorage {
 
         @Override
         protected void attemptToInferFunctionName(Object value) {
-            // Try to infer the name if the value is a normal JS function
-            if (this.keys == null || !(value instanceof JSFunction)) {
+            if (this.keys == null) {
                 return;
             }
+            int gs = getterSetters == null ? 0 : getterSetters[index];
+            inferFunctionName(this.keys[index], value, gs);
+        }
+    }
 
-            BaseFunction fun = (BaseFunction) value;
-            if (!"".equals(fun.get("name", fun))) {
-                return;
+    /**
+     * Set the inferred name on a function value placed under {@code propKey} in an object literal,
+     * matching the semantics of {@code SetFunctionName} (ECMA 9.2.13). Used by both V1 (via {@link
+     * NewLiteralStorage}) and V2 (directly from its ObjectLit instruction).
+     *
+     * @param propKey the property key (String, Symbol, or other id)
+     * @param value the candidate function value
+     * @param getterSetter -1 for getter, +1 for setter, 0 for regular value
+     */
+    public static void inferFunctionName(Object propKey, Object value, int getterSetter) {
+        if (!(value instanceof JSFunction)) {
+            return;
+        }
+        BaseFunction fun = (BaseFunction) value;
+        if (!"".equals(fun.get("name", fun))) {
+            return;
+        }
+
+        String prefix = "";
+        if (getterSetter == -1) {
+            prefix = "get ";
+        } else if (getterSetter == +1) {
+            prefix = "set ";
+        }
+
+        if (propKey instanceof Symbol) {
+            // For symbol keys, valid names are: `[foo]`, `get [foo]`
+            // However `[]` or `get []` aren't, and become `` and `get `
+            String symbolName = ((Symbol) propKey).getName();
+            if (!symbolName.isEmpty()) {
+                fun.setFunctionName(prefix + "[" + symbolName + "]");
+            } else if (!prefix.isEmpty()) {
+                fun.setFunctionName(prefix);
             }
-
-            String prefix = "";
-            if (getterSetters[index] == -1) {
-                prefix = "get ";
-            } else if (getterSetters[index] == +1) {
-                prefix = "set ";
-            }
-
-            Object propKey = this.keys[index];
-            if (propKey instanceof Symbol) {
-                // For symbol keys, valid names are: `[foo]`, `get [foo]`
-                // However `[]` or `get []` aren't, and become `` and `get `
-                String symbolName = ((Symbol) propKey).getName();
-                if (!symbolName.isEmpty()) {
-                    fun.setFunctionName(prefix + "[" + symbolName + "]");
-                } else if (!prefix.isEmpty()) {
-                    fun.setFunctionName(prefix);
-                }
+        } else {
+            if (!propKey.equals(PROTO_PROPERTY)) {
+                fun.setFunctionName(prefix + propKey);
             } else {
-                // Key was already converted to a string
-                if (!propKey.equals(PROTO_PROPERTY)) {
+                // `__proto__` is, as usual, weird and applies only to methods, meaning:
+                // - { __proto__(){} } infers the name
+                // - { __proto__: function(){} } does not!
+                if (((JSFunction) fun).isShorthand()) {
                     fun.setFunctionName(prefix + propKey);
-                } else {
-                    // `__proto__` is, as usual, weird and applies only to methods, meaning:
-                    // - { __proto__(){} } infers the name
-                    // - { __proto__: function(){} } does not!
-                    if (fun instanceof JSFunction && ((JSFunction) fun).isShorthand()) {
-                        fun.setFunctionName(prefix + propKey);
-                    }
                 }
             }
         }
