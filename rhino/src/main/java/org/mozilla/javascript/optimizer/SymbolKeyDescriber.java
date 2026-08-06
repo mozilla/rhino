@@ -14,9 +14,8 @@ import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import org.mozilla.classfile.DynamicConstantDescriber;
 import org.mozilla.javascript.SymbolKey;
 
@@ -48,25 +47,23 @@ public class SymbolKeyDescriber implements DynamicConstantDescriber<SymbolKey> {
     }
 
     @Override
-    public Optional<DynamicConstantDesc<SymbolKey>> describe(SymbolKey value) {
+    public DynamicConstantDesc<SymbolKey> describe(SymbolKey value) {
         return switch (value.getKind()) {
             case BUILT_IN ->
-                    WellKnownFields.NAMES.get(value) == null
-                            ? Optional.empty()
-                            : Optional.of(
-                                    DynamicConstantDesc.ofNamed(
-                                            ConstantDescs.BSM_GET_STATIC_FINAL,
-                                            WellKnownFields.NAMES.get(value),
-                                            CD_SYMBOL_KEY,
-                                            CD_SYMBOL_KEY));
+                    DynamicConstantDesc.ofNamed(
+                            ConstantDescs.BSM_GET_STATIC_FINAL,
+                            WellKnownFields.NAMES.get(value),
+                            CD_SYMBOL_KEY,
+                            CD_SYMBOL_KEY);
             case REGULAR ->
-                    Optional.of(
-                            DynamicConstantDesc.ofNamed(
-                                    SYMBOL_REGULAR,
-                                    value.getName(),
-                                    CD_SYMBOL_KEY,
-                                    Integer.valueOf(System.identityHashCode(value))));
-            default -> Optional.empty();
+                    DynamicConstantDesc.ofNamed(
+                            SYMBOL_REGULAR,
+                            value.getName(),
+                            CD_SYMBOL_KEY,
+                            Integer.valueOf(System.identityHashCode(value)));
+            default -> {
+                throw new IllegalStateException("Symbol descriptor could not be generated");
+            }
         };
     }
 
@@ -79,7 +76,7 @@ public class SymbolKeyDescriber implements DynamicConstantDescriber<SymbolKey> {
         static final Map<SymbolKey, String> NAMES = scan();
 
         private static Map<SymbolKey, String> scan() {
-            Map<SymbolKey, String> names = new IdentityHashMap<>();
+            var names = new HashMap<SymbolKey, String>();
             for (Field field : SymbolKey.class.getDeclaredFields()) {
                 int modifiers = field.getModifiers();
                 if (field.getType() == SymbolKey.class

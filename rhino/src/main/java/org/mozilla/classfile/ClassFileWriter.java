@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.config.RhinoConfig;
 
@@ -960,25 +959,19 @@ public class ClassFileWriter {
      *
      * @param constant the constant
      */
-    public void addLoadDynamicConstant(DynamicConstant constant) {
+    public <T extends DynamicConstant> void addLoadDynamicConstant(T constant) {
         // Class file version 55 is required for CONSTANT_Dynamic
         if (MajorVersion < 55) {
             throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
         }
 
-        Class<?> type = constant.getClass();
-        DynamicConstantDescriber<?> describer = findConstantDescriber(type);
+        @SuppressWarnings("unchecked")
+        var type = (Class<T>) constant.getClass();
+        var describer = (DynamicConstantDescriber<T>) findConstantDescriber(type);
         if (describer == null) {
             throw new IllegalArgumentException("no dynamic constant describer for " + type);
         }
-        DynamicConstantDesc<?> desc =
-                describe(describer, constant)
-                        .orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "value cannot be described as a dynamic constant: "
-                                                        + constant));
-        addLoadConstant(desc);
+        addLoadConstant(describer.describe(constant));
     }
 
     /** Generate the load constant bytecode for an already described constant. */
@@ -1000,21 +993,12 @@ public class ClassFileWriter {
         return desc instanceof Long || desc instanceof Double;
     }
 
-    /** Find the describer registered for a type, or for its nearest described supertype. */
-    private DynamicConstantDescriber<?> findConstantDescriber(Class<?> type) {
-        return itsConstantDescribers.get(type);
-    }
-
-    /**
-     * The describer registry is a heterogeneous container: the registration API guarantees that
-     * each describer is keyed by the type it accepts, and lookup only ever reaches a describer
-     * whose key the value is assignable to, so the cast here is safe even though it cannot be
-     * expressed in the type system.
-     */
-    @SuppressWarnings("unchecked")
-    private static <T extends DynamicConstant> Optional<DynamicConstantDesc<T>> describe(
-            DynamicConstantDescriber<T> describer, DynamicConstant value) {
-        return describer.describe((T) value);
+    /** Find the describer registered for a type. */
+    private <T extends DynamicConstant> DynamicConstantDescriber<T> findConstantDescriber(
+            Class<T> type) {
+        @SuppressWarnings("unchecked")
+        var res = (DynamicConstantDescriber<T>) itsConstantDescribers.get(type);
+        return res;
     }
 
     /**
@@ -4746,8 +4730,10 @@ public class ClassFileWriter {
     private ArrayList<int[]> itsVarDescriptors;
     private ArrayList<BootstrapEntry> itsBootstrapMethods;
     private int itsBootstrapMethodsLength = 0;
-    private final Map<Class<?>, DynamicConstantDescriber<?>> itsConstantDescribers =
-            new HashMap<>();
+    private final Map<
+                    Class<? extends DynamicConstant>,
+                    DynamicConstantDescriber<? extends DynamicConstant>>
+            itsConstantDescribers = new HashMap<>();
 
     private char[] tmpCharBuffer = new char[64];
 }
