@@ -1,5 +1,5 @@
 [versions]
-jline = '3.30.6'
+jline = '4.3.1'
 junit5 = '5.10.3'
 
 [libraries]
