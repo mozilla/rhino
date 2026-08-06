@@ -3,6 +3,7 @@ build --java_language_version=17
 # Ensure that Java 17-compatible bytecode is produced
 build --java_runtime_version=remotejdk_17
 # Force Bazel to use Java 25 for its own internal tools/helpers
+build --extra_toolchains=//bazel:custom_toolchain_jdk_17_definition
 build --extra_toolchains=@rules_java//java:all
 build --tool_java_runtime_version=remotejdk_25
 

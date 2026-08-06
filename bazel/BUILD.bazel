@@ -1,1 +1,20 @@
 # This class contains common Bazel build rules used elsewhere.
+
+load("@rules_java//toolchains:default_java_toolchain.bzl", "DEFAULT_TOOLCHAIN_CONFIGURATION", "default_java_toolchain")
+
+default_java_toolchain(
+    name = "custom_toolchain_jdk_17",
+    java_runtime = "@rules_java//toolchains:remotejdk_25",
+    jvm_opts = DEFAULT_TOOLCHAIN_CONFIGURATION["jvm_opts"] + [
+        "-XX:+IgnoreUnrecognizedVMOptions",
+        "--sun-misc-unsafe-memory-access=allow",
+    ],
+    source_version = "17",
+    target_version = "17",
+    turbine_jvm_opts = DEFAULT_TOOLCHAIN_CONFIGURATION["turbine_jvm_opts"] + [
+        "-XX:+IgnoreUnrecognizedVMOptions",
+        "--sun-misc-unsafe-memory-access=allow",
+    ],
+    visibility = ["//visibility:public"],
+)
+
