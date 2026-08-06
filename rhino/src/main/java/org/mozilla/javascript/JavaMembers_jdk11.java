@@ -6,10 +6,9 @@
 
 package org.mozilla.javascript;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Map;
+import org.mozilla.javascript.lc.ReflectUtils;
 
 /** Version of {@link JavaMembers} for modular JDKs. */
 class JavaMembers_jdk11 extends JavaMembers {
@@ -32,61 +31,13 @@ class JavaMembers_jdk11 extends JavaMembers {
     }
 
     private static boolean isExportedClass(Class<?> clazz) {
-        /*
-         * We are going to invoke, using reflection, the approximate equivalent
-         * to the following Java 9 code:
-         *
-         * return clazz.getModule().isExported(clazz.getPackageName());
-         */
-
-        // First, determine the package name
-        String pname;
-        Package pkg = clazz.getPackage();
-        if (pkg == null) {
-            // Primitive types, arrays, proxy classes
-            if (!Proxy.isProxyClass(clazz)) {
-                // Should be a primitive type or array
-                return true;
-            }
-            String clName = clazz.getName();
-            pname = clName.substring(0, clName.lastIndexOf('.'));
-        } else {
-            pname = pkg.getName();
-        }
-
-        // Obtain the module
-        Method getmodule;
-        @SuppressWarnings("GetClassOnClass")
-        Class<?> cl = clazz.getClass();
-        try {
-            getmodule = cl.getMethod("getModule");
-        } catch (NoSuchMethodException e) {
-            // We are on non-modular Java
+        if (!ReflectUtils.IS_MODULAR_JAVA) {
             return true;
         }
 
-        Object module;
-        try {
-            module = getmodule.invoke(clazz);
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            return false;
-        }
-
-        Class<?> moduleClass = module.getClass();
-
-        // Execute isExported()
-        boolean exported;
-        try {
-            Method isexported = moduleClass.getMethod("isExported", String.class);
-            exported = (boolean) isexported.invoke(module, pname);
-        } catch (NoSuchMethodException
-                | IllegalAccessException
-                | IllegalArgumentException
-                | InvocationTargetException e) {
-            // If we reached this part of the code, this cannot happen
-            exported = false;
-        }
-        return exported;
+        // `.getModule()` not present on Android, `.getPackageName()` not after API 31.
+        // Android compatibility is ensured by gating it after IS_MODULAR_JAVA
+        return clazz.getModule().isExported(clazz.getPackageName());
     }
 
     private static Method findAccessibleMethod(Method method) {

@@ -42,8 +42,6 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  */
 class JavaMembers {
 
-    private static final boolean STRICT_REFLECTIVE_ACCESS = isModularJava();
-
     private static final Permission allPermission = new AllPermission();
 
     JavaMembers(VarScope scope, Class<?> cl) {
@@ -63,19 +61,6 @@ class JavaMembers {
             this.cl = cl;
             boolean includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
             reflect(cx, scope, includeProtected, includePrivate);
-        }
-    }
-
-    /**
-     * This method returns true if we are on a "modular" version of Java (Java 11 or up). It does
-     * not use the SourceVersion class because this is not present on Android.
-     */
-    private static boolean isModularJava() {
-        try {
-            Class.class.getMethod("getModule");
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
         }
     }
 
@@ -851,7 +836,7 @@ class JavaMembers {
 
     private static JavaMembers createJavaMembers(
             VarScope associatedScope, Class<?> cl, boolean includeProtected) {
-        if (STRICT_REFLECTIVE_ACCESS) {
+        if (ReflectUtils.IS_MODULAR_JAVA) {
             return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
         } else {
             return new JavaMembers(associatedScope, cl, includeProtected);

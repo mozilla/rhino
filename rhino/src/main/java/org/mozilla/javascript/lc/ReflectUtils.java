@@ -1,8 +1,6 @@
 package org.mozilla.javascript.lc;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 /**
@@ -10,26 +8,21 @@ import org.mozilla.javascript.lc.type.TypeInfo;
  */
 public abstract class ReflectUtils {
 
-    public static Iterator<Class<?>> walkSuperClasses(Class<?> start, boolean includeSelf) {
-        var c = includeSelf ? start : start.getSuperclass();
-        return new Iterator<>() {
-            private Class<?> current = c;
+    /**
+     * {@code true} if we are on a "modular" version of Java (Java 11 or up, excluding Android). It
+     * does not use the SourceVersion class because this is not present on Android.
+     */
+    public static final boolean IS_MODULAR_JAVA;
 
-            @Override
-            public boolean hasNext() {
-                return current != null;
-            }
-
-            @Override
-            public Class<?> next() {
-                var result = current;
-                if (result == null) {
-                    throw new NoSuchElementException();
-                }
-                current = current.getSuperclass();
-                return result;
-            }
-        };
+    static {
+        boolean isModularJava;
+        try {
+            Class.class.getMethod("getModule");
+            isModularJava = true;
+        } catch (NoSuchMethodException e) {
+            isModularJava = false;
+        }
+        IS_MODULAR_JAVA = isModularJava;
     }
 
     public static String javaSignature(Class<?> type) {
