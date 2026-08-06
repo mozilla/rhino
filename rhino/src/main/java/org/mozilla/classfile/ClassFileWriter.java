@@ -66,6 +66,9 @@ public class ClassFileWriter {
         // class flag. This is specified in the first JVM spec, so it should
         // be old enough that it's okay to always set it.
         itsFlags = ACC_PUBLIC | ACC_SUPER;
+        if (DEBUGMETHODS) {
+            System.err.printf("Class start %s (%s).\n", generatedClassName, superClassName);
+        }
     }
 
     public final String getClassName() {
@@ -687,6 +690,24 @@ public class ClassFileWriter {
      */
     public void addLoadConstant(String k) {
         add(ByteCode.LDC, itsConstantPool.addConstant(k));
+    }
+
+    /**
+     * Generate the load constant bytecode for the given class.
+     *
+     * @param k the constant
+     */
+    public void addLoadConstant(Class<?> k) {
+        add(ByteCode.LDC, itsConstantPool.addClass(k.getName()));
+    }
+
+    /**
+     * Generate the load constant bytecode for the given class.
+     *
+     * @param k the constant
+     */
+    public void addLoadConstantClass(String k) {
+        add(ByteCode.LDC, itsConstantPool.addClass(k));
     }
 
     /**
@@ -2172,6 +2193,9 @@ public class ClassFileWriter {
                         case ConstantPool.CONSTANT_String:
                             push(TypeInfo.OBJECT("java/lang/String", itsConstantPool));
                             break;
+                        case ConstantPool.CONSTANT_Class:
+                            push(TypeInfo.OBJECT("java/lang/Class", itsConstantPool));
+                            break;
                         default:
                             throw new IllegalArgumentException("bad const type " + constType);
                     }
@@ -2865,6 +2889,9 @@ public class ClassFileWriter {
             throw new RuntimeException();
         }
 
+        if (DEBUGCODE) {
+            System.err.println("Class end.");
+        }
         return data;
     }
 

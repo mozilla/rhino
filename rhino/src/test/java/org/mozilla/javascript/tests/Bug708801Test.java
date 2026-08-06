@@ -25,8 +25,8 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.optimizer.Codegen;
+import org.mozilla.javascript.optimizer.MHJSCode;
 import org.mozilla.javascript.optimizer.OptFunctionNode;
-import org.mozilla.javascript.optimizer.OptJSCode;
 
 /**
  * @author André Bargull
@@ -67,7 +67,7 @@ public class Bug708801Test {
 
             Codegen codegen = new Codegen();
             JSDescriptor.Builder builder = new JSDescriptor.Builder();
-            OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv(scriptClassName);
+            MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
             codegen.setMainMethodClass(mainMethodClassName);
             codegen.compileToClassFile(
                     compilerEnv,
