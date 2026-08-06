@@ -7,7 +7,6 @@
 package org.mozilla.classfile;
 
 import java.lang.constant.DynamicConstantDesc;
-import java.util.Optional;
 
 /**
  * Turns values of a particular type into the {@code CONSTANT_Dynamic} description that {@link
@@ -23,9 +22,6 @@ public interface DynamicConstantDescriber<T extends DynamicConstant> {
     /** The type of value this describer handles. Used as the registration key. */
     Class<T> describedType();
 
-    /**
-     * Describe the given value as a dynamic constant, or return an empty result if this particular
-     * value cannot be represented as one.
-     */
-    Optional<DynamicConstantDesc<T>> describe(T value);
+    /** Describe the given value as a dynamic constant. */
+    DynamicConstantDesc<T> describe(T value);
 }
