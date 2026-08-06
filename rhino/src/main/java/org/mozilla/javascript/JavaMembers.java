@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import org.mozilla.javascript.lc.ReflectUtils;
 import org.mozilla.javascript.lc.member.ExecutableBox;
@@ -88,6 +89,37 @@ class JavaMembers {
         return findExplicitFunction(name, isStatic) != null;
     }
 
+    static JSDescriptor<JSFunction> buildNativeJavaMethodDescriptor(
+            ExecutableBox[] methods, String name) {
+        int arity = methods.length > 0 ? methods[0].getArgTypes().size() : 0;
+        JSDescriptor.Builder<JSFunction> builder = new JSDescriptor.Builder<>();
+        builder.code = new NativeJavaCode.Builder(methods);
+        builder.constructor = new JSCode.NullBuilder<>();
+        builder.name = name;
+        builder.arity = arity;
+        builder.isStrict = false;
+        builder.paramCount = arity;
+
+        var paramNames = new String[arity];
+        java.util.Arrays.fill(paramNames, "");
+        builder.paramAndVarNames = paramNames;
+        builder.paramIsConst = new boolean[arity];
+        builder.paramAndVarCount = arity;
+
+        builder.rawSource = "[native code]";
+        builder.rawSourceStart = 0;
+        builder.rawSourceEnd = builder.rawSource.length();
+        builder.hasPrototype = true;
+
+        return builder.build(desc -> {});
+    }
+
+    private static JSFunction buildNativeJavaMethodFunction(
+            Context cx, VarScope scope, ExecutableBox[] methods, String name) {
+        JSDescriptor<JSFunction> descriptor = buildNativeJavaMethodDescriptor(methods, name);
+        return JSFunction.createFunction(cx, scope, descriptor, null, null);
+    }
+
     Object get(Scriptable obj, VarScope scope, String name, Object javaObject, boolean isStatic) {
         Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
@@ -110,10 +142,11 @@ class JavaMembers {
                 return new FieldAndMethods(scope, withField);
             } else {
                 var method = (ExecutableOverload) member;
-                var built = new NativeJavaMethod(method.methods, method.name);
-                ScriptRuntime.setFunctionProtoAndParent(
-                        built, Context.getCurrentContext(), scope, false);
-                return built;
+                Context cx = Context.getCurrentContext();
+                JSFunction fn =
+                        buildNativeJavaMethodFunction(cx, scope, method.methods, method.name);
+                ScriptRuntime.setFunctionProtoAndParent(fn, cx, scope, false);
+                return fn;
             }
         }
 
@@ -254,7 +287,7 @@ class JavaMembers {
 
         if (isCtor) {
             // Explicit request for an overloaded constructor
-            methodsOrCtors = ctors.methods;
+            methodsOrCtors = ctors;
         } else {
             // Explicit request for an overloaded method
             String trueName = name.substring(0, sigStart);
@@ -301,8 +334,11 @@ class JavaMembers {
 
                 if (member instanceof ExecutableOverload
                         && ((ExecutableOverload) member).methods.length > 1) {
-                    NativeJavaMethod fun = new NativeJavaMethod(methodOrCtor, name);
-                    fun.setPrototype(prototype);
+                    Context cx = Context.getCurrentContext();
+                    JSFunction fun =
+                            buildNativeJavaMethodFunction(
+                                    cx, scope, new ExecutableBox[] {methodOrCtor}, name);
+                    ScriptRuntime.setFunctionProtoAndParent(fun, cx, scope, false);
                     ht.put(name, fun);
                     member = fun;
                 }
@@ -449,7 +485,7 @@ class JavaMembers {
         var accessibleFields = getAccessibleFields(includeProtected, includePrivate);
 
         // We reflect methods first, because we want overloaded field/method
-        // names to be allocated to the NativeJavaMethod before the field
+        // names to be allocated to the method function before the field
         // gets in the way.
         for (int cursor = 0; cursor < 2; cursor++) {
             var isStatic = (cursor == 0);
@@ -468,7 +504,7 @@ class JavaMembers {
         for (int i = 0; i != constructors.length; ++i) {
             ctorMembers[i] = new ExecutableBox(constructors[i], typeFactory);
         }
-        ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
+        ctors = ctorMembers;
     }
 
     /**
@@ -563,7 +599,7 @@ class JavaMembers {
             return !includePrivate
                     || !Modifier.isPrivate(((NativeJavaField) existed).raw().getModifiers());
         }
-        // member is NativeJavaMethod
+        // member is a method (ExecutableOverload)
         return true;
     }
 
@@ -623,18 +659,18 @@ class JavaMembers {
                     var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
                     if (bean.getter == null
                             // prefer 'get' over 'is'
-                            || bean.getter.getFunctionName().startsWith("is")) {
+                            || bean.getter.name.startsWith("is")) {
                         if (method.methods.length == 1) {
-                            bean.getter = new NativeJavaMethod(method.methods, name);
+                            bean.getter = new JavaAccessor(method.methods, name);
                         } else {
-                            bean.getter = new NativeJavaMethod(candidate, name);
+                            bean.getter = new JavaAccessor(candidate, name);
                         }
                     }
                 }
             } else { // isSetBeaning
                 var bean = beans.computeIfAbsent(beanName, BeanProperty::new);
                 // capture all possible setters for now, actual setter will be searched later
-                bean.setter = new NativeJavaMethod(method.methods, name);
+                bean.setter = new JavaAccessor(method.methods, name);
             }
         }
 
@@ -652,7 +688,7 @@ class JavaMembers {
                 // We have a getter. Now, do we have a setter with matching type?
                 match = extractSetMethod(type, setterCandidates.methods, isStatic);
                 if (match != null) {
-                    bean.setter = new NativeJavaMethod(match, match.getName());
+                    bean.setter = new JavaAccessor(match, match.getName());
                     continue;
                 }
             }
@@ -664,8 +700,8 @@ class JavaMembers {
                 bean.setter = null;
             }
 
-            // at this stage we know there's at least one valid setter. We will let NativeJavaMethod
-            // itself to pick the best one.
+            // at this stage we know there's at least one valid setter. We will let overload
+            // resolution pick the best one at call time.
         }
 
         return beans;
@@ -740,7 +776,7 @@ class JavaMembers {
     private static ExecutableBox extractSetMethod(
             TypeInfo type, ExecutableBox[] methods, boolean isStatic) {
         //
-        // Note: it may be preferable to allow NativeJavaMethod.findFunction()
+        // Note: it may be preferable to allow NativeJavaOverloadResolver.findFunction()
         //       to find the appropriate setter; unfortunately, it requires an
         //       instance of the target arg to determine that.
         //
@@ -895,7 +931,12 @@ class JavaMembers {
     private final Map<String, Object> staticMembers;
 
     private final Map<String, ExecutableOverload.WithField> staticFieldAndMethods;
-    NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
+
+    /** Overloaded constructors, used for constructor overload resolution. */
+    ExecutableBox[] ctors;
+
+    /** Per-class cache of resolved constructor overloads, keyed by argument runtime types. */
+    final CopyOnWriteArrayList<ResolvedOverload> ctorOverloadCache = new CopyOnWriteArrayList<>();
 }
 
 final class BeanProperty {
@@ -904,18 +945,44 @@ final class BeanProperty {
     }
 
     final String name;
-    NativeJavaMethod getter;
-    NativeJavaMethod setter;
+    JavaAccessor getter;
+    JavaAccessor setter;
 }
 
-class FieldAndMethods extends NativeJavaMethod {
+/**
+ * A callable bean getter or setter, backed by one or more overloaded Java methods. Overload
+ * resolution and invocation are delegated to {@link NativeJavaOverloadResolver}.
+ */
+final class JavaAccessor {
+    final String name;
+    final ExecutableBox[] methods;
+    final CopyOnWriteArrayList<ResolvedOverload> overloadCache = new CopyOnWriteArrayList<>();
+
+    JavaAccessor(ExecutableBox[] methods, String name) {
+        this.methods = methods;
+        this.name = name;
+    }
+
+    JavaAccessor(ExecutableBox method, String name) {
+        this(new ExecutableBox[] {method}, name);
+    }
+
+    Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        return NativeJavaOverloadResolver.invoke(
+                cx, scope, thisObj, args, methods, overloadCache, name);
+    }
+}
+
+class FieldAndMethods extends JSFunction {
     @Serial private static final long serialVersionUID = -9222428244284796755L;
 
     FieldAndMethods(VarScope scope, ExecutableOverload.WithField withField) {
-        super(withField.methods, withField.name);
+        super(
+                scope,
+                JavaMembers.buildNativeJavaMethodDescriptor(withField.methods, withField.name),
+                null,
+                null);
         this.field = withField.field;
-        setParentScope(scope);
-        setPrototype(ScriptableObject.getFunctionPrototype(scope));
     }
 
     @Override
