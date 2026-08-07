@@ -29,14 +29,14 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
 
     public HashSlotMap(SlotMap<T> oldMap) {
         map = new LinkedHashMap<>(oldMap.size());
-        for (Slot<T> n : oldMap) {
+        for (var n : oldMap) {
             add(null, n.copySlot());
         }
     }
 
     public HashSlotMap(SlotMap<T> oldMap, Slot<T> newSlot) {
         map = new LinkedHashMap<>(oldMap.dirtySize() + 1);
-        for (Slot<T> n : oldMap) {
+        for (var n : oldMap) {
             add(null, n.copySlot());
         }
         add(null, newSlot);
@@ -61,7 +61,7 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     @Override
     public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
         Object name = makeKey(key, index);
-        return map.computeIfAbsent(name, n -> new Slot<T>(key, index, attributes));
+        return map.computeIfAbsent(name, n -> new StandardSlot<T>(key, index, attributes));
     }
 
     @SuppressWarnings("unchecked")
@@ -73,7 +73,7 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
             int index,
             SlotComputer<S, T> c) {
         Object name = makeKey(key, index);
-        Slot<T> ret =
+        var ret =
                 map.compute(
                         name, (n, existing) -> c.compute(key, index, existing, compoundOp, owner));
         return (S) ret;
@@ -91,10 +91,10 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     }
 
     private Object makeKey(Object name, int index) {
-        return name == null ? String.valueOf(index) : name;
+        return name == null ? index : name;
     }
 
     private Object makeKey(Slot<T> slot) {
-        return slot.name == null ? String.valueOf(slot.indexOrHash) : slot.name;
+        return slot.getKey();
     }
 }

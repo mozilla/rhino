@@ -21,6 +21,7 @@ import java.util.function.IntPredicate;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations.ReplacementOperation;
+import org.mozilla.javascript.BuiltInSlot;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Constructable;
@@ -158,6 +159,13 @@ public class NativeRegExp extends ScriptableObject {
 
     private static final ClassDescriptor DESCRIPTOR;
     private static final JSDescriptor<JSFunction> EXEC_DESCRIPTOR;
+
+    private static final BuiltInSlot.Descriptor<NativeRegExp> LASTINDEX_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    "lastIndex",
+                    NativeRegExp::lastIndexGetter,
+                    NativeRegExp::lastIndexSetter,
+                    NativeRegExp::lastIndexAttrSetter);
 
     static {
         DESCRIPTOR =
@@ -372,13 +380,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private void createLastIndexProp() {
-        ScriptableObject.defineBuiltInProperty(
-                this,
-                "lastIndex",
-                lastIndexAttr,
-                NativeRegExp::lastIndexGetter,
-                NativeRegExp::lastIndexSetter,
-                NativeRegExp::lastIndexAttrSetter);
+        ScriptableObject.defineBuiltInProperty(this, lastIndexAttr, LASTINDEX_DESCRIPTOR);
     }
 
     private static Object lastIndexGetter(NativeRegExp regexp, Scriptable start) {

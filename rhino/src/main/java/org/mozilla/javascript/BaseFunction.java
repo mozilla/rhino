@@ -41,6 +41,40 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static final JSDescriptor<JSFunction> APPLY_DESCRIPTOR;
     private static final JSDescriptor<JSFunction> CALL_DESCRIPTOR;
 
+    private static final BuiltInSlot.Descriptor<BaseFunction> NAME_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    "name", BaseFunction::nameGetter, BaseFunction::nameSetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> LENGTH_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>("length", BaseFunction::lengthGetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> ARITY_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>("arity", BaseFunction::arityGetter);
+    private static final BuiltInSlot.Descriptor<BaseFunction> ARGUMENTS_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    "arguments", BaseFunction::argumentsGetter, BaseFunction::argumentsSetter);
+    private static final SlotMapDescriptor<BaseFunction> BASIC_MAP =
+            new SlotMapDescriptor.Builder<BaseFunction>()
+                    .withSlot(LENGTH_DESCRIPTOR, DONTENUM | READONLY)
+                    .withSlot(NAME_DESCRIPTOR, DONTENUM | READONLY)
+                    .build();
+
+    private static final SlotMapDescriptor<BaseFunction> ARITY_MAP =
+            SlotMapDescriptor.Builder.extending(BASIC_MAP)
+                    .withSlot(ARITY_DESCRIPTOR, PERMANENT | DONTENUM | READONLY)
+                    .build();
+
+    private static final SlotMapDescriptor<BaseFunction> ARGUMENTS_MAP =
+            SlotMapDescriptor.Builder.extending(ARITY_MAP)
+                    .withSlot(ARGUMENTS_DESCRIPTOR, PERMANENT | DONTENUM)
+                    .build();
+
+    private static final BuiltInSlot.Descriptor<BaseFunction> PROTOTYPE_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    PROTOTYPE_PROPERTY_NAME,
+                    BaseFunction::prototypeGetter,
+                    BaseFunction::prototypeSetter,
+                    BaseFunction::prototypeAttrSetter,
+                    BaseFunction::prototypeDescSetter);
+
     static {
         var builder =
                 new ClassDescriptor.Builder(
@@ -149,29 +183,20 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void createProperties() {
-        ScriptableObject.defineBuiltInProperty(
-                this, "length", DONTENUM | READONLY, BaseFunction::lengthGetter);
-        ScriptableObject.defineBuiltInProperty(
-                this,
-                "name",
-                DONTENUM | READONLY,
-                BaseFunction::nameGetter,
-                BaseFunction::nameSetter);
+        SlotMapDescriptor<BaseFunction> desc;
 
         Context cx = Context.getCurrentContext();
         if (cx == null || !cx.isStrictMode()) {
-            ScriptableObject.defineBuiltInProperty(
-                    this, "arity", PERMANENT | DONTENUM | READONLY, BaseFunction::arityGetter);
-
             if (cx == null || cx.getLanguageVersion() < Context.VERSION_ES6) {
-                ScriptableObject.defineBuiltInProperty(
-                        this,
-                        "arguments",
-                        PERMANENT | DONTENUM,
-                        BaseFunction::argumentsGetter,
-                        BaseFunction::argumentsSetter);
+                desc = ARGUMENTS_MAP;
+            } else {
+                desc = ARITY_MAP;
             }
+        } else {
+            desc = BASIC_MAP;
         }
+
+        desc.installMap(this);
     }
 
     private static Object lengthGetter(BaseFunction function, Scriptable start) {
@@ -230,14 +255,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                 (k, i, s, m, o) -> {
                     if (s == null) {
                         return new BuiltInSlot<BaseFunction>(
-                                PROTOTYPE_PROPERTY_NAME,
-                                0,
-                                prototypePropertyAttributes,
-                                this,
-                                BaseFunction::prototypeGetter,
-                                BaseFunction::prototypeSetter,
-                                BaseFunction::prototypeAttrSetter,
-                                BaseFunction::prototypeDescSetter);
+                                PROTOTYPE_DESCRIPTOR, prototypePropertyAttributes, this);
                     }
                     return s;
                 });

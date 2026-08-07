@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolder<T> {
 
@@ -69,7 +68,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
         @Override
         public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
-            var newSlot = new Slot<T>(key, index, attributes);
+            var newSlot = new StandardSlot<T>(key, index, attributes);
             var map = new SingleEntrySlotMap<T>(newSlot);
             owner.setMap(map);
             return newSlot;
@@ -115,7 +114,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
         @Override
         public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
-            var newSlot = new Slot<T>(key, index, attributes);
+            var newSlot = new StandardSlot<T>(key, index, attributes);
             var currentMap = replaceMapAndAddSlot(owner, newSlot);
             if (currentMap != this) {
                 return currentMap.modify(owner, key, index, attributes);
@@ -214,10 +213,10 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
-            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+            if (slot.keyMatches(key, indexOrHash)) {
                 return slot;
             }
-            Slot<T> newSlot = new Slot<T>(key, index, attributes);
+            var newSlot = new StandardSlot<T>(key, index, attributes);
             add(owner, newSlot);
             return newSlot;
         }
@@ -226,7 +225,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         public Slot<T> query(Object key, int index) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
-            if (indexOrHash == slot.indexOrHash && Objects.equals(slot.name, key)) {
+            if (slot.keyMatches(key, indexOrHash)) {
                 return slot;
             }
             return null;
@@ -343,6 +342,19 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
             return new HashSlotMap<>();
         } else {
             return new EmbeddedSlotMap<>();
+        }
+    }
+
+    protected static <T extends PropHolder<T>, O extends ScriptableObject> SlotMap<T> createSlotMap(
+            CompactSlot<T, O> slot0,
+            CompactSlot<T, O> slot1,
+            CompactSlot<T, O> slot2,
+            CompactSlot<T, O> slot3) {
+        Context cx = Context.getCurrentContext();
+        if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
+            return new ThreadSafeImmutableSmallSlotMap<>(slot0, slot1, slot2, slot3);
+        } else {
+            return new ImmutableSmallSlotMap<>(slot0, slot1, slot2, slot3);
         }
     }
 
@@ -694,7 +706,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
      */
     public void setAttributes(String name, int attributes) {
         checkNotSealed(name, 0);
-        Slot attrSlot = getMap().modify(this, name, 0, 0);
+        var attrSlot = getMap().modify(this, name, 0, 0);
         attrSlot.setAttributes(attributes);
     }
 
@@ -712,19 +724,19 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
      */
     public void setAttributes(int index, int attributes) {
         checkNotSealed(null, index);
-        Slot attrSlot = getMap().modify(this, null, index, 0);
+        var attrSlot = getMap().modify(this, null, index, 0);
         attrSlot.setAttributes(attributes);
     }
 
     /** Set attributes of a Symbol-keyed property. */
     public void setAttributes(Symbol key, int attributes) {
         checkNotSealed(key, 0);
-        Slot attrSlot = getMap().modify(this, key, 0, 0);
+        var attrSlot = getMap().modify(this, key, 0, 0);
         attrSlot.setAttributes(attributes);
     }
 
-    private Slot getAttributeSlot(String name, int index) {
-        Slot slot = getMap().query(name, index);
+    private Slot<T> getAttributeSlot(String name, int index) {
+        var slot = getMap().query(name, index);
         if (slot == null) {
             String str = (name != null ? name : Integer.toString(index));
             throw Context.reportRuntimeErrorById("msg.prop.not.found", str);
@@ -732,8 +744,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         return slot;
     }
 
-    private Slot getAttributeSlot(Symbol key) {
-        Slot slot = getMap().query(key, 0);
+    private Slot<T> getAttributeSlot(Symbol key) {
+        var slot = getMap().query(key, 0);
         if (slot == null) {
             throw Context.reportRuntimeErrorById("msg.prop.not.found", key);
         }
@@ -748,7 +760,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
                 out.writeInt(0);
             } else {
                 out.writeInt(objectsCount);
-                for (Slot slot : getMap()) {
+                for (var slot : getMap()) {
                     out.writeObject(slot);
                 }
             }
@@ -823,8 +835,8 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
 
         for (var slot : map) {
             if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0)
-                    && (getSymbols || !(slot.name instanceof Symbol))) {
-                a[c++] = slot.name != null ? slot.name : Integer.valueOf(slot.indexOrHash);
+                    && (getSymbols || !(slot.getName() instanceof Symbol))) {
+                a[c++] = slot.getKey();
             }
         }
 

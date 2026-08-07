@@ -109,7 +109,7 @@ public class ScriptRuntime {
         private static <T extends PropHolder<T>> Slot<T> removeWithoutChecking(
                 Object key,
                 int index,
-                Slot slot,
+                Slot<T> slot,
                 CompoundOperationMap<T> compoundOp,
                 SlotMapOwner<T> owner) {
             return null;

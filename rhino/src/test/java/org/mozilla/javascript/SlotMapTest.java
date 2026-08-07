@@ -1,6 +1,7 @@
 package org.mozilla.javascript;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,13 +45,13 @@ public class SlotMapTest {
                         () -> (SlotMap<Scriptable>) SlotMapOwner.EMPTY_SLOT_MAP,
                         () ->
                                 new SlotMapOwner.SingleEntrySlotMap<Scriptable>(
-                                        new Slot<Scriptable>(new Object(), 0, 0)),
+                                        new StandardSlot<Scriptable>(new Object(), 0, 0)),
                         () -> new EmbeddedSlotMap<>(),
                         () -> new HashSlotMap<>(),
                         () -> (SlotMap<Scriptable>) SlotMapOwner.THREAD_SAFE_EMPTY_SLOT_MAP,
                         () ->
                                 new SlotMapOwner.ThreadSafeSingleEntrySlotMap<Scriptable>(
-                                        new Slot<Scriptable>(new Object(), 0, 0)),
+                                        new StandardSlot<Scriptable>(new Object(), 0, 0)),
                         () -> new ThreadSafeEmbeddedSlotMap<>(),
                         () -> new ThreadSafeHashSlotMap<>());
         return suppliers.stream().map(i -> new Object[] {i}).collect(Collectors.toList());
@@ -81,7 +82,7 @@ public class SlotMapTest {
         slot.value = "Testing";
         assertEquals(1 + startingSize, obj.getMap().size());
         assertFalse(obj.getMap().isEmpty());
-        var newSlot = new Slot<>(slot);
+        var newSlot = new StandardSlot<>(slot);
         obj.getMap().compute(obj, "foo", 0, (k, i, e, m, o) -> newSlot);
         var foundNewSlot = obj.getMap().query("foo", 0);
         assertEquals("Testing", foundNewSlot.value);
@@ -98,6 +99,20 @@ public class SlotMapTest {
 
     @MethodSource("mapTypes")
     @ParameterizedTest
+    public void oneBuiltIn(Supplier<SlotMap<Scriptable>> mapSupplier) {
+        initSlotMapTest(mapSupplier);
+        assertNull(obj.getMap().query("foo", 0));
+        createBuiltInSlot(obj, "foo");
+        assertEquals(1 + startingSize, obj.getMap().size());
+        assertFalse(obj.getMap().isEmpty());
+        var foundNewSlot = obj.getMap().query("foo", 0);
+        assertNotNull(foundNewSlot);
+        assertTrue(foundNewSlot instanceof BuiltInSlot);
+        assertEquals("foo_result", foundNewSlot.getValue(obj));
+    }
+
+    @MethodSource("mapTypes")
+    @ParameterizedTest
     public void crudOneIndex(Supplier<SlotMap<Scriptable>> mapSupplier) {
         initSlotMapTest(mapSupplier);
         assertNull(obj.getMap().query(null, 11));
@@ -106,7 +121,7 @@ public class SlotMapTest {
         slot.value = "Testing";
         assertEquals(1 + startingSize, obj.getMap().size());
         assertFalse(obj.getMap().isEmpty());
-        var newSlot = new Slot<>(slot);
+        var newSlot = new StandardSlot<>(slot);
         obj.getMap().compute(obj, null, 11, (k, i, e, m, o) -> newSlot);
         var foundNewSlot = obj.getMap().query(null, 11);
         assertEquals("Testing", foundNewSlot.value);
@@ -138,7 +153,7 @@ public class SlotMapTest {
                                     assertEquals(i, 0);
                                     assertNotNull(e);
                                     assertEquals(e.value, "foo");
-                                    var n = new Slot<>(e);
+                                    var n = new StandardSlot<>(e);
                                     n.value = "bar";
                                     return n;
                                 });
@@ -162,7 +177,7 @@ public class SlotMapTest {
                                     assertEquals(k, "one");
                                     assertEquals(i, 0);
                                     assertNull(e);
-                                    var n = new Slot<Scriptable>(k, i, 0);
+                                    var n = new StandardSlot<Scriptable>(k, i, 0);
                                     n.value = "bar";
                                     return n;
                                 });
@@ -222,13 +237,13 @@ public class SlotMapTest {
             int ix = rand.nextInt(NUM_INDICES);
             var slot = obj.getMap().query(null, ix);
             assertNotNull(slot);
-            obj.getMap().compute(obj, null, ix, (k, j, e, m, o) -> new Slot<>(slot));
+            obj.getMap().compute(obj, null, ix, (k, j, e, m, o) -> new StandardSlot<>(slot));
         }
         for (int i = 0; i < 20; i++) {
             int ix = rand.nextInt(KEYS.length);
             var slot = obj.getMap().query(KEYS[ix], 0);
             assertNotNull(slot);
-            obj.getMap().compute(obj, KEYS[ix], 0, (k, j, e, m, o) -> new Slot<>(slot));
+            obj.getMap().compute(obj, KEYS[ix], 0, (k, j, e, m, o) -> new StandardSlot<>(slot));
         }
         verifyIndicesAndKeys();
 
@@ -290,6 +305,13 @@ public class SlotMapTest {
             }
             assertFalse(it.hasNext());
         }
+    }
+
+    private void createBuiltInSlot(ScriptableObject obj, String name) {
+        ScriptableObject.defineBuiltInProperty(
+                obj,
+                DONTENUM,
+                new BuiltInSlot.Descriptor<ScriptableObject>(name, (b, s) -> name + "_result"));
     }
 
     // These keys come from the hash collision test and may help ensure that we have a few

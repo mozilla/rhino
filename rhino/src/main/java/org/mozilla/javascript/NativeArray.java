@@ -75,6 +75,14 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static final ClassDescriptor DESCRIPTOR;
     public static final JSDescriptor<JSFunction> ITERATOR_DESCRIPTOR;
+    private static final BuiltInSlot.Descriptor<NativeArray> LENGTH_DESCRIPTOR =
+            new BuiltInSlot.Descriptor<>(
+                    "length",
+                    0,
+                    NativeArray::lengthGetter,
+                    NativeArray::lengthSetter,
+                    NativeArray::lengthAttrSetter,
+                    NativeArray::arraySetLength);
 
     static {
         DESCRIPTOR =
@@ -517,14 +525,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     private void createLengthProp() {
-        ScriptableObject.defineBuiltInProperty(
-                this,
-                "length",
-                DONTENUM | PERMANENT,
-                NativeArray::lengthGetter,
-                NativeArray::lengthSetter,
-                NativeArray::lengthAttrSetter,
-                NativeArray::arraySetLength);
+        ScriptableObject.defineBuiltInProperty(this, DONTENUM | PERMANENT, LENGTH_DESCRIPTOR);
     }
 
     private static Object lengthGetter(NativeArray array, Scriptable start) {
