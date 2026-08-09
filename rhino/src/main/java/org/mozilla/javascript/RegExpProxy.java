@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.List;
+import org.mozilla.classfile.DynamicConstantDescriber;
+
 /**
  * A proxy for the regexp package, so that the regexp package can be loaded optionally.
  *
@@ -23,6 +26,33 @@ public interface RegExpProxy {
     public boolean isRegExp(Scriptable obj);
 
     public Object compileRegExp(Context cx, String source, String flags);
+
+    /**
+     * Compile a regexp literal that the caller intends to write to a class file as a {@code
+     * CONSTANT_Dynamic} entry, rather than to compile again on every run.
+     *
+     * <p>Anything wrong with the expression must be reported here, because the class file records
+     * only a description of the compiled form: whatever recreates it when the constant is resolved
+     * is not in a position to report an error against the script being compiled.
+     *
+     * @return a value that one of the {@link #getDynamicConstantDescribers describers} of this
+     *     proxy can describe, or null if this implementation has no constant form, in which case
+     *     the caller falls back to compiling the expression at run time.
+     */
+    default Object prepareRegExpConstant(Context cx, String source, String flags) {
+        return null;
+    }
+
+    /**
+     * Describers for the values this proxy returns from {@link #prepareRegExpConstant}, to be
+     * registered with the class file writer that will write them.
+     *
+     * <p>An implementation that returns describers here must also implement {@code
+     * prepareRegExpConstant}, and one that does not must return an empty list.
+     */
+    default List<DynamicConstantDescriber<?>> getDynamicConstantDescribers() {
+        return List.of();
+    }
 
     public Scriptable wrapRegExp(Context cx, VarScope scope, Object compiled);
 

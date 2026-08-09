@@ -29,10 +29,14 @@ import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.classfile.DynamicConstant;
 import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.DefiningClassLoader;
+import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
+import org.mozilla.javascript.regexp.RegExpImpl;
 
 public class DynamicConstantTest {
 
@@ -299,8 +303,8 @@ public class DynamicConstantTest {
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
 
         assertThrows(
-            IllegalStateException.class,
-            () -> cfw.addLoadDynamicConstant(new UndescribableConstant()));
+                IllegalStateException.class,
+                () -> cfw.addLoadDynamicConstant(new UndescribableConstant()));
     }
 
     @Test
@@ -315,6 +319,63 @@ public class DynamicConstantTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> describer.describe(new SymbolKey("registered", Symbol.Kind.REGISTERED)));
+    }
+
+    @Test
+    public void regExpConstantResolvesWithoutAContext() throws Exception {
+        // The source contains the "[" and ";" characters that a constant name may not, which is
+        // why the describer passes it as a bootstrap argument instead.
+        ClassFileWriter cfw = writer("TestRegExpConstant");
+        RegExpProxy proxy = new RegExpImpl();
+        Object prepared;
+        try (Context cx = Context.enter()) {
+            prepared = proxy.prepareRegExpConstant(cx, "a[bc];", "gi");
+            for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
+                cfw.registerDynamicConstantDescriber(describer);
+            }
+        }
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant((DynamicConstant) prepared);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        // Resolution happens here, with no context on this thread.
+        Object resolved = invoke(cfw, "TestRegExpConstant", "get");
+        assertNotNull(resolved);
+
+        try (Context cx = Context.enter()) {
+            TopLevel scope = cx.initStandardObjects();
+            assertEquals("/a[bc];/gi", proxy.wrapRegExp(cx, scope, resolved).toString());
+        }
+    }
+
+    @Test
+    public void equivalentRegExpsShareAConstant() throws Exception {
+        ClassFileWriter cfw = writer("TestSharedRegExpConstants");
+        RegExpProxy proxy = new RegExpImpl();
+        Object gi, ig, g;
+        try (Context cx = Context.enter()) {
+            gi = proxy.prepareRegExpConstant(cx, "a", "gi");
+            ig = proxy.prepareRegExpConstant(cx, "a", "ig");
+            g = proxy.prepareRegExpConstant(cx, "a", "g");
+            for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
+                cfw.registerDynamicConstantDescriber(describer);
+            }
+        }
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant((DynamicConstant) gi);
+        cfw.add(ByteCode.POP);
+        cfw.addLoadDynamicConstant((DynamicConstant) ig);
+        cfw.add(ByteCode.POP);
+        cfw.addLoadDynamicConstant((DynamicConstant) g);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        ClassFileInfo info = ClassFileInfo.parse(cfw.toByteArray());
+        assertEquals(2, info.count(TAG_DYNAMIC), "flag order should not affect the constant");
+        // The source and flags are bootstrap arguments, so each distinct expression also needs an
+        // entry of its own in the BootstrapMethods attribute.
+        assertEquals(2, info.bootstrapMethodCount);
     }
 
     // ---------------------------------------------------------------- helpers
