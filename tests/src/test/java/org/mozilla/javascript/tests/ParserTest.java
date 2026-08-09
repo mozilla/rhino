@@ -1328,7 +1328,7 @@ public class ParserTest {
     public void parseObjectLiteral2() {
         // keywords, fail
         environment.setReservedKeywordAsIdentifier(false);
-        expectParseErrors("({function:1});", new String[] {"invalid property id"});
+        expectParseErrors("({function:1});", "invalid property id");
 
         environment.setReservedKeywordAsIdentifier(true);
 
@@ -1344,7 +1344,7 @@ public class ParserTest {
 
         environment.setReservedKeywordAsIdentifier(false);
         parse("var {get} = {get:1};");
-        expectParseErrors("var {get} = {if:1};", new String[] {"invalid property id"});
+        expectParseErrors("var {get} = {if:1};", "invalid property id");
     }
 
     @Test
@@ -1386,9 +1386,7 @@ public class ParserTest {
     @Test
     public void identifierIsReservedWordMessage() {
         environment.setReservedKeywordAsIdentifier(false);
-        expectParseErrors(
-                "interface: while (true){ }",
-                new String[] {"identifier is a reserved word: interface"});
+        expectParseErrors("interface: while (true){ }", "identifier is a reserved word: interface");
     }
 
     // Check that error recovery is working by returning a parsing exception, but only
@@ -1431,7 +1429,7 @@ public class ParserTest {
     public void reportError() {
         expectParseErrors(
                 "'use strict';(function(eval) {})();",
-                new String[] {"\"eval\" is not a valid identifier for this use in strict mode."});
+                "\"eval\" is not a valid identifier for this use in strict mode.");
     }
 
     @Test
@@ -1477,20 +1475,18 @@ public class ParserTest {
     @Test
     public void es6GeneratorNot() {
         expectParseErrors(
-                "function * notES6() { return true; }",
-                new String[] {"missing ( before function parameters."});
+                "function * notES6() { return true; }", "missing ( before function parameters.");
     }
 
     @Test
     public void oomOnInvalidInput() {
-        expectParseErrors("`\\u{8", new String[] {"syntax error"});
+        expectParseErrors("`\\u{8", "syntax error");
     }
 
     @Test
     public void errorOnInvalidDestructuringDeclaration() {
         expectParseErrors(
-                "for(var {};;) {}",
-                new String[] {"Missing = in destructuring declaration", "syntax error"});
+                "for(var {};;) {}", "Missing = in destructuring declaration", "syntax error");
     }
 
     @Test
@@ -1505,7 +1501,7 @@ public class ParserTest {
         assertEquals(10, comment.getLength());
     }
 
-    private void expectParseErrors(String string, String[] errors) {
+    private void expectParseErrors(String string, String... errors) {
         parse(string, errors, null, false);
     }
 
