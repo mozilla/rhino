@@ -1479,6 +1479,14 @@ public class ParserTest {
     }
 
     @Test
+    public void escapedNewlineLabel() {
+        // this is only active on ES6 and newer
+        environment.setLanguageVersion(Context.VERSION_ES6);
+        environment.setRecoverFromErrors(true);
+        expectParseErrors("\\u000a:abcd", "invalid Unicode escape sequence");
+    }
+
+    @Test
     public void oomOnInvalidInput() {
         expectParseErrors("`\\u{8", "syntax error");
     }
