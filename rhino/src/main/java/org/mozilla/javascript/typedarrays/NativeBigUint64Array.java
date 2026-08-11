@@ -18,6 +18,7 @@ import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 
@@ -73,7 +74,15 @@ public class NativeBigUint64Array extends NativeBigIntArrayView {
     private static Object js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return NativeTypedArrayView.js_constructor(
-                cx, f, nt, s, thisObj, args, NativeBigUint64Array::new, 8);
+                cx,
+                f,
+                nt,
+                s,
+                thisObj,
+                args,
+                NativeBigUint64Array::new,
+                8,
+                TopLevel.Builtins.BigUint64Array);
     }
 
     @Override

@@ -416,10 +416,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             Object thisObj,
             Object[] args,
             TypedArrayConstructable constructable,
-            int bytesPerElement) {
+            int bytesPerElement,
+            TopLevel.Builtins type) {
         var array = js_constructor(cx, s, args, constructable, bytesPerElement);
-        array.setParentScope(f.getDeclarationScope());
-        array.setPrototype((Scriptable) f.getPrototypeProperty());
+        ScriptRuntime.setBuiltinProtoAndParent(array, f, nt, s, type);
         return array;
     }
 
