@@ -234,9 +234,10 @@ public class Test262SuiteTest {
         sb.append("strict|non-strict");
         for (var mode : TestMode.values()) {
             if (mode.shouldRun()) {
-                sb.append('|').append(mode.keyPart()).append('|');
+                sb.append('|');
                 sb.append(mode.keyPart()).append("-strict").append('|');
-                sb.append(mode.keyPart()).append("-non-strict");
+                sb.append(mode.keyPart()).append("-non-strict").append('|');
+                sb.append(mode.keyPart());
             }
         }
         return sb.toString();
