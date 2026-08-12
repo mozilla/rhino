@@ -332,7 +332,7 @@ public class TopLevel extends ScopeObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
-    public static Scriptable getBuiltinPrototype(TopLevel scope, NativeErrors type) {
+    static Scriptable getBuiltinPrototype(TopLevel scope, NativeErrors type) {
         // must be called with top level scope
         Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
         if (result != null) {

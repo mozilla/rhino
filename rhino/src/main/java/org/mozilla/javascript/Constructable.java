@@ -27,8 +27,7 @@ public interface Constructable {
      *
      * @param cx the current Context for this thread
      * @param nt the new.target for this call,
-     * @param scope an enclosing scope of the caller except when the function is called from a
-     *     closure.
+     * @param s an enclosing scope of the caller except when the function is called from a closure.
      * @param args the array of arguments
      * @return the allocated object
      */
