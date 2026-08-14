@@ -209,6 +209,43 @@ public interface Scriptable extends PropHolder<Scriptable> {
     }
 
     /**
+     * Get the property descriptor for a named property.
+     *
+     * <p>This method allows any Scriptable implementation to describe the attributes of one of its
+     * properties, following the ECMAScript [[GetOwnProperty]] operation.
+     *
+     * <p>The default implementation returns null, indicating that this object does not support
+     * property descriptors or the property was not found.
+     *
+     * @param cx the current Context
+     * @param key the property key (String, Integer, or Symbol)
+     * @return a PropertyDescriptor if the property exists, null otherwise
+     * @see ScriptableObject#getOwnPropertyDescriptor(Context, Object)
+     */
+    default PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object key) {
+        return null;
+    }
+
+    /**
+     * Define or update a property descriptor on this object.
+     *
+     * <p>This method allows any Scriptable implementation to define properties with full descriptor
+     * support, following the ECMAScript [[DefineOwnProperty]] operation.
+     *
+     * <p>The default implementation returns false, indicating that property definition is not
+     * supported by this Scriptable implementation.
+     *
+     * @param cx the current Context
+     * @param key the property key (String, Integer, or Symbol)
+     * @param desc the property descriptor
+     * @return true if the property was successfully defined, false otherwise
+     * @see ScriptableObject#defineOwnProperty(Context, Object, PropertyDescriptor)
+     */
+    default boolean defineOwnProperty(Context cx, Object key, PropertyDescriptor desc) {
+        return false;
+    }
+
+    /**
      * Get the prototype of the object.
      *
      * @return the prototype
