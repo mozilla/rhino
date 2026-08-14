@@ -166,7 +166,8 @@ final class NativeReflect extends ScriptableObject {
         }
 
         ScriptableObject target = checkTarget(args);
-        DescriptorInfo desc = new DescriptorInfo(ScriptableObject.ensureScriptableObject(args[2]));
+        PropertyDescriptor desc =
+                new PropertyDescriptor(ScriptableObject.ensureScriptableObject(args[2]));
 
         Object key = args[1];
 

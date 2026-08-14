@@ -574,7 +574,7 @@ public class NativeObject extends ScriptableObject implements Map {
         ScriptableObject obj = ensureScriptableObject(arg);
         Object name = args.length < 2 ? Undefined.instance : args[1];
         Object descArg = args.length < 3 ? Undefined.instance : args[2];
-        var desc = new DescriptorInfo(ensureScriptableObject(descArg));
+        var desc = new PropertyDescriptor(ensureScriptableObject(descArg));
         ScriptableObject.checkPropertyDefinition(desc);
         if (!obj.defineOwnProperty(cx, name, desc)) {
             throw ScriptRuntime.typeErrorById("msg.prop.redefinition.failed", name);

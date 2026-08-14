@@ -225,7 +225,7 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
-    private static DescriptorInfo makeUnscopables(
+    private static PropertyDescriptor makeUnscopables(
             Context cx, VarScope scope, ScriptableObject obj) {
         NativeObject res;
 
@@ -236,7 +236,7 @@ public class NativeArray extends ScriptableObject implements List {
             res.defineOwnProperty(cx, k, desc);
         }
         res.setPrototype(null); // unscopables don't have any prototype
-        return new DescriptorInfo(res, DONTENUM | READONLY, true);
+        return new PropertyDescriptor(res, DONTENUM | READONLY, true);
     }
 
     @Override
@@ -446,8 +446,8 @@ public class NativeArray extends ScriptableObject implements List {
         return indices;
     }
 
-    private DescriptorInfo defaultIndexPropertyDescriptor(Object value) {
-        return new DescriptorInfo(true, true, true, NOT_FOUND, NOT_FOUND, value);
+    private PropertyDescriptor defaultIndexPropertyDescriptor(Object value) {
+        return new PropertyDescriptor(true, true, true, NOT_FOUND, NOT_FOUND, value);
     }
 
     @Override
@@ -459,7 +459,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         if (dense != null) {
             int index = toDenseIndex(id);
             if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
@@ -471,8 +471,8 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    protected boolean defineOwnProperty(
-            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
+    public boolean defineOwnProperty(
+            Context cx, Object id, PropertyDescriptor desc, boolean checkValid) {
         long index = toArrayIndex(id);
         if (index >= length) {
             length = index + 1;
@@ -557,7 +557,7 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static Slot<Scriptable> lengthDescSetValue(
             ScriptableObject owner,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             Object key,
             Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
@@ -571,7 +571,7 @@ public class NativeArray extends ScriptableObject implements List {
             NativeArray builtIn,
             BuiltInSlot<NativeArray> current,
             Object id,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             boolean checkValid,
             Object key,
             int index) {

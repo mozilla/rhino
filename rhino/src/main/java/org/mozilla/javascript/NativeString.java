@@ -542,7 +542,7 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected ScriptableObject.DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         if (!(id instanceof Symbol)
                 && (cx != null)
                 && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -555,8 +555,8 @@ final class NativeString extends ScriptableObject {
         return super.getOwnPropertyDescriptor(cx, id);
     }
 
-    private ScriptableObject.DescriptorInfo defaultIndexPropertyDescriptor(Object value) {
-        return new ScriptableObject.DescriptorInfo(true, false, false, NOT_FOUND, NOT_FOUND, value);
+    private PropertyDescriptor defaultIndexPropertyDescriptor(Object value) {
+        return new PropertyDescriptor(true, false, false, NOT_FOUND, NOT_FOUND, value);
     }
 
     /*
