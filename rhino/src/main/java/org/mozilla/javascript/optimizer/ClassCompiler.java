@@ -17,6 +17,7 @@ import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.EagerSourceCodeProvider;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
@@ -198,6 +199,7 @@ public class ClassCompiler {
         var mainName = mainClassName + "Main";
 
         var cfw = new ClassFileWriter(mainName, "java.lang.Object", "");
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
         buildDescriptor(cfw, builder, builder, classes, builders, mainClassName);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);
@@ -313,14 +315,8 @@ public class ClassCompiler {
         cfw.add(builder.hasRestArg ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.addLoadConstant(builder.sourceFile);
         if (compilerEnv.isGeneratingSource()) {
-            cfw.add(ByteCode.NEW, "org.mozilla.javascript.EagerSourceCodeProvider");
-            cfw.add(ByteCode.DUP);
-            cfw.addLoadConstant(root.sourceCodeProvider.getRawSource());
-            cfw.addInvoke(
-                    ByteCode.INVOKESPECIAL,
-                    "org.mozilla.javascript.EagerSourceCodeProvider",
-                    "<init>",
-                    "(Ljava/lang/String;)V");
+            cfw.addLoadDynamicConstant(
+                    new EagerSourceCodeProvider(root.sourceCodeProvider.getRawSource()));
         } else {
             cfw.add(ByteCode.ACONST_NULL);
         }
