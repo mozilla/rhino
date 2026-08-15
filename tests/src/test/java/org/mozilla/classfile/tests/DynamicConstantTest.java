@@ -31,10 +31,12 @@ import org.mozilla.classfile.DynamicConstant;
 import org.mozilla.classfile.DynamicConstantDescriber;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.DefiningClassLoader;
+import org.mozilla.javascript.EagerSourceCodeProvider;
 import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.optimizer.EagerSourceCodeProviderDescriber;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
 import org.mozilla.javascript.regexp.RegExpImpl;
 
@@ -319,6 +321,44 @@ public class DynamicConstantTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> describer.describe(new SymbolKey("registered", Symbol.Kind.REGISTERED)));
+    }
+
+    @Test
+    public void eagerSourceCodeProviderResolvesFromRawSource() throws Exception {
+        // The source contains the "[" and ";" characters that a constant name may not, which is
+        // why the describer passes it as a bootstrap argument instead.
+        ClassFileWriter cfw = writer("TestEagerSourceConstant");
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(new EagerSourceCodeProvider("a[bc];"));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        Object resolved = invoke(cfw, "TestEagerSourceConstant", "get");
+        assertEquals("a[bc];", ((EagerSourceCodeProvider) resolved).getRawSource());
+    }
+
+    @Test
+    public void equalSourceSharesAConstant() throws Exception {
+        ClassFileWriter cfw = writer("TestSharedEagerSourceConstants");
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(new EagerSourceCodeProvider("same"));
+        cfw.add(ByteCode.POP);
+        cfw.addLoadDynamicConstant(new EagerSourceCodeProvider("same"));
+        cfw.add(ByteCode.POP);
+        cfw.addLoadDynamicConstant(new EagerSourceCodeProvider("other"));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        ClassFileInfo info = ClassFileInfo.parse(bytecode);
+        assertEquals(2, info.count(TAG_DYNAMIC), "equal source should share a pool entry");
+        assertEquals(
+                "other",
+                ((EagerSourceCodeProvider)
+                                invoke(bytecode, "TestSharedEagerSourceConstants", "get"))
+                        .getRawSource());
     }
 
     @Test
