@@ -506,6 +506,7 @@ public class Codegen implements Evaluator {
     /** Teach a writer about the runtime types that can be emitted as dynamic constants. */
     private static void installConstantDescribers(ClassFileWriter cfw) {
         cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
     }
 
     private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
