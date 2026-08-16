@@ -23,7 +23,7 @@ dependencies {
     implementation project(':rhino-xml')
 
     testImplementation project(':testutils')
-    testImplementation(libs.archunit.get()) {
+    testImplementation("com.tngtech.archunit:archunit-junit4:1.4.1") {
         exclude group: 'junit'
     }
     testImplementation("org.slf4j:slf4j-simple:2.0.17")
@@ -31,7 +31,7 @@ dependencies {
     testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     testImplementation "javax.activation:javax.activation-api:1.2.0"
 
-    integrationTestImplementation platform(libs.junit.platform.get())
+    integrationTestImplementation platform("org.junit:junit-bom:5.10.3")
     integrationTestImplementation "org.junit.jupiter:junit-jupiter"
     integrationTestRuntimeOnly "org.junit.platform:junit-platform-launcher"
     integrationTestImplementation "org.apache.felix:org.apache.felix.framework:7.0.5"
