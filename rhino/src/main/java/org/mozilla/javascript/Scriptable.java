@@ -223,7 +223,17 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see ScriptableObject#getOwnPropertyDescriptor(Context, Object)
      */
     default PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object key) {
-        return null;
+        Object v;
+        if (key instanceof String) {
+            v = get((String) key, this);
+        } else if (key instanceof Number) {
+            v = get(((Number) key).intValue(), this);
+        } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
+            v = ((SymbolScriptable) this).get((Symbol) key, this);
+        } else {
+            v = NOT_FOUND;
+        }
+        return v == NOT_FOUND ? null : new PropertyDescriptor(v, 0, false);
     }
 
     /**
@@ -242,6 +252,14 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see ScriptableObject#defineOwnProperty(Context, Object, PropertyDescriptor)
      */
     default boolean defineOwnProperty(Context cx, Object key, PropertyDescriptor desc) {
+        if (key instanceof String) {
+            return put((String) key, this, desc.value);
+        } else if (key instanceof Number) {
+            var k = ((Number) key).intValue();
+            return put(k, this, desc.value);
+        } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
+            return put((Symbol) key, this, desc.value);
+        }
         return false;
     }
 
