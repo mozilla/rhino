@@ -8,6 +8,8 @@ package org.mozilla.javascript;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
+import org.mozilla.classfile.DynamicConstant;
 
 /**
  * This class implements the Undefined value in JavaScript.
@@ -19,20 +21,26 @@ import java.io.Serializable;
  * <p>Java code that needs to test whether something is undefined <b>must</b> use the "isUndefined"
  * method because of the multiple internal representations.
  */
-public class Undefined implements Serializable {
+public class Undefined implements Serializable, DynamicConstant {
     @Serial private static final long serialVersionUID = 9195680630202616767L;
 
     /**
      * This is the standard value for "undefined" in Rhino. Java code that needs to represent
      * "undefined" should use this object (rather than a new instance of this class).
      */
-    public static final Object instance = new Undefined();
+    public static final Undefined instance = new Undefined();
 
     private static final int instanceHash = System.identityHashCode(instance);
 
     private Undefined() {}
 
     public Object readResolve() {
+        return instance;
+    }
+
+    /** Bootstrap method used by {@code UndefinedDescriber} to resolve a dynamic constant. */
+    public static Undefined undefinedConstant(
+            MethodHandles.Lookup lookup, String name, Class<?> type) {
         return instance;
     }
 

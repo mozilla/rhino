@@ -42,6 +42,7 @@ import org.mozilla.javascript.ScriptOrFn;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
@@ -507,6 +508,7 @@ public class Codegen implements Evaluator {
     private static void installConstantDescribers(ClassFileWriter cfw) {
         cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
         cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
     }
 
     private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
@@ -1042,11 +1044,7 @@ public class Codegen implements Evaluator {
     }
 
     static void pushUndefined(ClassFileWriter cfw) {
-        cfw.add(
-                ByteCode.GETSTATIC,
-                "org/mozilla/javascript/Undefined",
-                "instance",
-                "Ljava/lang/Object;");
+        cfw.addLoadDynamicConstant(Undefined.instance);
     }
 
     int getIndex(ScriptNode n) {
