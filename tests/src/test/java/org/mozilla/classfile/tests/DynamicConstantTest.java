@@ -36,8 +36,10 @@ import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.optimizer.EagerSourceCodeProviderDescriber;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
+import org.mozilla.javascript.optimizer.UndefinedDescriber;
 import org.mozilla.javascript.regexp.RegExpImpl;
 
 public class DynamicConstantTest {
@@ -321,6 +323,20 @@ public class DynamicConstantTest {
         assertThrows(
                 IllegalStateException.class,
                 () -> describer.describe(new SymbolKey("registered", Symbol.Kind.REGISTERED)));
+    }
+
+    @Test
+    public void undefinedResolvesToTheCanonicalInstance() throws Exception {
+        // Undefined compares by identity, so the constant has to be the very same object the
+        // runtime uses, not merely an equal one.
+        ClassFileWriter cfw = writer("TestUndefinedConstant");
+        cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant((Undefined) Undefined.instance);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        assertSame(Undefined.instance, invoke(cfw, "TestUndefinedConstant", "get"));
     }
 
     @Test
