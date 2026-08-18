@@ -1374,7 +1374,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
         long actualIndex = relativeIndex >= 0 ? relativeIndex : self.length + relativeIndex;
 
-        Object argsValue = args.length > 1 ? ScriptRuntime.toNumber(args[1]) : 0.0;
+        Object argsValue = args.length > 1 ? ScriptRuntime.toNumeric(args[1]) : 0.0;
         int len = self.getLength();
 
         if (actualIndex < 0 || actualIndex >= len) {
