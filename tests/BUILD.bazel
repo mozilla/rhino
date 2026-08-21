@@ -48,6 +48,7 @@ java_test_suite(
         exclude = [
             "src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java",
             "src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java",
+            "src/test/java/org/mozilla/javascript/tests/Test262UnexpectedlyPassingTest.java",
             "src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java",
         ],
     ),
@@ -83,31 +84,34 @@ java_test_suite(
     ] + JUNIT5_DEPS,
 )
 
-sharded_parameterized_test(
+test_suite(
     name = "MozillaSuiteTest",
-    # "small" will result in build timeouts on GitHub Actions runners
-    size = "medium",
-    srcs = ["src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java"],
-    data = [":testsrc"],
-    javacopts = TEST_OPTS,
-    jvm_flags = [
-        "-Xmx1g",
-        "-Xss4m",
-        "-Djava.awt.headless=true",
-        "-Dmozilla.js.tests.timeout=60000",
-    ],
-    resources = glob(["src/test/resources/**"]),
-    shard_count = 16,
-    test_class = "org.mozilla.javascript.tests.MozillaSuiteTest",
-    deps = [
-        ":rhino-tests-lib",
-        "//rhino",
-        "//rhino-tools",
-        "//rhino-xml",
-        "//testutils",
-        "@maven//:org_junit_jupiter_junit_jupiter_api",
-        "@maven//:org_junit_jupiter_junit_jupiter_params",
-    ] + JUNIT5_DEPS,
+    tests = sharded_parameterized_test(
+        name = "MozillaSuiteTest",
+        # "small" will result in build timeouts on GitHub Actions runners
+        size = "medium",
+        srcs = ["src/test/java/org/mozilla/javascript/tests/MozillaSuiteTest.java"],
+        data = [":testsrc"],
+        javacopts = TEST_OPTS,
+        jvm_flags = [
+            "-Xmx1g",
+            "-Xss4m",
+            "-Djava.awt.headless=true",
+            "-Dmozilla.js.tests.timeout=60000",
+        ],
+        resources = glob(["src/test/resources/**"]),
+        shard_count = 16,
+        test_class = "org.mozilla.javascript.tests.MozillaSuiteTest",
+        deps = [
+            ":rhino-tests-lib",
+            "//rhino",
+            "//rhino-tools",
+            "//rhino-xml",
+            "//testutils",
+            "@maven//:org_junit_jupiter_junit_jupiter_api",
+            "@maven//:org_junit_jupiter_junit_jupiter_params",
+        ] + JUNIT5_DEPS,
+    ),
 )
 
 java_junit5_test(
@@ -127,17 +131,77 @@ java_junit5_test(
     ] + JUNIT5_DEPS,
 )
 
-sharded_parameterized_test(
+test_suite(
     name = "Test262SuiteTest",
-    # "small" will result in build timeouts on GitHub Actions runners
-    size = "medium",
-    srcs = ["src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java"],
-    data = ["testsrc/test262.properties"] + glob(["test262/**"]),
+    tests = sharded_parameterized_test(
+        name = "Test262SuiteTest",
+        # "small" will result in build timeouts on GitHub Actions runners
+        size = "medium",
+        srcs = ["src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java"],
+        data = ["testsrc/test262.properties"] + glob(["test262/**"]),
+        jvm_flags = [
+            "-Xmx1g",
+        ],
+        shard_count = 32,
+        test_class = "org.mozilla.javascript.tests.Test262SuiteTest",
+        deps = [
+            ":rhino-tests-lib",
+            "//rhino",
+            "//rhino-tools",
+            "//testutils",
+            "@maven//:org_junit_jupiter_junit_jupiter_api",
+            "@maven//:org_junit_jupiter_junit_jupiter_params",
+            "@maven//:org_yaml_snakeyaml",
+        ] + JUNIT5_DEPS,
+    ),
+)
+
+# Validates that testsrc/test262.properties is in sync with the results of
+# running the suite. Regenerating the file is not supported here because each
+# shard would only see its own slice of the results; use the Gradle workflow
+# described in README.md instead.
+test_suite(
+    name = "Test262SuiteValidationTest",
+    tags = ["manual"],
+    tests = sharded_parameterized_test(
+        name = "Test262SuiteValidationTest",
+        # "small" will result in build timeouts on GitHub Actions runners
+        size = "medium",
+        srcs = ["src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java"],
+        data = ["testsrc/test262.properties"] + glob(["test262/**"]),
+        jvm_flags = [
+            "-Xmx1g",
+            "-DvalidateTest262properties=true",
+        ],
+        shard_count = 32,
+        tags = ["manual"],
+        test_class = "org.mozilla.javascript.tests.Test262SuiteTest",
+        deps = [
+            ":rhino-tests-lib",
+            "//rhino",
+            "//rhino-tools",
+            "//testutils",
+            "@maven//:org_junit_jupiter_junit_jupiter_api",
+            "@maven//:org_junit_jupiter_junit_jupiter_params",
+            "@maven//:org_yaml_snakeyaml",
+        ] + JUNIT5_DEPS,
+    ),
+)
+
+# Needs its own target (and thus exclusion from rhino-tests above) because
+# loading Test262SuiteTest requires the test262 tree in the runfiles.
+java_junit5_test(
+    name = "Test262UnexpectedlyPassingTest",
+    size = "small",
+    srcs = [
+        "src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java",
+        "src/test/java/org/mozilla/javascript/tests/Test262UnexpectedlyPassingTest.java",
+    ],
+    data = [":testsrc"] + glob(["test262/**"]),
     jvm_flags = [
         "-Xmx1g",
     ],
-    shard_count = 32,
-    test_class = "org.mozilla.javascript.tests.Test262SuiteTest",
+    test_class = "org.mozilla.javascript.tests.Test262UnexpectedlyPassingTest",
     deps = [
         ":rhino-tests-lib",
         "//rhino",

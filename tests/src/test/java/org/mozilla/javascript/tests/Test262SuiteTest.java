@@ -90,6 +90,7 @@ public class Test262SuiteTest {
     private static final boolean debugEnabled;
 
     private static final boolean updateTest262Properties;
+    private static final boolean validateTest262Properties;
     private static final boolean rollUpEnabled;
     private static final boolean statsEnabled;
     private static final boolean includeUnsupported;
@@ -141,6 +142,7 @@ public class Test262SuiteTest {
         String updateProps = System.getProperty("updateTest262properties");
         boolean debug = System.getProperty("runTest262Debug") != null;
         boolean normal = System.getProperty("runTest262NonDebug") != null ? true : !debug;
+        validateTest262Properties = System.getProperty("validateTest262properties") != null;
 
         if (updateProps != null) {
             updateTest262Properties = true;
@@ -177,15 +179,16 @@ public class Test262SuiteTest {
     public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
 
-        for (Entry<Test262Case, TestResultTracker> entry : RESULT_TRACKERS.entrySet()) {
-            if (entry.getKey().file.isFile()) {
-                TestResultTracker tt = entry.getValue();
-
-                if (tt.expectedFailure && tt.expectationsMet()) {
-                    System.out.println(
-                            String.format(
-                                    "Test is marked as failing but it does not: %s",
-                                    entry.getKey().file));
+        List<String> unexpectedlyPassing = getUnexpectedlyPassingTests();
+        if (!unexpectedlyPassing.isEmpty()) {
+            if (validateTest262Properties) {
+                fail(
+                        "The following tests are marked as failing in the properties file"
+                                + " but now pass:\n"
+                                + String.join("\n", unexpectedlyPassing));
+            } else {
+                for (String file : unexpectedlyPassing) {
+                    System.out.println("Test is marked as failing but it does not: " + file);
                 }
             }
         }
@@ -203,6 +206,21 @@ public class Test262SuiteTest {
                 e.printStackTrace();
             }
         }
+    }
+
+    /** Return the files marked as failing in the properties file whose tests now pass. */
+    static List<String> getUnexpectedlyPassingTests() {
+        List<String> ret = new ArrayList<>();
+        for (Entry<Test262Case, TestResultTracker> entry : RESULT_TRACKERS.entrySet()) {
+            if (!entry.getKey().file.isFile()) {
+                continue;
+            }
+            TestResultTracker tt = entry.getValue();
+            if (tt.expectedFailure && tt.expectationsMet()) {
+                ret.add(entry.getKey().file.toString());
+            }
+        }
+        return ret;
     }
 
     /*
@@ -738,7 +756,7 @@ public class Test262SuiteTest {
         return result;
     }
 
-    private static class Test262Case {
+    static class Test262Case {
         private static final Yaml YAML = new Yaml();
 
         private final File file;
@@ -835,7 +853,7 @@ public class Test262SuiteTest {
         }
     }
 
-    private enum TestMode {
+    enum TestMode {
         INTERPRETED(
                 "interpreted",
                 true,
@@ -899,7 +917,7 @@ public class Test262SuiteTest {
         }
     }
 
-    private static class TestResultTracker {
+    static class TestResultTracker {
         private final Set<String> modes = new HashSet<>();
         private boolean onlyStrict;
         private boolean noStrict;
