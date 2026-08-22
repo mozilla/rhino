@@ -27,6 +27,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Evaluator;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.InstrumentEmitter;
+import org.mozilla.javascript.InstrumentEmitter.Type;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
@@ -108,6 +110,19 @@ public class Codegen implements Evaluator {
     }
 
     private <T extends ScriptOrFn<T>> CodegenCompilationResult<T> doCompile(
+            CompilerEnvirons compilerEnv,
+            ScriptNode tree,
+            String rawSource,
+            boolean returnFunction) {
+        var event = InstrumentEmitter.emitter.startEvent(Type.COMPILE_CLASSFILE);
+        try {
+            return doCompileInt(compilerEnv, tree, rawSource, returnFunction);
+        } finally {
+            InstrumentEmitter.emitter.endEvent(event, tree.getSourceName());
+        }
+    }
+
+    private <T extends ScriptOrFn<T>> CodegenCompilationResult<T> doCompileInt(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
             String rawSource,

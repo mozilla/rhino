@@ -23,6 +23,9 @@ dependencies {
     implementation project(':rhino-xml')
 
     testImplementation project(':testutils')
+    // Emits JFR events for test discovery and execution. Run with
+    // "-PjfrTestRecording" to record them.
+    testRuntimeOnly 'org.junit.platform:junit-platform-jfr'
     testImplementation(libs.archunit.get()) {
         exclude group: 'junit'
     }
@@ -38,6 +41,20 @@ dependencies {
 
     osgiIntegrationBundles platform("org.ow2.asm:asm-bom:9.9.1")
     osgiIntegrationBundles "org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:1.3.7"
+}
+
+tasks.withType(Test).configureEach {
+    if (project.hasProperty('jfrTestRecording')) {
+        def jfrDir = layout.buildDirectory.dir("jfr/${name}").get().asFile
+        def jfcFile = layout.projectDirectory.file("tests.jfc")
+        doFirst {
+            jfrDir.mkdirs()
+        }
+        // Ensure the stack depth is deep enough to avoid truncation.
+        jvmArgs += "-XX:FlightRecorderOptions=stackdepth=256"
+        // Set recording to run from start, and with a configuraiton that enables our internal event types.
+        jvmArgs += "-XX:StartFlightRecording=settings=${jfcFile},dumponexit=true,filename=${jfrDir},maxsize=1GB"
+    }
 }
 
 tasks.withType(JavaCompile) {

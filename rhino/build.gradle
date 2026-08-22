@@ -5,6 +5,19 @@ plugins {
 
 dependencies {
     testImplementation project(':testutils')
+    // Emits JFR events for test discovery and execution. Run with
+    // "-PjfrTestRecording" to record them.
+    testRuntimeOnly 'org.junit.platform:junit-platform-jfr'
+}
+
+tasks.withType(Test).configureEach {
+    if (project.hasProperty('jfrTestRecording')) {
+        def jfrDir = layout.buildDirectory.dir("jfr/${name}").get().asFile
+        doFirst {
+            jfrDir.mkdirs()
+        }
+        jvmArgs += "-XX:StartFlightRecording=settings=profile,dumponexit=true,filename=${jfrDir}"
+    }
 }
 
 jar {

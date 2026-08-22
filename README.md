@@ -192,6 +192,17 @@ When running the benchmarks you may find a couple of environment variables usefu
   argument. This allows for things like running JFR as the profiler to
   collect information on lock contention or other events.
 
+### JFR events
+
+Rhino will produces JFR events for a number of internal operations
+such as initialising global objects, parsing, compiling, and script
+execution These, along with standard junit events, can be enabled for
+`rhino:test` and `tests:test` by adding `-PjfrTestRecording` to the
+gradle options. If test recording is switched on then a jfr file will
+be created in the `build/jfr/test/` directory of the task for each JVM
+process which runs tests. You'll likely only want these types of
+traces for large tests such as `Test262SuiteTest`.
+
 ### Testing on other Java Versions
 
 It is a good idea to test major changes on Java 17 before assuming that they will pass the CI

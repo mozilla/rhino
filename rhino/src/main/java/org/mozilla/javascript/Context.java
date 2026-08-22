@@ -32,6 +32,7 @@ import java.util.TimeZone;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import org.mozilla.classfile.ClassFileWriter.ClassSizeException;
+import org.mozilla.javascript.InstrumentEmitter.Type;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
@@ -2768,6 +2769,27 @@ public class Context implements Closeable {
     }
 
     private ScriptNode parse(
+            String sourceString,
+            String sourceName,
+            int lineno,
+            CompilerEnvirons compilerEnv,
+            ErrorReporter compilationErrorReporter,
+            boolean returnFunction) {
+        var event = InstrumentEmitter.emitter.startEvent(Type.PARSE);
+        try {
+            return parseInt(
+                    sourceString,
+                    sourceName,
+                    lineno,
+                    compilerEnv,
+                    compilationErrorReporter,
+                    returnFunction);
+        } finally {
+            InstrumentEmitter.emitter.endEvent(event, sourceName, sourceString.length());
+        }
+    }
+
+    private ScriptNode parseInt(
             String sourceString,
             String sourceName,
             int lineno,

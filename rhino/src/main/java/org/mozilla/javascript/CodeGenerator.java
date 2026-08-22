@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.InstrumentEmitter.Type;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -56,6 +57,19 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private static final int ECF_TAIL = 1 << 0;
 
     public JSDescriptor<T> compile(
+            CompilerEnvirons compilerEnv,
+            ScriptNode tree,
+            String rawSource,
+            boolean returnFunction) {
+        var event = InstrumentEmitter.emitter.startEvent(Type.COMPILE_INTERPRETER);
+        try {
+            return compileInt(compilerEnv, tree, rawSource, returnFunction);
+        } finally {
+            InstrumentEmitter.emitter.endEvent(event, tree.getSourceName());
+        }
+    }
+
+    private JSDescriptor<T> compileInt(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
             String rawSource,
