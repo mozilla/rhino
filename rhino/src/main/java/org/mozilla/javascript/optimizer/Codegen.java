@@ -543,11 +543,11 @@ public class Codegen implements Evaluator {
                         + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(firstLocal);
 
-        cfw.addALoad(0);
-        cfw.addALoad(1);
-        cfw.add(ByteCode.ACONST_NULL);
-        cfw.addALoad(2);
-        cfw.addALoad(firstLocal);
+        cfw.addALoad(0); // context
+        cfw.addALoad(1); // this function
+        cfw.addALoad(2); // new.target will be this function
+        cfw.addALoad(3); // Scope
+        cfw.addALoad(firstLocal); // thisObj - object created above.
         for (int i = 0; i < argCount; i++) {
             cfw.addALoad(5 + (i * 3));
             cfw.addDLoad(6 + (i * 3));
@@ -561,13 +561,11 @@ public class Codegen implements Evaluator {
         int exitLabel = cfw.acquireLabel();
         cfw.add(ByteCode.DUP); // make a copy of direct call result
         cfw.add(ByteCode.INSTANCEOF, "org/mozilla/javascript/Scriptable");
-        cfw.add(ByteCode.IFEQ, exitLabel);
-        // cast direct call result
-        cfw.add(ByteCode.CHECKCAST, "org/mozilla/javascript/Scriptable");
-        cfw.add(ByteCode.ARETURN);
-        cfw.markLabel(exitLabel);
-
+        cfw.add(ByteCode.IFNE, exitLabel);
+        // If the constructor did not return a Scriptable we pass back the `this` we passed in.
+        cfw.add(ByteCode.POP);
         cfw.addALoad(firstLocal);
+        cfw.markLabel(exitLabel);
         cfw.add(ByteCode.ARETURN);
 
         cfw.stopMethod((short) (firstLocal + 1));
@@ -985,7 +983,8 @@ public class Codegen implements Evaluator {
                     + "Lorg/mozilla/javascript/Context;"
                     + "Lorg/mozilla/javascript/VarScope;"
                     + "Lorg/mozilla/javascript/JSDescriptor;"
-                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + "Ljava/lang/Object;"
+                    + "Ljava/lang/Object;"
                     + "Lorg/mozilla/javascript/Scriptable;"
                     + ")V";
 

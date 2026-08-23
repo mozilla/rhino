@@ -30,7 +30,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     //            exception local and scope local
     static final int EXCEPTION_SLOT_SIZE = 6;
 
-    static boolean compareDescs(JSDescriptor i1, JSDescriptor i2) {
+    static boolean compareDescs(JSDescriptor<?> i1, JSDescriptor<?> i2) {
         return i1 == i2 || Objects.equals(getSource(i1), getSource(i2));
     }
 
@@ -392,8 +392,9 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             InterpreterData<T> compilerData,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
-            Object[] args) {
+            Object thisObj,
+            Object[] args,
+            Object newTarget) {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
         var desc = ifun.getDescriptor();
@@ -441,7 +442,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         args.length,
                         ifun,
                         compilerData,
-                        null);
+                        null,
+                        newTarget);
         frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
         cx.isContinuationsTopCall = false;
 
@@ -735,6 +737,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.THIS] = new DoThis();
         instructionObjs[base + Token.SUPER] = new DoSuper();
         instructionObjs[base + Token.THISFN] = new DoThisFunction();
+        instructionObjs[base + Token.NEW_TARGET] = new DoNewTarget();
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode.UNDEF] = new DoUndef();
@@ -2631,7 +2634,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             // Check if the lookup result is a function and throw if it's not
             // must not be done sooner according to the spec
             Callable fun = result.getCallable();
-            Scriptable funThisObj = result.getThis();
+            Object funThisObj = result.getThis();
             Scriptable funHomeObj =
                     (fun instanceof BaseFunction) ? ((BaseFunction) fun).getHomeObject() : null;
             if (op == Icode.CALL_ON_SUPER) {
@@ -2813,7 +2816,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                     state.indexReg,
                                     ifun,
                                     compilerData,
-                                    callParentFrame);
+                                    callParentFrame,
+                                    ifun.getLexicalNewTarget());
                     if (op != Icode.TAIL_CALL) {
                         frame.savedCallOp = op;
                     }
@@ -2912,7 +2916,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                     state.indexReg,
                                     f,
                                     compilerData,
-                                    frame);
+                                    frame,
+                                    lhs);
 
                     frame.stack[frame.stackTop] = newInstance;
                     frame.savedCallOp = op;
@@ -3314,6 +3319,14 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.stack[++frame.stackTop] = frame.fnOrScript;
+            return null;
+        }
+    }
+
+    private static class DoNewTarget extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++frame.stackTop] = frame.newTarget;
             return null;
         }
     }
@@ -4275,7 +4288,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static CallFrame initFrame(
             Context cx,
             VarScope callerScope,
-            Scriptable thisObj,
+            Object thisObj,
             Scriptable homeObj,
             Object[] args,
             double[] argsDbl,
@@ -4284,11 +4297,13 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             int argCount,
             ScriptOrFn<?> fnOrScript,
             InterpreterData<?> code,
-            CallFrame parentFrame) {
+            CallFrame parentFrame,
+            Object newTarget) {
         CallFrame frame =
                 new CallFrame(
                         cx,
                         thisObj,
+                        newTarget,
                         fnOrScript,
                         code,
                         parentFrame,
@@ -4451,7 +4466,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         var desc = frame.fnOrScript.getDescriptor().getFunction(index);
         boolean isArrow = desc.getFunctionType() == FunctionNode.ARROW_FUNCTION;
         var homeObject = isArrow ? frame.fnOrScript.getHomeObject() : null;
-        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, homeObject);
+        var newTarget = isArrow ? frame.newTarget : Undefined.instance;
+        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, newTarget, homeObject);
         return f;
     }
 
@@ -4459,7 +4475,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             Context cx, CallFrame frame, int index, Scriptable homeObject) {
         var desc = frame.fnOrScript.getDescriptor().getFunction(index);
         boolean isArrow = desc.getFunctionType() == FunctionNode.ARROW_FUNCTION;
-        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, homeObject);
+        var newTarget = isArrow ? frame.newTarget : Undefined.instance;
+        JSFunction f = new JSFunction(cx, frame.scope, desc, frame.thisObj, newTarget, homeObject);
         return f;
     }
 }

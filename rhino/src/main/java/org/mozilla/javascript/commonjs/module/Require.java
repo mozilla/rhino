@@ -88,6 +88,7 @@ public class Require extends BaseFunction {
             Script preExec,
             Script postExec,
             boolean sandboxed) {
+        super(nativeScope);
         this.moduleScriptProvider = moduleScriptProvider;
         this.nativeScope = nativeScope;
         this.sandboxed = sandboxed;
@@ -175,7 +176,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Object nt, VarScope scope, Object thisObj, Object[] args) {
         if (args == null || args.length < 1) {
             throw ScriptRuntime.throwError(cx, scope, "require() needs one argument");
         }
@@ -225,7 +226,7 @@ public class Require extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+    public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] args) {
         throw ScriptRuntime.throwError(cx, scope, "require() can not be invoked as a constructor");
     }
 

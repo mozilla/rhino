@@ -36,7 +36,7 @@ public abstract class LineNumberTable {
 
     protected abstract int getPcFirstLineNo();
 
-    protected abstract List<Integer> getLineSetFromPc(int pc);
+    protected abstract List<Integer> getLineSetFromPcInt(int pc);
 
     protected abstract int getLineNoFromPc(int pc);
 
@@ -136,7 +136,7 @@ public abstract class LineNumberTable {
         }
 
         @Override
-        protected List<Integer> getLineSetFromPc(int pc) {
+        protected List<Integer> getLineSetFromPcInt(int pc) {
             if (isEmptyTable()) {
                 return null;
             }
@@ -256,7 +256,7 @@ public abstract class LineNumberTable {
         }
 
         @Override
-        protected List<Integer> getLineSetFromPc(int pc) {
+        protected List<Integer> getLineSetFromPcInt(int pc) {
             if (isEmptyTable()) {
                 return null;
             }
@@ -427,7 +427,7 @@ public abstract class LineNumberTable {
      */
     public static List<Integer> getLineSetFromPc(LineNumberTable lineNumberTable, int pc) {
         if (lineNumberTable == null) return null;
-        return lineNumberTable.getLineSetFromPc(pc);
+        return lineNumberTable.getLineSetFromPcInt(pc);
     }
 
     /**

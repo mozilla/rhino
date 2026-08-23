@@ -19,12 +19,13 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
 
     CallFrame(
             Context cx,
-            Scriptable thisObj,
+            Object thisObj,
+            Object newTarget,
             ScriptOrFn<?> fnOrScript,
             InterpreterData<?> code,
             CallFrame parentFrame,
             ACallFrame<?, ?> previousInterpreterFrame) {
-        super(cx, thisObj, fnOrScript, code, parentFrame, previousInterpreterFrame);
+        super(cx, thisObj, newTarget, fnOrScript, code, parentFrame, previousInterpreterFrame);
         pcSourceLineStart = compilerData.firstLinePC;
 
         stackTop = emptyStackTop;

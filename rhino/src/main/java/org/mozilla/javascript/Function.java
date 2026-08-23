@@ -29,7 +29,7 @@ public interface Function extends Scriptable, Callable, Constructable {
      * @return the result of the call
      */
     @Override
-    Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args);
+    Object call(Context cx, VarScope scope, Object thisObj, Object[] args);
 
     /**
      * Call the function as a constructor.
@@ -37,14 +37,17 @@ public interface Function extends Scriptable, Callable, Constructable {
      * <p>This method is invoked by the runtime in order to satisfy a use of the JavaScript {@code
      * new} operator. This method is expected to create a new object and return it.
      *
+     * <p>If nt is equal to this then this call is equivalent `new f(...arguments), but reflection
+     * and super constructor calls may pass in different values.
+     *
      * @param cx the current Context for this thread
-     * @param scope an enclosing scope of the caller except when the function is called from a
-     *     closure.
+     * @param nt the new.target for this call,
+     * @param s an enclosing scope of the caller except when the function is called from a closure.
      * @param args the array of arguments
      * @return the allocated object
      */
     @Override
-    Scriptable construct(Context cx, VarScope scope, Object[] args);
+    Scriptable construct(Context cx, Object nt, VarScope s, Object[] args);
 
     /**
      * Return the scope in which this function was declared or closed over. This is the

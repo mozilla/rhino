@@ -28,6 +28,7 @@ public class BoundFunction extends BaseFunction {
             Callable targetFunction,
             Scriptable boundThis,
             Object[] boundArgs) {
+        super(scope);
         this.targetFunction = targetFunction;
         this.boundThis = boundThis;
         this.boundArgs = boundArgs;
@@ -60,15 +61,18 @@ public class BoundFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] extraArgs) {
+    public Object call(Context cx, Object nt, VarScope scope, Object thisObj, Object[] extraArgs) {
         return targetFunction.call(cx, scope, getCallThis(), concat(boundArgs, extraArgs));
     }
 
     @Override
-    public Scriptable construct(Context cx, VarScope scope, Object[] extraArgs) {
+    public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] extraArgs) {
+        if (nt == this) {
+            nt = targetFunction;
+        }
         if (targetFunction instanceof Constructable) {
             return ((Constructable) targetFunction)
-                    .construct(cx, scope, concat(boundArgs, extraArgs));
+                    .construct(cx, nt, scope, concat(boundArgs, extraArgs));
         }
         throw ScriptRuntime.typeErrorById("msg.not.ctor");
     }

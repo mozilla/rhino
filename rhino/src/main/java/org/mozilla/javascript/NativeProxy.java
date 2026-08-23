@@ -63,7 +63,7 @@ class NativeProxy extends ScriptableObject {
         }
 
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handlerObj = null;
                 revocableProxy.targetObj = null;
@@ -1239,8 +1239,10 @@ class NativeProxy extends ScriptableObject {
             proxy = new NativeProxy(target, handler);
         }
 
-        proxy.setPrototypeDirect(ScriptableObject.getClassPrototype(s, PROXY_TAG));
+        // Can't use the normal function here as we `setPrototype()` would call the trap.
+        proxy.setPrototypeDirect(ScriptRuntime.findPrototype(f, nt, TopLevel.Builtins.Proxy));
         proxy.setParentScope(s);
+
         return proxy;
     }
 
@@ -1297,7 +1299,7 @@ class NativeProxy extends ScriptableObject {
          * [[Construct]] (argumentsList, newTarget)</a>
          */
         @Override
-        public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+        public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] args) {
             /*
              * 1. Let handler be O.[[ProxyHandler]].
              * 2. If handler is null, throw a TypeError exception.
@@ -1317,14 +1319,14 @@ class NativeProxy extends ScriptableObject {
             Function trap = getTrap(TRAP_CONSTRUCT);
             if (trap != null) {
                 Scriptable argumentsList = cx.newArray(scope, args);
-                Object result = callTrap(trap, new Object[] {target, argumentsList, this});
+                Object result = callTrap(trap, new Object[] {target, argumentsList, nt});
                 if (!(result instanceof Scriptable) || ScriptRuntime.isSymbol(result)) {
                     throw ScriptRuntime.typeError("Constructor trap has to return a scriptable.");
                 }
                 return (ScriptableObject) result;
             }
 
-            return ((Constructable) target).construct(cx, scope, args);
+            return ((Constructable) target).construct(cx, nt, scope, args);
         }
 
         /**
@@ -1333,7 +1335,7 @@ class NativeProxy extends ScriptableObject {
          * [[Call]] (thisArgument, argumentsList)</a>
          */
         @Override
-        public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+        public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             /*
              * 1. Let handler be O.[[ProxyHandler]].
              * 2. If handler is null, throw a TypeError exception.

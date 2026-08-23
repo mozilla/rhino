@@ -42,7 +42,7 @@ public interface Script {
      * @return the result of executing the script
      * @see org.mozilla.javascript.Context#initStandardObjects()
      */
-    Object exec(Context cx, VarScope scope, Scriptable thisObj);
+    Object exec(Context cx, VarScope scope, Object thisObj);
 
     default JSDescriptor<JSScript> getDescriptor() {
         return null;

@@ -99,7 +99,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             VarScope scope,
             Object thisObj,
             Object[] args) {
-        return Interpreter.interpret(executableObject, this, cx, scope, (Scriptable) thisObj, args);
+        return Interpreter.interpret(executableObject, this, cx, scope, thisObj, args, newTarget);
     }
 
     @Override

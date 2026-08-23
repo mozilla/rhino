@@ -66,6 +66,11 @@ public class TopLevel extends ScopeObject {
         /** The built-in Promise type. */
         Promise,
         Date,
+        Map,
+        Set,
+        WeakMap,
+        WeakSet,
+        Proxy,
         ArrayBuffer,
         Int8Array,
         Uint8Array,
@@ -76,6 +81,7 @@ public class TopLevel extends ScopeObject {
         Uint32Array,
         BigInt64Array,
         BigUint64Array,
+        Float16Array,
         Float32Array,
         Float64Array,
         DataView
@@ -318,6 +324,31 @@ public class TopLevel extends ScopeObject {
     }
 
     /**
+     * Static helper method to get a built-in object prototype with the given {@code type} from the
+     * given {@code scope}. If the scope is not an instance of this class or does not have a cache
+     * of built-ins, the prototype is looked up via normal property lookup.
+     *
+     * @param scope the top-level scope
+     * @param type the built-in type
+     * @return the built-in prototype
+     */
+    static Scriptable getBuiltinPrototype(TopLevel scope, NativeErrors type) {
+        // must be called with top level scope
+        Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
+        if (result != null) {
+            return result;
+        }
+
+        Object typeName;
+        typeName = type.name();
+        if (typeName instanceof String) {
+            return ScriptableObject.getClassPrototype(scope, (String) typeName);
+        } else {
+            return ScriptableObject.getClassPrototype(scope, (SymbolKey) typeName);
+        }
+    }
+
+    /**
      * Get the cached built-in object constructor from this scope with the given {@code type}.
      * Returns null if {@link #cacheBuiltins(boolean)} has not been called on this object.
      *
@@ -348,6 +379,19 @@ public class TopLevel extends ScopeObject {
      */
     public Scriptable getBuiltinPrototype(Builtins type) {
         BaseFunction func = getBuiltinCtor(type);
+        Object proto = func != null ? func.getPrototypeProperty() : null;
+        return proto instanceof Scriptable ? (Scriptable) proto : null;
+    }
+
+    /**
+     * Get the cached built-in object prototype from this scope with the given {@code type}. Returns
+     * null if {@link #cacheBuiltins(boolean)} has not been called on this object.
+     *
+     * @param type the built-in type
+     * @return the built-in prototype
+     */
+    public Scriptable getBuiltinPrototype(NativeErrors type) {
+        BaseFunction func = getNativeErrorCtor(type);
         Object proto = func != null ? func.getPrototypeProperty() : null;
         return proto instanceof Scriptable ? (Scriptable) proto : null;
     }

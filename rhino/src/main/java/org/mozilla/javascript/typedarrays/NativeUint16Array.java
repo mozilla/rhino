@@ -16,6 +16,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 
@@ -71,7 +72,15 @@ public class NativeUint16Array extends NativeTypedArrayView<Integer> {
     private static Object js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return NativeTypedArrayView.js_constructor(
-                cx, f, nt, s, thisObj, args, NativeUint16Array::new, 2);
+                cx,
+                f,
+                nt,
+                s,
+                thisObj,
+                args,
+                NativeUint16Array::new,
+                2,
+                TopLevel.Builtins.Uint16Array);
     }
 
     @Override

@@ -57,6 +57,7 @@ class NativeScript extends BaseFunction {
     }
 
     private NativeScript(Script script) {
+        super(null);
         this.script = script;
     }
 
@@ -67,7 +68,7 @@ class NativeScript extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, VarScope scope, Scriptable thisObj, Object[] args) {
+    public Object call(Context cx, Object nt, VarScope scope, Object thisObj, Object[] args) {
         if (script != null) {
             return script.exec(cx, scope, thisObj);
         }
@@ -75,7 +76,7 @@ class NativeScript extends BaseFunction {
     }
 
     @Override
-    public Scriptable construct(Context cx, VarScope scope, Object[] args) {
+    public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] args) {
         throw Context.reportRuntimeErrorById("msg.script.is.not.constructor");
     }
 

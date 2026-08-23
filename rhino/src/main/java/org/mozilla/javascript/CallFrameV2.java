@@ -19,7 +19,8 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
     public CallFrameV2(
             Context cx,
             VarScope callerScope,
-            Scriptable thisObj,
+            Object thisObj,
+            Object newTarget,
             Scriptable homeObj,
             Object[] args,
             double[] doubleArgs,
@@ -31,6 +32,7 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
         super(
                 cx,
                 thisObj,
+                newTarget,
                 fnOrScript,
                 (CompilerData<?>) fnOrScript.getDescriptor().getCode(),
                 parentFrame,

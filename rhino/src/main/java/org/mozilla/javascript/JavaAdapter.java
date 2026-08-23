@@ -91,7 +91,7 @@ public final class JavaAdapter {
         return self.get(adapter);
     }
 
-    static Scriptable js_createAdapter(Context cx, VarScope scope, Object[] args) {
+    static Scriptable js_createAdapter(Context cx, Object nt, VarScope scope, Object[] args) {
         int N = args.length;
         if (N == 0) {
             throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");

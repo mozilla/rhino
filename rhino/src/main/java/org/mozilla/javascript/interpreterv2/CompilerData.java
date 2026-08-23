@@ -8,7 +8,6 @@ import org.mozilla.javascript.InterpreterV2;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.ScriptOrFn;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.interpreterv2.instruction.Instruction;
@@ -146,8 +145,7 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
             VarScope scope,
             Object thisObj,
             Object[] args) {
-        return InterpreterV2.interpret(
-                executableObject, this, cx, scope, (Scriptable) thisObj, args);
+        return InterpreterV2.interpret(executableObject, this, cx, scope, thisObj, newTarget, args);
     }
 
     @Override

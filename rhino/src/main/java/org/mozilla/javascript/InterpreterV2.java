@@ -408,7 +408,8 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             CompilerData<T> data,
             Context cx,
             VarScope scope,
-            Scriptable thisObj,
+            Object thisObj,
+            Object newTarget,
             Object[] args) {
         if (!ScriptRuntime.hasTopCall(cx)) {
             Kit.codeBug();
@@ -433,6 +434,7 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
                         cx,
                         scope,
                         thisObj,
+                        newTarget,
                         fun.getHomeObject(),
                         args,
                         null,

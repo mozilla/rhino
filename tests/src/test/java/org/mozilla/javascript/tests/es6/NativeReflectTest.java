@@ -874,4 +874,55 @@ public class NativeReflectTest {
                         + "'' + ta[10];";
         Utils.assertWithAllModes_ES6("undefined", js);
     }
+
+    /**
+     * `Reflect.construct` without an explicit target sets `new.target` to the constructor called.
+     */
+    @Test
+    public void newTargetWithReflectConstructDefault() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += (new.target === foo);\n"
+                        + "}\n"
+                        + "Reflect.construct(foo, []);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * `Reflect.construct` with an explicit third argument sets `new.target` to that target, not the
+     * constructor called.
+     */
+    @Test
+    public void newTargetWithReflectConstructExplicitTarget() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += (new.target === bar);\n"
+                        + "}\n"
+                        + "function bar() {}\n"
+                        + "Reflect.construct(foo, [], bar);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * `new.target` and `arguments` both work correctly together inside a `Reflect.construct` call.
+     */
+    @Test
+    public void newTargetAndArgumentsWithReflectConstruct() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo(a, b) {\n"
+                        + "  res += 'foo - ' + new.target.name + ' - ';\n"
+                        + "  for (let i = 0; i < arguments.length; i++) {\n"
+                        + "    res += arguments[i] + ' ';\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "function bar() {}\n"
+                        + "Reflect.construct(foo, [1, 2], bar);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("foo - bar - 1 2 ", script);
+    }
 }
