@@ -4380,18 +4380,15 @@ public class ScriptRuntime {
             if (y == null || Undefined.isUndefined(y)) {
                 return true;
             }
-            if (y instanceof ScriptableObject sy) {
-                Object test = sy.equivalentValues(x);
-                if (test != Scriptable.NOT_FOUND) {
-                    return (Boolean) test;
-                }
-            }
-            return false;
+            Boolean hooked = equivalentValuesHook(y, x);
+            return hooked != null && hooked;
         } else if (x instanceof BigInteger bx) {
             return eqBigInt(bx, y);
         } else if (x instanceof Number nx) {
             return eqNumber(nx.doubleValue(), y);
         } else if (x == y) {
+            // Must follow the Number case above: the same NaN reference satisfies x == y,
+            // but NaN == NaN is false.
             return true;
         } else if (x instanceof CharSequence) {
             return eqString((CharSequence) x, y);
@@ -4400,11 +4397,9 @@ public class ScriptRuntime {
             if (y instanceof Boolean by) {
                 return b == by;
             }
-            if (y instanceof ScriptableObject sy) {
-                Object test = sy.equivalentValues(x);
-                if (test != Scriptable.NOT_FOUND) {
-                    return (Boolean) test;
-                }
+            Boolean hooked = equivalentValuesHook(y, x);
+            if (hooked != null) {
+                return hooked;
             }
             return eqNumber(b ? 1.0 : 0.0, y);
         } else if (isSymbol(x) && isObject(y)) {
@@ -4426,25 +4421,16 @@ public class ScriptRuntime {
                 return eq(toPrimitive(x), y);
             }
             if (y == null || Undefined.isUndefined(y)) {
-                if (x instanceof ScriptableObject) {
-                    Object test = ((ScriptableObject) x).equivalentValues(y);
-                    if (test != Scriptable.NOT_FOUND) {
-                        return (Boolean) test;
-                    }
-                }
-                return false;
+                Boolean hooked = equivalentValuesHook(x, y);
+                return hooked != null && hooked;
             } else if (y instanceof Scriptable) {
-                if (x instanceof ScriptableObject sx) {
-                    Object test = sx.equivalentValues(y);
-                    if (test != Scriptable.NOT_FOUND) {
-                        return (Boolean) test;
-                    }
+                Boolean hooked = equivalentValuesHook(x, y);
+                if (hooked != null) {
+                    return hooked;
                 }
-                if (y instanceof ScriptableObject sy) {
-                    Object test = sy.equivalentValues(x);
-                    if (test != Scriptable.NOT_FOUND) {
-                        return (Boolean) test;
-                    }
+                hooked = equivalentValuesHook(y, x);
+                if (hooked != null) {
+                    return hooked;
                 }
                 if (x instanceof Wrapper wx && y instanceof Wrapper wy) {
                     // See bug 413838. Effectively an extension to ECMA for
@@ -4457,14 +4443,12 @@ public class ScriptRuntime {
                                     && eq(unwrappedX, unwrappedY));
                 }
                 return false;
-            } else if (y instanceof Boolean) {
-                if (x instanceof ScriptableObject sx) {
-                    Object test = sx.equivalentValues(y);
-                    if (test != Scriptable.NOT_FOUND) {
-                        return (Boolean) test;
-                    }
+            } else if (y instanceof Boolean by) {
+                Boolean hooked = equivalentValuesHook(x, y);
+                if (hooked != null) {
+                    return hooked;
                 }
-                double d = (Boolean) y ? 1.0 : 0.0;
+                double d = by ? 1.0 : 0.0;
                 return eqNumber(d, x);
             } else if (y instanceof BigInteger by) {
                 return eqBigInt(by, x);
@@ -4473,7 +4457,6 @@ public class ScriptRuntime {
             } else if (y instanceof CharSequence cy) {
                 return eqString(cy, x);
             }
-            // covers the case when y == Undefined.instance as well
         } else {
             warnAboutNonJSObject(x);
         }
@@ -4485,32 +4468,19 @@ public class ScriptRuntime {
      * signed zeroes and NaNs differently.
      */
     public static boolean same(Object x, Object y) {
-        if (!typeof(x).equals(typeof(y))) {
+        if (!sameZero(x, y)) {
             return false;
         }
-        if (x instanceof Number nx) {
-            if (isNaN(x) && isNaN(y)) {
-                return true;
-            }
-            if (x instanceof BigInteger bi) {
-                return eqBigInt(bi, y);
-            }
+        // SameValue differs from SameValueZero only in the treatment of signed zeroes.
+        if (x instanceof Number nx
+                && y instanceof Number ny
+                && !(x instanceof BigInteger)
+                && !(y instanceof BigInteger)) {
             double dx = nx.doubleValue();
-            if (!eqNumber(dx, y)) {
-                return false;
-            }
-            if (dx != 0.0) {
-                return true;
-            }
-            if (y instanceof Number ny) {
-                // Specifically compare zero with negative zero
-                assert !(y instanceof BigInteger);
-                double dy = ny.doubleValue();
-                return Double.doubleToRawLongBits(dx) == Double.doubleToRawLongBits(dy);
-            }
-            return true;
+            double dy = ny.doubleValue();
+            return dx != 0.0 || Double.doubleToRawLongBits(dx) == Double.doubleToRawLongBits(dy);
         }
-        return eq(x, y);
+        return true;
     }
 
     /** Implement "SameValueZero" from ECMA 7.2.9 */
@@ -4557,67 +4527,82 @@ public class ScriptRuntime {
                 || (obj instanceof Boolean);
     }
 
-    static boolean eqNumber(double x, Object y) {
+    /**
+     * Probes the {@link ScriptableObject#equivalentValues} extension hook.
+     *
+     * @return the hook's answer, or {@code null} if the hook was absent or returned NOT_FOUND
+     */
+    private static Boolean equivalentValuesHook(Object obj, Object other) {
+        if (obj instanceof ScriptableObject so) {
+            Object test = so.equivalentValues(other);
+            if (test != Scriptable.NOT_FOUND) {
+                return (Boolean) test;
+            }
+        }
+        return null;
+    }
+
+    static boolean eqNumber(double value, Object other) {
         for (; ; ) {
-            if (y == null || Undefined.isUndefined(y)) {
+            if (other == null || Undefined.isUndefined(other)) {
                 return false;
-            } else if (y instanceof BigInteger) {
-                return eqBigInt((BigInteger) y, x);
-            } else if (y instanceof Number) {
-                return x == ((Number) y).doubleValue();
-            } else if (y instanceof CharSequence) {
-                return x == toNumber(y);
-            } else if (y instanceof Boolean) {
-                return x == (((Boolean) y).booleanValue() ? 1.0 : +0.0);
-            } else if (isSymbol(y)) {
+            } else if (other instanceof BigInteger) {
+                return eqBigInt((BigInteger) other, value);
+            } else if (other instanceof Number) {
+                return value == ((Number) other).doubleValue();
+            } else if (other instanceof CharSequence) {
+                return value == toNumber(other);
+            } else if (other instanceof Boolean) {
+                return value == (((Boolean) other).booleanValue() ? 1.0 : +0.0);
+            } else if (isSymbol(other)) {
                 return false;
-            } else if (y instanceof Scriptable) {
-                if (y instanceof ScriptableObject) {
-                    Object xval = wrapNumber(x);
-                    Object test = ((ScriptableObject) y).equivalentValues(xval);
-                    if (test != Scriptable.NOT_FOUND) {
-                        return ((Boolean) test).booleanValue();
+            } else if (other instanceof Scriptable) {
+                if (other instanceof ScriptableObject) {
+                    Boolean hooked = equivalentValuesHook(other, wrapNumber(value));
+                    if (hooked != null) {
+                        return hooked;
                     }
                 }
-                y = toPrimitive(y);
+                other = toPrimitive(other);
             } else {
-                warnAboutNonJSObject(y);
+                warnAboutNonJSObject(other);
                 return false;
             }
         }
     }
 
-    static boolean eqBigInt(BigInteger x, Object y) {
+    static boolean eqBigInt(BigInteger value, Object other) {
         for (; ; ) {
-            if (y == null || Undefined.isUndefined(y)) {
+            if (other == null || Undefined.isUndefined(other)) {
                 return false;
-            } else if (y instanceof BigInteger) {
-                return x.equals(y);
-            } else if (y instanceof Number) {
-                return eqBigInt(x, ((Number) y).doubleValue());
-            } else if (y instanceof CharSequence) {
-                BigInteger biy;
+            } else if (other instanceof BigInteger) {
+                return value.equals(other);
+            } else if (other instanceof Number) {
+                return eqBigInt(value, ((Number) other).doubleValue());
+            } else if (other instanceof CharSequence) {
+                BigInteger biOther;
                 try {
-                    biy = toBigInt(y);
+                    biOther = toBigInt(other);
                 } catch (EcmaError e) {
                     return false;
                 }
-                return x.equals(biy);
-            } else if (y instanceof Boolean) {
-                BigInteger biy = ((Boolean) y).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
-                return x.equals(biy);
-            } else if (isSymbol(y)) {
+                return value.equals(biOther);
+            } else if (other instanceof Boolean) {
+                BigInteger biOther =
+                        ((Boolean) other).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
+                return value.equals(biOther);
+            } else if (isSymbol(other)) {
                 return false;
-            } else if (y instanceof Scriptable) {
-                if (y instanceof ScriptableObject) {
-                    Object test = ((ScriptableObject) y).equivalentValues(x);
-                    if (test != Scriptable.NOT_FOUND) {
-                        return ((Boolean) test).booleanValue();
+            } else if (other instanceof Scriptable) {
+                if (other instanceof ScriptableObject) {
+                    Boolean hooked = equivalentValuesHook(other, value);
+                    if (hooked != null) {
+                        return hooked;
                     }
                 }
-                y = toPrimitive(y);
+                other = toPrimitive(other);
             } else {
-                warnAboutNonJSObject(y);
+                warnAboutNonJSObject(other);
                 return false;
             }
         }
@@ -4638,37 +4623,37 @@ public class ScriptRuntime {
         return bdx.compareTo(bdy) == 0;
     }
 
-    private static boolean eqString(CharSequence x, Object y) {
+    private static boolean eqString(CharSequence value, Object other) {
         for (; ; ) {
-            if (y == null || Undefined.isUndefined(y)) {
+            if (other == null || Undefined.isUndefined(other)) {
                 return false;
-            } else if (y instanceof CharSequence) {
-                CharSequence c = (CharSequence) y;
-                return x.length() == c.length() && x.toString().equals(c.toString());
-            } else if (y instanceof BigInteger) {
-                BigInteger bix;
+            } else if (other instanceof CharSequence) {
+                CharSequence c = (CharSequence) other;
+                return value.length() == c.length() && value.toString().equals(c.toString());
+            } else if (other instanceof BigInteger) {
+                BigInteger biValue;
                 try {
-                    bix = toBigInt(x);
+                    biValue = toBigInt(value);
                 } catch (EcmaError e) {
                     return false;
                 }
-                return bix.equals(y);
-            } else if (y instanceof Number) {
-                return toNumber(x.toString()) == ((Number) y).doubleValue();
-            } else if (y instanceof Boolean) {
-                return toNumber(x.toString()) == (((Boolean) y).booleanValue() ? 1.0 : 0.0);
-            } else if (isSymbol(y)) {
+                return biValue.equals(other);
+            } else if (other instanceof Number) {
+                return toNumber(value.toString()) == ((Number) other).doubleValue();
+            } else if (other instanceof Boolean) {
+                return toNumber(value.toString()) == (((Boolean) other).booleanValue() ? 1.0 : 0.0);
+            } else if (isSymbol(other)) {
                 return false;
-            } else if (y instanceof Scriptable) {
-                if (y instanceof ScriptableObject) {
-                    Object test = ((ScriptableObject) y).equivalentValues(x.toString());
-                    if (test != Scriptable.NOT_FOUND) {
-                        return ((Boolean) test).booleanValue();
+            } else if (other instanceof Scriptable) {
+                if (other instanceof ScriptableObject) {
+                    Boolean hooked = equivalentValuesHook(other, value.toString());
+                    if (hooked != null) {
+                        return hooked;
                     }
                 }
-                y = toPrimitive(y);
+                other = toPrimitive(other);
             } else {
-                warnAboutNonJSObject(y);
+                warnAboutNonJSObject(other);
                 return false;
             }
         }
@@ -4684,30 +4669,29 @@ public class ScriptRuntime {
             if (!(x instanceof Number nx)) {
                 return true;
             }
-            // NaN check
+            // Same-reference Numbers still need a NaN check: NaN === NaN is false.
             double d = nx.doubleValue();
             return !Double.isNaN(d);
         }
-        if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
-            if ((x == Undefined.instance && y == Undefined.SCRIPTABLE_UNDEFINED)
-                    || (x == Undefined.SCRIPTABLE_UNDEFINED && y == Undefined.instance))
-                return true;
-            return false;
-        } else if (x instanceof BigInteger) {
-            if (y instanceof BigInteger) {
-                return x.equals(y);
+        if (x == null || Undefined.isUndefined(x)) {
+            // null is strictly equal only to itself (handled above); undefined is strictly
+            // equal to both representations of undefined.
+            return x != null && Undefined.isUndefined(y);
+        } else if (x instanceof BigInteger bx) {
+            if (y instanceof BigInteger by) {
+                return bx.equals(by);
             }
         } else if (x instanceof Number nx) {
             if (y instanceof Number ny && !(y instanceof BigInteger)) {
                 return nx.doubleValue() == ny.doubleValue();
             }
-        } else if (x instanceof CharSequence) {
-            if (y instanceof CharSequence) {
-                return x.toString().equals(y.toString());
+        } else if (x instanceof CharSequence cx) {
+            if (y instanceof CharSequence cy) {
+                return cx.toString().equals(cy.toString());
             }
-        } else if (x instanceof Boolean) {
-            if (y instanceof Boolean) {
-                return x.equals(y);
+        } else if (x instanceof Boolean bx) {
+            if (y instanceof Boolean by) {
+                return bx.equals(by);
             }
         } else if (x instanceof Scriptable) {
             if (x instanceof Wrapper wx && y instanceof Wrapper wy) {
@@ -4722,7 +4706,7 @@ public class ScriptRuntime {
                     return true;
                 }
             }
-            return y instanceof Delegator && ((Delegator) y).getDelegee() == x;
+            return y instanceof Delegator dy && dy.getDelegee() == x;
         } else {
             warnAboutNonJSObject(x);
         }
