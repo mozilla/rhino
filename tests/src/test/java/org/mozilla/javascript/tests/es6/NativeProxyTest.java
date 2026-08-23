@@ -1191,4 +1191,218 @@ public class NativeProxyTest {
         Utils.assertWithAllModes_ES6(
                 "has:p,has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p", js);
     }
+
+    /**
+     * Constructing a Proxy with no `construct` trap forwards to the target; `new.target` is the
+     * Proxy itself, not the underlying target.
+     */
+    @Test
+    public void newTargetIsProxyWhenNoConstructTrap() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += (new.target === p);\n"
+                        + "}\n"
+                        + "var p = new Proxy(foo, {});\n"
+                        + "new p();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * A `construct` trap receives `newTarget` as its third argument, defaulting to the Proxy itself
+     * when constructed directly with `new`.
+     */
+    @Test
+    public void newTargetPassedIntoConstructTrap() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    res += (newTarget === p);\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "new p();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * When a `construct` trap forwards `newTarget` via `Reflect.construct`, `new.target` inside the
+     * target function equals the Proxy.
+     */
+    @Test
+    public void newTargetIsProxyViaConstructTrapForwarding() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += (new.target === p);\n"
+                        + "}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "new p();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * A `construct` trap can substitute a different `newTarget`, which is then reflected in
+     * `new.target` inside the target function.
+     */
+    @Test
+    public void newTargetIsSubstitutedByConstructTrap() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += new.target.name;\n"
+                        + "}\n"
+                        + "function bar() {}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    return Reflect.construct(target, args, bar);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "new p();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("bar", script);
+    }
+
+    /**
+     * Passing an explicit third argument to `Reflect.construct` on a Proxy target is forwarded as
+     * `newTarget` into the `construct` trap.
+     */
+    @Test
+    public void newTargetExplicitViaReflectConstructOnProxy() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {}\n"
+                        + "function bar() {}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    res += (newTarget === bar);\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.construct(p, [], bar);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * Calling a Proxy-wrapped constructor normally (no `new`), which triggers the `apply` trap,
+     * leaves `new.target` as `undefined`.
+     */
+    @Test
+    public void newTargetUndefinedViaApplyTrap() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += typeof new.target;\n"
+                        + "}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  apply: function(target, thisArg, args) {\n"
+                        + "    return target.apply(thisArg, args);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "p();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("undefined", script);
+    }
+
+    /**
+     * Invoking a Proxy-wrapped constructor via `Function.prototype.call`, which triggers the
+     * `apply` trap, leaves `new.target` as `undefined`.
+     */
+    @Test
+    public void newTargetUndefinedViaApplyTrapCall() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += typeof new.target;\n"
+                        + "}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  apply: function(target, thisArg, args) {\n"
+                        + "    return target.apply(thisArg, args);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "p.call(null);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("undefined", script);
+    }
+
+    /**
+     * Simulates a derived constructor calling its base via `Reflect.construct(Base, args,
+     * new.target)` through a Proxy-wrapped base — `new.target` inside the base reflects the outer
+     * derived constructor, not the Proxy or the base itself.
+     */
+    @Test
+    public void newTargetIsDerivedFunctionWhenExtendingProxiedBase() {
+        final String script =
+                "  var res = '';\n"
+                        + "function Base() {\n"
+                        + "  res += (new.target === Derived);\n"
+                        + "}\n"
+                        + "var ProxiedBase = new Proxy(Base, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "function Derived() {\n"
+                        + "  Reflect.construct(ProxiedBase, [], Derived);\n"
+                        + "}\n"
+                        + "new Derived();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * Constructing through two layers of Proxy, each forwarding `newTarget`, results in
+     * `new.target` being the outermost Proxy.
+     */
+    @Test
+    public void newTargetIsOutermostProxyWithNestedProxies() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {\n"
+                        + "  res += (new.target === outer);\n"
+                        + "}\n"
+                        + "var inner = new Proxy(foo, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var outer = new Proxy(inner, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "new outer();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true", script);
+    }
+
+    /**
+     * Inside a `construct` trap function itself, `new.target` is `undefined`, since the trap is
+     * invoked as an internal `[[Call]]`, not via `new`.
+     */
+    @Test
+    public void newTargetUndefinedInsideConstructTrapItself() {
+        final String script =
+                "  var res = '';\n"
+                        + "function foo() {}\n"
+                        + "var p = new Proxy(foo, {\n"
+                        + "  construct: function(target, args, newTarget) {\n"
+                        + "    res += typeof new.target;\n"
+                        + "    return Reflect.construct(target, args, newTarget);\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "new p();\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("undefined", script);
+    }
 }

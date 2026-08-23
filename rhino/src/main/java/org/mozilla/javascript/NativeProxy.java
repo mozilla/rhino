@@ -1319,7 +1319,7 @@ class NativeProxy extends ScriptableObject {
             Function trap = getTrap(TRAP_CONSTRUCT);
             if (trap != null) {
                 Scriptable argumentsList = cx.newArray(scope, args);
-                Object result = callTrap(trap, new Object[] {target, argumentsList, this});
+                Object result = callTrap(trap, new Object[] {target, argumentsList, nt});
                 if (!(result instanceof Scriptable) || ScriptRuntime.isSymbol(result)) {
                     throw ScriptRuntime.typeError("Constructor trap has to return a scriptable.");
                 }
