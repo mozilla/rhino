@@ -3117,7 +3117,10 @@ public class Parser {
             // Detect new.target meta-property
             if (peekToken() == Token.DOT) {
                 consumeToken(); // consume '.'
-                if (matchToken(Token.NAME, true) && "target".equals(ts.getString())) {
+
+                if (nestingOfFunction > 0
+                        && matchToken(Token.NAME, true)
+                        && "target".equals(ts.getString())) {
                     int end = ts.tokenEnd;
                     KeywordLiteral nt = new KeywordLiteral(pos, end - pos, Token.NEW_TARGET);
                     nt.setLineColumnNumber(lineno, column);
