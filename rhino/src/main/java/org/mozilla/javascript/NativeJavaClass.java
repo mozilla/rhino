@@ -140,16 +140,18 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
         Class<?> classObject = getClassObject();
         int modifiers = classObject.getModifiers();
         if (!(Modifier.isInterface(modifiers) || Modifier.isAbstract(modifiers))) {
-            NativeJavaMethod ctors = members.ctors;
-            int index = ctors.findCachedFunction(cx, args);
+            ExecutableBox[] ctors = members.ctors;
+            int index =
+                    NativeJavaOverloadResolver.findCachedFunction(
+                            cx, ctors, args, members.ctorOverloadCache);
             if (index < 0) {
-                String sig = NativeJavaMethod.scriptSignature(args);
+                String sig = NativeJavaOverloadResolver.scriptSignature(args);
                 throw Context.reportRuntimeErrorById(
                         "msg.no.java.ctor", classObject.getName(), sig);
             }
 
             // Found the constructor, so try invoking it.
-            return constructSpecific(cx, scope, args, ctors.methods[index]);
+            return constructSpecific(cx, scope, args, ctors[index]);
         }
         if (args.length == 0) {
             throw Context.reportRuntimeErrorById("msg.adapter.zero.args");

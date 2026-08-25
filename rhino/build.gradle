@@ -149,7 +149,7 @@ decycle {
     // LiveConnect classes in root package
     // TODO: Move them to LiveConnect module
     ignoring(
-        from: "org.mozilla.javascript.(Native*|JavaMembers|FieldAndMethods|InterfaceAdapter|WrapFactory)",
+        from: "org.mozilla.javascript.(Native*|JavaMembers|FieldAndMethods|InterfaceAdapter|WrapFactory|ResolvedOverload|JavaAccessor)",
         to: "org.mozilla.javascript.lc.**"
     )
 

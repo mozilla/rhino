@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.javascript.lc.member.ExecutableBox;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 public final class JavaAdapter {
@@ -130,17 +131,19 @@ public final class JavaAdapter {
                 System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
                 // TODO: cache class wrapper?
                 NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass, true);
-                NativeJavaMethod ctors = classWrapper.members.ctors;
-                int index = ctors.findCachedFunction(cx, ctorArgs);
+                ExecutableBox[] ctors = classWrapper.members.ctors;
+                int index =
+                        NativeJavaOverloadResolver.findCachedFunction(
+                                cx, ctors, ctorArgs, classWrapper.members.ctorOverloadCache);
                 if (index < 0) {
                     throw Context.reportRuntimeErrorById(
                             "msg.no.java.ctor",
                             adapterClass.getName(),
-                            NativeJavaMethod.scriptSignature(args));
+                            NativeJavaOverloadResolver.scriptSignature(args));
                 }
 
                 // Found the constructor, so try invoking it.
-                adapter = NativeJavaClass.constructInternal(ctorArgs, ctors.methods[index]);
+                adapter = NativeJavaClass.constructInternal(ctorArgs, ctors[index]);
             } else {
                 Class<?>[] ctorParms = {
                     ScriptRuntime.ScriptableClass, ScriptRuntime.ContextFactoryClass
