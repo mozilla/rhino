@@ -17,7 +17,6 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Objects;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
@@ -63,7 +62,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             dynamicType = staticType.asClass();
         }
         members = JavaMembers.lookupClass(parent, dynamicType, staticType.asClass(), isAdapter);
-        fieldAndMethods = members.getFieldAndMethodsObjects(parent, javaObject, false);
     }
 
     @Override
@@ -86,10 +84,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(String name, Scriptable start) {
-        var fieldAndMethod = fieldAndMethods.get(name);
-        if (fieldAndMethod != null) {
-            return fieldAndMethod;
-        }
         return members.get(this, parent, name, javaObject, false);
     }
 
@@ -977,7 +971,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     protected transient TypeInfo staticType;
     protected transient JavaMembers members;
-    private transient Map<String, FieldAndMethods> fieldAndMethods;
     protected transient boolean isAdapter;
 
     private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
