@@ -9,11 +9,12 @@ import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import org.mozilla.javascript.TopLevel.NativeErrors;
 
 public class NativePromise extends ScriptableObject {
 
-    enum State {
+    public enum State {
         PENDING,
         FULFILLED,
         REJECTED
@@ -55,9 +56,11 @@ public class NativePromise extends ScriptableObject {
     private State state = State.PENDING;
     private Object result = null;
     private boolean handled = false;
+    // True once settlement has begun, including while a thenable is being adopted
+    private boolean settling = false;
 
-    private ArrayList<Reaction> fulfillReactions = new ArrayList<>();
-    private ArrayList<Reaction> rejectReactions = new ArrayList<>();
+    private ArrayList<ReactionCall> fulfillReactions = new ArrayList<>();
+    private ArrayList<ReactionCall> rejectReactions = new ArrayList<>();
 
     public static Object init(Context cx, VarScope scope, boolean sealed) {
         return DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
@@ -93,13 +96,118 @@ public class NativePromise extends ScriptableObject {
         return promise;
     }
 
+    /**
+     * Create a new, uninitialized promise that will be owned by the Java method that created it.
+     * The caller will be responsible for resolving or rejecting the promise as appropriate. The
+     * resulting object is a valid JavaScript object with a proper prototype.
+     */
+    public static NativePromise create(VarScope s) {
+        var p = new NativePromise();
+        ScriptRuntime.setBuiltinProtoAndParent(p, s, TopLevel.Builtins.Promise);
+        return p;
+    }
+
+    /**
+     * Settle the promise with "value", following the same rules as the "resolve" method passed from
+     * the constructor in JavaScript: resolving with the promise itself rejects it with a TypeError,
+     * and resolving with a thenable adopts the thenable's state.
+     *
+     * @throws IllegalStateException if the promise has already been settled, or a settlement is
+     *     already in progress
+     */
+    public void resolve(Context cx, VarScope s, Object value) {
+        if (state != State.PENDING || settling) {
+            throw new IllegalStateException("Promise already resolved");
+        }
+        resolveWith(cx, s, value);
+    }
+
+    /**
+     * Reject the promise with "value". This is the same as calling the "reject" method passed from
+     * the constructor in JavaScript.
+     *
+     * @throws IllegalStateException if the promise has already been settled, or a settlement is
+     *     already in progress
+     */
+    public void reject(Context cx, VarScope s, Object value) {
+        if (state != State.PENDING || settling) {
+            throw new IllegalStateException("Promise already resolved");
+        }
+        rejectPromise(cx, s, value);
+    }
+
+    /**
+     * Call the callback when the promise is fulfilled. If the promise has already been fulfilled,
+     * call it right away. The callback will be executed on the microtask queue.
+     */
+    public void onFulfill(Context cx, Consumer<Object> cb) {
+        switch (state) {
+            case PENDING:
+                fulfillReactions.add((lcx, ls, r) -> cb.accept(r));
+                break;
+            case FULFILLED:
+                cx.enqueueMicrotask(() -> cb.accept(result));
+                break;
+            case REJECTED:
+                break;
+        }
+    }
+
+    /**
+     * Call the callback when the promise is rejected. If the promise has already been rejected,
+     * call it right away. The callback will be executed on the microtask queue. Registering a
+     * callback marks a rejected promise as handled.
+     */
+    public void onReject(Context cx, Consumer<Object> cb) {
+        switch (state) {
+            case PENDING:
+                rejectReactions.add((lcx, ls, r) -> cb.accept(r));
+                break;
+            case FULFILLED:
+                break;
+            case REJECTED:
+                markHandled(cx);
+                cx.enqueueMicrotask(() -> cb.accept(result));
+                break;
+        }
+    }
+
+    /**
+     * Call the callback when the promise is fulfilled or rejected. If the promise has already been
+     * settled, call it right away. The callback will be executed on the microtask queue.
+     * Registering a callback marks a rejected promise as handled.
+     */
+    public void onResolution(Context cx, Consumer<Object> cb) {
+        switch (state) {
+            case PENDING:
+                rejectReactions.add((lcx, ls, r) -> cb.accept(r));
+                fulfillReactions.add((lcx, ls, r) -> cb.accept(r));
+                break;
+            case FULFILLED:
+                cx.enqueueMicrotask(() -> cb.accept(result));
+                break;
+            case REJECTED:
+                markHandled(cx);
+                cx.enqueueMicrotask(() -> cb.accept(result));
+                break;
+        }
+    }
+
     @Override
     public String getClassName() {
         return "Promise";
     }
 
-    Object getResult() {
+    public State getState() {
+        return state;
+    }
+
+    public Object getResult() {
         return result;
+    }
+
+    public boolean isHandled() {
+        return handled;
     }
 
     // Promise.resolve
@@ -504,17 +612,48 @@ public class NativePromise extends ScriptableObject {
                 });
     }
 
+    // Implementation of the "PromiseResolve" abstract operation for this promise.
+    // Resolving with the promise itself rejects it with a TypeError, resolving with a
+    // thenable adopts the thenable's state, and anything else fulfills the promise.
+    // If a thenable is being adopted, the promise remains pending until the adoption
+    // completes.
+    private Object resolveWith(Context cx, VarScope scope, Object resolution) {
+        settling = true;
+        if (resolution == this) {
+            Object err =
+                    ScriptRuntime.newNativeError(
+                            cx,
+                            scope,
+                            NativeErrors.TypeError,
+                            new Object[] {"No promise self-resolution"});
+            return rejectPromise(cx, scope, err);
+        }
+
+        if (!ScriptRuntime.isObject(resolution)) {
+            return fulfillPromise(cx, scope, resolution);
+        }
+
+        Scriptable sresolution = ScriptableObject.ensureScriptable(resolution);
+        Object thenObj = ScriptableObject.getProperty(sresolution, "then");
+        if (!(thenObj instanceof Callable)) {
+            return fulfillPromise(cx, scope, resolution);
+        }
+
+        cx.enqueueMicrotask(() -> callThenable(cx, scope, resolution, (Callable) thenObj));
+        return Undefined.instance;
+    }
+
     // Abstract operation to fulfill a promise
     private Object fulfillPromise(Context cx, VarScope scope, Object value) {
         assert (state == State.PENDING);
         result = value;
-        ArrayList<Reaction> reactions = fulfillReactions;
+        ArrayList<ReactionCall> reactions = fulfillReactions;
         fulfillReactions = new ArrayList<>();
         if (!rejectReactions.isEmpty()) {
             rejectReactions = new ArrayList<>();
         }
         state = State.FULFILLED;
-        for (Reaction r : reactions) {
+        for (ReactionCall r : reactions) {
             cx.enqueueMicrotask(() -> r.invoke(cx, scope, value));
         }
         return Undefined.instance;
@@ -523,15 +662,16 @@ public class NativePromise extends ScriptableObject {
     // Abstract operation to reject a promise.
     private Object rejectPromise(Context cx, VarScope scope, Object reason) {
         assert (state == State.PENDING);
+        settling = true;
         result = reason;
-        ArrayList<Reaction> reactions = rejectReactions;
+        ArrayList<ReactionCall> reactions = rejectReactions;
         rejectReactions = new ArrayList<>();
         if (!fulfillReactions.isEmpty()) {
             fulfillReactions = new ArrayList<>();
         }
         state = State.REJECTED;
         cx.getUnhandledPromiseTracker().promiseRejected(this);
-        for (Reaction r : reactions) {
+        for (ReactionCall r : reactions) {
             cx.enqueueMicrotask(() -> r.invoke(cx, scope, reason));
         }
         if (!reactions.isEmpty()) {
@@ -613,67 +753,39 @@ public class NativePromise extends ScriptableObject {
                     new LambdaFunction(
                             topScope,
                             1,
-                            (Context cx, VarScope scope, Object thisObj, Object[] args) ->
-                                    resolve(
-                                            cx,
-                                            scope,
-                                            promise,
-                                            (args.length > 0 ? args[0] : Undefined.instance)));
+                            (Context cx, VarScope scope, Object thisObj, Object[] args) -> {
+                                if (alreadyResolved || promise.state != State.PENDING) {
+                                    return Undefined.instance;
+                                }
+                                alreadyResolved = true;
+                                return promise.resolveWith(
+                                        cx,
+                                        scope,
+                                        (args.length > 0 ? args[0] : Undefined.instance));
+                            });
             reject =
                     new LambdaFunction(
                             topScope,
                             1,
-                            (Context cx, VarScope scope, Object thisObj, Object[] args) ->
-                                    reject(
-                                            cx,
-                                            scope,
-                                            promise,
-                                            (args.length > 0 ? args[0] : Undefined.instance)));
-        }
-
-        private Object reject(Context cx, VarScope scope, NativePromise promise, Object reason) {
-            if (alreadyResolved) {
-                return Undefined.instance;
-            }
-            alreadyResolved = true;
-            return promise.rejectPromise(cx, scope, reason);
-        }
-
-        private Object resolve(
-                Context cx, VarScope scope, NativePromise promise, Object resolution) {
-            if (alreadyResolved) {
-                return Undefined.instance;
-            }
-            alreadyResolved = true;
-
-            if (resolution == promise) {
-                Object err =
-                        ScriptRuntime.newNativeError(
-                                cx,
-                                scope,
-                                NativeErrors.TypeError,
-                                new Object[] {"No promise self-resolution"});
-                return promise.rejectPromise(cx, scope, err);
-            }
-
-            if (!ScriptRuntime.isObject(resolution)) {
-                return promise.fulfillPromise(cx, scope, resolution);
-            }
-
-            Scriptable sresolution = ScriptableObject.ensureScriptable(resolution);
-            Object thenObj = ScriptableObject.getProperty(sresolution, "then");
-            if (!(thenObj instanceof Callable)) {
-                return promise.fulfillPromise(cx, scope, resolution);
-            }
-
-            cx.enqueueMicrotask(
-                    () -> promise.callThenable(cx, scope, resolution, (Callable) thenObj));
-            return Undefined.instance;
+                            (Context cx, VarScope scope, Object thisObj, Object[] args) -> {
+                                if (alreadyResolved || promise.state != State.PENDING) {
+                                    return Undefined.instance;
+                                }
+                                alreadyResolved = true;
+                                return promise.rejectPromise(
+                                        cx,
+                                        scope,
+                                        (args.length > 0 ? args[0] : Undefined.instance));
+                            });
         }
     }
 
+    interface ReactionCall {
+        void invoke(Context cx, VarScope scope, Object arg);
+    }
+
     // "Promise Reaction" record. This is an input to the microtask.
-    private static class Reaction {
+    private static class Reaction implements ReactionCall {
         Capability capability;
         ReactionType reaction = ReactionType.REJECT;
         Callable handler;
@@ -685,7 +797,8 @@ public class NativePromise extends ScriptableObject {
         }
 
         // Implementation of NewPromiseReactionJob
-        void invoke(Context cx, VarScope scope, Object arg) {
+        @Override
+        public void invoke(Context cx, VarScope scope, Object arg) {
             try {
                 Object result = null;
                 if (handler == null) {
