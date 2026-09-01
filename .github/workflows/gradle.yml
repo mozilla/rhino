@@ -24,7 +24,7 @@ jobs:
       - name: Check out test262
         run: git submodule update --init --single-branch
       - name: Set up Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           java-version: |
             17
@@ -93,7 +93,7 @@ jobs:
     - name: Check out test262
       run: git submodule update --init --single-branch
     - name: Set up Java
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
       with:
         java-version: |
           ${{ matrix.test-java-version }}
