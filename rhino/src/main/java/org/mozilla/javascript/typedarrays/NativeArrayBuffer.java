@@ -11,6 +11,8 @@ import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
 import java.io.Serial;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Constructable;
@@ -34,8 +36,6 @@ public class NativeArrayBuffer extends ScriptableObject {
     @Serial private static final long serialVersionUID = 3110411773054879549L;
 
     public static final String CLASS_NAME = "ArrayBuffer";
-
-    private static final byte[] EMPTY_BUF = new byte[0];
 
     private static final ClassDescriptor DESCRIPTOR;
 
@@ -73,7 +73,10 @@ public class NativeArrayBuffer extends ScriptableObject {
                         .build();
     }
 
-    byte[] buffer;
+    /** The actual buffer, with limit set to the maximum allocated size. */
+    ByteBuffer buffer;
+
+    protected final ByteOrder byteOrder;
     // ES2024: maxByteLength for resizable buffers (-1 = fixed-length)
     private int maxByteLength = -1;
 
@@ -88,7 +91,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     /** Create an empty buffer. */
     public NativeArrayBuffer() {
-        buffer = EMPTY_BUF;
+        this(0);
     }
 
     /** Create a buffer of the specified length in bytes. */
@@ -97,28 +100,57 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     private NativeArrayBuffer(int len) {
-        if (len == 0) {
-            buffer = EMPTY_BUF;
-        } else {
-            try {
-                buffer = new byte[len];
-            } catch (OutOfMemoryError e) {
-                throw ScriptRuntime.rangeErrorById("msg.arraybuf.oom");
-            }
+        byteOrder = defaultByteOrder();
+        try {
+            buffer = allocateBuffer(len);
+        } catch (OutOfMemoryError e) {
+            throw ScriptRuntime.rangeErrorById("msg.arraybuf.oom");
         }
+    }
+
+    private ByteBuffer allocateBuffer(int len) {
+        var buf = ByteBuffer.allocate(len);
+        buf.order(byteOrder);
+        return buf;
+    }
+
+    private static ByteOrder defaultByteOrder(Context cx) {
+        return cx.hasFeature(Context.FEATURE_LITTLE_ENDIAN)
+                ? ByteOrder.LITTLE_ENDIAN
+                : ByteOrder.BIG_ENDIAN;
+    }
+
+    private static ByteOrder defaultByteOrder() {
+        Context cx = Context.getCurrentContext();
+        return cx == null ? ByteOrder.BIG_ENDIAN : defaultByteOrder(cx);
     }
 
     /** Get the number of bytes in the buffer. */
     public int getLength() {
-        return buffer != null ? buffer.length : 0;
+        return buffer != null ? buffer.limit() : 0;
     }
 
     /**
      * Return the actual bytes that back the buffer. This is a reference to the real buffer, so
-     * changes to bytes here will be reflected in the actual object and all its views.
+     * changes to bytes here will be reflected in the actual object and all its views. In the
+     * future, for a shared array buffer this will return null -- callers should use getByteBuffer()
+     * instead.
+     *
+     * @deprecated This method will return null for shared buffers and possibly other buffers in the
+     *     future. Callers should use {@link #getByteBuffer} instead.
      */
+    @Deprecated
+    @SuppressWarnings("ByteBufferBackingArray")
     public byte[] getBuffer() {
-        return buffer;
+        return buffer != null && buffer.hasArray() ? buffer.array() : null;
+    }
+
+    /**
+     * Return a buffer that points to the contents. The position will be zero and the limit will be
+     * the length of the buffer. The buffer is returned using {@link java.nio.Buffer#duplicate}.
+     */
+    public ByteBuffer getByteBuffer() {
+        return buffer != null ? buffer.duplicate() : null;
     }
 
     public void detach() {
@@ -150,7 +182,10 @@ public class NativeArrayBuffer extends ScriptableObject {
         int len = end - start;
 
         NativeArrayBuffer newBuf = new NativeArrayBuffer(len);
-        System.arraycopy(buffer, start, newBuf.buffer, 0, len);
+        buffer.position(start);
+        newBuf.buffer.put(buffer);
+        buffer.rewind();
+        newBuf.buffer.flip();
         return newBuf;
     }
 
@@ -188,7 +223,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     private static Boolean js_isView(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return Boolean.valueOf((isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
+        return isArg(args, 0) && (args[0] instanceof NativeArrayBufferView);
     }
 
     private static NativeArrayBuffer js_slice(
@@ -237,7 +272,11 @@ public class NativeArrayBuffer extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.arraybuf.smaller.len", len, actualLength);
         }
 
-        System.arraycopy(self.buffer, startI, buf.buffer, 0, len);
+        var tmp = self.buffer.duplicate();
+        tmp.position(startI);
+        tmp.limit(startI + len);
+        buf.buffer.put(tmp);
+        buf.buffer.rewind();
         return buf;
     }
 
@@ -281,7 +320,10 @@ public class NativeArrayBuffer extends ScriptableObject {
         var newBuffer = (NativeArrayBuffer) newBuf;
         int copyLength = Math.min(newLength, getLength());
         if (copyLength > 0) {
-            System.arraycopy(buffer, 0, newBuffer.buffer, 0, copyLength);
+            var tmp = buffer.duplicate();
+            tmp.limit(copyLength);
+            newBuffer.buffer.put(tmp);
+            newBuffer.buffer.rewind();
         }
         detach();
         return newBuffer;
@@ -328,11 +370,14 @@ public class NativeArrayBuffer extends ScriptableObject {
             return Undefined.instance;
         }
 
-        byte[] newBuffer = new byte[newLength];
+        var newBuffer = self.allocateBuffer(newLength);
         int copyLength = Math.min(newLength, oldLength);
 
         if (copyLength > 0) {
-            System.arraycopy(self.buffer, 0, newBuffer, 0, copyLength);
+            var tmp = self.buffer.duplicate();
+            tmp.limit(copyLength);
+            newBuffer.put(tmp);
+            newBuffer.rewind();
         }
 
         // New bytes are automatically initialized to 0 in Java

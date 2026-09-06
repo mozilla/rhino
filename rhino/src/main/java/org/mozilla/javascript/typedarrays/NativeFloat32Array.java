@@ -89,18 +89,16 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readFloat32(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
+        return arrayBuffer.buffer.getFloat((index * BYTES_PER_ELEMENT) + offset);
     }
 
     @Override
     protected Object js_set(int index, Object c) {
-        double val = ScriptRuntime.toNumber(c);
+        float val = (float) ScriptRuntime.toNumber(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeFloat32(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
+        arrayBuffer.buffer.putFloat((index * BYTES_PER_ELEMENT) + offset, val);
         return null;
     }
 

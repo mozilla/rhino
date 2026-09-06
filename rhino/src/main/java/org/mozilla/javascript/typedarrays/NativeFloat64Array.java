@@ -89,12 +89,7 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        long base =
-                ByteIo.readUint64Primitive(
-                        arrayBuffer.buffer,
-                        (index * BYTES_PER_ELEMENT) + offset,
-                        useLittleEndian());
-        return Double.valueOf(Double.longBitsToDouble(base));
+        return arrayBuffer.buffer.getDouble((index * BYTES_PER_ELEMENT) + offset);
     }
 
     @Override
@@ -103,9 +98,7 @@ public class NativeFloat64Array extends NativeTypedArrayView<Double> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        long base = Double.doubleToLongBits(val);
-        ByteIo.writeUint64(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, base, useLittleEndian());
+        arrayBuffer.buffer.putDouble((index * BYTES_PER_ELEMENT) + offset, val);
         return null;
     }
 

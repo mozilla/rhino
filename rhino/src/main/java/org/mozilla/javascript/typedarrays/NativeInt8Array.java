@@ -79,7 +79,7 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt8(arrayBuffer.buffer, index + offset);
+        return arrayBuffer.buffer.get(index + offset);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class NativeInt8Array extends NativeTypedArrayView<Byte> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeInt8(arrayBuffer.buffer, index + offset, val);
+        arrayBuffer.buffer.put(index + offset, (byte) val);
         return null;
     }
 

@@ -89,7 +89,8 @@ public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readUint8(arrayBuffer.buffer, index + offset);
+        int byteBits = arrayBuffer.buffer.get(index + offset);
+        return Conversions.byteBitsToUint(byteBits);
     }
 
     @Override
@@ -98,7 +99,7 @@ public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeUint8(arrayBuffer.buffer, index + offset, val);
+        arrayBuffer.buffer.put(index + offset, (byte) val);
         return null;
     }
 

@@ -88,18 +88,16 @@ public class NativeInt16Array extends NativeTypedArrayView<Short> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt16(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
+        return arrayBuffer.buffer.getShort((index * BYTES_PER_ELEMENT) + offset);
     }
 
     @Override
     protected Object js_set(int index, Object c) {
-        int val = Conversions.toInt16(c);
+        short val = Conversions.toInt16(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeInt16(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
+        arrayBuffer.buffer.putShort((index * BYTES_PER_ELEMENT) + offset, val);
         return null;
     }
 
