@@ -24,7 +24,7 @@ import org.mozilla.javascript.dtoa.DecimalFormatter;
  *
  * @author Norris Boyd
  */
-final class NativeNumber extends ScriptableObject {
+public final class NativeNumber extends ScriptableObject {
     @Serial private static final long serialVersionUID = 3504516769741512101L;
 
     /**

@@ -10,11 +10,20 @@ import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serial;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.JSFunction;
+import org.mozilla.javascript.NativeNumber;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
@@ -31,6 +40,13 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 
     private static final ClassDescriptor DESCRIPTOR;
 
+    private static final String BASE_64 = "base64";
+    private static final String BASE_64_URL = "base64url";
+
+    private static final String LOOSE = "loose";
+    private static final String STRICT = "strict";
+    private static final String STOP_BEFORE_PARTIAL = "stop-before-partial";
+
     static {
         DESCRIPTOR =
                 new ClassDescriptor.Builder(
@@ -41,6 +57,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         .withProp(CTOR, "BYTES_PER_ELEMENT", value(1))
                         .withProp(PROTO, "BYTES_PER_ELEMENT", value(1))
                         .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
+                        .withMethod(CTOR, "fromBase64", 1, NativeUint8Array::js_fromBase64)
                         .build();
     }
 
@@ -68,7 +85,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         return 1;
     }
 
-    private static Object js_constructor(
+    private static NativeTypedArrayView<?> js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return NativeTypedArrayView.js_constructor(
                 cx,
@@ -81,6 +98,255 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                 1,
                 TopLevel.Builtins.Uint8Array);
     }
+
+    private static Object js_fromBase64(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+
+        var string = args[0].toString();
+        var options = getOptionsObject(args, 1);
+
+        var alphabet = ScriptableObject.getProperty(options, "alphabet");
+        if (alphabet == NOT_FOUND || Undefined.isUndefined(alphabet)) {
+            alphabet = BASE_64;
+        }
+        var alphabetString = alphabet.toString();
+
+        if (!(alphabet instanceof CharSequence)
+                || (!alphabetString.equals(BASE_64) && !alphabetString.equals(BASE_64_URL))) {
+            throw ScriptRuntime.typeErrorById("msg.bad.alphabet");
+        }
+
+        var lastChunkHandling = ScriptableObject.getProperty(options, "lastChunkHandling");
+        if (lastChunkHandling == NOT_FOUND || Undefined.isUndefined(lastChunkHandling)) {
+            lastChunkHandling = LOOSE;
+        }
+        var lastChunkHandlingString = lastChunkHandling.toString();
+
+        if (!(lastChunkHandling instanceof CharSequence)
+                || (!lastChunkHandlingString.equals(LOOSE)
+                        && !lastChunkHandlingString.equals(STRICT)
+                        && !lastChunkHandlingString.equals(STOP_BEFORE_PARTIAL))) {
+            throw ScriptRuntime.typeErrorById("msg.bad.lastchunkhandling");
+        }
+
+        try {
+            var result = Base64Result.create(string, alphabetString, lastChunkHandlingString);
+            if (result.error != null) {
+                throw result.error;
+            }
+
+            var resultLength = result.bytes.length;
+            var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
+            ta.arrayBuffer.buffer = result.bytes;
+            return ta;
+        } catch (IOException exception) {
+            throw ScriptRuntime.constructError("Error", "Error decoding base64");
+        }
+    }
+
+    private static NativeObject getOptionsObject(Object[] args, int index) {
+        if (!isArg(args, index) || Undefined.isUndefined(args[index])) {
+            return new NativeObject();
+        }
+        if (args[index] instanceof NativeObject obj) {
+            return obj;
+        }
+        throw ScriptRuntime.typeErrorById("msg.not.an.object");
+    }
+
+    private static class Base64Result {
+        private final int read;
+        private final byte[] bytes;
+        private final EcmaError error;
+
+        private Base64Result(int read, byte[] bytes, EcmaError error) {
+            this.read = read;
+            this.bytes = bytes;
+            this.error = error;
+        }
+
+        private static boolean isAsciiWhitespace(char c) {
+            return c == '\t' || c == '\n' || c == '\f' || c == '\r' || c == ' ';
+        }
+
+        private static int skipWhitespace(String string, int index) {
+            var length = string.length();
+            while (index < length && isAsciiWhitespace(string.charAt(index))) {
+                index++;
+            }
+            return index;
+        }
+
+        private static Base64Result create(String string, String alphabet, String lastChunkHandling)
+                throws IOException {
+            return create(string, alphabet, lastChunkHandling, NativeNumber.MAX_SAFE_INTEGER);
+        }
+
+        private static Base64Result create(
+                String string, String alphabet, String lastChunkHandling, double maxLength)
+                throws IOException {
+            if (maxLength == 0) {
+                return new Base64Result(0, new byte[0], null);
+            }
+
+            var read = 0;
+            var bytes = new ByteArrayOutputStream();
+            var chunk = new StringBuilder();
+            var index = 0;
+            var length = string.length();
+
+            while (true) {
+                index = skipWhitespace(string, index);
+
+                if (index == length) {
+                    if (!chunk.isEmpty()) {
+                        switch (lastChunkHandling) {
+                            case STOP_BEFORE_PARTIAL:
+                                return new Base64Result(read, bytes.toByteArray(), null);
+                            case STRICT:
+                                return new Base64Result(
+                                        read,
+                                        bytes.toByteArray(),
+                                        ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
+                            case LOOSE:
+                            default:
+                                if (chunk.length() == 1) {
+                                    return new Base64Result(
+                                            read,
+                                            bytes.toByteArray(),
+                                            ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
+                                }
+                                bytes.write(DecodeFinalBase64Chunk(chunk, false));
+                        }
+                    }
+                    return new Base64Result(length, bytes.toByteArray(), null);
+                }
+
+                var c = string.charAt(index);
+                index++;
+
+                if (c == '=') {
+                    if (chunk.length() < 2) {
+                        return new Base64Result(
+                                read,
+                                bytes.toByteArray(),
+                                ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
+                    }
+
+                    index = skipWhitespace(string, index);
+
+                    if (chunk.length() == 2) {
+                        if (index == length) {
+                            if (lastChunkHandling.equals(STOP_BEFORE_PARTIAL)) {
+                                return new Base64Result(read, bytes.toByteArray(), null);
+                            }
+                            return new Base64Result(
+                                    read,
+                                    bytes.toByteArray(),
+                                    ScriptRuntime.syntaxError("msg.invalid.base64"));
+                        }
+
+                        c = string.charAt(index);
+                        if (c == '=') {
+                            index = skipWhitespace(string, index + 1);
+                        }
+                    }
+
+                    if (index < length) {
+                        return new Base64Result(
+                                read,
+                                bytes.toByteArray(),
+                                ScriptRuntime.syntaxError("msg.invalid.base64"));
+                    }
+
+                    var throwOnExtraBits = lastChunkHandling.equals(STRICT);
+                    try {
+                        bytes.write(DecodeFinalBase64Chunk(chunk, throwOnExtraBits));
+                        return new Base64Result(length, bytes.toByteArray(), null);
+                    } catch (EcmaError error) {
+                        return new Base64Result(read, bytes.toByteArray(), error);
+                    }
+                }
+
+                if (alphabet.equals(BASE_64_URL)) {
+                    if (c == '+' || c == '/') {
+                        return new Base64Result(
+                                read,
+                                bytes.toByteArray(),
+                                ScriptRuntime.syntaxError("msg.invalid.base64"));
+                    } else if (c == '-') {
+                        c = '+';
+                    } else if (c == '_') {
+                        c = '/';
+                    }
+                }
+
+                if (!isBase64(c)) {
+                    return new Base64Result(
+                            read,
+                            bytes.toByteArray(),
+                            ScriptRuntime.syntaxErrorById("msg.not.base64"));
+                }
+
+                var remaining = maxLength - bytes.size();
+                if ((remaining == 1 && chunk.length() == 2)
+                        || (remaining == 2 && chunk.length() == 3)) {
+                    return new Base64Result(read, bytes.toByteArray(), null);
+                }
+
+                chunk.append(c);
+
+                if (chunk.length() == 4) {
+                    bytes.write(DecodeFullBase64Chunk(chunk));
+                    chunk.setLength(0);
+                    read = index;
+
+                    if (bytes.size() == maxLength) {
+                        return new Base64Result(read, bytes.toByteArray(), null);
+                    }
+                }
+            }
+        }
+
+        private static boolean isBase64(char c) {
+            return ('A' <= c && c <= 'Z')
+                    || ('a' <= c && c <= 'z')
+                    || ('0' <= c && c <= '9')
+                    || (c == '+')
+                    || (c == '/');
+        }
+
+        private static byte[] DecodeFinalBase64Chunk(
+                StringBuilder chunk, boolean throwOnExtraBits) {
+            var chunkLength = chunk.length();
+            if (chunkLength == 2) {
+                chunk.append('A');
+            }
+            chunk.append('A');
+
+            var bytes = DecodeFullBase64Chunk(chunk);
+
+            if (chunkLength == 2) {
+                if (throwOnExtraBits && bytes[1] != 0) {
+                    throw ScriptRuntime.syntaxError("msg.invalid.base64");
+                }
+                return new byte[] {bytes[0]};
+            }
+
+            if (throwOnExtraBits && bytes[2] != 0) {
+                throw ScriptRuntime.syntaxError("msg.invalid.base64");
+            }
+            return new byte[] {bytes[0], bytes[1]};
+        }
+
+        private static byte[] DecodeFullBase64Chunk(StringBuilder chunk) {
+            return Base64.getDecoder().decode(chunk.toString().getBytes(StandardCharsets.UTF_8));
+        }
+    }
+    ;
 
     @Override
     protected Object js_get(int index) {
