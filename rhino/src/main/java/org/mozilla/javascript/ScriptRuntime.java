@@ -3568,7 +3568,7 @@ public class ScriptRuntime {
     }
 
     static Object[] getApplyArguments(Context cx, Object arg1) {
-        if (arg1 == null || Undefined.isUndefined(arg1)) {
+        if (arg1 == null || Undefined.isUndefined(arg1) || arg1 == ScriptRuntime.emptyArgs) {
             return ScriptRuntime.emptyArgs;
         } else if (arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1)) {
             return ScriptRuntime.getArrayElements(cx, (Scriptable) arg1);
