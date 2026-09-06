@@ -14,7 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serial;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.HexFormat;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
@@ -58,6 +60,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         .withProp(PROTO, "BYTES_PER_ELEMENT", value(1))
                         .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
                         .withMethod(CTOR, "fromBase64", 1, NativeUint8Array::js_fromBase64)
+                        .withMethod(CTOR, "fromHex", 1, NativeUint8Array::js_fromHex)
                         .build();
     }
 
@@ -133,7 +136,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         }
 
         try {
-            var result = Base64Result.create(string, alphabetString, lastChunkHandlingString);
+            var result = Result.fromBase64(string, alphabetString, lastChunkHandlingString);
             if (result.error != null) {
                 throw result.error;
             }
@@ -147,6 +150,25 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         }
     }
 
+    private static Object js_fromHex(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+
+        var string = args[0].toString();
+
+        var result = Result.fromHex(string);
+        if (result.error != null) {
+            throw result.error;
+        }
+
+        var resultLength = result.bytes.length;
+        var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
+        ta.arrayBuffer.buffer = result.bytes;
+        return ta;
+    }
+
     private static NativeObject getOptionsObject(Object[] args, int index) {
         if (!isArg(args, index) || Undefined.isUndefined(args[index])) {
             return new NativeObject();
@@ -157,12 +179,12 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         throw ScriptRuntime.typeErrorById("msg.not.an.object");
     }
 
-    private static class Base64Result {
+    private static class Result {
         private final int read;
         private final byte[] bytes;
         private final EcmaError error;
 
-        private Base64Result(int read, byte[] bytes, EcmaError error) {
+        private Result(int read, byte[] bytes, EcmaError error) {
             this.read = read;
             this.bytes = bytes;
             this.error = error;
@@ -180,16 +202,16 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
             return index;
         }
 
-        private static Base64Result create(String string, String alphabet, String lastChunkHandling)
+        private static Result fromBase64(String string, String alphabet, String lastChunkHandling)
                 throws IOException {
-            return create(string, alphabet, lastChunkHandling, NativeNumber.MAX_SAFE_INTEGER);
+            return fromBase64(string, alphabet, lastChunkHandling, NativeNumber.MAX_SAFE_INTEGER);
         }
 
-        private static Base64Result create(
+        private static Result fromBase64(
                 String string, String alphabet, String lastChunkHandling, double maxLength)
                 throws IOException {
             if (maxLength == 0) {
-                return new Base64Result(0, new byte[0], null);
+                return new Result(0, new byte[0], null);
             }
 
             var read = 0;
@@ -205,16 +227,16 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     if (!chunk.isEmpty()) {
                         switch (lastChunkHandling) {
                             case STOP_BEFORE_PARTIAL:
-                                return new Base64Result(read, bytes.toByteArray(), null);
+                                return new Result(read, bytes.toByteArray(), null);
                             case STRICT:
-                                return new Base64Result(
+                                return new Result(
                                         read,
                                         bytes.toByteArray(),
                                         ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
                             case LOOSE:
                             default:
                                 if (chunk.length() == 1) {
-                                    return new Base64Result(
+                                    return new Result(
                                             read,
                                             bytes.toByteArray(),
                                             ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
@@ -222,7 +244,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                                 bytes.write(DecodeFinalBase64Chunk(chunk, false));
                         }
                     }
-                    return new Base64Result(length, bytes.toByteArray(), null);
+                    return new Result(length, bytes.toByteArray(), null);
                 }
 
                 var c = string.charAt(index);
@@ -230,7 +252,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 
                 if (c == '=') {
                     if (chunk.length() < 2) {
-                        return new Base64Result(
+                        return new Result(
                                 read,
                                 bytes.toByteArray(),
                                 ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
@@ -241,9 +263,9 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     if (chunk.length() == 2) {
                         if (index == length) {
                             if (lastChunkHandling.equals(STOP_BEFORE_PARTIAL)) {
-                                return new Base64Result(read, bytes.toByteArray(), null);
+                                return new Result(read, bytes.toByteArray(), null);
                             }
-                            return new Base64Result(
+                            return new Result(
                                     read,
                                     bytes.toByteArray(),
                                     ScriptRuntime.syntaxError("msg.invalid.base64"));
@@ -256,7 +278,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     }
 
                     if (index < length) {
-                        return new Base64Result(
+                        return new Result(
                                 read,
                                 bytes.toByteArray(),
                                 ScriptRuntime.syntaxError("msg.invalid.base64"));
@@ -265,15 +287,15 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     var throwOnExtraBits = lastChunkHandling.equals(STRICT);
                     try {
                         bytes.write(DecodeFinalBase64Chunk(chunk, throwOnExtraBits));
-                        return new Base64Result(length, bytes.toByteArray(), null);
+                        return new Result(length, bytes.toByteArray(), null);
                     } catch (EcmaError error) {
-                        return new Base64Result(read, bytes.toByteArray(), error);
+                        return new Result(read, bytes.toByteArray(), error);
                     }
                 }
 
                 if (alphabet.equals(BASE_64_URL)) {
                     if (c == '+' || c == '/') {
-                        return new Base64Result(
+                        return new Result(
                                 read,
                                 bytes.toByteArray(),
                                 ScriptRuntime.syntaxError("msg.invalid.base64"));
@@ -285,7 +307,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                 }
 
                 if (!isBase64(c)) {
-                    return new Base64Result(
+                    return new Result(
                             read,
                             bytes.toByteArray(),
                             ScriptRuntime.syntaxErrorById("msg.not.base64"));
@@ -294,7 +316,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                 var remaining = maxLength - bytes.size();
                 if ((remaining == 1 && chunk.length() == 2)
                         || (remaining == 2 && chunk.length() == 3)) {
-                    return new Base64Result(read, bytes.toByteArray(), null);
+                    return new Result(read, bytes.toByteArray(), null);
                 }
 
                 chunk.append(c);
@@ -305,7 +327,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     read = index;
 
                     if (bytes.size() == maxLength) {
-                        return new Base64Result(read, bytes.toByteArray(), null);
+                        return new Result(read, bytes.toByteArray(), null);
                     }
                 }
             }
@@ -345,8 +367,23 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         private static byte[] DecodeFullBase64Chunk(StringBuilder chunk) {
             return Base64.getDecoder().decode(chunk.toString().getBytes(StandardCharsets.UTF_8));
         }
+
+        private static Result fromHex(String string) {
+            return fromHex(string, NativeNumber.MAX_SAFE_INTEGER);
+        }
+
+        private static Result fromHex(String string, double maxLength) {
+            try {
+                var bytes = HexFormat.of().parseHex(string);
+                if (bytes.length > maxLength) {
+                    bytes = Arrays.copyOf(bytes, (int) maxLength);
+                }
+                return new Result(bytes.length * 2, bytes, null);
+            } catch (IllegalArgumentException exception) {
+                return new Result(0, new byte[0], ScriptRuntime.syntaxError("msg.invalid.hex"));
+            }
+        }
     }
-    ;
 
     @Override
     protected Object js_get(int index) {
