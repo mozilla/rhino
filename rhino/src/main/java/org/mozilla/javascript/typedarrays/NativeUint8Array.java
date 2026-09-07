@@ -21,6 +21,7 @@ import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.JSFunction;
+import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeNumber;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
@@ -61,6 +62,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
                         .withMethod(CTOR, "fromBase64", 1, NativeUint8Array::js_fromBase64)
                         .withMethod(CTOR, "fromHex", 1, NativeUint8Array::js_fromHex)
+                        .withMethod(PROTO, "setFromBase64", 1, NativeUint8Array::js_setFromBase64)
                         .build();
     }
 
@@ -86,6 +88,10 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
     @Override
     public int getBytesPerElement() {
         return 1;
+    }
+
+    private static NativeUint8Array realThis(Object thisObj) {
+        return LambdaConstructor.convertThisObject(thisObj, NativeUint8Array.class);
     }
 
     private static NativeTypedArrayView<?> js_constructor(
@@ -167,6 +173,64 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
         ta.arrayBuffer.buffer = result.bytes;
         return ta;
+    }
+
+    private static Object js_setFromBase64(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        var into = realThis(thisObj);
+
+        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+
+        var string = args[0].toString();
+        var options = getOptionsObject(args, 1);
+
+        var alphabet = ScriptableObject.getProperty(options, "alphabet");
+        if (alphabet == NOT_FOUND || Undefined.isUndefined(alphabet)) {
+            alphabet = BASE_64;
+        }
+        var alphabetString = alphabet.toString();
+
+        if (!(alphabet instanceof CharSequence)
+                || (!alphabetString.equals(BASE_64) && !alphabetString.equals(BASE_64_URL))) {
+            throw ScriptRuntime.typeErrorById("msg.bad.alphabet");
+        }
+
+        var lastChunkHandling = ScriptableObject.getProperty(options, "lastChunkHandling");
+        if (lastChunkHandling == NOT_FOUND || Undefined.isUndefined(lastChunkHandling)) {
+            lastChunkHandling = LOOSE;
+        }
+        var lastChunkHandlingString = lastChunkHandling.toString();
+
+        if (!(lastChunkHandling instanceof CharSequence)
+                || (!lastChunkHandlingString.equals(LOOSE)
+                        && !lastChunkHandlingString.equals(STRICT)
+                        && !lastChunkHandlingString.equals(STOP_BEFORE_PARTIAL))) {
+            throw ScriptRuntime.typeErrorById("msg.bad.lastchunkhandling");
+        }
+
+        var length = into.validateAndGetLength();
+
+        try {
+            var result = Result.fromBase64(string, alphabetString, lastChunkHandlingString, length);
+            var bytes = result.bytes;
+
+            for (int i = 0; i < bytes.length; i++) {
+                into.js_set(i, bytes[i]);
+            }
+
+            if (result.error != null) {
+                throw result.error;
+            }
+
+            var resultObj = cx.newObject(s);
+            resultObj.put("read", resultObj, result.read);
+            resultObj.put("written", resultObj, bytes.length);
+            return resultObj;
+        } catch (IOException exception) {
+            throw ScriptRuntime.constructError("Error", "Error decoding base64");
+        }
     }
 
     private static NativeObject getOptionsObject(Object[] args, int index) {

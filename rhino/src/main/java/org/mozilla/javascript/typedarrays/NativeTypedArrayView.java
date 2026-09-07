@@ -670,7 +670,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
      * https://tc39.es/ecma262/multipage/indexed-collections.html#sec-validatetypedarray, but only
      * return the actual length since we don't really need to create a witness record.
      */
-    private long validateAndGetLength() {
+    protected long validateAndGetLength() {
         if (isTypedArrayOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.typed.array.out.of.bounds");
         }
