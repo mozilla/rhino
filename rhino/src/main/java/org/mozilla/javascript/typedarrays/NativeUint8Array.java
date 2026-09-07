@@ -14,9 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serial;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.HexFormat;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
@@ -63,6 +61,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         .withMethod(CTOR, "fromBase64", 1, NativeUint8Array::js_fromBase64)
                         .withMethod(CTOR, "fromHex", 1, NativeUint8Array::js_fromHex)
                         .withMethod(PROTO, "setFromBase64", 1, NativeUint8Array::js_setFromBase64)
+                        .withMethod(PROTO, "setFromHex", 1, NativeUint8Array::js_setFromHex)
                         .build();
     }
 
@@ -231,6 +230,34 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         } catch (IOException exception) {
             throw ScriptRuntime.constructError("Error", "Error decoding base64");
         }
+    }
+
+    private static Object js_setFromHex(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        var into = realThis(thisObj);
+
+        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+
+        var string = args[0].toString();
+        var length = into.validateAndGetLength();
+
+        var result = Result.fromHex(string, length);
+        var bytes = result.bytes;
+
+        for (int i = 0; i < bytes.length; i++) {
+            into.js_set(i, bytes[i]);
+        }
+
+        if (result.error != null) {
+            throw result.error;
+        }
+
+        var resultObj = cx.newObject(s);
+        resultObj.put("read", resultObj, result.read);
+        resultObj.put("written", resultObj, bytes.length);
+        return resultObj;
     }
 
     private static NativeObject getOptionsObject(Object[] args, int index) {
@@ -405,6 +432,10 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     || (c == '/');
         }
 
+        private static boolean isHex(char c) {
+            return ('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f');
+        }
+
         private static byte[] DecodeFinalBase64Chunk(
                 StringBuilder chunk, boolean throwOnExtraBits) {
             var chunkLength = chunk.length();
@@ -437,15 +468,31 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         }
 
         private static Result fromHex(String string, double maxLength) {
-            try {
-                var bytes = HexFormat.of().parseHex(string);
-                if (bytes.length > maxLength) {
-                    bytes = Arrays.copyOf(bytes, (int) maxLength);
-                }
-                return new Result(bytes.length * 2, bytes, null);
-            } catch (IllegalArgumentException exception) {
-                return new Result(0, new byte[0], ScriptRuntime.syntaxError("msg.invalid.hex"));
+            var length = string.length();
+            var bytes = new ByteArrayOutputStream();
+            var read = 0;
+            if (length % 2 != 0) {
+                return new Result(
+                        read,
+                        bytes.toByteArray(),
+                        ScriptRuntime.syntaxErrorById("msg.invalid.hex"));
             }
+
+            while (read < length && bytes.size() < maxLength) {
+                char c1 = string.charAt(read);
+                char c2 = string.charAt(read + 1);
+                if (!isHex(c1) || !isHex(c2)) {
+                    return new Result(
+                            read,
+                            bytes.toByteArray(),
+                            ScriptRuntime.syntaxErrorById("msg.invalid.hex"));
+                }
+
+                bytes.write((Character.digit(c1, 16) << 4) + Character.digit(c2, 16));
+                read += 2;
+            }
+
+            return new Result(read, bytes.toByteArray(), null);
         }
     }
 
