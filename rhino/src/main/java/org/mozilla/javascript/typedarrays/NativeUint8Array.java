@@ -63,6 +63,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         .withMethod(PROTO, "setFromBase64", 1, NativeUint8Array::js_setFromBase64)
                         .withMethod(PROTO, "setFromHex", 1, NativeUint8Array::js_setFromHex)
                         .withMethod(PROTO, "toBase64", 0, NativeUint8Array::js_toBase64)
+                        .withMethod(PROTO, "toHex", 0, NativeUint8Array::js_toHex)
                         .build();
     }
 
@@ -302,6 +303,25 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
             }
         }
         return result;
+    }
+
+    private static Object js_toHex(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        var self = realThis(thisObj);
+
+        var length = self.validateAndGetLength();
+        var out = new StringBuilder();
+        var index = 0;
+        while (index < length) {
+            var digit = ScriptRuntime.numberToString(self.get(index), 16);
+            if (digit.length() == 1) {
+                out.append(0);
+            }
+            out.append(digit);
+            index++;
+        }
+
+        return out.toString();
     }
 
     private static NativeObject getOptionsObject(Object[] args, int index) {
