@@ -62,6 +62,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         .withMethod(CTOR, "fromHex", 1, NativeUint8Array::js_fromHex)
                         .withMethod(PROTO, "setFromBase64", 1, NativeUint8Array::js_setFromBase64)
                         .withMethod(PROTO, "setFromHex", 1, NativeUint8Array::js_setFromHex)
+                        .withMethod(PROTO, "toBase64", 0, NativeUint8Array::js_toBase64)
                         .build();
     }
 
@@ -258,6 +259,49 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         resultObj.put("read", resultObj, result.read);
         resultObj.put("written", resultObj, bytes.length);
         return resultObj;
+    }
+
+    private static Object js_toBase64(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        var self = realThis(thisObj);
+        var options = getOptionsObject(args, 0);
+
+        var alphabet = ScriptableObject.getProperty(options, "alphabet");
+        if (alphabet == NOT_FOUND || Undefined.isUndefined(alphabet)) {
+            alphabet = BASE_64;
+        }
+        var alphabetString = alphabet.toString();
+
+        if (!(alphabet instanceof CharSequence)
+                || (!alphabetString.equals(BASE_64) && !alphabetString.equals(BASE_64_URL))) {
+            throw ScriptRuntime.typeErrorById("msg.bad.alphabet");
+        }
+
+        var omitPaddingField = ScriptableObject.getProperty(options, "omitPadding");
+        if (omitPaddingField == NOT_FOUND) {
+            omitPaddingField = Undefined.instance;
+        }
+        var omitPadding = ScriptRuntime.toBoolean(omitPaddingField);
+
+        var length = self.validateAndGetLength();
+        var bytes = new ByteArrayOutputStream();
+        var index = 0;
+        while (index < length) {
+            bytes.write(self.get(index));
+            index++;
+        }
+
+        var encoder = alphabetString.equals(BASE_64) ? Base64.getEncoder() : Base64.getUrlEncoder();
+        var result = encoder.encodeToString(bytes.toByteArray());
+        if (omitPadding) {
+            if (result.endsWith("==")) {
+                return result.substring(0, result.length() - 2);
+            }
+            if (result.endsWith("=")) {
+                return result.substring(0, result.length() - 1);
+            }
+        }
+        return result;
     }
 
     private static NativeObject getOptionsObject(Object[] args, int index) {
