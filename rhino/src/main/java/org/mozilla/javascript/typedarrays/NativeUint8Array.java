@@ -423,7 +423,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                             return new Result(
                                     read,
                                     bytes.toByteArray(),
-                                    ScriptRuntime.syntaxError("msg.invalid.base64"));
+                                    ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
                         }
 
                         c = string.charAt(index);
@@ -436,7 +436,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         return new Result(
                                 read,
                                 bytes.toByteArray(),
-                                ScriptRuntime.syntaxError("msg.invalid.base64"));
+                                ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
                     }
 
                     var throwOnExtraBits = lastChunkHandling.equals(STRICT);
@@ -453,7 +453,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                         return new Result(
                                 read,
                                 bytes.toByteArray(),
-                                ScriptRuntime.syntaxError("msg.invalid.base64"));
+                                ScriptRuntime.syntaxErrorById("msg.not.base64", c));
                     } else if (c == '-') {
                         c = '+';
                     } else if (c == '_') {
@@ -465,7 +465,7 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                     return new Result(
                             read,
                             bytes.toByteArray(),
-                            ScriptRuntime.syntaxErrorById("msg.not.base64"));
+                            ScriptRuntime.syntaxErrorById("msg.not.base64", c));
                 }
 
                 var remaining = maxLength - bytes.size();
@@ -512,13 +512,13 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 
             if (chunkLength == 2) {
                 if (throwOnExtraBits && bytes[1] != 0) {
-                    throw ScriptRuntime.syntaxError("msg.invalid.base64");
+                    throw ScriptRuntime.syntaxErrorById("msg.invalid.base64");
                 }
                 return new byte[] {bytes[0]};
             }
 
             if (throwOnExtraBits && bytes[2] != 0) {
-                throw ScriptRuntime.syntaxError("msg.invalid.base64");
+                throw ScriptRuntime.syntaxErrorById("msg.invalid.base64");
             }
             return new byte[] {bytes[0], bytes[1]};
         }
@@ -539,17 +539,24 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
                 return new Result(
                         read,
                         bytes.toByteArray(),
-                        ScriptRuntime.syntaxErrorById("msg.invalid.hex"));
+                        ScriptRuntime.syntaxErrorById("msg.hex.not.even"));
             }
 
             while (read < length && bytes.size() < maxLength) {
                 char c1 = string.charAt(read);
                 char c2 = string.charAt(read + 1);
-                if (!isHex(c1) || !isHex(c2)) {
+                if (!isHex(c1)) {
                     return new Result(
                             read,
                             bytes.toByteArray(),
-                            ScriptRuntime.syntaxErrorById("msg.invalid.hex"));
+                            ScriptRuntime.syntaxErrorById("msg.bad.hex", c1));
+                }
+
+                if (!isHex(c2)) {
+                    return new Result(
+                            read,
+                            bytes.toByteArray(),
+                            ScriptRuntime.syntaxErrorById("msg.bad.hex", c2));
                 }
 
                 bytes.write((Character.digit(c1, 16) << 4) + Character.digit(c2, 16));
