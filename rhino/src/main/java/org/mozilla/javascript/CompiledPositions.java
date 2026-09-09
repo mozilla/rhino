@@ -170,6 +170,20 @@ public final class CompiledPositions {
 
         private final Map<String, MethodState> byMethod = new HashMap<>();
 
+        private boolean markersEnabled = true;
+
+        /**
+         * Stops handing out position markers.
+         *
+         * <p>A marker is only meaningful alongside this table, which is attached to the generated
+         * class as it is defined. Code compiled ahead of time to a class file on disk is loaded
+         * without that step, so it must carry real line numbers and report no column where a line
+         * holds more than one position.
+         */
+        public void disableMarkers() {
+            markersEnabled = false;
+        }
+
         /**
          * Records a position and returns the line number to emit for it, which is the real line
          * unless that line already identifies a different position.
@@ -208,10 +222,10 @@ public final class CompiledPositions {
                 return already.intValue();
             }
 
-            if (state.nextMarker <= state.highestRealLine) {
-                // This method has run out of numbers, which takes tens of thousands of distinct
-                // positions in one function. Report the column as unknown rather than emit a
-                // number that already means something else.
+            if (!markersEnabled || state.nextMarker <= state.highestRealLine) {
+                // Either markers are unavailable, or this method has run out of them, which takes
+                // tens of thousands of distinct positions in one function. Report the column as
+                // unknown rather than emit a number that already means something else.
                 state.lines.put(line, new Entry(line, 0, claimed.sourceName));
                 return line;
             }

@@ -1479,6 +1479,7 @@ class BodyCodegen {
 
             case Token.GETELEM:
                 generateExpression(child, node); // object
+                updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     int getElem = cfw.acquireLabel();
                     int after = cfw.acquireLabel();
@@ -2796,6 +2797,10 @@ class BodyCodegen {
         generateCallArgArray(node, firstArgChild, false);
         cfw.addAStore(argsLocal);
 
+        // After the callee and the arguments, so that calling a non-function is attributed to
+        // the call rather than to the last argument evaluated.
+        updateExpressionPosition(node);
+
         if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
             // Extract the function but ignore the "this" that comes back
             // in favor of the one that we've been saving up for.
@@ -3120,6 +3125,9 @@ class BodyCodegen {
                     Node target = node.getFirstChild();
                     generateExpression(target, node);
                     Node id = target.getNext();
+                    // The call target is itself a property access, and reading it is what fails
+                    // when the object is null or undefined.
+                    updateExpressionPosition(node);
                     if (type == Token.GETPROP) {
                         String property = id.getString();
                         cfw.addALoad(contextLocal);
@@ -3193,6 +3201,19 @@ class BodyCodegen {
                 "org.mozilla.javascript.ScriptRuntime$LookupResult",
                 "getThis",
                 "()Lorg/mozilla/javascript/Scriptable;");
+    }
+
+    /**
+     * Records the position of an operation inside an expression, so that a failure is attributed to
+     * the operation rather than to the start of the statement.
+     *
+     * <p>Only nodes carrying a real column qualify. Parts the compiler synthesizes have no position
+     * of their own, and some carry a zero rather than the usual -1, which would otherwise be taken
+     * for line zero.
+     */
+    private void updateExpressionPosition(Node node) {
+        if (node.getColumn() <= 0) return;
+        updateLineNumber(node);
     }
 
     private void updateLineNumber(Node node) {
@@ -4655,6 +4676,9 @@ class BodyCodegen {
 
     private void visitGetProp(Node node, Node child) {
         generateExpression(child, node); // object
+        // After the target, so a failure reading the property is attributed to the property
+        // rather than to wherever evaluating the target left us.
+        updateExpressionPosition(node);
         if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
             int getExpr = cfw.acquireLabel();
             int after = cfw.acquireLabel();

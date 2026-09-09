@@ -362,7 +362,9 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 if (span != 3) Kit.codeBug();
                 // The operand is a position index; report the distinct lines behind them so
                 // debugger breakpoints see exactly what they saw before.
-                presentLines.add(data.sourcePositions[getIndex(iCode, pc + 1) * 3]);
+                int packed = data.sourcePositions[getIndex(iCode, pc + 1)];
+                presentLines.add(
+                        (packed >>> InterpreterData.LINE_SHIFT) & InterpreterData.POSITION_MASK);
             }
             pc += span;
         }

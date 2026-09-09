@@ -77,6 +77,31 @@ public class StackTraceColumnTest {
         }
     }
 
+    /**
+     * A failed property read is attributed to the property, not to the start of the statement or of
+     * the expression. This is what V8 reports for the same code.
+     */
+    @Test
+    public void failedReadReportsThePropertyColumn() {
+        String source = "var foo = {};\nfoo.bar.baz();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(2, stack[0].lineNumber, mode + " line");
+            assertEquals(9, stack[0].columnNumber, mode + " the column of 'baz'");
+        }
+    }
+
+    /** Calling a non-function is attributed to the call, not to the last argument evaluated. */
+    @Test
+    public void callingANonFunctionReportsTheCallColumn() {
+        String source = "var foo = {};\nvar arg = 1;\nfoo.nope(arg);";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(3, stack[0].lineNumber, mode + " line");
+            assertEquals(1, stack[0].columnNumber, mode + " the column of the call");
+        }
+    }
+
     @Test
     public void columnAppearsInV8RenderedStack() {
         Utils.runWithAllModes(

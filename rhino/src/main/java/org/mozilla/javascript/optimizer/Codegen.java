@@ -990,6 +990,15 @@ public class Codegen implements Evaluator {
         mainMethodClass = className;
     }
 
+    /**
+     * Declares that the generated class files are being written out rather than defined in this
+     * process, so nothing will attach a {@link CompiledPositions} table to them. Line numbers then
+     * have to stand on their own, which costs a column wherever a line holds several positions.
+     */
+    public void setCompilingToClassFiles() {
+        positions.disableMarkers();
+    }
+
     static final String DEFAULT_MAIN_METHOD_CLASS = "org.mozilla.javascript.optimizer.OptRuntime";
 
     private static final String SUPER_CLASS_NAME = "java.lang.Object";

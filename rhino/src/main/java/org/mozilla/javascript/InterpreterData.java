@@ -43,9 +43,11 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             Map<Integer, Integer> longJumps,
             int firstLineOperandPC,
             int[] sourcePositions,
+            short[] positionSourceIndexes,
             String[] positionSourceNames) {
         super(maxVars, maxLocals, maxStack, maxFrameArray, exceptionTable);
         this.sourcePositions = sourcePositions;
+        this.positionSourceIndexes = positionSourceIndexes;
         this.positionSourceNames = positionSourceNames;
         this.itsStringTable = itsStringTable;
         this.itsDoubleTable = itsDoubleTable;
@@ -77,35 +79,57 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     final int firstLineOperandPC;
 
     /**
-     * Source positions, three ints each: line, column, and an index into {@link
-     * #positionSourceNames} (negative when the position has no source of its own). Indexed by the
-     * operand of a LINE icode.
+     * Source positions, one packed int each: the line in the high half, the column in the low half.
+     * Indexed by the operand of a LINE or POS icode.
+     *
+     * <p>Both halves are unsigned 16-bit. A file with more lines than that already exceeds what a
+     * line number can express elsewhere, and a column past 65535 is reported as unknown rather than
+     * wrapped.
      */
     final int[] sourcePositions;
 
+    /**
+     * Index into {@link #positionSourceNames} per position, or an empty array when no source mapper
+     * supplied any. Kept apart from {@link #sourcePositions} because it is unused unless a script
+     * was compiled with a source map, which is the less common case.
+     */
+    final short[] positionSourceIndexes;
+
     /** Original source paths, or null when no source mapper supplied any. */
     final String[] positionSourceNames;
+
+    /** Shared empty column, since most scripts are compiled without a source map. */
+    static final short[] NO_SOURCE_INDEXES = new short[0];
+
+    static final int LINE_SHIFT = 16;
+    static final int POSITION_MASK = 0xFFFF;
+
+    /** Packs a line and column into one int, or -1 if either is too large to represent. */
+    static int packPosition(int line, int column) {
+        if (line < 0 || line > POSITION_MASK || column < 0 || column > POSITION_MASK) return -1;
+        return (line << LINE_SHIFT) | column;
+    }
 
     private int icodeHashCode = 0;
 
     @Override
     public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
         int i = positionIndex(pcSourceLineStart);
-        return i < 0 ? 0 : sourcePositions[i * 3];
+        return i < 0 ? 0 : (sourcePositions[i] >>> LINE_SHIFT) & POSITION_MASK;
     }
 
     @Override
     public int getColumnNumberFromPc(int pc, int pcSourceLineStart) {
         int i = positionIndex(pcSourceLineStart);
-        return i < 0 ? 0 : sourcePositions[i * 3 + 1];
+        return i < 0 ? 0 : sourcePositions[i] & POSITION_MASK;
     }
 
     @Override
     public String getSourceNameFromPc(int pc, int pcSourceLineStart) {
         if (positionSourceNames == null) return null;
         int i = positionIndex(pcSourceLineStart);
-        if (i < 0) return null;
-        int n = sourcePositions[i * 3 + 2];
+        if (i < 0 || i >= positionSourceIndexes.length) return null;
+        int n = positionSourceIndexes[i];
         return n < 0 ? null : positionSourceNames[n];
     }
 
@@ -118,7 +142,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         int index =
                 ((itsICode[pcSourceLineStart] & 0xFF) << 8)
                         | (itsICode[pcSourceLineStart + 1] & 0xFF);
-        return (index * 3 + 2) < sourcePositions.length ? index : -1;
+        return index < sourcePositions.length ? index : -1;
     }
 
     public int icodeHashCode() {
@@ -182,8 +206,14 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
         int firstLineOperandPC = -1; // PC of the operand of the first LINE icode
 
-        /** Interned source positions, three ints each; see InterpreterData#sourcePositions. */
-        private int[] sourcePositions = new int[INITIAL_POSITION_TABLE_SIZE * 3];
+        /** Interned source positions, one packed int each; see InterpreterData#sourcePositions. */
+        private int[] sourcePositions = new int[INITIAL_POSITION_TABLE_SIZE];
+
+        /**
+         * Source name per position, grown only once a source mapper supplies one. Most scripts are
+         * compiled without a source map and never allocate it.
+         */
+        private short[] positionSourceIndexes = NO_SOURCE_INDEXES;
 
         private int positionCount;
         private final Map<Position, Integer> positionIndexes = new HashMap<>();
@@ -206,9 +236,17 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             if (positionCount > 0xFFFF) {
                 return positionCount - 1;
             }
-            int nameIndex = -1;
+            int packed = packPosition(line, column);
+            if (packed < 0) {
+                // Beyond what a packed position can hold; report the line alone.
+                packed = packPosition(Math.min(Math.max(line, 0), POSITION_MASK), 0);
+            }
+            if (positionCount == sourcePositions.length) {
+                sourcePositions = Arrays.copyOf(sourcePositions, sourcePositions.length * 2);
+            }
+            sourcePositions[positionCount] = packed;
             if (sourceName != null) {
-                nameIndex =
+                int nameIndex =
                         sourceNameIndexes
                                 .computeIfAbsent(
                                         sourceName,
@@ -217,27 +255,32 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
                                             return sourceNames.size() - 1;
                                         })
                                 .intValue();
+                growSourceIndexes(positionCount + 1);
+                positionSourceIndexes[positionCount] = (short) nameIndex;
             }
-            int base = positionCount * 3;
-            if (base + 3 > sourcePositions.length) {
-                sourcePositions = Arrays.copyOf(sourcePositions, sourcePositions.length * 2);
-            }
-            sourcePositions[base] = line;
-            sourcePositions[base + 1] = column;
-            sourcePositions[base + 2] = nameIndex;
             int index = positionCount++;
             positionIndexes.put(key, index);
             return index;
         }
 
+        /** Grows the source-name column to hold {@code needed} entries, unset ones being -1. */
+        private void growSourceIndexes(int needed) {
+            if (needed <= positionSourceIndexes.length) return;
+            int size = Math.max(needed, Math.max(INITIAL_POSITION_TABLE_SIZE, needed * 2));
+            short[] next = new short[size];
+            Arrays.fill(next, (short) -1);
+            System.arraycopy(positionSourceIndexes, 0, next, 0, positionSourceIndexes.length);
+            positionSourceIndexes = next;
+        }
+
         /** The line recorded for a position index; used by the icode dumper. */
         int positionLine(int index) {
-            return sourcePositions[index * 3];
+            return (sourcePositions[index] >>> LINE_SHIFT) & POSITION_MASK;
         }
 
         /** The column recorded for a position index; used by the icode dumper. */
         int positionColumn(int index) {
-            return sourcePositions[index * 3 + 1];
+            return sourcePositions[index] & POSITION_MASK;
         }
 
         public Builder() {
@@ -267,7 +310,10 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
                                 literalIds,
                                 jumpMap,
                                 firstLineOperandPC,
-                                Arrays.copyOf(sourcePositions, positionCount * 3),
+                                Arrays.copyOf(sourcePositions, positionCount),
+                                sourceNames.isEmpty()
+                                        ? NO_SOURCE_INDEXES
+                                        : Arrays.copyOf(positionSourceIndexes, positionCount),
                                 sourceNames.isEmpty() ? null : sourceNames.toArray(new String[0]));
             }
             return built;

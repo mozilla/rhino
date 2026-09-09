@@ -259,6 +259,19 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         itsData.itsTemplateLiterals = array;
     }
 
+    /**
+     * Records the position of an operation inside an expression, so that a failure is attributed to
+     * the operation rather than to the start of the statement.
+     *
+     * <p>Only nodes carrying a real column qualify. Parts the compiler synthesizes have no position
+     * of their own, and some carry a zero rather than the usual -1, which would otherwise be taken
+     * for line zero.
+     */
+    private void updateExpressionPosition(Node node) {
+        if (node.getColumn() <= 0) return;
+        updateLineNumber(node);
+    }
+
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
         if (lineno < 0) return;
@@ -709,6 +722,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         visitExpression(child, 0);
                         ++argCount;
                     }
+                    // After the target and the arguments, so that calling a non-function is
+                    // attributed to the call rather than to the last argument evaluated.
+                    updateExpressionPosition(node);
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
                         // embed line number and source filename
@@ -792,6 +808,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             case Token.GETPROPNOWARN:
                 visitExpression(child, 0);
                 child = child.getNext();
+                // After the target, so a failure reading the property is attributed to the
+                // property rather than to wherever evaluating the target left us.
+                updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // Jump if null or undefined
                     addIcode(Icode.DUP);
@@ -838,6 +857,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             case Token.GETELEM:
                 visitExpression(child, 0);
                 child = child.getNext();
+                updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     addIcode(Icode.DUP);
                     stackChange(1);
@@ -1312,6 +1332,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     Node target = left.getFirstChild();
                     visitExpression(target, 0);
                     Node id = target.getNext();
+                    // The call target is itself a property access, and reading it is what fails
+                    // when the object is null or undefined.
+                    updateExpressionPosition(left);
                     if (type == Token.GETPROP) {
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj

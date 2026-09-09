@@ -139,20 +139,21 @@ class InterpreterBytecodeDumpTest {
     void optionalChainingBranchIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 18",
+                        "ICode dump, for null, length = 21",
                         "MaxStack = 2",
                         " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"x\"",
                         " [4] NAME",
-                        " [5] DUP",
-                        " [6] IF_NULL_UNDEF 14",
-                        " [9] REG_STR_C1 \"y\"",
-                        " [10] GETPROP",
-                        " [11] GOTO 16",
-                        " [14] POP",
-                        " [15] UNDEF",
-                        " [16] POP_RESULT",
-                        " [17] RETURN_RESULT",
+                        " [5] POS : 1:4",
+                        " [8] DUP",
+                        " [9] IF_NULL_UNDEF 17",
+                        " [12] REG_STR_C1 \"y\"",
+                        " [13] GETPROP",
+                        " [14] GOTO 19",
+                        " [17] POP",
+                        " [18] UNDEF",
+                        " [19] POP_RESULT",
+                        " [20] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("x?.y"));
     }

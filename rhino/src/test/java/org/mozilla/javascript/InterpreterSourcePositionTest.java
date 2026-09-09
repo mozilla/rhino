@@ -39,21 +39,36 @@ class InterpreterSourcePositionTest {
     }
 
     /**
-     * Positions are recorded per statement, so a failing sub-expression is attributed to the start
-     * of its statement rather than to the operation itself. V8 would report the column of {@code
-     * b}; expression-level positions would change this to match.
+     * A failed read is attributed to the property being read, not to the start of the statement or
+     * of the expression. This is what V8 reports for the same code.
      */
     @Test
-    void subExpressionsReportTheStatementColumn() {
+    void aFailedReadReportsThePropertyColumn() {
         RhinoException e = throwFrom("var o = {};\n  o.a.b;", 1);
         assertEquals(2, e.lineNumber());
-        assertEquals(3, e.columnNumber(), "start of the statement, not of '.b'");
+        assertEquals(7, e.columnNumber(), "the column of 'b', which could not be read");
     }
 
     @Test
     void engineThrownErrorsCarryAColumn() {
         RhinoException e = throwFrom("null.x;", 1);
         assertEquals(1, e.lineNumber());
+        assertEquals(6, e.columnNumber(), "the column of 'x'");
+    }
+
+    /** An element read is attributed to the index expression, as a property read is to the name. */
+    @Test
+    void aFailedElementReadReportsTheIndexColumn() {
+        RhinoException e = throwFrom("var k = 'a';\nnull[k];", 1);
+        assertEquals(2, e.lineNumber());
+        assertEquals(6, e.columnNumber(), "the column of 'k'");
+    }
+
+    /** Calling a non-function is attributed to the call, not to the last argument evaluated. */
+    @Test
+    void callingANonFunctionReportsTheCallColumn() {
+        RhinoException e = throwFrom("var o = {};\nvar q = 1;\no.nope(q);", 1);
+        assertEquals(3, e.lineNumber());
         assertEquals(1, e.columnNumber());
     }
 
