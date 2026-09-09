@@ -743,40 +743,31 @@ public class NativePromise extends ScriptableObject {
     // so we make it a separate object. This actually fires resolution functions on
     // the passed callbacks.
     private static class ResolvingFunctions {
-
         private boolean alreadyResolved = false;
-        LambdaFunction resolve;
-        LambdaFunction reject;
+        private final NativePromise promise;
+        final LambdaFunction resolve;
+        final LambdaFunction reject;
 
         ResolvingFunctions(VarScope topScope, NativePromise promise) {
-            resolve =
-                    new LambdaFunction(
-                            topScope,
-                            1,
-                            (Context cx, VarScope scope, Object thisObj, Object[] args) -> {
-                                if (alreadyResolved || promise.state != State.PENDING) {
-                                    return Undefined.instance;
-                                }
-                                alreadyResolved = true;
-                                return promise.resolveWith(
-                                        cx,
-                                        scope,
-                                        (args.length > 0 ? args[0] : Undefined.instance));
-                            });
-            reject =
-                    new LambdaFunction(
-                            topScope,
-                            1,
-                            (Context cx, VarScope scope, Object thisObj, Object[] args) -> {
-                                if (alreadyResolved || promise.state != State.PENDING) {
-                                    return Undefined.instance;
-                                }
-                                alreadyResolved = true;
-                                return promise.rejectPromise(
-                                        cx,
-                                        scope,
-                                        (args.length > 0 ? args[0] : Undefined.instance));
-                            });
+            this.promise = promise;
+            resolve = new LambdaFunction(topScope, 1, this::resolve);
+            reject = new LambdaFunction(topScope, 1, this::reject);
+        }
+
+        private Object resolve(Context cx, VarScope s, Object to, Object[] args) {
+            if (alreadyResolved || promise.state != State.PENDING) {
+                return Undefined.instance;
+            }
+            alreadyResolved = true;
+            return promise.resolveWith(cx, s, (args.length > 0 ? args[0] : Undefined.instance));
+        }
+
+        private Object reject(Context cx, VarScope s, Object to, Object[] args) {
+            if (alreadyResolved || promise.state != State.PENDING) {
+                return Undefined.instance;
+            }
+            alreadyResolved = true;
+            return promise.rejectPromise(cx, s, (args.length > 0 ? args[0] : Undefined.instance));
         }
     }
 
@@ -846,12 +837,7 @@ public class NativePromise extends ScriptableObject {
             if (!(pc instanceof Constructable)) {
                 throw ScriptRuntime.typeErrorById("msg.constructor.expected");
             }
-            LambdaFunction executorFunc =
-                    new LambdaFunction(
-                            topScope,
-                            2,
-                            (Context cx, VarScope scope, Object thisObj, Object[] args) ->
-                                    executor(args));
+            LambdaFunction executorFunc = new LambdaFunction(topScope, 2, this::executor);
 
             promise = ((Constructable) pc).construct(topCx, topScope, new Object[] {executorFunc});
 
@@ -866,7 +852,7 @@ public class NativePromise extends ScriptableObject {
             reject = (Callable) rawReject;
         }
 
-        private Object executor(Object[] args) {
+        private Object executor(Context cx, VarScope s, Object to, Object[] args) {
             if (!Undefined.isUndefined(rawResolve) || !Undefined.isUndefined(rawReject)) {
                 throw ScriptRuntime.typeErrorById("msg.promise.capability.state");
             }
@@ -958,21 +944,7 @@ public class NativePromise extends ScriptableObject {
 
                 Callable rejectFunc = capability.reject;
                 if (!failFast) {
-                    LambdaFunction resolveSettledRejection =
-                            new LambdaFunction(
-                                    topScope,
-                                    1,
-                                    (cx, scope, thisObj, args) -> {
-                                        Scriptable result = cx.newObject(scope);
-                                        result.put("status", result, " rejected");
-                                        result.put(
-                                                "reason",
-                                                result,
-                                                (args.length > 0 ? args[0] : Undefined.instance));
-                                        return eltResolver.resolve(cx, scope, result, this);
-                                    });
-                    resolveSettledRejection.setStandardPropertyAttributes(DONTENUM | READONLY);
-                    rejectFunc = resolveSettledRejection;
+                    rejectFunc = createResolveSettledRejection(topScope, eltResolver);
                 }
                 remainingElements++;
 
@@ -981,6 +953,25 @@ public class NativePromise extends ScriptableObject {
                 thenFunc.call(topCx, topScope, new Object[] {resolveFunc, rejectFunc});
                 index++;
             }
+        }
+
+        private LambdaFunction createResolveSettledRejection(
+                VarScope topScope, PromiseElementResolver eltResolver) {
+            LambdaFunction resolveSettledRejection =
+                    new LambdaFunction(
+                            topScope,
+                            1,
+                            (cx, scope, thisObj, args) -> {
+                                Scriptable result = cx.newObject(scope);
+                                result.put("status", result, " rejected");
+                                result.put(
+                                        "reason",
+                                        result,
+                                        (args.length > 0 ? args[0] : Undefined.instance));
+                                return eltResolver.resolve(cx, scope, result, this);
+                            });
+            resolveSettledRejection.setStandardPropertyAttributes(DONTENUM | READONLY);
+            return resolveSettledRejection;
         }
 
         void finalResolution(Context cx, VarScope scope) {
@@ -1054,15 +1045,7 @@ public class NativePromise extends ScriptableObject {
                 Object nextPromise = resolve.call(topCx, topScope, new Object[] {nextVal});
 
                 // Create a resolution func that will stash its result in the right place
-                PromiseElementResolver eltResolver = new PromiseElementResolver(index);
-                LambdaFunction rejectFunc =
-                        new LambdaFunction(
-                                topScope,
-                                1,
-                                (cx, scope, thisObj, args) -> {
-                                    Object value = (args.length > 0 ? args[0] : Undefined.instance);
-                                    return eltResolver.reject(cx, scope, value, this);
-                                });
+                LambdaFunction rejectFunc = getRejectFunc(topScope, index);
                 remainingElements++;
 
                 // Call "then" on the promise with the resolution func
@@ -1070,6 +1053,19 @@ public class NativePromise extends ScriptableObject {
                 thenFunc.call(topCx, topScope, new Object[] {capability.resolve, rejectFunc});
                 index++;
             }
+        }
+
+        private LambdaFunction getRejectFunc(VarScope topScope, int index) {
+            // This needs to be bound to the function because it tracks whether a
+            // rejection call is made more than once.
+            PromiseElementResolver eltResolver = new PromiseElementResolver(index);
+            return new LambdaFunction(
+                    topScope,
+                    1,
+                    (cx, scope, thisObj, args) -> {
+                        Object value = (args.length > 0 ? args[0] : Undefined.instance);
+                        return eltResolver.reject(cx, scope, value, this);
+                    });
         }
 
         void finalRejection(Context cx, VarScope scope) {
