@@ -290,17 +290,21 @@ public abstract class RhinoException extends RuntimeException {
                     printStarted = true;
                 } else if (printStarted && ((limit < 0) || (count < limit))) {
                     String fn = fileName == null ? "(unknown)" : fileName;
+                    int reported = e.getLineNumber();
+                    int line = reported;
                     int column = 0;
                     CompiledPositions positions = CompiledPositions.forClass(e.getClassName());
                     if (positions != null) {
-                        column = positions.getColumn(e.getMethodName(), e.getLineNumber());
-                        String mapped =
-                                positions.getSourceName(e.getMethodName(), e.getLineNumber());
+                        column = positions.getColumn(e.getMethodName(), reported);
+                        String mapped = positions.getSourceName(e.getMethodName(), reported);
                         if (mapped != null) {
                             fn = mapped;
                         }
+                        // The emitted number may be a synthetic stand-in for a line that already
+                        // identified another position.
+                        line = positions.getLine(e.getMethodName(), reported);
                     }
-                    list.add(new ScriptStackElement(fn, methodName, e.getLineNumber(), column));
+                    list.add(new ScriptStackElement(fn, methodName, line, column));
                     count++;
                 }
 

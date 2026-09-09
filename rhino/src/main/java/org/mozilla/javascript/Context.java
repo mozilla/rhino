@@ -2844,20 +2844,23 @@ public class Context implements Closeable {
         return EvaluationMethod.Interpreter.createEvaluator();
     }
 
+    /**
+     * The line and source of the topmost script frame, discarding the column.
+     *
+     * <p>Deliberately a thin wrapper over {@link #getSourcePosition()} rather than a second
+     * traversal: a compiled frame's reported line number is not always its real one, and going
+     * through a single implementation keeps every caller on the translated value.
+     */
     static String getSourcePositionFromStack(int[] linep) {
-        Context cx = getCurrentContext();
-        if (cx == null) return null;
-        if (cx.lastInterpreterFrame != null) {
-            Evaluator evaluator = cx.getInterpreterForCurrentMethod();
-            if (evaluator != null) return evaluator.getSourcePositionFromStack(cx, linep);
-        }
-
-        return getSourcePositionFromJavaStack(linep);
+        Position position = getSourcePosition();
+        if (position == null) return null;
+        linep[0] = position.getLine();
+        return position.getSourcePath();
     }
 
     /**
-     * Like {@link #getSourcePositionFromStack(int[])}, but also reports the column when the
-     * evaluator tracks one. Returns null if no position could be determined.
+     * The position of the topmost script frame, or null if none could be determined. Reports the
+     * column where the evaluator tracks one.
      */
     static Position getSourcePosition() {
         Context cx = getCurrentContext();
@@ -2879,28 +2882,19 @@ public class Context implements Closeable {
         for (StackTraceElement e : stack) {
             if (!frameMatches(e)) continue;
             String sourceName = e.getFileName();
+            int reported = e.getLineNumber();
+            int line = reported;
             int column = 0;
             CompiledPositions positions = CompiledPositions.forClass(e.getClassName());
             if (positions != null) {
-                column = positions.getColumn(e.getMethodName(), e.getLineNumber());
-                String mapped = positions.getSourceName(e.getMethodName(), e.getLineNumber());
+                column = positions.getColumn(e.getMethodName(), reported);
+                String mapped = positions.getSourceName(e.getMethodName(), reported);
                 if (mapped != null) {
                     sourceName = mapped;
                 }
+                line = positions.getLine(e.getMethodName(), reported);
             }
-            return sourceName == null ? null : new Position(sourceName, e.getLineNumber(), column);
-        }
-        return null;
-    }
-
-    /** Returns the current filename in the java stack. */
-    static String getSourcePositionFromJavaStack(int[] linep) {
-        StackTraceElement[] stack = new Throwable().getStackTrace();
-        for (StackTraceElement e : stack) {
-            if (frameMatches(e)) {
-                linep[0] = e.getLineNumber();
-                return e.getFileName();
-            }
+            return sourceName == null ? null : new Position(sourceName, line, column);
         }
         return null;
     }

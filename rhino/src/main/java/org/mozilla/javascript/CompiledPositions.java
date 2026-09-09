@@ -13,30 +13,36 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Columns and original source paths for one generated class, keyed by method name and line.
+ * Source positions for one generated class, addressed by the line number a stack frame reports.
  *
- * <p>The JVM {@code LineNumberTable} holds a line number and nothing else, and a class has a single
- * {@code SourceFile}, so a compiled frame cannot carry a column or a per-position source path on
- * its own. This table records what the class file cannot.
+ * <p>A compiled frame exposes exactly one datum that varies from position to position: the {@code
+ * line_number} of a LineNumberTable entry, sixteen bits per JVMS 4.7.12. The class name, method
+ * name and source file are fixed for the whole frame. Those sixteen bits are therefore the entire
+ * channel through which a column can travel.
  *
- * <p>The line is the only per-position value a stack frame gives back, so it is also the key. Where
- * a line carries two different columns the column is reported as unknown rather than guessed: a
- * plausible but wrong column would send a source-map consumer to the wrong place, which is worse
- * than admitting ignorance. In normally formatted code a line holds one position and the column is
- * exact, and when a source mapper is attached the recorded line is already the mapped original
- * line, so collisions are rarer still.
+ * <p>Rhino chooses what goes in them. A position whose line is not yet spoken for emits its real
+ * line, which is what a Java debugger expects. A second position on a line already claimed by a
+ * different one emits a synthetic number taken from the top of the range instead, and this table
+ * maps it back to the real line and column. So the reported line is always exact, the column is
+ * exact too, and a synthetic number is only ever used where the real line could not have identified
+ * the position anyway.
  */
 public final class CompiledPositions {
 
     /** Name of the static field holding the table on a generated class. */
     public static final String FIELD_NAME = "_positions";
 
-    /** Column and source recorded for one line; column zero means "more than one, so unknown". */
-    private static final class LinePosition {
+    /** Synthetic line numbers are handed out from the top of the 16-bit range downwards. */
+    private static final int FIRST_SYNTHETIC_LINE = 0xFFFF;
+
+    /** What a reported line number resolves to. */
+    private static final class Entry {
+        final int line;
         final int column;
         final String sourceName;
 
-        LinePosition(int column, String sourceName) {
+        Entry(int line, int column, String sourceName) {
+            this.line = line;
             this.column = column;
             this.sourceName = sourceName;
         }
@@ -80,27 +86,37 @@ public final class CompiledPositions {
         return ref == null ? null : ref.get();
     }
 
-    private final Map<String, Map<Integer, LinePosition>> byMethod;
+    private final Map<String, Map<Integer, Entry>> byMethod;
 
-    private CompiledPositions(Map<String, Map<Integer, LinePosition>> byMethod) {
+    private CompiledPositions(Map<String, Map<Integer, Entry>> byMethod) {
         this.byMethod = byMethod;
     }
 
-    private LinePosition lookup(String methodName, int line) {
-        Map<Integer, LinePosition> lines = byMethod.get(methodName);
-        return lines == null ? null : lines.get(line);
+    private Entry lookup(String methodName, int reportedLine) {
+        Map<Integer, Entry> lines = byMethod.get(methodName);
+        return lines == null ? null : lines.get(reportedLine);
     }
 
-    /** The one-based column on a line, or zero when unknown or ambiguous. */
-    public int getColumn(String methodName, int line) {
-        LinePosition p = lookup(methodName, line);
-        return p == null ? 0 : p.column;
+    /**
+     * The real source line for a reported line number, which differs from it when the position had
+     * to be given a synthetic one. Returns {@code reportedLine} unchanged when it is not in the
+     * table.
+     */
+    public int getLine(String methodName, int reportedLine) {
+        Entry e = lookup(methodName, reportedLine);
+        return e == null ? reportedLine : e.line;
     }
 
-    /** The original source path for a line, or null to use the class's own source file. */
-    public String getSourceName(String methodName, int line) {
-        LinePosition p = lookup(methodName, line);
-        return p == null ? null : p.sourceName;
+    /** The one-based column, or zero when unknown. */
+    public int getColumn(String methodName, int reportedLine) {
+        Entry e = lookup(methodName, reportedLine);
+        return e == null ? 0 : e.column;
+    }
+
+    /** The original source path, or null to use the class's own source file. */
+    public String getSourceName(String methodName, int reportedLine) {
+        Entry e = lookup(methodName, reportedLine);
+        return e == null ? null : e.sourceName;
     }
 
     public static Builder builder() {
@@ -109,39 +125,90 @@ public final class CompiledPositions {
 
     /** Collects positions during code generation. Not thread safe; one per generated class. */
     public static final class Builder {
-        private final Map<String, Map<Integer, LinePosition>> byMethod = new HashMap<>();
 
-        /** Marks a line whose positions disagree, so it reports unknown. */
-        private static final LinePosition AMBIGUOUS = new LinePosition(0, null);
+        private static final class Key {
+            final String method;
+            final int line;
+            final int column;
+            final String sourceName;
+
+            Key(String method, int line, int column, String sourceName) {
+                this.method = method;
+                this.line = line;
+                this.column = column;
+                this.sourceName = sourceName;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (!(o instanceof Key)) return false;
+                Key k = (Key) o;
+                return line == k.line
+                        && column == k.column
+                        && method.equals(k.method)
+                        && Objects.equals(sourceName, k.sourceName);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(method, line, column, sourceName);
+            }
+        }
+
+        private final Map<String, Map<Integer, Entry>> byMethod = new HashMap<>();
+        private final Map<Key, Integer> emittedFor = new HashMap<>();
+
+        private int nextSynthetic = FIRST_SYNTHETIC_LINE;
+        private int highestRealLine;
 
         /**
+         * Records a position and returns the line number to emit for it, which is the real line
+         * unless that line already identifies a different position.
+         *
          * @param column the one-based column, or zero when the position is synthetic and carries no
-         *     column of its own.
+         *     column of its own
          */
-        public void add(String methodName, int line, int column, String sourceName) {
-            Map<Integer, LinePosition> lines =
-                    byMethod.computeIfAbsent(methodName, k -> new HashMap<>());
-            LinePosition existing = lines.get(line);
-            if (existing == null) {
-                lines.put(line, new LinePosition(Math.max(column, 0), sourceName));
-                return;
+        public int record(String methodName, int line, int column, String sourceName) {
+            if (line > highestRealLine) highestRealLine = line;
+            Map<Integer, Entry> lines = byMethod.computeIfAbsent(methodName, k -> new HashMap<>());
+
+            Entry claimed = lines.get(line);
+            if (claimed == null) {
+                lines.put(line, new Entry(line, Math.max(column, 0), sourceName));
+                emittedFor.put(new Key(methodName, line, column, sourceName), line);
+                return line;
             }
-            if (existing == AMBIGUOUS) {
-                return;
+
+            boolean sameAsClaimed =
+                    claimed.line == line
+                            && claimed.column == Math.max(column, 0)
+                            && Objects.equals(claimed.sourceName, sourceName);
+            if (sameAsClaimed) {
+                return line;
             }
-            if (!Objects.equals(existing.sourceName, sourceName)) {
-                lines.put(line, AMBIGUOUS);
-                return;
-            }
+
+            // A position with no column of its own can neither claim a line nor be worth a
+            // synthetic number; it just reuses whatever the line already resolves to.
             if (column <= 0) {
-                // Carries no column, so it can neither supply nor contradict one.
-                return;
+                return line;
             }
-            if (existing.column == 0) {
-                lines.put(line, new LinePosition(column, sourceName));
-            } else if (existing.column != column) {
-                lines.put(line, AMBIGUOUS);
+
+            Integer already = emittedFor.get(new Key(methodName, line, column, sourceName));
+            if (already != null) {
+                return already.intValue();
             }
+
+            if (nextSynthetic <= highestRealLine) {
+                // The 16-bit space is exhausted, which needs a file of some 65000 lines. Report
+                // the column as unknown rather than emit a number that means something else.
+                lines.put(line, new Entry(line, 0, claimed.sourceName));
+                return line;
+            }
+
+            int synthetic = nextSynthetic--;
+            lines.put(synthetic, new Entry(line, column, sourceName));
+            emittedFor.put(new Key(methodName, line, column, sourceName), synthetic);
+            return synthetic;
         }
 
         public boolean isEmpty() {
@@ -149,8 +216,8 @@ public final class CompiledPositions {
         }
 
         public CompiledPositions build() {
-            Map<String, Map<Integer, LinePosition>> out = new HashMap<>();
-            for (Map.Entry<String, Map<Integer, LinePosition>> e : byMethod.entrySet()) {
+            Map<String, Map<Integer, Entry>> out = new HashMap<>();
+            for (Map.Entry<String, Map<Integer, Entry>> e : byMethod.entrySet()) {
                 out.put(e.getKey(), Map.copyOf(e.getValue()));
             }
             return new CompiledPositions(out);

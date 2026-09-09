@@ -3215,20 +3215,23 @@ class BodyCodegen {
     }
 
     /**
-     * Adds a line to the class file and records the column and original source alongside it. A
-     * stack frame reports only the line, so the line is also how the side table is keyed; a line
-     * carrying more than one column resolves to unknown rather than to a guess.
+     * Records a position and adds the line entry that identifies it. The number emitted is the real
+     * line unless that line already identifies a different position, in which case the table hands
+     * back a synthetic one and maps it back at lookup time.
      */
     private void emitPosition(Position position) {
-        cfw.addLineNumberEntry((short) position.getLine());
-        if (currentMethodName != null) {
-            codegen.getPositions()
-                    .add(
-                            currentMethodName,
-                            position.getLine(),
-                            position.getColumn(),
-                            position.getSourcePath());
+        if (currentMethodName == null) {
+            cfw.addLineNumberEntry(position.getLine());
+            return;
         }
+        int emitted =
+                codegen.getPositions()
+                        .record(
+                                currentMethodName,
+                                position.getLine(),
+                                position.getColumn(),
+                                position.getSourcePath());
+        cfw.addLineNumberEntry(emitted);
     }
 
     /** Applies the source mapper, or passes the position through when there is none. */

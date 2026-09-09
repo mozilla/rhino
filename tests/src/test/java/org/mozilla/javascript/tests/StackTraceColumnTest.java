@@ -51,20 +51,30 @@ public class StackTraceColumnTest {
     }
 
     /**
-     * Two statements on one line. The interpreter records each position separately and reports the
-     * exact one; the compiled backend can only key on the line the JVM gives back, so it reports
-     * the column as unknown rather than guessing between them.
+     * Two statements on one line, so the line alone cannot say which one threw. The compiled
+     * backend gives the second position a synthetic line number in the class file and maps it back,
+     * so both modes still report the exact column.
      */
     @Test
     public void oneLineWithTwoStatements() {
         String source = "function f() { var a = 1; throw new Error(a); }\nf();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(1, stack[0].lineNumber, mode + " line");
+            assertEquals(27, stack[0].columnNumber, mode + " column of the throw");
+        }
+    }
 
-        ScriptStackElement[] interpreted = stackOf(source, EvaluationMethod.Interpreter);
-        assertEquals(27, interpreted[0].columnNumber, "interpreter resolves the exact position");
-
-        ScriptStackElement[] compiled = stackOf(source, EvaluationMethod.Compiler);
-        assertEquals(0, compiled[0].columnNumber, "compiled reports unknown rather than a guess");
-        assertEquals(1, compiled[0].lineNumber, "the line is still exact");
+    /** Many positions on one line, well past what a single line number could distinguish. */
+    @Test
+    public void oneLineWithManyStatements() {
+        String source =
+                "function f() { var a = 1; var b = 2; var c = 3; throw new Error(a); }\nf();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(1, stack[0].lineNumber, mode + " line");
+            assertEquals(49, stack[0].columnNumber, mode + " column of the throw");
+        }
     }
 
     @Test
