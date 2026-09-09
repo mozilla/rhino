@@ -490,7 +490,7 @@ class BodyCodegen {
             cfw.addAStore(popvLocal);
 
             int linenum = scriptOrFn.getEndLineno();
-            if (linenum != -1) addRemappedLineEntry(linenum, 1);
+            if (linenum != -1) emitScriptEndLine(linenum);
 
         } else {
             if (fnCurrent.itsContainsCalls0) {
@@ -3218,10 +3218,11 @@ class BodyCodegen {
         emitPosition(mapped);
     }
 
-    // For a position the compiler invented rather than one from a statement. The column handed to
-    // the source mapper is a placeholder, so it is not recorded as though it were real.
-    private void addRemappedLineEntry(int line, int placeholderColumn) {
-        Position mapped = remap(line, placeholderColumn);
+    // The closing line of a script, which is the compiler's own idea of a position rather than one
+    // taken from a node. Column 1 is only a probe for the source mapper, so the mapped column is
+    // dropped instead of being recorded as though it were real.
+    private void emitScriptEndLine(int line) {
+        Position mapped = remap(line, 1);
         if (mapped == null) return;
         emitPosition(new Position(mapped.getSourcePath(), mapped.getLine(), 0));
     }
@@ -3229,10 +3230,6 @@ class BodyCodegen {
     // Emits the real line, unless that line already identifies a different position, in which case
     // the table hands back a marker and maps it back at lookup time.
     private void emitPosition(Position position) {
-        if (currentMethodName == null) {
-            cfw.addLineNumberEntry(position.getLine());
-            return;
-        }
         int emitted =
                 codegen.getPositions()
                         .record(
@@ -5005,7 +5002,7 @@ class BodyCodegen {
 
     private int itsLineNumber;
 
-    /** Name of the method currently being generated, used to key recorded source positions. */
+    // Keys the positions recorded for this body, since a lookup is by method as well as line
     private String currentMethodName;
 
     private boolean hasVarsInRegs;

@@ -172,12 +172,6 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
     /** Returns the parent frame, or null if this is the top-level frame. */
     public abstract ACallFrame<T, U> getParentFrame();
 
-    /**
-     * Returns the program counter position for source line information. For the original
-     * interpreter, this is the PC at the start of the current source line. For InterpreterV2, this
-     * may be the current PC.
-     */
-
     /** Returns the debuggable script data associated with this frame. */
     public abstract DebuggableScript getData();
 

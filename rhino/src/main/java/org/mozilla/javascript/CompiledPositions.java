@@ -26,9 +26,6 @@ import org.mozilla.javascript.sourcemap.Position;
  */
 public final class CompiledPositions {
 
-    /** Name of the static field holding the table on a generated class. */
-    public static final String FIELD_NAME = "_positions";
-
     // Markers are handed out downwards, per method, since a lookup is keyed by method too
     private static final int FIRST_POSITION_MARKER = 0xFFFF;
 

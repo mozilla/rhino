@@ -1009,7 +1009,7 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
-    static final String POSITIONS_FIELD_NAME = CompiledPositions.FIELD_NAME;
+    static final String POSITIONS_FIELD_NAME = "_positions";
     static final String POSITIONS_FIELD_SIGNATURE = "Lorg/mozilla/javascript/CompiledPositions;";
 
     static final String REGEXP_INIT_METHOD_NAME = "_reInit";

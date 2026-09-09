@@ -2844,13 +2844,8 @@ public class Context implements Closeable {
         return EvaluationMethod.Interpreter.createEvaluator();
     }
 
-    /**
-     * The line and source of the topmost script frame, discarding the column.
-     *
-     * <p>Deliberately a thin wrapper over {@link #getSourcePosition()} rather than a second
-     * traversal: a compiled frame's reported line number is not always its real one, and going
-     * through a single implementation keeps every caller on the translated value.
-     */
+    // A thin wrapper rather than a second traversal: a compiled frame's reported line number is
+    // not always its real one, so every caller should go through the same translation.
     static String getSourcePositionFromStack(int[] linep) {
         Position position = getSourcePosition();
         if (position == null) return null;
@@ -2858,10 +2853,7 @@ public class Context implements Closeable {
         return position.getSourcePath();
     }
 
-    /**
-     * The position of the topmost script frame, or null if none could be determined. Reports the
-     * column where the evaluator tracks one.
-     */
+    /** The position of the topmost script frame, or null if none could be determined. */
     static Position getSourcePosition() {
         Context cx = getCurrentContext();
         if (cx == null) return null;
@@ -2873,10 +2865,7 @@ public class Context implements Closeable {
         return getPositionFromJavaStack();
     }
 
-    /**
-     * The position of the topmost script frame on the Java stack, consulting the compiled position
-     * table so the column and original source match what the stack trace reports.
-     */
+    /** Returns the current position in the java stack. */
     private static Position getPositionFromJavaStack() {
         StackTraceElement[] stack = new Throwable().getStackTrace();
         for (StackTraceElement e : stack) {
