@@ -304,6 +304,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 // source position table index
                 return 1 + 2;
 
+            case Icode.LINE1:
+            case Icode.POS1:
+                // source position table index, one byte
+                return 1 + 1;
+
             case Icode.LITERAL_NEW_OBJECT:
                 // make a copy or not flag
                 return 1 + 1;
@@ -358,11 +363,13 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         for (int pc = 0; pc != iCodeLength; ) {
             int bytecode = iCode[pc];
             int span = bytecodeSpan(bytecode);
-            if (bytecode == Icode.LINE) {
-                if (span != 3) Kit.codeBug();
+            if (bytecode == Icode.LINE || bytecode == Icode.LINE1) {
                 // The operand is a position index; report the distinct lines behind them so
-                // debugger breakpoints see exactly what they saw before.
-                int packed = data.sourcePositions[getIndex(iCode, pc + 1)];
+                // debugger breakpoints see exactly what they saw before. POS records are skipped:
+                // they refine a position within a line already reported.
+                int index =
+                        bytecode == Icode.LINE1 ? (iCode[pc + 1] & 0xFF) : getIndex(iCode, pc + 1);
+                int packed = data.sourcePositions[index];
                 presentLines.add(
                         (packed >>> InterpreterData.LINE_SHIFT) & InterpreterData.POSITION_MASK);
             }
@@ -792,8 +799,10 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.ESCXMLATTR] = new DoEscXMLAttr();
         instructionObjs[base + Token.ESCXMLTEXT] = new DoEscXMLText();
         instructionObjs[base + Icode.DEBUGGER] = new DoDebug();
-        instructionObjs[base + Icode.LINE] = new DoLineChange();
-        instructionObjs[base + Icode.POS] = new DoPositionChange();
+        instructionObjs[base + Icode.LINE] = new DoLineChange(2);
+        instructionObjs[base + Icode.POS] = new DoPositionChange(2);
+        instructionObjs[base + Icode.LINE1] = new DoLineChange(1);
+        instructionObjs[base + Icode.POS1] = new DoPositionChange(1);
         instructionObjs[base + Icode.REG_IND_C0] = new DoIndexCn();
         instructionObjs[base + Icode.REG_IND_C1] = new DoIndexCn();
         instructionObjs[base + Icode.REG_IND_C2] = new DoIndexCn();
@@ -3942,25 +3951,37 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         }
     }
 
-    /** Records a position within the current line. Deliberately silent for the debugger. */
+    /**
+     * Records a position within the current line. Deliberately silent for the debugger, which is
+     * line-oriented, so several positions on one line stay a single step.
+     */
     private static class DoPositionChange extends InstructionClass {
+        private final int operandSize;
+
+        DoPositionChange(int operandSize) {
+            this.operandSize = operandSize;
+        }
+
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.pcSourceLineStart = frame.pc;
-            frame.pc += 2;
+            frame.pc += operandSize;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int index = ctx.getIndex(ctx.pc);
-            ctx.out.println(
-                    tname + " : " + ctx.positionLine(index) + ":" + ctx.positionColumn(index));
-            ctx.pc += 2;
+            dumpPosition(tname, ctx, operandSize);
         }
     }
 
     private static class DoLineChange extends InstructionClass {
+        private final int operandSize;
+
+        DoLineChange(int operandSize) {
+            this.operandSize = operandSize;
+        }
+
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.pcSourceLineStart = frame.pc;
@@ -3968,17 +3989,23 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 int line = frame.compilerData.getLineNumberFromPc(frame.pc, frame.pc);
                 frame.debuggerFrame.onLineChange(cx, line);
             }
-            frame.pc += 2;
+            frame.pc += operandSize;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int index = ctx.getIndex(ctx.pc);
-            ctx.out.println(
-                    tname + " : " + ctx.positionLine(index) + ":" + ctx.positionColumn(index));
-            ctx.pc += 2;
+            dumpPosition(tname, ctx, operandSize);
         }
+    }
+
+    private static void dumpPosition(String tname, ICodeDumpContext ctx, int operandSize) {
+        int index =
+                operandSize == 1
+                        ? (ctx.compilerData.itsICode[ctx.pc] & 0xFF)
+                        : ctx.getIndex(ctx.pc);
+        ctx.out.println(tname + " : " + ctx.positionLine(index) + ":" + ctx.positionColumn(index));
+        ctx.pc += operandSize;
     }
 
     private static class DoIndexCn extends InstructionClass {

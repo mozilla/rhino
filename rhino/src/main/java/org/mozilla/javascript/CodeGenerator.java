@@ -41,6 +41,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private int columnNumber = 0;
     private String positionSourceName;
     private int lastPositionIcodeStart = -1;
+    private int lastPositionIcodeSize;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
@@ -301,22 +302,43 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         if (column > 0) columnNumber = column;
         positionSourceName = sourcePath;
         int index = itsData.internSourcePosition(lineNumber, columnNumber, sourcePath);
+        // Positions are numbered per function from zero, so all but the largest functions address
+        // their whole table with one byte.
+        boolean narrow = index <= 0xFF;
+        int size = narrow ? 2 : 3;
         // Nested nodes often refine the column before anything is emitted, so rewrite the pending
         // icode in place instead of leaving one that is immediately superseded. Only the operand
         // moves, so jump targets are unaffected. A line change is never collapsed: the debugger
-        // reports it even when the line emits no code of its own, such as a function header.
-        if (!lineChanged && lastPositionIcodeStart >= 0 && iCodeTop == lastPositionIcodeStart + 3) {
+        // reports it even when the line emits no code of its own, such as a function header. Nor
+        // is a record whose operand has outgrown the form it was written in.
+        if (!lineChanged
+                && lastPositionIcodeStart >= 0
+                && iCodeTop == lastPositionIcodeStart + lastPositionIcodeSize
+                && size <= lastPositionIcodeSize) {
             byte[] array = itsData.itsICode;
-            array[lastPositionIcodeStart + 1] = (byte) (index >>> 8);
-            array[lastPositionIcodeStart + 2] = (byte) index;
+            if (lastPositionIcodeSize == 2) {
+                array[lastPositionIcodeStart + 1] = (byte) index;
+            } else {
+                array[lastPositionIcodeStart + 1] = (byte) (index >>> 8);
+                array[lastPositionIcodeStart + 2] = (byte) index;
+            }
             return;
         }
         lastPositionIcodeStart = iCodeTop;
-        addIcode(lineChanged ? Icode.LINE : Icode.POS);
-        if (itsData.firstLineOperandPC < 0) {
-            itsData.firstLineOperandPC = iCodeTop;
+        lastPositionIcodeSize = size;
+        if (narrow) {
+            addIcode(lineChanged ? Icode.LINE1 : Icode.POS1);
+            if (itsData.firstLineOperandPC < 0) {
+                itsData.firstLineOperandPC = iCodeTop;
+            }
+            addUint8(index);
+        } else {
+            addIcode(lineChanged ? Icode.LINE : Icode.POS);
+            if (itsData.firstLineOperandPC < 0) {
+                itsData.firstLineOperandPC = iCodeTop;
+            }
+            addUint16(index);
         }
-        addUint16(index);
     }
 
     private static RuntimeException badTree(Node node) {

@@ -172,8 +172,13 @@ abstract class Icode {
             // is line-oriented, so several positions on one line stay a single step.
             POS = OBJECT_REST - 1,
 
+            // LINE and POS with a one-byte operand. Positions are numbered per function from
+            // zero, so all but the largest functions fit their whole table in a byte.
+            LINE1 = POS - 1,
+            POS1 = LINE1 - 1,
+
             // Last icode
-            MIN_ICODE = POS;
+            MIN_ICODE = POS1;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -254,6 +259,10 @@ abstract class Icode {
             case LINE:
                 return "LINE";
             case POS:
+                return "POS";
+            case LINE1:
+                return "LINE";
+            case POS1:
                 return "POS";
             case SHORTNUMBER:
                 return "SHORTNUMBER";

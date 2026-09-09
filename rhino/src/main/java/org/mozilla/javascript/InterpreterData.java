@@ -138,10 +138,17 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
      * covers data deserialized from a version that had no position table.
      */
     private int positionIndex(int pcSourceLineStart) {
-        if (pcSourceLineStart < 0 || sourcePositions == null) return -1;
-        int index =
-                ((itsICode[pcSourceLineStart] & 0xFF) << 8)
-                        | (itsICode[pcSourceLineStart + 1] & 0xFF);
+        if (pcSourceLineStart <= 0 || sourcePositions == null) return -1;
+        // The operand is one byte or two depending on which form the opcode just before it is.
+        int opcode = itsICode[pcSourceLineStart - 1];
+        int index;
+        if (opcode == Icode.LINE1 || opcode == Icode.POS1) {
+            index = itsICode[pcSourceLineStart] & 0xFF;
+        } else {
+            index =
+                    ((itsICode[pcSourceLineStart] & 0xFF) << 8)
+                            | (itsICode[pcSourceLineStart + 1] & 0xFF);
+        }
         return index < sourcePositions.length ? index : -1;
     }
 
