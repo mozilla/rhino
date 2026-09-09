@@ -15,6 +15,18 @@ import org.mozilla.javascript.ast.ScriptNode;
  */
 public class CodeGenUtils {
 
+    /**
+     * Whether an operation within an expression carries a position worth recording, so that a
+     * failure is attributed to the operation rather than to the start of the statement.
+     *
+     * <p>Only nodes with a real column qualify. Parts the compiler synthesizes have no position of
+     * their own, and some carry a zero rather than the usual -1, which would otherwise be taken for
+     * line zero. Both backends ask this so they agree on what is worth a position record.
+     */
+    public static boolean hasExpressionPosition(Node node) {
+        return node.getColumn() > 0;
+    }
+
     /** Populates builder data for a nested function. */
     public static void fillInForNestedFunction(
             JSDescriptor.Builder<JSFunction> builder,

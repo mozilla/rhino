@@ -260,17 +260,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         itsData.itsTemplateLiterals = array;
     }
 
-    /**
-     * Records the position of an operation inside an expression, so that a failure is attributed to
-     * the operation rather than to the start of the statement.
-     *
-     * <p>Only nodes carrying a real column qualify. Parts the compiler synthesizes have no position
-     * of their own, and some carry a zero rather than the usual -1, which would otherwise be taken
-     * for line zero.
-     */
+    /** See {@link CodeGenUtils#hasExpressionPosition}. */
     private void updateExpressionPosition(Node node) {
-        if (node.getColumn() <= 0) return;
-        updateLineNumber(node);
+        if (CodeGenUtils.hasExpressionPosition(node)) updateLineNumber(node);
     }
 
     private void updateLineNumber(Node node) {

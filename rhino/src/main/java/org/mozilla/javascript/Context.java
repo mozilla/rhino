@@ -2881,20 +2881,8 @@ public class Context implements Closeable {
         StackTraceElement[] stack = new Throwable().getStackTrace();
         for (StackTraceElement e : stack) {
             if (!frameMatches(e)) continue;
-            String sourceName = e.getFileName();
-            int reported = e.getLineNumber();
-            int line = reported;
-            int column = 0;
-            CompiledPositions positions = CompiledPositions.forClass(e.getClassName());
-            if (positions != null) {
-                column = positions.getColumn(e.getMethodName(), reported);
-                String mapped = positions.getSourceName(e.getMethodName(), reported);
-                if (mapped != null) {
-                    sourceName = mapped;
-                }
-                line = positions.getLine(e.getMethodName(), reported);
-            }
-            return sourceName == null ? null : new Position(sourceName, line, column);
+            Position at = CompiledPositions.resolve(e, e.getFileName());
+            return at.getSourcePath() == null ? null : at;
         }
         return null;
     }

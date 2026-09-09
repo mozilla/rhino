@@ -126,6 +126,21 @@ class CompiledPositionsTest {
         assertEquals(0, p.getColumn(M, 0xFFFE), "but the column is not guessed");
     }
 
+    /**
+     * Ahead-of-time compilation loads a class without the table that gives a marker meaning, so it
+     * must emit real line numbers and report no column where a line holds several positions.
+     */
+    @Test
+    void disablingMarkersKeepsRealLineNumbers() {
+        var b = CompiledPositions.builder();
+        b.disableMarkers();
+        assertEquals(7, b.record(M, 7, 12, null));
+        assertEquals(7, b.record(M, 7, 30, null), "no marker, so the real line is reused");
+        CompiledPositions p = b.build();
+        assertEquals(7, p.getLine(M, 7));
+        assertEquals(0, p.getColumn(M, 7), "the column cannot be told apart, so it is unknown");
+    }
+
     /** Exhausting one method's numbers must not touch another's. */
     @Test
     void theNumberSpaceIsPerMethod() {

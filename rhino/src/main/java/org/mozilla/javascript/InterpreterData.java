@@ -104,10 +104,22 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     static final int LINE_SHIFT = 16;
     static final int POSITION_MASK = 0xFFFF;
 
-    /** Packs a line and column into one int, or -1 if either is too large to represent. */
+    /**
+     * Packs a line and column into one int. Either beyond what sixteen bits hold is reported as
+     * unknown rather than wrapped, which takes a file of some 65000 lines.
+     */
     static int packPosition(int line, int column) {
-        if (line < 0 || line > POSITION_MASK || column < 0 || column > POSITION_MASK) return -1;
-        return (line << LINE_SHIFT) | column;
+        int packedLine = line >= 0 && line <= POSITION_MASK ? line : 0;
+        int packedColumn = column >= 0 && column <= POSITION_MASK ? column : 0;
+        return (packedLine << LINE_SHIFT) | packedColumn;
+    }
+
+    static int unpackLine(int packed) {
+        return (packed >>> LINE_SHIFT) & POSITION_MASK;
+    }
+
+    static int unpackColumn(int packed) {
+        return packed & POSITION_MASK;
     }
 
     private int icodeHashCode = 0;
@@ -115,13 +127,13 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     @Override
     public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
         int i = positionIndex(pcSourceLineStart);
-        return i < 0 ? 0 : (sourcePositions[i] >>> LINE_SHIFT) & POSITION_MASK;
+        return i < 0 ? 0 : unpackLine(sourcePositions[i]);
     }
 
     @Override
     public int getColumnNumberFromPc(int pc, int pcSourceLineStart) {
         int i = positionIndex(pcSourceLineStart);
-        return i < 0 ? 0 : sourcePositions[i] & POSITION_MASK;
+        return i < 0 ? 0 : unpackColumn(sourcePositions[i]);
     }
 
     @Override
@@ -243,15 +255,10 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             if (positionCount > 0xFFFF) {
                 return positionCount - 1;
             }
-            int packed = packPosition(line, column);
-            if (packed < 0) {
-                // Beyond what a packed position can hold; report the line alone.
-                packed = packPosition(Math.min(Math.max(line, 0), POSITION_MASK), 0);
-            }
             if (positionCount == sourcePositions.length) {
                 sourcePositions = Arrays.copyOf(sourcePositions, sourcePositions.length * 2);
             }
-            sourcePositions[positionCount] = packed;
+            sourcePositions[positionCount] = packPosition(line, column);
             if (sourceName != null) {
                 int nameIndex =
                         sourceNameIndexes
@@ -273,21 +280,20 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         /** Grows the source-name column to hold {@code needed} entries, unset ones being -1. */
         private void growSourceIndexes(int needed) {
             if (needed <= positionSourceIndexes.length) return;
-            int size = Math.max(needed, Math.max(INITIAL_POSITION_TABLE_SIZE, needed * 2));
-            short[] next = new short[size];
-            Arrays.fill(next, (short) -1);
-            System.arraycopy(positionSourceIndexes, 0, next, 0, positionSourceIndexes.length);
-            positionSourceIndexes = next;
+            int was = positionSourceIndexes.length;
+            int size = Math.max(INITIAL_POSITION_TABLE_SIZE, needed * 2);
+            positionSourceIndexes = Arrays.copyOf(positionSourceIndexes, size);
+            Arrays.fill(positionSourceIndexes, was, size, (short) -1);
         }
 
         /** The line recorded for a position index; used by the icode dumper. */
         int positionLine(int index) {
-            return (sourcePositions[index] >>> LINE_SHIFT) & POSITION_MASK;
+            return unpackLine(sourcePositions[index]);
         }
 
         /** The column recorded for a position index; used by the icode dumper. */
         int positionColumn(int index) {
-            return sourcePositions[index] & POSITION_MASK;
+            return unpackColumn(sourcePositions[index]);
         }
 
         public Builder() {

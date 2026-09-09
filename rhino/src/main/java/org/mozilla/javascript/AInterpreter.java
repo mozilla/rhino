@@ -413,11 +413,9 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
 
     @Override
     public final String getSourcePositionFromStack(Context cx, int[] linep) {
-        ACallFrame<?, ?> frame = cx.lastInterpreterFrame;
-        var data = frame.compilerData;
-        JSDescriptor<?> desc = frame.fnOrScript.getDescriptor();
-        linep[0] = data.getLineNumberFromPc(frame.pc, frame.getPcSourceLineStart());
-        return desc.getSourceName();
+        Position position = getSourcePosition(cx);
+        linep[0] = position.getLine();
+        return position.getSourcePath();
     }
 
     @Override

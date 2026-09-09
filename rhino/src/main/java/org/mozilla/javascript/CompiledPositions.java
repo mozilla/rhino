@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import org.mozilla.javascript.sourcemap.Position;
 
 /**
  * Source positions for one generated class, addressed by the line number a stack frame reports.
@@ -38,19 +39,6 @@ public final class CompiledPositions {
 
     /** Position markers are handed out from the top of the 16-bit range downwards. */
     private static final int FIRST_POSITION_MARKER = 0xFFFF;
-
-    /** What a reported line number resolves to. */
-    private static final class Entry {
-        final int line;
-        final int column;
-        final String sourceName;
-
-        Entry(int line, int column, String sourceName) {
-            this.line = line;
-            this.column = column;
-            this.sourceName = sourceName;
-        }
-    }
 
     /**
      * Tables by generated class name. A stack frame gives us only the class name, so the lookup
@@ -90,15 +78,38 @@ public final class CompiledPositions {
         return ref == null ? null : ref.get();
     }
 
-    private final Map<String, Map<Integer, Entry>> byMethod;
+    private final Map<String, Map<Integer, Position>> byMethod;
 
-    private CompiledPositions(Map<String, Map<Integer, Entry>> byMethod) {
+    private CompiledPositions(Map<String, Map<Integer, Position>> byMethod) {
         this.byMethod = byMethod;
     }
 
-    private Entry lookup(String methodName, int reportedLine) {
-        Map<Integer, Entry> lines = byMethod.get(methodName);
+    private Position lookup(String methodName, int reportedLine) {
+        Map<Integer, Position> lines = byMethod.get(methodName);
         return lines == null ? null : lines.get(reportedLine);
+    }
+
+    /**
+     * The position a compiled stack frame refers to, resolving the number it reports through the
+     * table of whichever generated class it belongs to.
+     *
+     * <p>The reported number is the real line unless it is a marker, so this is the only place that
+     * has to know the difference.
+     *
+     * @param fallbackSourceName the source to name when the frame's position has none of its own
+     * @return the position, never null
+     */
+    static Position resolve(StackTraceElement frame, String fallbackSourceName) {
+        int reported = frame.getLineNumber();
+        CompiledPositions positions = forClass(frame.getClassName());
+        Position found =
+                positions == null ? null : positions.lookup(frame.getMethodName(), reported);
+        if (found == null) {
+            return new Position(fallbackSourceName, reported, 0);
+        }
+        return found.getSourcePath() == null
+                ? new Position(fallbackSourceName, found.getLine(), found.getColumn())
+                : found;
     }
 
     /**
@@ -106,20 +117,20 @@ public final class CompiledPositions {
      * to be given a marker. Returns {@code reportedLine} unchanged when it is not in the table.
      */
     public int getLine(String methodName, int reportedLine) {
-        Entry e = lookup(methodName, reportedLine);
-        return e == null ? reportedLine : e.line;
+        Position e = lookup(methodName, reportedLine);
+        return e == null ? reportedLine : e.getLine();
     }
 
     /** The one-based column, or zero when unknown. */
     public int getColumn(String methodName, int reportedLine) {
-        Entry e = lookup(methodName, reportedLine);
-        return e == null ? 0 : e.column;
+        Position e = lookup(methodName, reportedLine);
+        return e == null ? 0 : e.getColumn();
     }
 
     /** The original source path, or null to use the class's own source file. */
     public String getSourceName(String methodName, int reportedLine) {
-        Entry e = lookup(methodName, reportedLine);
-        return e == null ? null : e.sourceName;
+        Position e = lookup(methodName, reportedLine);
+        return e == null ? null : e.getSourcePath();
     }
 
     public static Builder builder() {
@@ -129,41 +140,14 @@ public final class CompiledPositions {
     /** Collects positions during code generation. Not thread safe; one per generated class. */
     public static final class Builder {
 
-        /** Identifies a position within one method, so that repeats reuse their number. */
-        private static final class Key {
-            final int line;
-            final int column;
-            final String sourceName;
-
-            Key(int line, int column, String sourceName) {
-                this.line = line;
-                this.column = column;
-                this.sourceName = sourceName;
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (!(o instanceof Key)) return false;
-                Key k = (Key) o;
-                return line == k.line
-                        && column == k.column
-                        && Objects.equals(sourceName, k.sourceName);
-            }
-
-            @Override
-            public int hashCode() {
-                return Objects.hash(line, column, sourceName);
-            }
-        }
-
         /**
          * Allocation state for one method. A reported number only has to be unique within its
          * method, because that is how lookups are keyed, so every method gets the whole range
          * rather than sharing one with the rest of the class.
          */
         private static final class MethodState {
-            final Map<Integer, Entry> lines = new HashMap<>();
-            final Map<Key, Integer> emittedFor = new HashMap<>();
+            final Map<Integer, Position> lines = new HashMap<>();
+            final Map<Position, Integer> emittedFor = new HashMap<>();
             int nextMarker = FIRST_POSITION_MARKER;
             int highestRealLine;
         }
@@ -195,17 +179,17 @@ public final class CompiledPositions {
             MethodState state = byMethod.computeIfAbsent(methodName, k -> new MethodState());
             if (line > state.highestRealLine) state.highestRealLine = line;
 
-            Entry claimed = state.lines.get(line);
+            Position claimed = state.lines.get(line);
             if (claimed == null) {
-                state.lines.put(line, new Entry(line, Math.max(column, 0), sourceName));
-                state.emittedFor.put(new Key(line, column, sourceName), line);
+                state.lines.put(line, new Position(sourceName, line, Math.max(column, 0)));
+                state.emittedFor.put(new Position(sourceName, line, column), line);
                 return line;
             }
 
             boolean sameAsClaimed =
-                    claimed.line == line
-                            && claimed.column == Math.max(column, 0)
-                            && Objects.equals(claimed.sourceName, sourceName);
+                    claimed.getLine() == line
+                            && claimed.getColumn() == Math.max(column, 0)
+                            && Objects.equals(claimed.getSourcePath(), sourceName);
             if (sameAsClaimed) {
                 return line;
             }
@@ -216,7 +200,7 @@ public final class CompiledPositions {
                 return line;
             }
 
-            Key key = new Key(line, column, sourceName);
+            Position key = new Position(sourceName, line, column);
             Integer already = state.emittedFor.get(key);
             if (already != null) {
                 return already.intValue();
@@ -226,12 +210,12 @@ public final class CompiledPositions {
                 // Either markers are unavailable, or this method has run out of them, which takes
                 // tens of thousands of distinct positions in one function. Report the column as
                 // unknown rather than emit a number that already means something else.
-                state.lines.put(line, new Entry(line, 0, claimed.sourceName));
+                state.lines.put(line, new Position(claimed.getSourcePath(), line, 0));
                 return line;
             }
 
             int marker = state.nextMarker--;
-            state.lines.put(marker, new Entry(line, column, sourceName));
+            state.lines.put(marker, new Position(sourceName, line, column));
             state.emittedFor.put(key, marker);
             return marker;
         }
@@ -241,7 +225,7 @@ public final class CompiledPositions {
         }
 
         public CompiledPositions build() {
-            Map<String, Map<Integer, Entry>> out = new HashMap<>();
+            Map<String, Map<Integer, Position>> out = new HashMap<>();
             for (Map.Entry<String, MethodState> e : byMethod.entrySet()) {
                 out.put(e.getKey(), Map.copyOf(e.getValue().lines));
             }

@@ -369,9 +369,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 // they refine a position within a line already reported.
                 int index =
                         bytecode == Icode.LINE1 ? (iCode[pc + 1] & 0xFF) : getIndex(iCode, pc + 1);
-                int packed = data.sourcePositions[index];
-                presentLines.add(
-                        (packed >>> InterpreterData.LINE_SHIFT) & InterpreterData.POSITION_MASK);
+                presentLines.add(InterpreterData.unpackLine(data.sourcePositions[index]));
             }
             pc += span;
         }

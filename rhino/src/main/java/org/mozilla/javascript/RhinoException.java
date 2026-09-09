@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mozilla.javascript.config.RhinoConfig;
+import org.mozilla.javascript.sourcemap.Position;
 
 /** The class of exceptions thrown by the JavaScript engine. */
 public abstract class RhinoException extends RuntimeException {
@@ -273,8 +274,7 @@ public abstract class RhinoException extends RuntimeException {
         // Pattern to recover function name from java method name -
         // see Codegen.getBodyMethodName()
         // kudos to Marc Guillemot for coming up with this
-        for (int frameIndex = 0; frameIndex < stack.length; frameIndex++) {
-            StackTraceElement e = stack[frameIndex];
+        for (StackTraceElement e : stack) {
             String fileName = e.getFileName();
             if (e.getMethodName().startsWith("_c_")
                     && e.getLineNumber() > -1
@@ -289,22 +289,11 @@ public abstract class RhinoException extends RuntimeException {
                 if (!printStarted && hideFunction.equals(methodName)) {
                     printStarted = true;
                 } else if (printStarted && ((limit < 0) || (count < limit))) {
-                    String fn = fileName == null ? "(unknown)" : fileName;
-                    int reported = e.getLineNumber();
-                    int line = reported;
-                    int column = 0;
-                    CompiledPositions positions = CompiledPositions.forClass(e.getClassName());
-                    if (positions != null) {
-                        column = positions.getColumn(e.getMethodName(), reported);
-                        String mapped = positions.getSourceName(e.getMethodName(), reported);
-                        if (mapped != null) {
-                            fn = mapped;
-                        }
-                        // The emitted number may be a position marker rather than a line, when the
-                        // line itself already identified another position.
-                        line = positions.getLine(e.getMethodName(), reported);
-                    }
-                    list.add(new ScriptStackElement(fn, methodName, line, column));
+                    Position at =
+                            CompiledPositions.resolve(e, fileName == null ? "(unknown)" : fileName);
+                    list.add(
+                            new ScriptStackElement(
+                                    at.getSourcePath(), methodName, at.getLine(), at.getColumn()));
                     count++;
                 }
 
