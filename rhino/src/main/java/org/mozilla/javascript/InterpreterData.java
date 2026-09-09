@@ -123,19 +123,19 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     private int icodeHashCode = 0;
 
     @Override
-    public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
+    public int getLineNumberFromPc(int pc) {
         int i = positionIndex(pc);
         return i < 0 ? 0 : entryLine(positions[i]);
     }
 
     @Override
-    public int getColumnNumberFromPc(int pc, int pcSourceLineStart) {
+    public int getColumnNumberFromPc(int pc) {
         int i = positionIndex(pc);
         return i < 0 ? 0 : entryColumn(positions[i]);
     }
 
     @Override
-    public String getSourceNameFromPc(int pc, int pcSourceLineStart) {
+    public String getSourceNameFromPc(int pc) {
         if (positionSourceNames == null) return null;
         int i = positionIndex(pc);
         if (i < 0 || i >= positionSourceIndexes.length) return null;

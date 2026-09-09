@@ -22,8 +22,8 @@ public class CompilerDataLineNumberTest {
         assertEquals(-1, cData.getFirstLineNumber());
         assertEquals(-1, cData.getPcFirstLineNumber());
         assertEquals("[]", cData.getLineNumberTableForDebug());
-        assertEquals(-1, cData.getLineNumberFromPc(0, 0));
-        assertEquals(-1, cData.getLineNumberFromPc(99, 0));
+        assertEquals(-1, cData.getLineNumberFromPc(0));
+        assertEquals(-1, cData.getLineNumberFromPc(99));
     }
 
     @Test
@@ -36,8 +36,8 @@ public class CompilerDataLineNumberTest {
         assertEquals(42, cData.getFirstLineNumber());
         assertEquals(1, cData.getPcFirstLineNumber());
         assertEquals("[1 -> [42]]", cData.getLineNumberTableForDebug());
-        assertEquals(-1, cData.getLineNumberFromPc(0, 0));
-        assertEquals(42, cData.getLineNumberFromPc(99, 0));
+        assertEquals(-1, cData.getLineNumberFromPc(0));
+        assertEquals(42, cData.getLineNumberFromPc(99));
     }
 
     @Test
@@ -51,11 +51,11 @@ public class CompilerDataLineNumberTest {
         assertEquals(1, cData.getFirstLineNumber());
         assertEquals(1, cData.getPcFirstLineNumber());
         assertEquals("[1 -> [1],  7 -> [2]]", cData.getLineNumberTableForDebug());
-        assertEquals(-1, cData.getLineNumberFromPc(0, 0));
-        assertEquals(1, cData.getLineNumberFromPc(1, 0));
-        assertEquals(1, cData.getLineNumberFromPc(6, 0));
-        assertEquals(2, cData.getLineNumberFromPc(7, 0));
-        assertEquals(2, cData.getLineNumberFromPc(99, 0));
+        assertEquals(-1, cData.getLineNumberFromPc(0));
+        assertEquals(1, cData.getLineNumberFromPc(1));
+        assertEquals(1, cData.getLineNumberFromPc(6));
+        assertEquals(2, cData.getLineNumberFromPc(7));
+        assertEquals(2, cData.getLineNumberFromPc(99));
     }
 
     @Test
@@ -70,12 +70,12 @@ public class CompilerDataLineNumberTest {
         assertEquals(2, cData.getFirstLineNumber());
         assertEquals(1, cData.getPcFirstLineNumber());
         assertEquals("[1 -> [2],  6 -> [3, 4],  8 -> [5, 6]]", cData.getLineNumberTableForDebug());
-        assertEquals(-1, cData.getLineNumberFromPc(0, 0));
-        assertEquals(2, cData.getLineNumberFromPc(1, 0));
-        assertEquals(4, cData.getLineNumberFromPc(6, 0));
-        assertEquals(4, cData.getLineNumberFromPc(7, 0));
-        assertEquals(6, cData.getLineNumberFromPc(8, 0));
-        assertEquals(6, cData.getLineNumberFromPc(99, 0));
+        assertEquals(-1, cData.getLineNumberFromPc(0));
+        assertEquals(2, cData.getLineNumberFromPc(1));
+        assertEquals(4, cData.getLineNumberFromPc(6));
+        assertEquals(4, cData.getLineNumberFromPc(7));
+        assertEquals(6, cData.getLineNumberFromPc(8));
+        assertEquals(6, cData.getLineNumberFromPc(99));
     }
 
     @Test
@@ -97,12 +97,12 @@ public class CompilerDataLineNumberTest {
                         + "8192 -> [52, 53, 54, 55],  "
                         + "131072 -> [68, 69, 70, 71]]",
                 cData.getLineNumberTableForDebug());
-        assertEquals(-1, cData.getLineNumberFromPc(0, 0));
-        assertEquals(-1, cData.getLineNumberFromPc(1, 0));
-        assertEquals(7, cData.getLineNumberFromPc(2, 0));
-        assertEquals(23, cData.getLineNumberFromPc(32, 0));
-        assertEquals(39, cData.getLineNumberFromPc(512, 0));
-        assertEquals(55, cData.getLineNumberFromPc(8192, 0));
-        assertEquals(71, cData.getLineNumberFromPc(131072, 0));
+        assertEquals(-1, cData.getLineNumberFromPc(0));
+        assertEquals(-1, cData.getLineNumberFromPc(1));
+        assertEquals(7, cData.getLineNumberFromPc(2));
+        assertEquals(23, cData.getLineNumberFromPc(32));
+        assertEquals(39, cData.getLineNumberFromPc(512));
+        assertEquals(55, cData.getLineNumberFromPc(8192));
+        assertEquals(71, cData.getLineNumberFromPc(131072));
     }
 }

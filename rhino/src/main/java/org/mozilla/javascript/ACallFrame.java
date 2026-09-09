@@ -82,12 +82,9 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
 
         this.parentFrame = parentFrame;
         if (parentFrame == null) {
-            this.parentPC =
-                    previousInterpreterFrame == null
-                            ? -1
-                            : previousInterpreterFrame.getPcSourceLineStart();
+            this.parentPC = previousInterpreterFrame == null ? -1 : previousInterpreterFrame.pc;
         } else {
-            this.parentPC = parentFrame.getPcSourceLineStart();
+            this.parentPC = parentFrame.pc;
         }
         this.previousInterpreterFrame = previousInterpreterFrame;
         frameIndex = (short) ((parentFrame == null) ? 0 : parentFrame.frameIndex + 1);
@@ -139,10 +136,7 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
         this.previousInterpreterFrame = previousInterpreterFrame;
         if (parentFrame == null) {
             frameIndex = 0;
-            parentPC =
-                    previousInterpreterFrame == null
-                            ? -1
-                            : previousInterpreterFrame.getPcSourceLineStart();
+            parentPC = previousInterpreterFrame == null ? -1 : previousInterpreterFrame.pc;
         } else {
             frameIndex = original.frameIndex;
             parentPC = parentFrame.parentPC;
@@ -183,7 +177,6 @@ public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompiler
      * interpreter, this is the PC at the start of the current source line. For InterpreterV2, this
      * may be the current PC.
      */
-    public abstract int getPcSourceLineStart();
 
     /** Returns the debuggable script data associated with this frame. */
     public abstract DebuggableScript getData();

@@ -129,7 +129,7 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
     }
 
     @Override
-    public int getLineNumberFromPc(int pc, int pcLineStart) {
+    public int getLineNumberFromPc(int pc) {
         return LineNumberTable.getLineNumberFromPc(lineNumberTable, pc);
     }
 

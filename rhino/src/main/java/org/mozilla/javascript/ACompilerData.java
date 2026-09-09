@@ -22,12 +22,12 @@ public abstract class ACompilerData<T extends ScriptOrFn<T>, U extends ACompiler
         this.exceptionTable = exceptionTable;
     }
 
-    public abstract int getLineNumberFromPc(int pc, int pcLineStart);
+    public abstract int getLineNumberFromPc(int pc);
 
     /**
      * @return the one-based column, or zero when this backend does not track columns.
      */
-    public int getColumnNumberFromPc(int pc, int pcLineStart) {
+    public int getColumnNumberFromPc(int pc) {
         return 0;
     }
 
@@ -35,7 +35,7 @@ public abstract class ACompilerData<T extends ScriptOrFn<T>, U extends ACompiler
      * @return the original source path for this position, or null to use the source name of the
      *     enclosing script or function.
      */
-    public String getSourceNameFromPc(int pc, int pcLineStart) {
+    public String getSourceNameFromPc(int pc) {
         return null;
     }
 }

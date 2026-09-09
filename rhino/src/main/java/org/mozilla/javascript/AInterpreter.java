@@ -294,7 +294,7 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             ex.interpreterStackInfo = null;
         } else {
             ex.interpreterStackInfo = cx.lastInterpreterFrame;
-            ex.interpreterLineData = cx.lastInterpreterFrame.getPcSourceLineStart();
+            ex.interpreterLineData = cx.lastInterpreterFrame.pc;
         }
     }
 
@@ -341,7 +341,7 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                 if (pc >= 0) {
                     // Include line info only if available
                     sb.append(':');
-                    sb.append(idata.getLineNumberFromPc(pc, pc));
+                    sb.append(idata.getLineNumberFromPc(pc));
                 }
                 sb.append(')');
                 calleeFrame = callerFrame;
@@ -391,9 +391,9 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                 int columnNumber = 0;
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    lineNumber = idata.getLineNumberFromPc(pc, pc);
-                    columnNumber = idata.getColumnNumberFromPc(pc, pc);
-                    String mappedName = idata.getSourceNameFromPc(pc, pc);
+                    lineNumber = idata.getLineNumberFromPc(pc);
+                    columnNumber = idata.getColumnNumberFromPc(pc);
+                    String mappedName = idata.getSourceNameFromPc(pc);
                     if (mappedName != null) {
                         fileName = mappedName;
                     }
@@ -422,14 +422,13 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
     public final Position getSourcePosition(Context cx) {
         ACallFrame<?, ?> frame = cx.lastInterpreterFrame;
         var data = frame.compilerData;
-        int lineStart = frame.getPcSourceLineStart();
-        String sourceName = data.getSourceNameFromPc(frame.pc, lineStart);
+        String sourceName = data.getSourceNameFromPc(frame.pc);
         if (sourceName == null) {
             sourceName = frame.fnOrScript.getDescriptor().getSourceName();
         }
         return new Position(
                 sourceName,
-                data.getLineNumberFromPc(frame.pc, lineStart),
-                data.getColumnNumberFromPc(frame.pc, lineStart));
+                data.getLineNumberFromPc(frame.pc),
+                data.getColumnNumberFromPc(frame.pc));
     }
 }

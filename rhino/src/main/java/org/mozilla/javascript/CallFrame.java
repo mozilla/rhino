@@ -310,12 +310,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
     }
 
     @Override
-    public int getPcSourceLineStart() {
-        // Positions are keyed by bytecode offset, so the program counter is the whole answer.
-        return pc;
-    }
-
-    @Override
     public DebuggableScript getData() {
         return fnOrScript.getDescriptor();
     }

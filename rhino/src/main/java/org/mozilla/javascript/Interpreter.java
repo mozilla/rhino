@@ -3941,7 +3941,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             if (frame.debuggerFrame != null) {
                 frame.debuggerFrame.onLineChange(
-                        cx, frame.compilerData.getLineNumberFromPc(frame.pc, frame.pc));
+                        cx, frame.compilerData.getLineNumberFromPc(frame.pc));
             }
             return null;
         }
