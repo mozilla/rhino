@@ -293,43 +293,14 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         lineNumber = lineno;
         if (column > 0) columnNumber = column;
         positionSourceName = sourcePath;
-        int index = itsData.internSourcePosition(lineNumber, columnNumber, sourcePath);
-        // Positions are numbered per function from zero, so all but the largest functions address
-        // their whole table with one byte.
-        boolean narrow = index <= 0xFF;
-        int size = narrow ? 2 : 3;
-        // Nested nodes often refine the column before anything is emitted, so rewrite the pending
-        // icode in place instead of leaving one that is immediately superseded. Only the operand
-        // moves, so jump targets are unaffected. A line change is never collapsed: the debugger
-        // reports it even when the line emits no code of its own, such as a function header. Nor
-        // is a record whose operand has outgrown the form it was written in.
-        if (!lineChanged
-                && lastPositionIcodeStart >= 0
-                && iCodeTop == lastPositionIcodeStart + lastPositionIcodeSize
-                && size <= lastPositionIcodeSize) {
-            byte[] array = itsData.itsICode;
-            if (lastPositionIcodeSize == 2) {
-                array[lastPositionIcodeStart + 1] = (byte) index;
-            } else {
-                array[lastPositionIcodeStart + 1] = (byte) (index >>> 8);
-                array[lastPositionIcodeStart + 2] = (byte) index;
-            }
-            return;
-        }
-        lastPositionIcodeStart = iCodeTop;
-        lastPositionIcodeSize = size;
-        if (narrow) {
-            addIcode(lineChanged ? Icode.LINE1 : Icode.POS1);
-            if (itsData.firstLineOperandPC < 0) {
-                itsData.firstLineOperandPC = iCodeTop;
-            }
-            addUint8(index);
-        } else {
-            addIcode(lineChanged ? Icode.LINE : Icode.POS);
-            if (itsData.firstLineOperandPC < 0) {
-                itsData.firstLineOperandPC = iCodeTop;
-            }
-            addUint16(index);
+        // The position lives beside the code, keyed by the offset it takes effect at, so the
+        // interpreter never spends an instruction or a field write on it.
+        itsData.recordPosition(iCodeTop, lineNumber, columnNumber, sourcePath);
+        // A LINE icode remains only because the debugger steps by line, and it carries no operand:
+        // the line it marks is whatever the table says for its offset. A move within a line needs
+        // no instruction at all.
+        if (lineChanged) {
+            addIcode(Icode.LINE);
         }
     }
 

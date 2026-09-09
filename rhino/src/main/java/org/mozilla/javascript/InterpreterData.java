@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.mozilla.javascript.sourcemap.Position;
 
 final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, InterpreterData<?>>
         implements Serializable {
@@ -41,12 +40,11 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             int maxCalleeArgs,
             Object[] literalIds,
             Map<Integer, Integer> longJumps,
-            int firstLineOperandPC,
-            int[] sourcePositions,
+            long[] positions,
             short[] positionSourceIndexes,
             String[] positionSourceNames) {
         super(maxVars, maxLocals, maxStack, maxFrameArray, exceptionTable);
-        this.sourcePositions = sourcePositions;
+        this.positions = positions;
         this.positionSourceIndexes = positionSourceIndexes;
         this.positionSourceNames = positionSourceNames;
         this.itsStringTable = itsStringTable;
@@ -58,7 +56,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         this.maxCalleeArgs = maxCalleeArgs;
         this.literalIds = literalIds;
         this.longJumps = longJumps;
-        this.firstLineOperandPC = firstLineOperandPC;
     }
 
     final String[] itsStringTable;
@@ -75,23 +72,20 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
     final Map<Integer, Integer> longJumps;
 
-    /** PC of the operand of the first LINE icode, or -1 if the code has none. */
-    final int firstLineOperandPC;
-
     /**
-     * Source positions, one packed int each: the line in the high half, the column in the low half.
-     * Indexed by the operand of a LINE or POS icode.
+     * Where the source position changes, ascending by bytecode offset. Each entry packs the offset
+     * into the high half and the position into the low half, as line and column.
      *
-     * <p>Both halves are unsigned 16-bit. A file with more lines than that already exceeds what a
-     * line number can express elsewhere, and a column past 65535 is reported as unknown rather than
-     * wrapped.
+     * <p>Positions live beside the code rather than in it. The interpreter never spends an
+     * instruction or a field write on them; a stack trace finds one by searching this for the last
+     * offset before the frame's program counter, which only ever happens while reporting an error.
      */
-    final int[] sourcePositions;
+    final long[] positions;
 
     /**
-     * Index into {@link #positionSourceNames} per position, or an empty array when no source mapper
-     * supplied any. Kept apart from {@link #sourcePositions} because it is unused unless a script
-     * was compiled with a source map, which is the less common case.
+     * Index into {@link #positionSourceNames} for the entry at the same place in {@link
+     * #positions}, or an empty array when no source mapper supplied any. Kept apart because a
+     * script compiled without a source map, which is the common case, needs none of it.
      */
     final short[] positionSourceIndexes;
 
@@ -101,67 +95,79 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     /** Shared empty column, since most scripts are compiled without a source map. */
     static final short[] NO_SOURCE_INDEXES = new short[0];
 
-    static final int LINE_SHIFT = 16;
-    static final int POSITION_MASK = 0xFFFF;
+    private static final int POSITION_MASK = 0xFFFF;
+    private static final int LINE_SHIFT = 16;
 
     /**
-     * Packs a line and column into one int. Either beyond what sixteen bits hold is reported as
-     * unknown rather than wrapped, which takes a file of some 65000 lines.
+     * Packs an offset and a position into one entry. A line or column beyond what sixteen bits hold
+     * is reported as unknown rather than wrapped, which takes a file of some 65000 lines.
      */
-    static int packPosition(int line, int column) {
+    static long packEntry(int pc, int line, int column) {
         int packedLine = line >= 0 && line <= POSITION_MASK ? line : 0;
         int packedColumn = column >= 0 && column <= POSITION_MASK ? column : 0;
-        return (packedLine << LINE_SHIFT) | packedColumn;
+        return ((long) pc << 32) | ((long) packedLine << LINE_SHIFT) | packedColumn;
     }
 
-    static int unpackLine(int packed) {
-        return (packed >>> LINE_SHIFT) & POSITION_MASK;
+    static int entryPc(long entry) {
+        return (int) (entry >>> 32);
     }
 
-    static int unpackColumn(int packed) {
-        return packed & POSITION_MASK;
+    static int entryLine(long entry) {
+        return ((int) entry >>> LINE_SHIFT) & POSITION_MASK;
+    }
+
+    static int entryColumn(long entry) {
+        return (int) entry & POSITION_MASK;
     }
 
     private int icodeHashCode = 0;
 
     @Override
     public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
-        int i = positionIndex(pcSourceLineStart);
-        return i < 0 ? 0 : unpackLine(sourcePositions[i]);
+        int i = positionIndex(pc);
+        return i < 0 ? 0 : entryLine(positions[i]);
     }
 
     @Override
     public int getColumnNumberFromPc(int pc, int pcSourceLineStart) {
-        int i = positionIndex(pcSourceLineStart);
-        return i < 0 ? 0 : unpackColumn(sourcePositions[i]);
+        int i = positionIndex(pc);
+        return i < 0 ? 0 : entryColumn(positions[i]);
     }
 
     @Override
     public String getSourceNameFromPc(int pc, int pcSourceLineStart) {
         if (positionSourceNames == null) return null;
-        int i = positionIndex(pcSourceLineStart);
+        int i = positionIndex(pc);
         if (i < 0 || i >= positionSourceIndexes.length) return null;
         int n = positionSourceIndexes[i];
         return n < 0 ? null : positionSourceNames[n];
     }
 
     /**
-     * Resolves a LINE operand PC to an index into {@link #sourcePositions}. The bounds check also
-     * covers data deserialized from a version that had no position table.
+     * The entry in effect at a program counter: the last one recorded before it, or -1 if the
+     * counter precedes them all.
+     *
+     * <p>Strictly before, because a frame's counter has already moved past the opcode of the
+     * instruction it is executing, while a position is recorded at that opcode's own offset.
      */
-    private int positionIndex(int pcSourceLineStart) {
-        if (pcSourceLineStart <= 0 || sourcePositions == null) return -1;
-        // The operand is one byte or two depending on which form the opcode just before it is.
-        int opcode = itsICode[pcSourceLineStart - 1];
-        int index;
-        if (opcode == Icode.LINE1 || opcode == Icode.POS1) {
-            index = itsICode[pcSourceLineStart] & 0xFF;
-        } else {
-            index =
-                    ((itsICode[pcSourceLineStart] & 0xFF) << 8)
-                            | (itsICode[pcSourceLineStart + 1] & 0xFF);
+    long positionAt(int index) {
+        return positions[index];
+    }
+
+    int positionIndex(int pc) {
+        int lo = 0;
+        int hi = positions.length - 1;
+        int best = -1;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            if (entryPc(positions[mid]) < pc) {
+                best = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
         }
-        return index < sourcePositions.length ? index : -1;
+        return best;
     }
 
     public int icodeHashCode() {
@@ -223,43 +229,32 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
         InterpreterData<T> built = null;
 
-        int firstLineOperandPC = -1; // PC of the operand of the first LINE icode
+        /** Entries as {@link InterpreterData#positions}, filled in ascending offset order. */
+        private long[] positions = new long[INITIAL_POSITION_TABLE_SIZE];
 
-        /** Interned source positions, one packed int each; see InterpreterData#sourcePositions. */
-        private int[] sourcePositions = new int[INITIAL_POSITION_TABLE_SIZE];
-
-        /**
-         * Source name per position, grown only once a source mapper supplies one. Most scripts are
-         * compiled without a source map and never allocate it.
-         */
         private short[] positionSourceIndexes = NO_SOURCE_INDEXES;
-
         private int positionCount;
-        private final Map<Position, Integer> positionIndexes = new HashMap<>();
-        private final List<String> sourceNames = new ArrayList<>();
-        private final Map<String, Integer> sourceNameIndexes = new HashMap<>();
+        private List<String> sourceNames;
+        private Map<String, Integer> sourceNameIndexes;
 
         /**
-         * Returns the index of a source position, adding it to the table if it is new. Identical
-         * positions share an entry, so loops and re-entered branches cost nothing.
-         *
-         * <p>The index is emitted as a LINE operand, so it must fit in 16 bits. Scripts with more
-         * distinct positions than that reuse the last entry rather than corrupt the table.
+         * Notes the position taking effect at a bytecode offset. Successive records at the same
+         * offset supersede one another, which happens when a statement updates the position without
+         * emitting any code of its own.
          */
-        int internSourcePosition(int line, int column, String sourceName) {
-            Position key = new Position(sourceName, line, column);
-            Integer existing = positionIndexes.get(key);
-            if (existing != null) {
-                return existing.intValue();
+        void recordPosition(int pc, int line, int column, String sourceName) {
+            long entry = packEntry(pc, line, column);
+            boolean sameOffset = positionCount > 0 && entryPc(positions[positionCount - 1]) == pc;
+            int at = sameOffset ? positionCount - 1 : positionCount;
+            if (!sameOffset && positionCount == positions.length) {
+                positions = Arrays.copyOf(positions, positionCount * 2);
             }
-            if (positionCount > 0xFFFF) {
-                return positionCount - 1;
-            }
-            if (positionCount == sourcePositions.length) {
-                sourcePositions = Arrays.copyOf(sourcePositions, sourcePositions.length * 2);
-            }
-            sourcePositions[positionCount] = packPosition(line, column);
+            positions[at] = entry;
             if (sourceName != null) {
+                if (sourceNames == null) {
+                    sourceNames = new ArrayList<>();
+                    sourceNameIndexes = new HashMap<>();
+                }
                 int nameIndex =
                         sourceNameIndexes
                                 .computeIfAbsent(
@@ -269,12 +264,18 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
                                             return sourceNames.size() - 1;
                                         })
                                 .intValue();
-                growSourceIndexes(positionCount + 1);
-                positionSourceIndexes[positionCount] = (short) nameIndex;
+                growSourceIndexes(at + 1);
+                positionSourceIndexes[at] = (short) nameIndex;
             }
-            int index = positionCount++;
-            positionIndexes.put(key, index);
-            return index;
+            if (!sameOffset) positionCount++;
+        }
+
+        /** The entry recorded at an offset, or zero if none; used by the icode dumper. */
+        long positionEntryFor(int pc) {
+            for (int i = positionCount - 1; i >= 0; i--) {
+                if (entryPc(positions[i]) == pc) return positions[i];
+            }
+            return 0;
         }
 
         /** Grows the source-name column to hold {@code needed} entries, unset ones being -1. */
@@ -284,16 +285,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             int size = Math.max(INITIAL_POSITION_TABLE_SIZE, needed * 2);
             positionSourceIndexes = Arrays.copyOf(positionSourceIndexes, size);
             Arrays.fill(positionSourceIndexes, was, size, (short) -1);
-        }
-
-        /** The line recorded for a position index; used by the icode dumper. */
-        int positionLine(int index) {
-            return unpackLine(sourcePositions[index]);
-        }
-
-        /** The column recorded for a position index; used by the icode dumper. */
-        int positionColumn(int index) {
-            return unpackColumn(sourcePositions[index]);
         }
 
         public Builder() {
@@ -322,12 +313,11 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
                                 maxCalleeArgs,
                                 literalIds,
                                 jumpMap,
-                                firstLineOperandPC,
-                                Arrays.copyOf(sourcePositions, positionCount),
-                                sourceNames.isEmpty()
+                                Arrays.copyOf(positions, positionCount),
+                                sourceNames == null
                                         ? NO_SOURCE_INDEXES
                                         : Arrays.copyOf(positionSourceIndexes, positionCount),
-                                sourceNames.isEmpty() ? null : sourceNames.toArray(new String[0]));
+                                sourceNames == null ? null : sourceNames.toArray(new String[0]));
             }
             return built;
         }
