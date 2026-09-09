@@ -287,7 +287,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         lineNumber = lineno;
         if (column > 0) columnNumber = column;
         positionSourceName = sourcePath;
-        itsData.recordPosition(iCodeTop, lineNumber, columnNumber, sourcePath);
+        itsData.positions.add(iCodeTop, lineNumber, columnNumber, sourcePath);
         // LINE is only there for the debugger, which steps by line. It has no operand: the line
         // is whatever the table holds for this pc. Moving within a line needs no icode at all.
         if (lineChanged) {

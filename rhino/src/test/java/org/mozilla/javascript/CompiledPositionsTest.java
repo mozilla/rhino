@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.sourcemap.Position;
 
 /**
  * The position table used by the JVM bytecode backend, which addresses positions by the line number
@@ -18,13 +19,16 @@ class CompiledPositionsTest {
 
     private static final String M = "_c_f_1";
 
+    private static void assertAt(int line, int column, Position at) {
+        assertEquals(line, at.getLine(), "line");
+        assertEquals(column, at.getColumn(), "column");
+    }
+
     @Test
     void aLineWithOnePositionEmitsItself() {
         var b = CompiledPositions.builder();
         assertEquals(7, b.record(M, 7, 12, null));
-        CompiledPositions p = b.build();
-        assertEquals(7, p.getLine(M, 7));
-        assertEquals(12, p.getColumn(M, 7));
+        assertAt(7, 12, b.build().get(M, 7));
     }
 
     @Test
@@ -35,10 +39,8 @@ class CompiledPositionsTest {
         assertNotEquals(7, marker, "must not reuse a number that identifies another position");
 
         CompiledPositions p = b.build();
-        assertEquals(7, p.getLine(M, 7));
-        assertEquals(12, p.getColumn(M, 7));
-        assertEquals(7, p.getLine(M, marker), "a marker resolves to the real line");
-        assertEquals(30, p.getColumn(M, marker));
+        assertAt(7, 12, p.get(M, 7));
+        assertAt(7, 30, p.get(M, marker));
     }
 
     @Test
@@ -51,8 +53,7 @@ class CompiledPositionsTest {
         }
         CompiledPositions p = b.build();
         for (int i = 0; i < columns.length; i++) {
-            assertEquals(4, p.getLine(M, emitted[i]));
-            assertEquals(columns[i], p.getColumn(M, emitted[i]));
+            assertAt(4, columns[i], p.get(M, emitted[i]));
         }
     }
 
@@ -73,8 +74,7 @@ class CompiledPositionsTest {
         var b = CompiledPositions.builder();
         assertEquals(7, b.record(M, 7, 12, null));
         assertEquals(7, b.record(M, 7, 0, null));
-        CompiledPositions p = b.build();
-        assertEquals(12, p.getColumn(M, 7), "the real position survives");
+        assertAt(7, 12, b.build().get(M, 7));
     }
 
     @Test
@@ -84,9 +84,9 @@ class CompiledPositionsTest {
         int second = b.record(M, 7, 12, "src/b.ts");
         assertNotEquals(first, second);
         CompiledPositions p = b.build();
-        assertEquals("src/a.ts", p.getSourceName(M, first));
-        assertEquals("src/b.ts", p.getSourceName(M, second));
-        assertEquals(7, p.getLine(M, second));
+        assertEquals("src/a.ts", p.get(M, first).getSourcePath());
+        assertEquals("src/b.ts", p.get(M, second).getSourcePath());
+        assertEquals(7, p.get(M, second).getLine());
     }
 
     @Test
@@ -95,19 +95,17 @@ class CompiledPositionsTest {
         assertEquals(7, b.record(M, 7, 12, null));
         assertEquals(7, b.record("_c_g_2", 7, 44, null), "a different method may reuse the line");
         CompiledPositions p = b.build();
-        assertEquals(12, p.getColumn(M, 7));
-        assertEquals(44, p.getColumn("_c_g_2", 7));
+        assertAt(7, 12, p.get(M, 7));
+        assertAt(7, 44, p.get("_c_g_2", 7));
     }
 
     @Test
-    void unknownLinesAndMethodsReportUnknown() {
+    void unknownLinesAndMethodsAreNotInTheTable() {
         var b = CompiledPositions.builder();
         b.record(M, 7, 12, null);
         CompiledPositions p = b.build();
-        assertEquals(0, p.getColumn(M, 99));
-        assertEquals(99, p.getLine(M, 99), "an unrecorded line passes through");
-        assertEquals(0, p.getColumn("_c_other_9", 7));
-        assertNull(p.getSourceName(M, 99));
+        assertNull(p.get(M, 99));
+        assertNull(p.get("_c_other_9", 7));
     }
 
     /**
@@ -119,11 +117,8 @@ class CompiledPositionsTest {
         var b = CompiledPositions.builder();
         b.record(M, 0xFFFE, 1, null);
         b.record(M, 0xFFFF, 1, null);
-        int emitted = b.record(M, 0xFFFE, 40, null);
-        assertEquals(0xFFFE, emitted, "no room for a marker");
-        CompiledPositions p = b.build();
-        assertEquals(0xFFFE, p.getLine(M, 0xFFFE), "the line is still right");
-        assertEquals(0, p.getColumn(M, 0xFFFE), "but the column is not guessed");
+        assertEquals(0xFFFE, b.record(M, 0xFFFE, 40, null), "no room for a marker");
+        assertAt(0xFFFE, 0, b.build().get(M, 0xFFFE));
     }
 
     /**
@@ -136,9 +131,7 @@ class CompiledPositionsTest {
         b.disableMarkers();
         assertEquals(7, b.record(M, 7, 12, null));
         assertEquals(7, b.record(M, 7, 30, null), "no marker, so the real line is reused");
-        CompiledPositions p = b.build();
-        assertEquals(7, p.getLine(M, 7));
-        assertEquals(0, p.getColumn(M, 7), "the column cannot be told apart, so it is unknown");
+        assertAt(7, 0, b.build().get(M, 7));
     }
 
     /** Exhausting one method's numbers must not touch another's. */
@@ -153,10 +146,7 @@ class CompiledPositionsTest {
         int otherSecond = b.record("_c_g_2", 5, 20, null);
         assertEquals(5, other);
         assertNotEquals(5, otherSecond, "a different method still has its whole range");
-
-        CompiledPositions p = b.build();
-        assertEquals(20, p.getColumn("_c_g_2", otherSecond));
-        assertEquals(5, p.getLine("_c_g_2", otherSecond));
+        assertAt(5, 20, b.build().get("_c_g_2", otherSecond));
     }
 
     /**
@@ -172,8 +162,7 @@ class CompiledPositionsTest {
         }
         CompiledPositions p = b.build();
         for (int i = 0; i < emitted.length; i++) {
-            assertEquals(1, p.getLine(M, emitted[i]), "position " + i);
-            assertEquals(i + 1, p.getColumn(M, emitted[i]), "position " + i);
+            assertAt(1, i + 1, p.get(M, emitted[i]));
         }
     }
 }

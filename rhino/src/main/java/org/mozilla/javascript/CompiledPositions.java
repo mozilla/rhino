@@ -10,6 +10,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import org.mozilla.javascript.sourcemap.Position;
 
@@ -62,15 +63,16 @@ public final class CompiledPositions {
         return ref == null ? null : ref.get();
     }
 
-    private final Map<String, Map<Integer, Position>> byMethod;
+    private final Map<String, PositionTable> byMethod;
 
-    private CompiledPositions(Map<String, Map<Integer, Position>> byMethod) {
+    private CompiledPositions(Map<String, PositionTable> byMethod) {
         this.byMethod = byMethod;
     }
 
-    private Position lookup(String methodName, int reportedLine) {
-        Map<Integer, Position> lines = byMethod.get(methodName);
-        return lines == null ? null : lines.get(reportedLine);
+    /** The position behind a reported line number, or null if the table has none for it. */
+    public Position get(String methodName, int reportedLine) {
+        PositionTable positions = byMethod.get(methodName);
+        return positions == null ? null : positions.get(reportedLine);
     }
 
     /**
@@ -82,32 +84,13 @@ public final class CompiledPositions {
     static Position resolve(StackTraceElement frame, String fallbackSourceName) {
         int reported = frame.getLineNumber();
         CompiledPositions positions = forClass(frame.getClassName());
-        Position found =
-                positions == null ? null : positions.lookup(frame.getMethodName(), reported);
+        Position found = positions == null ? null : positions.get(frame.getMethodName(), reported);
         if (found == null) {
             return new Position(fallbackSourceName, reported, 0);
         }
         return found.getSourcePath() == null
                 ? new Position(fallbackSourceName, found.getLine(), found.getColumn())
                 : found;
-    }
-
-    /** The real line behind a reported one, or {@code reportedLine} if it is not in the table. */
-    public int getLine(String methodName, int reportedLine) {
-        Position e = lookup(methodName, reportedLine);
-        return e == null ? reportedLine : e.getLine();
-    }
-
-    /** The one-based column, or zero when unknown. */
-    public int getColumn(String methodName, int reportedLine) {
-        Position e = lookup(methodName, reportedLine);
-        return e == null ? 0 : e.getColumn();
-    }
-
-    /** The original source path, or null to use the class's own source file. */
-    public String getSourceName(String methodName, int reportedLine) {
-        Position e = lookup(methodName, reportedLine);
-        return e == null ? null : e.getSourcePath();
     }
 
     public static Builder builder() {
@@ -120,7 +103,7 @@ public final class CompiledPositions {
         // A reported number only has to be unique within its method, since lookups are keyed by
         // method, so every method gets the whole range rather than sharing one.
         private static final class MethodState {
-            final Map<Integer, Position> lines = new HashMap<>();
+            final TreeMap<Integer, Position> lines = new TreeMap<>();
             final Map<Position, Integer> emittedFor = new HashMap<>();
             int nextMarker = FIRST_POSITION_MARKER;
             int highestRealLine;
@@ -196,9 +179,14 @@ public final class CompiledPositions {
         }
 
         public CompiledPositions build() {
-            Map<String, Map<Integer, Position>> out = new HashMap<>();
+            Map<String, PositionTable> out = new HashMap<>();
             for (Map.Entry<String, MethodState> e : byMethod.entrySet()) {
-                out.put(e.getKey(), Map.copyOf(e.getValue().lines));
+                PositionTable.Builder table = new PositionTable.Builder();
+                for (Map.Entry<Integer, Position> line : e.getValue().lines.entrySet()) {
+                    Position at = line.getValue();
+                    table.add(line.getKey(), at.getLine(), at.getColumn(), at.getSourcePath());
+                }
+                out.put(e.getKey(), table.build());
             }
             return new CompiledPositions(out);
         }

@@ -142,11 +142,17 @@ the parser's convention is left alone.
 
 ### The interpreter
 
-Positions live in a table beside the code, sorted by the bytecode offset they take effect
-at; `RhinoException` finds one by searching it for the frame's program counter. Nothing is
+Positions live in a table beside the code, keyed by the bytecode offset they take effect
+at; `RhinoException` finds one by walking it up to the frame's program counter. Nothing is
 spent maintaining them as the code runs, which matters because they are only ever read
 while reporting an error. A `LINE` icode remains, without an operand, purely so the
 debugger can step by line.
+
+The table (`PositionTable`) is a stream of variable-length deltas, the form V8's source
+position table and HotSpot's own line number table take: on a real bundle it costs about
+three and a half bytes per position, where fixed words would cost eight and outweigh the
+icode itself. It is read front to back, which is fine for something consulted once per
+frame of an exception.
 
 ### The JVM bytecode backend
 
@@ -159,7 +165,8 @@ Rhino chooses what goes in them. A position whose line is not yet spoken for emi
 real line, which is what a Java debugger expects. A second position on a line already
 claimed by a different one emits a *position marker* from the top of the range instead,
 which `CompiledPositions` maps back. Markers are handed out per method, since a lookup is
-keyed by method as well.
+keyed by method as well; behind each method sits the same `PositionTable` the interpreter
+uses, keyed by the reported number rather than by bytecode offset.
 
 Code compiled ahead of time to class files, via `ClassCompiler`, is loaded without the
 step that attaches that table, so it emits real line numbers only and reports no column

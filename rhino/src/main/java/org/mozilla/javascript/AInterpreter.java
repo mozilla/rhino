@@ -391,11 +391,11 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                 int columnNumber = 0;
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    lineNumber = idata.getLineNumberFromPc(pc);
-                    columnNumber = idata.getColumnNumberFromPc(pc);
-                    String mappedName = idata.getSourceNameFromPc(pc);
-                    if (mappedName != null) {
-                        fileName = mappedName;
+                    Position at = idata.getPositionFromPc(pc);
+                    lineNumber = at.getLine();
+                    columnNumber = at.getColumn();
+                    if (at.getSourcePath() != null) {
+                        fileName = at.getSourcePath();
                     }
                 }
                 if (desc.getName() != null && desc.getName().length() != 0) {
@@ -421,14 +421,9 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
     @Override
     public final Position getSourcePosition(Context cx) {
         ACallFrame<?, ?> frame = cx.lastInterpreterFrame;
-        var data = frame.compilerData;
-        String sourceName = data.getSourceNameFromPc(frame.pc);
-        if (sourceName == null) {
-            sourceName = frame.fnOrScript.getDescriptor().getSourceName();
-        }
+        Position at = frame.compilerData.getPositionFromPc(frame.pc);
+        if (at.getSourcePath() != null) return at;
         return new Position(
-                sourceName,
-                data.getLineNumberFromPc(frame.pc),
-                data.getColumnNumberFromPc(frame.pc));
+                frame.fnOrScript.getDescriptor().getSourceName(), at.getLine(), at.getColumn());
     }
 }

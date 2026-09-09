@@ -11,12 +11,12 @@ import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
+import org.mozilla.javascript.sourcemap.Position;
 
 public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?>> {
 
@@ -350,30 +350,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             }
         }
 
-        HashSet<Integer> presentLines = new HashSet<>();
-
-        byte[] iCode = data.itsICode;
-        int iCodeLength = iCode.length;
-        for (int pc = 0; pc != iCodeLength; ) {
-            int bytecode = iCode[pc];
-            int span = bytecodeSpan(bytecode);
-            if (bytecode == Icode.LINE) {
-                // Report the distinct lines these mark, so debugger breakpoints see exactly what
-                // they saw before. The line is whatever the table holds just past the marker.
-                int at = data.positionIndex(pc + 1);
-                if (at >= 0) {
-                    presentLines.add(InterpreterData.entryLine(data.positionAt(at)));
-                }
-            }
-            pc += span;
-        }
-
-        int[] ret = new int[presentLines.size()];
-        int i = 0;
-        for (int num : presentLines) {
-            ret[i++] = num;
-        }
-        return ret;
+        // Every line with a position is one a LINE icode marks, so this is the breakpoint set
+        return data.positions.lines();
     }
 
     static String getSource(JSDescriptor<?> desc) {
@@ -3946,13 +3924,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            long entry = ctx.compilerData.positionEntryFor(ctx.pc - 1);
-            ctx.out.println(
-                    tname
-                            + " : "
-                            + InterpreterData.entryLine(entry)
-                            + ":"
-                            + InterpreterData.entryColumn(entry));
+            Position at = ctx.compilerData.positions.get(ctx.pc - 1);
+            ctx.out.println(tname + " : " + at.getLine() + ":" + at.getColumn());
         }
     }
 

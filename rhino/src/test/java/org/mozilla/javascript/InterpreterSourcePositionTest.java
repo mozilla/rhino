@@ -81,8 +81,8 @@ class InterpreterSourcePositionTest {
     }
 
     /**
-     * Breakpoint lines come from the LINE icodes, so the distinct-line set must stay exactly what
-     * it was before positions carried columns.
+     * Breakpoint lines are the distinct lines in the position table, which must stay exactly the
+     * set the LINE icodes marked before positions carried columns.
      */
     @Test
     void debuggerLineNumbersAreUnchangedByColumnTracking() {
