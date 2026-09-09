@@ -617,32 +617,31 @@ public class Codegen implements Evaluator {
             return;
         }
 
-        cfw.startMethod(
-                REGEXP_INIT_METHOD_NAME,
-                REGEXP_INIT_METHOD_SIGNATURE,
-                (short) (ACC_STATIC | ACC_PUBLIC));
-        cfw.addField("_reInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
-        cfw.add(ByteCode.GETSTATIC, mainClassName, "_reInitDone", "Z");
-        int doInit = cfw.acquireLabel();
-        cfw.add(ByteCode.IFEQ, doInit);
-        cfw.add(ByteCode.RETURN);
-        cfw.markLabel(doInit);
-
-        // get regexp proxy and store it in local slot 1
-        cfw.addALoad(0); // context
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "checkRegExpProxy",
-                "(Lorg/mozilla/javascript/Context;" + ")Lorg/mozilla/javascript/RegExpProxy;");
-        cfw.addAStore(1); // proxy
-
-        // We could apply double-checked locking here but concurrency
-        // shouldn't be a problem in practice
+        // The literals are compiled by helper methods rather than inline, because a file can hold
+        // more of them than fit in one method's 64K of bytecode.
+        List<String> parts = new ArrayList<>();
         for (int i = 0; i != scriptOrFnNodes.length; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
             int regCount = n.getRegexpCount();
             for (int j = 0; j != regCount; ++j) {
+                if (parts.isEmpty() || cfw.getCurrentCodeOffset() > INIT_PART_LIMIT) {
+                    if (!parts.isEmpty()) {
+                        cfw.add(ByteCode.RETURN);
+                        cfw.stopMethod(2);
+                    }
+                    startInitPart(
+                            cfw, parts, REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE);
+                    // get regexp proxy and store it in local slot 1
+                    cfw.addALoad(0); // context
+                    cfw.addInvoke(
+                            ByteCode.INVOKESTATIC,
+                            "org/mozilla/javascript/ScriptRuntime",
+                            "checkRegExpProxy",
+                            "(Lorg/mozilla/javascript/Context;"
+                                    + ")Lorg/mozilla/javascript/RegExpProxy;");
+                    cfw.addAStore(1); // proxy
+                }
+
                 String reFieldName = getCompiledRegexpName(n, j);
                 String reFieldType = "Ljava/lang/Object;";
                 String reString = n.getRegexpString(j);
@@ -666,11 +665,42 @@ public class Codegen implements Evaluator {
                 cfw.add(ByteCode.PUTSTATIC, mainClassName, reFieldName, reFieldType);
             }
         }
+        cfw.add(ByteCode.RETURN);
+        cfw.stopMethod(2);
+
+        cfw.startMethod(
+                REGEXP_INIT_METHOD_NAME,
+                REGEXP_INIT_METHOD_SIGNATURE,
+                (short) (ACC_STATIC | ACC_PUBLIC));
+        cfw.addField("_reInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
+        cfw.add(ByteCode.GETSTATIC, mainClassName, "_reInitDone", "Z");
+        int doInit = cfw.acquireLabel();
+        cfw.add(ByteCode.IFEQ, doInit);
+        cfw.add(ByteCode.RETURN);
+        cfw.markLabel(doInit);
+
+        // We could apply double-checked locking here but concurrency
+        // shouldn't be a problem in practice
+        for (String part : parts) {
+            cfw.addALoad(0); // context
+            cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName, part, REGEXP_INIT_METHOD_SIGNATURE);
+        }
 
         cfw.addPush(1);
         cfw.add(ByteCode.PUTSTATIC, mainClassName, "_reInitDone", "Z");
         cfw.add(ByteCode.RETURN);
         cfw.stopMethod(2);
+    }
+
+    /**
+     * Starts a helper method for one of the init methods, whose work is split over as many of them
+     * as it takes to stay under the 64K of bytecode a single method can hold.
+     */
+    private void startInitPart(
+            ClassFileWriter cfw, List<String> parts, String name, String signature) {
+        String partName = name + parts.size();
+        parts.add(partName);
+        cfw.startMethod(partName, signature, (short) (ACC_STATIC | ACC_PRIVATE));
     }
 
     /**
@@ -688,39 +718,42 @@ public class Codegen implements Evaluator {
      * </pre>
      */
     private void emitTemplateLiteralInit(ClassFileWriter cfw) {
-        // emit all template literals
+        // emit all template literals, in helper methods rather than inline, because a file can
+        // hold more of them than fit in one method's 64K of bytecode
+        List<String> parts = new ArrayList<>();
 
-        int totalTemplateLiteralCount = 0;
-        for (ScriptNode n : scriptOrFnNodes) {
-            totalTemplateLiteralCount += n.getTemplateLiteralCount();
-        }
-
-        cfw.startMethod(
-                TEMPLATE_LITERAL_INIT_METHOD_NAME,
-                TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
-                (short) (ACC_STATIC | ACC_PUBLIC));
-        cfw.addField("_qInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
-
-        cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
-        int doInit = cfw.acquireLabel();
-        cfw.add(ByteCode.IFEQ, doInit);
-        cfw.add(ByteCode.RETURN);
-        cfw.markLabel(doInit);
-
-        // We could apply double-checked locking here but concurrency
-        // shouldn't be a problem in practice
         for (ScriptNode n : scriptOrFnNodes) {
             int qCount = n.getTemplateLiteralCount();
             if (qCount == 0) continue;
             String qFieldName = getTemplateLiteralName(n);
             String qFieldType = "[Ljava/lang/Object;";
             cfw.addField(qFieldName, qFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
+
+            if (parts.isEmpty()) {
+                startInitPart(
+                        cfw,
+                        parts,
+                        TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                        TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+            }
             cfw.addPush(qCount);
             cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+            // the array is stored right away so that its entries can be filled from any method
+            cfw.add(ByteCode.PUTSTATIC, mainClassName, qFieldName, qFieldType);
+
             for (int j = 0; j < qCount; ++j) {
-                List<TemplateCharacters> strings = n.getTemplateLiteralStrings(j);
-                cfw.add(ByteCode.DUP);
+                if (cfw.getCurrentCodeOffset() > INIT_PART_LIMIT) {
+                    cfw.add(ByteCode.RETURN);
+                    cfw.stopMethod(0);
+                    startInitPart(
+                            cfw,
+                            parts,
+                            TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                            TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+                }
+                cfw.add(ByteCode.GETSTATIC, mainClassName, qFieldName, qFieldType);
                 cfw.addPush(j);
+                List<TemplateCharacters> strings = n.getTemplateLiteralStrings(j);
                 cfw.addPush(strings.size() * 2);
                 cfw.add(ByteCode.ANEWARRAY, "java/lang/String");
                 int k = 0;
@@ -742,7 +775,32 @@ public class Codegen implements Evaluator {
                 }
                 cfw.add(ByteCode.AASTORE);
             }
-            cfw.add(ByteCode.PUTSTATIC, mainClassName, qFieldName, qFieldType);
+        }
+        if (!parts.isEmpty()) {
+            cfw.add(ByteCode.RETURN);
+            cfw.stopMethod(0);
+        }
+
+        cfw.startMethod(
+                TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
+                (short) (ACC_STATIC | ACC_PUBLIC));
+        cfw.addField("_qInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
+
+        cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
+        int doInit = cfw.acquireLabel();
+        cfw.add(ByteCode.IFEQ, doInit);
+        cfw.add(ByteCode.RETURN);
+        cfw.markLabel(doInit);
+
+        // We could apply double-checked locking here but concurrency
+        // shouldn't be a problem in practice
+        for (String part : parts) {
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    mainClassName,
+                    part,
+                    TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
         }
 
         cfw.addPush(true);
@@ -982,6 +1040,12 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTOR_CLASS_SIGNATURE = "Lorg/mozilla/javascript/JSDescriptor;";
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
+
+    /**
+     * Bytecode after which an init method starts a new part, low enough to leave room for the
+     * biggest single entry.
+     */
+    private static final int INIT_PART_LIMIT = 32768;
 
     static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
