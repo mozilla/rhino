@@ -149,6 +149,17 @@ public class StandardSlot<T extends PropHolder<T>> extends Slot<T> {
         return indexOrHash == this.indexOrHash && Objects.equals(this.name, key);
     }
 
+    /**
+     * Fast path for hot lookup loops that have already established that the slot is a StandardSlot
+     * (or a subclass inheriting its key semantics, such as AccessorSlot). It is equivalent to
+     * {@link #keyMatches} but inlines the identity comparison so the JIT does not need to dispatch
+     * through the Slot interface or call {@code Objects.equals}.
+     */
+    boolean keyMatchesFast(Object key, int indexOrHash) {
+        return indexOrHash == this.indexOrHash
+                && (name == key || (name != null && name.equals(key)));
+    }
+
     @Override
     public final Object getKey() {
         return name != null ? name : indexOrHash;

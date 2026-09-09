@@ -96,7 +96,11 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         int indexOrHash = (key != null ? key.hashCode() : index);
         int slotIndex = getSlotIndex(slots.length, indexOrHash);
         for (Slot<T> slot = slots[slotIndex]; slot != null; slot = slot.next) {
-            if (slot.keyMatches(key, indexOrHash)) {
+            if (slot instanceof StandardSlot) {
+                if (((StandardSlot<T>) slot).keyMatchesFast(key, indexOrHash)) {
+                    return slot;
+                }
+            } else if (slot.keyMatches(key, indexOrHash)) {
                 return slot;
             }
         }
@@ -117,7 +121,11 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         if (slots != null) {
             final int slotIndex = getSlotIndex(slots.length, indexOrHash);
             for (slot = slots[slotIndex]; slot != null; slot = slot.next) {
-                if (slot.keyMatches(key, indexOrHash)) {
+                if (slot instanceof StandardSlot) {
+                    if (((StandardSlot<T>) slot).keyMatchesFast(key, indexOrHash)) {
+                        break;
+                    }
+                } else if (slot.keyMatches(key, indexOrHash)) {
                     break;
                 }
             }
@@ -172,7 +180,13 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
             final int slotIndex = getSlotIndex(slots.length, indexOrHash);
             Slot<T> prev = slots[slotIndex];
             for (slot = prev; slot != null; slot = slot.next) {
-                if (slot.keyMatches(key, indexOrHash)) {
+                boolean matches;
+                if (slot instanceof StandardSlot) {
+                    matches = ((StandardSlot<T>) slot).keyMatchesFast(key, indexOrHash);
+                } else {
+                    matches = slot.keyMatches(key, indexOrHash);
+                }
+                if (matches) {
                     break;
                 }
                 prev = slot;

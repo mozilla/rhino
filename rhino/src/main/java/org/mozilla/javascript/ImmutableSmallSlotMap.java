@@ -67,17 +67,25 @@ public class ImmutableSmallSlotMap<T extends PropHolder<T>> implements SlotMap<T
     public Slot<T> query(Object key, int index) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
 
-        if (slot0 != null && slot0.keyMatches(key, indexOrHash)) {
+        if (slot0 != null && slotMatches(slot0, key, indexOrHash)) {
             return slot0;
-        } else if (slot1 != null && slot1.keyMatches(key, indexOrHash)) {
+        } else if (slot1 != null && slotMatches(slot1, key, indexOrHash)) {
             return slot1;
-        } else if (slot2 != null && slot2.keyMatches(key, indexOrHash)) {
+        } else if (slot2 != null && slotMatches(slot2, key, indexOrHash)) {
             return slot2;
-        } else if (slot3 != null && slot3.keyMatches(key, indexOrHash)) {
+        } else if (slot3 != null && slotMatches(slot3, key, indexOrHash)) {
             return slot3;
         } else {
             return null;
         }
+    }
+
+    private static <T extends PropHolder<T>> boolean slotMatches(
+            Slot<T> slot, Object key, int indexOrHash) {
+        if (slot instanceof StandardSlot) {
+            return ((StandardSlot<T>) slot).keyMatchesFast(key, indexOrHash);
+        }
+        return slot.keyMatches(key, indexOrHash);
     }
 
     @Override

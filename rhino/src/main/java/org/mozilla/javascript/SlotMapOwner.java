@@ -218,7 +218,7 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         public Slot<T> modify(SlotMapOwner<T> owner, Object key, int index, int attributes) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
-            if (slot.keyMatches(key, indexOrHash)) {
+            if (slotMatches(slot, key, indexOrHash)) {
                 return slot;
             }
             var newSlot = new StandardSlot<T>(key, index, attributes);
@@ -230,10 +230,18 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
         public Slot<T> query(Object key, int index) {
             final int indexOrHash = (key != null ? key.hashCode() : index);
 
-            if (slot.keyMatches(key, indexOrHash)) {
+            if (slotMatches(slot, key, indexOrHash)) {
                 return slot;
             }
             return null;
+        }
+
+        static <T extends PropHolder<T>> boolean slotMatches(
+                Slot<T> slot, Object key, int indexOrHash) {
+            if (slot instanceof StandardSlot) {
+                return ((StandardSlot<T>) slot).keyMatchesFast(key, indexOrHash);
+            }
+            return slot.keyMatches(key, indexOrHash);
         }
 
         @Override
