@@ -3205,8 +3205,9 @@ class BodyCodegen {
     }
 
     /**
-     * Adds a line entry for a position that is synthetic rather than a real statement. The column
-     * passed to the source mapper is a placeholder, so it is not recorded as if it were real.
+     * Adds a line entry for a position the compiler invented rather than one from a statement. The
+     * column passed to the source mapper is a placeholder, so it is not recorded as if it were
+     * real.
      */
     private void addRemappedLineEntry(int line, int placeholderColumn) {
         Position mapped = remap(line, placeholderColumn);
@@ -3217,7 +3218,7 @@ class BodyCodegen {
     /**
      * Records a position and adds the line entry that identifies it. The number emitted is the real
      * line unless that line already identifies a different position, in which case the table hands
-     * back a synthetic one and maps it back at lookup time.
+     * back a position marker, which it maps back at lookup time.
      */
     private void emitPosition(Position position) {
         if (currentMethodName == null) {

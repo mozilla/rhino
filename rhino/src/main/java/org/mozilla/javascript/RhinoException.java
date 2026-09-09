@@ -300,8 +300,8 @@ public abstract class RhinoException extends RuntimeException {
                         if (mapped != null) {
                             fn = mapped;
                         }
-                        // The emitted number may be a synthetic stand-in for a line that already
-                        // identified another position.
+                        // The emitted number may be a position marker rather than a line, when the
+                        // line itself already identified another position.
                         line = positions.getLine(e.getMethodName(), reported);
                     }
                     list.add(new ScriptStackElement(fn, methodName, line, column));

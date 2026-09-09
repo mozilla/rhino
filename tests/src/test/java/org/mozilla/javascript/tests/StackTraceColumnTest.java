@@ -52,8 +52,8 @@ public class StackTraceColumnTest {
 
     /**
      * Two statements on one line, so the line alone cannot say which one threw. The compiled
-     * backend gives the second position a synthetic line number in the class file and maps it back,
-     * so both modes still report the exact column.
+     * backend gives the second position a marker in place of a line number and maps it back, so
+     * both modes still report the exact column.
      */
     @Test
     public void oneLineWithTwoStatements() {

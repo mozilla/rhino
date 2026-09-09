@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The position table used by the JVM bytecode backend, which addresses positions by the line number
- * a stack frame reports and hands out synthetic numbers when a real line is already taken.
+ * a stack frame reports and hands out position markers when a real line is already taken.
  */
 class CompiledPositionsTest {
 
@@ -28,17 +28,17 @@ class CompiledPositionsTest {
     }
 
     @Test
-    void aSecondPositionOnALineGetsASyntheticNumberThatMapsBack() {
+    void aSecondPositionOnALineGetsAMarkerThatMapsBack() {
         var b = CompiledPositions.builder();
         assertEquals(7, b.record(M, 7, 12, null));
-        int synthetic = b.record(M, 7, 30, null);
-        assertNotEquals(7, synthetic, "must not reuse a number that identifies another position");
+        int marker = b.record(M, 7, 30, null);
+        assertNotEquals(7, marker, "must not reuse a number that identifies another position");
 
         CompiledPositions p = b.build();
         assertEquals(7, p.getLine(M, 7));
         assertEquals(12, p.getColumn(M, 7));
-        assertEquals(7, p.getLine(M, synthetic), "synthetic resolves to the real line");
-        assertEquals(30, p.getColumn(M, synthetic));
+        assertEquals(7, p.getLine(M, marker), "a marker resolves to the real line");
+        assertEquals(30, p.getColumn(M, marker));
     }
 
     @Test
@@ -62,12 +62,14 @@ class CompiledPositionsTest {
         assertEquals(7, b.record(M, 7, 12, null));
         int second = b.record(M, 7, 30, null);
         assertEquals(7, b.record(M, 7, 12, null), "the line's own position");
-        assertEquals(second, b.record(M, 7, 30, null), "an already allocated synthetic");
+        assertEquals(second, b.record(M, 7, 30, null), "an already allocated marker");
     }
 
-    /** A synthetic entry such as the script's end line carries no column and claims nothing. */
+    /**
+     * A compiler-invented entry such as the script end line carries no column and claims nothing.
+     */
     @Test
-    void aPositionWithoutAColumnTakesNoSyntheticNumber() {
+    void aPositionWithoutAColumnTakesNoMarker() {
         var b = CompiledPositions.builder();
         assertEquals(7, b.record(M, 7, 12, null));
         assertEquals(7, b.record(M, 7, 0, null));
@@ -109,8 +111,8 @@ class CompiledPositionsTest {
     }
 
     /**
-     * Synthetic numbers come from the top of the 16-bit range. A file large enough to reach them
-     * falls back to reporting the column as unknown rather than emitting a misleading number.
+     * Markers come from the top of the 16-bit range. A method whose own lines reach them falls back
+     * to reporting the column as unknown rather than emitting a misleading number.
      */
     @Test
     void exhaustingTheNumberSpaceDegradesToUnknown() {
@@ -118,9 +120,45 @@ class CompiledPositionsTest {
         b.record(M, 0xFFFE, 1, null);
         b.record(M, 0xFFFF, 1, null);
         int emitted = b.record(M, 0xFFFE, 40, null);
-        assertEquals(0xFFFE, emitted, "no room for a synthetic number");
+        assertEquals(0xFFFE, emitted, "no room for a marker");
         CompiledPositions p = b.build();
         assertEquals(0xFFFE, p.getLine(M, 0xFFFE), "the line is still right");
         assertEquals(0, p.getColumn(M, 0xFFFE), "but the column is not guessed");
+    }
+
+    /** Exhausting one method's numbers must not touch another's. */
+    @Test
+    void theNumberSpaceIsPerMethod() {
+        var b = CompiledPositions.builder();
+        b.record(M, 0xFFFE, 1, null);
+        b.record(M, 0xFFFF, 1, null);
+        assertEquals(0xFFFE, b.record(M, 0xFFFE, 40, null), "exhausted in this method");
+
+        int other = b.record("_c_g_2", 5, 1, null);
+        int otherSecond = b.record("_c_g_2", 5, 20, null);
+        assertEquals(5, other);
+        assertNotEquals(5, otherSecond, "a different method still has its whole range");
+
+        CompiledPositions p = b.build();
+        assertEquals(20, p.getColumn("_c_g_2", otherSecond));
+        assertEquals(5, p.getLine("_c_g_2", otherSecond));
+    }
+
+    /**
+     * A minified file puts every position on one line, so nearly every one needs a marker. The
+     * range is per method, so what matters is the positions in a single function, not the file.
+     */
+    @Test
+    void aThousandPositionsOnOneLineAreAllExact() {
+        var b = CompiledPositions.builder();
+        int[] emitted = new int[1000];
+        for (int i = 0; i < emitted.length; i++) {
+            emitted[i] = b.record(M, 1, i + 1, null);
+        }
+        CompiledPositions p = b.build();
+        for (int i = 0; i < emitted.length; i++) {
+            assertEquals(1, p.getLine(M, emitted[i]), "position " + i);
+            assertEquals(i + 1, p.getColumn(M, emitted[i]), "position " + i);
+        }
     }
 }

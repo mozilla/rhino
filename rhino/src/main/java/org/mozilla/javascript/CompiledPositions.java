@@ -22,18 +22,22 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Rhino chooses what goes in them. A position whose line is not yet spoken for emits its real
  * line, which is what a Java debugger expects. A second position on a line already claimed by a
- * different one emits a synthetic number taken from the top of the range instead, and this table
- * maps it back to the real line and column. So the reported line is always exact, the column is
- * exact too, and a synthetic number is only ever used where the real line could not have identified
+ * different one emits a <em>position marker</em> instead, taken from the top of the range, which
+ * this table maps back to the real line and column. So the reported line is always exact, the
+ * column is exact too, and a marker is only ever used where the real line could not have identified
  * the position anyway.
+ *
+ * <p>Markers are handed out per method rather than per class, since a lookup is keyed by method as
+ * well. Each generated method therefore has the whole range to itself, less whatever its own lines
+ * occupy.
  */
 public final class CompiledPositions {
 
     /** Name of the static field holding the table on a generated class. */
     public static final String FIELD_NAME = "_positions";
 
-    /** Synthetic line numbers are handed out from the top of the 16-bit range downwards. */
-    private static final int FIRST_SYNTHETIC_LINE = 0xFFFF;
+    /** Position markers are handed out from the top of the 16-bit range downwards. */
+    private static final int FIRST_POSITION_MARKER = 0xFFFF;
 
     /** What a reported line number resolves to. */
     private static final class Entry {
@@ -99,8 +103,7 @@ public final class CompiledPositions {
 
     /**
      * The real source line for a reported line number, which differs from it when the position had
-     * to be given a synthetic one. Returns {@code reportedLine} unchanged when it is not in the
-     * table.
+     * to be given a marker. Returns {@code reportedLine} unchanged when it is not in the table.
      */
     public int getLine(String methodName, int reportedLine) {
         Entry e = lookup(methodName, reportedLine);
@@ -126,14 +129,13 @@ public final class CompiledPositions {
     /** Collects positions during code generation. Not thread safe; one per generated class. */
     public static final class Builder {
 
+        /** Identifies a position within one method, so that repeats reuse their number. */
         private static final class Key {
-            final String method;
             final int line;
             final int column;
             final String sourceName;
 
-            Key(String method, int line, int column, String sourceName) {
-                this.method = method;
+            Key(int line, int column, String sourceName) {
                 this.line = line;
                 this.column = column;
                 this.sourceName = sourceName;
@@ -145,37 +147,44 @@ public final class CompiledPositions {
                 Key k = (Key) o;
                 return line == k.line
                         && column == k.column
-                        && method.equals(k.method)
                         && Objects.equals(sourceName, k.sourceName);
             }
 
             @Override
             public int hashCode() {
-                return Objects.hash(method, line, column, sourceName);
+                return Objects.hash(line, column, sourceName);
             }
         }
 
-        private final Map<String, Map<Integer, Entry>> byMethod = new HashMap<>();
-        private final Map<Key, Integer> emittedFor = new HashMap<>();
+        /**
+         * Allocation state for one method. A reported number only has to be unique within its
+         * method, because that is how lookups are keyed, so every method gets the whole range
+         * rather than sharing one with the rest of the class.
+         */
+        private static final class MethodState {
+            final Map<Integer, Entry> lines = new HashMap<>();
+            final Map<Key, Integer> emittedFor = new HashMap<>();
+            int nextMarker = FIRST_POSITION_MARKER;
+            int highestRealLine;
+        }
 
-        private int nextSynthetic = FIRST_SYNTHETIC_LINE;
-        private int highestRealLine;
+        private final Map<String, MethodState> byMethod = new HashMap<>();
 
         /**
          * Records a position and returns the line number to emit for it, which is the real line
          * unless that line already identifies a different position.
          *
-         * @param column the one-based column, or zero when the position is synthetic and carries no
-         *     column of its own
+         * @param column the one-based column, or zero for a position the compiler invented, which
+         *     carries no column of its own
          */
         public int record(String methodName, int line, int column, String sourceName) {
-            if (line > highestRealLine) highestRealLine = line;
-            Map<Integer, Entry> lines = byMethod.computeIfAbsent(methodName, k -> new HashMap<>());
+            MethodState state = byMethod.computeIfAbsent(methodName, k -> new MethodState());
+            if (line > state.highestRealLine) state.highestRealLine = line;
 
-            Entry claimed = lines.get(line);
+            Entry claimed = state.lines.get(line);
             if (claimed == null) {
-                lines.put(line, new Entry(line, Math.max(column, 0), sourceName));
-                emittedFor.put(new Key(methodName, line, column, sourceName), line);
+                state.lines.put(line, new Entry(line, Math.max(column, 0), sourceName));
+                state.emittedFor.put(new Key(line, column, sourceName), line);
                 return line;
             }
 
@@ -188,27 +197,29 @@ public final class CompiledPositions {
             }
 
             // A position with no column of its own can neither claim a line nor be worth a
-            // synthetic number; it just reuses whatever the line already resolves to.
+            // marker; it just reuses whatever the line already resolves to.
             if (column <= 0) {
                 return line;
             }
 
-            Integer already = emittedFor.get(new Key(methodName, line, column, sourceName));
+            Key key = new Key(line, column, sourceName);
+            Integer already = state.emittedFor.get(key);
             if (already != null) {
                 return already.intValue();
             }
 
-            if (nextSynthetic <= highestRealLine) {
-                // The 16-bit space is exhausted, which needs a file of some 65000 lines. Report
-                // the column as unknown rather than emit a number that means something else.
-                lines.put(line, new Entry(line, 0, claimed.sourceName));
+            if (state.nextMarker <= state.highestRealLine) {
+                // This method has run out of numbers, which takes tens of thousands of distinct
+                // positions in one function. Report the column as unknown rather than emit a
+                // number that already means something else.
+                state.lines.put(line, new Entry(line, 0, claimed.sourceName));
                 return line;
             }
 
-            int synthetic = nextSynthetic--;
-            lines.put(synthetic, new Entry(line, column, sourceName));
-            emittedFor.put(new Key(methodName, line, column, sourceName), synthetic);
-            return synthetic;
+            int marker = state.nextMarker--;
+            state.lines.put(marker, new Entry(line, column, sourceName));
+            state.emittedFor.put(key, marker);
+            return marker;
         }
 
         public boolean isEmpty() {
@@ -217,8 +228,8 @@ public final class CompiledPositions {
 
         public CompiledPositions build() {
             Map<String, Map<Integer, Entry>> out = new HashMap<>();
-            for (Map.Entry<String, Map<Integer, Entry>> e : byMethod.entrySet()) {
-                out.put(e.getKey(), Map.copyOf(e.getValue()));
+            for (Map.Entry<String, MethodState> e : byMethod.entrySet()) {
+                out.put(e.getKey(), Map.copyOf(e.getValue().lines));
             }
             return new CompiledPositions(out);
         }
