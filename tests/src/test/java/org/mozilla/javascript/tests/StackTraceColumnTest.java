@@ -102,6 +102,41 @@ public class StackTraceColumnTest {
         }
     }
 
+    /** The JVM backend generates each call shape along its own path. */
+    @Test
+    public void constructingANonConstructorReportsTheNewColumn() {
+        String source = "var foo = {};\nvar arg = 1;\nnew foo.nope(arg);";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(3, stack[0].lineNumber, mode + " line");
+            assertEquals(1, stack[0].columnNumber, mode + " column of the new");
+        }
+    }
+
+    /** A direct call to a top-level function, which the JVM backend specialises. */
+    @Test
+    public void aDirectCallReportsTheCallColumn() {
+        String source =
+                "function g(a) { return a.nope.deeper; }\nfunction f() { return g(1); }\nf();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(1, stack[0].lineNumber, mode + " callee line");
+            assertEquals(2, stack[1].lineNumber, mode + " caller line");
+            assertEquals(23, stack[1].columnNumber, mode + " column of the call to g");
+        }
+    }
+
+    /** A call through eval, which the JVM backend routes through its special-call path. */
+    @Test
+    public void aSpecialCallReportsTheCallColumn() {
+        String source = "var o = {};\nfunction f() { return eval(o.nope.deeper); }\nf();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(2, stack[0].lineNumber, mode + " line");
+            assertEquals(35, stack[0].columnNumber, mode + " column of 'deeper'");
+        }
+    }
+
     @Test
     public void columnAppearsInV8RenderedStack() {
         Utils.runWithAllModes(

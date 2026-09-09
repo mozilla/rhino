@@ -2858,6 +2858,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         // stack: ... functionObj cx scope
         generateCallArgArray(node, firstArgChild, false);
+        updateExpressionPosition(node);
         addScriptRuntimeInvoke(
                 "newObject",
                 "(Ljava/lang/Object;"
@@ -2980,6 +2981,7 @@ class BodyCodegen {
                 "org/mozilla/javascript/ScriptRuntime",
                 "emptyArgs",
                 "[Ljava/lang/Object;");
+        updateExpressionPosition(node);
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
                 codegen.mainClassName,
@@ -3018,6 +3020,7 @@ class BodyCodegen {
         // XXX: this will generate code for the child array the second time,
         // so expression code generation better not to alter tree structure...
         generateCallArgArray(node, firstArgChild, true);
+        updateExpressionPosition(node);
 
         if (type == Token.NEW) {
             addScriptRuntimeInvoke(
