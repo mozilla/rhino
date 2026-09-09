@@ -2867,9 +2867,30 @@ public class Context implements Closeable {
             if (evaluator != null) return evaluator.getSourcePosition(cx);
         }
 
-        int[] linep = new int[1];
-        String sourceName = getSourcePositionFromJavaStack(linep);
-        return sourceName == null ? null : new Position(sourceName, linep[0], 0);
+        return getPositionFromJavaStack();
+    }
+
+    /**
+     * The position of the topmost script frame on the Java stack, consulting the compiled position
+     * table so the column and original source match what the stack trace reports.
+     */
+    private static Position getPositionFromJavaStack() {
+        StackTraceElement[] stack = new Throwable().getStackTrace();
+        for (StackTraceElement e : stack) {
+            if (!frameMatches(e)) continue;
+            String sourceName = e.getFileName();
+            int column = 0;
+            CompiledPositions positions = CompiledPositions.forClass(e.getClassName());
+            if (positions != null) {
+                column = positions.getColumn(e.getMethodName(), e.getLineNumber());
+                String mapped = positions.getSourceName(e.getMethodName(), e.getLineNumber());
+                if (mapped != null) {
+                    sourceName = mapped;
+                }
+            }
+            return sourceName == null ? null : new Position(sourceName, e.getLineNumber(), column);
+        }
+        return null;
     }
 
     /** Returns the current filename in the java stack. */
