@@ -3932,10 +3932,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         }
     }
 
-    /**
-     * Marks a line boundary for the debugger, which steps by line. Carries no operand: the position
-     * it marks is whatever the side table holds for this offset.
-     */
+    // A line boundary for the debugger, which steps by line. No operand: the position is whatever
+    // the side table holds for this pc.
     private static class DoLineChange extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {

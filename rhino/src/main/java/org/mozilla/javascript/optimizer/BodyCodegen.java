@@ -2798,8 +2798,7 @@ class BodyCodegen {
         generateCallArgArray(node, firstArgChild, false);
         cfw.addAStore(argsLocal);
 
-        // After the callee and the arguments, so that calling a non-function is attributed to
-        // the call rather than to the last argument evaluated.
+        // After the args, so calling a non-function blames the call, not the last arg
         updateExpressionPosition(node);
 
         if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
@@ -3129,8 +3128,7 @@ class BodyCodegen {
                     Node target = node.getFirstChild();
                     generateExpression(target, node);
                     Node id = target.getNext();
-                    // The call target is itself a property access, and reading it is what fails
-                    // when the object is null or undefined.
+                    // The call target is a property access, and reading it is what fails here
                     updateExpressionPosition(node);
                     if (type == Token.GETPROP) {
                         String property = id.getString();
@@ -3207,7 +3205,6 @@ class BodyCodegen {
                 "()Lorg/mozilla/javascript/Scriptable;");
     }
 
-    /** See {@link CodeGenUtils#hasExpressionPosition}. */
     private void updateExpressionPosition(Node node) {
         if (CodeGenUtils.hasExpressionPosition(node)) updateLineNumber(node);
     }
@@ -3221,22 +3218,16 @@ class BodyCodegen {
         emitPosition(mapped);
     }
 
-    /**
-     * Adds a line entry for a position the compiler invented rather than one from a statement. The
-     * column passed to the source mapper is a placeholder, so it is not recorded as if it were
-     * real.
-     */
+    // For a position the compiler invented rather than one from a statement. The column handed to
+    // the source mapper is a placeholder, so it is not recorded as though it were real.
     private void addRemappedLineEntry(int line, int placeholderColumn) {
         Position mapped = remap(line, placeholderColumn);
         if (mapped == null) return;
         emitPosition(new Position(mapped.getSourcePath(), mapped.getLine(), 0));
     }
 
-    /**
-     * Records a position and adds the line entry that identifies it. The number emitted is the real
-     * line unless that line already identifies a different position, in which case the table hands
-     * back a position marker, which it maps back at lookup time.
-     */
+    // Emits the real line, unless that line already identifies a different position, in which case
+    // the table hands back a marker and maps it back at lookup time.
     private void emitPosition(Position position) {
         if (currentMethodName == null) {
             cfw.addLineNumberEntry(position.getLine());
@@ -3252,7 +3243,6 @@ class BodyCodegen {
         cfw.addLineNumberEntry(emitted);
     }
 
-    /** Applies the source mapper, or passes the position through when there is none. */
     private Position remap(int line, int column) {
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper == null) return new Position(null, line, column);
@@ -4672,8 +4662,7 @@ class BodyCodegen {
 
     private void visitGetProp(Node node, Node child) {
         generateExpression(child, node); // object
-        // After the target, so a failure reading the property is attributed to the property
-        // rather than to wherever evaluating the target left us.
+        // After the target, so a failed read blames the property, not the target
         updateExpressionPosition(node);
         if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
             int getExpr = cfw.acquireLabel();

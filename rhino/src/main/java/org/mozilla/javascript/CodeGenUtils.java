@@ -16,12 +16,9 @@ import org.mozilla.javascript.ast.ScriptNode;
 public class CodeGenUtils {
 
     /**
-     * Whether an operation within an expression carries a position worth recording, so that a
-     * failure is attributed to the operation rather than to the start of the statement.
-     *
-     * <p>Only nodes with a real column qualify. Parts the compiler synthesizes have no position of
-     * their own, and some carry a zero rather than the usual -1, which would otherwise be taken for
-     * line zero. Both backends ask this so they agree on what is worth a position record.
+     * Whether an operation inside an expression has a position worth recording, so that a failure
+     * blames the operation rather than the start of its statement. Parts the compiler synthesizes
+     * have none: most carry a column of -1, some a 0. Both backends ask this, so they agree.
      */
     public static boolean hasExpressionPosition(Node node) {
         return node.getColumn() > 0;

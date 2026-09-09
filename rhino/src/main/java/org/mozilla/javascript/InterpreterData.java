@@ -72,36 +72,21 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
     final Map<Integer, Integer> longJumps;
 
-    /**
-     * Where the source position changes, ascending by bytecode offset. Each entry packs the offset
-     * into the high half and the position into the low half, as line and column.
-     *
-     * <p>Positions live beside the code rather than in it. The interpreter never spends an
-     * instruction or a field write on them; a stack trace finds one by searching this for the last
-     * offset before the frame's program counter, which only ever happens while reporting an error.
-     */
+    // Where the source position changes, ascending by pc. Each entry is the pc in the high half,
+    // line and column in the low half. These are kept out of the icode so that the interpreter
+    // never spends an instruction on them: only error reporting reads them.
     final long[] positions;
 
-    /**
-     * Index into {@link #positionSourceNames} for the entry at the same place in {@link
-     * #positions}, or an empty array when no source mapper supplied any. Kept apart because a
-     * script compiled without a source map, which is the common case, needs none of it.
-     */
+    // Source name per entry, empty unless a source mapper supplied one
     final short[] positionSourceIndexes;
-
-    /** Original source paths, or null when no source mapper supplied any. */
     final String[] positionSourceNames;
 
-    /** Shared empty column, since most scripts are compiled without a source map. */
     static final short[] NO_SOURCE_INDEXES = new short[0];
 
     private static final int POSITION_MASK = 0xFFFF;
     private static final int LINE_SHIFT = 16;
 
-    /**
-     * Packs an offset and a position into one entry. A line or column beyond what sixteen bits hold
-     * is reported as unknown rather than wrapped, which takes a file of some 65000 lines.
-     */
+    // A line or column past 16 bits is reported as unknown rather than wrapped
     static long packEntry(int pc, int line, int column) {
         int packedLine = line >= 0 && line <= POSITION_MASK ? line : 0;
         int packedColumn = column >= 0 && column <= POSITION_MASK ? column : 0;
@@ -143,17 +128,12 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         return n < 0 ? null : positionSourceNames[n];
     }
 
-    /**
-     * The entry in effect at a program counter: the last one recorded before it, or -1 if the
-     * counter precedes them all.
-     *
-     * <p>Strictly before, because a frame's counter has already moved past the opcode of the
-     * instruction it is executing, while a position is recorded at that opcode's own offset.
-     */
     long positionAt(int index) {
         return positions[index];
     }
 
+    // The last entry recorded before pc, or -1. Strictly before, since a frame's pc has already
+    // moved past the opcode it is executing, while a position is recorded at that opcode's offset.
     int positionIndex(int pc) {
         int lo = 0;
         int hi = positions.length - 1;
@@ -229,7 +209,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
         InterpreterData<T> built = null;
 
-        /** Entries as {@link InterpreterData#positions}, filled in ascending offset order. */
         private long[] positions = new long[INITIAL_POSITION_TABLE_SIZE];
 
         private short[] positionSourceIndexes = NO_SOURCE_INDEXES;
@@ -237,11 +216,8 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         private List<String> sourceNames;
         private Map<String, Integer> sourceNameIndexes;
 
-        /**
-         * Notes the position taking effect at a bytecode offset. Successive records at the same
-         * offset supersede one another, which happens when a statement updates the position without
-         * emitting any code of its own.
-         */
+        // Successive records at the same pc supersede one another, which happens when a statement
+        // updates the position without emitting any code of its own.
         void recordPosition(int pc, int line, int column, String sourceName) {
             long entry = packEntry(pc, line, column);
             boolean sameOffset = positionCount > 0 && entryPc(positions[positionCount - 1]) == pc;
@@ -270,7 +246,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             if (!sameOffset) positionCount++;
         }
 
-        /** The entry recorded at an offset, or zero if none; used by the icode dumper. */
+        // Used by the icode dumper
         long positionEntryFor(int pc) {
             for (int i = positionCount - 1; i >= 0; i--) {
                 if (entryPc(positions[i]) == pc) return positions[i];
@@ -278,7 +254,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             return 0;
         }
 
-        /** Grows the source-name column to hold {@code needed} entries, unset ones being -1. */
         private void growSourceIndexes(int needed) {
             if (needed <= positionSourceIndexes.length) return;
             int was = positionSourceIndexes.length;

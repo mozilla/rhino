@@ -258,7 +258,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         itsData.itsTemplateLiterals = array;
     }
 
-    /** See {@link CodeGenUtils#hasExpressionPosition}. */
     private void updateExpressionPosition(Node node) {
         if (CodeGenUtils.hasExpressionPosition(node)) updateLineNumber(node);
     }
@@ -276,9 +275,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             column = mapped.getColumn();
             sourcePath = mapped.getSourcePath();
         }
-        // A non-positive column means unknown, since Node.column defaults to -1, so compare lines
-        // alone and keep whatever column was last recorded. Otherwise a synthesized node would
-        // record a position for every statement it touches.
+        // Column 0 or less means unknown, so compare lines alone and keep the last column we had.
+        // Otherwise a synthesized node records a position for every statement it touches.
         if (lineno == lineNumber
                 && (column <= 0 || column == columnNumber)
                 && Objects.equals(sourcePath, positionSourceName)) {
@@ -290,9 +288,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         if (column > 0) columnNumber = column;
         positionSourceName = sourcePath;
         itsData.recordPosition(iCodeTop, lineNumber, columnNumber, sourcePath);
-        // A LINE icode survives only because the debugger steps by line, and carries no operand:
-        // the line it marks is whatever the table holds for its offset. Moving within a line needs
-        // no instruction at all.
+        // LINE is only there for the debugger, which steps by line. It has no operand: the line
+        // is whatever the table holds for this pc. Moving within a line needs no icode at all.
         if (lineChanged) {
             addIcode(Icode.LINE);
         }
@@ -701,8 +698,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         visitExpression(child, 0);
                         ++argCount;
                     }
-                    // After the target and the arguments, so that calling a non-function is
-                    // attributed to the call rather than to the last argument evaluated.
+                    // After the args, so calling a non-function blames the call, not the last arg
                     updateExpressionPosition(node);
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
@@ -787,8 +783,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             case Token.GETPROPNOWARN:
                 visitExpression(child, 0);
                 child = child.getNext();
-                // After the target, so a failure reading the property is attributed to the
-                // property rather than to wherever evaluating the target left us.
+                // After the target, so a failed read blames the property, not the target
                 updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // Jump if null or undefined
@@ -1311,8 +1306,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     Node target = left.getFirstChild();
                     visitExpression(target, 0);
                     Node id = target.getNext();
-                    // The call target is itself a property access, and reading it is what fails
-                    // when the object is null or undefined.
+                    // The call target is a property access, and reading it is what fails here
                     updateExpressionPosition(left);
                     if (type == Token.GETPROP) {
                         String property = id.getString();

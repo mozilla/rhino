@@ -14,40 +14,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.mozilla.javascript.sourcemap.Position;
 
 /**
- * Source positions for one generated class, addressed by the line number a stack frame reports.
+ * Columns and original source paths for one generated class, looked up by the line number a stack
+ * frame reports.
  *
- * <p>A compiled frame exposes exactly one datum that varies from position to position: the {@code
- * line_number} of a LineNumberTable entry, sixteen bits per JVMS 4.7.12. The class name, method
- * name and source file are fixed for the whole frame. Those sixteen bits are therefore the entire
- * channel through which a column can travel.
- *
- * <p>Rhino chooses what goes in them. A position whose line is not yet spoken for emits its real
- * line, which is what a Java debugger expects. A second position on a line already claimed by a
- * different one emits a <em>position marker</em> instead, taken from the top of the range, which
- * this table maps back to the real line and column. So the reported line is always exact, the
- * column is exact too, and a marker is only ever used where the real line could not have identified
- * the position anyway.
- *
- * <p>Markers are handed out per method rather than per class, since a lookup is keyed by method as
- * well. Each generated method therefore has the whole range to itself, less whatever its own lines
- * occupy.
+ * <p>The class name, method name and source file are fixed for a whole frame, so a LineNumberTable
+ * entry's {@code line_number} is the only thing that varies from position to position, and its
+ * sixteen bits (JVMS 4.7.12) are the only channel a column can travel through. A position whose
+ * line is still free emits its real line, which is what a Java debugger expects; a second position
+ * on that line emits a marker from the top of the range instead, which this maps back. So a line is
+ * only ever displaced where it could not have identified the position anyway.
  */
 public final class CompiledPositions {
 
     /** Name of the static field holding the table on a generated class. */
     public static final String FIELD_NAME = "_positions";
 
-    /** Position markers are handed out from the top of the 16-bit range downwards. */
+    // Markers are handed out downwards, per method, since a lookup is keyed by method too
     private static final int FIRST_POSITION_MARKER = 0xFFFF;
 
-    /**
-     * Tables by generated class name. A stack frame gives us only the class name, so the lookup
-     * cannot be keyed on the class itself.
-     *
-     * <p>The reference is weak and the strong one lives in a static field of the generated class,
-     * so a table is collected along with the code it describes. Every generated class has a fresh
-     * name, so a strong map here would grow without bound as scripts are compiled and discarded.
-     */
+    // A frame gives us only the class name, so this cannot be keyed on the class itself. The
+    // reference is weak and the strong one lives in the generated class, so a table dies with the
+    // code it describes; every generated class has a fresh name, so a strong map would only grow.
     private static final Map<String, WeakReference<CompiledPositions>> BY_CLASS_NAME =
             new ConcurrentHashMap<>();
 
@@ -90,14 +77,10 @@ public final class CompiledPositions {
     }
 
     /**
-     * The position a compiled stack frame refers to, resolving the number it reports through the
-     * table of whichever generated class it belongs to.
+     * The position a compiled frame refers to, never null. The number it reports is the real line
+     * unless it is a marker, so this is the only place that has to know the difference.
      *
-     * <p>The reported number is the real line unless it is a marker, so this is the only place that
-     * has to know the difference.
-     *
-     * @param fallbackSourceName the source to name when the frame's position has none of its own
-     * @return the position, never null
+     * @param fallbackSourceName named when the frame's position has no source of its own
      */
     static Position resolve(StackTraceElement frame, String fallbackSourceName) {
         int reported = frame.getLineNumber();
@@ -112,10 +95,7 @@ public final class CompiledPositions {
                 : found;
     }
 
-    /**
-     * The real source line for a reported line number, which differs from it when the position had
-     * to be given a marker. Returns {@code reportedLine} unchanged when it is not in the table.
-     */
+    /** The real line behind a reported one, or {@code reportedLine} if it is not in the table. */
     public int getLine(String methodName, int reportedLine) {
         Position e = lookup(methodName, reportedLine);
         return e == null ? reportedLine : e.getLine();
@@ -140,11 +120,8 @@ public final class CompiledPositions {
     /** Collects positions during code generation. Not thread safe; one per generated class. */
     public static final class Builder {
 
-        /**
-         * Allocation state for one method. A reported number only has to be unique within its
-         * method, because that is how lookups are keyed, so every method gets the whole range
-         * rather than sharing one with the rest of the class.
-         */
+        // A reported number only has to be unique within its method, since lookups are keyed by
+        // method, so every method gets the whole range rather than sharing one.
         private static final class MethodState {
             final Map<Integer, Position> lines = new HashMap<>();
             final Map<Position, Integer> emittedFor = new HashMap<>();
@@ -157,23 +134,20 @@ public final class CompiledPositions {
         private boolean markersEnabled = true;
 
         /**
-         * Stops handing out position markers.
-         *
-         * <p>A marker is only meaningful alongside this table, which is attached to the generated
-         * class as it is defined. Code compiled ahead of time to a class file on disk is loaded
-         * without that step, so it must carry real line numbers and report no column where a line
-         * holds more than one position.
+         * Stops handing out markers. A marker only means anything alongside this table, which is
+         * attached as the class is defined; code compiled ahead of time to a file is loaded without
+         * that step, so it has to carry real line numbers and give up the column where a line holds
+         * more than one position.
          */
         public void disableMarkers() {
             markersEnabled = false;
         }
 
         /**
-         * Records a position and returns the line number to emit for it, which is the real line
-         * unless that line already identifies a different position.
+         * Records a position and returns the line number to emit for it: the real line, unless that
+         * line already identifies a different one.
          *
-         * @param column the one-based column, or zero for a position the compiler invented, which
-         *     carries no column of its own
+         * @param column the one-based column, or zero for a position the compiler invented
          */
         public int record(String methodName, int line, int column, String sourceName) {
             MethodState state = byMethod.computeIfAbsent(methodName, k -> new MethodState());
