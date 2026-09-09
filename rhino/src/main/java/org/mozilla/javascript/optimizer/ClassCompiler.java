@@ -315,7 +315,7 @@ public class ClassCompiler {
         if (compilerEnv.isGeneratingSource()) {
             cfw.add(ByteCode.NEW, "org.mozilla.javascript.EagerSourceCodeProvider");
             cfw.add(ByteCode.DUP);
-            cfw.addLoadConstant(root.sourceCodeProvider.getRawSource());
+            pushSource(cfw, root.sourceCodeProvider.getRawSource());
             cfw.addInvoke(
                     ByteCode.INVOKESPECIAL,
                     "org.mozilla.javascript.EagerSourceCodeProvider",
@@ -408,6 +408,40 @@ public class ClassCompiler {
         }
     }
 
+    /**
+     * Pushes the source of a script which, unlike the other constants here, has no bound on its
+     * length, so anything too long for one string constant is pushed in pieces and joined again.
+     */
+    private static void pushSource(ClassFileWriter cfw, String source) {
+        if (source.length() <= MAX_STRING_CONSTANT_LENGTH) {
+            cfw.addLoadConstant(source);
+            return;
+        }
+
+        cfw.add(ByteCode.NEW, "java.lang.StringBuilder");
+        cfw.add(ByteCode.DUP);
+        cfw.addLoadConstant(source.length());
+        cfw.addInvoke(ByteCode.INVOKESPECIAL, "java.lang.StringBuilder", "<init>", "(I)V");
+        for (int start = 0; start < source.length(); ) {
+            int end = Math.min(start + MAX_STRING_CONSTANT_LENGTH, source.length());
+            if (end < source.length() && Character.isHighSurrogate(source.charAt(end - 1))) {
+                end--;
+            }
+            cfw.addLoadConstant(source.substring(start, end));
+            cfw.addInvoke(
+                    ByteCode.INVOKEVIRTUAL,
+                    "java.lang.StringBuilder",
+                    "append",
+                    "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+            start = end;
+        }
+        cfw.addInvoke(
+                ByteCode.INVOKEVIRTUAL,
+                "java.lang.StringBuilder",
+                "toString",
+                "()Ljava/lang/String;");
+    }
+
     private void populateDescriptorEntry(ClassFileWriter cfw, int index, int parent) {
         // Start with the array on top.
         cfw.add(ByteCode.DUP); // array, array.
@@ -428,6 +462,9 @@ public class ClassCompiler {
         var code = (MHJSCode.Builder<?>) builder.code;
         return code.index;
     }
+
+    /** A string constant holds at most 64K of modified UTF-8, which is at least this many chars. */
+    private static final int MAX_STRING_CONSTANT_LENGTH = 16384;
 
     private String mainMethodClassName;
     private CompilerEnvirons compilerEnv;
