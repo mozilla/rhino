@@ -26,7 +26,7 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
             CallFrame parentFrame,
             ACallFrame<?, ?> previousInterpreterFrame) {
         super(cx, thisObj, newTarget, fnOrScript, code, parentFrame, previousInterpreterFrame);
-        pcSourceLineStart = compilerData.firstLinePC;
+        pcSourceLineStart = compilerData.firstLineOperandPC;
 
         stackTop = emptyStackTop;
     }

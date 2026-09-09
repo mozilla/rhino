@@ -23,4 +23,19 @@ public abstract class ACompilerData<T extends ScriptOrFn<T>, U extends ACompiler
     }
 
     public abstract int getLineNumberFromPc(int pc, int pcLineStart);
+
+    /**
+     * @return the one-based column, or zero when this backend does not track columns.
+     */
+    public int getColumnNumberFromPc(int pc, int pcLineStart) {
+        return 0;
+    }
+
+    /**
+     * @return the original source path for this position, or null to use the source name of the
+     *     enclosing script or function.
+     */
+    public String getSourceNameFromPc(int pc, int pcLineStart) {
+        return null;
+    }
 }

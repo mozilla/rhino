@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.mozilla.javascript.sourcemap.Position;
 
 public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompilerData<?, U>>
         implements Evaluator {
@@ -387,16 +388,22 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                 String fileName = desc.getSourceName();
                 String functionName = null;
                 int lineNumber = -1;
+                int columnNumber = 0;
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
                     lineNumber = idata.getLineNumberFromPc(pc, pc);
+                    columnNumber = idata.getColumnNumberFromPc(pc, pc);
+                    String mappedName = idata.getSourceNameFromPc(pc, pc);
+                    if (mappedName != null) {
+                        fileName = mappedName;
+                    }
                 }
                 if (desc.getName() != null && desc.getName().length() != 0) {
                     functionName = desc.getName();
                 }
                 calleeFrame = callerFrame;
                 callerFrame = callerFrame.parentFrame;
-                group.add(new ScriptStackElement(fileName, functionName, lineNumber));
+                group.add(new ScriptStackElement(fileName, functionName, lineNumber, columnNumber));
             }
             list.add(group.toArray(new ScriptStackElement[0]));
             frame = calleeFrame.previousInterpreterFrame;
@@ -411,5 +418,20 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         JSDescriptor<?> desc = frame.fnOrScript.getDescriptor();
         linep[0] = data.getLineNumberFromPc(frame.pc, frame.getPcSourceLineStart());
         return desc.getSourceName();
+    }
+
+    @Override
+    public final Position getSourcePosition(Context cx) {
+        ACallFrame<?, ?> frame = cx.lastInterpreterFrame;
+        var data = frame.compilerData;
+        int lineStart = frame.getPcSourceLineStart();
+        String sourceName = data.getSourceNameFromPc(frame.pc, lineStart);
+        if (sourceName == null) {
+            sourceName = frame.fnOrScript.getDescriptor().getSourceName();
+        }
+        return new Position(
+                sourceName,
+                data.getLineNumberFromPc(frame.pc, lineStart),
+                data.getColumnNumberFromPc(frame.pc, lineStart));
     }
 }

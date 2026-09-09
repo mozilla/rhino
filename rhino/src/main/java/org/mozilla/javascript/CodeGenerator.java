@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -37,6 +38,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private int iCodeTop;
     private int stackDepth;
     private int lineNumber = -1;
+    private int columnNumber = 0;
+    private String positionSourceName;
+    private int lastPositionIcodeStart = -1;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
@@ -258,19 +262,48 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
         if (lineno < 0) return;
+        int column = node.getColumn();
+        String sourcePath = null;
         SourceMapper mapper = compilerEnv.getSourceMapper();
         if (mapper != null) {
-            Position mapped = mapper.mapPosition(lineno, node.getColumn());
+            Position mapped = mapper.mapPosition(lineno, column);
             if (mapped == null) return;
             lineno = mapped.getLine();
+            column = mapped.getColumn();
+            sourcePath = mapped.getSourcePath();
         }
-        if (lineno == lineNumber) return;
-        if (itsData.firstLinePC < 0) {
-            itsData.firstLinePC = lineno;
+        // A non-positive column means "unknown" (Node.column defaults to -1), so fall back to
+        // comparing lines alone and keep whatever column we last recorded. Otherwise synthesized
+        // nodes would emit a redundant LINE for every statement they touch.
+        if (lineno == lineNumber
+                && (column <= 0 || column == columnNumber)
+                && Objects.equals(sourcePath, positionSourceName)) {
+            return;
         }
+        // The debugger is line-oriented, so only a genuine line change gets a LINE icode; a move
+        // within the same line records the position without producing a step.
+        boolean lineChanged =
+                lineno != lineNumber || !Objects.equals(sourcePath, positionSourceName);
         lineNumber = lineno;
-        addIcode(Icode.LINE);
-        addUint16(lineno & 0xFFFF);
+        if (column > 0) columnNumber = column;
+        positionSourceName = sourcePath;
+        int index = itsData.internSourcePosition(lineNumber, columnNumber, sourcePath);
+        // Nested nodes often refine the column before anything is emitted, so rewrite the pending
+        // icode in place instead of leaving one that is immediately superseded. Only the operand
+        // moves, so jump targets are unaffected. A line change is never collapsed: the debugger
+        // reports it even when the line emits no code of its own, such as a function header.
+        if (!lineChanged && lastPositionIcodeStart >= 0 && iCodeTop == lastPositionIcodeStart + 3) {
+            byte[] array = itsData.itsICode;
+            array[lastPositionIcodeStart + 1] = (byte) (index >>> 8);
+            array[lastPositionIcodeStart + 2] = (byte) index;
+            return;
+        }
+        lastPositionIcodeStart = iCodeTop;
+        addIcode(lineChanged ? Icode.LINE : Icode.POS);
+        if (itsData.firstLineOperandPC < 0) {
+            itsData.firstLineOperandPC = iCodeTop;
+        }
+        addUint16(index);
     }
 
     private static RuntimeException badTree(Node node) {

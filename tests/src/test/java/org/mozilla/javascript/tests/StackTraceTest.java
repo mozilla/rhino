@@ -108,15 +108,26 @@ public class StackTraceTest {
             final String source2 = "function f2() { 'H'.toLowerCase(); throw 'hello'; }; f2();";
             final String source3 =
                     "function f2() { new java.lang.String('H').toLowerCase(); throw 'hello'; }; f2();";
-            final String result =
-                    "hello" + LS + "    at f2 (test.js:0:0)" + LS + "    at test.js:0:0" + LS;
-
-            runWithExpectedStackTrace(source1, result);
-            runWithExpectedStackTrace(source2, result);
-            runWithExpectedStackTrace(source3, result);
+            // Unlike the other styles, V8 renders columns, so each source has its own: the
+            // first is the "throw" keyword, the second the top-level "f2()" call.
+            runWithExpectedStackTrace(source1, v8Result(17, 35));
+            runWithExpectedStackTrace(source2, v8Result(36, 54));
+            runWithExpectedStackTrace(source3, v8Result(58, 76));
         } finally {
             RhinoException.setStackStyle(stackStyle);
         }
+    }
+
+    private static String v8Result(int throwColumn, int callColumn) {
+        return "hello"
+                + LS
+                + "    at f2 (test.js:0:"
+                + throwColumn
+                + ")"
+                + LS
+                + "    at test.js:0:"
+                + callColumn
+                + LS;
     }
 
     private static void runWithExpectedStackTrace(

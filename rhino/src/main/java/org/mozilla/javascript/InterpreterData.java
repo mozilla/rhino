@@ -9,8 +9,12 @@ package org.mozilla.javascript;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.sourcemap.Position;
 
 final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, InterpreterData<?>>
         implements Serializable {
@@ -20,6 +24,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     static final int INITIAL_STRINGTABLE_SIZE = 64;
     static final int INITIAL_NUMBERTABLE_SIZE = 64;
     static final int INITIAL_BIGINTTABLE_SIZE = 64;
+    static final int INITIAL_POSITION_TABLE_SIZE = 64;
 
     InterpreterData(
             String[] itsStringTable,
@@ -36,8 +41,12 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             int maxCalleeArgs,
             Object[] literalIds,
             Map<Integer, Integer> longJumps,
-            int firstLinePC) {
+            int firstLineOperandPC,
+            int[] sourcePositions,
+            String[] positionSourceNames) {
         super(maxVars, maxLocals, maxStack, maxFrameArray, exceptionTable);
+        this.sourcePositions = sourcePositions;
+        this.positionSourceNames = positionSourceNames;
         this.itsStringTable = itsStringTable;
         this.itsDoubleTable = itsDoubleTable;
         this.itsBigIntTable = itsBigIntTable;
@@ -47,7 +56,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         this.maxCalleeArgs = maxCalleeArgs;
         this.literalIds = literalIds;
         this.longJumps = longJumps;
-        this.firstLinePC = firstLinePC;
+        this.firstLineOperandPC = firstLineOperandPC;
     }
 
     final String[] itsStringTable;
@@ -64,18 +73,52 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
     final Map<Integer, Integer> longJumps;
 
-    final int firstLinePC;
+    /** PC of the operand of the first LINE icode, or -1 if the code has none. */
+    final int firstLineOperandPC;
+
+    /**
+     * Source positions, three ints each: line, column, and an index into {@link
+     * #positionSourceNames} (negative when the position has no source of its own). Indexed by the
+     * operand of a LINE icode.
+     */
+    final int[] sourcePositions;
+
+    /** Original source paths, or null when no source mapper supplied any. */
+    final String[] positionSourceNames;
 
     private int icodeHashCode = 0;
 
     @Override
     public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
-        if (pcSourceLineStart >= 0) {
-            return ((itsICode[pcSourceLineStart] & 0xFF) << 8)
-                    | (itsICode[pcSourceLineStart + 1] & 0xFF);
-        } else {
-            return 0;
-        }
+        int i = positionIndex(pcSourceLineStart);
+        return i < 0 ? 0 : sourcePositions[i * 3];
+    }
+
+    @Override
+    public int getColumnNumberFromPc(int pc, int pcSourceLineStart) {
+        int i = positionIndex(pcSourceLineStart);
+        return i < 0 ? 0 : sourcePositions[i * 3 + 1];
+    }
+
+    @Override
+    public String getSourceNameFromPc(int pc, int pcSourceLineStart) {
+        if (positionSourceNames == null) return null;
+        int i = positionIndex(pcSourceLineStart);
+        if (i < 0) return null;
+        int n = sourcePositions[i * 3 + 2];
+        return n < 0 ? null : positionSourceNames[n];
+    }
+
+    /**
+     * Resolves a LINE operand PC to an index into {@link #sourcePositions}. The bounds check also
+     * covers data deserialized from a version that had no position table.
+     */
+    private int positionIndex(int pcSourceLineStart) {
+        if (pcSourceLineStart < 0 || sourcePositions == null) return -1;
+        int index =
+                ((itsICode[pcSourceLineStart] & 0xFF) << 8)
+                        | (itsICode[pcSourceLineStart + 1] & 0xFF);
+        return (index * 3 + 2) < sourcePositions.length ? index : -1;
     }
 
     public int icodeHashCode() {
@@ -137,7 +180,65 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
         InterpreterData<T> built = null;
 
-        int firstLinePC = -1; // PC for the first LINE icode
+        int firstLineOperandPC = -1; // PC of the operand of the first LINE icode
+
+        /** Interned source positions, three ints each; see InterpreterData#sourcePositions. */
+        private int[] sourcePositions = new int[INITIAL_POSITION_TABLE_SIZE * 3];
+
+        private int positionCount;
+        private final Map<Position, Integer> positionIndexes = new HashMap<>();
+        private final List<String> sourceNames = new ArrayList<>();
+        private final Map<String, Integer> sourceNameIndexes = new HashMap<>();
+
+        /**
+         * Returns the index of a source position, adding it to the table if it is new. Identical
+         * positions share an entry, so loops and re-entered branches cost nothing.
+         *
+         * <p>The index is emitted as a LINE operand, so it must fit in 16 bits. Scripts with more
+         * distinct positions than that reuse the last entry rather than corrupt the table.
+         */
+        int internSourcePosition(int line, int column, String sourceName) {
+            Position key = new Position(sourceName, line, column);
+            Integer existing = positionIndexes.get(key);
+            if (existing != null) {
+                return existing.intValue();
+            }
+            if (positionCount > 0xFFFF) {
+                return positionCount - 1;
+            }
+            int nameIndex = -1;
+            if (sourceName != null) {
+                nameIndex =
+                        sourceNameIndexes
+                                .computeIfAbsent(
+                                        sourceName,
+                                        n -> {
+                                            sourceNames.add(n);
+                                            return sourceNames.size() - 1;
+                                        })
+                                .intValue();
+            }
+            int base = positionCount * 3;
+            if (base + 3 > sourcePositions.length) {
+                sourcePositions = Arrays.copyOf(sourcePositions, sourcePositions.length * 2);
+            }
+            sourcePositions[base] = line;
+            sourcePositions[base + 1] = column;
+            sourcePositions[base + 2] = nameIndex;
+            int index = positionCount++;
+            positionIndexes.put(key, index);
+            return index;
+        }
+
+        /** The line recorded for a position index; used by the icode dumper. */
+        int positionLine(int index) {
+            return sourcePositions[index * 3];
+        }
+
+        /** The column recorded for a position index; used by the icode dumper. */
+        int positionColumn(int index) {
+            return sourcePositions[index * 3 + 1];
+        }
 
         public Builder() {
             itsICode = new byte[INITIAL_MAX_ICODE_LENGTH];
@@ -165,7 +266,9 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
                                 maxCalleeArgs,
                                 literalIds,
                                 jumpMap,
-                                firstLinePC);
+                                firstLineOperandPC,
+                                Arrays.copyOf(sourcePositions, positionCount * 3),
+                                sourceNames.isEmpty() ? null : sourceNames.toArray(new String[0]));
             }
             return built;
         }

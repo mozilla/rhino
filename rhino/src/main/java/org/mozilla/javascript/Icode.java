@@ -168,8 +168,12 @@ abstract class Icode {
             // object rest - create object excluding extracted keys
             OBJECT_REST = SPREAD - 1,
 
+            // Like LINE, but for a position within a line. Does not notify the debugger, which
+            // is line-oriented, so several positions on one line stay a single step.
+            POS = OBJECT_REST - 1,
+
             // Last icode
-            MIN_ICODE = OBJECT_REST;
+            MIN_ICODE = POS;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -249,6 +253,8 @@ abstract class Icode {
                 return "RETSUB";
             case LINE:
                 return "LINE";
+            case POS:
+                return "POS";
             case SHORTNUMBER:
                 return "SHORTNUMBER";
             case INTNUMBER:

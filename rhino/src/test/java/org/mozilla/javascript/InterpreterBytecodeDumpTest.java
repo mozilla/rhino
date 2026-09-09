@@ -19,7 +19,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 8",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] SHORTNUMBER 42",
                         " [6] POP_RESULT",
                         " [7] RETURN_RESULT",
@@ -33,7 +33,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for f, length = 4",
                         "MaxStack = 0",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:14",
                         " [3] RETUNDEF",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
@@ -48,11 +48,11 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for f, length = 4",
                         "MaxStack = 0",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:11",
                         " [3] RETUNDEF",
                         "ICode dump, for null, length = 16",
                         "MaxStack = 4",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"o\"",
                         " [4] BINDNAME",
                         " [5] REG_IND_C0",
@@ -75,7 +75,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 20",
                         "MaxStack = 2",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_BIGINT_C0 1n",
                         " [4] BIGINT",
                         " [5] REG_BIGINT_C1 2n",
@@ -102,7 +102,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 19",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"x\"",
                         " [4] NAME",
                         " [5] IFNE 14",
@@ -121,7 +121,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 14",
                         "MaxStack = 2",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"x\"",
                         " [4] NAME",
                         " [5] DUP",
@@ -141,7 +141,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 18",
                         "MaxStack = 2",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"x\"",
                         " [4] NAME",
                         " [5] DUP",
@@ -163,7 +163,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 8",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"x\"",
                         " [4] NAME_INC_DEC 2",
                         " [6] POP_RESULT",
@@ -178,7 +178,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 15",
                         "MaxStack = 3",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"eval\"",
                         " [4] NAME_AND_THIS",
                         " [5] REG_STR_C1 \"1\"",
@@ -230,7 +230,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 13",
                         "MaxStack = 4",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"f\"",
                         " [4] NAME_AND_THIS",
                         " [5] ONE",
@@ -249,7 +249,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 9",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"F\"",
                         " [4] NAME",
                         " [5] REG_IND_C0",
@@ -266,7 +266,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 8",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] ONE",
                         " [4] THROW : 1",
                         " [7] RETURN_RESULT",
@@ -281,7 +281,7 @@ class InterpreterBytecodeDumpTest {
                         "ICode dump, for g, length = 14",
                         "MaxStack = 1",
                         " [0] GENERATOR : 1",
-                        " [3] LINE : 1",
+                        " [3] LINE : 1:17",
                         " [6] ONE",
                         " [7] YIELD : 1",
                         " [10] POP",
@@ -306,7 +306,7 @@ class InterpreterBytecodeDumpTest {
                         "ICode dump, for g, length = 10",
                         "MaxStack = 1",
                         " [0] GENERATOR : 1",
-                        " [3] LINE : 1",
+                        " [3] LINE : 1:17",
                         " [6] ONE",
                         " [7] GENERATOR_RETURN : 1",
                         "ICode dump, for null, length = 1",
@@ -322,7 +322,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 10",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] INTNUMBER 100000",
                         " [8] POP_RESULT",
                         " [9] RETURN_RESULT",
@@ -336,7 +336,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 7",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_IND_C0",
                         " [4] NUMBER 1.5",
                         " [5] POP_RESULT",
@@ -383,14 +383,15 @@ class InterpreterBytecodeDumpTest {
     void getvar1Setvar1ArePrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for f, length = 10",
+                        "ICode dump, for f, length = 13",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:16",
                         " [3] ONE",
                         " [4] SETVAR1 0",
                         " [6] POP",
-                        " [7] GETVAR1 0",
-                        " [9] RETURN",
+                        " [7] POS : 1:27",
+                        " [10] GETVAR1 0",
+                        " [12] RETURN",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -404,7 +405,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for f, length = 8",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:16",
                         " [3] ONE",
                         " [4] SETCONSTVAR1 0",
                         " [6] POP",
@@ -422,7 +423,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 19",
                         "MaxStack = 3",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_STR_C0 \"x\"",
                         " [4] NAME",
                         " [5] DUP",
@@ -449,7 +450,7 @@ class InterpreterBytecodeDumpTest {
                 Utils.portableLines(
                         "ICode dump, for null, length = 35",
                         "MaxStack = 3",
-                        " [0] LINE : 1",
+                        " [0] LINE : 1:1",
                         " [3] REG_IND_C0",
                         " [4] LITERAL_NEW_OBJECT [$0] false",
                         " [6] REG_STR_C0 \"obj\"",
