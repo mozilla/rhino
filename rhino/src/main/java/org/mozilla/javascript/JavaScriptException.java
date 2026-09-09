@@ -34,7 +34,17 @@ public class JavaScriptException extends RhinoException {
      * @param value the JavaScript value thrown.
      */
     public JavaScriptException(Object value, String sourceName, int lineNumber) {
-        recordErrorOrigin(sourceName, lineNumber, null, 0);
+        this(value, sourceName, lineNumber, 0);
+    }
+
+    /**
+     * Create a JavaScript exception wrapping the given JavaScript value
+     *
+     * @param value the JavaScript value thrown.
+     * @param columnNumber the one-based column number, or zero when unknown.
+     */
+    public JavaScriptException(Object value, String sourceName, int lineNumber, int columnNumber) {
+        recordErrorOrigin(sourceName, lineNumber, null, columnNumber);
         this.value = value;
         // try to extract the cause. Value can be either a (wrapped) java.lang.Throwable
         // or a NativeError, that may contain the causing javaException
@@ -50,6 +60,9 @@ public class JavaScriptException extends RhinoException {
                 }
                 if (!error.has("lineNumber", error)) {
                     error.put("lineNumber", error, Integer.valueOf(lineNumber));
+                }
+                if (columnNumber > 0 && !error.has("columnNumber", error)) {
+                    error.put("columnNumber", error, Integer.valueOf(columnNumber));
                 }
                 // set stack property, see bug #549604
                 error.setStackProvider(this);

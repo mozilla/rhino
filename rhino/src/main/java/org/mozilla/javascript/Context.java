@@ -38,6 +38,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.sourcemap.Position;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.xml.XMLLib;
 
@@ -2852,6 +2853,23 @@ public class Context implements Closeable {
         }
 
         return getSourcePositionFromJavaStack(linep);
+    }
+
+    /**
+     * Like {@link #getSourcePositionFromStack(int[])}, but also reports the column when the
+     * evaluator tracks one. Returns null if no position could be determined.
+     */
+    static Position getSourcePosition() {
+        Context cx = getCurrentContext();
+        if (cx == null) return null;
+        if (cx.lastInterpreterFrame != null) {
+            Evaluator evaluator = cx.getInterpreterForCurrentMethod();
+            if (evaluator != null) return evaluator.getSourcePosition(cx);
+        }
+
+        int[] linep = new int[1];
+        String sourceName = getSourcePositionFromJavaStack(linep);
+        return sourceName == null ? null : new Position(sourceName, linep[0], 0);
     }
 
     /** Returns the current filename in the java stack. */

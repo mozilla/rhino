@@ -33,6 +33,7 @@ import org.mozilla.javascript.dtoa.DoubleFormatter;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.impl.factory.ClassValueCacheFactory;
 import org.mozilla.javascript.lc.type.impl.factory.LegacyCacheFactory;
+import org.mozilla.javascript.sourcemap.Position;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeBigInt64Array;
 import org.mozilla.javascript.typedarrays.NativeBigUint64Array;
@@ -5802,18 +5803,23 @@ public class ScriptRuntime {
     }
 
     public static EcmaError constructError(String error, String message) {
-        int[] linep = new int[1];
-        String filename = Context.getSourcePositionFromStack(linep);
-        return constructError(error, message, filename, linep[0], null, 0);
+        Position p = Context.getSourcePosition();
+        if (p == null) {
+            return constructError(error, message, null, 0, null, 0);
+        }
+        return constructError(error, message, p.getSourcePath(), p.getLine(), null, p.getColumn());
     }
 
     public static EcmaError constructError(String error, String message, int lineNumberDelta) {
-        int[] linep = new int[1];
-        String filename = Context.getSourcePositionFromStack(linep);
-        if (linep[0] != 0) {
-            linep[0] += lineNumberDelta;
+        Position p = Context.getSourcePosition();
+        if (p == null) {
+            return constructError(error, message, null, 0, null, 0);
         }
-        return constructError(error, message, filename, linep[0], null, 0);
+        int line = p.getLine();
+        if (line != 0) {
+            line += lineNumberDelta;
+        }
+        return constructError(error, message, p.getSourcePath(), line, null, p.getColumn());
     }
 
     public static EcmaError constructError(

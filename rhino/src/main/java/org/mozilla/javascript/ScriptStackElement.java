@@ -22,10 +22,20 @@ public final class ScriptStackElement implements Serializable {
     public final String functionName;
     public final int lineNumber;
 
+    /** One-based column number, or zero when unknown. */
+    public final int columnNumber;
+
+    /** Equivalent to {@code ScriptStackElement(fileName, functionName, lineNumber, 0)}. */
     public ScriptStackElement(String fileName, String functionName, int lineNumber) {
+        this(fileName, functionName, lineNumber, 0);
+    }
+
+    public ScriptStackElement(
+            String fileName, String functionName, int lineNumber, int columnNumber) {
         this.fileName = fileName;
         this.functionName = functionName;
         this.lineNumber = lineNumber;
+        this.columnNumber = columnNumber;
     }
 
     @Override
@@ -89,6 +99,7 @@ public final class ScriptStackElement implements Serializable {
 
     private void appendV8Location(StringBuilder sb) {
         sb.append(fileName).append(':');
-        sb.append(lineNumber > -1 ? lineNumber : 0).append(":0");
+        sb.append(lineNumber > -1 ? lineNumber : 0).append(':');
+        sb.append(Math.max(columnNumber, 0));
     }
 }

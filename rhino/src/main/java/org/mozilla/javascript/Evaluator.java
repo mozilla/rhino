@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.util.List;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.sourcemap.Position;
 
 /** Abstraction of evaluation, which can be implemented either by an interpreter or compiler. */
 public interface Evaluator {
@@ -74,6 +75,21 @@ public interface Evaluator {
      * @return the name of the file or other source container
      */
     public String getSourcePositionFromStack(Context cx, int[] linep);
+
+    /**
+     * Get the full source position by examining the stack.
+     *
+     * <p>The default implementation reports the line only, so evaluators that do not track columns
+     * need not override it.
+     *
+     * @param cx Context
+     * @return the position, or null if it could not be determined
+     */
+    default Position getSourcePosition(Context cx) {
+        int[] linep = new int[1];
+        String sourceName = getSourcePositionFromStack(cx, linep);
+        return sourceName == null ? null : new Position(sourceName, linep[0], 0);
+    }
 
     /**
      * Given a native stack trace, patch it with script-specific source and line information
