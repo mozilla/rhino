@@ -40,8 +40,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private int lineNumber = -1;
     private int columnNumber = 0;
     private String positionSourceName;
-    private int lastPositionIcodeStart = -1;
-    private int lastPositionIcodeSize;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
@@ -278,26 +276,22 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             column = mapped.getColumn();
             sourcePath = mapped.getSourcePath();
         }
-        // A non-positive column means "unknown" (Node.column defaults to -1), so fall back to
-        // comparing lines alone and keep whatever column we last recorded. Otherwise synthesized
-        // nodes would emit a redundant LINE for every statement they touch.
+        // A non-positive column means unknown, since Node.column defaults to -1, so compare lines
+        // alone and keep whatever column was last recorded. Otherwise a synthesized node would
+        // record a position for every statement it touches.
         if (lineno == lineNumber
                 && (column <= 0 || column == columnNumber)
                 && Objects.equals(sourcePath, positionSourceName)) {
             return;
         }
-        // The debugger is line-oriented, so only a genuine line change gets a LINE icode; a move
-        // within the same line records the position without producing a step.
         boolean lineChanged =
                 lineno != lineNumber || !Objects.equals(sourcePath, positionSourceName);
         lineNumber = lineno;
         if (column > 0) columnNumber = column;
         positionSourceName = sourcePath;
-        // The position lives beside the code, keyed by the offset it takes effect at, so the
-        // interpreter never spends an instruction or a field write on it.
         itsData.recordPosition(iCodeTop, lineNumber, columnNumber, sourcePath);
-        // A LINE icode remains only because the debugger steps by line, and it carries no operand:
-        // the line it marks is whatever the table says for its offset. A move within a line needs
+        // A LINE icode survives only because the debugger steps by line, and carries no operand:
+        // the line it marks is whatever the table holds for its offset. Moving within a line needs
         // no instruction at all.
         if (lineChanged) {
             addIcode(Icode.LINE);
