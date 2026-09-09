@@ -22,6 +22,7 @@ import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilationResult;
+import org.mozilla.javascript.CompiledPositions;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Evaluator;
@@ -76,16 +77,19 @@ public class Codegen implements Evaluator {
         final String className;
         final byte[] bytecode;
         final MHJSCode.BuilderEnv builderEnv;
+        final CompiledPositions positions;
 
         CodegenCompilationResult(
                 JSDescriptor.Builder<T> builder,
                 String className,
                 byte[] bytecode,
-                MHJSCode.BuilderEnv builderEnv) {
+                MHJSCode.BuilderEnv builderEnv,
+                CompiledPositions positions) {
             this.builder = builder;
             this.className = className;
             this.bytecode = bytecode;
             this.builderEnv = builderEnv;
+            this.positions = positions;
         }
 
         @Override
@@ -139,7 +143,12 @@ public class Codegen implements Evaluator {
                         rawSource,
                         returnFunction);
 
-        return new CodegenCompilationResult<>(builder, mainClassName, mainClassBytes, builderEnv);
+        return new CodegenCompilationResult<>(
+                builder,
+                mainClassName,
+                mainClassBytes,
+                builderEnv,
+                positions.isEmpty() ? null : positions.build());
     }
 
     @Override
@@ -176,6 +185,12 @@ public class Codegen implements Evaluator {
             var descs = new ArrayList<JSDescriptor<?>>();
             JSDescriptor<T> desc = compiled.builder.build(d -> descs.add(d));
             cl.getField(DESCRIPTORS_FIELD_NAME).set(null, descs.toArray(new JSDescriptor[0]));
+            if (compiled.positions != null) {
+                // The static field keeps the table alive exactly as long as the class; the
+                // registry that stack traces consult holds only a weak reference to it.
+                cl.getField(POSITIONS_FIELD_NAME).set(null, compiled.positions);
+                CompiledPositions.register(compiled.className, compiled.positions);
+            }
             if (compiled.builderEnv.hasRegExpLiterals) {
                 cl.getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
                         .invoke(null, Context.getCurrentContext());
@@ -417,6 +432,8 @@ public class Codegen implements Evaluator {
                 DESCRIPTORS_FIELD_NAME,
                 "[Lorg/mozilla/javascript/JSDescriptor;",
                 (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addField(
+                POSITIONS_FIELD_NAME, POSITIONS_FIELD_SIGNATURE, (short) (ACC_PUBLIC | ACC_STATIC));
 
         generateLookupAccessor(cfw);
 
@@ -983,6 +1000,9 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
+    static final String POSITIONS_FIELD_NAME = CompiledPositions.FIELD_NAME;
+    static final String POSITIONS_FIELD_SIGNATURE = "Lorg/mozilla/javascript/CompiledPositions;";
+
     static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
 
@@ -1018,6 +1038,12 @@ public class Codegen implements Evaluator {
     private static int globalSerialClassCounter;
 
     private CompilerEnvirons compilerEnv;
+
+    private final CompiledPositions.Builder positions = CompiledPositions.builder();
+
+    CompiledPositions.Builder getPositions() {
+        return positions;
+    }
 
     private List<OptFunctionNode> directCallTargets;
     ScriptNode[] scriptOrFnNodes;

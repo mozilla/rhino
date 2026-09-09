@@ -273,7 +273,8 @@ public abstract class RhinoException extends RuntimeException {
         // Pattern to recover function name from java method name -
         // see Codegen.getBodyMethodName()
         // kudos to Marc Guillemot for coming up with this
-        for (StackTraceElement e : stack) {
+        for (int frameIndex = 0; frameIndex < stack.length; frameIndex++) {
+            StackTraceElement e = stack[frameIndex];
             String fileName = e.getFileName();
             if (e.getMethodName().startsWith("_c_")
                     && e.getLineNumber() > -1
@@ -289,7 +290,17 @@ public abstract class RhinoException extends RuntimeException {
                     printStarted = true;
                 } else if (printStarted && ((limit < 0) || (count < limit))) {
                     String fn = fileName == null ? "(unknown)" : fileName;
-                    list.add(new ScriptStackElement(fn, methodName, e.getLineNumber()));
+                    int column = 0;
+                    CompiledPositions positions = CompiledPositions.forClass(e.getClassName());
+                    if (positions != null) {
+                        column = positions.getColumn(e.getMethodName(), e.getLineNumber());
+                        String mapped =
+                                positions.getSourceName(e.getMethodName(), e.getLineNumber());
+                        if (mapped != null) {
+                            fn = mapped;
+                        }
+                    }
+                    list.add(new ScriptStackElement(fn, methodName, e.getLineNumber(), column));
                     count++;
                 }
 
