@@ -402,6 +402,54 @@ class SourceMapperTest {
                 });
     }
 
+    /**
+     * A bundle of three original files, each frame of the stack coming from a different one. Every
+     * frame names its own file, line and column, and both backends agree on all of it.
+     */
+    @Test
+    void realSourceMapV3RemapsEveryFrameToItsOwnSource() {
+        // Segment per generated line: line 1 col 14 -> a.ts:10:5, line 2 col 14 -> b.ts:20:7,
+        // line 3 col 1 -> main.ts:30:1.
+        String mapJson =
+                "{\"version\":3,\"sources\":[\"a.ts\",\"b.ts\",\"main.ts\"],"
+                        + "\"mappings\":\"aASI;aCUE;ACUN\"}";
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource(
+                                                    "function a(){throw new Error('x');}\n"
+                                                            + "function b(){a();}\n"
+                                                            + "b();")
+                                            .sourceName("bundle.js")
+                                            .lineno(1)
+                                            .sourceMapper(SourceMapV3.parse(mapJson))
+                                            .build());
+
+                    RhinoException ex =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
+                    ScriptStackElement[] stack = ex.getScriptStack();
+                    assertEquals(3, stack.length);
+                    assertPositionIs("a.ts", 10, 5, stack[0]);
+                    assertPositionIs("b.ts", 20, 7, stack[1]);
+                    assertPositionIs("main.ts", 30, 1, stack[2]);
+                    assertEquals(stack[0].fileName, ex.sourceName());
+                    assertEquals(stack[0].lineNumber, ex.lineNumber());
+                    assertEquals(stack[0].columnNumber, ex.columnNumber());
+                    return null;
+                });
+    }
+
+    private static void assertPositionIs(
+            String fileName, int line, int column, ScriptStackElement frame) {
+        assertEquals(fileName, frame.fileName);
+        assertEquals(line, frame.lineNumber, fileName + " line");
+        assertEquals(column, frame.columnNumber, fileName + " column");
+    }
+
     @Test
     void realSourceMapV3SurfacesPrimarySourceToDebugger() {
         Utils.runWithMode(
