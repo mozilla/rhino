@@ -121,9 +121,8 @@ public class ObjectLiteralSpreadBytecodeTest {
     }
 
     // ------------------------------------------------------------------
-    // 3. Error line numbers: pcSourceLineStart is driven by Icode.LINE
-    //    instructions found via bytecodeSpan(). If the span for
-    //    Icode.SPREAD is wrong, the line counter drifts.
+    // 3. Error line numbers: the position table is keyed by pc, so if the
+    //    span for Icode.SPREAD is wrong, every later lookup is off.
     // ------------------------------------------------------------------
 
     @Test

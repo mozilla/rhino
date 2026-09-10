@@ -25,7 +25,6 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.sourcemap.Position;
-import org.mozilla.javascript.sourcemap.SourceMapper;
 
 class BodyCodegen {
     void generateBodyCode() {
@@ -3212,7 +3211,7 @@ class BodyCodegen {
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
         if (lineno == -1) return;
-        Position mapped = remap(lineno, node.getColumn());
+        Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
         if (mapped == null) return;
         itsLineNumber = mapped.getLine();
         emitPosition(mapped);
@@ -3222,7 +3221,7 @@ class BodyCodegen {
     // taken from a node. Column 1 is only a probe for the source mapper, so the mapped column is
     // dropped instead of being recorded as though it were real.
     private void emitScriptEndLine(int line) {
-        Position mapped = remap(line, 1);
+        Position mapped = CodeGenUtils.mapPosition(compilerEnv, line, 1);
         if (mapped == null) return;
         emitPosition(new Position(mapped.getSourcePath(), mapped.getLine(), 0));
     }
@@ -3237,13 +3236,11 @@ class BodyCodegen {
                                 position.getLine(),
                                 position.getColumn(),
                                 position.getSourcePath());
-        cfw.addLineNumberEntry(emitted);
-    }
-
-    private Position remap(int line, int column) {
-        SourceMapper mapper = compilerEnv.getSourceMapper();
-        if (mapper == null) return new Position(null, line, column);
-        return mapper.mapPosition(line, column);
+        // An entry covers the code up to the next one, so repeating the number adds nothing
+        if (emitted != lastEmittedLine) {
+            cfw.addLineNumberEntry(emitted);
+            lastEmittedLine = emitted;
+        }
     }
 
     private void visitTryCatchFinally(Jump node, Node child) {
@@ -5004,6 +5001,8 @@ class BodyCodegen {
 
     // Keys the positions recorded for this body, since a lookup is by method as well as line
     private String currentMethodName;
+
+    private int lastEmittedLine = -1;
 
     private boolean hasVarsInRegs;
     private int[] varRegisters;

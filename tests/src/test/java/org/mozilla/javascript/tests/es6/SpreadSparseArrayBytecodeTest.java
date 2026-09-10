@@ -98,8 +98,8 @@ public class SpreadSparseArrayBytecodeTest {
     }
 
     // ------------------------------------------------------------------
-    // 3. Error line numbers: if bytecodeSpan is wrong, pcSourceLineStart
-    //    drifts and exceptions report the wrong line.
+    // 3. Error line numbers: the position table is keyed by pc, so if
+    //    bytecodeSpan is wrong, exceptions report the wrong line.
     // ------------------------------------------------------------------
 
     @Test

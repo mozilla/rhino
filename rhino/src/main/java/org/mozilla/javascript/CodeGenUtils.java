@@ -8,6 +8,8 @@ import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /**
  * Common utilities usable by all the compilers for populating {@link JSDescriptor.Builder} entries
@@ -22,6 +24,15 @@ public class CodeGenUtils {
      */
     public static boolean hasExpressionPosition(Node node) {
         return node.getColumn() > 0;
+    }
+
+    /**
+     * The position to record for one in the script being compiled: the original position when a
+     * source mapper is attached, the given one otherwise, or null if the mapper has nothing for it.
+     */
+    public static Position mapPosition(CompilerEnvirons env, int line, int column) {
+        SourceMapper mapper = env.getSourceMapper();
+        return mapper == null ? new Position(null, line, column) : mapper.mapPosition(line, column);
     }
 
     /** Populates builder data for a nested function. */

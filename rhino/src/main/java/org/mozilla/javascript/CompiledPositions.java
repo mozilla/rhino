@@ -9,7 +9,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import org.mozilla.javascript.sourcemap.Position;
@@ -70,7 +69,7 @@ public final class CompiledPositions {
     }
 
     /** The position behind a reported line number, or null if the table has none for it. */
-    public Position get(String methodName, int reportedLine) {
+    Position get(String methodName, int reportedLine) {
         PositionTable positions = byMethod.get(methodName);
         return positions == null ? null : positions.get(reportedLine);
     }
@@ -133,32 +132,20 @@ public final class CompiledPositions {
             MethodState state = byMethod.computeIfAbsent(methodName, k -> new MethodState());
             if (line > state.highestRealLine) state.highestRealLine = line;
 
+            Position key = new Position(sourceName, line, column);
             Position claimed = state.lines.get(line);
             if (claimed == null) {
-                state.lines.put(line, new Position(sourceName, line, Math.max(column, 0)));
-                state.emittedFor.put(new Position(sourceName, line, column), line);
-                return line;
-            }
-
-            boolean sameAsClaimed =
-                    claimed.getLine() == line
-                            && claimed.getColumn() == Math.max(column, 0)
-                            && Objects.equals(claimed.getSourcePath(), sourceName);
-            if (sameAsClaimed) {
+                state.lines.put(line, column > 0 ? key : new Position(sourceName, line, 0));
+                if (column > 0) state.emittedFor.put(key, line);
                 return line;
             }
 
             // A position with no column of its own can neither claim a line nor be worth a
             // marker; it just reuses whatever the line already resolves to.
-            if (column <= 0) {
-                return line;
-            }
+            if (column <= 0) return line;
 
-            Position key = new Position(sourceName, line, column);
             Integer already = state.emittedFor.get(key);
-            if (already != null) {
-                return already.intValue();
-            }
+            if (already != null) return already.intValue();
 
             if (!markersEnabled || state.nextMarker <= state.highestRealLine) {
                 // Either markers are unavailable, or this method has run out of them, which takes
@@ -169,13 +156,9 @@ public final class CompiledPositions {
             }
 
             int marker = state.nextMarker--;
-            state.lines.put(marker, new Position(sourceName, line, column));
+            state.lines.put(marker, key);
             state.emittedFor.put(key, marker);
             return marker;
-        }
-
-        public boolean isEmpty() {
-            return byMethod.isEmpty();
         }
 
         public CompiledPositions build() {
@@ -190,10 +173,5 @@ public final class CompiledPositions {
             }
             return new CompiledPositions(out);
         }
-    }
-
-    @Override
-    public String toString() {
-        return "CompiledPositions" + byMethod.keySet();
     }
 }

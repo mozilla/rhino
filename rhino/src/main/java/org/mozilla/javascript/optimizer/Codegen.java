@@ -144,11 +144,7 @@ public class Codegen implements Evaluator {
                         returnFunction);
 
         return new CodegenCompilationResult<>(
-                builder,
-                mainClassName,
-                mainClassBytes,
-                builderEnv,
-                positions.isEmpty() ? null : positions.build());
+                builder, mainClassName, mainClassBytes, builderEnv, positions.build());
     }
 
     @Override
@@ -185,12 +181,10 @@ public class Codegen implements Evaluator {
             var descs = new ArrayList<JSDescriptor<?>>();
             JSDescriptor<T> desc = compiled.builder.build(d -> descs.add(d));
             cl.getField(DESCRIPTORS_FIELD_NAME).set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.positions != null) {
-                // The static field keeps the table alive exactly as long as the class; the
-                // registry that stack traces consult holds only a weak reference to it.
-                cl.getField(POSITIONS_FIELD_NAME).set(null, compiled.positions);
-                CompiledPositions.register(compiled.className, compiled.positions);
-            }
+            // The static field keeps the table alive exactly as long as the class; the registry
+            // that stack traces consult holds only a weak reference to it.
+            cl.getField(POSITIONS_FIELD_NAME).set(null, compiled.positions);
+            CompiledPositions.register(compiled.className, compiled.positions);
             if (compiled.builderEnv.hasRegExpLiterals) {
                 cl.getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
                         .invoke(null, Context.getCurrentContext());

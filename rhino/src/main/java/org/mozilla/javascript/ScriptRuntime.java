@@ -5803,11 +5803,7 @@ public class ScriptRuntime {
     }
 
     public static EcmaError constructError(String error, String message) {
-        Position p = Context.getSourcePosition();
-        if (p == null) {
-            return constructError(error, message, null, 0, null, 0);
-        }
-        return constructError(error, message, p.getSourcePath(), p.getLine(), null, p.getColumn());
+        return constructError(error, message, 0);
     }
 
     public static EcmaError constructError(String error, String message, int lineNumberDelta) {

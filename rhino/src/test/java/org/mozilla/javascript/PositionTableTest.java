@@ -34,10 +34,10 @@ class PositionTableTest {
         assertAt(null, 1, 5, t.floor(19));
         assertAt(null, 1, 17, t.floor(20));
         assertAt(null, 3, 2, t.floor(35));
-        assertAt(null, 3, 2, t.floor(1_000_000), "past the last entry");
+        assertAt(3, 2, t.floor(1_000_000), "past the last entry");
     }
 
-    private static void assertAt(String source, int line, int column, Position at, String why) {
+    private static void assertAt(int line, int column, Position at, String why) {
         assertEquals(line, at.getLine(), why);
         assertEquals(column, at.getColumn(), why);
     }
@@ -93,7 +93,7 @@ class PositionTableTest {
         var b = new PositionTable.Builder();
         b.add(10, 1, 1, null);
         b.add(10, 1, 9, null);
-        assertAt(null, 1, 9, b.get(10), "in the builder");
+        assertAt(1, 9, b.get(10), "in the builder");
         PositionTable t = b.build();
         assertAt(null, 1, 9, t.get(10));
         assertEquals(1, t.lines().length);
@@ -120,7 +120,6 @@ class PositionTableTest {
     @Test
     void anEmptyTableHasNothing() {
         PositionTable t = new PositionTable.Builder().build();
-        assertTrue(t.isEmpty());
         assertNull(t.floor(0));
         assertNull(t.get(0));
         assertEquals(0, t.lines().length);

@@ -72,10 +72,6 @@ final class PositionTable implements Serializable {
         return seen.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    boolean isEmpty() {
-        return deltas.length == 0;
-    }
-
     private final class Cursor {
         int at, key, line, column;
         int source = -1;
@@ -162,10 +158,6 @@ final class PositionTable implements Serializable {
             if (i < 0) return null;
             return new Position(
                     sources[i] < 0 ? null : names.get(sources[i]), lines[i], columns[i]);
-        }
-
-        boolean isEmpty() {
-            return size == 0;
         }
 
         PositionTable build() {

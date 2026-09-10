@@ -383,7 +383,6 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             ACallFrame<?, ?> callerFrame = frame;
             List<ScriptStackElement> group = new ArrayList<>();
             while (callerFrame != null) {
-                var idata = callerFrame.compilerData;
                 JSDescriptor<?> desc = callerFrame.fnOrScript.getDescriptor();
                 String fileName = desc.getSourceName();
                 String functionName = null;
@@ -391,12 +390,10 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                 int columnNumber = 0;
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    Position at = idata.getPositionFromPc(pc);
+                    Position at = positionAt(callerFrame, pc);
+                    fileName = at.getSourcePath();
                     lineNumber = at.getLine();
                     columnNumber = at.getColumn();
-                    if (at.getSourcePath() != null) {
-                        fileName = at.getSourcePath();
-                    }
                 }
                 if (desc.getName() != null && desc.getName().length() != 0) {
                     functionName = desc.getName();
@@ -421,7 +418,12 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
     @Override
     public final Position getSourcePosition(Context cx) {
         ACallFrame<?, ?> frame = cx.lastInterpreterFrame;
-        Position at = frame.compilerData.getPositionFromPc(frame.pc);
+        return positionAt(frame, frame.pc);
+    }
+
+    // Named after the frame's script or function when the position has no source of its own
+    private static Position positionAt(ACallFrame<?, ?> frame, int pc) {
+        Position at = frame.compilerData.getPositionFromPc(pc);
         if (at.getSourcePath() != null) return at;
         return new Position(
                 frame.fnOrScript.getDescriptor().getSourceName(), at.getLine(), at.getColumn());

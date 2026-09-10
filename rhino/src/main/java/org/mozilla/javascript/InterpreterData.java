@@ -73,11 +73,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
     private static final Position UNKNOWN = new Position(null, 0, 0);
 
-    @Override
-    public int getLineNumberFromPc(int pc) {
-        return getPositionFromPc(pc).getLine();
-    }
-
     // The last entry recorded before pc. Strictly before, since a frame's pc has already moved past
     // the opcode it is executing, while a position is recorded at that opcode's offset.
     @Override

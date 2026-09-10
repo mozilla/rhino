@@ -18,7 +18,6 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
 import org.mozilla.javascript.sourcemap.Position;
-import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator<T extends ScriptOrFn<T>> {
@@ -265,26 +264,17 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private void updateLineNumber(Node node) {
         int lineno = node.getLineno();
         if (lineno < 0) return;
-        int column = node.getColumn();
-        String sourcePath = null;
-        SourceMapper mapper = compilerEnv.getSourceMapper();
-        if (mapper != null) {
-            Position mapped = mapper.mapPosition(lineno, column);
-            if (mapped == null) return;
-            lineno = mapped.getLine();
-            column = mapped.getColumn();
-            sourcePath = mapped.getSourcePath();
-        }
+        Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
+        if (mapped == null) return;
+        int column = mapped.getColumn();
+        String sourcePath = mapped.getSourcePath();
         // Column 0 or less means unknown, so compare lines alone and keep the last column we had.
         // Otherwise a synthesized node records a position for every statement it touches.
-        if (lineno == lineNumber
-                && (column <= 0 || column == columnNumber)
-                && Objects.equals(sourcePath, positionSourceName)) {
-            return;
-        }
         boolean lineChanged =
-                lineno != lineNumber || !Objects.equals(sourcePath, positionSourceName);
-        lineNumber = lineno;
+                mapped.getLine() != lineNumber || !Objects.equals(sourcePath, positionSourceName);
+        boolean columnChanged = column > 0 && column != columnNumber;
+        if (!lineChanged && !columnChanged) return;
+        lineNumber = mapped.getLine();
         if (column > 0) columnNumber = column;
         positionSourceName = sourcePath;
         itsData.positions.add(iCodeTop, lineNumber, columnNumber, sourcePath);
