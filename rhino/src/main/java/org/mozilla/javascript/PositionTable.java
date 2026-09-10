@@ -17,7 +17,8 @@ import org.mozilla.javascript.sourcemap.Position;
 
 /**
  * Source positions keyed by an integer that never decreases: the bytecode offset a position takes
- * effect at in the interpreter, or the line number a compiled frame reports.
+ * effect at in the interpreter, or the line number a compiled frame reports. An entry knows whether
+ * it is a statement's, since only those mark lines for the debugger.
  *
  * <p>Only error reporting and the debugger read this, so it is stored the way HotSpot stores its
  * own line number table: as a stream of variable-length deltas. Stored as fixed words the table
@@ -30,8 +31,8 @@ final class PositionTable implements Serializable {
 
     static final PositionTable EMPTY = new PositionTable(new byte[0], null);
 
-    // Per entry: the key delta, then the line, column and source deltas, the last only when some
-    // entry names a source
+    // Per entry: the key delta with the statement flag in its low bit, then the line, column and
+    // source deltas, the last only when some entry names a source
     final byte[] deltas;
     private final String[] sourceNames;
 
@@ -58,7 +59,7 @@ final class PositionTable implements Serializable {
         return i < 0 ? null : e.at(i, sourceNames);
     }
 
-    /** Every distinct line, in the order first met. */
+    /** Every distinct line a statement is on, in the order first met. */
     int[] lines() {
         return entries().lines();
     }
@@ -68,7 +69,7 @@ final class PositionTable implements Serializable {
         if (e == null) {
             e = new Entries();
             for (Cursor c = new Cursor(); c.advance(); ) {
-                e.add(c.key, c.line, c.column, c.source);
+                e.add(c.key, c.line, c.column, c.source, c.statement);
             }
             entries = e;
         }
@@ -81,21 +82,26 @@ final class PositionTable implements Serializable {
         int[] lines = new int[16];
         int[] columns = new int[16];
         int[] sources = new int[16];
+        boolean[] statements = new boolean[16];
         int size;
 
         /** Appends an entry, or replaces the last one when it has the same key. */
-        void add(int key, int line, int column, int source) {
-            int at = size > 0 && keys[size - 1] == key ? size - 1 : size++;
+        void add(int key, int line, int column, int source, boolean statement) {
+            boolean replacing = size > 0 && keys[size - 1] == key;
+            int at = replacing ? size - 1 : size++;
             if (at == keys.length) {
                 keys = Arrays.copyOf(keys, size * 2);
                 lines = Arrays.copyOf(lines, size * 2);
                 columns = Arrays.copyOf(columns, size * 2);
                 sources = Arrays.copyOf(sources, size * 2);
+                statements = Arrays.copyOf(statements, size * 2);
             }
             keys[at] = key;
             lines[at] = line;
             columns[at] = column;
             sources[at] = source;
+            // A statement's line stays marked even if an expression's position supersedes it
+            statements[at] = statement || (replacing && statements[at]);
         }
 
         int indexOf(int key) {
@@ -114,7 +120,7 @@ final class PositionTable implements Serializable {
         int[] lines() {
             Set<Integer> seen = new LinkedHashSet<>();
             for (int i = 0; i < size; i++) {
-                seen.add(lines[i]);
+                if (statements[i]) seen.add(lines[i]);
             }
             return seen.stream().mapToInt(Integer::intValue).toArray();
         }
@@ -123,10 +129,13 @@ final class PositionTable implements Serializable {
     private final class Cursor {
         int at, key, line, column;
         int source = -1;
+        boolean statement;
 
         boolean advance() {
             if (at >= deltas.length) return false;
-            key += unsigned();
+            int keyDelta = unsigned();
+            key += keyDelta >>> 1;
+            statement = (keyDelta & 1) != 0;
             line += signed();
             column += signed();
             if (sourceNames != null) source += signed();
@@ -168,11 +177,12 @@ final class PositionTable implements Serializable {
         private final Map<String, Integer> nameIndexes = new HashMap<>();
 
         /** Adds an entry. Keys must not decrease; adding at the last key replaces that entry. */
-        void add(int key, int line, int column, String sourceName) {
+        void add(int key, int line, int column, String sourceName, boolean statement) {
             if (entries.size > 0 && key < entries.keys[entries.size - 1]) {
                 throw new IllegalArgumentException("keys must not decrease");
             }
-            entries.add(key, line, column, sourceName == null ? -1 : nameIndex(sourceName));
+            int source = sourceName == null ? -1 : nameIndex(sourceName);
+            entries.add(key, line, column, source, statement);
         }
 
         private int nameIndex(String sourceName) {
@@ -201,7 +211,8 @@ final class PositionTable implements Serializable {
             int lastKey = 0, lastLine = 0, lastColumn = 0, lastSource = -1;
             for (int i = 0; i < size; i++) {
                 if (out.length - at < 20) out = Arrays.copyOf(out, out.length * 2);
-                at = writeUnsigned(out, at, entries.keys[i] - lastKey);
+                int keyDelta = (entries.keys[i] - lastKey) << 1 | (entries.statements[i] ? 1 : 0);
+                at = writeUnsigned(out, at, keyDelta);
                 at = writeSigned(out, at, entries.lines[i] - lastLine);
                 at = writeSigned(out, at, entries.columns[i] - lastColumn);
                 if (named) at = writeSigned(out, at, entries.sources[i] - lastSource);

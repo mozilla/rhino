@@ -340,7 +340,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             }
         }
 
-        // Every line with a position is one a LINE icode marks, so this is the breakpoint set
+        // The lines the LINE icodes mark: statements, not the expressions within them
         return data.positions.lines();
     }
 

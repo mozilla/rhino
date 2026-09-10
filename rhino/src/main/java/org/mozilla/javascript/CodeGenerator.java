@@ -36,9 +36,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private ScriptNode scriptOrFn;
     private int iCodeTop;
     private int stackDepth;
-    private int lineNumber = -1;
-    private int columnNumber = 0;
-    private String positionSourceName;
+    // The position last recorded, and the line the debugger was last told about
+    private Position lastPosition = new Position(null, -1, 0);
+    private boolean lastStatement;
+    private int statementLine = -1;
+    private String statementSource;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
@@ -132,6 +134,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 }
             }
 
+            // A throw into a generator that has not started is attributed to its declaration
+            recordPosition(theFunction, false);
             addIcode(Icode.GENERATOR);
         }
 
@@ -257,31 +261,37 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     }
 
     private void updateExpressionPosition(Node node) {
-        if (CodeGenUtils.hasExpressionPosition(node)) updateLineNumber(node);
+        if (CodeGenUtils.hasExpressionPosition(node)) recordPosition(node, false);
     }
 
+    // A statement's position also marks a line for the debugger, which steps by line. LINE has no
+    // operand: the line is whatever the table holds for this pc. Moving within a line, or through
+    // the expressions of a statement, needs no icode at all.
     private void updateLineNumber(Node node) {
-        int lineno = node.getLineno();
-        if (lineno < 0) return;
-        Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
-        if (mapped == null) return;
-        int column = mapped.getColumn();
-        String sourcePath = mapped.getSourcePath();
-        // Column 0 or less means unknown, so compare lines alone and keep the last column we had.
-        // Otherwise a synthesized node records a position for every statement it touches.
-        boolean lineChanged =
-                mapped.getLine() != lineNumber || !Objects.equals(sourcePath, positionSourceName);
-        boolean columnChanged = column > 0 && column != columnNumber;
-        if (!lineChanged && !columnChanged) return;
-        lineNumber = mapped.getLine();
-        if (column > 0) columnNumber = column;
-        positionSourceName = sourcePath;
-        itsData.positions.add(iCodeTop, lineNumber, columnNumber, sourcePath);
-        // LINE is only there for the debugger, which steps by line. It has no operand: the line
-        // is whatever the table holds for this pc. Moving within a line needs no icode at all.
-        if (lineChanged) {
+        Position at = recordPosition(node, true);
+        if (at == null) return;
+        if (at.getLine() != statementLine || !Objects.equals(at.getSourcePath(), statementSource)) {
+            statementLine = at.getLine();
+            statementSource = at.getSourcePath();
             addIcode(Icode.LINE);
         }
+    }
+
+    // Records the node's position at the current pc, or returns null if it has none
+    private Position recordPosition(Node node, boolean statement) {
+        int lineno = node.getLineno();
+        if (lineno < 0) return null;
+        Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
+        if (mapped == null) return null;
+        // Column 0 or less means unknown, so keep the last column we had. Otherwise a synthesized
+        // node records a position for every statement it touches.
+        int column = mapped.getColumn() > 0 ? mapped.getColumn() : lastPosition.getColumn();
+        Position at = new Position(mapped.getSourcePath(), mapped.getLine(), column);
+        if (statement == lastStatement && at.equals(lastPosition)) return at;
+        lastPosition = at;
+        lastStatement = statement;
+        itsData.positions.add(iCodeTop, at.getLine(), column, at.getSourcePath(), statement);
+        return at;
     }
 
     private static RuntimeException badTree(Node node) {

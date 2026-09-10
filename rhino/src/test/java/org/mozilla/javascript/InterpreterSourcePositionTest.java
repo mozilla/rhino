@@ -88,12 +88,7 @@ class InterpreterSourcePositionTest {
         assertEquals(16, stack[0].columnNumber);
     }
 
-    /**
-     * Breakpoint lines are the distinct lines in the position table, which must stay exactly the
-     * set the LINE icodes marked before positions carried columns.
-     */
-    @Test
-    void debuggerLineNumbersAreUnchangedByColumnTracking() {
+    private static String breakpointLinesOf(String source) {
         try (Context cx = Context.enter()) {
             cx.setEvaluationMethod(Context.EvaluationMethod.Interpreter);
             cx.setGeneratingDebug(true);
@@ -107,12 +102,49 @@ class InterpreterSourcePositionTest {
                         return null;
                     },
                     null);
-            cx.evaluateString(
-                    scope, "var a = 1;\nvar b = 2; var c = 3;\na + b + c;", "t.js", 1, null);
+            cx.evaluateString(scope, source, "t.js", 1, null);
             assertNotNull(seen[0]);
             int[] lines = seen[0].clone();
             Arrays.sort(lines);
-            assertEquals("[1, 2, 3]", Arrays.toString(lines));
+            return Arrays.toString(lines);
+        }
+    }
+
+    /**
+     * Breakpoint lines are the lines statements are on, which must stay exactly the set the LINE
+     * icodes marked before positions carried columns.
+     */
+    @Test
+    void debuggerLineNumbersAreUnchangedByColumnTracking() {
+        assertEquals(
+                "[1, 2, 3]", breakpointLinesOf("var a = 1;\nvar b = 2; var c = 3;\na + b + c;"));
+    }
+
+    /** An expression spread over several lines adds none of them. */
+    @Test
+    void anExpressionSpanningLinesAddsNoBreakpointLines() {
+        assertEquals(
+                "[1, 2, 5]", breakpointLinesOf("var a = {b:{c:1}};\nvar x = a\n  .b\n  .c;\nx;"));
+    }
+
+    /** A legacy generator resumed with throw() before its first next() blames its declaration. */
+    @Test
+    void aThrowIntoAnUnstartedGeneratorReportsItsDeclaration() {
+        try (Context cx = Context.enter()) {
+            cx.setEvaluationMethod(Context.EvaluationMethod.Interpreter);
+            cx.setLanguageVersion(Context.VERSION_1_8);
+            TopLevel scope = cx.initStandardObjects();
+            RhinoException e =
+                    assertThrows(
+                            RhinoException.class,
+                            () ->
+                                    cx.evaluateString(
+                                            scope,
+                                            "function g() { yield 1; }\nvar it = g();\nit.throw('boom');",
+                                            "t.js",
+                                            1,
+                                            null));
+            assertEquals(1, e.lineNumber());
         }
     }
 }

@@ -145,8 +145,9 @@ the parser's convention is left alone.
 Positions live in a table beside the code, keyed by the bytecode offset they take effect
 at; `RhinoException` finds one by walking it up to the frame's program counter. Nothing is
 spent maintaining them as the code runs, which matters because they are only ever read
-while reporting an error. A `LINE` icode remains, without an operand, purely so the
-debugger can step by line.
+while reporting an error. Each entry records whether it is a statement's, as V8's table
+does; only those mark lines for the debugger, and a `LINE` icode remains at them, without
+an operand, purely so the debugger can step by line.
 
 The table (`PositionTable`) is a stream of variable-length deltas, the form V8's source
 position table and HotSpot's own line number table take: on a real bundle it costs about

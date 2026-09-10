@@ -179,7 +179,8 @@ public final class CompiledPositions {
                 PositionTable.Builder table = new PositionTable.Builder();
                 for (Map.Entry<Integer, Position> line : e.getValue().lines.entrySet()) {
                     Position at = line.getValue();
-                    table.add(line.getKey(), at.getLine(), at.getColumn(), at.getSourcePath());
+                    table.add(
+                            line.getKey(), at.getLine(), at.getColumn(), at.getSourcePath(), true);
                 }
                 out.put(e.getKey(), table.build());
             }

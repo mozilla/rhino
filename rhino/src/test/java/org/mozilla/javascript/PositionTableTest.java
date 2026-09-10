@@ -24,9 +24,9 @@ class PositionTableTest {
     @Test
     void floorFindsTheLastEntryAtOrBeforeAKey() {
         var b = new PositionTable.Builder();
-        b.add(10, 1, 5, null);
-        b.add(20, 1, 17, null);
-        b.add(35, 3, 2, null);
+        b.add(10, 1, 5, null, true);
+        b.add(20, 1, 17, null, true);
+        b.add(35, 3, 2, null, true);
         PositionTable t = b.build();
 
         assertNull(t.floor(9), "before the first entry");
@@ -40,8 +40,8 @@ class PositionTableTest {
     @Test
     void getMatchesAKeyExactly() {
         var b = new PositionTable.Builder();
-        b.add(10, 1, 5, null);
-        b.add(20, 1, 17, null);
+        b.add(10, 1, 5, null, true);
+        b.add(20, 1, 17, null, true);
         PositionTable t = b.build();
 
         assertAt(null, 1, 17, t.get(20));
@@ -62,7 +62,7 @@ class PositionTableTest {
             {Integer.MAX_VALUE, 1, 1},
         };
         var b = new PositionTable.Builder();
-        for (int[] e : entries) b.add(e[0], e[1], e[2], null);
+        for (int[] e : entries) b.add(e[0], e[1], e[2], null, true);
         PositionTable t = b.build();
         for (int[] e : entries) assertAt(null, e[1], e[2], t.get(e[0]));
     }
@@ -70,10 +70,10 @@ class PositionTableTest {
     @Test
     void sourceNamesAreSharedAndAbsenceIsKept() {
         var b = new PositionTable.Builder();
-        b.add(1, 1, 1, "a.ts");
-        b.add(2, 2, 1, null);
-        b.add(3, 3, 1, "b.ts");
-        b.add(4, 4, 1, "a.ts");
+        b.add(1, 1, 1, "a.ts", true);
+        b.add(2, 2, 1, null, true);
+        b.add(3, 3, 1, "b.ts", true);
+        b.add(4, 4, 1, "a.ts", true);
         PositionTable t = b.build();
 
         assertAt("a.ts", 1, 1, t.get(1));
@@ -86,8 +86,8 @@ class PositionTableTest {
     @Test
     void addingAtTheLastKeyReplacesThatEntry() {
         var b = new PositionTable.Builder();
-        b.add(10, 1, 1, null);
-        b.add(10, 1, 9, null);
+        b.add(10, 1, 1, null, true);
+        b.add(10, 1, 9, null, true);
         assertAt(null, 1, 9, b.get(10));
         PositionTable t = b.build();
         assertAt(null, 1, 9, t.get(10));
@@ -97,19 +97,40 @@ class PositionTableTest {
     @Test
     void keysMustNotDecrease() {
         var b = new PositionTable.Builder();
-        b.add(10, 1, 1, null);
-        assertThrows(IllegalArgumentException.class, () -> b.add(9, 1, 1, null));
+        b.add(10, 1, 1, null, true);
+        assertThrows(IllegalArgumentException.class, () -> b.add(9, 1, 1, null, true));
     }
 
     @Test
     void linesAreDistinctInOrderOfFirstAppearance() {
         var b = new PositionTable.Builder();
-        b.add(1, 5, 1, null);
-        b.add(2, 5, 9, null);
-        b.add(3, 2, 1, null);
-        b.add(4, 5, 1, null);
-        b.add(5, 7, 1, null);
+        b.add(1, 5, 1, null, true);
+        b.add(2, 5, 9, null, true);
+        b.add(3, 2, 1, null, true);
+        b.add(4, 5, 1, null, true);
+        b.add(5, 7, 1, null, true);
         assertArrayEquals(new int[] {5, 2, 7}, b.build().lines());
+    }
+
+    /** Only statements mark lines for the debugger; the expressions within them add none. */
+    @Test
+    void linesComeFromStatementsOnly() {
+        var b = new PositionTable.Builder();
+        b.add(1, 5, 1, null, true);
+        b.add(2, 6, 9, null, false);
+        b.add(3, 7, 1, null, true);
+        PositionTable t = b.build();
+        assertArrayEquals(new int[] {5, 7}, t.lines());
+        assertAt(null, 6, 9, t.get(2));
+    }
+
+    /** A statement's line stays marked even when an expression at the same pc supersedes it. */
+    @Test
+    void anExpressionReplacingAStatementKeepsItsLine() {
+        var b = new PositionTable.Builder();
+        b.add(1, 5, 1, null, true);
+        b.add(1, 5, 9, null, false);
+        assertArrayEquals(new int[] {5}, b.build().lines());
     }
 
     @Test
@@ -127,7 +148,7 @@ class PositionTableTest {
         int pc = 0;
         for (int i = 0; i < 1000; i++) {
             pc += 3 + (i % 7);
-            b.add(pc, 1 + i / 4, 1 + (i * 13) % 60, null);
+            b.add(pc, 1 + i / 4, 1 + (i * 13) % 60, null, i % 3 == 0);
         }
         int bytes = b.build().deltas.length;
         assertTrue(bytes <= 4000, "was " + bytes + " bytes for 1000 entries");
