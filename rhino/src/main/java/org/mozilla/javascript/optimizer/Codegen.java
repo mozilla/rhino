@@ -196,10 +196,6 @@ public class Codegen implements Evaluator {
             var descs = new ArrayList<JSDescriptor<?>>();
             JSDescriptor<T> desc = compiled.builder.build(d -> descs.add(d));
             cl.getField(DESCRIPTORS_FIELD_NAME).set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.builderEnv.hasRegExpLiterals) {
-                cl.getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
-                        .invoke(null, Context.getCurrentContext());
-            }
             if (compiled.builderEnv.hasTemplateLiterals) {
                 cl.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
             }
@@ -641,9 +637,7 @@ public class Codegen implements Evaluator {
      *
      * <p>Preparing them here is what lets the constants be resolved later without a context: the
      * regexp implementation reports anything wrong with an expression now, while there is still a
-     * script being compiled to report it against. If the implementation has no constant form, or
-     * there is no implementation at all, nothing is prepared and the literals are compiled when the
-     * class is defined by {@link #emitRegExpInit} instead.
+     * script being compiled to report it against.
      */
     private void prepareRegExpConstants(ClassFileWriter cfw, MHJSCode.BuilderEnv builderEnv) {
         if (!builderEnv.hasRegExpLiterals) {
@@ -652,7 +646,8 @@ public class Codegen implements Evaluator {
         Context cx = Context.getCurrentContext();
         RegExpProxy proxy = cx == null ? null : ScriptRuntime.getRegExpProxy(cx);
         if (proxy == null) {
-            return;
+            throw new IllegalStateException(
+                    "Compilation of regexps literals requires an enclosing context.");
         }
 
         DynamicConstant[][] constants = new DynamicConstant[scriptOrFnNodes.length][];
@@ -991,7 +986,6 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
-    static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
 
     static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";
