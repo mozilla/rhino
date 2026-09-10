@@ -26,7 +26,6 @@ import org.mozilla.javascript.JavaAdapter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.SourceCodeProvider;
-import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -157,9 +156,11 @@ public class ClassCompiler {
             codegen.setMainMethodClass(mainMethodClassName);
             JSDescriptor.Builder<?> builder = new JSDescriptor.Builder<>();
             MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
-            byte[] scriptClassBytes = codegen.compileToClassFile(
-                    compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
-            Object[] auxilaryClasses = buildDescriptorsAndMain(scriptClassName, builder);
+            byte[] scriptClassBytes =
+                    codegen.compileToClassFile(
+                            compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
+            Object[] auxilaryClasses =
+                    buildDescriptorsAndMain(scriptClassName, builderEnv, builder);
             if (isPrimary) {
                 var result = new Object[auxilaryClasses.length + 2];
                 System.arraycopy(auxilaryClasses, 0, result, 2, auxilaryClasses.length);
@@ -179,8 +180,9 @@ public class ClassCompiler {
             if (superClass == null) {
                 superClass = ScriptRuntime.ObjectClass;
             }
-            byte[] mainClassBytes = JavaAdapter.createAdapterCode(
-                    functionNames, mainClassName, superClass, interfaces, scriptClassName);
+            byte[] mainClassBytes =
+                    JavaAdapter.createAdapterCode(
+                            functionNames, mainClassName, superClass, interfaces, scriptClassName);
 
             var result = new Object[auxilaryClasses.length + 4];
             System.arraycopy(auxilaryClasses, 0, result, 4, auxilaryClasses.length);
@@ -198,7 +200,7 @@ public class ClassCompiler {
      * first descriptor and pass that to the main method in the runtime.
      */
     private Object[] buildDescriptorsAndMain(
-            String mainClassName, JSDescriptor.Builder<?> builder) {
+            String mainClassName, MHJSCode.BuilderEnv builderEnv, JSDescriptor.Builder<?> builder) {
         var classes = new HashMap<String, byte[]>();
         var mainName = mainClassName + "Main";
 
@@ -207,6 +209,13 @@ public class ClassCompiler {
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
         buildDescriptor(cfw, builder, builder, classes, builders, mainClassName);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);
+        if (builderEnv.hasTemplateLiterals) {
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    mainClassName,
+                    Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                    Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+        }
         cfw.addLoadConstant(builders.size());
         cfw.add(ByteCode.ANEWARRAY, "org/mozilla/javascript/JSDescriptor");
         for (var b : builders) {
