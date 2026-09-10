@@ -211,11 +211,6 @@ public class Codegen implements Evaluator {
             mainClass
                     .getField(DESCRIPTORS_FIELD_NAME)
                     .set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.units.get(0).env.hasRegExpLiterals) {
-                mainClass
-                        .getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
-                        .invoke(null, Context.getCurrentContext());
-            }
             if (compiled.units.get(0).env.hasTemplateLiterals) {
                 mainClass.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
             }
@@ -1154,7 +1149,6 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
-    static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
 
     static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";

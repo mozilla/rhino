@@ -1223,7 +1223,7 @@ class BodyCodegen {
                     if (constant != null) {
                         cfw.addLoadDynamicConstant(constant);
                     } else {
-                        throw new IllegalStateException("null rgexp constant.");
+                        throw new IllegalStateException("null regexp constant.");
                     }
                     cfw.addInvoke(
                             ByteCode.INVOKESTATIC,
