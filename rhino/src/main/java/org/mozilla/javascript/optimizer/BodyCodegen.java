@@ -2681,6 +2681,8 @@ class BodyCodegen {
         generateExpression(child, node);
         child = child.getNext();
         generateCallArgArray(node, child, false);
+        // After the args, so a failed call blames the call, not the last arg
+        updateExpressionPosition(node);
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(specialType);
 
@@ -2700,6 +2702,9 @@ class BodyCodegen {
         // stack: ... cx functionObj thisObj
         child = child.getNext();
         generateCallArgArray(node, child, false);
+        // After the args, so a failed call blames the call, not the last arg, and so the label
+        // eval gives its code is the call's own position
+        updateExpressionPosition(node);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
         cfw.addPush(specialType);
@@ -2742,6 +2747,7 @@ class BodyCodegen {
 
         child = child.getNext();
         generateCallArgArray(node, child, false);
+        updateExpressionPosition(node);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
         cfw.addPush(specialType);

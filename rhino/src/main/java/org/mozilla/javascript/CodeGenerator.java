@@ -283,9 +283,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         if (lineno < 0) return null;
         Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
         if (mapped == null) return null;
-        // Column 0 or less means unknown, so keep the last column we had. Otherwise a synthesized
-        // node records a position for every statement it touches.
-        int column = mapped.getColumn() > 0 ? mapped.getColumn() : lastPosition.getColumn();
+        // Column 0 or less means unknown, which only a source mapper can produce now that every
+        // node the compiler positions has one. Keep the column we had if it is on the same line,
+        // since it is at worst early; a column from another line would be nonsense.
+        int column = mapped.getColumn();
+        if (column <= 0) {
+            column = mapped.getLine() == lastPosition.getLine() ? lastPosition.getColumn() : 0;
+        }
         Position at = new Position(mapped.getSourcePath(), mapped.getLine(), column);
         if (statement == lastStatement && at.equals(lastPosition)) return at;
         lastPosition = at;

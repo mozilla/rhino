@@ -106,6 +106,25 @@ public class StackTraceColumnTest {
         assertThrownAt("var o = {};\nfunction f() { return eval(o.nope.deeper); }\nf();", 2, 35);
     }
 
+    /** The special-call paths are generated separately in the JVM backend, like the plain ones. */
+    @Test
+    public void aFailedSpecialConstructionReportsTheNewColumn() {
+        assertThrownAt("var arg = 1;\nvar r = new eval(arg);", 2, 9);
+    }
+
+    /**
+     * A frame calling eval is blamed at the call, not wherever the last position happened to be.
+     */
+    @Test
+    public void aSpecialCallFrameReportsTheCallColumn() {
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf("var o = {};\nvar r = eval('null.x');", mode);
+            ScriptStackElement caller = stack[stack.length - 1];
+            assertEquals(2, caller.lineNumber, mode + " line of the eval call");
+            assertEquals(9, caller.columnNumber, mode + " column of the eval call");
+        }
+    }
+
     /** A direct call to a top-level function, which the JVM backend specialises. */
     @Test
     public void aDirectCallReportsTheCallColumn() {
