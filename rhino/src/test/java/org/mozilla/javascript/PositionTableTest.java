@@ -34,12 +34,7 @@ class PositionTableTest {
         assertAt(null, 1, 5, t.floor(19));
         assertAt(null, 1, 17, t.floor(20));
         assertAt(null, 3, 2, t.floor(35));
-        assertAt(3, 2, t.floor(1_000_000), "past the last entry");
-    }
-
-    private static void assertAt(int line, int column, Position at, String why) {
-        assertEquals(line, at.getLine(), why);
-        assertEquals(column, at.getColumn(), why);
+        assertAt(null, 3, 2, t.floor(1_000_000));
     }
 
     @Test
@@ -93,7 +88,7 @@ class PositionTableTest {
         var b = new PositionTable.Builder();
         b.add(10, 1, 1, null);
         b.add(10, 1, 9, null);
-        assertAt(1, 9, b.get(10), "in the builder");
+        assertAt(null, 1, 9, b.get(10));
         PositionTable t = b.build();
         assertAt(null, 1, 9, t.get(10));
         assertEquals(1, t.lines().length);
@@ -127,17 +122,14 @@ class PositionTableTest {
 
     /** The point of the encoding: typical entries take a few bytes, not eight. */
     @Test
-    void typicalEntriesTakeAFewBytes() throws Exception {
+    void typicalEntriesTakeAFewBytes() {
         var b = new PositionTable.Builder();
         int pc = 0;
         for (int i = 0; i < 1000; i++) {
             pc += 3 + (i % 7);
             b.add(pc, 1 + i / 4, 1 + (i * 13) % 60, null);
         }
-        PositionTable t = b.build();
-        var field = PositionTable.class.getDeclaredField("deltas");
-        field.setAccessible(true);
-        byte[] deltas = (byte[]) field.get(t);
-        assertTrue(deltas.length <= 4000, "was " + deltas.length + " bytes for 1000 entries");
+        int bytes = b.build().deltas.length;
+        assertTrue(bytes <= 4000, "was " + bytes + " bytes for 1000 entries");
     }
 }

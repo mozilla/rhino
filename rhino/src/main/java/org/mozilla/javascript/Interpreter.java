@@ -237,8 +237,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             case Icode.CALLSPECIAL_OPTIONAL:
                 // call type
                 // is new
-                // line number
-                return 1 + 1 + 1 + 2;
+                return 1 + 1 + 1;
 
             case Token.CATCH_SCOPE:
                 // scope flag
@@ -1267,28 +1266,13 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoThrow extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.throwable =
-                    throwObject(
-                            frame,
-                            frame.stack,
-                            frame.doubleStack,
-                            frame.compilerData,
-                            frame.compilerData.itsICode,
-                            state);
+            Object value = frame.stack[frame.stackTop];
+            if (value == DOUBLE_MARK) {
+                value = ScriptRuntime.wrapNumber(frame.doubleStack[frame.stackTop]);
+            }
+            state.throwable = thrownAt(frame, value);
             --frame.stackTop;
             return BREAK_WITHOUT_EXTENSION;
-        }
-
-        private static Object throwObject(
-                CallFrame frame,
-                final Object[] stack,
-                final double[] sDbl,
-                final InterpreterData compilerData,
-                final byte[] iCode,
-                InterpreterState state) {
-            Object value = stack[frame.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
-            return thrownAt(frame, value);
         }
     }
 
@@ -2490,7 +2474,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             }
             int callType = iCode[frame.pc] & 0xFF;
             boolean isNew = (iCode[frame.pc + 1] != 0);
-            int sourceLine = getIndex(iCode, frame.pc + 2);
 
             // indexReg: number of arguments
             if (isNew) {
@@ -2513,6 +2496,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         (ScriptRuntime.LookupResult) stack[frame.stackTop];
                 Object[] outArgs = getArgsArray(stack, sDbl, frame.stackTop + 1, state.indexReg);
                 Callable function = result.getCallable();
+                // Where eval labels the code it compiles: the call's own position
+                Position at = positionAt(frame, frame.pc);
                 stack[frame.stackTop] =
                         ScriptRuntime.callSpecial(
                                 cx,
@@ -2522,11 +2507,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                 frame.scope,
                                 frame.thisObj,
                                 callType,
-                                frame.fnOrScript.getDescriptor().getSourceName(),
-                                sourceLine,
+                                at.getSourcePath(),
+                                at.getLine(),
                                 isOptionalChainingCall);
             }
-            frame.pc += 4;
+            frame.pc += 2;
             return null;
         }
 
@@ -2534,9 +2519,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             int callType = ctx.compilerData.itsICode[ctx.pc] & 0xFF;
             boolean isNew = (ctx.compilerData.itsICode[ctx.pc + 1] != 0);
-            int line = ctx.getIndex(ctx.pc + 2);
-            ctx.out.println(tname + " " + callType + " " + isNew + " " + ctx.indexReg + " " + line);
-            ctx.pc += 4;
+            ctx.out.println(tname + " " + callType + " " + isNew + " " + ctx.indexReg);
+            ctx.pc += 2;
         }
     }
 

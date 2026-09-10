@@ -27,15 +27,15 @@ class CompiledPositionsTest {
     @Test
     void aLineWithOnePositionEmitsItself() {
         var b = CompiledPositions.builder();
-        assertEquals(7, b.record(M, 7, 12, null));
+        assertEquals(7, b.record(M, new Position(null, 7, 12)));
         assertAt(7, 12, b.build().get(M, 7));
     }
 
     @Test
     void aSecondPositionOnALineGetsAMarkerThatMapsBack() {
         var b = CompiledPositions.builder();
-        assertEquals(7, b.record(M, 7, 12, null));
-        int marker = b.record(M, 7, 30, null);
+        assertEquals(7, b.record(M, new Position(null, 7, 12)));
+        int marker = b.record(M, new Position(null, 7, 30));
         assertNotEquals(7, marker, "must not reuse a number that identifies another position");
 
         CompiledPositions p = b.build();
@@ -49,7 +49,7 @@ class CompiledPositionsTest {
         int[] columns = {3, 11, 20, 34, 41};
         int[] emitted = new int[columns.length];
         for (int i = 0; i < columns.length; i++) {
-            emitted[i] = b.record(M, 4, columns[i], null);
+            emitted[i] = b.record(M, new Position(null, 4, columns[i]));
         }
         CompiledPositions p = b.build();
         for (int i = 0; i < columns.length; i++) {
@@ -60,10 +60,10 @@ class CompiledPositionsTest {
     @Test
     void repeatingAPositionReusesItsNumber() {
         var b = CompiledPositions.builder();
-        assertEquals(7, b.record(M, 7, 12, null));
-        int second = b.record(M, 7, 30, null);
-        assertEquals(7, b.record(M, 7, 12, null), "the line's own position");
-        assertEquals(second, b.record(M, 7, 30, null), "an already allocated marker");
+        assertEquals(7, b.record(M, new Position(null, 7, 12)));
+        int second = b.record(M, new Position(null, 7, 30));
+        assertEquals(7, b.record(M, new Position(null, 7, 12)), "the line's own position");
+        assertEquals(second, b.record(M, new Position(null, 7, 30)), "an already allocated marker");
     }
 
     /**
@@ -72,16 +72,16 @@ class CompiledPositionsTest {
     @Test
     void aPositionWithoutAColumnTakesNoMarker() {
         var b = CompiledPositions.builder();
-        assertEquals(7, b.record(M, 7, 12, null));
-        assertEquals(7, b.record(M, 7, 0, null));
+        assertEquals(7, b.record(M, new Position(null, 7, 12)));
+        assertEquals(7, b.record(M, new Position(null, 7, 0)));
         assertAt(7, 12, b.build().get(M, 7));
     }
 
     @Test
     void differingSourcePathsOnOneLineAreBothExact() {
         var b = CompiledPositions.builder();
-        int first = b.record(M, 7, 12, "src/a.ts");
-        int second = b.record(M, 7, 12, "src/b.ts");
+        int first = b.record(M, new Position("src/a.ts", 7, 12));
+        int second = b.record(M, new Position("src/b.ts", 7, 12));
         assertNotEquals(first, second);
         CompiledPositions p = b.build();
         assertEquals("src/a.ts", p.get(M, first).getSourcePath());
@@ -92,8 +92,11 @@ class CompiledPositionsTest {
     @Test
     void methodsAreKeyedSeparatelyAndDoNotCollide() {
         var b = CompiledPositions.builder();
-        assertEquals(7, b.record(M, 7, 12, null));
-        assertEquals(7, b.record("_c_g_2", 7, 44, null), "a different method may reuse the line");
+        assertEquals(7, b.record(M, new Position(null, 7, 12)));
+        assertEquals(
+                7,
+                b.record("_c_g_2", new Position(null, 7, 44)),
+                "a different method may reuse the line");
         CompiledPositions p = b.build();
         assertAt(7, 12, p.get(M, 7));
         assertAt(7, 44, p.get("_c_g_2", 7));
@@ -102,7 +105,7 @@ class CompiledPositionsTest {
     @Test
     void unknownLinesAndMethodsAreNotInTheTable() {
         var b = CompiledPositions.builder();
-        b.record(M, 7, 12, null);
+        b.record(M, new Position(null, 7, 12));
         CompiledPositions p = b.build();
         assertNull(p.get(M, 99));
         assertNull(p.get("_c_other_9", 7));
@@ -115,9 +118,9 @@ class CompiledPositionsTest {
     @Test
     void exhaustingTheNumberSpaceDegradesToUnknown() {
         var b = CompiledPositions.builder();
-        b.record(M, 0xFFFE, 1, null);
-        b.record(M, 0xFFFF, 1, null);
-        assertEquals(0xFFFE, b.record(M, 0xFFFE, 40, null), "no room for a marker");
+        b.record(M, new Position(null, 0xFFFE, 1));
+        b.record(M, new Position(null, 0xFFFF, 1));
+        assertEquals(0xFFFE, b.record(M, new Position(null, 0xFFFE, 40)), "no room for a marker");
         assertAt(0xFFFE, 0, b.build().get(M, 0xFFFE));
     }
 
@@ -129,8 +132,9 @@ class CompiledPositionsTest {
     void disablingMarkersKeepsRealLineNumbers() {
         var b = CompiledPositions.builder();
         b.disableMarkers();
-        assertEquals(7, b.record(M, 7, 12, null));
-        assertEquals(7, b.record(M, 7, 30, null), "no marker, so the real line is reused");
+        assertEquals(7, b.record(M, new Position(null, 7, 12)));
+        assertEquals(
+                7, b.record(M, new Position(null, 7, 30)), "no marker, so the real line is reused");
         assertAt(7, 0, b.build().get(M, 7));
     }
 
@@ -138,12 +142,13 @@ class CompiledPositionsTest {
     @Test
     void theNumberSpaceIsPerMethod() {
         var b = CompiledPositions.builder();
-        b.record(M, 0xFFFE, 1, null);
-        b.record(M, 0xFFFF, 1, null);
-        assertEquals(0xFFFE, b.record(M, 0xFFFE, 40, null), "exhausted in this method");
+        b.record(M, new Position(null, 0xFFFE, 1));
+        b.record(M, new Position(null, 0xFFFF, 1));
+        assertEquals(
+                0xFFFE, b.record(M, new Position(null, 0xFFFE, 40)), "exhausted in this method");
 
-        int other = b.record("_c_g_2", 5, 1, null);
-        int otherSecond = b.record("_c_g_2", 5, 20, null);
+        int other = b.record("_c_g_2", new Position(null, 5, 1));
+        int otherSecond = b.record("_c_g_2", new Position(null, 5, 20));
         assertEquals(5, other);
         assertNotEquals(5, otherSecond, "a different method still has its whole range");
         assertAt(5, 20, b.build().get("_c_g_2", otherSecond));
@@ -158,7 +163,7 @@ class CompiledPositionsTest {
         var b = CompiledPositions.builder();
         int[] emitted = new int[1000];
         for (int i = 0; i < emitted.length; i++) {
-            emitted[i] = b.record(M, 1, i + 1, null);
+            emitted[i] = b.record(M, new Position(null, 1, i + 1));
         }
         CompiledPositions p = b.build();
         for (int i = 0; i < emitted.length; i++) {

@@ -176,7 +176,7 @@ class InterpreterBytecodeDumpTest {
     void callSpecialIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 13",
+                        "ICode dump, for null, length = 11",
                         "MaxStack = 3",
                         " [0] LINE : 1:1",
                         " [1] REG_STR_C0 \"eval\"",
@@ -184,9 +184,9 @@ class InterpreterBytecodeDumpTest {
                         " [3] REG_STR_C1 \"1\"",
                         " [4] STRING",
                         " [5] REG_IND_C1",
-                        " [6] CALLSPECIAL 1 false 1 1",
-                        " [11] POP_RESULT",
-                        " [12] RETURN_RESULT",
+                        " [6] CALLSPECIAL 1 false 1",
+                        " [9] POP_RESULT",
+                        " [10] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("eval('1')"));
     }

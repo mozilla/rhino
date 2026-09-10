@@ -20,8 +20,10 @@ import org.mozilla.javascript.sourcemap.Position;
  * effect at in the interpreter, or the line number a compiled frame reports.
  *
  * <p>Only error reporting and the debugger read this, so it is stored the way HotSpot stores its
- * own line number table: as a stream of variable-length deltas, decoded front to back. Stored as
- * fixed words the table outweighs the code it describes.
+ * own line number table: as a stream of variable-length deltas. Stored as fixed words the table
+ * outweighs the code it describes. A table that is read at all is decoded once into arrays it can
+ * be searched in, since the few that are, by a debugger stepping through the function or a throw
+ * inside a loop, are read many times over.
  */
 final class PositionTable implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
@@ -30,8 +32,11 @@ final class PositionTable implements Serializable {
 
     // Per entry: the key delta, then the line, column and source deltas, the last only when some
     // entry names a source
-    private final byte[] deltas;
+    final byte[] deltas;
     private final String[] sourceNames;
+
+    // Two threads decoding at once produce the same thing, so no locking is needed
+    private transient Entries entries;
 
     private PositionTable(byte[] deltas, String[] sourceNames) {
         this.deltas = deltas;
@@ -40,36 +45,78 @@ final class PositionTable implements Serializable {
 
     /** The entry at exactly {@code key}, or null. */
     Position get(int key) {
-        return find(key, true);
+        Entries e = entries();
+        int i = e.indexOf(key);
+        return i < 0 ? null : e.at(i, sourceNames);
     }
 
     /** The last entry at or before {@code key}, or null. */
     Position floor(int key) {
-        return find(key, false);
-    }
-
-    private Position find(int key, boolean exact) {
-        Cursor c = new Cursor();
-        int found = 0, line = 0, column = 0, source = -1;
-        boolean any = false;
-        while (c.advance() && c.key <= key) {
-            any = true;
-            found = c.key;
-            line = c.line;
-            column = c.column;
-            source = c.source;
-        }
-        if (!any || (exact && found != key)) return null;
-        return new Position(source < 0 ? null : sourceNames[source], line, column);
+        Entries e = entries();
+        int i = e.floorIndex(key);
+        return i < 0 ? null : e.at(i, sourceNames);
     }
 
     /** Every distinct line, in the order first met. */
     int[] lines() {
-        Set<Integer> seen = new LinkedHashSet<>();
-        for (Cursor c = new Cursor(); c.advance(); ) {
-            seen.add(c.line);
+        return entries().lines();
+    }
+
+    private Entries entries() {
+        Entries e = entries;
+        if (e == null) {
+            e = new Entries();
+            for (Cursor c = new Cursor(); c.advance(); ) {
+                e.add(c.key, c.line, c.column, c.source);
+            }
+            entries = e;
         }
-        return seen.stream().mapToInt(Integer::intValue).toArray();
+        return e;
+    }
+
+    /** Entries as parallel arrays sorted by key: the form they are built in and searched in. */
+    private static final class Entries {
+        int[] keys = new int[16];
+        int[] lines = new int[16];
+        int[] columns = new int[16];
+        int[] sources = new int[16];
+        int size;
+
+        /** Appends an entry, or replaces the last one when it has the same key. */
+        void add(int key, int line, int column, int source) {
+            int at = size > 0 && keys[size - 1] == key ? size - 1 : size++;
+            if (at == keys.length) {
+                keys = Arrays.copyOf(keys, size * 2);
+                lines = Arrays.copyOf(lines, size * 2);
+                columns = Arrays.copyOf(columns, size * 2);
+                sources = Arrays.copyOf(sources, size * 2);
+            }
+            keys[at] = key;
+            lines[at] = line;
+            columns[at] = column;
+            sources[at] = source;
+        }
+
+        int indexOf(int key) {
+            return Arrays.binarySearch(keys, 0, size, key);
+        }
+
+        int floorIndex(int key) {
+            int i = indexOf(key);
+            return i >= 0 ? i : -i - 2;
+        }
+
+        Position at(int i, String[] names) {
+            return new Position(sources[i] < 0 ? null : names[sources[i]], lines[i], columns[i]);
+        }
+
+        int[] lines() {
+            Set<Integer> seen = new LinkedHashSet<>();
+            for (int i = 0; i < size; i++) {
+                seen.add(lines[i]);
+            }
+            return seen.stream().mapToInt(Integer::intValue).toArray();
+        }
     }
 
     private final class Cursor {
@@ -115,31 +162,16 @@ final class PositionTable implements Serializable {
 
     /** Collects entries in key order and encodes them once complete. */
     static final class Builder {
-        private int[] keys = new int[16];
-        private int[] lines = new int[16];
-        private int[] columns = new int[16];
-        private int[] sources = new int[16];
-        private int size;
-
+        private final Entries entries = new Entries();
         private final List<String> names = new ArrayList<>();
         private final Map<String, Integer> nameIndexes = new HashMap<>();
 
         /** Adds an entry. Keys must not decrease; adding at the last key replaces that entry. */
         void add(int key, int line, int column, String sourceName) {
-            if (size > 0 && key < keys[size - 1]) {
+            if (entries.size > 0 && key < entries.keys[entries.size - 1]) {
                 throw new IllegalArgumentException("keys must not decrease");
             }
-            int at = size > 0 && keys[size - 1] == key ? size - 1 : size++;
-            if (at == keys.length) {
-                keys = Arrays.copyOf(keys, size * 2);
-                lines = Arrays.copyOf(lines, size * 2);
-                columns = Arrays.copyOf(columns, size * 2);
-                sources = Arrays.copyOf(sources, size * 2);
-            }
-            keys[at] = key;
-            lines[at] = line;
-            columns[at] = column;
-            sources[at] = sourceName == null ? -1 : nameIndex(sourceName);
+            entries.add(key, line, column, sourceName == null ? -1 : nameIndex(sourceName));
         }
 
         private int nameIndex(String sourceName) {
@@ -154,29 +186,28 @@ final class PositionTable implements Serializable {
 
         /** The entry added at exactly {@code key}, or null. */
         Position get(int key) {
-            int i = Arrays.binarySearch(keys, 0, size, key);
-            if (i < 0) return null;
-            return new Position(
-                    sources[i] < 0 ? null : names.get(sources[i]), lines[i], columns[i]);
+            int i = entries.indexOf(key);
+            return i < 0 ? null : entries.at(i, names.toArray(new String[0]));
         }
 
         PositionTable build() {
+            int size = entries.size;
             if (size == 0) return EMPTY;
             boolean named = !names.isEmpty();
-            byte[] out = new byte[size * 4];
+            // Four varints of at most five bytes each
+            byte[] out = new byte[size * 4 + 20];
             int at = 0;
             int lastKey = 0, lastLine = 0, lastColumn = 0, lastSource = -1;
             for (int i = 0; i < size; i++) {
-                // Four varints of at most five bytes each
                 if (out.length - at < 20) out = Arrays.copyOf(out, out.length * 2);
-                at = writeUnsigned(out, at, keys[i] - lastKey);
-                at = writeSigned(out, at, lines[i] - lastLine);
-                at = writeSigned(out, at, columns[i] - lastColumn);
-                if (named) at = writeSigned(out, at, sources[i] - lastSource);
-                lastKey = keys[i];
-                lastLine = lines[i];
-                lastColumn = columns[i];
-                lastSource = sources[i];
+                at = writeUnsigned(out, at, entries.keys[i] - lastKey);
+                at = writeSigned(out, at, entries.lines[i] - lastLine);
+                at = writeSigned(out, at, entries.columns[i] - lastColumn);
+                if (named) at = writeSigned(out, at, entries.sources[i] - lastSource);
+                lastKey = entries.keys[i];
+                lastLine = entries.lines[i];
+                lastColumn = entries.columns[i];
+                lastSource = entries.sources[i];
             }
             return new PositionTable(
                     Arrays.copyOf(out, at), named ? names.toArray(new String[0]) : null);

@@ -84,12 +84,8 @@ public final class CompiledPositions {
         int reported = frame.getLineNumber();
         CompiledPositions positions = forClass(frame.getClassName());
         Position found = positions == null ? null : positions.get(frame.getMethodName(), reported);
-        if (found == null) {
-            return new Position(fallbackSourceName, reported, 0);
-        }
-        return found.getSourcePath() == null
-                ? new Position(fallbackSourceName, found.getLine(), found.getColumn())
-                : found;
+        if (found == null) found = new Position(null, reported, 0);
+        return found.withSourcePathIfAbsent(fallbackSourceName);
     }
 
     public static Builder builder() {
@@ -126,17 +122,18 @@ public final class CompiledPositions {
          * Records a position and returns the line number to emit for it: the real line, unless that
          * line already identifies a different one.
          *
-         * @param column the one-based column, or zero for a position the compiler invented
+         * @param at the position; a column of zero marks one the compiler invented
          */
-        public int record(String methodName, int line, int column, String sourceName) {
+        public int record(String methodName, Position at) {
             MethodState state = byMethod.computeIfAbsent(methodName, k -> new MethodState());
+            int line = at.getLine();
+            int column = at.getColumn();
             if (line > state.highestRealLine) state.highestRealLine = line;
 
-            Position key = new Position(sourceName, line, column);
             Position claimed = state.lines.get(line);
             if (claimed == null) {
-                state.lines.put(line, column > 0 ? key : new Position(sourceName, line, 0));
-                if (column > 0) state.emittedFor.put(key, line);
+                state.lines.put(line, column > 0 ? at : new Position(at.getSourcePath(), line, 0));
+                if (column > 0) state.emittedFor.put(at, line);
                 return line;
             }
 
@@ -144,7 +141,7 @@ public final class CompiledPositions {
             // marker; it just reuses whatever the line already resolves to.
             if (column <= 0) return line;
 
-            Integer already = state.emittedFor.get(key);
+            Integer already = state.emittedFor.get(at);
             if (already != null) return already.intValue();
 
             if (!markersEnabled || state.nextMarker <= state.highestRealLine) {
@@ -156,8 +153,8 @@ public final class CompiledPositions {
             }
 
             int marker = state.nextMarker--;
-            state.lines.put(marker, key);
-            state.emittedFor.put(key, marker);
+            state.lines.put(marker, at);
+            state.emittedFor.put(at, marker);
             return marker;
         }
 

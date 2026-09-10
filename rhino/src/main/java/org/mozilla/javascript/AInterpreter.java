@@ -327,7 +327,6 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             offset = pos;
 
             while (callerFrame != null) {
-                var idata = callerFrame.compilerData;
                 JSDescriptor<?> desc = callerFrame.fnOrScript.getDescriptor();
                 sb.append(lineSeparator);
                 sb.append("\tat script");
@@ -336,12 +335,12 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                     sb.append(desc.getName());
                 }
                 sb.append('(');
-                sb.append(desc.getSourceName());
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    // Include line info only if available
-                    sb.append(':');
-                    sb.append(idata.getLineNumberFromPc(pc));
+                    Position at = positionAt(callerFrame, pc);
+                    sb.append(at.getSourcePath()).append(':').append(at.getLine());
+                } else {
+                    sb.append(desc.getSourceName());
                 }
                 sb.append(')');
                 calleeFrame = callerFrame;
@@ -423,9 +422,8 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
 
     // Named after the frame's script or function when the position has no source of its own
     static Position positionAt(ACallFrame<?, ?> frame, int pc) {
-        Position at = frame.compilerData.getPositionFromPc(pc);
-        if (at.getSourcePath() != null) return at;
-        return new Position(
-                frame.fnOrScript.getDescriptor().getSourceName(), at.getLine(), at.getColumn());
+        return frame.compilerData
+                .getPositionFromPc(pc)
+                .withSourcePathIfAbsent(frame.fnOrScript.getDescriptor().getSourceName());
     }
 }

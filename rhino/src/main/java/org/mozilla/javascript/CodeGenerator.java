@@ -132,16 +132,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 }
             }
 
-            // A throw into a generator that has not started yet is attributed to its declaration
-            Position start =
-                    CodeGenUtils.mapPosition(
-                            compilerEnv,
-                            theFunction.getBaseLineno(),
-                            Math.max(theFunction.getColumn(), 0));
-            if (start != null) {
-                itsData.positions.add(
-                        iCodeTop, start.getLine(), start.getColumn(), start.getSourcePath());
-            }
             addIcode(Icode.GENERATOR);
         }
 
@@ -698,11 +688,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     updateExpressionPosition(node);
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
-                        // embed line number and source filename
                         addIndexOp(Icode.CALLSPECIAL, argCount);
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
-                        addUint16(lineNumber & 0xFFFF);
                     } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                         addIndexOp(Icode.CALL_ON_SUPER, argCount);
                     } else {

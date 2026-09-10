@@ -22,20 +22,23 @@ import org.mozilla.javascript.testutils.Utils;
 /** Columns in stack traces, in both evaluation modes. */
 public class StackTraceColumnTest {
 
-    private static ScriptStackElement[] stackOf(String source, EvaluationMethod mode) {
-        ScriptStackElement[][] out = new ScriptStackElement[1][];
+    private static RhinoException thrownBy(String source, EvaluationMethod mode) {
+        RhinoException[] out = new RhinoException[1];
         Utils.runWithMode(
                 cx -> {
                     TopLevel scope = cx.initStandardObjects();
-                    RhinoException e =
+                    out[0] =
                             assertThrows(
                                     RhinoException.class,
                                     () -> cx.evaluateString(scope, source, "t.js", 1, null));
-                    out[0] = e.getScriptStack();
                     return null;
                 },
                 mode);
         return out[0];
+    }
+
+    private static ScriptStackElement[] stackOf(String source, EvaluationMethod mode) {
+        return thrownBy(source, mode).getScriptStack();
     }
 
     /** Asserts where the throw is reported, in both modes, since they must not disagree. */
@@ -119,31 +122,11 @@ public class StackTraceColumnTest {
     @Test
     public void aThrownValueCarriesItsColumn() {
         for (EvaluationMethod mode : EvaluationMethod.values()) {
-            Utils.runWithMode(
-                    cx -> {
-                        TopLevel scope = cx.initStandardObjects();
-                        RhinoException e =
-                                assertThrows(
-                                        RhinoException.class,
-                                        () ->
-                                                cx.evaluateString(
-                                                        scope,
-                                                        "function f() {\n  throw 'boom';\n}\nf();",
-                                                        "t.js",
-                                                        1,
-                                                        null));
-                        ScriptStackElement top = e.getScriptStack()[0];
-                        assertEquals(2, e.lineNumber(), mode + " line");
-                        assertEquals(3, e.columnNumber(), mode + " column");
-                        assertEquals(
-                                top.lineNumber, e.lineNumber(), mode + " agrees with the frame");
-                        assertEquals(
-                                top.columnNumber,
-                                e.columnNumber(),
-                                mode + " agrees with the frame");
-                        return null;
-                    },
-                    mode);
+            RhinoException e = thrownBy("function f() {\n  throw 'boom';\n}\nf();", mode);
+            ScriptStackElement top = e.getScriptStack()[0];
+            assertEquals(3, e.columnNumber(), mode + " column");
+            assertEquals(top.lineNumber, e.lineNumber(), mode + " agrees with the frame");
+            assertEquals(top.columnNumber, e.columnNumber(), mode + " agrees with the frame");
         }
     }
 

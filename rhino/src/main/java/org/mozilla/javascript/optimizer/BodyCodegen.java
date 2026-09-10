@@ -968,10 +968,10 @@ class BodyCodegen {
         cfw.add(ByteCode.DUP_X1);
         cfw.add(ByteCode.SWAP);
         // The same origin the stack frame for this position resolves to
-        String sourceName = itsPosition == null ? null : itsPosition.getSourcePath();
-        cfw.addPush(sourceName == null ? scriptOrFn.getSourceName() : sourceName);
-        cfw.addPush(itsLineNumber);
-        cfw.addPush(itsPosition == null ? 0 : itsPosition.getColumn());
+        Position at = itsPosition.withSourcePathIfAbsent(scriptOrFn.getSourceName());
+        cfw.addPush(at.getSourcePath());
+        cfw.addPush(at.getLine());
+        cfw.addPush(at.getColumn());
         cfw.addInvoke(
                 ByteCode.INVOKESPECIAL,
                 "org/mozilla/javascript/JavaScriptException",
@@ -2705,9 +2705,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
         cfw.addPush(specialType);
-        String sourceName = scriptOrFn.getSourceName();
-        cfw.addPush(sourceName == null ? "" : sourceName);
-        cfw.addPush(itsLineNumber);
+        pushEvalOrigin();
         cfw.addPush(false);
 
         addScriptRuntimeInvoke(
@@ -2749,9 +2747,7 @@ class BodyCodegen {
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
         cfw.addPush(specialType);
-        String sourceName = scriptOrFn.getSourceName();
-        cfw.addPush(sourceName == null ? "" : sourceName);
-        cfw.addPush(itsLineNumber);
+        pushEvalOrigin();
         cfw.addPush(true);
 
         addScriptRuntimeInvoke(
@@ -3217,7 +3213,6 @@ class BodyCodegen {
         Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
         if (mapped == null) return;
         itsPosition = mapped;
-        itsLineNumber = mapped.getLine();
         emitPosition(mapped);
     }
 
@@ -3233,18 +3228,19 @@ class BodyCodegen {
     // Emits the real line, unless that line already identifies a different position, in which case
     // the table hands back a marker and maps it back at lookup time.
     private void emitPosition(Position position) {
-        int emitted =
-                codegen.getPositions()
-                        .record(
-                                currentMethodName,
-                                position.getLine(),
-                                position.getColumn(),
-                                position.getSourcePath());
+        int emitted = codegen.getPositions().record(currentMethodName, position);
         // An entry covers the code up to the next one, so repeating the number adds nothing
         if (emitted != lastEmittedLine) {
             cfw.addLineNumberEntry(emitted);
             lastEmittedLine = emitted;
         }
+    }
+
+    // The source name and line an eval call labels the code it compiles with
+    private void pushEvalOrigin() {
+        Position at = itsPosition.withSourcePathIfAbsent(scriptOrFn.getSourceName());
+        cfw.addPush(at.getSourcePath() == null ? "" : at.getSourcePath());
+        cfw.addPush(at.getLine());
     }
 
     private void visitTryCatchFinally(Jump node, Node child) {
@@ -5001,10 +4997,8 @@ class BodyCodegen {
     private int firstFreeLocal;
     private int localsMax;
 
-    private int itsLineNumber;
-
-    // The last position emitted, which is where a throw generated next is attributed to
-    private Position itsPosition;
+    // The last position emitted, which is where a throw or eval generated next is attributed to
+    private Position itsPosition = new Position(null, 0, 0);
 
     // Keys the positions recorded for this body, since a lookup is by method as well as line
     private String currentMethodName;
