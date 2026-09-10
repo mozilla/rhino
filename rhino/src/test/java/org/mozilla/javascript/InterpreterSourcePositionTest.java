@@ -72,6 +72,14 @@ class InterpreterSourcePositionTest {
         assertEquals(1, e.columnNumber());
     }
 
+    /** Line 0 is a common base; only -1 means a node has no position. */
+    @Test
+    void aFailedReadOnLineZeroReportsThePropertyColumn() {
+        RhinoException e = throwFrom("var o = {}; o.a.b;", 0);
+        assertEquals(0, e.lineNumber());
+        assertEquals(17, e.columnNumber(), "the column of 'b'");
+    }
+
     @Test
     void columnsSurviveANonDefaultBaseLine() {
         RhinoException e = throwFrom("function f() { throw new Error('x'); }\nf();", 100);

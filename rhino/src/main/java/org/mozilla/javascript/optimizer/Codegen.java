@@ -218,6 +218,8 @@ public class Codegen implements Evaluator {
             String rawSource,
             boolean returnFunction) {
         this.compilerEnv = compilerEnv;
+        positions = CompiledPositions.builder();
+        if (compilingToClassFiles) positions.disableMarkers();
 
         transform(scriptOrFn);
 
@@ -990,7 +992,7 @@ public class Codegen implements Evaluator {
      * have to stand on their own, which costs a column wherever a line holds several positions.
      */
     public void setCompilingToClassFiles() {
-        positions.disableMarkers();
+        compilingToClassFiles = true;
     }
 
     static final String DEFAULT_MAIN_METHOD_CLASS = "org.mozilla.javascript.optimizer.OptRuntime";
@@ -1042,7 +1044,9 @@ public class Codegen implements Evaluator {
 
     private CompilerEnvirons compilerEnv;
 
-    private final CompiledPositions.Builder positions = CompiledPositions.builder();
+    // One per compilation, since a Codegen may be reused for several
+    private CompiledPositions.Builder positions;
+    private boolean compilingToClassFiles;
 
     CompiledPositions.Builder getPositions() {
         return positions;

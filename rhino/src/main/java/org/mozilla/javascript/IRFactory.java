@@ -1067,9 +1067,9 @@ public final class IRFactory {
      * expression, and then to nothing at all rather than to a line that does not exist.
      */
     private static void setAccessPosition(Node target, AstNode read, AstNode expression) {
-        if (read != null && read.getLineno() > 0) {
+        if (read != null && read.getLineno() >= 0) {
             target.setLineColumnNumber(read.getLineno(), read.getColumn());
-        } else if (expression.getLineno() > 0) {
+        } else if (expression.getLineno() >= 0) {
             target.setLineColumnNumber(expression.getLineno(), expression.getColumn());
         }
     }

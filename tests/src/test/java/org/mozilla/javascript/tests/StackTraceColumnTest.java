@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
@@ -116,6 +117,40 @@ public class StackTraceColumnTest {
             assertEquals(2, stack[1].lineNumber, mode + " caller line");
             assertEquals(23, stack[1].columnNumber, mode + " column of the call to g");
         }
+    }
+
+    /** An object literal large enough to get its own factory method still resolves positions. */
+    @Test
+    public void aLiteralFactoryReportsItsPosition() {
+        assertThrownAt(
+                "var o = {p1:1, p2:2, p3:3, p4:4, p5:5, p6:6, p7:7, p8:8, p9:9, p10:10,\n"
+                        + "  p11: null.x};",
+                2,
+                13);
+    }
+
+    /** A generator's entry wrapper is a method of its own as well. */
+    @Test
+    public void aGeneratorParameterDefaultReportsItsPosition() {
+        assertThrownAt("function* g(a = null.x) { yield 1; }\ng();", 1, 22);
+    }
+
+    /** The Error a script catches carries the column, as it already did the line. */
+    @Test
+    public void aCaughtEngineErrorExposesItsColumn() {
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Object column =
+                            cx.evaluateString(
+                                    scope,
+                                    "try { null.x } catch (e) { e.columnNumber }",
+                                    "t.js",
+                                    1,
+                                    null);
+                    assertEquals(12, Context.toNumber(column));
+                    return null;
+                });
     }
 
     /** The exception's own origin is the position of the top frame, column included. */

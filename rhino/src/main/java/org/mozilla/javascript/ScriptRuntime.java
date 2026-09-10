@@ -5209,6 +5209,9 @@ public class ScriptRuntime {
             // set exception in Error objects to enable non-ECMA "stack" property
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
+                if (re.columnNumber() > 0) {
+                    ScriptableObject.putProperty(errorObject, "columnNumber", re.columnNumber());
+                }
             }
 
             if (javaException != null && isVisible(cx, javaException)) {
@@ -5308,6 +5311,9 @@ public class ScriptRuntime {
         // set exception in Error objects to enable non-ECMA "stack" property
         if (errorObject instanceof NativeError) {
             ((NativeError) errorObject).setStackProvider(re);
+            if (re.columnNumber() > 0) {
+                ScriptableObject.putProperty(errorObject, "columnNumber", re.columnNumber());
+            }
         }
 
         if (javaException != null && isVisible(cx, javaException)) {

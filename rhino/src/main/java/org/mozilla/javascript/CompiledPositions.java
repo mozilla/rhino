@@ -26,8 +26,10 @@ import org.mozilla.javascript.sourcemap.Position;
  */
 public final class CompiledPositions {
 
-    // Markers are handed out downwards, per method, since a lookup is keyed by method too
-    private static final int FIRST_POSITION_MARKER = 0xFFFF;
+    // The largest number a LineNumberTable entry holds (JVMS 4.7.12). Markers are handed out
+    // downwards from it, per method, since a lookup is keyed by method too.
+    private static final int LAST_LINE = 0xFFFF;
+    private static final int FIRST_POSITION_MARKER = LAST_LINE;
 
     // A frame gives us only the class name, so this cannot be keyed on the class itself. The
     // reference is weak and the strong one lives in the generated class, so a table dies with the
@@ -48,18 +50,25 @@ public final class CompiledPositions {
     }
 
     public static void register(String className, CompiledPositions positions) {
-        for (Reference<? extends CompiledPositions> stale = STALE.poll();
-                stale != null;
-                stale = STALE.poll()) {
-            BY_CLASS_NAME.remove(((Ref) stale).className, stale);
-        }
+        dropUnloaded();
         BY_CLASS_NAME.put(className, new Ref(className, positions));
     }
 
     /** The table for a generated class, or null if it has none. */
     static CompiledPositions forClass(String className) {
+        dropUnloaded();
         WeakReference<CompiledPositions> ref = BY_CLASS_NAME.get(className);
         return ref == null ? null : ref.get();
+    }
+
+    // Polled on lookups as well as registrations, so a process that has stopped compiling does
+    // not keep the names of every class it unloaded
+    private static void dropUnloaded() {
+        for (Reference<? extends CompiledPositions> stale = STALE.poll();
+                stale != null;
+                stale = STALE.poll()) {
+            BY_CLASS_NAME.remove(((Ref) stale).className, stale);
+        }
     }
 
     private final Map<String, PositionTable> byMethod;
@@ -128,18 +137,22 @@ public final class CompiledPositions {
             MethodState state = byMethod.computeIfAbsent(methodName, k -> new MethodState());
             int line = at.getLine();
             int column = at.getColumn();
-            if (line > state.highestRealLine) state.highestRealLine = line;
 
-            Position claimed = state.lines.get(line);
-            if (claimed == null) {
-                state.lines.put(line, column > 0 ? at : new Position(at.getSourcePath(), line, 0));
-                if (column > 0) state.emittedFor.put(at, line);
-                return line;
+            // A line is emitted as itself while the field can hold it and no marker has taken it
+            boolean fits = line <= LAST_LINE && line <= state.nextMarker;
+            Position claimed = fits ? state.lines.get(line) : null;
+            if (fits) {
+                if (line > state.highestRealLine) state.highestRealLine = line;
+                if (claimed == null) {
+                    state.lines.put(
+                            line, column > 0 ? at : new Position(at.getSourcePath(), line, 0));
+                    if (column > 0) state.emittedFor.put(at, line);
+                    return line;
+                }
+                // A position with no column of its own can neither claim a line nor be worth a
+                // marker; it just reuses whatever the line already resolves to.
+                if (column <= 0) return line;
             }
-
-            // A position with no column of its own can neither claim a line nor be worth a
-            // marker; it just reuses whatever the line already resolves to.
-            if (column <= 0) return line;
 
             Integer already = state.emittedFor.get(at);
             if (already != null) return already.intValue();
@@ -147,7 +160,9 @@ public final class CompiledPositions {
             if (!markersEnabled || state.nextMarker <= state.highestRealLine) {
                 // Either markers are unavailable, or this method has run out of them, which takes
                 // tens of thousands of distinct positions in one function. Report the column as
-                // unknown rather than emit a number that already means something else.
+                // unknown rather than emit a number that already means something else, and a
+                // line the field cannot hold as no line at all.
+                if (!fits) return 0;
                 state.lines.put(line, new Position(claimed.getSourcePath(), line, 0));
                 return line;
             }

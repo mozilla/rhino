@@ -35,8 +35,9 @@ final class PositionTable implements Serializable {
     final byte[] deltas;
     private final String[] sourceNames;
 
-    // Two threads decoding at once produce the same thing, so no locking is needed
-    private transient Entries entries;
+    // Two threads decoding at once produce the same thing, so no locking is needed; volatile so
+    // that a reader sees the arrays as filled, not as they were being filled
+    private transient volatile Entries entries;
 
     private PositionTable(byte[] deltas, String[] sourceNames) {
         this.deltas = deltas;

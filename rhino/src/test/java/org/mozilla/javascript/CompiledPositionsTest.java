@@ -7,6 +7,7 @@ package org.mozilla.javascript;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.sourcemap.Position;
@@ -152,6 +153,21 @@ class CompiledPositionsTest {
         assertEquals(5, other);
         assertNotEquals(5, otherSecond, "a different method still has its whole range");
         assertAt(5, 20, b.build().get("_c_g_2", otherSecond));
+    }
+
+    /**
+     * A line past what the sixteen-bit field can hold travels as a marker, like a second position
+     * on a line would, and takes nothing away from the lines that do fit.
+     */
+    @Test
+    void aLineTheFieldCannotHoldGetsAMarker() {
+        var b = CompiledPositions.builder();
+        int emitted = b.record(M, new Position(null, 70000, 5));
+        assertTrue(emitted <= 0xFFFF, "must fit the field");
+        assertNotEquals(70000 & 0xFFFF, emitted, "must not be what truncation would give");
+        assertEquals(8, b.record(M, new Position(null, 8, 1)));
+        assertNotEquals(8, b.record(M, new Position(null, 8, 20)), "markers still available");
+        assertAt(70000, 5, b.build().get(M, emitted));
     }
 
     /**
