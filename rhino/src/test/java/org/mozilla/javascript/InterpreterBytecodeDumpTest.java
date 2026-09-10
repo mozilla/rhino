@@ -264,12 +264,12 @@ class InterpreterBytecodeDumpTest {
     void throwIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 6",
+                        "ICode dump, for null, length = 4",
                         "MaxStack = 1",
                         " [0] LINE : 1:1",
                         " [1] ONE",
-                        " [2] THROW : 1",
-                        " [5] RETURN_RESULT",
+                        " [2] THROW",
+                        " [3] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("throw 1"));
     }
@@ -278,14 +278,14 @@ class InterpreterBytecodeDumpTest {
     void generatorICodeIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for g, length = 12",
+                        "ICode dump, for g, length = 6",
                         "MaxStack = 1",
-                        " [0] GENERATOR : 1",
-                        " [3] LINE : 1:15",
-                        " [4] ONE",
-                        " [5] YIELD : 1",
-                        " [8] POP",
-                        " [9] GENERATOR_END : 1",
+                        " [0] GENERATOR",
+                        " [1] LINE : 1:15",
+                        " [2] ONE",
+                        " [3] YIELD",
+                        " [4] POP",
+                        " [5] GENERATOR_END",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -296,19 +296,19 @@ class InterpreterBytecodeDumpTest {
     @Test
     void yieldStarIsPrinted() throws IOException {
         var output = getByteCodeFrom("function* g() { yield* [1]; }");
-        assertTrue(output.contains("YIELD_STAR : "));
+        assertTrue(output.contains("YIELD_STAR"));
     }
 
     @Test
     void generatorReturnIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for g, length = 8",
+                        "ICode dump, for g, length = 4",
                         "MaxStack = 1",
-                        " [0] GENERATOR : 1",
-                        " [3] LINE : 1:15",
-                        " [4] ONE",
-                        " [5] GENERATOR_RETURN : 1",
+                        " [0] GENERATOR",
+                        " [1] LINE : 1:15",
+                        " [2] ONE",
+                        " [3] GENERATOR_RETURN",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",

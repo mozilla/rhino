@@ -10,9 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context.EvaluationMethod;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptCompileSpec;
 import org.mozilla.javascript.ScriptStackElement;
 import org.mozilla.javascript.StackStyle;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.testutils.Utils;
 
 /** Columns in stack traces, in both evaluation modes. */
@@ -109,6 +113,84 @@ public class StackTraceColumnTest {
             assertEquals(2, stack[1].lineNumber, mode + " caller line");
             assertEquals(23, stack[1].columnNumber, mode + " column of the call to g");
         }
+    }
+
+    /** The exception's own origin is the position of the top frame, column included. */
+    @Test
+    public void aThrownValueCarriesItsColumn() {
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            Utils.runWithMode(
+                    cx -> {
+                        TopLevel scope = cx.initStandardObjects();
+                        RhinoException e =
+                                assertThrows(
+                                        RhinoException.class,
+                                        () ->
+                                                cx.evaluateString(
+                                                        scope,
+                                                        "function f() {\n  throw 'boom';\n}\nf();",
+                                                        "t.js",
+                                                        1,
+                                                        null));
+                        ScriptStackElement top = e.getScriptStack()[0];
+                        assertEquals(2, e.lineNumber(), mode + " line");
+                        assertEquals(3, e.columnNumber(), mode + " column");
+                        assertEquals(
+                                top.lineNumber, e.lineNumber(), mode + " agrees with the frame");
+                        assertEquals(
+                                top.columnNumber,
+                                e.columnNumber(),
+                                mode + " agrees with the frame");
+                        return null;
+                    },
+                    mode);
+        }
+    }
+
+    /** Under a source map the exception names the original file, as its frames already do. */
+    @Test
+    public void aThrownValueIsMappedLikeItsFrames() {
+        SourceMapper mapper =
+                new SourceMapper() {
+                    @Override
+                    public Position mapPosition(int line, int column) {
+                        return new Position("original.js", 100 + line, 200 + column);
+                    }
+
+                    @Override
+                    public String getSourceLineText(String sourcePath, int line) {
+                        return null;
+                    }
+
+                    @Override
+                    public String getPrimarySourceContent() {
+                        return null;
+                    }
+                };
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource(
+                                                    "function f() {\n  throw 'boom';\n}\nf();")
+                                            .sourceName("t.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+                    RhinoException e =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
+                    ScriptStackElement top = e.getScriptStack()[0];
+                    assertEquals("original.js", top.fileName);
+                    assertEquals(top.fileName, e.sourceName());
+                    assertEquals(top.lineNumber, e.lineNumber());
+                    assertEquals(top.columnNumber, e.columnNumber());
+                    assertEquals(102, e.lineNumber());
+                    assertEquals(203, e.columnNumber());
+                    return null;
+                });
     }
 
     /** Only the V8 style renders a column, as file:line:column. */

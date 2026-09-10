@@ -132,8 +132,17 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 }
             }
 
+            // A throw into a generator that has not started yet is attributed to its declaration
+            Position start =
+                    CodeGenUtils.mapPosition(
+                            compilerEnv,
+                            theFunction.getBaseLineno(),
+                            Math.max(theFunction.getColumn(), 0));
+            if (start != null) {
+                itsData.positions.add(
+                        iCodeTop, start.getLine(), start.getColumn(), start.getSourcePath());
+            }
             addIcode(Icode.GENERATOR);
-            addUint16(theFunction.getBaseLineno() & 0xFFFF);
         }
 
         generateICodeFromTree(theFunction.getLastChild());
@@ -511,7 +520,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 updateLineNumber(node);
                 visitExpression(child, 0);
                 addToken(Token.THROW);
-                addUint16(lineNumber & 0xFFFF);
                 stackChange(-1);
                 break;
 
@@ -528,11 +536,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         // End generator function with no result, or old language version
                         // in which generators never return a result.
                         addIcode(Icode.GENERATOR_END);
-                        addUint16(lineNumber & 0xFFFF);
                     } else {
                         visitExpression(child, ECF_TAIL);
                         addIcode(Icode.GENERATOR_RETURN);
-                        addUint16(lineNumber & 0xFFFF);
                         stackChange(-1);
                     }
 
@@ -1193,7 +1199,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 } else {
                     addIcode(Icode.YIELD_STAR);
                 }
-                addUint16(node.getLineno() & 0xFFFF);
                 break;
 
             case Token.WITHEXPR:

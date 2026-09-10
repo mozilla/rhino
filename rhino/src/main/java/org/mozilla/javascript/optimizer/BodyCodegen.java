@@ -967,13 +967,16 @@ class BodyCodegen {
         cfw.add(ByteCode.NEW, "org/mozilla/javascript/JavaScriptException");
         cfw.add(ByteCode.DUP_X1);
         cfw.add(ByteCode.SWAP);
-        cfw.addPush(scriptOrFn.getSourceName());
+        // The same origin the stack frame for this position resolves to
+        String sourceName = itsPosition == null ? null : itsPosition.getSourcePath();
+        cfw.addPush(sourceName == null ? scriptOrFn.getSourceName() : sourceName);
         cfw.addPush(itsLineNumber);
+        cfw.addPush(itsPosition == null ? 0 : itsPosition.getColumn());
         cfw.addInvoke(
                 ByteCode.INVOKESPECIAL,
                 "org/mozilla/javascript/JavaScriptException",
                 "<init>",
-                "(Ljava/lang/Object;Ljava/lang/String;I)V");
+                "(Ljava/lang/Object;Ljava/lang/String;II)V");
         cfw.add(ByteCode.ATHROW);
     }
 
@@ -3213,6 +3216,7 @@ class BodyCodegen {
         if (lineno == -1) return;
         Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
         if (mapped == null) return;
+        itsPosition = mapped;
         itsLineNumber = mapped.getLine();
         emitPosition(mapped);
     }
@@ -4998,6 +5002,9 @@ class BodyCodegen {
     private int localsMax;
 
     private int itsLineNumber;
+
+    // The last position emitted, which is where a throw generated next is attributed to
+    private Position itsPosition;
 
     // Keys the positions recorded for this body, since a lookup is by method as well as line
     private String currentMethodName;
