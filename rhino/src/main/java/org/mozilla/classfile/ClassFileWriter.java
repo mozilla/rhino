@@ -1440,6 +1440,16 @@ public class ClassFileWriter {
     }
 
     /**
+     * @deprecated the field is unsigned, so a signed short cannot express half of it. Call {@link
+     *     #addLineNumberEntry(int)} instead. Kept so that code compiled against the old signature
+     *     still links.
+     */
+    @Deprecated
+    public void addLineNumberEntry(short lineNumber) {
+        addLineNumberEntry(lineNumber & 0xFFFF);
+    }
+
+    /**
      * @param lineNumber the {@code line_number} of a LineNumberTable entry, an unsigned 16-bit
      *     value per JVMS 4.7.12. Values outside that range are truncated to it.
      */

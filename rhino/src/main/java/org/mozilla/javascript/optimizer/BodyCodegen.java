@@ -1480,7 +1480,6 @@ class BodyCodegen {
 
             case Token.GETELEM:
                 generateExpression(child, node); // object
-                updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     int getElem = cfw.acquireLabel();
                     int after = cfw.acquireLabel();
@@ -1807,6 +1806,8 @@ class BodyCodegen {
 
     private void finishGetElemGeneration(Node node, Node child) {
         generateExpression(child.getNext(), node); // id
+        // After the subscript, so a failed read blames the read and not what the subscript did
+        updateExpressionPosition(node);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
 
@@ -3130,9 +3131,9 @@ class BodyCodegen {
                     Node target = node.getFirstChild();
                     generateExpression(target, node);
                     Node id = target.getNext();
-                    // The call target is a property access, and reading it is what fails here
-                    updateExpressionPosition(node);
                     if (type == Token.GETPROP) {
+                        // The call target is a property access, and reading it is what fails here
+                        updateExpressionPosition(node);
                         String property = id.getString();
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
@@ -3144,6 +3145,7 @@ class BodyCodegen {
                     } else {
                         generateExpression(id, node); // id
                         if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) addDoubleWrap();
+                        updateExpressionPosition(node);
                         cfw.addALoad(contextLocal);
                         cfw.addALoad(variableObjectLocal);
                         String name =

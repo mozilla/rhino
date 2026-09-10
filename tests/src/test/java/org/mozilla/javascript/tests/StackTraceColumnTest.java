@@ -88,6 +88,24 @@ public class StackTraceColumnTest {
         assertThrownAt("var foo = {};\nfoo.bar.baz();", 2, 9);
     }
 
+    /** A failed element read blames the subscript, as a property read blames the name. */
+    @Test
+    public void failedElementReadReportsTheSubscriptColumn() {
+        assertThrownAt("var u;\nvar k = 'a';\nu[k];", 3, 3);
+    }
+
+    /** Reading the subscript is itself positioned, and must not take the failed read's blame. */
+    @Test
+    public void failedElementReadWithAComputedSubscriptStillBlamesTheRead() {
+        assertThrownAt("var u;\nvar o = {p:1};\nu[o.p];", 3, 3);
+    }
+
+    /** Calling through a failed element read blames the read, not the subscript within it. */
+    @Test
+    public void failedElementCallTargetWithAComputedSubscriptBlamesTheRead() {
+        assertThrownAt("var u;\nvar o = {p:'q'};\nu[o.p]();", 3, 3);
+    }
+
     /** Calling a non-function blames the call, not the last argument evaluated. */
     @Test
     public void callingANonFunctionReportsTheCallColumn() {

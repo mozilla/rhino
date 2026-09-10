@@ -284,11 +284,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
         if (mapped == null) return null;
         // Column 0 or less means unknown, which only a source mapper can produce now that every
-        // node the compiler positions has one. Keep the column we had if it is on the same line,
-        // since it is at worst early; a column from another line would be nonsense.
+        // node the compiler positions has one. Keep the column we had if it is on the same line of
+        // the same file, since it is at worst early; anywhere else it would be nonsense.
         int column = mapped.getColumn();
         if (column <= 0) {
-            column = mapped.getLine() == lastPosition.getLine() ? lastPosition.getColumn() : 0;
+            column = sameLine(mapped, lastPosition) ? lastPosition.getColumn() : 0;
         }
         Position at = new Position(mapped.getSourcePath(), mapped.getLine(), column);
         if (statement == lastStatement && at.equals(lastPosition)) return at;
@@ -296,6 +296,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         lastStatement = statement;
         itsData.positions.add(iCodeTop, at.getLine(), column, at.getSourcePath(), statement);
         return at;
+    }
+
+    private static boolean sameLine(Position one, Position other) {
+        return one.getLine() == other.getLine()
+                && Objects.equals(one.getSourcePath(), other.getSourcePath());
     }
 
     private static RuntimeException badTree(Node node) {
@@ -829,7 +834,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             case Token.GETELEM:
                 visitExpression(child, 0);
                 child = child.getNext();
-                updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     addIcode(Icode.DUP);
                     stackChange(1);
@@ -838,7 +842,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     stackChange(-1);
 
                     // Infix op
-                    finishGetElemGeneration(child);
+                    finishGetElemGeneration(node, child);
                     int afterLabel = iCodeTop;
                     addGotoOp(Token.GOTO);
 
@@ -849,10 +853,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     visitExpression(child, 0);
+                    updateExpressionPosition(node);
                     addToken(Token.GETELEM_SUPER);
                     stackChange(-1);
                 } else {
-                    finishGetElemGeneration(child);
+                    finishGetElemGeneration(node, child);
                 }
                 break;
 
@@ -1272,8 +1277,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         stackChange(1);
     }
 
-    private void finishGetElemGeneration(Node child) {
+    private void finishGetElemGeneration(Node node, Node child) {
         visitExpression(child, 0);
+        // After the subscript, so a failed read blames the read and not what the subscript did
+        updateExpressionPosition(node);
         addToken(Token.GETELEM);
         stackChange(-1);
     }
@@ -1303,9 +1310,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     Node target = left.getFirstChild();
                     visitExpression(target, 0);
                     Node id = target.getNext();
-                    // The call target is a property access, and reading it is what fails here
-                    updateExpressionPosition(left);
                     if (type == Token.GETPROP) {
+                        // The call target is a property access, and reading it is what fails here
+                        updateExpressionPosition(left);
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
                         if (isOptionalChainingCall) {
@@ -1318,6 +1325,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         }
                     } else {
                         visitExpression(id, 0);
+                        updateExpressionPosition(left);
                         // stack: ... target id -> ... function thisObj
                         if (isOptionalChainingCall) {
                             addIcode(Icode.ELEM_AND_THIS_OPTIONAL);
