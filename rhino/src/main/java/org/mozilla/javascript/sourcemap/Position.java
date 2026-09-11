@@ -38,6 +38,11 @@ public final class Position {
         return column;
     }
 
+    /** This position, or the same one in {@code sourcePath} when it has no source of its own. */
+    public Position withSourcePathIfAbsent(String sourcePath) {
+        return this.sourcePath != null ? this : new Position(sourcePath, line, column);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;

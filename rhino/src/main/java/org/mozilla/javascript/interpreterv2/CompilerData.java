@@ -11,6 +11,7 @@ import org.mozilla.javascript.ScriptOrFn;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.interpreterv2.instruction.Instruction;
+import org.mozilla.javascript.sourcemap.Position;
 
 public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, CompilerData<?>> {
 
@@ -129,8 +130,8 @@ public class CompilerData<T extends ScriptOrFn<T>> extends ACompilerData<T, Comp
     }
 
     @Override
-    public int getLineNumberFromPc(int pc, int pcLineStart) {
-        return LineNumberTable.getLineNumberFromPc(lineNumberTable, pc);
+    public Position getPositionFromPc(int pc) {
+        return new Position(null, LineNumberTable.getLineNumberFromPc(lineNumberTable, pc), 0);
     }
 
     public String getLineNumberTableForDebug() {

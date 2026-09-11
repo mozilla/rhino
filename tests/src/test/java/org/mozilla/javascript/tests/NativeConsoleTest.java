@@ -554,7 +554,7 @@ public class NativeConsoleTest {
                         + "}";
         assertPrintMsg(
                 js,
-                "{\"msg\":\"Something is wrong\",\"err\":{\"fileName\":\"source\",\"lineNumber\":2}}");
+                "{\"msg\":\"Something is wrong\",\"err\":{\"fileName\":\"source\",\"lineNumber\":2,\"columnNumber\":3}}");
     }
 
     @Test

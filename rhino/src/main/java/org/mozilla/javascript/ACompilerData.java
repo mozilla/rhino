@@ -1,6 +1,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import org.mozilla.javascript.sourcemap.Position;
 
 public abstract class ACompilerData<T extends ScriptOrFn<T>, U extends ACompilerData<?, U>>
         extends JSCode<T> implements Serializable {
@@ -22,5 +23,13 @@ public abstract class ACompilerData<T extends ScriptOrFn<T>, U extends ACompiler
         this.exceptionTable = exceptionTable;
     }
 
-    public abstract int getLineNumberFromPc(int pc, int pcLineStart);
+    public int getLineNumberFromPc(int pc) {
+        return getPositionFromPc(pc).getLine();
+    }
+
+    /**
+     * @return the position at this pc, never null. A backend that tracks only lines reports a
+     *     column of zero; a null source path means the enclosing script or function's.
+     */
+    public abstract Position getPositionFromPc(int pc);
 }

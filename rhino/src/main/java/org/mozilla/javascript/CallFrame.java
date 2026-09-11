@@ -13,7 +13,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
     // The values that change during interpretation
 
     int pcPrevBranch;
-    int pcSourceLineStart;
 
     int savedCallOp;
 
@@ -26,7 +25,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
             CallFrame parentFrame,
             ACallFrame<?, ?> previousInterpreterFrame) {
         super(cx, thisObj, newTarget, fnOrScript, code, parentFrame, previousInterpreterFrame);
-        pcSourceLineStart = compilerData.firstLinePC;
 
         stackTop = emptyStackTop;
     }
@@ -45,7 +43,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
         super(original, parentFrame, previousInterpreterFrame);
         isContinuationsTopFrame = original.isContinuationsTopFrame;
 
-        pcSourceLineStart = original.pcSourceLineStart;
         pcPrevBranch = original.pcPrevBranch;
 
         stackTop = original.stackTop;
@@ -64,7 +61,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
         super(original, parentFrame, previousInterpreterFrame, false, keepFrozen);
         isContinuationsTopFrame = original.isContinuationsTopFrame;
 
-        pcSourceLineStart = original.pcSourceLineStart;
         pcPrevBranch = original.pcPrevBranch;
 
         stackTop = original.stackTop;
@@ -199,7 +195,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
         otherFrame.resultDbl = resultDbl;
         otherFrame.pc = pc;
         otherFrame.pcPrevBranch = pcPrevBranch;
-        otherFrame.pcSourceLineStart = pcSourceLineStart;
         otherFrame.scope = scope;
 
         otherFrame.stackTop = stackTop;
@@ -312,11 +307,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
     @Override
     public CallFrame getParentFrame() {
         return parentFrame;
-    }
-
-    @Override
-    public int getPcSourceLineStart() {
-        return pcSourceLineStart;
     }
 
     @Override

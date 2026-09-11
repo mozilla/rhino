@@ -149,6 +149,7 @@ public class ClassCompiler {
 
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
+        codegen.setCompilingToClassFiles();
         JSDescriptor.Builder<?> builder = new JSDescriptor.Builder<>();
         MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
         byte[] scriptClassBytes =

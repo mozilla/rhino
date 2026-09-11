@@ -22,6 +22,10 @@ public class ThrowBenchmark {
         Function mediumThrow;
         Function deepThrow;
 
+        Function shallowThrowRead;
+        Function mediumThrowRead;
+        Function deepThrowRead;
+
         @Param({"Interpreter", "Compiler"})
         public EvaluationMethod evalMethod;
 
@@ -38,6 +42,9 @@ public class ThrowBenchmark {
             shallowThrow = (Function) ScriptableObject.getProperty(scope, "shallowThrow");
             mediumThrow = (Function) ScriptableObject.getProperty(scope, "mediumThrow");
             deepThrow = (Function) ScriptableObject.getProperty(scope, "deepThrow");
+            shallowThrowRead = (Function) ScriptableObject.getProperty(scope, "shallowThrowRead");
+            mediumThrowRead = (Function) ScriptableObject.getProperty(scope, "mediumThrowRead");
+            deepThrowRead = (Function) ScriptableObject.getProperty(scope, "deepThrowRead");
         }
 
         @TearDown(Level.Trial)
@@ -59,5 +66,20 @@ public class ThrowBenchmark {
     @Benchmark
     public Object deepThrow(GeneratorState state) {
         return state.deepThrow.call(state.cx, state.scope, null, ScriptRuntime.emptyArgs);
+    }
+
+    @Benchmark
+    public Object shallowThrowRead(GeneratorState state) {
+        return state.shallowThrowRead.call(state.cx, state.scope, null, ScriptRuntime.emptyArgs);
+    }
+
+    @Benchmark
+    public Object mediumThrowRead(GeneratorState state) {
+        return state.mediumThrowRead.call(state.cx, state.scope, null, ScriptRuntime.emptyArgs);
+    }
+
+    @Benchmark
+    public Object deepThrowRead(GeneratorState state) {
+        return state.deepThrowRead.call(state.cx, state.scope, null, ScriptRuntime.emptyArgs);
     }
 }

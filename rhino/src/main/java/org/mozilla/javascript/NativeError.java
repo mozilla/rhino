@@ -52,6 +52,7 @@ final class NativeError extends ScriptableObject {
                         .withProp(PROTO, "message", value("", DONTENUM))
                         .withProp(PROTO, "fileName", value("", DONTENUM))
                         .withProp(PROTO, "lineNumber", value(0, DONTENUM))
+                        .withProp(PROTO, "columnNumber", value(0, DONTENUM))
                         .build();
     }
 

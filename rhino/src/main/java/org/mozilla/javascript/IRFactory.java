@@ -588,6 +588,7 @@ public final class IRFactory {
         Node target = transform(node.getTarget());
         Node element = transform(node.getElement());
         Node getElem = new Node(Token.GETELEM, target, element);
+        setAccessPosition(getElem, node.getElement(), node);
         if (node.type == Token.QUESTION_DOT) {
             getElem.putIntProp(Node.OPTIONAL_CHAINING, 1);
         }
@@ -1057,10 +1058,26 @@ public final class IRFactory {
         return new Node(node.type, transformedExpression);
     }
 
+    /**
+     * Positions a property or element read for error reporting. A node's position is the start of
+     * the whole expression, but a failed read belongs to the part being read: for {@code a.b.c} it
+     * is {@code c} that could not be read, not {@code a}. Synthesized nodes have no position of
+     * their own and fall back to the expression.
+     */
+    private static void setAccessPosition(Node target, AstNode read, AstNode expression) {
+        if (read != null && read.getLineno() >= 0) {
+            target.setLineColumnNumber(read.getLineno(), read.getColumn());
+        } else if (expression.getLineno() >= 0) {
+            target.setLineColumnNumber(expression.getLineno(), expression.getColumn());
+        }
+    }
+
     private Node transformPropertyGet(PropertyGet node) {
         Node target = transform(node.getTarget());
         String name = node.getProperty().getIdentifier();
-        return createPropertyGet(target, null, name, 0, node.type);
+        Node get = createPropertyGet(target, null, name, 0, node.type);
+        setAccessPosition(get, node.getProperty(), node);
+        return get;
     }
 
     private Node transformTemplateLiteral(TemplateLiteral node) {

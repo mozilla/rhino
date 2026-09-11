@@ -1,6 +1,6 @@
 # Source Map Support
 
-Rhino can remap stack-trace line numbers, parser error positions, and debugger source
+Rhino can remap stack-trace positions, parser error positions, and debugger source
 handoffs back to the original source when a transpiler or minifier has generated the
 script being compiled. The feature is opt-in: attach a `SourceMapper` to a compile spec
 and Rhino uses it automatically.
@@ -17,9 +17,10 @@ Script script = cx.compileScript(
         .build());
 ```
 
-From that point on, `RhinoException.lineNumber()` reports the original source line,
-parser error messages quote the original source text, and the debugger receives the
-primary original source content at compilation time.
+From that point on a stack frame names the original file, line and column it came from,
+even where one bundle maps back to many original files; parser error messages quote the
+original source text; and the debugger receives the primary original source content at
+compilation time.
 
 ## Architecture
 
@@ -126,4 +127,48 @@ after fixing bugs:
 |---|---|
 | `Parser.mapLocation` | Remaps error position and fetches original source line text |
 | `Context` debugger handoff | Passes `getPrimarySourceContent()` to the debugger at compile time |
-| `CodeGenerator` / `BodyCodegen` | Consume only `position.line()`; unaffected by the `sourcePath` addition |
+| `CodeGenerator` / `BodyCodegen` | Record the whole mapped position, so a stack frame reports the original file, line and column |
+
+## Positions in a stack trace
+
+Both backends record a position wherever one can be blamed: at each statement, and at each
+property read, element read and call, so a failure is attributed to the operation rather
+than to the start of the statement. For `foo.bar.baz()` that is the column of `baz`, which
+is what V8 reports for the same code.
+
+An AST node is positioned at the start of its whole expression, deliberately, for parity
+with other parsers. Error reporting instead takes the position of the part being read, so
+the parser's convention is left alone.
+
+### The interpreter
+
+Positions live in a table beside the code, keyed by the bytecode offset they take effect
+at; `RhinoException` finds one by walking it up to the frame's program counter. Nothing is
+spent maintaining them as the code runs, which matters because they are only ever read
+while reporting an error. Each entry records whether it is a statement's, as V8's table
+does; only those mark lines for the debugger, and a `LINE` icode remains at them, without
+an operand, purely so the debugger can step by line.
+
+The table (`PositionTable`) is a stream of variable-length deltas, the form V8's source
+position table and HotSpot's own line number table take: on a real bundle it costs about
+three and a half bytes per position, where fixed words would cost eight and outweigh the
+icode itself. It is read front to back, which is fine for something consulted once per
+frame of an exception.
+
+### The JVM bytecode backend
+
+A compiled frame exposes one datum that varies from position to position: the
+`line_number` of a `LineNumberTable` entry, sixteen bits per JVMS 4.7.12. The class name,
+method name and source file are fixed for the whole frame, so those sixteen bits are the
+entire channel a column can travel through.
+
+Rhino chooses what goes in them. A position whose line is not yet spoken for emits its
+real line, which is what a Java debugger expects. A second position on a line already
+claimed by a different one emits a *position marker* from the top of the range instead,
+which `CompiledPositions` maps back. Markers are handed out per method, since a lookup is
+keyed by method as well; behind each method sits the same `PositionTable` the interpreter
+uses, keyed by the reported number rather than by bytecode offset.
+
+Code compiled ahead of time to class files, via `ClassCompiler`, is loaded without the
+step that attaches that table, so it emits real line numbers only and reports no column
+where a line holds several positions.

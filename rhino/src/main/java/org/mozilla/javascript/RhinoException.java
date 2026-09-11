@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.mozilla.javascript.config.RhinoConfig;
+import org.mozilla.javascript.sourcemap.Position;
 
 /** The class of exceptions thrown by the JavaScript engine. */
 public abstract class RhinoException extends RuntimeException {
@@ -288,8 +289,11 @@ public abstract class RhinoException extends RuntimeException {
                 if (!printStarted && hideFunction.equals(methodName)) {
                     printStarted = true;
                 } else if (printStarted && ((limit < 0) || (count < limit))) {
-                    String fn = fileName == null ? "(unknown)" : fileName;
-                    list.add(new ScriptStackElement(fn, methodName, e.getLineNumber()));
+                    Position at =
+                            CompiledPositions.resolve(e, fileName == null ? "(unknown)" : fileName);
+                    list.add(
+                            new ScriptStackElement(
+                                    at.getSourcePath(), methodName, at.getLine(), at.getColumn()));
                     count++;
                 }
 

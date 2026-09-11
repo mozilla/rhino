@@ -17,12 +17,12 @@ class InterpreterBytecodeDumpTest {
     void basicSmokeTest() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 8",
+                        "ICode dump, for null, length = 6",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] SHORTNUMBER 42",
-                        " [6] POP_RESULT",
-                        " [7] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] SHORTNUMBER 42",
+                        " [4] POP_RESULT",
+                        " [5] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("42"));
     }
@@ -31,10 +31,10 @@ class InterpreterBytecodeDumpTest {
     void functionNamesArePrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for f, length = 4",
+                        "ICode dump, for f, length = 2",
                         "MaxStack = 0",
-                        " [0] LINE : 1",
-                        " [3] RETUNDEF",
+                        " [0] LINE : 1:14",
+                        " [1] RETUNDEF",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -46,25 +46,25 @@ class InterpreterBytecodeDumpTest {
     void methodsArePrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for f, length = 4",
+                        "ICode dump, for f, length = 2",
                         "MaxStack = 0",
-                        " [0] LINE : 1",
-                        " [3] RETUNDEF",
-                        "ICode dump, for null, length = 16",
+                        " [0] LINE : 1:11",
+                        " [1] RETUNDEF",
+                        "ICode dump, for null, length = 14",
                         "MaxStack = 4",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"o\"",
-                        " [4] BINDNAME",
-                        " [5] REG_IND_C0",
-                        " [6] LITERAL_NEW_OBJECT [f] false",
-                        " [8] REG_IND_C0",
-                        " [9] METHOD_EXPR #0",
-                        " [10] LITERAL_SET",
-                        " [11] OBJECTLIT",
-                        " [12] REG_STR_C0 \"o\"",
-                        " [13] SETNAME",
-                        " [14] POP_RESULT",
-                        " [15] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"o\"",
+                        " [2] BINDNAME",
+                        " [3] REG_IND_C0",
+                        " [4] LITERAL_NEW_OBJECT [f] false",
+                        " [6] REG_IND_C0",
+                        " [7] METHOD_EXPR #0",
+                        " [8] LITERAL_SET",
+                        " [9] OBJECTLIT",
+                        " [10] REG_STR_C0 \"o\"",
+                        " [11] SETNAME",
+                        " [12] POP_RESULT",
+                        " [13] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("o = { f() {} }"));
     }
@@ -73,25 +73,25 @@ class InterpreterBytecodeDumpTest {
     void bigIntsArePrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 20",
+                        "ICode dump, for null, length = 18",
                         "MaxStack = 2",
-                        " [0] LINE : 1",
-                        " [3] REG_BIGINT_C0 1n",
+                        " [0] LINE : 1:1",
+                        " [1] REG_BIGINT_C0 1n",
+                        " [2] BIGINT",
+                        " [3] REG_BIGINT_C1 2n",
                         " [4] BIGINT",
-                        " [5] REG_BIGINT_C1 2n",
-                        " [6] BIGINT",
-                        " [7] ADD",
-                        " [8] REG_BIGINT_C2 3n",
-                        " [9] BIGINT",
-                        " [10] ADD",
-                        " [11] REG_BIGINT_C3 4n",
-                        " [12] BIGINT",
-                        " [13] ADD",
-                        " [14] LOAD_BIGINT1 5n",
-                        " [16] BIGINT",
-                        " [17] ADD",
-                        " [18] POP_RESULT",
-                        " [19] RETURN_RESULT",
+                        " [5] ADD",
+                        " [6] REG_BIGINT_C2 3n",
+                        " [7] BIGINT",
+                        " [8] ADD",
+                        " [9] REG_BIGINT_C3 4n",
+                        " [10] BIGINT",
+                        " [11] ADD",
+                        " [12] LOAD_BIGINT1 5n",
+                        " [14] BIGINT",
+                        " [15] ADD",
+                        " [16] POP_RESULT",
+                        " [17] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("1n + 2n + 3n + 4n + 5n"));
     }
@@ -100,17 +100,17 @@ class InterpreterBytecodeDumpTest {
     void branchInstructionsArePrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 19",
+                        "ICode dump, for null, length = 17",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"x\"",
-                        " [4] NAME",
-                        " [5] IFNE 14",
-                        " [8] SHORTNUMBER 42",
-                        " [11] GOTO 17",
-                        " [14] SHORTNUMBER 43",
-                        " [17] POP_RESULT",
-                        " [18] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"x\"",
+                        " [2] NAME",
+                        " [3] IFNE 12",
+                        " [6] SHORTNUMBER 42",
+                        " [9] GOTO 15",
+                        " [12] SHORTNUMBER 43",
+                        " [15] POP_RESULT",
+                        " [16] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("x ? 42 : 43"));
     }
@@ -119,18 +119,18 @@ class InterpreterBytecodeDumpTest {
     void nullishCoalescingBranchIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 14",
+                        "ICode dump, for null, length = 12",
                         "MaxStack = 2",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"x\"",
-                        " [4] NAME",
-                        " [5] DUP",
-                        " [6] IF_NOT_NULL_UNDEF 12",
-                        " [9] POP",
-                        " [10] REG_STR_C1 \"y\"",
-                        " [11] NAME",
-                        " [12] POP_RESULT",
-                        " [13] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"x\"",
+                        " [2] NAME",
+                        " [3] DUP",
+                        " [4] IF_NOT_NULL_UNDEF 10",
+                        " [7] POP",
+                        " [8] REG_STR_C1 \"y\"",
+                        " [9] NAME",
+                        " [10] POP_RESULT",
+                        " [11] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("x ?? y"));
     }
@@ -139,20 +139,20 @@ class InterpreterBytecodeDumpTest {
     void optionalChainingBranchIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 18",
+                        "ICode dump, for null, length = 16",
                         "MaxStack = 2",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"x\"",
-                        " [4] NAME",
-                        " [5] DUP",
-                        " [6] IF_NULL_UNDEF 14",
-                        " [9] REG_STR_C1 \"y\"",
-                        " [10] GETPROP",
-                        " [11] GOTO 16",
-                        " [14] POP",
-                        " [15] UNDEF",
-                        " [16] POP_RESULT",
-                        " [17] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"x\"",
+                        " [2] NAME",
+                        " [3] DUP",
+                        " [4] IF_NULL_UNDEF 12",
+                        " [7] REG_STR_C1 \"y\"",
+                        " [8] GETPROP",
+                        " [9] GOTO 14",
+                        " [12] POP",
+                        " [13] UNDEF",
+                        " [14] POP_RESULT",
+                        " [15] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("x?.y"));
     }
@@ -161,13 +161,13 @@ class InterpreterBytecodeDumpTest {
     void nameIncDecIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 8",
+                        "ICode dump, for null, length = 6",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"x\"",
-                        " [4] NAME_INC_DEC 2",
-                        " [6] POP_RESULT",
-                        " [7] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"x\"",
+                        " [2] NAME_INC_DEC 2",
+                        " [4] POP_RESULT",
+                        " [5] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("x++"));
     }
@@ -176,17 +176,17 @@ class InterpreterBytecodeDumpTest {
     void callSpecialIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 15",
+                        "ICode dump, for null, length = 11",
                         "MaxStack = 3",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"eval\"",
-                        " [4] NAME_AND_THIS",
-                        " [5] REG_STR_C1 \"1\"",
-                        " [6] STRING",
-                        " [7] REG_IND_C1",
-                        " [8] CALLSPECIAL 1 false 1 1",
-                        " [13] POP_RESULT",
-                        " [14] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"eval\"",
+                        " [2] NAME_AND_THIS",
+                        " [3] REG_STR_C1 \"1\"",
+                        " [4] STRING",
+                        " [5] REG_IND_C1",
+                        " [6] CALLSPECIAL 1 false 1",
+                        " [9] POP_RESULT",
+                        " [10] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("eval('1')"));
     }
@@ -228,17 +228,17 @@ class InterpreterBytecodeDumpTest {
     void functionCallIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 13",
+                        "ICode dump, for null, length = 11",
                         "MaxStack = 4",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"f\"",
-                        " [4] NAME_AND_THIS",
-                        " [5] ONE",
-                        " [6] SHORTNUMBER 2",
-                        " [9] REG_IND_C2",
-                        " [10] CALL 2",
-                        " [11] POP_RESULT",
-                        " [12] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"f\"",
+                        " [2] NAME_AND_THIS",
+                        " [3] ONE",
+                        " [4] SHORTNUMBER 2",
+                        " [7] REG_IND_C2",
+                        " [8] CALL 2",
+                        " [9] POP_RESULT",
+                        " [10] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("f(1, 2)"));
     }
@@ -247,15 +247,15 @@ class InterpreterBytecodeDumpTest {
     void newExpressionIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 9",
+                        "ICode dump, for null, length = 7",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"F\"",
-                        " [4] NAME",
-                        " [5] REG_IND_C0",
-                        " [6] NEW 0",
-                        " [7] POP_RESULT",
-                        " [8] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"F\"",
+                        " [2] NAME",
+                        " [3] REG_IND_C0",
+                        " [4] NEW 0",
+                        " [5] POP_RESULT",
+                        " [6] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("new F()"));
     }
@@ -264,12 +264,12 @@ class InterpreterBytecodeDumpTest {
     void throwIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 8",
+                        "ICode dump, for null, length = 4",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] ONE",
-                        " [4] THROW : 1",
-                        " [7] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] ONE",
+                        " [2] THROW",
+                        " [3] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("throw 1"));
     }
@@ -278,14 +278,14 @@ class InterpreterBytecodeDumpTest {
     void generatorICodeIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for g, length = 14",
+                        "ICode dump, for g, length = 6",
                         "MaxStack = 1",
-                        " [0] GENERATOR : 1",
-                        " [3] LINE : 1",
-                        " [6] ONE",
-                        " [7] YIELD : 1",
-                        " [10] POP",
-                        " [11] GENERATOR_END : 1",
+                        " [0] GENERATOR",
+                        " [1] LINE : 1:15",
+                        " [2] ONE",
+                        " [3] YIELD",
+                        " [4] POP",
+                        " [5] GENERATOR_END",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -296,19 +296,19 @@ class InterpreterBytecodeDumpTest {
     @Test
     void yieldStarIsPrinted() throws IOException {
         var output = getByteCodeFrom("function* g() { yield* [1]; }");
-        assertTrue(output.contains("YIELD_STAR : "));
+        assertTrue(output.contains("YIELD_STAR"));
     }
 
     @Test
     void generatorReturnIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for g, length = 10",
+                        "ICode dump, for g, length = 4",
                         "MaxStack = 1",
-                        " [0] GENERATOR : 1",
-                        " [3] LINE : 1",
-                        " [6] ONE",
-                        " [7] GENERATOR_RETURN : 1",
+                        " [0] GENERATOR",
+                        " [1] LINE : 1:15",
+                        " [2] ONE",
+                        " [3] GENERATOR_RETURN",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -320,12 +320,12 @@ class InterpreterBytecodeDumpTest {
     void intNumberIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 10",
+                        "ICode dump, for null, length = 8",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] INTNUMBER 100000",
-                        " [8] POP_RESULT",
-                        " [9] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] INTNUMBER 100000",
+                        " [6] POP_RESULT",
+                        " [7] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("100000"));
     }
@@ -334,13 +334,13 @@ class InterpreterBytecodeDumpTest {
     void doubleNumberIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 7",
+                        "ICode dump, for null, length = 5",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] REG_IND_C0",
-                        " [4] NUMBER 1.5",
-                        " [5] POP_RESULT",
-                        " [6] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_IND_C0",
+                        " [2] NUMBER 1.5",
+                        " [3] POP_RESULT",
+                        " [4] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("1.5"));
     }
@@ -383,14 +383,14 @@ class InterpreterBytecodeDumpTest {
     void getvar1Setvar1ArePrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for f, length = 10",
+                        "ICode dump, for f, length = 8",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] ONE",
-                        " [4] SETVAR1 0",
-                        " [6] POP",
-                        " [7] GETVAR1 0",
-                        " [9] RETURN",
+                        " [0] LINE : 1:14",
+                        " [1] ONE",
+                        " [2] SETVAR1 0",
+                        " [4] POP",
+                        " [5] GETVAR1 0",
+                        " [7] RETURN",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -402,13 +402,13 @@ class InterpreterBytecodeDumpTest {
     void setConstVar1IsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for f, length = 8",
+                        "ICode dump, for f, length = 6",
                         "MaxStack = 1",
-                        " [0] LINE : 1",
-                        " [3] ONE",
-                        " [4] SETCONSTVAR1 0",
-                        " [6] POP",
-                        " [7] RETUNDEF",
+                        " [0] LINE : 1:14",
+                        " [1] ONE",
+                        " [2] SETCONSTVAR1 0",
+                        " [4] POP",
+                        " [5] RETUNDEF",
                         "ICode dump, for null, length = 1",
                         "MaxStack = 0",
                         " [0] RETURN_RESULT",
@@ -420,19 +420,19 @@ class InterpreterBytecodeDumpTest {
     void switchIfeqPopIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 19",
+                        "ICode dump, for null, length = 17",
                         "MaxStack = 3",
-                        " [0] LINE : 1",
-                        " [3] REG_STR_C0 \"x\"",
-                        " [4] NAME",
-                        " [5] DUP",
-                        " [6] ONE",
-                        " [7] SHEQ",
-                        " [8] IFEQ_POP 15",
-                        " [11] POP",
-                        " [12] GOTO 18",
-                        " [15] GOTO 18",
-                        " [18] RETURN_RESULT",
+                        " [0] LINE : 1:1",
+                        " [1] REG_STR_C0 \"x\"",
+                        " [2] NAME",
+                        " [3] DUP",
+                        " [4] ONE",
+                        " [5] SHEQ",
+                        " [6] IFEQ_POP 13",
+                        " [9] POP",
+                        " [10] GOTO 16",
+                        " [13] GOTO 16",
+                        " [16] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("switch(x) { case 1: break; }"));
     }
@@ -447,39 +447,39 @@ class InterpreterBytecodeDumpTest {
     void objectRestIsPrinted() throws IOException {
         assertEquals(
                 Utils.portableLines(
-                        "ICode dump, for null, length = 35",
+                        "ICode dump, for null, length = 33",
                         "MaxStack = 3",
-                        " [0] LINE : 1",
-                        " [3] REG_IND_C0",
-                        " [4] LITERAL_NEW_OBJECT [$0] false",
-                        " [6] REG_STR_C0 \"obj\"",
-                        " [7] NAME",
-                        " [8] LITERAL_SET",
-                        " [9] OBJECTLIT",
-                        " [10] ENTERWITH",
-                        " [11] REG_STR_C1 \"a\"",
-                        " [12] BINDNAME",
-                        " [13] REG_STR_C2 \"$0\"",
-                        " [14] NAME",
+                        " [0] LINE : 1:1",
+                        " [1] REG_IND_C0",
+                        " [2] LITERAL_NEW_OBJECT [$0] false",
+                        " [4] REG_STR_C0 \"obj\"",
+                        " [5] NAME",
+                        " [6] LITERAL_SET",
+                        " [7] OBJECTLIT",
+                        " [8] ENTERWITH",
+                        " [9] REG_STR_C1 \"a\"",
+                        " [10] BINDNAME",
+                        " [11] REG_STR_C2 \"$0\"",
+                        " [12] NAME",
+                        " [13] REG_STR_C1 \"a\"",
+                        " [14] GETPROP",
                         " [15] REG_STR_C1 \"a\"",
-                        " [16] GETPROP",
-                        " [17] REG_STR_C1 \"a\"",
-                        " [18] SETNAME",
-                        " [19] POP",
-                        " [20] REG_STR_C3 \"rest\"",
-                        " [21] BINDNAME",
-                        " [22] REG_STR_C2 \"$0\"",
-                        " [23] NAME",
-                        " [24] REG_IND_C1",
-                        " [25] OBJECT_REST excluding [static: \"a\"; computed: 0]",
-                        " [27] REG_STR_C3 \"rest\"",
-                        " [28] SETNAME",
-                        " [29] POP",
-                        " [30] REG_STR_C2 \"$0\"",
-                        " [31] NAME",
-                        " [32] LEAVEWITH",
-                        " [33] POP",
-                        " [34] RETURN_RESULT",
+                        " [16] SETNAME",
+                        " [17] POP",
+                        " [18] REG_STR_C3 \"rest\"",
+                        " [19] BINDNAME",
+                        " [20] REG_STR_C2 \"$0\"",
+                        " [21] NAME",
+                        " [22] REG_IND_C1",
+                        " [23] OBJECT_REST excluding [static: \"a\"; computed: 0]",
+                        " [25] REG_STR_C3 \"rest\"",
+                        " [26] SETNAME",
+                        " [27] POP",
+                        " [28] REG_STR_C2 \"$0\"",
+                        " [29] NAME",
+                        " [30] LEAVEWITH",
+                        " [31] POP",
+                        " [32] RETURN_RESULT",
                         ""),
                 getByteCodeFrom("var {a, ...rest} = obj"));
     }

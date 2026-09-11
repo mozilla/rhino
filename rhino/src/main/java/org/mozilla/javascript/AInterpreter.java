@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.mozilla.javascript.sourcemap.Position;
 
 public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompilerData<?, U>>
         implements Evaluator {
@@ -293,7 +294,7 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             ex.interpreterStackInfo = null;
         } else {
             ex.interpreterStackInfo = cx.lastInterpreterFrame;
-            ex.interpreterLineData = cx.lastInterpreterFrame.getPcSourceLineStart();
+            ex.interpreterLineData = cx.lastInterpreterFrame.pc;
         }
     }
 
@@ -326,7 +327,6 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             offset = pos;
 
             while (callerFrame != null) {
-                var idata = callerFrame.compilerData;
                 JSDescriptor<?> desc = callerFrame.fnOrScript.getDescriptor();
                 sb.append(lineSeparator);
                 sb.append("\tat script");
@@ -335,12 +335,12 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                     sb.append(desc.getName());
                 }
                 sb.append('(');
-                sb.append(desc.getSourceName());
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    // Include line info only if available
-                    sb.append(':');
-                    sb.append(idata.getLineNumberFromPc(pc, pc));
+                    Position at = positionAt(callerFrame, pc);
+                    sb.append(at.getSourcePath()).append(':').append(at.getLine());
+                } else {
+                    sb.append(desc.getSourceName());
                 }
                 sb.append(')');
                 calleeFrame = callerFrame;
@@ -382,21 +382,24 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             ACallFrame<?, ?> callerFrame = frame;
             List<ScriptStackElement> group = new ArrayList<>();
             while (callerFrame != null) {
-                var idata = callerFrame.compilerData;
                 JSDescriptor<?> desc = callerFrame.fnOrScript.getDescriptor();
                 String fileName = desc.getSourceName();
                 String functionName = null;
                 int lineNumber = -1;
+                int columnNumber = 0;
                 int pc = calleeFrame == null ? ex.interpreterLineData : calleeFrame.parentPC;
                 if (pc >= 0) {
-                    lineNumber = idata.getLineNumberFromPc(pc, pc);
+                    Position at = positionAt(callerFrame, pc);
+                    fileName = at.getSourcePath();
+                    lineNumber = at.getLine();
+                    columnNumber = at.getColumn();
                 }
                 if (desc.getName() != null && desc.getName().length() != 0) {
                     functionName = desc.getName();
                 }
                 calleeFrame = callerFrame;
                 callerFrame = callerFrame.parentFrame;
-                group.add(new ScriptStackElement(fileName, functionName, lineNumber));
+                group.add(new ScriptStackElement(fileName, functionName, lineNumber, columnNumber));
             }
             list.add(group.toArray(new ScriptStackElement[0]));
             frame = calleeFrame.previousInterpreterFrame;
@@ -406,10 +409,21 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
 
     @Override
     public final String getSourcePositionFromStack(Context cx, int[] linep) {
+        Position position = getSourcePosition(cx);
+        linep[0] = position.getLine();
+        return position.getSourcePath();
+    }
+
+    @Override
+    public final Position getSourcePosition(Context cx) {
         ACallFrame<?, ?> frame = cx.lastInterpreterFrame;
-        var data = frame.compilerData;
-        JSDescriptor<?> desc = frame.fnOrScript.getDescriptor();
-        linep[0] = data.getLineNumberFromPc(frame.pc, frame.getPcSourceLineStart());
-        return desc.getSourceName();
+        return positionAt(frame, frame.pc);
+    }
+
+    // Falls back to the script or function's own source name when the position has none
+    static Position positionAt(ACallFrame<?, ?> frame, int pc) {
+        return frame.compilerData
+                .getPositionFromPc(pc)
+                .withSourcePathIfAbsent(frame.fnOrScript.getDescriptor().getSourceName());
     }
 }

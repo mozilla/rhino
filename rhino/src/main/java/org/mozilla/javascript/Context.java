@@ -38,6 +38,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.lc.type.TypeInfo;
 import org.mozilla.javascript.lc.type.TypeInfoFactory;
+import org.mozilla.javascript.sourcemap.Position;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 import org.mozilla.javascript.xml.XMLLib;
 
@@ -2843,25 +2844,34 @@ public class Context implements Closeable {
         return EvaluationMethod.Interpreter.createEvaluator();
     }
 
+    // Delegates rather than walking the stack again: a compiled frame's reported line number is
+    // not always its real one, so every caller needs the same translation.
     static String getSourcePositionFromStack(int[] linep) {
+        Position position = getSourcePosition();
+        if (position == null) return null;
+        linep[0] = position.getLine();
+        return position.getSourcePath();
+    }
+
+    /** The position of the topmost script frame, or null if none could be determined. */
+    static Position getSourcePosition() {
         Context cx = getCurrentContext();
         if (cx == null) return null;
         if (cx.lastInterpreterFrame != null) {
             Evaluator evaluator = cx.getInterpreterForCurrentMethod();
-            if (evaluator != null) return evaluator.getSourcePositionFromStack(cx, linep);
+            if (evaluator != null) return evaluator.getSourcePosition(cx);
         }
 
-        return getSourcePositionFromJavaStack(linep);
+        return getPositionFromJavaStack();
     }
 
-    /** Returns the current filename in the java stack. */
-    static String getSourcePositionFromJavaStack(int[] linep) {
+    /** Returns the current position in the java stack. */
+    private static Position getPositionFromJavaStack() {
         StackTraceElement[] stack = new Throwable().getStackTrace();
         for (StackTraceElement e : stack) {
-            if (frameMatches(e)) {
-                linep[0] = e.getLineNumber();
-                return e.getFileName();
-            }
+            if (!frameMatches(e)) continue;
+            Position at = CompiledPositions.resolve(e, e.getFileName());
+            return at.getSourcePath() == null ? null : at;
         }
         return null;
     }

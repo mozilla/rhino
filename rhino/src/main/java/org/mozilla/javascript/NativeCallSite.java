@@ -113,7 +113,7 @@ public class NativeCallSite extends ScriptableObject {
 
     private static Object js_getColumnNumber(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return Undefined.instance;
+        return getColumnNumber((Scriptable) thisObj);
     }
 
     private static Object js_getEvalOrigin(
@@ -193,5 +193,19 @@ public class NativeCallSite extends ScriptableObject {
             return Undefined.instance;
         }
         return Integer.valueOf(cs.element.lineNumber);
+    }
+
+    private static Object getColumnNumber(Scriptable obj) {
+        while (obj != null && !(obj instanceof NativeCallSite)) {
+            obj = obj.getPrototype();
+        }
+        if (obj == null) {
+            return NOT_FOUND;
+        }
+        NativeCallSite cs = (NativeCallSite) obj;
+        if ((cs.element == null) || (cs.element.columnNumber <= 0)) {
+            return Undefined.instance;
+        }
+        return Integer.valueOf(cs.element.columnNumber);
     }
 }

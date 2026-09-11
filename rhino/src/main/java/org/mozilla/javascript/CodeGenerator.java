@@ -12,12 +12,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
 import org.mozilla.javascript.sourcemap.Position;
-import org.mozilla.javascript.sourcemap.SourceMapper;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator<T extends ScriptOrFn<T>> {
@@ -36,7 +36,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private ScriptNode scriptOrFn;
     private int iCodeTop;
     private int stackDepth;
-    private int lineNumber = -1;
+    // The position last recorded, and the line the debugger was last told about
+    private Position lastPosition = new Position(null, -1, 0);
+    private boolean lastStatement;
+    private int statementLine = -1;
+    private String statementSource;
     private int doubleTableTop;
 
     private final HashMap<String, Integer> strings = new HashMap<>();
@@ -130,8 +134,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 }
             }
 
+            // A throw into a generator that has not started is attributed to its declaration
+            recordPosition(theFunction, false);
             addIcode(Icode.GENERATOR);
-            addUint16(theFunction.getBaseLineno() & 0xFFFF);
         }
 
         generateICodeFromTree(theFunction.getLastChild());
@@ -255,22 +260,46 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         itsData.itsTemplateLiterals = array;
     }
 
+    // Called after an operation's operands, so that a failure blames the operation and not the
+    // last operand evaluated
+    private void updateExpressionPosition(Node node) {
+        if (CodeGenUtils.hasExpressionPosition(node)) recordPosition(node, false);
+    }
+
+    // A statement's position also marks a line for the debugger, which steps by line. Moving
+    // within a line, or through the expressions of a statement, needs no icode at all.
     private void updateLineNumber(Node node) {
+        Position at = recordPosition(node, true);
+        if (at == null) return;
+        if (at.getLine() != statementLine || !Objects.equals(at.getSourcePath(), statementSource)) {
+            statementLine = at.getLine();
+            statementSource = at.getSourcePath();
+            addIcode(Icode.LINE);
+        }
+    }
+
+    private Position recordPosition(Node node, boolean statement) {
         int lineno = node.getLineno();
-        if (lineno < 0) return;
-        SourceMapper mapper = compilerEnv.getSourceMapper();
-        if (mapper != null) {
-            Position mapped = mapper.mapPosition(lineno, node.getColumn());
-            if (mapped == null) return;
-            lineno = mapped.getLine();
+        if (lineno < 0) return null;
+        Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
+        if (mapped == null) return null;
+        // Only a source mapper can produce an unknown column now. Keep the one we had if it is on
+        // the same line of the same file, where it is at worst early.
+        int column = mapped.getColumn();
+        if (column <= 0) {
+            column = sameLine(mapped, lastPosition) ? lastPosition.getColumn() : 0;
         }
-        if (lineno == lineNumber) return;
-        if (itsData.firstLinePC < 0) {
-            itsData.firstLinePC = lineno;
-        }
-        lineNumber = lineno;
-        addIcode(Icode.LINE);
-        addUint16(lineno & 0xFFFF);
+        Position at = new Position(mapped.getSourcePath(), mapped.getLine(), column);
+        if (statement == lastStatement && at.equals(lastPosition)) return at;
+        lastPosition = at;
+        lastStatement = statement;
+        itsData.positions.add(iCodeTop, at.getLine(), column, at.getSourcePath(), statement);
+        return at;
+    }
+
+    private static boolean sameLine(Position one, Position other) {
+        return one.getLine() == other.getLine()
+                && Objects.equals(one.getSourcePath(), other.getSourcePath());
     }
 
     private static RuntimeException badTree(Node node) {
@@ -499,7 +528,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 updateLineNumber(node);
                 visitExpression(child, 0);
                 addToken(Token.THROW);
-                addUint16(lineNumber & 0xFFFF);
                 stackChange(-1);
                 break;
 
@@ -516,11 +544,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         // End generator function with no result, or old language version
                         // in which generators never return a result.
                         addIcode(Icode.GENERATOR_END);
-                        addUint16(lineNumber & 0xFFFF);
                     } else {
                         visitExpression(child, ECF_TAIL);
                         addIcode(Icode.GENERATOR_RETURN);
-                        addUint16(lineNumber & 0xFFFF);
                         stackChange(-1);
                     }
 
@@ -676,13 +702,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         visitExpression(child, 0);
                         ++argCount;
                     }
+                    updateExpressionPosition(node);
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
-                        // embed line number and source filename
                         addIndexOp(Icode.CALLSPECIAL, argCount);
                         addUint8(callType);
                         addUint8(type == Token.NEW ? 1 : 0);
-                        addUint16(lineNumber & 0xFFFF);
                     } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                         addIndexOp(Icode.CALL_ON_SUPER, argCount);
                     } else {
@@ -759,6 +784,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             case Token.GETPROPNOWARN:
                 visitExpression(child, 0);
                 child = child.getNext();
+                updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // Jump if null or undefined
                     addIcode(Icode.DUP);
@@ -813,7 +839,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     stackChange(-1);
 
                     // Infix op
-                    finishGetElemGeneration(child);
+                    finishGetElemGeneration(node, child);
                     int afterLabel = iCodeTop;
                     addGotoOp(Token.GOTO);
 
@@ -824,10 +850,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     resolveForwardGoto(afterLabel);
                 } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
                     visitExpression(child, 0);
+                    updateExpressionPosition(node);
                     addToken(Token.GETELEM_SUPER);
                     stackChange(-1);
                 } else {
-                    finishGetElemGeneration(child);
+                    finishGetElemGeneration(node, child);
                 }
                 break;
 
@@ -1176,7 +1203,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 } else {
                     addIcode(Icode.YIELD_STAR);
                 }
-                addUint16(node.getLineno() & 0xFFFF);
                 break;
 
             case Token.WITHEXPR:
@@ -1248,8 +1274,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         stackChange(1);
     }
 
-    private void finishGetElemGeneration(Node child) {
+    private void finishGetElemGeneration(Node node, Node child) {
         visitExpression(child, 0);
+        updateExpressionPosition(node);
         addToken(Token.GETELEM);
         stackChange(-1);
     }
@@ -1280,6 +1307,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     visitExpression(target, 0);
                     Node id = target.getNext();
                     if (type == Token.GETPROP) {
+                        // left is the property access, and reading it is what fails here
+                        updateExpressionPosition(left);
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
                         if (isOptionalChainingCall) {
@@ -1292,6 +1321,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         }
                     } else {
                         visitExpression(id, 0);
+                        updateExpressionPosition(left);
                         // stack: ... target id -> ... function thisObj
                         if (isOptionalChainingCall) {
                             addIcode(Icode.ELEM_AND_THIS_OPTIONAL);

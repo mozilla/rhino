@@ -360,16 +360,6 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
     }
 
     @Override
-    public int getPcSourceLineStart() {
-        // This is not equivalent to frame v1, but it is still correct. This is used to find the
-        // line number from the pc, which for frame v1 requires having the pc corresponding to the
-        // LINE instruction, basically. However, with the line number table implementation that we
-        // use in v2, it's ok if we use _any_ pc that corresponds to that same line number. So we
-        // can simply return the current pc and get the correct behavior.
-        return pc;
-    }
-
-    @Override
     public DebuggableScript getData() {
         return fnOrScript.getDescriptor();
     }

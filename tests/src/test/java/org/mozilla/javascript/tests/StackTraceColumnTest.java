@@ -1,0 +1,284 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.javascript.tests;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Context.EvaluationMethod;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptCompileSpec;
+import org.mozilla.javascript.ScriptStackElement;
+import org.mozilla.javascript.StackStyle;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.sourcemap.Position;
+import org.mozilla.javascript.sourcemap.SourceMapper;
+import org.mozilla.javascript.testutils.Utils;
+
+/** Columns in stack traces, in both evaluation modes. */
+public class StackTraceColumnTest {
+
+    private static RhinoException thrownBy(String source, EvaluationMethod mode) {
+        RhinoException[] out = new RhinoException[1];
+        Utils.runWithMode(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    out[0] =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> cx.evaluateString(scope, source, "t.js", 1, null));
+                    return null;
+                },
+                mode);
+        return out[0];
+    }
+
+    private static ScriptStackElement[] stackOf(String source, EvaluationMethod mode) {
+        return thrownBy(source, mode).getScriptStack();
+    }
+
+    /** Asserts where the throw is reported, in both modes, since they must not disagree. */
+    private static void assertThrownAt(String source, int line, int column) {
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(line, stack[0].lineNumber, mode + " line");
+            assertEquals(column, stack[0].columnNumber, mode + " column");
+        }
+    }
+
+    /** One statement per line, so the line alone already identifies each position. */
+    @Test
+    public void exactColumnsInBothModes() {
+        String source = "function f() {\n  throw new Error('x');\n}\nf();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(2, stack[0].lineNumber, mode + " line of the throw");
+            assertEquals(3, stack[0].columnNumber, mode + " column of the throw");
+            assertEquals(4, stack[1].lineNumber, mode + " line of the call");
+            assertEquals(1, stack[1].columnNumber, mode + " column of the call");
+        }
+    }
+
+    /**
+     * Two statements on one line, so the line alone cannot say which one threw. The JVM backend
+     * gives the second a marker in place of a line number and maps it back.
+     */
+    @Test
+    public void oneLineWithTwoStatements() {
+        assertThrownAt("function f() { var a = 1; throw new Error(a); }\nf();", 1, 27);
+    }
+
+    /** Many positions on one line, well past what a line number alone could distinguish. */
+    @Test
+    public void oneLineWithManyStatements() {
+        assertThrownAt(
+                "function f() { var a = 1; var b = 2; var c = 3; throw new Error(a); }\nf();",
+                1,
+                49);
+    }
+
+    /** A failed read blames the property, not the statement or the expression, as V8 does. */
+    @Test
+    public void failedReadReportsThePropertyColumn() {
+        assertThrownAt("var foo = {};\nfoo.bar.baz();", 2, 9);
+    }
+
+    /** A failed element read blames the subscript, as a property read blames the name. */
+    @Test
+    public void failedElementReadReportsTheSubscriptColumn() {
+        assertThrownAt("var u;\nvar k = 'a';\nu[k];", 3, 3);
+    }
+
+    /** Reading the subscript is itself positioned, and must not take the failed read's blame. */
+    @Test
+    public void failedElementReadWithAComputedSubscriptStillBlamesTheRead() {
+        assertThrownAt("var u;\nvar o = {p:1};\nu[o.p];", 3, 3);
+    }
+
+    /** Calling through a failed element read blames the read, not the subscript within it. */
+    @Test
+    public void failedElementCallTargetWithAComputedSubscriptBlamesTheRead() {
+        assertThrownAt("var u;\nvar o = {p:'q'};\nu[o.p]();", 3, 3);
+    }
+
+    /** Calling a non-function blames the call, not the last argument evaluated. */
+    @Test
+    public void callingANonFunctionReportsTheCallColumn() {
+        assertThrownAt("var foo = {};\nvar arg = 1;\nfoo.nope(arg);", 3, 1);
+    }
+
+    /** The JVM backend generates each call shape along its own path, so each needs covering. */
+    @Test
+    public void constructingANonConstructorReportsTheNewColumn() {
+        assertThrownAt("var foo = {};\nvar arg = 1;\nnew foo.nope(arg);", 3, 1);
+    }
+
+    @Test
+    public void aSpecialCallReportsTheCallColumn() {
+        assertThrownAt("var o = {};\nfunction f() { return eval(o.nope.deeper); }\nf();", 2, 35);
+    }
+
+    /** The special-call paths are generated separately in the JVM backend, like the plain ones. */
+    @Test
+    public void aFailedSpecialConstructionReportsTheNewColumn() {
+        assertThrownAt("var arg = 1;\nvar r = new eval(arg);", 2, 9);
+    }
+
+    /**
+     * A frame calling eval is blamed at the call, not wherever the last position happened to be.
+     */
+    @Test
+    public void aSpecialCallFrameReportsTheCallColumn() {
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf("var o = {};\nvar r = eval('null.x');", mode);
+            ScriptStackElement caller = stack[stack.length - 1];
+            assertEquals(2, caller.lineNumber, mode + " line of the eval call");
+            assertEquals(9, caller.columnNumber, mode + " column of the eval call");
+        }
+    }
+
+    /** A direct call to a top-level function, which the JVM backend specialises. */
+    @Test
+    public void aDirectCallReportsTheCallColumn() {
+        String source =
+                "function g(a) { return a.nope.deeper; }\nfunction f() { return g(1); }\nf();";
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            ScriptStackElement[] stack = stackOf(source, mode);
+            assertEquals(1, stack[0].lineNumber, mode + " callee line");
+            assertEquals(2, stack[1].lineNumber, mode + " caller line");
+            assertEquals(23, stack[1].columnNumber, mode + " column of the call to g");
+        }
+    }
+
+    /** An object literal large enough to get its own factory method still resolves positions. */
+    @Test
+    public void aLiteralFactoryReportsItsPosition() {
+        assertThrownAt(
+                "var o = {p1:1, p2:2, p3:3, p4:4, p5:5, p6:6, p7:7, p8:8, p9:9, p10:10,\n"
+                        + "  p11: null.x};",
+                2,
+                13);
+    }
+
+    /** A generator's entry wrapper is a method of its own as well. */
+    @Test
+    public void aGeneratorParameterDefaultReportsItsPosition() {
+        assertThrownAt("function* g(a = null.x) { yield 1; }\ng();", 1, 22);
+    }
+
+    /** The Error a script catches carries the column, as it already did the line. */
+    @Test
+    public void aCaughtEngineErrorExposesItsColumn() {
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Object column =
+                            cx.evaluateString(
+                                    scope,
+                                    "try { null.x } catch (e) { e.columnNumber }",
+                                    "t.js",
+                                    1,
+                                    null);
+                    assertEquals(12, Context.toNumber(column));
+                    return null;
+                });
+    }
+
+    /** The exception's own origin is the position of the top frame, column included. */
+    @Test
+    public void aThrownValueCarriesItsColumn() {
+        for (EvaluationMethod mode : EvaluationMethod.values()) {
+            RhinoException e = thrownBy("function f() {\n  throw 'boom';\n}\nf();", mode);
+            ScriptStackElement top = e.getScriptStack()[0];
+            assertEquals(3, e.columnNumber(), mode + " column");
+            assertEquals(top.lineNumber, e.lineNumber(), mode + " agrees with the frame");
+            assertEquals(top.columnNumber, e.columnNumber(), mode + " agrees with the frame");
+        }
+    }
+
+    /** Under a source map the exception names the original file, as its frames already do. */
+    @Test
+    public void aThrownValueIsMappedLikeItsFrames() {
+        SourceMapper mapper =
+                new SourceMapper() {
+                    @Override
+                    public Position mapPosition(int line, int column) {
+                        return new Position("original.js", 100 + line, 200 + column);
+                    }
+
+                    @Override
+                    public String getSourceLineText(String sourcePath, int line) {
+                        return null;
+                    }
+
+                    @Override
+                    public String getPrimarySourceContent() {
+                        return null;
+                    }
+                };
+        Utils.runWithAllModes(
+                cx -> {
+                    TopLevel scope = cx.initStandardObjects();
+                    Script script =
+                            cx.compileScript(
+                                    ScriptCompileSpec.fromSource(
+                                                    "function f() {\n  throw 'boom';\n}\nf();")
+                                            .sourceName("t.js")
+                                            .lineno(1)
+                                            .sourceMapper(mapper)
+                                            .build());
+                    RhinoException e =
+                            assertThrows(
+                                    RhinoException.class,
+                                    () -> script.exec(cx, scope, scope.getGlobalThis()));
+                    ScriptStackElement top = e.getScriptStack()[0];
+                    assertEquals("original.js", top.fileName);
+                    assertEquals(top.fileName, e.sourceName());
+                    assertEquals(top.lineNumber, e.lineNumber());
+                    assertEquals(top.columnNumber, e.columnNumber());
+                    assertEquals(102, e.lineNumber());
+                    assertEquals(203, e.columnNumber());
+                    return null;
+                });
+    }
+
+    /** Only the V8 style renders a column, as file:line:column. */
+    @Test
+    public void columnAppearsInV8RenderedStack() {
+        StackStyle style = RhinoException.getStackStyle();
+        try {
+            RhinoException.setStackStyle(StackStyle.V8);
+            String ls = System.lineSeparator();
+            Utils.runWithAllModes(
+                    cx -> {
+                        TopLevel scope = cx.initStandardObjects();
+                        RhinoException e =
+                                assertThrows(
+                                        RhinoException.class,
+                                        () ->
+                                                cx.evaluateString(
+                                                        scope,
+                                                        "function f() {\n  throw new Error('x');\n}\nf();",
+                                                        "t.js",
+                                                        1,
+                                                        null));
+                        assertEquals(
+                                "Error: x"
+                                        + ls
+                                        + "    at f (t.js:2:3)"
+                                        + ls
+                                        + "    at t.js:4:1"
+                                        + ls,
+                                e.getScriptStackTrace());
+                        return null;
+                    });
+        } finally {
+            RhinoException.setStackStyle(style);
+        }
+    }
+}

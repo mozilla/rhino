@@ -11,12 +11,12 @@ import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
+import org.mozilla.javascript.sourcemap.Position;
 
 public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?>> {
 
@@ -222,15 +222,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
 
     private static int bytecodeSpan(int bytecode) {
         switch (bytecode) {
-            case Token.THROW:
-            case Token.YIELD:
-            case Icode.YIELD_STAR:
-            case Icode.GENERATOR:
-            case Icode.GENERATOR_END:
-            case Icode.GENERATOR_RETURN:
-                // source line
-                return 1 + 2;
-
             case Icode.GOSUB:
             case Token.GOTO:
             case Token.IFEQ:
@@ -246,8 +237,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             case Icode.CALLSPECIAL_OPTIONAL:
                 // call type
                 // is new
-                // line number
-                return 1 + 1 + 1 + 2;
+                return 1 + 1 + 1;
 
             case Token.CATCH_SCOPE:
                 // scope flag
@@ -300,8 +290,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 return 1 + 1;
 
             case Icode.LINE:
-                // line number
-                return 1 + 2;
+                // no operand: the position lives in the side table
+                return 1;
 
             case Icode.LITERAL_NEW_OBJECT:
                 // make a copy or not flag
@@ -350,27 +340,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             }
         }
 
-        HashSet<Integer> presentLines = new HashSet<>();
-
-        byte[] iCode = data.itsICode;
-        int iCodeLength = iCode.length;
-        for (int pc = 0; pc != iCodeLength; ) {
-            int bytecode = iCode[pc];
-            int span = bytecodeSpan(bytecode);
-            if (bytecode == Icode.LINE) {
-                if (span != 3) Kit.codeBug();
-                int line = getIndex(iCode, pc + 1);
-                presentLines.add(line);
-            }
-            pc += span;
-        }
-
-        int[] ret = new int[presentLines.size()];
-        int i = 0;
-        for (int num : presentLines) {
-            ret[i++] = num;
-        }
-        return ret;
+        // The lines the LINE icodes mark: statements, not the expressions within them
+        return data.positions.lines();
     }
 
     static String getSource(JSDescriptor<?> desc) {
@@ -1181,13 +1152,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                 generatorFrame);
             }
         }
-
-        @Override
-        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int line = ctx.getIndex(ctx.pc);
-            ctx.out.println(tname + " : " + line);
-            ctx.pc += 2;
-        }
     }
 
     private static Object freezeGenerator(
@@ -1215,19 +1179,20 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         return result;
     }
 
+    // A thrown value takes the position the frame is standing at
+    private static JavaScriptException thrownAt(CallFrame frame, Object value) {
+        Position at = positionAt(frame, frame.pc);
+        return new JavaScriptException(value, at.getSourcePath(), at.getLine(), at.getColumn());
+    }
+
     private static Object thawGenerator(
             CallFrame frame, InterpreterState state, GeneratorState generatorState, int op) {
         // we are resuming execution
         frame.frozen = false;
-        int sourceLine = getIndex(frame.compilerData.itsICode, frame.pc);
-        frame.pc += 2; // skip line number data
         if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
             // processing a call to <generator>.throw(exception): must
             // act as if exception was thrown from resumption point.
-            return new JavaScriptException(
-                    generatorState.value,
-                    frame.fnOrScript.getDescriptor().getSourceName(),
-                    sourceLine);
+            return thrownAt(frame, generatorState.value);
         }
         if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
             return generatorState.value;
@@ -1257,13 +1222,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             }
             return null;
         }
-
-        @Override
-        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int line = ctx.getIndex(ctx.pc);
-            ctx.out.println(tname + " : " + line);
-            ctx.pc += 2;
-        }
     }
 
     private static class DoGeneratorEnd extends InstructionClass {
@@ -1271,20 +1229,9 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             // throw StopIteration
             frame.frozen = true;
-            int sourceLine = getIndex(frame.compilerData.itsICode, frame.pc);
             state.generatorState.returnedException =
-                    new JavaScriptException(
-                            NativeIterator.getStopIterationObject(frame.scope),
-                            frame.fnOrScript.getDescriptor().getSourceName(),
-                            sourceLine);
+                    thrownAt(frame, NativeIterator.getStopIterationObject(frame.scope));
             return BREAK_LOOP;
-        }
-
-        @Override
-        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int line = ctx.getIndex(ctx.pc);
-            ctx.out.println(tname + " : " + line);
-            ctx.pc += 2;
         }
     }
 
@@ -1302,18 +1249,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                     ? Double.valueOf(frame.resultDbl)
                                     : frame.result);
 
-            int sourceLine = getIndex(frame.compilerData.itsICode, frame.pc);
-            state.generatorState.returnedException =
-                    new JavaScriptException(
-                            si, frame.fnOrScript.getDescriptor().getSourceName(), sourceLine);
+            state.generatorState.returnedException = thrownAt(frame, si);
             return BREAK_LOOP;
-        }
-
-        @Override
-        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int line = ctx.getIndex(ctx.pc);
-            ctx.out.println(tname + " : " + line);
-            ctx.pc += 2;
         }
     }
 
@@ -1329,41 +1266,13 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoThrow extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            state.throwable =
-                    throwObject(
-                            frame,
-                            frame.stack,
-                            frame.doubleStack,
-                            frame.compilerData,
-                            frame.compilerData.itsICode,
-                            state);
+            Object value = frame.stack[frame.stackTop];
+            if (value == DOUBLE_MARK) {
+                value = ScriptRuntime.wrapNumber(frame.doubleStack[frame.stackTop]);
+            }
+            state.throwable = thrownAt(frame, value);
             --frame.stackTop;
             return BREAK_WITHOUT_EXTENSION;
-        }
-
-        private static Object throwObject(
-                CallFrame frame,
-                final Object[] stack,
-                final double[] sDbl,
-                final InterpreterData compilerData,
-                final byte[] iCode,
-                InterpreterState state) {
-            Object throwable;
-            Object value = stack[frame.stackTop];
-            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
-
-            int sourceLine = getIndex(iCode, frame.pc);
-            throwable =
-                    new JavaScriptException(
-                            value, frame.fnOrScript.getDescriptor().getSourceName(), sourceLine);
-            return throwable;
-        }
-
-        @Override
-        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int line = ctx.getIndex(ctx.pc);
-            ctx.out.println(tname + " : " + line);
-            ctx.pc += 2;
         }
     }
 
@@ -2565,7 +2474,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             }
             int callType = iCode[frame.pc] & 0xFF;
             boolean isNew = (iCode[frame.pc + 1] != 0);
-            int sourceLine = getIndex(iCode, frame.pc + 2);
 
             // indexReg: number of arguments
             if (isNew) {
@@ -2588,6 +2496,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         (ScriptRuntime.LookupResult) stack[frame.stackTop];
                 Object[] outArgs = getArgsArray(stack, sDbl, frame.stackTop + 1, state.indexReg);
                 Callable function = result.getCallable();
+                // eval labels the code it compiles with the call's own position
+                Position at = positionAt(frame, frame.pc);
                 stack[frame.stackTop] =
                         ScriptRuntime.callSpecial(
                                 cx,
@@ -2597,11 +2507,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                                 frame.scope,
                                 frame.thisObj,
                                 callType,
-                                frame.fnOrScript.getDescriptor().getSourceName(),
-                                sourceLine,
+                                at.getSourcePath(),
+                                at.getLine(),
                                 isOptionalChainingCall);
             }
-            frame.pc += 4;
+            frame.pc += 2;
             return null;
         }
 
@@ -2609,9 +2519,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
             int callType = ctx.compilerData.itsICode[ctx.pc] & 0xFF;
             boolean isNew = (ctx.compilerData.itsICode[ctx.pc + 1] != 0);
-            int line = ctx.getIndex(ctx.pc + 2);
-            ctx.out.println(tname + " " + callType + " " + isNew + " " + ctx.indexReg + " " + line);
-            ctx.pc += 4;
+            ctx.out.println(tname + " " + callType + " " + isNew + " " + ctx.indexReg);
+            ctx.pc += 2;
         }
     }
 
@@ -3932,20 +3841,17 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoLineChange extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.pcSourceLineStart = frame.pc;
             if (frame.debuggerFrame != null) {
-                int line = getIndex(frame.compilerData.itsICode, frame.pc);
-                frame.debuggerFrame.onLineChange(cx, line);
+                frame.debuggerFrame.onLineChange(
+                        cx, frame.compilerData.getLineNumberFromPc(frame.pc));
             }
-            frame.pc += 2;
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            int line = ctx.getIndex(ctx.pc);
-            ctx.out.println(tname + " : " + line);
-            ctx.pc += 2;
+            Position at = ctx.compilerData.positions.get(ctx.pc - 1);
+            ctx.out.println(tname + " : " + at.getLine() + ":" + at.getColumn());
         }
     }
 

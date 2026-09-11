@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Map;
+import org.mozilla.javascript.sourcemap.Position;
 
 final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, InterpreterData<?>>
         implements Serializable {
@@ -36,8 +37,9 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             int maxCalleeArgs,
             Object[] literalIds,
             Map<Integer, Integer> longJumps,
-            int firstLinePC) {
+            PositionTable positions) {
         super(maxVars, maxLocals, maxStack, maxFrameArray, exceptionTable);
+        this.positions = positions;
         this.itsStringTable = itsStringTable;
         this.itsDoubleTable = itsDoubleTable;
         this.itsBigIntTable = itsBigIntTable;
@@ -47,7 +49,6 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         this.maxCalleeArgs = maxCalleeArgs;
         this.literalIds = literalIds;
         this.longJumps = longJumps;
-        this.firstLinePC = firstLinePC;
     }
 
     final String[] itsStringTable;
@@ -64,18 +65,20 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
     final Map<Integer, Integer> longJumps;
 
-    final int firstLinePC;
+    // Where the source position changes, keyed by pc. Kept out of the icode so that the
+    // interpreter never spends an instruction on them: only error reporting reads them.
+    final PositionTable positions;
 
     private int icodeHashCode = 0;
 
+    private static final Position UNKNOWN = new Position(null, 0, 0);
+
+    // The last entry recorded before pc. Strictly before, since a frame's pc has already moved past
+    // the opcode it is executing, while a position is recorded at that opcode's offset.
     @Override
-    public int getLineNumberFromPc(int pc, int pcSourceLineStart) {
-        if (pcSourceLineStart >= 0) {
-            return ((itsICode[pcSourceLineStart] & 0xFF) << 8)
-                    | (itsICode[pcSourceLineStart + 1] & 0xFF);
-        } else {
-            return 0;
-        }
+    public Position getPositionFromPc(int pc) {
+        Position at = positions.floor(pc - 1);
+        return at == null ? UNKNOWN : at;
     }
 
     public int icodeHashCode() {
@@ -135,9 +138,9 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
 
         Map<Integer, Integer> longJumps;
 
-        InterpreterData<T> built = null;
+        final PositionTable.Builder positions = new PositionTable.Builder();
 
-        int firstLinePC = -1; // PC for the first LINE icode
+        InterpreterData<T> built = null;
 
         public Builder() {
             itsICode = new byte[INITIAL_MAX_ICODE_LENGTH];
@@ -165,7 +168,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
                                 maxCalleeArgs,
                                 literalIds,
                                 jumpMap,
-                                firstLinePC);
+                                positions.build());
             }
             return built;
         }
