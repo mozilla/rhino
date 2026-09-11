@@ -3247,13 +3247,13 @@ class BodyCodegen {
         int emitLine = remapLine(lineno, node.getColumn());
         if (emitLine == -1) return;
         itsLineNumber = emitLine;
-        cfw.addLineNumberEntry((short) emitLine);
+        cfw.addLineNumberEntry(emitLine);
     }
 
     private void addRemappedLineEntry(int line, int column) {
         int emitLine = remapLine(line, column);
         if (emitLine == -1) return;
-        cfw.addLineNumberEntry((short) emitLine);
+        cfw.addLineNumberEntry(emitLine);
     }
 
     private int remapLine(int line, int column) {

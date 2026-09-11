@@ -1439,7 +1439,21 @@ public class ClassFileWriter {
         itsExceptionTableTop = N + 1;
     }
 
+    /**
+     * @deprecated the field is unsigned, so a signed short cannot express half of it. Call {@link
+     *     #addLineNumberEntry(int)} instead. Kept so that code compiled against the old signature
+     *     still links.
+     */
+    @Deprecated
     public void addLineNumberEntry(short lineNumber) {
+        addLineNumberEntry(lineNumber & 0xFFFF);
+    }
+
+    /**
+     * @param lineNumber the {@code line_number} of a LineNumberTable entry, an unsigned 16-bit
+     *     value per JVMS 4.7.12. Values outside that range are truncated to it.
+     */
+    public void addLineNumberEntry(int lineNumber) {
         if (DEBUGCODE) {
             if (DEBUGCODEORIGINS) {
                 printOrigin();
@@ -1455,7 +1469,9 @@ public class ClassFileWriter {
             System.arraycopy(itsLineNumberTable, 0, tmp, 0, N);
             itsLineNumberTable = tmp;
         }
-        itsLineNumberTable[N] = (itsCodeBufferTop << 16) + lineNumber;
+        // Masked rather than added: a line number above Short.MAX_VALUE used to sign-extend and
+        // borrow into the start_pc half of the packed entry.
+        itsLineNumberTable[N] = (itsCodeBufferTop << 16) | (lineNumber & 0xFFFF);
         itsLineNumberTableTop = N + 1;
     }
 
