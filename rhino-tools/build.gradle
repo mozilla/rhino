@@ -22,6 +22,8 @@ dependencies {
     shellOnly libs.jline.reader
     shellOnly libs.bundles.jline.runtime
     testImplementation project(':testutils')
+    testImplementation libs.jline.terminal
+    testImplementation libs.jline.reader
 }
 
 jar {
