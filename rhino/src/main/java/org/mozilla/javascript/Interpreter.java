@@ -290,7 +290,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 return 1 + 1;
 
             case Icode.LINE:
-                // a debugger step marker; the position itself lives in the side table
+                // no operand: the position lives in the side table
                 return 1;
 
             case Icode.LITERAL_NEW_OBJECT:
@@ -1179,7 +1179,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         return result;
     }
 
-    // A value thrown where the frame stands, so its origin is what the frame's stack entry says
+    // A thrown value takes the position the frame is standing at
     private static JavaScriptException thrownAt(CallFrame frame, Object value) {
         Position at = positionAt(frame, frame.pc);
         return new JavaScriptException(value, at.getSourcePath(), at.getLine(), at.getColumn());
@@ -2496,7 +2496,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         (ScriptRuntime.LookupResult) stack[frame.stackTop];
                 Object[] outArgs = getArgsArray(stack, sDbl, frame.stackTop + 1, state.indexReg);
                 Callable function = result.getCallable();
-                // Where eval labels the code it compiles: the call's own position
+                // eval labels the code it compiles with the call's own position
                 Position at = positionAt(frame, frame.pc);
                 stack[frame.stackTop] =
                         ScriptRuntime.callSpecial(
@@ -3838,8 +3838,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         }
     }
 
-    // A line boundary for the debugger, which steps by line. No operand: the position is whatever
-    // the side table holds for this pc.
     private static class DoLineChange extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {

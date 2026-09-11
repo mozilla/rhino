@@ -21,10 +21,9 @@ import org.mozilla.javascript.sourcemap.Position;
  * it is a statement's, since only those mark lines for the debugger.
  *
  * <p>Only error reporting and the debugger read this, so it is stored the way HotSpot stores its
- * own line number table: as a stream of variable-length deltas. Stored as fixed words the table
+ * own line number table: as a stream of variable-length deltas, since as fixed words the table
  * outweighs the code it describes. A table that is read at all is decoded once into arrays it can
- * be searched in, since the few that are, by a debugger stepping through the function or a throw
- * inside a loop, are read many times over.
+ * be searched in, as the few that are read are read many times over.
  */
 final class PositionTable implements Serializable {
     @Serial private static final long serialVersionUID = 1L;

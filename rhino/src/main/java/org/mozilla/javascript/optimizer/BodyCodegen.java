@@ -1806,7 +1806,6 @@ class BodyCodegen {
 
     private void finishGetElemGeneration(Node node, Node child) {
         generateExpression(child.getNext(), node); // id
-        // After the subscript, so a failed read blames the read and not what the subscript did
         updateExpressionPosition(node);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
@@ -2682,7 +2681,6 @@ class BodyCodegen {
         generateExpression(child, node);
         child = child.getNext();
         generateCallArgArray(node, child, false);
-        // After the args, so a failed call blames the call, not the last arg
         updateExpressionPosition(node);
         cfw.addALoad(variableObjectLocal);
         cfw.addPush(specialType);
@@ -2703,8 +2701,6 @@ class BodyCodegen {
         // stack: ... cx functionObj thisObj
         child = child.getNext();
         generateCallArgArray(node, child, false);
-        // After the args, so a failed call blames the call, not the last arg, and so the label
-        // eval gives its code is the call's own position
         updateExpressionPosition(node);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
@@ -2801,7 +2797,6 @@ class BodyCodegen {
         generateCallArgArray(node, firstArgChild, false);
         cfw.addAStore(argsLocal);
 
-        // After the args, so calling a non-function blames the call, not the last arg
         updateExpressionPosition(node);
 
         if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
@@ -3132,7 +3127,6 @@ class BodyCodegen {
                     generateExpression(target, node);
                     Node id = target.getNext();
                     if (type == Token.GETPROP) {
-                        // The call target is a property access, and reading it is what fails here
                         updateExpressionPosition(node);
                         String property = id.getString();
                         cfw.addALoad(contextLocal);
@@ -3209,6 +3203,8 @@ class BodyCodegen {
                 "()Lorg/mozilla/javascript/Scriptable;");
     }
 
+    // Called after an operation's operands, so that a failure blames the operation and not the
+    // last operand evaluated
     private void updateExpressionPosition(Node node) {
         if (CodeGenUtils.hasExpressionPosition(node)) updateLineNumber(node);
     }
@@ -3222,9 +3218,8 @@ class BodyCodegen {
         emitPosition(mapped);
     }
 
-    // The closing line of a script, which is the compiler's own idea of a position rather than one
-    // taken from a node. Column 1 is only a probe for the source mapper, so the mapped column is
-    // dropped instead of being recorded as though it were real.
+    // The closing line of a script, which is the compiler's own position rather than a node's.
+    // Column 1 is only a probe for the source mapper, so the mapped column is dropped.
     private void emitScriptEndLine(int line) {
         Position mapped = CodeGenUtils.mapPosition(compilerEnv, line, 1);
         if (mapped == null) return;
@@ -4669,7 +4664,6 @@ class BodyCodegen {
 
     private void visitGetProp(Node node, Node child) {
         generateExpression(child, node); // object
-        // After the target, so a failed read blames the property, not the target
         updateExpressionPosition(node);
         if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
             int getExpr = cfw.acquireLabel();

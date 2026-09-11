@@ -12,10 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.sourcemap.Position;
 
-/**
- * The position table used by the JVM bytecode backend, which addresses positions by the line number
- * a stack frame reports and hands out position markers when a real line is already taken.
- */
+/** The JVM backend's position table, which addresses positions by reported line number. */
 class CompiledPositionsTest {
 
     private static final String M = "_c_f_1";

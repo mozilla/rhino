@@ -118,7 +118,6 @@ public class StackTraceColumnTest {
         assertThrownAt("var foo = {};\nvar arg = 1;\nnew foo.nope(arg);", 3, 1);
     }
 
-    /** A call routed through the special-call path. */
     @Test
     public void aSpecialCallReportsTheCallColumn() {
         assertThrownAt("var o = {};\nfunction f() { return eval(o.nope.deeper); }\nf();", 2, 35);

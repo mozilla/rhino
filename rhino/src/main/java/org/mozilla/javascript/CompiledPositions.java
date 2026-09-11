@@ -17,12 +17,11 @@ import org.mozilla.javascript.sourcemap.Position;
  * Columns and original source paths for one generated class, looked up by the line number a stack
  * frame reports.
  *
- * <p>The class name, method name and source file are fixed for a whole frame, so a LineNumberTable
- * entry's {@code line_number} is the only thing that varies from position to position, and its
- * sixteen bits (JVMS 4.7.12) are the only channel a column can travel through. A position whose
- * line is still free emits its real line, which is what a Java debugger expects; a second position
- * on that line emits a marker from the top of the range instead, which this maps back. So a line is
- * only ever displaced where it could not have identified the position anyway.
+ * <p>A LineNumberTable entry's {@code line_number} is the only thing that varies from position to
+ * position within a frame, and its sixteen bits (JVMS 4.7.12) are the only channel a column can
+ * travel through. A position whose line is still free emits that real line, which is what a Java
+ * debugger expects; a second position on the same line emits a marker from the top of the range
+ * instead, which this maps back.
  */
 public final class CompiledPositions {
 
@@ -31,9 +30,8 @@ public final class CompiledPositions {
     private static final int LAST_LINE = 0xFFFF;
     private static final int FIRST_POSITION_MARKER = LAST_LINE;
 
-    // A frame gives us only the class name, so this cannot be keyed on the class itself. The
-    // reference is weak and the strong one lives in the generated class, so a table dies with the
-    // code it describes; every generated class has a fresh name, so a strong map would only grow.
+    // A frame gives us only the class name, so this cannot be keyed on the class itself. Every
+    // generated class has a fresh name, so entries are weak and die with the code they describe.
     private static final Map<String, WeakReference<CompiledPositions>> BY_CLASS_NAME =
             new ConcurrentHashMap<>();
 
@@ -118,10 +116,9 @@ public final class CompiledPositions {
         private boolean markersEnabled = true;
 
         /**
-         * Stops handing out markers. A marker only means anything alongside this table, which is
-         * attached as the class is defined; code compiled ahead of time to a file is loaded without
-         * that step, so it has to carry real line numbers and give up the column where a line holds
-         * more than one position.
+         * Stops handing out markers. A marker means nothing without this table, which is attached
+         * as the class is defined, so code written out to a file has to carry real line numbers and
+         * give up the column where a line holds more than one position.
          */
         public void disableMarkers() {
             markersEnabled = false;
@@ -149,8 +146,8 @@ public final class CompiledPositions {
                     if (column > 0) state.emittedFor.put(at, line);
                     return line;
                 }
-                // A position with no column of its own can neither claim a line nor be worth a
-                // marker; it just reuses whatever the line already resolves to.
+                // A position with no column of its own is not worth a marker; it reuses whatever
+                // the line already resolves to.
                 if (column <= 0) return line;
             }
 
@@ -158,10 +155,10 @@ public final class CompiledPositions {
             if (already != null) return already.intValue();
 
             if (!markersEnabled || state.nextMarker <= state.highestRealLine) {
-                // Either markers are unavailable, or this method has run out of them, which takes
-                // tens of thousands of distinct positions in one function. Report the column as
-                // unknown rather than emit a number that already means something else, and a
-                // line the field cannot hold as no line at all.
+                // Markers are unavailable, or this method has used all of its own, which takes
+                // tens of thousands of distinct positions in one function. Report no column rather
+                // than a number that already means something else, and no line at all when the
+                // field cannot hold it.
                 if (!fits) return 0;
                 state.lines.put(line, new Position(claimed.getSourcePath(), line, 0));
                 return line;

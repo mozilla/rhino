@@ -18,17 +18,16 @@ import org.mozilla.javascript.sourcemap.SourceMapper;
 public class CodeGenUtils {
 
     /**
-     * Whether an operation inside an expression has a position worth recording, so that a failure
-     * blames the operation rather than the start of its statement. Parts the compiler synthesizes
-     * have none: most carry a column of -1, some a 0. Both backends ask this, so they agree.
+     * Whether a node within an expression has a position of its own. Nodes the compiler synthesizes
+     * carry a column of 0 or -1. Both backends ask this so that they agree.
      */
     public static boolean hasExpressionPosition(Node node) {
         return node.getColumn() > 0;
     }
 
     /**
-     * The position to record for one in the script being compiled: the original position when a
-     * source mapper is attached, the given one otherwise, or null if the mapper has nothing for it.
+     * The original position when a source mapper is attached, the given one otherwise, or null if
+     * the mapper has nothing for it.
      */
     public static Position mapPosition(CompilerEnvirons env, int line, int column) {
         SourceMapper mapper = env.getSourceMapper();

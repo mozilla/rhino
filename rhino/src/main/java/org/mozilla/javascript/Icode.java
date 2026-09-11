@@ -70,8 +70,8 @@ abstract class Icode {
             STARTSUB = GOSUB - 1,
             RETSUB = STARTSUB - 1,
 
-            // Marks a line boundary for the debugger. The position itself is held beside the
-            // code, so this carries no operand.
+            // Marks a line boundary for the debugger. The position is held beside the code, so
+            // this carries no operand.
             LINE = RETSUB - 1,
 
             // To store shorts and ints inline

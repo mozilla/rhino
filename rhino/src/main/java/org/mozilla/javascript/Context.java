@@ -2844,8 +2844,8 @@ public class Context implements Closeable {
         return EvaluationMethod.Interpreter.createEvaluator();
     }
 
-    // A thin wrapper rather than a second traversal: a compiled frame's reported line number is
-    // not always its real one, so every caller should go through the same translation.
+    // Delegates rather than walking the stack again: a compiled frame's reported line number is
+    // not always its real one, so every caller needs the same translation.
     static String getSourcePositionFromStack(int[] linep) {
         Position position = getSourcePosition();
         if (position == null) return null;

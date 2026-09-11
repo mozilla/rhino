@@ -420,7 +420,7 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         return positionAt(frame, frame.pc);
     }
 
-    // Named after the frame's script or function when the position has no source of its own
+    // Falls back to the script or function's own source name when the position has none
     static Position positionAt(ACallFrame<?, ?> frame, int pc) {
         return frame.compilerData
                 .getPositionFromPc(pc)

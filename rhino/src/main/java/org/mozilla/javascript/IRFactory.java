@@ -1059,12 +1059,10 @@ public final class IRFactory {
     }
 
     /**
-     * Positions a property or element read for error reporting.
-     *
-     * <p>An AST node's position is the start of the whole expression, but a failed read belongs to
-     * the part being read: for {@code a.b.c} it is {@code c} that could not be read, not {@code a}.
-     * Nodes the compiler synthesizes have no position of their own, so those fall back to the
-     * expression, and then to nothing at all rather than to a line that does not exist.
+     * Positions a property or element read for error reporting. A node's position is the start of
+     * the whole expression, but a failed read belongs to the part being read: for {@code a.b.c} it
+     * is {@code c} that could not be read, not {@code a}. Synthesized nodes have no position of
+     * their own and fall back to the expression.
      */
     private static void setAccessPosition(Node target, AstNode read, AstNode expression) {
         if (read != null && read.getLineno() >= 0) {

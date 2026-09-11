@@ -260,13 +260,14 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         itsData.itsTemplateLiterals = array;
     }
 
+    // Called after an operation's operands, so that a failure blames the operation and not the
+    // last operand evaluated
     private void updateExpressionPosition(Node node) {
         if (CodeGenUtils.hasExpressionPosition(node)) recordPosition(node, false);
     }
 
-    // A statement's position also marks a line for the debugger, which steps by line. LINE has no
-    // operand: the line is whatever the table holds for this pc. Moving within a line, or through
-    // the expressions of a statement, needs no icode at all.
+    // A statement's position also marks a line for the debugger, which steps by line. Moving
+    // within a line, or through the expressions of a statement, needs no icode at all.
     private void updateLineNumber(Node node) {
         Position at = recordPosition(node, true);
         if (at == null) return;
@@ -277,15 +278,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         }
     }
 
-    // Records the node's position at the current pc, or returns null if it has none
     private Position recordPosition(Node node, boolean statement) {
         int lineno = node.getLineno();
         if (lineno < 0) return null;
         Position mapped = CodeGenUtils.mapPosition(compilerEnv, lineno, node.getColumn());
         if (mapped == null) return null;
-        // Column 0 or less means unknown, which only a source mapper can produce now that every
-        // node the compiler positions has one. Keep the column we had if it is on the same line of
-        // the same file, since it is at worst early; anywhere else it would be nonsense.
+        // Only a source mapper can produce an unknown column now. Keep the one we had if it is on
+        // the same line of the same file, where it is at worst early.
         int column = mapped.getColumn();
         if (column <= 0) {
             column = sameLine(mapped, lastPosition) ? lastPosition.getColumn() : 0;
@@ -703,7 +702,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         visitExpression(child, 0);
                         ++argCount;
                     }
-                    // After the args, so calling a non-function blames the call, not the last arg
                     updateExpressionPosition(node);
                     int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
                     if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
@@ -786,7 +784,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
             case Token.GETPROPNOWARN:
                 visitExpression(child, 0);
                 child = child.getNext();
-                // After the target, so a failed read blames the property, not the target
                 updateExpressionPosition(node);
                 if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
                     // Jump if null or undefined
@@ -1279,7 +1276,6 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
 
     private void finishGetElemGeneration(Node node, Node child) {
         visitExpression(child, 0);
-        // After the subscript, so a failed read blames the read and not what the subscript did
         updateExpressionPosition(node);
         addToken(Token.GETELEM);
         stackChange(-1);
@@ -1311,7 +1307,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     visitExpression(target, 0);
                     Node id = target.getNext();
                     if (type == Token.GETPROP) {
-                        // The call target is a property access, and reading it is what fails here
+                        // left is the property access, and reading it is what fails here
                         updateExpressionPosition(left);
                         String property = id.getString();
                         // stack: ... target -> ... function thisObj
