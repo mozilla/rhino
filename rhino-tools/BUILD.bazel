@@ -68,6 +68,8 @@ java_test_suite(
         ":rhino-tools",
         "//rhino",
         "//testutils",
+        "@maven//:org_jline_jline_reader",
+        "@maven//:org_jline_jline_terminal",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_params",
     ] + JUNIT5_DEPS,
