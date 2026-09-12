@@ -103,7 +103,7 @@ final class PositionTable implements Serializable {
         if (e == null) {
             e = new Entries(count);
             for (Cursor c = new Cursor(); c.advance(); ) {
-                e.add(c.key, c.line, c.column, c.source, c.statement);
+                e.append(c.key, c.line, c.column, c.source);
             }
             entries = e;
         }
@@ -116,19 +116,41 @@ final class PositionTable implements Serializable {
         int[] lines;
         int[] columns;
         int[] sources;
+
+        // Which entries are statements, and so which lines the debugger may stop on. Only a table
+        // being built holds these: lines() walks the stream, and by the time a table is encoded
+        // the flags have already done their work.
         boolean[] statements;
+
         int size;
 
-        /** Sized for {@code capacity} entries, growing only if more arrive. */
+        /** An index over a table already encoded, sized for exactly its entries. */
         Entries(int capacity) {
             keys = new int[capacity];
             lines = new int[capacity];
             columns = new int[capacity];
             sources = new int[capacity];
-            statements = new boolean[capacity];
         }
 
-        /** Appends an entry, or replaces the last one when it has the same key and yields to it. */
+        /** A table under construction, which grows as entries arrive. */
+        Entries() {
+            this(0);
+            statements = new boolean[0];
+        }
+
+        /**
+         * Appends an entry known to come after the last. An encoded table has one entry per key, so
+         * decoding never has to replace.
+         */
+        void append(int key, int line, int column, int source) {
+            keys[size] = key;
+            lines[size] = line;
+            columns[size] = column;
+            sources[size] = source;
+            size++;
+        }
+
+        /** Adds an entry, or replaces the last one when it has the same key and yields to it. */
         void add(int key, int line, int column, int source, boolean statement) {
             boolean replacing = size > 0 && keys[size - 1] == key;
             // An entry holds one position, so a statement keeps the key against an expression
@@ -212,7 +234,7 @@ final class PositionTable implements Serializable {
 
     /** Collects entries in key order and encodes them once complete. */
     static final class Builder {
-        private final Entries entries = new Entries(0);
+        private final Entries entries = new Entries();
         private final List<String> names = new ArrayList<>();
         private final Map<String, Integer> nameIndexes = new HashMap<>();
 
