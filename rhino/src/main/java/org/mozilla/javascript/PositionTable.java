@@ -84,9 +84,14 @@ final class PositionTable implements Serializable {
         boolean[] statements = new boolean[16];
         int size;
 
-        /** Appends an entry, or replaces the last one when it has the same key. */
+        /** Appends an entry, or replaces the last one when it has the same key and yields to it. */
         void add(int key, int line, int column, int source, boolean statement) {
             boolean replacing = size > 0 && keys[size - 1] == key;
+            // An entry holds one position, so a statement keeps the key against an expression
+            // landing on the same one. The expression's is the finer of the two, but it is only
+            // ever a column apart, where giving up the statement's line loses the debugger a
+            // line it can stop on.
+            if (replacing && statements[size - 1] && !statement) return;
             int at = replacing ? size - 1 : size++;
             if (at == keys.length) {
                 keys = Arrays.copyOf(keys, size * 2);
@@ -99,8 +104,7 @@ final class PositionTable implements Serializable {
             lines[at] = line;
             columns[at] = column;
             sources[at] = source;
-            // A statement's line stays marked even if an expression's position supersedes it
-            statements[at] = statement || (replacing && statements[at]);
+            statements[at] = statement;
         }
 
         int indexOf(int key) {
@@ -175,7 +179,10 @@ final class PositionTable implements Serializable {
         private final List<String> names = new ArrayList<>();
         private final Map<String, Integer> nameIndexes = new HashMap<>();
 
-        /** Adds an entry. Keys must not decrease; adding at the last key replaces that entry. */
+        /**
+         * Adds an entry. Keys must not decrease; adding at the last key replaces that entry, except
+         * that a statement's entry is not replaced by an expression's.
+         */
         void add(int key, int line, int column, String sourceName, boolean statement) {
             if (entries.size > 0 && key < entries.keys[entries.size - 1]) {
                 throw new IllegalArgumentException("keys must not decrease");

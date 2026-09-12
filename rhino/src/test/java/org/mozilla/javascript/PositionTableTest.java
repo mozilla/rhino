@@ -133,6 +133,28 @@ class PositionTableTest {
         assertArrayEquals(new int[] {5}, b.build().lines());
     }
 
+    /** And keeps it whole: the line the debugger stops on is the statement's, not the read's. */
+    @Test
+    void anExpressionOnAnotherLineDoesNotTakeTheStatementsKey() {
+        var b = new PositionTable.Builder();
+        b.add(1, 5, 1, null, true);
+        b.add(1, 11, 9, null, false);
+        PositionTable t = b.build();
+        assertArrayEquals(new int[] {5}, t.lines());
+        assertAt(null, 5, 1, t.get(1));
+    }
+
+    /** A statement does take the key from an expression already there. */
+    @Test
+    void aStatementReplacesAnExpressionAtTheSameKey() {
+        var b = new PositionTable.Builder();
+        b.add(1, 11, 9, null, false);
+        b.add(1, 5, 1, null, true);
+        PositionTable t = b.build();
+        assertArrayEquals(new int[] {5}, t.lines());
+        assertAt(null, 5, 1, t.get(1));
+    }
+
     @Test
     void anEmptyTableHasNothing() {
         PositionTable t = new PositionTable.Builder().build();
