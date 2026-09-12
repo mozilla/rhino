@@ -31,8 +31,8 @@ import org.mozilla.javascript.sourcemap.Position;
  * <p>A table large enough to be worth an index builds one the first time it is read, since the few
  * tables that are read are read many times over. A small one is walked instead, which for a handful
  * of entries costs less than the array an index would need. The index is itself packed rather than
- * a set of {@code int[]}: each column counts from its own smallest value, in as many bytes as its
- * span needs, which for most functions is one.
+ * a set of {@code int[]}: each column counts from its own smallest value, in as many bytes as the
+ * widest of them needs, which for most functions is one.
  */
 final class PositionTable implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
