@@ -163,6 +163,32 @@ class PositionTableTest {
         assertEquals(0, t.lines().length);
     }
 
+    /** A table past the threshold builds an index; one below it is walked. Both must agree. */
+    @Test
+    void walkedAndIndexedTablesAnswerAlike() {
+        assertAnswers(5);
+        assertAnswers(50);
+    }
+
+    private static void assertAnswers(int n) {
+        var b = new PositionTable.Builder();
+        for (int i = 0; i < n; i++) {
+            b.add(i * 10, 100 + i, 1 + i, null, i % 2 == 0);
+        }
+        PositionTable t = b.build();
+
+        for (int i = 0; i < n; i++) {
+            assertAt(null, 100 + i, 1 + i, t.get(i * 10));
+            assertNull(t.get(i * 10 + 1), "no entry between keys");
+            assertAt(null, 100 + i, 1 + i, t.floor(i * 10 + 9));
+        }
+        assertNull(t.floor(-1), "nothing before the first key");
+
+        int[] lines = new int[(n + 1) / 2];
+        for (int i = 0; i < lines.length; i++) lines[i] = 100 + i * 2;
+        assertArrayEquals(lines, t.lines());
+    }
+
     /** The point of the encoding: typical entries take a few bytes, not eight. */
     @Test
     void typicalEntriesTakeAFewBytes() {
