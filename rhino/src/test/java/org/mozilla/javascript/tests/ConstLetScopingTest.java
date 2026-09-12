@@ -36,6 +36,13 @@ class ConstLetScopingTest {
         Utils.assertWithAllModes_ES6(2.0, "var x = 1; { var x = 2; } x;");
     }
 
+    @Test
+    void varRedeclarationOfParamIsAllowed() {
+        // var hoists to function scope, so redeclaring in a nested block must be fine
+        Utils.assertWithAllModes_ES6(3.0, "(function f(a) { var a; return a; })(3)");
+        Utils.assertWithAllModes_ES6(3.0, "(function f(a) { 'use strict'; var a; return a; })(3)");
+    }
+
     // --- single-statement const/let errors in ES6 ---
 
     @Test

@@ -103,6 +103,7 @@ public class WithScope implements VarScope {
         throw new IllegalStateException();
     }
 
+    @Override
     public boolean isNestedScope() {
         return true;
     }

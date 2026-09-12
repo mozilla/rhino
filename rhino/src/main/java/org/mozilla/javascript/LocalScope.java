@@ -7,6 +7,7 @@ public class LocalScope extends DeclarationScope {
         super(parentScope);
     }
 
+    @Override
     public boolean isNestedScope() {
         return true;
     }

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
-import org.mozilla.javascript.ast.Symbol.Type;
 
 /**
  * Base type for {@link AstRoot} and {@link FunctionNode} nodes, which need to collect much of the
@@ -337,11 +336,11 @@ public class ScriptNode extends Scope {
             Symbol existing = s.getSymbol(name);
             if (existing != null && existing != sym) {
                 Symbol.Type dt = existing.getDeclType();
-                if (dt == Type.FUNCTION_LET
-                        || dt == Type.LET
-                        || dt == Type.CONST
-                        || dt == Type.LP) {
-                    return true;
+                switch (dt) {
+                    case FUNCTION_LET, LET, CONST, LP -> {
+                        return true;
+                    }
+                    default -> {}
                 }
             }
             if (s == this) break;

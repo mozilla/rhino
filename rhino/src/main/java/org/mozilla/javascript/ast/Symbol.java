@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript.ast;
 
-import static org.mozilla.javascript.ScriptableObject.CONST;
-
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
