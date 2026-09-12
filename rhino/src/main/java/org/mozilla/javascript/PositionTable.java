@@ -113,94 +113,83 @@ final class PositionTable implements Serializable {
 
     /**
      * An encoded table laid out for searching: one record per entry in a single byte array, each
-     * column held as an offset from its own smallest value in as many bytes as that column's span
-     * needs. A function's lines and columns rarely span more than a couple of hundred, so a byte
-     * apiece is usually enough where a plain {@code int[]} would spend four.
+     * column held as an offset from its own smallest value. A function's keys, lines and columns
+     * rarely span more than a couple of hundred, so one byte apiece is usually enough where a plain
+     * {@code int[]} would spend four. One width serves every column, which costs a byte here and
+     * there against keeping a width per column, and saves describing them at all.
      */
     private static final class Index {
+        private static final int KEY = 0, LINE = 1, COLUMN = 2, SOURCE = 3;
+
         private final byte[] records;
         private final int size;
-        private final int stride;
-
-        // Per column: the value its offsets count from, its width in bytes, and where in a record
-        // it starts. The source column is absent from a table that names no source.
-        private final int[] bases;
-        private final int[] widths;
-        private final int[] offsets;
-
-        private static final int KEY = 0, LINE = 1, COLUMN = 2, SOURCE = 3;
+        private final int columns;
+        private final int width;
+        private final int keyBase, lineBase, columnBase, sourceBase;
 
         Index(PositionTable table) {
             boolean named = table.sourceNames != null;
-            int columns = named ? 4 : 3;
-            bases = new int[columns];
-            widths = new int[columns];
-            offsets = new int[columns];
+            columns = named ? 4 : 3;
 
-            int[] highest = new int[columns];
-            Arrays.fill(bases, Integer.MAX_VALUE);
-            Arrays.fill(highest, Integer.MIN_VALUE);
+            int lowKey = Integer.MAX_VALUE, highKey = Integer.MIN_VALUE;
+            int lowLine = Integer.MAX_VALUE, highLine = Integer.MIN_VALUE;
+            int lowColumn = Integer.MAX_VALUE, highColumn = Integer.MIN_VALUE;
+            int lowSource = Integer.MAX_VALUE, highSource = Integer.MIN_VALUE;
             int n = 0;
             for (Cursor c = table.new Cursor(); c.advance(); ) {
                 n++;
-                span(bases, highest, KEY, c.key);
-                span(bases, highest, LINE, c.line);
-                span(bases, highest, COLUMN, c.column);
-                if (named) span(bases, highest, SOURCE, c.source);
+                if (c.key < lowKey) lowKey = c.key;
+                if (c.key > highKey) highKey = c.key;
+                if (c.line < lowLine) lowLine = c.line;
+                if (c.line > highLine) highLine = c.line;
+                if (c.column < lowColumn) lowColumn = c.column;
+                if (c.column > highColumn) highColumn = c.column;
+                if (c.source < lowSource) lowSource = c.source;
+                if (c.source > highSource) highSource = c.source;
             }
             size = n;
+            keyBase = lowKey;
+            lineBase = lowLine;
+            columnBase = lowColumn;
+            sourceBase = named ? lowSource : 0;
 
-            int at = 0;
-            for (int i = 0; i < columns; i++) {
-                widths[i] = widthFor((long) highest[i] - bases[i]);
-                offsets[i] = at;
-                at += widths[i];
+            long span = Math.max((long) highKey - lowKey, (long) highLine - lowLine);
+            span = Math.max(span, (long) highColumn - lowColumn);
+            if (named) span = Math.max(span, (long) highSource - lowSource);
+            width = span <= 0xFF ? 1 : span <= 0xFFFF ? 2 : 4;
+
+            records = new byte[size * columns * width];
+            int i = 0;
+            for (Cursor c = table.new Cursor(); c.advance(); i++) {
+                write(i, KEY, c.key - keyBase);
+                write(i, LINE, c.line - lineBase);
+                write(i, COLUMN, c.column - columnBase);
+                if (named) write(i, SOURCE, c.source - sourceBase);
             }
-            stride = at;
-
-            records = new byte[size * stride];
-            int r = 0;
-            for (Cursor c = table.new Cursor(); c.advance(); r += stride) {
-                write(r, KEY, c.key);
-                write(r, LINE, c.line);
-                write(r, COLUMN, c.column);
-                if (named) write(r, SOURCE, c.source);
-            }
         }
 
-        private static void span(int[] lowest, int[] highest, int column, int value) {
-            if (value < lowest[column]) lowest[column] = value;
-            if (value > highest[column]) highest[column] = value;
-        }
-
-        private static int widthFor(long span) {
-            if (span <= 0xFF) return 1;
-            if (span <= 0xFFFF) return 2;
-            return 4;
-        }
-
-        private void write(int record, int column, int value) {
-            int offset = value - bases[column];
-            int at = record + offsets[column];
-            for (int b = 0; b < widths[column]; b++) {
+        private void write(int i, int column, int offset) {
+            int at = (i * columns + column) * width;
+            for (int b = 0; b < width; b++) {
                 records[at + b] = (byte) (offset >>> (b * 8));
             }
         }
 
+        /** The offset stored for a column, before its base is added back. */
         private int read(int i, int column) {
-            int at = i * stride + offsets[column];
+            int at = (i * columns + column) * width;
             int offset = 0;
-            for (int b = 0; b < widths[column]; b++) {
+            for (int b = 0; b < width; b++) {
                 offset |= (records[at + b] & 0xFF) << (b * 8);
             }
-            return bases[column] + offset;
+            return offset;
         }
 
         Position at(int key, boolean exact, String[] names) {
             int i = floorIndex(key);
-            if (i < 0 || (exact && read(i, KEY) != key)) return null;
-            int source = widths.length > SOURCE ? read(i, SOURCE) : -1;
-            return position(source, read(i, LINE), read(i, COLUMN), names);
+            if (i < 0 || (exact && keyBase + read(i, KEY) != key)) return null;
+            int source = columns > SOURCE ? sourceBase + read(i, SOURCE) : -1;
+            return position(source, lineBase + read(i, LINE), columnBase + read(i, COLUMN), names);
         }
 
         /** The last entry at or before {@code key}, or -1 when every entry comes after it. */
@@ -208,7 +197,7 @@ final class PositionTable implements Serializable {
             int low = 0, high = size - 1, found = -1;
             while (low <= high) {
                 int middle = (low + high) >>> 1;
-                if (read(middle, KEY) <= key) {
+                if (keyBase + read(middle, KEY) <= key) {
                     found = middle;
                     low = middle + 1;
                 } else {
