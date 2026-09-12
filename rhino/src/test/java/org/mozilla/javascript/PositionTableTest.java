@@ -189,6 +189,48 @@ class PositionTableTest {
         assertArrayEquals(lines, t.lines());
     }
 
+    /** An index sizes each column to its span, so every width has to answer alike. */
+    @Test
+    void anIndexHoldsColumnsOfEveryWidth() {
+        int[][] entries = {
+            {0, 1, 1},
+            {1, 2, 2},
+            {2, 3, 3},
+            {3, 4, 4},
+            {250, 250, 250},
+            {300, 300, 300},
+            {70_000, 70_000, 70_000},
+            {80_000, 80_000, 80_000},
+            {100_000, 5, 40_000},
+            {Integer.MAX_VALUE, 1, 1},
+        };
+        var b = new PositionTable.Builder();
+        for (int[] e : entries) b.add(e[0], e[1], e[2], null, true);
+        PositionTable t = b.build();
+
+        for (int[] e : entries) {
+            assertAt(null, e[1], e[2], t.get(e[0]));
+        }
+        assertNull(t.get(4));
+        assertAt(null, 4, 4, t.floor(249));
+        assertAt(null, 1, 1, t.floor(Integer.MAX_VALUE));
+    }
+
+    /** Source names survive an index, including the entries that name none. */
+    @Test
+    void anIndexKeepsSourceNames() {
+        var b = new PositionTable.Builder();
+        for (int i = 0; i < 20; i++) {
+            String name = i % 3 == 0 ? null : (i % 3 == 1 ? "one.js" : "two.js");
+            b.add(i, 100 + i, 1 + i, name, true);
+        }
+        PositionTable t = b.build();
+        for (int i = 0; i < 20; i++) {
+            String name = i % 3 == 0 ? null : (i % 3 == 1 ? "one.js" : "two.js");
+            assertAt(name, 100 + i, 1 + i, t.get(i));
+        }
+    }
+
     /** The point of the encoding: typical entries take a few bytes, not eight. */
     @Test
     void typicalEntriesTakeAFewBytes() {

@@ -30,7 +30,9 @@ import org.mozilla.javascript.sourcemap.Position;
  *
  * <p>A table large enough to be worth an index builds one the first time it is read, since the few
  * tables that are read are read many times over. A small one is walked instead, which for a handful
- * of entries costs less than the arrays an index would need.
+ * of entries costs less than the array an index would need. The index is itself packed rather than
+ * a set of {@code int[]}: each column counts from its own smallest value, in as many bytes as its
+ * span needs, which for most functions is one.
  */
 final class PositionTable implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
@@ -46,8 +48,8 @@ final class PositionTable implements Serializable {
     private final int count;
 
     // Two threads indexing at once produce the same thing, so no locking is needed; volatile so
-    // that a reader sees the arrays as filled, not as they were being filled
-    private transient volatile Entries entries;
+    // that a reader sees the index as filled, not as it was being filled
+    private transient volatile Index index;
 
     private PositionTable(byte[] deltas, String[] sourceNames, int count) {
         this.deltas = deltas;
@@ -66,11 +68,9 @@ final class PositionTable implements Serializable {
     }
 
     private Position at(int key, boolean exact) {
-        Entries e = entries();
-        if (e != null) {
-            int i = exact ? e.indexOf(key) : e.floorIndex(key);
-            return i < 0 ? null : e.at(i, sourceNames);
-        }
+        Index i = index();
+        if (i != null) return i.at(key, exact, sourceNames);
+
         int foundKey = 0, line = 0, column = 0, source = -1;
         boolean found = false;
         for (Cursor c = new Cursor(); c.advance() && c.key <= key; ) {
@@ -81,7 +81,11 @@ final class PositionTable implements Serializable {
             found = true;
         }
         if (!found || (exact && foundKey != key)) return null;
-        return new Position(source < 0 ? null : sourceNames[source], line, column);
+        return position(source, line, column, sourceNames);
+    }
+
+    private static Position position(int source, int line, int column, String[] names) {
+        return new Position(source < 0 ? null : names[source], line, column);
     }
 
     /**
@@ -97,58 +101,132 @@ final class PositionTable implements Serializable {
     }
 
     /** The index for this table, or null when it is small enough to walk instead. */
-    private Entries entries() {
+    private Index index() {
         if (count <= WORTH_INDEXING) return null;
-        Entries e = entries;
-        if (e == null) {
-            e = new Entries(count);
-            for (Cursor c = new Cursor(); c.advance(); ) {
-                e.append(c.key, c.line, c.column, c.source);
-            }
-            entries = e;
+        Index i = index;
+        if (i == null) {
+            i = new Index(this);
+            index = i;
         }
-        return e;
+        return i;
     }
 
-    /** Entries as parallel arrays sorted by key: the form they are built in and searched in. */
+    /**
+     * An encoded table laid out for searching: one record per entry in a single byte array, each
+     * column held as an offset from its own smallest value in as many bytes as that column's span
+     * needs. A function's lines and columns rarely span more than a couple of hundred, so a byte
+     * apiece is usually enough where a plain {@code int[]} would spend four.
+     */
+    private static final class Index {
+        private final byte[] records;
+        private final int size;
+        private final int stride;
+
+        // Per column: the value its offsets count from, its width in bytes, and where in a record
+        // it starts. The source column is absent from a table that names no source.
+        private final int[] bases;
+        private final int[] widths;
+        private final int[] offsets;
+
+        private static final int KEY = 0, LINE = 1, COLUMN = 2, SOURCE = 3;
+
+        Index(PositionTable table) {
+            boolean named = table.sourceNames != null;
+            int columns = named ? 4 : 3;
+            bases = new int[columns];
+            widths = new int[columns];
+            offsets = new int[columns];
+
+            int[] highest = new int[columns];
+            Arrays.fill(bases, Integer.MAX_VALUE);
+            Arrays.fill(highest, Integer.MIN_VALUE);
+            int n = 0;
+            for (Cursor c = table.new Cursor(); c.advance(); ) {
+                n++;
+                span(bases, highest, KEY, c.key);
+                span(bases, highest, LINE, c.line);
+                span(bases, highest, COLUMN, c.column);
+                if (named) span(bases, highest, SOURCE, c.source);
+            }
+            size = n;
+
+            int at = 0;
+            for (int i = 0; i < columns; i++) {
+                widths[i] = widthFor((long) highest[i] - bases[i]);
+                offsets[i] = at;
+                at += widths[i];
+            }
+            stride = at;
+
+            records = new byte[size * stride];
+            int r = 0;
+            for (Cursor c = table.new Cursor(); c.advance(); r += stride) {
+                write(r, KEY, c.key);
+                write(r, LINE, c.line);
+                write(r, COLUMN, c.column);
+                if (named) write(r, SOURCE, c.source);
+            }
+        }
+
+        private static void span(int[] lowest, int[] highest, int column, int value) {
+            if (value < lowest[column]) lowest[column] = value;
+            if (value > highest[column]) highest[column] = value;
+        }
+
+        private static int widthFor(long span) {
+            if (span <= 0xFF) return 1;
+            if (span <= 0xFFFF) return 2;
+            return 4;
+        }
+
+        private void write(int record, int column, int value) {
+            int offset = value - bases[column];
+            int at = record + offsets[column];
+            for (int b = 0; b < widths[column]; b++) {
+                records[at + b] = (byte) (offset >>> (b * 8));
+            }
+        }
+
+        private int read(int i, int column) {
+            int at = i * stride + offsets[column];
+            int offset = 0;
+            for (int b = 0; b < widths[column]; b++) {
+                offset |= (records[at + b] & 0xFF) << (b * 8);
+            }
+            return bases[column] + offset;
+        }
+
+        Position at(int key, boolean exact, String[] names) {
+            int i = floorIndex(key);
+            if (i < 0 || (exact && read(i, KEY) != key)) return null;
+            int source = widths.length > SOURCE ? read(i, SOURCE) : -1;
+            return position(source, read(i, LINE), read(i, COLUMN), names);
+        }
+
+        /** The last entry at or before {@code key}, or -1 when every entry comes after it. */
+        private int floorIndex(int key) {
+            int low = 0, high = size - 1, found = -1;
+            while (low <= high) {
+                int middle = (low + high) >>> 1;
+                if (read(middle, KEY) <= key) {
+                    found = middle;
+                    low = middle + 1;
+                } else {
+                    high = middle - 1;
+                }
+            }
+            return found;
+        }
+    }
+
+    /** The entries of a table under construction, as parallel arrays in key order. */
     private static final class Entries {
-        int[] keys;
-        int[] lines;
-        int[] columns;
-        int[] sources;
-
-        // Which entries are statements, and so which lines the debugger may stop on. Only a table
-        // being built holds these: lines() walks the stream, and by the time a table is encoded
-        // the flags have already done their work.
-        boolean[] statements;
-
+        int[] keys = new int[0];
+        int[] lines = new int[0];
+        int[] columns = new int[0];
+        int[] sources = new int[0];
+        boolean[] statements = new boolean[0];
         int size;
-
-        /** An index over a table already encoded, sized for exactly its entries. */
-        Entries(int capacity) {
-            keys = new int[capacity];
-            lines = new int[capacity];
-            columns = new int[capacity];
-            sources = new int[capacity];
-        }
-
-        /** A table under construction, which grows as entries arrive. */
-        Entries() {
-            this(0);
-            statements = new boolean[0];
-        }
-
-        /**
-         * Appends an entry known to come after the last. An encoded table has one entry per key, so
-         * decoding never has to replace.
-         */
-        void append(int key, int line, int column, int source) {
-            keys[size] = key;
-            lines[size] = line;
-            columns[size] = column;
-            sources[size] = source;
-            size++;
-        }
 
         /** Adds an entry, or replaces the last one when it has the same key and yields to it. */
         void add(int key, int line, int column, int source, boolean statement) {
@@ -176,15 +254,6 @@ final class PositionTable implements Serializable {
 
         int indexOf(int key) {
             return Arrays.binarySearch(keys, 0, size, key);
-        }
-
-        int floorIndex(int key) {
-            int i = indexOf(key);
-            return i >= 0 ? i : -i - 2;
-        }
-
-        Position at(int i, String[] names) {
-            return new Position(sources[i] < 0 ? null : names[sources[i]], lines[i], columns[i]);
         }
     }
 
@@ -235,6 +304,7 @@ final class PositionTable implements Serializable {
     /** Collects entries in key order and encodes them once complete. */
     static final class Builder {
         private final Entries entries = new Entries();
+
         private final List<String> names = new ArrayList<>();
         private final Map<String, Integer> nameIndexes = new HashMap<>();
 
@@ -263,7 +333,12 @@ final class PositionTable implements Serializable {
         /** The entry added at exactly {@code key}, or null. */
         Position get(int key) {
             int i = entries.indexOf(key);
-            return i < 0 ? null : entries.at(i, names.toArray(new String[0]));
+            if (i < 0) return null;
+            return position(
+                    entries.sources[i],
+                    entries.lines[i],
+                    entries.columns[i],
+                    names.toArray(new String[0]));
         }
 
         PositionTable build() {
