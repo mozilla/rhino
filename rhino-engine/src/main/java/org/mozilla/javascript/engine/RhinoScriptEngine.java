@@ -131,6 +131,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             Object ret = cx.evaluateReader(scope, reader, getFilename(), 0, null);
             return Context.jsToJava(ret, Object.class);
         } catch (RhinoException re) {
+
             throw new ScriptException(
                     re.getMessage(), re.sourceName(), re.lineNumber(), re.columnNumber());
         } catch (IOException ioe) {

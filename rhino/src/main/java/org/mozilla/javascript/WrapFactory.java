@@ -8,11 +8,7 @@
 
 package org.mozilla.javascript;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import org.mozilla.javascript.lc.type.TypeInfo;
-import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class
@@ -25,11 +21,13 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  * @since 1.5 Release 4
  */
 public class WrapFactory {
-    /**
-     * @see #wrap(Context, VarScope, Object, TypeInfo)
-     */
-    public final Object wrap(Context cx, VarScope scope, Object obj, Class<?> staticType) {
-        return wrap(cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType));
+    private final WrapProcessor processor;
+
+    private boolean javaPrimitiveWrap = true;
+
+    public WrapFactory() {
+        // Set the processor to null if reflection is not available
+        processor = LiveConnectSupport.get().getWrapProcessor();
     }
 
     /**
@@ -54,34 +52,14 @@ public class WrapFactory {
      * @return the wrapped value.
      * @since 1.9.0
      */
-    public Object wrap(Context cx, VarScope scope, Object obj, TypeInfo staticType) {
-        if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
-            return obj;
-        }
-        if (staticType.isPrimitive()) {
-            if (staticType == TypeInfo.PRIMITIVE_VOID) {
-                return Undefined.instance;
-            } else if (staticType == TypeInfo.PRIMITIVE_CHARACTER) {
-                return (int) (Character) obj;
-            }
-            return obj;
-        }
-        if (!isJavaPrimitiveWrap()) {
-            if (obj instanceof String
-                    || obj instanceof Boolean
-                    || obj instanceof Integer
-                    || obj instanceof Byte
-                    || obj instanceof Short
-                    || obj instanceof Long
-                    || obj instanceof Float
-                    || obj instanceof Double
-                    || obj instanceof BigInteger) {
-                return obj;
-            } else if (obj instanceof Character) {
-                return String.valueOf(((Character) obj).charValue());
-            }
-        }
-        return wrapAsJavaObject(cx, scope, obj, staticType);
+    public Object wrap(Context cx, VarScope scope, Object obj, Class<?> staticType) {
+        checkReflectionSupport();
+        return processor.wrap(cx, scope, obj, staticType, javaPrimitiveWrap);
+    }
+
+    public Object wrap(Context cx, VarScope scope, Object obj, TypeInfo type) {
+        checkReflectionSupport();
+        return processor.wrap(cx, scope, obj, type, javaPrimitiveWrap);
     }
 
     /**
@@ -93,18 +71,8 @@ public class WrapFactory {
      * @return the wrapped value.
      */
     public Scriptable wrapNewObject(Context cx, VarScope scope, Object obj) {
-        if (obj instanceof Scriptable) {
-            return (Scriptable) obj;
-        }
-        return wrapAsJavaObject(cx, scope, obj, TypeInfo.NONE);
-    }
-
-    /**
-     * @see #wrapAsJavaObject(Context, VarScope, Object, TypeInfo)
-     */
-    public final Scriptable wrapAsJavaObject(
-            Context cx, VarScope scope, Object javaObject, Class<?> staticType) {
-        return wrapAsJavaObject(cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
+        checkReflectionSupport();
+        return processor.wrapNewObject(cx, scope, obj);
     }
 
     /**
@@ -126,20 +94,15 @@ public class WrapFactory {
      * @since 1.9.0
      */
     public Scriptable wrapAsJavaObject(
-            Context cx, VarScope scope, Object javaObject, TypeInfo staticType) {
-        if (staticType.shouldReplace() && javaObject != null) {
-            staticType =
-                    TypeInfoFactory.getOrElse(scope, TypeInfoFactory.GLOBAL)
-                            .create(javaObject.getClass());
-        }
-        if (List.class.isAssignableFrom(staticType.asClass())) {
-            return new NativeJavaList(scope, javaObject, staticType);
-        } else if (Map.class.isAssignableFrom(staticType.asClass())) {
-            return new NativeJavaMap(scope, javaObject, staticType);
-        } else if (staticType.isArray()) {
-            return new NativeJavaArray(scope, javaObject, staticType);
-        }
-        return new NativeJavaObject(scope, javaObject, staticType);
+            Context cx, VarScope scope, Object javaObject, Class<?> staticType) {
+        checkReflectionSupport();
+        return processor.wrapAsJavaObject(cx, scope, javaObject, staticType);
+    }
+
+    public Scriptable wrapAsJavaObject(
+            Context cx, VarScope scope, Object javaObject, TypeInfo type) {
+        checkReflectionSupport();
+        return processor.wrapAsJavaObject(cx, scope, javaObject, type);
     }
 
     /**
@@ -155,7 +118,8 @@ public class WrapFactory {
      * @since 1.7R3
      */
     public Scriptable wrapJavaClass(Context cx, VarScope scope, Class<?> javaClass) {
-        return new NativeJavaClass(scope, javaClass);
+        checkReflectionSupport();
+        return processor.wrapJavaClass(cx, scope, javaClass);
     }
 
     /**
@@ -174,6 +138,9 @@ public class WrapFactory {
      * @see #isJavaPrimitiveWrap()
      */
     public final void setJavaPrimitiveWrap(boolean value) {
+        if (value) {
+            checkReflectionSupport();
+        }
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.isSealed()) {
             Context.onSealedMutation();
@@ -181,5 +148,10 @@ public class WrapFactory {
         javaPrimitiveWrap = value;
     }
 
-    private boolean javaPrimitiveWrap = true;
+    private void checkReflectionSupport() {
+        if (processor == null) {
+            // TODO message
+            throw ScriptRuntime.constructError("Error", "Java reflection is not supported");
+        }
+    }
 }

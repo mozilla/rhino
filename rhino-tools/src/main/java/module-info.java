@@ -1,6 +1,7 @@
 module org.mozilla.rhino.tools {
     requires transitive org.mozilla.rhino;
     requires transitive java.desktop;
+    requires org.mozilla.rhino.reflect;
     requires static org.jline.terminal;
     requires static org.jline.reader;
 
