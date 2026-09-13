@@ -1,0 +1,40 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
+
+java_library(
+    name = "rhino-reflect",
+    srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = LIBRARY_OPTS,
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rhino",
+    ],
+)
+
+java_test_suite(
+    name = "rhino-reflect-tests",
+    size = "small",
+    srcs = glob(
+        ["src/test/java/**/*.java"],
+        exclude = ["**/module-info.java"],
+    ),
+    resources = glob(["src/test/resources/**"]),
+    javacopts = TEST_OPTS,
+    jvm_flags = [
+        "--add-opens",
+        "java.base/java.lang=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+    ],
+    runner = "junit5",
+    test_suffixes = ["Test.java"],
+    deps = [
+        ":rhino-reflect",
+        "//rhino",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)

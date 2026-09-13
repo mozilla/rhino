@@ -17,8 +17,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.NativeArray;
-import org.mozilla.javascript.NativeJavaMethod;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.reflect.NativeJavaMethod;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 

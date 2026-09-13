@@ -3,5 +3,6 @@ module org.mozilla.rhino.engine.test {
 
     requires org.mozilla.rhino.engine;
     requires org.mozilla.rhino;
+    requires org.mozilla.rhino.reflect;
     requires org.mozilla.rhino.testutils;
 }

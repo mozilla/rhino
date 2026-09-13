@@ -10,6 +10,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//rhino",
+        "//rhino-reflect",
         "@maven//:org_jline_jline_reader",
         "@maven//:org_jline_jline_terminal",
     ],
@@ -23,6 +24,7 @@ java_binary(
     runtime_deps = [
         ":rhino-tools",
         "//rhino",
+        "//rhino-reflect",
         "//rhino-xml",
         "@maven//:org_jline_jline_reader",
         "@maven//:org_jline_jline_terminal",
@@ -39,6 +41,7 @@ java_binary(
     runtime_deps = [
         ":rhino-tools",
         "//rhino",
+        "//rhino-reflect",
         "//rhino-xml",
     ],
 )
@@ -51,6 +54,7 @@ java_binary(
     runtime_deps = [
         ":rhino-tools",
         "//rhino",
+        "//rhino-reflect",
     ],
 )
 
@@ -67,6 +71,7 @@ java_test_suite(
     deps = [
         ":rhino-tools",
         "//rhino",
+        "//rhino-reflect",
         "//testutils",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_params",
