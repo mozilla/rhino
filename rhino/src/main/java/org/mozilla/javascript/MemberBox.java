@@ -125,6 +125,7 @@ final class MemberBox implements Serializable {
         return returnType;
     }
 
+    /* TODO no longer used?
     String toJavaDeclaration() {
         StringBuilder sb = new StringBuilder();
         if (isMethod()) {
@@ -144,6 +145,7 @@ final class MemberBox implements Serializable {
         sb.append(JavaMembers.liveConnectSignature(getArgTypes()));
         return sb.toString();
     }
+     */
 
     @Override
     public String toString() {
