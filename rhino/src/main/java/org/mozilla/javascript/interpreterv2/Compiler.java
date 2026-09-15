@@ -727,275 +727,41 @@ public class Compiler<T extends ScriptOrFn<T>> {
         int savedStackDepth = stackDepth;
         switch (op) {
             case Token.FUNCTION:
-                {
-                    int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
-                    FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
-                    // See comments in visitStatement for Token.FUNCTION case
-                    if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION
-                            && fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
-                        throw Kit.codeBug();
-                    }
-                    addInstruction(new ClosureExpression(fnIndex));
-                    if (fn.isMethodDefinition()) {
-                        throw Kit.codeBug();
-                    }
-                    return;
-                }
+                visitFunction(node);
+                return;
             case Token.LOCAL_LOAD:
-                {
-                    int localIndex = getLocalBlockRef(node);
-                    addInstruction(new LocalLoad(localIndex));
-                    return;
-                }
+                visitLocalLoad(node);
+                return;
             case Token.COMMA:
-                {
-                    var lastChild = node.getLastChild();
-                    while (child != lastChild) {
-                        var obj = getOperand(child, 0);
-                        addInstruction(VoidInstruction.ofOperand(obj));
-                        child = child.getNext();
-                    }
-                    // Preserve tail context flag if any
-                    visitExpression(child, contextFlags & ECF_TAIL);
-                    return;
-                }
+                visitComma(node, contextFlags, child);
+                return;
             case Token.USE_STACK:
-                {
-                    return;
-                }
+                return;
             case Token.OBJECT_REST:
-                {
-                    Object[] excludedKeys = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-                    if (excludedKeys == null) {
-                        excludedKeys = new Object[0];
-                    }
-                    int computedCount = 0;
-                    int staticCount = 0;
-                    for (Object key : excludedKeys) {
-                        if (key instanceof Node) {
-                            computedCount++;
-                        } else {
-                            staticCount++;
-                        }
-                    }
-                    Object[] staticKeys = new Object[staticCount];
-                    int si = 0;
-                    for (Object key : excludedKeys) {
-                        if (!(key instanceof Node)) {
-                            staticKeys[si++] = key;
-                        }
-                    }
-
-                    var sourceOperand = getOperand(child, 0);
-                    Operand[] computedKeys = new Operand[computedCount];
-                    int ci = 0;
-                    for (Object key : excludedKeys) {
-                        if (key instanceof Node) {
-                            computedKeys[ci++] = getOperand((Node) key, 0);
-                        }
-                    }
-                    addInstruction(new ObjectRest(sourceOperand, staticKeys, computedKeys));
-                    return;
-                }
+                visitObjectRest(node, child);
+                return;
             case Token.REF_CALL:
             case Token.CALL:
             case Token.NEW:
-                {
-                    boolean isOptionalChainingCall =
-                            node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
-                    CompleteOptionalCallJump completeOptionalCallJump = null;
-                    // We get a function for news, and lookup result for normal calls
-                    Operand lookupResultOrFunction;
-                    var lines = new ArrayList<Integer>();
-                    if (op == Token.NEW) {
-                        lookupResultOrFunction = getOperand(child, 0, false, lines);
-                    } else {
-                        completeOptionalCallJump =
-                                generateCallFunAndThis(child, isOptionalChainingCall);
-                        if (completeOptionalCallJump != null) {
-                            resolveForwardGoto(completeOptionalCallJump.putArgsAndDoCallLabel);
-                        }
-                        lookupResultOrFunction = PopOperand.instance;
-                    }
-                    List<Operand> args = new ArrayList<>();
-                    while ((child = child.getNext()) != null) {
-                        args.add(getOperand(child, 0, false, lines));
-                    }
-                    int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
-                    updateLineNumber(node);
-                    updateLineNumbers(lines);
-                    if (op != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
-                        if (op == Token.NEW) {
-                            addInstruction(
-                                    new SpecialCallNew(
-                                            lookupResultOrFunction,
-                                            args.toArray(Operand.EMPTY_ARRAY),
-                                            callType));
-                        } else {
-                            addInstruction(
-                                    new SpecialCall(
-                                            lookupResultOrFunction,
-                                            args.toArray(Operand.EMPTY_ARRAY),
-                                            (short) (lineNumber & 0xFF),
-                                            callType));
-                        }
-                    } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-                        addInstruction(
-                                Call.create(
-                                        lookupResultOrFunction,
-                                        args.toArray(Operand.EMPTY_ARRAY),
-                                        Call.Type.CallOnSuper));
-                    } else {
-                        // Only use the tail call optimization if we're not in a try
-                        // or we're not generating debug info (since the
-                        // optimization will confuse the debugger)
-                        Call.Type type = Call.Type.Call;
-                        if (op == Token.CALL
-                                && (contextFlags & ECF_TAIL) != 0
-                                && !compilerEnv.isGenerateDebugInfo()
-                                && !inTryFlag) {
-                            type = Call.Type.TailCall;
-                        } else if (op == Token.REF_CALL) {
-                            type = Call.Type.RefCall;
-                        }
-
-                        if (op == Token.NEW) {
-                            addInstruction(
-                                    New.create(
-                                            lookupResultOrFunction,
-                                            args.toArray(Operand.EMPTY_ARRAY)));
-                        } else {
-                            addInstruction(
-                                    Call.create(
-                                            lookupResultOrFunction,
-                                            args.toArray(Operand.EMPTY_ARRAY),
-                                            type));
-                        }
-                    }
-
-                    if (completeOptionalCallJump != null) {
-                        resolveForwardGoto(completeOptionalCallJump.afterLabel);
-                    }
-                    return;
-                }
+                visitCall(op, contextFlags, node, child);
+                return;
             case Token.AND:
             case Token.OR:
-                {
-                    visitExpression(child, 0);
-                    child = child.getNext();
-
-                    int end = instructions.size();
-                    JumpInstruction jump =
-                            (op == Token.AND)
-                                    ? new IfNe(PeekOperand.instance)
-                                    : new IfEq(PeekOperand.instance);
-                    addInstruction(jump);
-
-                    addInstruction(Pop.instance);
-
-                    // Preserve tail context flag if any
-                    visitExpression(child, contextFlags & ECF_TAIL);
-
-                    resolveForwardGoto(end);
-                    return;
-                }
+                visitAndOr(op, contextFlags, node, child);
+                return;
             case Token.HOOK:
-                {
-                    Node ifThen = child.getNext();
-                    Node ifElse = ifThen.getNext();
-                    var test = getOperand(child, 0);
-                    int elseJumpStart = instructions.size();
-                    addInstruction(new IfNe(test));
-
-                    // Preserve tail context flag if any
-                    visitExpression(ifThen, contextFlags & ECF_TAIL);
-                    int afterElseJumpStart = instructions.size();
-                    addInstruction(new Goto());
-                    resolveForwardGoto(elseJumpStart);
-                    stackDepth = savedStackDepth;
-                    // Preserve tail context flag if any
-                    visitExpression(ifElse, contextFlags & ECF_TAIL);
-                    resolveForwardGoto(afterElseJumpStart);
-                    return;
-                }
+                visitHook(contextFlags, child, savedStackDepth);
+                return;
             case Token.GETPROP:
             case Token.GETPROPNOWARN:
-                {
-                    var firstChild = child;
-                    child = child.getNext();
-                    if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
-                        var lhs = getOperand(firstChild, 0, true);
-                        // Jump if null or undefined
-                        int putUndefinedLabel = instructions.size();
-                        addInstruction(new IfNullUndefined(lhs));
-
-                        // Access property
-                        addInstruction(
-                                new GetProp(
-                                        lhs.convertToConsume(),
-                                        child.getString(),
-                                        op == Token.GETPROPNOWARN));
-                        int afterLabel = instructions.size();
-                        addInstruction(new Goto());
-
-                        // Put undefined
-                        resolveForwardGoto(putUndefinedLabel);
-                        popIfPeek(lhs);
-                        addInstruction(PushConstant.pushUndefined);
-                        resolveForwardGoto(afterLabel);
-                    } else {
-                        boolean noWarn = op == Token.GETPROPNOWARN;
-                        var propName = child.getString();
-                        visitUnaryOperation(
-                                firstChild,
-                                lhs ->
-                                        (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1)
-                                                ? new GetPropSuper(lhs, propName, noWarn)
-                                                : new GetProp(lhs, propName, noWarn));
-                    }
-                    return;
-                }
+                visitGetProp(op, node, child);
+                return;
             case Token.DELPROP:
-                {
-                    boolean isName = child.getType() == Token.BINDNAME;
-                    visitBinaryOperation(
-                            child,
-                            (l, r) ->
-                                    (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1)
-                                            ? new DelPropSuper(l, r)
-                                            : isName ? new DelName(l, r) : new DelProp(l, r));
-                    return;
-                }
+                visitDelProp(node, child);
+                return;
             case Token.GETELEM:
-                {
-                    var firstChild = child;
-                    child = child.getNext();
-                    if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
-                        var lhs = getOperand(firstChild, 0, true);
-                        int putUndefinedLabel = instructions.size();
-                        addInstruction(new IfNullUndefined(lhs));
-
-                        // Infix op
-                        finishGetElemGeneration(child, lhs.convertToConsume());
-                        int afterLabel = instructions.size();
-                        addInstruction(new Goto());
-
-                        // Put undefined
-                        resolveForwardGoto(putUndefinedLabel);
-                        popIfPeek(lhs);
-                        addInstruction(PushConstant.pushUndefined);
-                        resolveForwardGoto(afterLabel);
-                    } else {
-                        var lhs = getOperand(firstChild, 0);
-                        if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
-                            var elem = getOperand(child, 0);
-                            addInstruction(new GetElemSuper(lhs, elem));
-                        } else {
-                            finishGetElemGeneration(child, lhs);
-                        }
-                    }
-                    return;
-                }
+                visitGetElem(node, child);
+                return;
             case Token.BITAND:
                 visitBinaryOperation(child, (l, r) -> new BitAnd(l, r));
                 return;
@@ -1075,497 +841,757 @@ public class Compiler<T extends ScriptOrFn<T>> {
                 visitUnaryOperation(child, obj -> new Typeof(obj));
                 return;
             case Token.VOID:
-                {
-                    visitExpression(child, 0);
-                    addInstruction(Pop.instance);
-                    addInstruction(PushConstant.pushUndefined);
-                    return;
-                }
+                visitVoid(child);
+                return;
             case Token.GET_REF:
             case Token.DEL_REF:
-                {
-                    if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
-                        var lhs = getOperand(child, 0, true);
-                        // On the stack we'll have either the Ref or undefined
-
-                        // If it's null or undefined, just jump ahead
-                        int afterLabel = instructions.size();
-                        addInstruction(new IfNullUndefined(lhs));
-
-                        // Otherwise do the GET_REF
-                        addInstruction(
-                                op == Token.GET_REF
-                                        ? new GetRef(lhs.convertToConsume())
-                                        : new DelRef(lhs.convertToConsume()));
-
-                        resolveForwardGoto(afterLabel);
-                    } else {
-                        var lhs = getOperand(child, 0);
-                        addInstruction(op == Token.GET_REF ? new GetRef(lhs) : new DelRef(lhs));
-                    }
-                    return;
-                }
+                visitGetOrDelRef(op, node, child);
+                return;
             case Token.SETPROP:
             case Token.SETPROP_OP:
-                {
-                    var lhs = getOperand(child, 0, true);
-                    child = child.getNext();
-                    String property = child.getString();
-                    child = child.getNext();
-                    if (op == Token.SETPROP_OP) {
-                        addInstruction(new GetProp(lhs, property, false));
-                    }
-                    var rhs = getOperand(child, 0);
-                    addInstruction(
-                            node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
-                                    ? new SetPropSuper(lhs.convertToConsume(), property, rhs)
-                                    : new SetProp(lhs.convertToConsume(), property, rhs));
-                    return;
-                }
+                visitSetProp(op, node, child);
+                return;
             case Token.SETELEM:
             case Token.SETELEM_OP:
-                {
-                    Operand lhs, elem;
-                    if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
-                        lhs = getSafeOperand(child, 0, true);
-                        child = child.getNext();
-                        elem = getSafeOperand(child, 0, true);
-                    } else {
-                        lhs = getOperand(child, 0, true);
-                        child = child.getNext();
-                        elem = getOperand(child, 0, true);
-                    }
-                    child = child.getNext();
-                    if (op == Token.SETELEM_OP) {
-                        if (lhs instanceof PeekOperand && elem instanceof PeekOperand) {
-                            lhs = new PeekOperand(-1);
-                        }
-
-                        addInstruction(new GetElem(lhs, elem));
-                    }
-                    var rhs = getOperand(child, 0);
-                    addInstruction(
-                            node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
-                                    ? new SetElemSuper(
-                                            lhs.convertToConsume(), elem.convertToConsume(), rhs)
-                                    : new SetElem(
-                                            lhs.convertToConsume(), elem.convertToConsume(), rhs));
-                    return;
-                }
+                visitSetElem(op, node, child);
+                return;
             case Token.SET_REF:
             case Token.SET_REF_OP:
-                {
-                    var obj = getOperand(child, 0, true);
-                    child = child.getNext();
-                    if (op == Token.SET_REF_OP) {
-                        addInstruction(new GetRef(obj));
-                    }
-                    var rhs = getOperand(child, 0);
-                    addInstruction(new SetRef(obj.convertToConsume(), rhs));
-                    return;
-                }
+                visitSetRef(op, child);
+                return;
             case Token.SETNAME:
-                {
-                    String name = child.getString();
-                    visitBinaryOperation(child, (l, r) -> new SetName(l, name, r));
-                    return;
-                }
+                visitSetName(child);
+                return;
             case Token.STRICT_SETNAME:
-                {
-                    String name = child.getString();
-                    visitBinaryOperation(child, (l, r) -> new StrictSetName(l, name, r));
-                    return;
-                }
+                visitStrictSetName(child);
+                return;
             case Token.SETCONST:
-                {
-                    String name = child.getString();
-                    visitBinaryOperation(child, (l, r) -> new SetConst(l, name, r));
-                    return;
-                }
+                visitSetConst(child);
+                return;
             case Token.TYPEOFNAME:
-                {
-                    int index = -1;
-                    // use typeofname if an activation frame exists
-                    // since the vars all exist there instead of in jregs
-                    if (inFunction && !descBuilder.requiresActivationFrame)
-                        index = scriptOrFn.getIndexForNameNode(node);
-                    if (index == -1) {
-                        addInstruction(new TypeofName(node.getString()));
-                    } else {
-                        addInstruction(new Typeof(GetVarOperand.createOperand(index)));
-                    }
-                    return;
-                }
+                visitTypeofName(node);
+                return;
             case Token.BINDNAME:
-                {
-                    addInstruction(new BindName(node.getString()));
-                    return;
-                }
+                addInstruction(new BindName(node.getString()));
+                return;
             case Token.NAME:
-                {
-                    updateLineNumber(node);
-                    addInstruction(new Name(node.getString()));
-                    return;
-                }
+                visitName(node);
+                return;
             case Token.STRING:
-                {
-                    addInstruction(new PushConstant(node.getString()));
-                    return;
-                }
+                addInstruction(new PushConstant(node.getString()));
+                return;
             case Token.INC:
             case Token.DEC:
-                {
-                    visitIncDec(node, node.getFirstChild());
-                    return;
-                }
+                visitIncDec(node, node.getFirstChild());
+                return;
             case Token.NUMBER:
-                {
-                    double num = node.getDouble();
-                    int inum = (int) num;
-
-                    if (shouldTreatNumberAsInteger(num)) {
-                        if (inum == 0) {
-                            // Check for negative zero
-                            if (1.0 / num < 0.0) {
-                                addInstruction(PushConstant.pushNegativeZero);
-                            } else {
-                                addInstruction(PushConstant.pushZero);
-                            }
-                        } else if (inum == 1) {
-                            addInstruction(PushConstant.pushOne);
-                        } else if ((short) inum == inum) {
-                            addInstruction(new ShortNumber((short) (inum & 0xFFFF)));
-                        } else {
-                            addInstruction(new Int(inum));
-                        }
-                    } else {
-                        addInstruction(new Num(num));
-                    }
-                    return;
-                }
+                visitNumber(node);
+                return;
             case Token.GETVAR:
-                {
-                    if (descBuilder.requiresActivationFrame) {
-                        Kit.codeBug();
-                    }
-                    int index = scriptOrFn.getIndexForNameNode(node);
-                    addInstruction(new GetVar(index));
-                    return;
-                }
+                visitGetVar(node);
+                return;
             case Token.SETVAR:
-                {
-                    if (descBuilder.requiresActivationFrame) {
-                        Kit.codeBug();
-                    }
-                    int index = scriptOrFn.getIndexForNameNode(child);
-                    child = child.getNext();
-                    var value = getOperand(child, 0);
-                    addInstruction(new SetVar(index, value));
-                    return;
-                }
+                visitSetVar(child);
+                return;
             case Token.SETCONSTVAR:
-                {
-                    if (descBuilder.requiresActivationFrame) {
-                        Kit.codeBug();
-                    }
-                    int index = scriptOrFn.getIndexForNameNode(child);
-                    child = child.getNext();
-                    var value = getOperand(child, 0);
-                    addInstruction(new SetConstVar(index, value));
-                    return;
-                }
+                visitSetConstVar(child);
+                return;
             case Token.NULL:
-                {
-                    addInstruction(PushConstant.pushNull);
-                    return;
-                }
+                addInstruction(PushConstant.pushNull);
+                return;
             case Token.UNDEFINED:
-                {
-                    addInstruction(PushConstant.pushUndefined);
-                    return;
-                }
+                addInstruction(PushConstant.pushUndefined);
+                return;
             case Token.THIS:
-                {
-                    addInstruction(This.instance);
-                    return;
-                }
+                addInstruction(This.instance);
+                return;
             case Token.SUPER:
-                {
-                    addInstruction(Super.instance);
-                    return;
-                }
+                addInstruction(Super.instance);
+                return;
             case Token.THISFN:
-                {
-                    addInstruction(ThisFunction.instance);
-                    return;
-                }
+                addInstruction(ThisFunction.instance);
+                return;
             case Token.NEW_TARGET:
-                {
-                    addInstruction(NewTarget.instance);
-                    return;
-                }
+                addInstruction(NewTarget.instance);
+                return;
             case Token.FALSE:
-                {
-                    addInstruction(PushConstant.pushFalse);
-                    return;
-                }
+                addInstruction(PushConstant.pushFalse);
+                return;
             case Token.TRUE:
-                {
-                    addInstruction(PushConstant.pushTrue);
-                    return;
-                }
+                addInstruction(PushConstant.pushTrue);
+                return;
             case Token.ENUM_NEXT:
-                {
-                    addInstruction(new EnumNext(getLocalBlockRef(node)));
-                    return;
-                }
+                addInstruction(new EnumNext(getLocalBlockRef(node)));
+                return;
             case Token.ENUM_ID:
-                {
-                    addInstruction(new EnumId(getLocalBlockRef(node)));
-                    return;
-                }
+                addInstruction(new EnumId(getLocalBlockRef(node)));
+                return;
             case Token.BIGINT:
-                {
-                    addInstruction(new BigInt(node.getBigInt()));
-                    return;
-                }
+                addInstruction(new BigInt(node.getBigInt()));
+                return;
             case Token.REGEXP:
-                {
-                    int index = node.getExistingIntProp(Node.REGEXP_PROP);
-                    addInstruction(new Regexp(generateRegExpLiteral(index)));
-                    return;
-                }
+                visitRegexp(node);
+                return;
             case Token.ARRAYLIT:
-                {
-                    updateLineNumber(node);
-
-                    int[] skipIndices = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
-                    int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
-
-                    if (numberOfSpread > 0) {
-                        var elements = new ArrayList<Operand>();
-                        var spreadFlags = new ArrayList<Boolean>();
-                        var lines = new ArrayList<Integer>();
-                        while (child != null) {
-                            updateLineNumber(child);
-                            if (child.getType() == Token.DOTDOTDOT) {
-                                elements.add(getOperand(child.getFirstChild(), 0, false, lines));
-                                spreadFlags.add(Boolean.TRUE);
-                            } else {
-                                elements.add(getOperand(child, 0, false, lines));
-                                spreadFlags.add(Boolean.FALSE);
-                            }
-                            child = child.getNext();
-                        }
-
-                        int count = elements.size();
-                        boolean[] isSpread = new boolean[count];
-                        for (int i = 0; i < count; i++) {
-                            isSpread[i] = spreadFlags.get(i);
-                        }
-
-                        int[] sourcePositions = null;
-                        if (skipIndices != null) {
-                            sourcePositions = new int[count];
-                            int sourcePos = 0;
-                            int skipIdx = 0;
-                            for (int i = 0; i < count; i++) {
-                                while (skipIdx < skipIndices.length
-                                        && skipIndices[skipIdx] == sourcePos) {
-                                    sourcePos++;
-                                    skipIdx++;
-                                }
-                                sourcePositions[i] = sourcePos;
-                                sourcePos++;
-                            }
-                        }
-
-                        int nonSpreadCount = count - numberOfSpread;
-                        updateLineNumbers(lines);
-                        addInstruction(
-                                new ArrayLitWithSpread(
-                                        elements.toArray(Operand.EMPTY_ARRAY),
-                                        isSpread,
-                                        skipIndices,
-                                        sourcePositions,
-                                        nonSpreadCount));
-                        return;
-                    }
-
-                    var elements = new ArrayList<Operand>();
-                    var lines = new ArrayList<Integer>();
-                    while (child != null) {
-                        elements.add(getOperand(child, 0, false, lines));
-                        child = child.getNext();
-                    }
-
-                    updateLineNumbers(lines);
-                    updateLineNumber(node);
-                    addInstruction(
-                            new ArrayLit(elements.toArray(Operand.EMPTY_ARRAY), skipIndices));
-                    return;
-                }
+                visitArrayLit(node, child);
+                return;
             case Token.OBJECTLIT:
-                {
-                    Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-                    int count = propertyIds == null ? 0 : propertyIds.length;
-                    int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
-                    int nonSpreadCount = count - numberOfSpread;
-                    boolean hasSpread = numberOfSpread > 0;
-                    boolean hasAnyComputedProperty =
-                            propertyIds != null
-                                    && Arrays.stream(propertyIds)
-                                            .anyMatch(
-                                                    id ->
-                                                            id instanceof Node
-                                                                    && ((Node) id).getType()
-                                                                            != Token.DOTDOTDOT);
-
-                    updateLineNumber(node);
-
-                    if (hasSpread) {
-                        emitObjectLiteralWithSpread(
-                                node, child, propertyIds, count, nonSpreadCount);
-                    } else {
-                        emitObjectLiteralNoSpread(
-                                node, child, propertyIds, count, hasAnyComputedProperty);
-                    }
-                    return;
-                }
+                visitObjectLit(node, child);
+                return;
             case Token.ARRAYCOMP:
-                {
-                    // A bit of a hack: array comprehensions are implemented using
-                    // statement nodes for the iteration, yet they appear in an
-                    // expression context. So we pass the current stack depth to
-                    // visitStatement so it can check that the depth is not altered
-                    // by statements.
-                    var next = child.getNext();
-                    generateStatement(child, stackDepth);
-                    visitExpression(next, 0);
-                    return;
-                }
+                visitArrayComp(child);
+                return;
             case Token.REF_SPECIAL:
-                {
-                    if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
-                        var lhs = getOperand(child, 0, true);
-                        // Jump if null or undefined
-                        int putUndefinedLabel = instructions.size();
-                        addInstruction(new IfNullUndefined(lhs));
-
-                        // Access property
-                        addInstruction(
-                                new RefSpecial(
-                                        lhs.convertToConsume(),
-                                        (String) node.getProp(Node.NAME_PROP)));
-                        int afterLabel = instructions.size();
-                        addInstruction(new Goto());
-
-                        // Put undefined
-                        resolveForwardGoto(putUndefinedLabel);
-                        popIfPeek(lhs);
-                        addInstruction(PushConstant.pushUndefined);
-                        resolveForwardGoto(afterLabel);
-                    } else {
-                        var name = (String) node.getProp(Node.NAME_PROP);
-                        visitUnaryOperation(child, obj -> new RefSpecial(obj, name));
-                    }
-                    return;
-                }
+                visitRefSpecial(node, child);
+                return;
             case Token.WITHEXPR:
-                {
-                    Node enterWith = node.getFirstChild();
-                    Node with = enterWith.getNext();
-                    var enterObj = getOperand(enterWith.getFirstChild(), 0);
-                    addInstruction(new EnterWith(enterObj));
-                    visitExpression(with.getFirstChild(), 0);
-                    addInstruction(LeaveWith.instance);
-                    return;
-                }
+                visitWithExpr(node);
+                return;
             case Token.TEMPLATE_LITERAL:
-                {
-                    int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
-                    addInstruction(new TemplateLiteralCallsite(generateTemplateLiteral(index)));
-                    return;
-                }
+                visitTemplateLiteral(node);
+                return;
             case Token.NULLISH_COALESCING:
-                {
-                    visitExpression(child, 0);
-                    child = child.getNext();
-
-                    int end = instructions.size();
-                    addInstruction(new IfNotNullUndefined(PeekOperand.instance));
-
-                    addInstruction(Pop.instance);
-                    visitExpression(child, 0);
-                    resolveForwardGoto(end);
-                    return;
-                }
+                visitNullishCoalescing(child);
+                return;
             case Token.YIELD:
-                {
-                    Operand valueOperand;
-                    if (child != null) {
-                        valueOperand = getOperand(child, 0);
-                    } else {
-                        valueOperand = UndefinedOperand.instance;
-                    }
-
-                    addInstruction(new Yield(valueOperand, (short) node.getLineno()));
-                    addInstruction(new ThawFrame(true, (short) node.getLineno()));
-                    return;
-                }
+                visitYield(node, child);
+                return;
             case Token.YIELD_STAR:
-                {
-                    Operand valueOperand;
-                    if (child != null) {
-                        valueOperand = getOperand(child, 0);
-                    } else {
-                        valueOperand = UndefinedOperand.instance;
-                    }
-
-                    addInstruction(new YieldStar(valueOperand, (short) node.getLineno()));
-                    addInstruction(new ThawFrame(true, (short) node.getLineno()));
-                    return;
-                }
+                visitYieldStar(node, child);
+                return;
             case Token.REF_MEMBER:
             case Token.REF_NS_MEMBER:
             case Token.REF_NAME:
             case Token.REF_NS_NAME:
-                {
-                    int flags = node.getIntProp(Node.MEMBER_TYPE_PROP, 0);
-                    // generate possible target, possible namespace and member
-                    var operands = new ArrayList<Operand>();
-                    var lines = new ArrayList<Integer>();
-                    do {
-                        operands.add(getOperand(child, 0, false, lines));
-                        child = child.getNext();
-                    } while (child != null);
-                    updateLineNumber(node);
-                    updateLineNumbers(lines);
-                    addInstruction(createRefInstruction(op, operands, flags));
-                    return;
-                }
+                visitRefMemberOrName(op, node, child);
+                return;
             case Token.DOTQUERY:
-                {
-                    visitExpression(child, 0);
-                    addInstruction(EnterDotQuery.instance);
-                    int queryPC = instructions.size();
-                    visitExpression(child.getNext(), 0);
-                    addBackwardGoto(new LeaveDotQuery(), queryPC);
-                    return;
-                }
+                visitDotQuery(child);
+                return;
             case Token.DEFAULTNAMESPACE:
             case Token.ESCXMLATTR:
             case Token.ESCXMLTEXT:
-                {
-                    visitExpression(child, 0);
-                    addInstruction(getE4xInstruction(op));
-                    return;
-                }
+                visitE4xExpression(op, child);
+                return;
             default:
                 {
                     throw new UnknownInstructionException(
                             "Unknown op: " + Token.typeToName(op), op);
                 }
+        }
+    }
+
+    private void visitDelProp(Node node, Node child) {
+        boolean isName = child.getType() == Token.BINDNAME;
+        visitBinaryOperation(
+                child,
+                (l, r) ->
+                        (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1)
+                                ? new DelPropSuper(l, r)
+                                : isName ? new DelName(l, r) : new DelProp(l, r));
+    }
+
+    private void visitGetElem(Node node, Node child) {
+        var firstChild = child;
+        child = child.getNext();
+        if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+            var lhs = getOperand(firstChild, 0, true);
+            int putUndefinedLabel = instructions.size();
+            addInstruction(new IfNullUndefined(lhs));
+
+            // Infix op
+            finishGetElemGeneration(child, lhs.convertToConsume());
+            int afterLabel = instructions.size();
+            addInstruction(new Goto());
+
+            // Put undefined
+            resolveForwardGoto(putUndefinedLabel);
+            popIfPeek(lhs);
+            addInstruction(PushConstant.pushUndefined);
+            resolveForwardGoto(afterLabel);
+        } else {
+            var lhs = getOperand(firstChild, 0);
+            if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+                var elem = getOperand(child, 0);
+                addInstruction(new GetElemSuper(lhs, elem));
+            } else {
+                finishGetElemGeneration(child, lhs);
+            }
+        }
+    }
+
+    private void visitVoid(Node child) {
+        visitExpression(child, 0);
+        addInstruction(Pop.instance);
+        addInstruction(PushConstant.pushUndefined);
+    }
+
+    private void visitGetOrDelRef(int op, Node node, Node child) {
+        if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+            var lhs = getOperand(child, 0, true);
+            // On the stack we'll have either the Ref or undefined
+
+            // If it's null or undefined, just jump ahead
+            int afterLabel = instructions.size();
+            addInstruction(new IfNullUndefined(lhs));
+
+            // Otherwise do the GET_REF
+            addInstruction(
+                    op == Token.GET_REF
+                            ? new GetRef(lhs.convertToConsume())
+                            : new DelRef(lhs.convertToConsume()));
+
+            resolveForwardGoto(afterLabel);
+        } else {
+            var lhs = getOperand(child, 0);
+            addInstruction(op == Token.GET_REF ? new GetRef(lhs) : new DelRef(lhs));
+        }
+    }
+
+    private void visitSetProp(int op, Node node, Node child) {
+        var lhs = getOperand(child, 0, true);
+        child = child.getNext();
+        String property = child.getString();
+        child = child.getNext();
+        if (op == Token.SETPROP_OP) {
+            addInstruction(new GetProp(lhs, property, false));
+        }
+        var rhs = getOperand(child, 0);
+        addInstruction(
+                node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
+                        ? new SetPropSuper(lhs.convertToConsume(), property, rhs)
+                        : new SetProp(lhs.convertToConsume(), property, rhs));
+    }
+
+    private void visitSetElem(int op, Node node, Node child) {
+        Operand lhs, elem;
+        if (isSafeOperand(child) && isSafeOperand(child.getNext())) {
+            lhs = getSafeOperand(child, 0, true);
+            child = child.getNext();
+            elem = getSafeOperand(child, 0, true);
+        } else {
+            lhs = getOperand(child, 0, true);
+            child = child.getNext();
+            elem = getOperand(child, 0, true);
+        }
+        child = child.getNext();
+        if (op == Token.SETELEM_OP) {
+            if (lhs instanceof PeekOperand && elem instanceof PeekOperand) {
+                lhs = new PeekOperand(-1);
+            }
+
+            addInstruction(new GetElem(lhs, elem));
+        }
+        var rhs = getOperand(child, 0);
+        addInstruction(
+                node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
+                        ? new SetElemSuper(lhs.convertToConsume(), elem.convertToConsume(), rhs)
+                        : new SetElem(lhs.convertToConsume(), elem.convertToConsume(), rhs));
+    }
+
+    private void visitSetRef(int op, Node child) {
+        var obj = getOperand(child, 0, true);
+        child = child.getNext();
+        if (op == Token.SET_REF_OP) {
+            addInstruction(new GetRef(obj));
+        }
+        var rhs = getOperand(child, 0);
+        addInstruction(new SetRef(obj.convertToConsume(), rhs));
+    }
+
+    private void visitSetName(Node child) {
+        String name = child.getString();
+        visitBinaryOperation(child, (l, r) -> new SetName(l, name, r));
+    }
+
+    private void visitStrictSetName(Node child) {
+        String name = child.getString();
+        visitBinaryOperation(child, (l, r) -> new StrictSetName(l, name, r));
+    }
+
+    private void visitSetConst(Node child) {
+        String name = child.getString();
+        visitBinaryOperation(child, (l, r) -> new SetConst(l, name, r));
+    }
+
+    private void visitTypeofName(Node node) {
+        int index = -1;
+        // use typeofname if an activation frame exists
+        // since the vars all exist there instead of in jregs
+        if (inFunction && !descBuilder.requiresActivationFrame)
+            index = scriptOrFn.getIndexForNameNode(node);
+        if (index == -1) {
+            addInstruction(new TypeofName(node.getString()));
+        } else {
+            addInstruction(new Typeof(GetVarOperand.createOperand(index)));
+        }
+    }
+
+    private void visitName(Node node) {
+        updateLineNumber(node);
+        addInstruction(new Name(node.getString()));
+    }
+
+    private void visitNumber(Node node) {
+        double num = node.getDouble();
+        int inum = (int) num;
+
+        if (shouldTreatNumberAsInteger(num)) {
+            if (inum == 0) {
+                // Check for negative zero
+                if (1.0 / num < 0.0) {
+                    addInstruction(PushConstant.pushNegativeZero);
+                } else {
+                    addInstruction(PushConstant.pushZero);
+                }
+            } else if (inum == 1) {
+                addInstruction(PushConstant.pushOne);
+            } else if ((short) inum == inum) {
+                addInstruction(new ShortNumber((short) (inum & 0xFFFF)));
+            } else {
+                addInstruction(new Int(inum));
+            }
+        } else {
+            addInstruction(new Num(num));
+        }
+    }
+
+    private void visitGetVar(Node node) {
+        if (descBuilder.requiresActivationFrame) {
+            Kit.codeBug();
+        }
+        int index = scriptOrFn.getIndexForNameNode(node);
+        addInstruction(new GetVar(index));
+    }
+
+    private void visitSetVar(Node child) {
+        if (descBuilder.requiresActivationFrame) {
+            Kit.codeBug();
+        }
+        int index = scriptOrFn.getIndexForNameNode(child);
+        child = child.getNext();
+        var value = getOperand(child, 0);
+        addInstruction(new SetVar(index, value));
+    }
+
+    private void visitSetConstVar(Node child) {
+        if (descBuilder.requiresActivationFrame) {
+            Kit.codeBug();
+        }
+        int index = scriptOrFn.getIndexForNameNode(child);
+        child = child.getNext();
+        var value = getOperand(child, 0);
+        addInstruction(new SetConstVar(index, value));
+    }
+
+    private void visitRegexp(Node node) {
+        int index = node.getExistingIntProp(Node.REGEXP_PROP);
+        addInstruction(new Regexp(generateRegExpLiteral(index)));
+    }
+
+    private void visitArrayLit(Node node, Node child) {
+        updateLineNumber(node);
+
+        int[] skipIndices = (int[]) node.getProp(Node.SKIP_INDEXES_PROP);
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+
+        if (numberOfSpread > 0) {
+            var elements = new ArrayList<Operand>();
+            var spreadFlags = new ArrayList<Boolean>();
+            var lines = new ArrayList<Integer>();
+            while (child != null) {
+                updateLineNumber(child);
+                if (child.getType() == Token.DOTDOTDOT) {
+                    elements.add(getOperand(child.getFirstChild(), 0, false, lines));
+                    spreadFlags.add(Boolean.TRUE);
+                } else {
+                    elements.add(getOperand(child, 0, false, lines));
+                    spreadFlags.add(Boolean.FALSE);
+                }
+                child = child.getNext();
+            }
+
+            int count = elements.size();
+            boolean[] isSpread = new boolean[count];
+            for (int i = 0; i < count; i++) {
+                isSpread[i] = spreadFlags.get(i);
+            }
+
+            int[] sourcePositions = null;
+            if (skipIndices != null) {
+                sourcePositions = new int[count];
+                int sourcePos = 0;
+                int skipIdx = 0;
+                for (int i = 0; i < count; i++) {
+                    while (skipIdx < skipIndices.length && skipIndices[skipIdx] == sourcePos) {
+                        sourcePos++;
+                        skipIdx++;
+                    }
+                    sourcePositions[i] = sourcePos;
+                    sourcePos++;
+                }
+            }
+
+            int nonSpreadCount = count - numberOfSpread;
+            updateLineNumbers(lines);
+            addInstruction(
+                    new ArrayLitWithSpread(
+                            elements.toArray(Operand.EMPTY_ARRAY),
+                            isSpread,
+                            skipIndices,
+                            sourcePositions,
+                            nonSpreadCount));
+            return;
+        }
+
+        var elements = new ArrayList<Operand>();
+        var lines = new ArrayList<Integer>();
+        while (child != null) {
+            elements.add(getOperand(child, 0, false, lines));
+            child = child.getNext();
+        }
+
+        updateLineNumbers(lines);
+        updateLineNumber(node);
+        addInstruction(new ArrayLit(elements.toArray(Operand.EMPTY_ARRAY), skipIndices));
+    }
+
+    private void visitObjectLit(Node node, Node child) {
+        Object[] propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        int count = propertyIds == null ? 0 : propertyIds.length;
+        int numberOfSpread = node.getIntProp(Node.NUMBER_OF_SPREAD, 0);
+        int nonSpreadCount = count - numberOfSpread;
+        boolean hasSpread = numberOfSpread > 0;
+        boolean hasAnyComputedProperty =
+                propertyIds != null
+                        && Arrays.stream(propertyIds)
+                                .anyMatch(
+                                        id ->
+                                                id instanceof Node
+                                                        && ((Node) id).getType()
+                                                                != Token.DOTDOTDOT);
+
+        updateLineNumber(node);
+
+        if (hasSpread) {
+            emitObjectLiteralWithSpread(node, child, propertyIds, count, nonSpreadCount);
+        } else {
+            emitObjectLiteralNoSpread(node, child, propertyIds, count, hasAnyComputedProperty);
+        }
+    }
+
+    private void visitArrayComp(Node child) {
+        // A bit of a hack: array comprehensions are implemented using
+        // statement nodes for the iteration, yet they appear in an
+        // expression context. So we pass the current stack depth to
+        // visitStatement so it can check that the depth is not altered
+        // by statements.
+        var next = child.getNext();
+        generateStatement(child, stackDepth);
+        visitExpression(next, 0);
+    }
+
+    private void visitRefSpecial(Node node, Node child) {
+        if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+            var lhs = getOperand(child, 0, true);
+            // Jump if null or undefined
+            int putUndefinedLabel = instructions.size();
+            addInstruction(new IfNullUndefined(lhs));
+
+            // Access property
+            addInstruction(
+                    new RefSpecial(lhs.convertToConsume(), (String) node.getProp(Node.NAME_PROP)));
+            int afterLabel = instructions.size();
+            addInstruction(new Goto());
+
+            // Put undefined
+            resolveForwardGoto(putUndefinedLabel);
+            popIfPeek(lhs);
+            addInstruction(PushConstant.pushUndefined);
+            resolveForwardGoto(afterLabel);
+        } else {
+            var name = (String) node.getProp(Node.NAME_PROP);
+            visitUnaryOperation(child, obj -> new RefSpecial(obj, name));
+        }
+    }
+
+    private void visitWithExpr(Node node) {
+        Node enterWith = node.getFirstChild();
+        Node with = enterWith.getNext();
+        var enterObj = getOperand(enterWith.getFirstChild(), 0);
+        addInstruction(new EnterWith(enterObj));
+        visitExpression(with.getFirstChild(), 0);
+        addInstruction(LeaveWith.instance);
+    }
+
+    private void visitTemplateLiteral(Node node) {
+        int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        addInstruction(new TemplateLiteralCallsite(generateTemplateLiteral(index)));
+    }
+
+    private void visitNullishCoalescing(Node child) {
+        visitExpression(child, 0);
+        child = child.getNext();
+
+        int end = instructions.size();
+        addInstruction(new IfNotNullUndefined(PeekOperand.instance));
+
+        addInstruction(Pop.instance);
+        visitExpression(child, 0);
+        resolveForwardGoto(end);
+    }
+
+    private void visitYield(Node node, Node child) {
+        Operand valueOperand;
+        if (child != null) {
+            valueOperand = getOperand(child, 0);
+        } else {
+            valueOperand = UndefinedOperand.instance;
+        }
+
+        addInstruction(new Yield(valueOperand, (short) node.getLineno()));
+        addInstruction(new ThawFrame(true, (short) node.getLineno()));
+    }
+
+    private void visitYieldStar(Node node, Node child) {
+        Operand valueOperand;
+        if (child != null) {
+            valueOperand = getOperand(child, 0);
+        } else {
+            valueOperand = UndefinedOperand.instance;
+        }
+
+        addInstruction(new YieldStar(valueOperand, (short) node.getLineno()));
+        addInstruction(new ThawFrame(true, (short) node.getLineno()));
+    }
+
+    private void visitRefMemberOrName(int op, Node node, Node child) {
+        int flags = node.getIntProp(Node.MEMBER_TYPE_PROP, 0);
+        // generate possible target, possible namespace and member
+        var operands = new ArrayList<Operand>();
+        var lines = new ArrayList<Integer>();
+        do {
+            operands.add(getOperand(child, 0, false, lines));
+            child = child.getNext();
+        } while (child != null);
+        updateLineNumber(node);
+        updateLineNumbers(lines);
+        addInstruction(createRefInstruction(op, operands, flags));
+    }
+
+    private void visitDotQuery(Node child) {
+        visitExpression(child, 0);
+        addInstruction(EnterDotQuery.instance);
+        int queryPC = instructions.size();
+        visitExpression(child.getNext(), 0);
+        addBackwardGoto(new LeaveDotQuery(), queryPC);
+    }
+
+    private void visitE4xExpression(int op, Node child) {
+        visitExpression(child, 0);
+        addInstruction(getE4xInstruction(op));
+    }
+
+    private void visitHook(int contextFlags, Node child, int savedStackDepth) {
+        Node ifThen = child.getNext();
+        Node ifElse = ifThen.getNext();
+        var test = getOperand(child, 0);
+        int elseJumpStart = instructions.size();
+        addInstruction(new IfNe(test));
+
+        // Preserve tail context flag if any
+        visitExpression(ifThen, contextFlags & ECF_TAIL);
+        int afterElseJumpStart = instructions.size();
+        addInstruction(new Goto());
+        resolveForwardGoto(elseJumpStart);
+        stackDepth = savedStackDepth;
+        // Preserve tail context flag if any
+        visitExpression(ifElse, contextFlags & ECF_TAIL);
+        resolveForwardGoto(afterElseJumpStart);
+    }
+
+    private void visitObjectRest(Node node, Node child) {
+        Object[] excludedKeys = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        if (excludedKeys == null) {
+            excludedKeys = new Object[0];
+        }
+        int computedCount = 0;
+        int staticCount = 0;
+        for (Object key : excludedKeys) {
+            if (key instanceof Node) {
+                computedCount++;
+            } else {
+                staticCount++;
+            }
+        }
+        Object[] staticKeys = new Object[staticCount];
+        int si = 0;
+        for (Object key : excludedKeys) {
+            if (!(key instanceof Node)) {
+                staticKeys[si++] = key;
+            }
+        }
+
+        var sourceOperand = getOperand(child, 0);
+        Operand[] computedKeys = new Operand[computedCount];
+        int ci = 0;
+        for (Object key : excludedKeys) {
+            if (key instanceof Node) {
+                computedKeys[ci++] = getOperand((Node) key, 0);
+            }
+        }
+        addInstruction(new ObjectRest(sourceOperand, staticKeys, computedKeys));
+    }
+
+    private void visitComma(Node node, int contextFlags, Node child) {
+        var lastChild = node.getLastChild();
+        while (child != lastChild) {
+            var obj = getOperand(child, 0);
+            addInstruction(VoidInstruction.ofOperand(obj));
+            child = child.getNext();
+        }
+        // Preserve tail context flag if any
+        visitExpression(child, contextFlags & ECF_TAIL);
+    }
+
+    private void visitLocalLoad(Node node) {
+        int localIndex = getLocalBlockRef(node);
+        addInstruction(new LocalLoad(localIndex));
+    }
+
+    private void visitFunction(Node node) {
+        int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
+        FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
+        // See comments in visitStatement for Token.FUNCTION case
+        if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION
+                && fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
+            throw Kit.codeBug();
+        }
+        addInstruction(new ClosureExpression(fnIndex));
+        if (fn.isMethodDefinition()) {
+            throw Kit.codeBug();
+        }
+    }
+
+    private void visitCall(int op, int contextFlags, Node node, Node child) {
+        boolean isOptionalChainingCall = node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1;
+        CompleteOptionalCallJump completeOptionalCallJump = null;
+        // We get a function for news, and lookup result for normal calls
+        Operand lookupResultOrFunction;
+        var lines = new ArrayList<Integer>();
+        if (op == Token.NEW) {
+            lookupResultOrFunction = getOperand(child, 0, false, lines);
+        } else {
+            completeOptionalCallJump = generateCallFunAndThis(child, isOptionalChainingCall);
+            if (completeOptionalCallJump != null) {
+                resolveForwardGoto(completeOptionalCallJump.putArgsAndDoCallLabel);
+            }
+            lookupResultOrFunction = PopOperand.instance;
+        }
+        List<Operand> args = new ArrayList<>();
+        while ((child = child.getNext()) != null) {
+            args.add(getOperand(child, 0, false, lines));
+        }
+        int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
+        updateLineNumber(node);
+        updateLineNumbers(lines);
+        if (op != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
+            if (op == Token.NEW) {
+                addInstruction(
+                        new SpecialCallNew(
+                                lookupResultOrFunction,
+                                args.toArray(Operand.EMPTY_ARRAY),
+                                callType));
+            } else {
+                addInstruction(
+                        new SpecialCall(
+                                lookupResultOrFunction,
+                                args.toArray(Operand.EMPTY_ARRAY),
+                                (short) (lineNumber & 0xFF),
+                                callType));
+            }
+        } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
+            addInstruction(
+                    Call.create(
+                            lookupResultOrFunction,
+                            args.toArray(Operand.EMPTY_ARRAY),
+                            Call.Type.CallOnSuper));
+        } else {
+            // Only use the tail call optimization if we're not in a try
+            // or we're not generating debug info (since the
+            // optimization will confuse the debugger)
+            Call.Type type = Call.Type.Call;
+            if (op == Token.CALL
+                    && (contextFlags & ECF_TAIL) != 0
+                    && !compilerEnv.isGenerateDebugInfo()
+                    && !inTryFlag) {
+                type = Call.Type.TailCall;
+            } else if (op == Token.REF_CALL) {
+                type = Call.Type.RefCall;
+            }
+
+            if (op == Token.NEW) {
+                addInstruction(
+                        New.create(lookupResultOrFunction, args.toArray(Operand.EMPTY_ARRAY)));
+            } else {
+                addInstruction(
+                        Call.create(
+                                lookupResultOrFunction, args.toArray(Operand.EMPTY_ARRAY), type));
+            }
+        }
+
+        if (completeOptionalCallJump != null) {
+            resolveForwardGoto(completeOptionalCallJump.afterLabel);
+        }
+    }
+
+    private void visitAndOr(int op, int contextFlags, Node node, Node child) {
+        visitExpression(child, 0);
+        child = child.getNext();
+
+        int end = instructions.size();
+        JumpInstruction jump =
+                (op == Token.AND) ? new IfNe(PeekOperand.instance) : new IfEq(PeekOperand.instance);
+        addInstruction(jump);
+
+        addInstruction(Pop.instance);
+
+        // Preserve tail context flag if any
+        visitExpression(child, contextFlags & ECF_TAIL);
+
+        resolveForwardGoto(end);
+    }
+
+    private void visitGetProp(int op, Node node, Node child) {
+        var firstChild = child;
+        child = child.getNext();
+        if (node.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+            var lhs = getOperand(firstChild, 0, true);
+            // Jump if null or undefined
+            int putUndefinedLabel = instructions.size();
+            addInstruction(new IfNullUndefined(lhs));
+
+            // Access property
+            addInstruction(
+                    new GetProp(
+                            lhs.convertToConsume(), child.getString(), op == Token.GETPROPNOWARN));
+            int afterLabel = instructions.size();
+            addInstruction(new Goto());
+
+            // Put undefined
+            resolveForwardGoto(putUndefinedLabel);
+            popIfPeek(lhs);
+            addInstruction(PushConstant.pushUndefined);
+            resolveForwardGoto(afterLabel);
+        } else {
+            boolean noWarn = op == Token.GETPROPNOWARN;
+            var propName = child.getString();
+            visitUnaryOperation(
+                    firstChild,
+                    lhs ->
+                            (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1)
+                                    ? new GetPropSuper(lhs, propName, noWarn)
+                                    : new GetProp(lhs, propName, noWarn));
         }
     }
 
@@ -1585,9 +1611,15 @@ public class Compiler<T extends ScriptOrFn<T>> {
             child = child.getNext();
             rhs = getSafeOperand(child, 0, false);
         } else {
-            lhs = getOperand(child, 0, false, lines);
+            lhs = getOperandInBinOp(child, 0, false, lines);
+            if (lhs == PeekOperand.instance || lhs == PopOperand.instance) {
+                visitExpression(child, 0);
+            }
             child = child.getNext();
-            rhs = getOperand(child, 0, false, lines);
+            rhs = getOperandInBinOp(child, 0, false, lines);
+            if (rhs == PeekOperand.instance || rhs == PopOperand.instance) {
+                visitExpression(child, 0);
+            }
         }
         updateLineNumbers(lines);
         addInstruction(instruction.apply(lhs, rhs));
@@ -1726,6 +1758,44 @@ public class Compiler<T extends ScriptOrFn<T>> {
             default:
                 {
                     visitExpression(node, contextFlags);
+                    if (preferPeek) {
+                        return PeekOperand.instance;
+                    }
+                    return PopOperand.instance;
+                }
+        }
+    }
+
+    private Operand getOperandInBinOp(
+            Node node, int contextFlags, boolean preferPeek, List<Integer> lines) {
+        addLineNumber(node, lines);
+        switch (node.getType()) {
+            case Token.NUMBER:
+                {
+                    double num = node.getDouble();
+                    int inum = (int) num;
+
+                    return new DoubleOperand(num);
+                }
+            case Token.STRING:
+                return new StringOperand(node.getString());
+            case Token.NULL:
+                return NullOperand.instance;
+            case Token.UNDEFINED:
+                return UndefinedOperand.instance;
+            case Token.TRUE:
+                return BooleanOperand.TRUE;
+            case Token.FALSE:
+                return BooleanOperand.FALSE;
+            case Token.THIS:
+                return ThisOperand.instance;
+            case Token.NEW_TARGET:
+                updateLineNumber(node);
+                return NewTargetOperand.instance;
+            case Token.SUPER:
+                return SuperOperand.instance;
+            default:
+                {
                     if (preferPeek) {
                         return PeekOperand.instance;
                     }
