@@ -161,34 +161,6 @@ public class NativeArrayBuffer extends ScriptableObject {
         return buffer == null;
     }
 
-    /**
-     * Return a new buffer that represents a slice of this buffer's content, starting at position
-     * "start" and ending at position "end". Both values will be "clamped" as per the JavaScript
-     * spec so that invalid values may be passed and will be adjusted up or down accordingly. This
-     * method will return a new buffer that contains a copy of the original buffer. Changes there
-     * will not affect the content of the buffer.
-     *
-     * @param s the position where the new buffer will start
-     * @param e the position where it will end
-     */
-    public NativeArrayBuffer slice(double s, double e) {
-        // Handle negative start as relative to start
-        // Clamp as per the spec to between 0 and length
-        int end =
-                ScriptRuntime.toInt32(
-                        Math.max(0, Math.min(getLength(), (e < 0 ? getLength() + e : e))));
-        int start =
-                ScriptRuntime.toInt32(Math.min(end, Math.max(0, (s < 0 ? getLength() + s : s))));
-        int len = end - start;
-
-        NativeArrayBuffer newBuf = new NativeArrayBuffer(len);
-        buffer.position(start);
-        newBuf.buffer.put(buffer);
-        buffer.rewind();
-        newBuf.buffer.flip();
-        return newBuf;
-    }
-
     private static NativeArrayBuffer getSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
     }

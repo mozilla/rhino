@@ -7,7 +7,6 @@
 package org.mozilla.javascript.typedarrays;
 
 import java.io.Serial;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
@@ -18,8 +17,6 @@ import org.mozilla.javascript.Undefined;
  */
 public abstract class NativeArrayBufferView extends ScriptableObject {
     @Serial private static final long serialVersionUID = 6884475582973958419L;
-
-    private static Boolean useLittleEndian = null;
 
     /** Many view objects can share the same backing array */
     protected final NativeArrayBuffer arrayBuffer;
@@ -63,18 +60,6 @@ public abstract class NativeArrayBufferView extends ScriptableObject {
     /** Return the length, in bytes, of the part of the buffer that this view represents. */
     public int getByteLength() {
         return byteLength;
-    }
-
-    protected static boolean useLittleEndian() {
-        if (useLittleEndian == null) {
-            Context ctx = Context.getCurrentContext();
-            // for some unit tests this might be null
-            if (ctx == null) {
-                return false;
-            }
-            useLittleEndian = Boolean.valueOf(ctx.hasFeature(Context.FEATURE_LITTLE_ENDIAN));
-        }
-        return useLittleEndian.booleanValue();
     }
 
     protected static boolean isArg(Object[] args, int i) {
