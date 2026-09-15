@@ -434,8 +434,15 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             Object savedDomain = cx.interpreterSecurityDomain;
             cx.interpreterSecurityDomain = securityDomain;
             try {
-                return securityController.callWithDomain(
-                        securityDomain, cx, (Callable) fun, scope, thisObj, args);
+                if (fun instanceof JSScript) {
+                    return securityController.callWithDomain(
+                            securityDomain, cx, (JSScript) fun, scope, thisObj, args);
+                } else if (fun instanceof JSFunction) {
+                    return securityController.callWithDomain(
+                            securityDomain, cx, (JSFunction) fun, scope, thisObj, args);
+                } else {
+                    Kit.codeBug("Unknown compiled code type.");
+                }
             } finally {
                 cx.interpreterSecurityDomain = savedDomain;
             }
