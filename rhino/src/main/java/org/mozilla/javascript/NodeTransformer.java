@@ -35,6 +35,7 @@ public class NodeTransformer {
     }
 
     public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env) {
+        compilerEnv = env;
         boolean useStrictMode = inStrictMode;
         // Support strict mode inside a function only for "ES6" language level
         // and above. Otherwise, we will end up breaking backward compatibility for
@@ -91,7 +92,8 @@ public class NodeTransformer {
             if ((type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
                     && (node instanceof Scope)
                     && !createScopeObjects
-                    && inLoop) {
+                    && inLoop
+                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
                 // The scope is not reified, so its bindings keep the same slots for the whole
                 // call. A loop can enter the scope again, and the bindings must be fresh when
                 // it does.
@@ -432,7 +434,10 @@ public class NodeTransformer {
                                 // A loop can run a block scoped declaration more than once, and
                                 // each run re-binds. Pre-ES6 const is hoisted to the function
                                 // scope instead, and keeps its "assign once" behaviour.
-                                boolean reinitialized = inLoop && defining != tree;
+                                boolean reinitialized =
+                                        compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                                                && inLoop
+                                                && defining != tree;
                                 node.setType(
                                         reinitialized ? Token.INITCONSTVAR : Token.SETCONSTVAR);
                                 nameSource.setType(Token.STRING);
@@ -709,4 +714,5 @@ public class NodeTransformer {
     private Deque<Node> loops;
     private Deque<Node> loopEnds;
     private boolean hasFinally;
+    private CompilerEnvirons compilerEnv;
 }
