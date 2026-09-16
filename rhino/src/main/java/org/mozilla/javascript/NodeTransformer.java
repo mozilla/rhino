@@ -672,8 +672,8 @@ public class NodeTransformer {
                     ((Scope) scopeNode).setParentScope(scopeParent);
                 }
             } else {
-                result.addChildToBack(new Node(Token.EXPR_VOID, newVars));
                 scopeNode.setType(Token.BLOCK);
+                scopeNode.addChildToFront(new Node(Token.EXPR_VOID, newVars));
                 result.addChildToBack(scopeNode);
                 scopeNode.addChildrenToBack(body);
                 if (body instanceof Scope) {
