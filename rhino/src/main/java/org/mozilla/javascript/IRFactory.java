@@ -1761,6 +1761,11 @@ public final class IRFactory {
                     // with an array type of length 2 (to hold key and value)
                     parser.reportError("msg.bad.for.in.destruct");
                 }
+            } else if (declType == Token.CONST) {
+                // The head declares the binding, so each iteration initializes it rather than
+                // assigning to it; a plain assignment would be refused as a write to a const.
+                lvalue.setType(Token.BINDNAME);
+                assign = new Node(Token.SETCONST, lvalue, id);
             } else {
                 assign = parser.simpleAssignment(lvalue, id);
             }

@@ -353,6 +353,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 }
                 break;
 
+            case Token.RESETVAR:
+                {
+                    if (builder.requiresActivationFrame) Kit.codeBug();
+                    addVarOp(Token.RESETVAR, scriptOrFn.getIndexForNameNode(child));
+                }
+                break;
+
             case Token.ENTERWITH:
                 visitExpression(child, 0);
                 addToken(Token.ENTERWITH);
@@ -1100,12 +1107,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 break;
 
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 {
                     if (builder.requiresActivationFrame) Kit.codeBug();
                     int index = scriptOrFn.getIndexForNameNode(child);
                     child = child.getNext();
                     visitExpression(child, 0);
-                    addVarOp(Token.SETCONSTVAR, index);
+                    addVarOp(type, index);
                 }
                 break;
 
@@ -1920,6 +1928,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     return;
                 }
                 addIndexOp(Icode.SETCONSTVAR, varIndex);
+                return;
+            case Token.INITCONSTVAR:
+                addIndexOp(Icode.INITCONSTVAR, varIndex);
+                return;
+            case Token.RESETVAR:
+                addIndexOp(Icode.RESETVAR, varIndex);
                 return;
             case Token.GETVAR:
             case Token.SETVAR:

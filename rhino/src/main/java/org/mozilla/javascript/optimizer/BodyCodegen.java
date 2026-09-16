@@ -868,7 +868,8 @@ class BodyCodegen {
                     /* special case this so as to avoid unnecessary
                     load's & pop's */
                     visitSetVar(child, child.getFirstChild(), false);
-                } else if (child.getType() == Token.SETCONSTVAR) {
+                } else if (child.getType() == Token.SETCONSTVAR
+                        || child.getType() == Token.INITCONSTVAR) {
                     /* special case this so as to avoid unnecessary
                     load's & pop's */
                     visitSetConstVar(child, child.getFirstChild(), false);
@@ -880,6 +881,10 @@ class BodyCodegen {
                     if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) cfw.add(ByteCode.POP2);
                     else cfw.add(ByteCode.POP);
                 }
+                break;
+
+            case Token.RESETVAR:
+                visitResetVar(node);
                 break;
 
             case Token.EXPR_RESULT:
@@ -1548,6 +1553,7 @@ class BodyCodegen {
                 break;
 
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 visitSetConstVar(node, child, true);
                 break;
 
@@ -4686,40 +4692,60 @@ class BodyCodegen {
         generateExpression(child.getNext(), node);
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         int reg = varRegisters[varIndex];
+        // A block scoped declaration reached more than once must re-bind, so INITCONSTVAR
+        // stores without consulting the "already initialized" flag register.
+        boolean force = node.getType() == Token.INITCONSTVAR;
+        int flagReg = reg + (isNumber ? 2 : 1);
         int beyond = cfw.acquireLabel();
-        int noAssign = cfw.acquireLabel();
+        int noAssign = force ? -1 : cfw.acquireLabel();
+        if (!force) {
+            cfw.addILoad(flagReg);
+            cfw.add(ByteCode.IFNE, noAssign);
+        }
+        int stack = cfw.getStackTop();
+        cfw.addPush(1);
+        cfw.addIStore(flagReg);
         if (isNumber) {
-            cfw.addILoad(reg + 2);
-            cfw.add(ByteCode.IFNE, noAssign);
-            int stack = cfw.getStackTop();
-            cfw.addPush(1);
-            cfw.addIStore(reg + 2);
             cfw.addDStore(reg);
-            if (needValue) {
-                cfw.addDLoad(reg);
-                cfw.markLabel(noAssign, stack);
-            } else {
-                cfw.add(ByteCode.GOTO, beyond);
-                cfw.markLabel(noAssign, stack);
-                cfw.add(ByteCode.POP2);
-            }
         } else {
-            cfw.addILoad(reg + 1);
-            cfw.add(ByteCode.IFNE, noAssign);
-            int stack = cfw.getStackTop();
-            cfw.addPush(1);
-            cfw.addIStore(reg + 1);
             cfw.addAStore(reg);
-            if (needValue) {
-                cfw.addALoad(reg);
-                cfw.markLabel(noAssign, stack);
+        }
+        if (needValue) {
+            if (isNumber) {
+                cfw.addDLoad(reg);
             } else {
-                cfw.add(ByteCode.GOTO, beyond);
-                cfw.markLabel(noAssign, stack);
-                cfw.add(ByteCode.POP);
+                cfw.addALoad(reg);
             }
+            if (!force) {
+                cfw.markLabel(noAssign, stack);
+            }
+        } else if (!force) {
+            cfw.add(ByteCode.GOTO, beyond);
+            cfw.markLabel(noAssign, stack);
+            cfw.add(isNumber ? ByteCode.POP2 : ByteCode.POP);
         }
         cfw.markLabel(beyond);
+    }
+
+    /**
+     * Restores a block scoped slot held in a register to the state it has on entry to its block:
+     * undefined, and uninitialized again if the slot holds a const. Emitted at the top of a
+     * flattened block scope that a loop can re-enter.
+     */
+    private void visitResetVar(Node node) {
+        if (!hasVarsInRegs) Kit.codeBug();
+        int varIndex = fnCurrent.getVarIndex(node);
+        if (fnCurrent.isNumberVar(varIndex)) {
+            // RESETVAR forces the slot to AnyType during flow analysis, so this cannot happen.
+            throw Kit.codeBug();
+        }
+        int reg = varRegisters[varIndex];
+        Codegen.pushUndefined(cfw);
+        cfw.addAStore(reg);
+        if (fnCurrent.fnode.getParamAndVarConst()[varIndex]) {
+            cfw.addPush(0);
+            cfw.addIStore(reg + 1);
+        }
     }
 
     private void visitGetProp(Node node, Node child) {

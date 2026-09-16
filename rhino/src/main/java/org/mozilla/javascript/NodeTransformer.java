@@ -12,6 +12,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -62,7 +63,7 @@ public class NodeTransformer {
 
         // uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
-        transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode);
+        transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode, false);
     }
 
     private void transformCompilationUnit_r(
@@ -70,7 +71,8 @@ public class NodeTransformer {
             final Node parent,
             Scope scope,
             boolean createScopeObjects,
-            boolean inStrictMode) {
+            boolean inStrictMode,
+            boolean inLoop) {
         Node node = null;
         siblingLoop:
         for (; ; ) {
@@ -86,6 +88,15 @@ public class NodeTransformer {
             }
 
             int type = node.getType();
+            if ((type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
+                    && (node instanceof Scope)
+                    && !createScopeObjects
+                    && inLoop) {
+                // The scope is not reified, so its bindings keep the same slots for the whole
+                // call. A loop can enter the scope again, and the bindings must be fresh when
+                // it does.
+                addScopeReinit((Scope) node);
+            }
             if (createScopeObjects
                     && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
                     && (node instanceof Scope)) {
@@ -221,7 +232,12 @@ public class NodeTransformer {
                                 unwindBlock.addChildToBack(returnNode);
                                 // transform return expression
                                 transformCompilationUnit_r(
-                                        tree, store, scope, createScopeObjects, inStrictMode);
+                                        tree,
+                                        store,
+                                        scope,
+                                        createScopeObjects,
+                                        inStrictMode,
+                                        inLoop);
                             }
                             // skip transformCompilationUnit_r to avoid infinite loop
                             continue siblingLoop;
@@ -413,7 +429,12 @@ public class NodeTransformer {
                                 node.setType(Token.SETVAR);
                                 nameSource.setType(Token.STRING);
                             } else if (type == Token.SETCONST) {
-                                node.setType(Token.SETCONSTVAR);
+                                // A loop can run a block scoped declaration more than once, and
+                                // each run re-binds. Pre-ES6 const is hoisted to the function
+                                // scope instead, and keeps its "assign once" behaviour.
+                                boolean reinitialized = inLoop && defining != tree;
+                                node.setType(
+                                        reinitialized ? Token.INITCONSTVAR : Token.SETCONSTVAR);
                                 nameSource.setType(Token.STRING);
                             } else if (type == Token.DELPROP) {
                                 // Local variables are by definition permanent
@@ -437,7 +458,8 @@ public class NodeTransformer {
                                         (Node) propertyId,
                                         node instanceof Scope ? (Scope) node : scope,
                                         createScopeObjects,
-                                        inStrictMode);
+                                        inStrictMode,
+                                        inLoop);
                             }
                         }
                     }
@@ -448,8 +470,68 @@ public class NodeTransformer {
                     node,
                     node instanceof Scope ? (Scope) node : scope,
                     createScopeObjects,
-                    inStrictMode);
+                    inStrictMode,
+                    inLoop || node.getType() == Token.LOOP);
         }
+    }
+
+    /**
+     * Prepends to a flattened block scope the stores that re-entering it implies. Because the scope
+     * is not reified, each of its bindings keeps one slot for the whole call, so a declaration that
+     * ran on an earlier iteration is still in effect: {@code SETCONSTVAR} stores only into a slot
+     * still marked uninitialized, and a {@code let} without an initializer stores nothing at all.
+     *
+     * <p>Only bindings that the scope does not itself initialize on entry need this. A declaration
+     * among the scope's leading statements always runs before anything can read the binding, so it
+     * is left to do the initializing; one that a jump can bypass — a {@code case} clause of a
+     * switch, or the head of a for-in/for-of loop — is not.
+     */
+    private static void addScopeReinit(Scope scope) {
+        Map<String, Symbol> symbolTable = scope.getSymbolTable();
+        if (symbolTable == null || symbolTable.isEmpty()) {
+            return;
+        }
+        List<String> initializedOnEntry = namesInitializedOnEntry(scope);
+        Node previous = null;
+        for (Symbol symbol : symbolTable.values()) {
+            if (!symbol.isDeclTypeLexical() || initializedOnEntry.contains(symbol.getName())) {
+                continue;
+            }
+            Node name = Node.newString(symbol.getName());
+            name.setScope(scope);
+            Node reset = new Node(Token.RESETVAR, name);
+            reset.setLineColumnNumber(scope.getLineno(), scope.getColumn());
+            if (previous == null) {
+                scope.addChildToFront(reset);
+            } else {
+                scope.addChildAfter(reset, previous);
+            }
+            previous = reset;
+        }
+    }
+
+    /**
+     * Collects the names that the leading statements of a scope declare with an initializer. The
+     * walk stops at the first {@link Token#TARGET}, since from there on a jump can land past a
+     * declaration and leave the binding holding whatever an earlier iteration left in its slot.
+     */
+    private static List<String> namesInitializedOnEntry(Scope scope) {
+        List<String> names = new ArrayList<>(4);
+        for (Node child = scope.getFirstChild(); child != null; child = child.getNext()) {
+            int type = child.getType();
+            if (type == Token.TARGET) {
+                break;
+            }
+            if (type != Token.LET && type != Token.CONST && type != Token.VAR) {
+                continue;
+            }
+            for (Node decl = child.getFirstChild(); decl != null; decl = decl.getNext()) {
+                if (decl.getType() == Token.NAME && decl.hasChildren()) {
+                    names.add(decl.getString());
+                }
+            }
+        }
+        return names;
     }
 
     protected void visitNew(Node node, ScriptNode tree) {}

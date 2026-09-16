@@ -141,4 +141,133 @@ class ConstLetScopingTest {
                 1.0,
                 "'use strict'; function f() { return 1; } { function f() { return 2; } } f();");
     }
+
+    // --- re-entering a block scope inside a loop ---
+    //
+    // A function that needs no activation holds its block-scoped bindings in flat slots, one per
+    // binding for the whole call. Every iteration must still see a fresh binding.
+
+    @Test
+    void constInForBodyIsRebound() {
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "function f(a) { var o = []; for (var i = 0; i < a.length; i++) {"
+                        + " const x = a[i]; o.push(x); } return o.join(); } f([1, 2, 3]);");
+    }
+
+    @Test
+    void constInWhileBodyIsRebound() {
+        Utils.assertWithAllModes_ES6(
+                "0,1,2",
+                "function f(n) { var o = []; var i = 0; while (i < n) {"
+                        + " const x = i; o.push(x); i++; } return o.join(); } f(3);");
+    }
+
+    @Test
+    void constInDoWhileBodyIsRebound() {
+        Utils.assertWithAllModes_ES6(
+                "0,1,2",
+                "function f(n) { var o = []; var i = 0; do {"
+                        + " const x = i; o.push(x); i++; } while (i < n); return o.join(); } f(3);");
+    }
+
+    @Test
+    void constInNestedBlocksIsRebound() {
+        Utils.assertWithAllModes_ES6(
+                "0:0,1:2,2:4",
+                "function f(n) { var o = []; for (var i = 0; i < n; i++) { { const x = i;"
+                        + " { const y = i * 2; o.push(x + ':' + y); } } } return o.join(); } f(3);");
+    }
+
+    @Test
+    void constInForBodyIsReboundAfterContinue() {
+        // The declaration is skipped on the middle iteration, and must still re-bind on the next
+        Utils.assertWithAllModes_ES6(
+                "0,skip,2",
+                "function f(n) { var o = []; for (var i = 0; i < n; i++) {"
+                        + " if (i === 1) { o.push('skip'); continue; } const x = i; o.push(x); }"
+                        + " return o.join(); } f(3);");
+    }
+
+    @Test
+    void letWithoutInitializerInForBodyIsReset() {
+        // Reading the binding before its first assignment must see undefined on every iteration,
+        // not the value the previous iteration left in the slot
+        Utils.assertWithAllModes_ES6(
+                "undefined,undefined,undefined",
+                "function f(n) { var o = []; for (var i = 0; i < n; i++) {"
+                        + " let x; o.push(String(x)); x = i; } return o.join(); } f(3);");
+    }
+
+    @Test
+    void constDeclaredInSwitchCaseIsResetOnReentry() {
+        // The declaration only runs for case 0, so on the next iteration the binding must be
+        // undefined again rather than holding the value from the first pass
+        Utils.assertWithAllModes_ES6(
+                "7,undefined,d",
+                "function f(n) { var o = []; for (var i = 0; i < n; i++) { switch (i) {"
+                        + " case 0: const x = 7; o.push(x); break;"
+                        + " case 1: o.push(String(x)); break;"
+                        + " default: o.push('d'); } } return o.join(); } f(3);");
+    }
+
+    @Test
+    void constForOfHeadIsBoundEachIteration() {
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "function f(a) { var o = []; for (const x of a) { o.push(x); }"
+                        + " return o.join(); } f([1, 2, 3]);");
+    }
+
+    @Test
+    void constForInHeadIsBoundEachIteration() {
+        Utils.assertWithAllModes_ES6(
+                "a,b",
+                "function f(obj) { var o = []; for (const k in obj) { o.push(k); }"
+                        + " return o.join(); } f({a: 1, b: 2});");
+    }
+
+    @Test
+    void destructuringConstInForBodyIsRebound() {
+        Utils.assertWithAllModes_ES6(
+                "1/2,3/4",
+                "function f(a) { var o = []; for (var i = 0; i < a.length; i++) {"
+                        + " const [p, q] = a[i]; o.push(p + '/' + q); } return o.join(); }"
+                        + " f([[1, 2], [3, 4]]);");
+    }
+
+    @Test
+    void constInLoopStillRejectsAssignment() {
+        Utils.assertWithAllModes_ES6(
+                "protected",
+                "function f() { for (var i = 0; i < 2; i++) { const x = i; x = 99;"
+                        + " if (x !== i) return 'leaked'; } return 'protected'; } f();");
+    }
+
+    @Test
+    void constInLoopIsReboundWithActivation() {
+        // The same loop in a function that does reify its scopes, for comparison
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "function f(a) { var o = []; for (var i = 0; i < a.length; i++) {"
+                        + " const x = a[i]; o.push(x); } eval(''); return o.join(); } f([1, 2, 3]);");
+    }
+
+    @Test
+    void constInLoopStaysNumericallyCorrect() {
+        // The declaration initializes unconditionally, so the slot can still be a number var
+        Utils.assertWithAllModes_ES6(
+                12.0,
+                "function f(n) { var s = 0; for (var i = 0; i < n; i++) { const x = i * 2;"
+                        + " s += x; } return s; } f(4);");
+    }
+
+    @Test
+    void legacyConstInLoopStillAssignsOnce() {
+        // Pre-ES6 const is hoisted to the function scope and keeps its "assign once" behaviour
+        Utils.assertWithAllModes_1_8(
+                "0,0,0",
+                "function f(n) { var o = []; for (var i = 0; i < n; i++) { const x = i;"
+                        + " o.push(x); } return o.join(); } f(3);");
+    }
 }
