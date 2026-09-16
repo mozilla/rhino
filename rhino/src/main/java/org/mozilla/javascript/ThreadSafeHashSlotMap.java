@@ -175,4 +175,9 @@ class ThreadSafeHashSlotMap<T extends PropHolder<T>> extends HashSlotMap<T>
     public void releaseLock(long stamp) {
         lock.unlock(stamp);
     }
+
+    @Override
+    public SlotMap<T> copyMap() {
+        return new ThreadSafeHashSlotMap<>(new StampedLock(), this);
+    }
 }
