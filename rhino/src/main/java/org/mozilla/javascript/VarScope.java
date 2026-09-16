@@ -28,4 +28,8 @@ public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope
     default boolean isNestedScope() {
         return false;
     }
+
+    default VarScope copyScope() {
+        throw new UnsupportedOperationException();
+    }
 }
