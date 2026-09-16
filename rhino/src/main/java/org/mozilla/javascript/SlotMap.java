@@ -91,4 +91,8 @@ public interface SlotMap<T extends PropHolder<T>> extends Iterable<Slot<T>> {
     default CompoundOperationMap<T> startCompoundOp(SlotMapOwner<T> owner, boolean forWriting) {
         return new CompoundOperationMap<T>(owner);
     }
+
+    default SlotMap<T> copyMap() {
+        throw new UnsupportedOperationException();
+    }
 }
