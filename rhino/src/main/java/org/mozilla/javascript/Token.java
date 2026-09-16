@@ -250,7 +250,13 @@ public class Token {
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
-            LAST_TOKEN = OBJECT_REST + 1;
+            // Unconditional initialization of a block-scoped const slot. Unlike SETCONSTVAR it
+            // always stores, so a declaration reached more than once (a loop body) re-binds.
+            INITCONSTVAR = OBJECT_REST + 1,
+            // Restores a flattened block-scoped slot to its state on block entry: undefined,
+            // and uninitialized again if the slot holds a const.
+            RESETVAR = INITCONSTVAR + 1,
+            LAST_TOKEN = RESETVAR + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -625,6 +631,10 @@ public class Token {
                 return "SETCONST";
             case SETCONSTVAR:
                 return "SETCONSTVAR";
+            case INITCONSTVAR:
+                return "INITCONSTVAR";
+            case RESETVAR:
+                return "RESETVAR";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:

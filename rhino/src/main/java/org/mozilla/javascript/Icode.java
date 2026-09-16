@@ -171,8 +171,12 @@ abstract class Icode {
             // Create an uninitialized const binding in the current scope
             DEF_CONST = OBJECT_REST - 1,
 
+            // block scoped bindings held in flattened slots
+            INITCONSTVAR = DEF_CONST - 1,
+            RESETVAR = INITCONSTVAR - 1,
+
             // Last icode
-            MIN_ICODE = DEF_CONST;
+            MIN_ICODE = RESETVAR;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -326,6 +330,10 @@ abstract class Icode {
                 return "SETCONSTVAR";
             case SETCONSTVAR1:
                 return "SETCONSTVAR1";
+            case INITCONSTVAR:
+                return "INITCONSTVAR";
+            case RESETVAR:
+                return "RESETVAR";
             case GENERATOR:
                 return "GENERATOR";
             case GENERATOR_END:
