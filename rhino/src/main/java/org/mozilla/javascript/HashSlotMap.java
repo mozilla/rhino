@@ -97,4 +97,9 @@ public class HashSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
     private Object makeKey(Slot<T> slot) {
         return slot.getKey();
     }
+
+    @Override
+    public SlotMap<T> copyMap() {
+        return new HashSlotMap<>(this);
+    }
 }

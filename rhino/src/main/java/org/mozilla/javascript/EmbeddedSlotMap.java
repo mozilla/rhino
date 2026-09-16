@@ -63,6 +63,14 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         slots = new Slot[n];
     }
 
+    @SuppressWarnings("unchecked")
+    protected EmbeddedSlotMap(EmbeddedSlotMap<T> other) {
+        slots = new Slot[other.slots.length];
+        for (var s : other) {
+            insertNewSlot(s.copySlot());
+        }
+    }
+
     @Override
     public int size() {
         return count;
@@ -319,5 +327,10 @@ public class EmbeddedSlotMap<T extends PropHolder<T>> implements SlotMap<T> {
         // It only works if the table size is a power of 2.
         // The performance improvement is measurable.
         return indexOrHash & (tableSize - 1);
+    }
+
+    @Override
+    public SlotMap<T> copyMap() {
+        return new EmbeddedSlotMap<>(this);
     }
 }
