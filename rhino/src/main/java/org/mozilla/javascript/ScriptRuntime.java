@@ -5379,6 +5379,14 @@ public class ScriptRuntime {
         scope.defineConst(cx, name, scope);
     }
 
+    /**
+     * Gives the next iteration of a loop its own copy of the loop's block scope, leaving the one
+     * the finished iteration may have handed to a closure untouched.
+     */
+    public static VarScope replaceScope(VarScope scope) {
+        return scope.copyScope();
+    }
+
     public static VarScope enterDotQuery(Object value, VarScope scope) {
         if (!(value instanceof XMLObject)) {
             throw notXmlError(value);

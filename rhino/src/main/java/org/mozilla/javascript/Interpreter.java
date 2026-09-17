@@ -761,6 +761,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
         instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
         instructionObjs[base + Icode.DEF_CONST] = new DoDefConst();
+        instructionObjs[base + Icode.SCOPE_REPLACE] = new DoScopeReplace();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
@@ -3460,6 +3461,14 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             ScriptRuntime.defineConst(cx, frame.scope, state.stringReg);
+            return null;
+        }
+    }
+
+    private static class DoScopeReplace extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope = ScriptRuntime.replaceScope(frame.scope);
             return null;
         }
     }

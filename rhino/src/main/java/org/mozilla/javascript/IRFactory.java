@@ -578,7 +578,7 @@ public final class IRFactory {
         try {
             Node body = transform(loop.getBody());
             Node cond = transform(loop.getCondition());
-            return createLoop(loop, LOOP_DO_WHILE, body, cond, null, null);
+            return createLoop(loop, LOOP_DO_WHILE, body, cond, null, null, false);
         } finally {
             parser.popScope();
         }
@@ -1369,7 +1369,7 @@ public final class IRFactory {
         try {
             Node cond = transform(loop.getCondition());
             Node body = transform(loop.getBody());
-            return createLoop(loop, LOOP_WHILE, body, cond, null, null);
+            return createLoop(loop, LOOP_WHILE, body, cond, null, null, false);
         } finally {
             parser.popScope();
         }
@@ -1624,22 +1624,40 @@ public final class IRFactory {
         return result;
     }
 
-    private static Node createFor(Scope loop, Node init, Node test, Node incr, Node body) {
-        if (init.getType() == Token.LET) {
+    private Node createFor(Scope loop, Node init, Node test, Node incr, Node body) {
+        int initType = init.getType();
+        // Pre-ES6 "const" hoists to the enclosing function, so there is nothing to split out.
+        boolean lexicalHead =
+                initType == Token.LET
+                        || (initType == Token.CONST
+                                && parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
+        if (lexicalHead) {
             // rewrite "for (let i=s; i < N; i++)..." as
             // "let (i=s) { for (; i < N; i++)..." so that "s" is evaluated
             // outside the scope of the for.
             Scope let = Scope.splitScope(loop);
             let.setType(Token.LET);
             let.addChildrenToBack(init);
-            let.addChildToBack(createLoop(loop, LOOP_FOR, body, test, new Node(Token.EMPTY), incr));
+            let.addChildToBack(
+                    createLoop(loop, LOOP_FOR, body, test, new Node(Token.EMPTY), incr, true));
             return let;
         }
-        return createLoop(loop, LOOP_FOR, body, test, init, incr);
+        return createLoop(loop, LOOP_FOR, body, test, init, incr, false);
     }
 
+    /**
+     * @param perIteration whether the loop's own bindings are lexical, and so must be rebound for
+     *     each iteration. Only meaningful for {@code LOOP_FOR}; the other loop forms declare
+     *     nothing of their own, and a for-in/of head is marked by {@link #createForIn}.
+     */
     private static Node createLoop(
-            Jump loop, int loopType, Node body, Node cond, Node init, Node incr) {
+            Jump loop,
+            int loopType,
+            Node body,
+            Node cond,
+            Node init,
+            Node incr,
+            boolean perIteration) {
         Node bodyTarget = Node.newTarget();
         Node condTarget = Node.newTarget();
         if (loopType == LOOP_FOR && cond.getType() == Token.EMPTY) {
@@ -1669,7 +1687,7 @@ public final class IRFactory {
             if (loopType == LOOP_FOR) {
                 int initType = init.getType();
                 if (initType != Token.EMPTY) {
-                    if (initType != Token.VAR && initType != Token.LET) {
+                    if (initType != Token.VAR && initType != Token.LET && initType != Token.CONST) {
                         init = new Node(Token.EXPR_VOID, init);
                     }
                     loop.addChildToFront(init);
@@ -1679,6 +1697,15 @@ public final class IRFactory {
                 if (incr.getType() != Token.EMPTY) {
                     incr = new Node(Token.EXPR_VOID, incr);
                     loop.addChildAfter(incr, incrTarget);
+                }
+                if (perIteration) {
+                    // One iteration environment is entered before the first test, so that what
+                    // the initializer saw stays behind, and a new one at the continue target,
+                    // where it is the increment that first writes to it.
+                    int lineno = loop.getLineno();
+                    int column = loop.getColumn();
+                    loop.addChildAfter(new Node(Token.ITERATION, lineno, column), incrTarget);
+                    loop.addChildToFront(new Node(Token.ITERATION, lineno, column));
                 }
                 continueTarget = incrTarget;
             }
@@ -1769,10 +1796,16 @@ public final class IRFactory {
             } else {
                 assign = parser.simpleAssignment(lvalue, id);
             }
+            if (declType == Token.LET || declType == Token.CONST) {
+                // A lexical head binds afresh on every iteration, before the value the
+                // enumeration just produced is assigned to it.
+                newBody.addChildToBack(
+                        new Node(Token.ITERATION, loop.getLineno(), loop.getColumn()));
+            }
             newBody.addChildToBack(new Node(Token.EXPR_VOID, assign));
             newBody.addChildToBack(body);
 
-            loop = createLoop((Jump) loop, LOOP_WHILE, newBody, cond, null, null);
+            loop = createLoop((Jump) loop, LOOP_WHILE, newBody, cond, null, null, false);
             loop.addChildToFront(init);
             if (type == Token.VAR || type == Token.LET) loop.addChildToFront(lhs);
             localBlock.addChildToBack(loop);

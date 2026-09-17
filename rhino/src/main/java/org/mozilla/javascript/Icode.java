@@ -175,8 +175,11 @@ abstract class Icode {
             INITCONSTVAR = DEF_CONST - 1,
             RESETVAR = INITCONSTVAR - 1,
 
+            // replace the current block scope with a copy of itself
+            SCOPE_REPLACE = RESETVAR - 1,
+
             // Last icode
-            MIN_ICODE = RESETVAR;
+            MIN_ICODE = SCOPE_REPLACE;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -334,6 +337,8 @@ abstract class Icode {
                 return "INITCONSTVAR";
             case RESETVAR:
                 return "RESETVAR";
+            case SCOPE_REPLACE:
+                return "SCOPE_REPLACE";
             case GENERATOR:
                 return "GENERATOR";
             case GENERATOR_END:

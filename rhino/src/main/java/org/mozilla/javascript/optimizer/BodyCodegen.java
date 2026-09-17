@@ -11,6 +11,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CompilerEnvirons;
@@ -832,6 +833,17 @@ class BodyCodegen {
                                 + ")Lorg/mozilla/javascript/VarScope;");
                 cfw.addAStore(variableObjectLocal);
                 decReferenceWordLocal(variableObjectLocal);
+                break;
+
+            case Token.SCOPE_REPLACE:
+                // Swaps one scope for another at the same depth, so the reference count of the
+                // local holding it does not change.
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                        "replaceScope",
+                        "(Lorg/mozilla/javascript/VarScope;"
+                                + ")Lorg/mozilla/javascript/VarScope;");
+                cfw.addAStore(variableObjectLocal);
                 break;
 
             case Token.ENUM_INIT_KEYS:
