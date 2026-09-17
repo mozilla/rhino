@@ -71,7 +71,7 @@ public class StandardSlot<T extends PropHolder<T>> extends Slot<T> {
     @Override
     public boolean setValue(Object value, T owner, T start, boolean isThrow) {
         if ((attributes & ScriptableObject.READONLY) != 0) {
-            if (isThrow) {
+            if ((attributes & ScriptableObject.STRICTLY_READONLY) != 0 || isThrow) {
                 throw ScriptRuntime.typeErrorById("msg.modify.readonly", getName());
             }
             return true;

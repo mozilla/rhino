@@ -411,7 +411,11 @@ public class TopLevel extends ScopeObject {
 
     @Override
     public void put(String name, VarScope start, Object value) {
-        ScriptableObject.putProperty(globalThis, name, value);
+        if (super.has(name, start)) {
+            super.put(name, start, value);
+        } else {
+            ScriptableObject.putProperty(globalThis, name, value);
+        }
     }
 
     @Override
@@ -457,31 +461,6 @@ public class TopLevel extends ScopeObject {
         } else {
             return globalThis.getAttributes(name);
         }
-    }
-
-    // Technically this is wrong, but there are currently tests that
-    // depend const variable being defined on globalThis.
-    //
-    // In a compliant implementation const declarations should bind
-    // the values on the global scope but not on the global object.
-
-    @Override
-    public boolean isConst(String name) {
-        if (super.get(name, this) != NOT_FOUND) {
-            return super.isConst(name);
-        } else {
-            return globalThis.isConst(name);
-        }
-    }
-
-    @Override
-    public void putConst(String name, VarScope start, Object value) {
-        globalThis.putConst(name, globalThis, value);
-    }
-
-    @Override
-    public void defineConst(String name, VarScope start) {
-        globalThis.defineConst(name, globalThis);
     }
 
     public void defineFunctionProperties(

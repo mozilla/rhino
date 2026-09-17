@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
 import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 
 import java.io.IOException;
@@ -319,7 +320,8 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
         if (slot == null) {
             return false;
         }
-        return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
+        return (slot.getAttributes() & (PERMANENT | READONLY | STRICTLY_READONLY))
+                == (PERMANENT | READONLY | STRICTLY_READONLY);
     }
 
     /**
