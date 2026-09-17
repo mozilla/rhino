@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.InstrumentEmitter.Type;
+import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -372,6 +373,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
 
             case Token.LEAVE_SCOPE:
                 addToken(Token.LEAVE_SCOPE);
+                break;
+
+            case Token.SCOPE_REPLACE:
+                addIcode(Icode.SCOPE_REPLACE);
                 break;
 
             case Token.LOCAL_BLOCK:

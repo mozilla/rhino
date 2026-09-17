@@ -256,7 +256,14 @@ public class Token {
             // Restores a flattened block-scoped slot to its state on block entry: undefined,
             // and uninitialized again if the slot holds a const.
             RESETVAR = INITCONSTVAR + 1,
-            LAST_TOKEN = RESETVAR + 1;
+            // Marks the point in a loop at which a new iteration, and so a new lexical
+            // environment for the loop's own bindings, begins. NodeTransformer rewrites it
+            // according to whether that environment is reified, so it never reaches a back end.
+            ITERATION = RESETVAR + 1,
+            // Replaces the current block scope with a fresh copy of itself, so that the bindings
+            // the next loop iteration sees are distinct from the ones it leaves behind.
+            SCOPE_REPLACE = ITERATION + 1,
+            LAST_TOKEN = SCOPE_REPLACE + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -635,6 +642,10 @@ public class Token {
                 return "INITCONSTVAR";
             case RESETVAR:
                 return "RESETVAR";
+            case ITERATION:
+                return "ITERATION";
+            case SCOPE_REPLACE:
+                return "SCOPE_REPLACE";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:

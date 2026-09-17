@@ -10,9 +10,12 @@ import static org.mozilla.javascript.Context.reportError;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -302,9 +305,10 @@ public class NodeTransformer {
                 case Token.LET:
                     {
                         Node child = node.getFirstChild();
-                        if (child.getType() == Token.LET) {
+                        if (child.getType() == Token.LET || child.getType() == Token.CONST) {
                             // We have a let statement or expression rather than a
-                            // let declaration
+                            // let declaration. A CONST child means a "for (const ...; ...)"
+                            // head that createFor split into a scope of its own.
                             boolean createWith =
                                     tree.getType() != Token.FUNCTION
                                             || ((FunctionNode) tree).requiresActivation();
@@ -345,6 +349,22 @@ public class NodeTransformer {
                             result.addChildToBack(pop);
                         }
                         node = replaceCurrent(parent, previous, node, result);
+                        break;
+                    }
+
+                case Token.ITERATION:
+                    {
+                        // A reified iteration environment is copied, so that the bindings the
+                        // iteration just finished handed to any closure it created stay as they
+                        // were. A flattened scope keeps one slot per binding for the whole call
+                        // and nothing can capture it, so the RESETVAR stores that addScopeReinit
+                        // prepends are all the freshness it needs.
+                        boolean copyScope =
+                                createScopeObjects
+                                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+                        Node replacement = new Node(copyScope ? Token.SCOPE_REPLACE : Token.EMPTY);
+                        replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
+                        node = replaceCurrent(parent, previous, node, replacement);
                         break;
                     }
 
@@ -539,6 +559,29 @@ public class NodeTransformer {
         return names;
     }
 
+    /**
+     * Collects the names a let wrapper scope declares as {@code const}. Only a {@code for (const
+     * ...; ...; ...)} head, which {@link IRFactory} splits into a scope of its own, still carries a
+     * symbol table by the time it gets here; the wrappers synthesized for ordinary blocks have
+     * already given their symbols away.
+     */
+    private static Set<String> constNames(Node scopeNode) {
+        if (!(scopeNode instanceof Scope)) {
+            return Collections.emptySet();
+        }
+        Map<String, Symbol> symbolTable = ((Scope) scopeNode).getSymbolTable();
+        if (symbolTable == null) {
+            return Collections.emptySet();
+        }
+        Set<String> names = new HashSet<>(4);
+        for (Symbol symbol : symbolTable.values()) {
+            if (symbol.getDeclType() == Symbol.Type.CONST) {
+                names.add(symbol.getName());
+            }
+        }
+        return names;
+    }
+
     protected void visitNew(Node node, ScriptNode tree) {}
 
     protected void visitCall(Node node, ScriptNode tree) {}
@@ -546,6 +589,7 @@ public class NodeTransformer {
     protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();
         Node body = vars.getNext();
+        Set<String> constNames = constNames(scopeNode);
         scopeNode.removeChild(vars);
         scopeNode.removeChild(body);
         boolean isExpression = scopeNode.getType() == Token.LETEXPR;
@@ -659,7 +703,13 @@ public class NodeTransformer {
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 }
-                newVars.addChildToBack(new Node(Token.SETVAR, stringNode, init));
+                // A const slot rejects SETVAR, and the declaration may run again if an outer
+                // loop re-enters, so initialize it unconditionally.
+                int setOp =
+                        constNames.contains(current.getString())
+                                ? Token.INITCONSTVAR
+                                : Token.SETVAR;
+                newVars.addChildToBack(new Node(setOp, stringNode, init));
             }
             if (isExpression) {
                 result.addChildToBack(newVars);
