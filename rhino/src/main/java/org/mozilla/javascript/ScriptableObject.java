@@ -50,11 +50,7 @@ import org.mozilla.javascript.debug.DebuggableObject;
  * @author Norris Boyd
  */
 public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
-        implements Scriptable,
-                SymbolScriptable,
-                Serializable,
-                DebuggableObject,
-                ConstProperties<Scriptable> {
+        implements Scriptable, SymbolScriptable, Serializable, DebuggableObject {
 
     @Serial private static final long serialVersionUID = 2829861078851942586L;
 
@@ -103,7 +99,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public static final int UNINITIALIZED_CONST = 0x08;
 
-    public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+    public static final int STRICTLY_READONLY = 0x10;
+
+    public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST | STRICTLY_READONLY;
 
     /** The prototype of this object. */
     private Scriptable prototypeObject;
@@ -139,7 +137,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static void checkValidAttributes(int attributes) {
-        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST;
+        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST | STRICTLY_READONLY;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -362,57 +360,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             return slot;
         }
         return null;
-    }
-
-    /**
-     * Sets the value of the named const property, creating it if need be.
-     *
-     * <p>If the property was created using defineProperty, the appropriate setter method is called.
-     *
-     * <p>If the property's attributes include READONLY, no action is taken. This method will
-     * actually set the property in the start object.
-     *
-     * @param name the name of the property
-     * @param start the object whose property is being set
-     * @param value value to set the property to
-     */
-    @Override
-    public void putConst(String name, Scriptable start, Object value) {
-        if (putConstImpl(name, 0, start, value, READONLY)) return;
-
-        if (start == this) throw Kit.codeBug();
-        if (start instanceof ConstProperties) {
-            @SuppressWarnings("unchecked")
-            var cstart = ((ConstProperties<Scriptable>) start);
-            cstart.putConst(name, start, value);
-        } else start.put(name, start, value);
-    }
-
-    @Override
-    public void defineConst(String name, Scriptable start) {
-        if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
-
-        if (start == this) throw Kit.codeBug();
-        if (start instanceof ConstProperties) {
-            @SuppressWarnings("unchecked")
-            var cstart = ((ConstProperties<Scriptable>) start);
-            cstart.defineConst(name, start);
-        }
-    }
-
-    /**
-     * Returns true if the named property is defined as a const on this object.
-     *
-     * @param name the name of the property
-     * @return true if the named property is defined as a const, false otherwise.
-     */
-    @Override
-    public boolean isConst(String name) {
-        var slot = getMap().query(name, 0);
-        if (slot == null) {
-            return false;
-        }
-        return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
     }
 
     /** Implement the legacy "__defineGetter__" and "__defineSetter__" methods. */

@@ -3890,39 +3890,22 @@ class BodyCodegen {
                 int reg = varRegisters[varIndex];
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
+                    cfw.addPush("msg.modify.readonly");
+                    cfw.addPush(1);
+                    cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                    cfw.add(ByteCode.DUP);
+                    cfw.addPush(0);
+                    cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                    cfw.add(ByteCode.AASTORE);
+                    addOptRuntimeInvoke(
+                            "throwTypeErrorById",
+                            "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
                     if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                        int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
-                        cfw.addDLoad(reg + offset);
-                        if (!post) {
-                            cfw.addPush(1.0);
-                            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                                cfw.add(ByteCode.DADD);
-                            } else {
-                                cfw.add(ByteCode.DSUB);
-                            }
-                        }
+                        cfw.addPush(1.0);
                     } else {
-                        if (varIsDirectCallParameter(varIndex)) {
-                            dcpLoadAsObject(reg);
-                        } else {
-                            cfw.addALoad(reg);
-                        }
-                        if (post) {
-                            cfw.add(ByteCode.DUP);
-                            addObjectToDouble();
-                            cfw.add(ByteCode.POP2);
-                        } else {
-                            addObjectToDouble();
-                            cfw.addPush(1.0);
-                            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                                cfw.add(ByteCode.DADD);
-                            } else {
-                                cfw.add(ByteCode.DSUB);
-                            }
-                            addDoubleWrap();
-                        }
+                        cfw.addPush(1.0);
+                        addDoubleWrap();
                     }
-                    break;
                 }
                 if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
                     int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
@@ -4590,6 +4573,15 @@ class BodyCodegen {
         int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
         if (constDeclarations[varIndex]) {
+            cfw.addPush("msg.modify.readonly");
+            cfw.addPush(1);
+            cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+            cfw.add(ByteCode.DUP);
+            cfw.addPush(0);
+            cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+            cfw.add(ByteCode.AASTORE);
+            addOptRuntimeInvoke(
+                    "throwTypeErrorById", "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
             if (!needValue) {
                 if (isNumber) cfw.add(ByteCode.POP2);
                 else cfw.add(ByteCode.POP);
