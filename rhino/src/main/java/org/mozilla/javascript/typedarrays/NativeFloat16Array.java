@@ -89,8 +89,8 @@ public class NativeFloat16Array extends NativeTypedArrayView<Float> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readFloat16(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
+        short shortBits = arrayBuffer.buffer.getShort((index * BYTES_PER_ELEMENT) + offset);
+        return Conversions.shortBitsToFloat16(shortBits);
     }
 
     @Override
@@ -99,8 +99,8 @@ public class NativeFloat16Array extends NativeTypedArrayView<Float> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeFloat16(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
+        short shortBits = Conversions.float16ToShortBits(val);
+        arrayBuffer.buffer.putShort((index * BYTES_PER_ELEMENT) + offset, shortBits);
         return null;
     }
 

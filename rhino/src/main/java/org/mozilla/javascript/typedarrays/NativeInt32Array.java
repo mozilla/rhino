@@ -89,8 +89,7 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt32(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
+        return arrayBuffer.buffer.getInt((index * BYTES_PER_ELEMENT) + offset);
     }
 
     @Override
@@ -99,8 +98,7 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeInt32(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
+        arrayBuffer.buffer.putInt((index * BYTES_PER_ELEMENT) + offset, val);
         return null;
     }
 

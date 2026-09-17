@@ -88,18 +88,17 @@ public class NativeUint32Array extends NativeTypedArrayView<Long> {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readUint32(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
+        int intBits = arrayBuffer.buffer.getInt((index * BYTES_PER_ELEMENT) + offset);
+        return Conversions.intBitsToUint(intBits);
     }
 
     @Override
     protected Object js_set(int index, Object c) {
-        long val = Conversions.toUint32(c);
+        int val = Conversions.toUint32(c);
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        ByteIo.writeUint32(
-                arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
+        arrayBuffer.buffer.putInt((index * BYTES_PER_ELEMENT) + offset, val);
         return null;
     }
 

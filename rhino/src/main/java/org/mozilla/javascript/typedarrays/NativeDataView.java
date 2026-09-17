@@ -12,6 +12,8 @@ import static org.mozilla.javascript.SymbolKey.TO_STRING_TAG;
 
 import java.io.Serial;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JSFunction;
@@ -25,9 +27,9 @@ import org.mozilla.javascript.VarScope;
 
 /**
  * This class represents the JavaScript "DataView" interface, which allows direct manipulations of
- * the bytes in a NativeArrayBuffer. Java programmers would be best off getting the underling
- * "byte[]" array from the NativeArrayBuffer and manipulating it directly, perhaps using the
- * "ByteIo" class as a helper.
+ * the bytes in a NativeArrayBuffer. Java programmers would be best off getting the {@link
+ * java.nio.ByteBuffer} from the NativeArrayBuffer (via {@link NativeArrayBuffer#getByteBuffer}) and
+ * manipulating it directly.
  */
 public class NativeDataView extends NativeArrayBufferView {
     @Serial private static final long serialVersionUID = 1427967607557438968L;
@@ -97,6 +99,22 @@ public class NativeDataView extends NativeArrayBufferView {
 
     private static NativeDataView realThis(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeDataView.class);
+    }
+
+    // A view of the buffer with the requested byte order. Duplicate is used so that setting the
+    // order does not mutate the shared buffer, which would be unsafe for concurrent access.
+    private ByteBuffer orderedView(boolean littleEndian) {
+        return arrayBuffer
+                .buffer
+                .duplicate()
+                .order(littleEndian ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
+    }
+
+    private static boolean littleEndian(int arg, Object[] args) {
+        if (arg >= args.length) {
+            return false;
+        }
+        return ScriptRuntime.toBoolean(args[arg]);
     }
 
     private static Object js_buffer(Scriptable thisObj) {
@@ -205,8 +223,6 @@ public class NativeDataView extends NativeArrayBufferView {
     private Object js_getInt(Context cx, VarScope scope, int bytes, boolean signed, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
-        boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
-
         if (isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
@@ -218,21 +234,23 @@ public class NativeDataView extends NativeArrayBufferView {
 
         switch (bytes) {
             case 1:
+                int byteBits = arrayBuffer.buffer.get(offset + pos);
                 if (signed) {
-                    return ByteIo.readInt8(arrayBuffer.buffer, offset + pos);
-                } else {
-                    return ByteIo.readUint8(arrayBuffer.buffer, offset + pos);
+                    return (byte) byteBits;
                 }
+                return Conversions.byteBitsToUint(byteBits);
             case 2:
+                short shortBits = orderedView(littleEndian(1, args)).getShort(offset + pos);
                 if (signed) {
-                    return ByteIo.readInt16(arrayBuffer.buffer, offset + pos, littleEndian);
-                } else {
-                    return ByteIo.readUint16(arrayBuffer.buffer, offset + pos, littleEndian);
+                    return shortBits;
                 }
+                return Conversions.shortBitsToUint(shortBits);
             case 4:
-                return signed
-                        ? ByteIo.readInt32(arrayBuffer.buffer, offset + pos, littleEndian)
-                        : ByteIo.readUint32(arrayBuffer.buffer, offset + pos, littleEndian);
+                int intBits = orderedView(littleEndian(1, args)).getInt(offset + pos);
+                if (signed) {
+                    return intBits;
+                }
+                return Conversions.intBitsToUint(intBits);
             default:
                 throw new AssertionError();
         }
@@ -259,8 +277,6 @@ public class NativeDataView extends NativeArrayBufferView {
     private Object js_getFloat(Context cx, VarScope scope, int bytes, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
-        boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
-
         if (isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
@@ -270,13 +286,15 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
+        var view = orderedView(littleEndian(1, args));
         switch (bytes) {
             case 2:
-                return ByteIo.readFloat16(arrayBuffer.buffer, offset + pos, littleEndian);
+                short shortBits = view.getShort(offset + pos);
+                return Conversions.shortBitsToFloat16(shortBits);
             case 4:
-                return ByteIo.readFloat32(arrayBuffer.buffer, offset + pos, littleEndian);
+                return view.getFloat(offset + pos);
             case 8:
-                return ByteIo.readFloat64(arrayBuffer.buffer, offset + pos, littleEndian);
+                return view.getDouble(offset + pos);
             default:
                 throw new AssertionError();
         }
@@ -329,8 +347,6 @@ public class NativeDataView extends NativeArrayBufferView {
 
         Object val = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : ScriptRuntime.zeroObj;
 
-        boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
-
         if (isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
@@ -342,49 +358,25 @@ public class NativeDataView extends NativeArrayBufferView {
 
         switch (bytes) {
             case 1:
-                if (signed) {
-                    int value = Conversions.toInt8(val);
-                    if (pos + bytes > viewSize) {
-                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-                    }
-                    ByteIo.writeInt8(arrayBuffer.buffer, offset + pos, value);
-                } else {
-                    int value = Conversions.toUint8(val);
-                    if (pos + bytes > viewSize) {
-                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-                    }
-                    ByteIo.writeUint8(arrayBuffer.buffer, offset + pos, value);
+                int byteBits = signed ? Conversions.toInt8(val) : Conversions.toUint8(val);
+                if (pos + bytes > viewSize) {
+                    throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                 }
+                arrayBuffer.buffer.put(offset + pos, (byte) byteBits);
                 break;
             case 2:
-                if (signed) {
-                    int value = Conversions.toInt16(val);
-                    if (pos + bytes > viewSize) {
-                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-                    }
-                    ByteIo.writeInt16(arrayBuffer.buffer, offset + pos, value, littleEndian);
-                } else {
-                    int value = Conversions.toUint16(val);
-                    if (pos + bytes > viewSize) {
-                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-                    }
-                    ByteIo.writeUint16(arrayBuffer.buffer, offset + pos, value, littleEndian);
+                short shortBits = signed ? Conversions.toInt16(val) : Conversions.toUint16(val);
+                if (pos + bytes > viewSize) {
+                    throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                 }
+                orderedView(littleEndian(2, args)).putShort(offset + pos, shortBits);
                 break;
             case 4:
-                if (signed) {
-                    int value = Conversions.toInt32(val);
-                    if (pos + bytes > viewSize) {
-                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-                    }
-                    ByteIo.writeInt32(arrayBuffer.buffer, offset + pos, value, littleEndian);
-                } else {
-                    long value = Conversions.toUint32(val);
-                    if (pos + bytes > viewSize) {
-                        throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
-                    }
-                    ByteIo.writeUint32(arrayBuffer.buffer, offset + pos, value, littleEndian);
+                int intBits = signed ? Conversions.toInt32(val) : Conversions.toUint32(val);
+                if (pos + bytes > viewSize) {
+                    throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
                 }
+                orderedView(littleEndian(2, args)).putInt(offset + pos, intBits);
                 break;
             default:
                 throw new AssertionError();
@@ -417,8 +409,6 @@ public class NativeDataView extends NativeArrayBufferView {
 
         double val = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : Double.NaN;
 
-        boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
-
         if (isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
@@ -428,15 +418,17 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
+        var view = orderedView(littleEndian(2, args));
         switch (bytes) {
             case 2:
-                ByteIo.writeFloat16(arrayBuffer.buffer, offset + pos, val, littleEndian);
+                short shortBits = Conversions.float16ToShortBits(val);
+                view.putShort(offset + pos, shortBits);
                 break;
             case 4:
-                ByteIo.writeFloat32(arrayBuffer.buffer, offset + pos, val, littleEndian);
+                view.putFloat(offset + pos, (float) val);
                 break;
             case 8:
-                ByteIo.writeFloat64(arrayBuffer.buffer, offset + pos, val, littleEndian);
+                view.putDouble(offset + pos, val);
                 break;
             default:
                 throw new AssertionError();
@@ -458,8 +450,6 @@ public class NativeDataView extends NativeArrayBufferView {
     private Object js_getBigInt(boolean signed, Object[] args) {
         int pos = ScriptRuntime.toIndex(isArg(args, 0) ? args[0] : Undefined.instance);
 
-        boolean littleEndian = isArg(args, 1) && ScriptRuntime.toBoolean(args[1]);
-
         if (isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
@@ -469,21 +459,14 @@ public class NativeDataView extends NativeArrayBufferView {
             throw ScriptRuntime.rangeErrorById("msg.dataview.offset.range");
         }
 
-        long base = ByteIo.readUint64Primitive(arrayBuffer.buffer, offset + pos, littleEndian);
+        long base = orderedView(littleEndian(1, args)).getLong(offset + pos);
 
         if (signed) {
             // Interpret as signed 64-bit integer
             return BigInteger.valueOf(base);
         } else {
             // Interpret as unsigned 64-bit integer
-            if (base >= 0L) {
-                return BigInteger.valueOf(base);
-            } else {
-                // Split into two 32-bit parts for proper unsigned conversion
-                var lsw = BigInteger.valueOf(base & 0xffffffffL);
-                var msw = BigInteger.valueOf((base >>> 32)).shiftLeft(32);
-                return msw.add(lsw);
-            }
+            return Conversions.longBitsToBigUint(base);
         }
     }
 
@@ -509,8 +492,6 @@ public class NativeDataView extends NativeArrayBufferView {
 
         BigInteger val = ScriptRuntime.toBigInt(isArg(args, 1) ? args[1] : Undefined.instance);
 
-        boolean littleEndian = isArg(args, 2) && ScriptRuntime.toBoolean(args[2]);
-
         if (isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
         }
@@ -521,7 +502,7 @@ public class NativeDataView extends NativeArrayBufferView {
         }
 
         long base = val.longValue();
-        ByteIo.writeUint64(arrayBuffer.buffer, offset + pos, base, littleEndian);
+        orderedView(littleEndian(2, args)).putLong(offset + pos, base);
     }
 
     public boolean isDataViewOutOfBounds() {
