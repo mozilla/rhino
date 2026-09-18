@@ -98,6 +98,10 @@ public class NativePromise extends ScriptableObject {
         return "Promise";
     }
 
+    public boolean isPending() {
+        return state == State.PENDING;
+    }
+
     Object getResult() {
         return result;
     }
