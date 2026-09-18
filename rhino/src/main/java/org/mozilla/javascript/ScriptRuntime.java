@@ -5374,6 +5374,11 @@ public class ScriptRuntime {
         return scope.getParentScope();
     }
 
+    /** Creates an uninitialized const binding, to be initialized by its declaration. */
+    public static void defineConst(VarScope scope, String name) {
+        scope.defineConst(name, scope);
+    }
+
     public static VarScope enterDotQuery(Object value, VarScope scope) {
         if (!(value instanceof XMLObject)) {
             throw notXmlError(value);

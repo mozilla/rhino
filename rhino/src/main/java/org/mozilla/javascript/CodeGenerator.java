@@ -592,14 +592,21 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         addToken(Token.ENTER_SCOPE);
         stackChange(1);
         Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
         int i = 0;
         while (child != null) {
-            addIcode(Icode.DUP);
-            stackChange(1);
-            visitExpression(child, 0);
-            addStringOp(Token.SETNAME, (String) names[i]);
-            addIcode(Icode.POP);
-            stackChange(-2);
+            if (consts != null && consts[i]) {
+                // The declaration in the body of the scope initializes this one,
+                // so there is no initializer to evaluate here.
+                addStringOp(Icode.DEF_CONST, (String) names[i]);
+            } else {
+                addIcode(Icode.DUP);
+                stackChange(1);
+                visitExpression(child, 0);
+                addStringOp(Token.SETNAME, (String) names[i]);
+                addIcode(Icode.POP);
+                stackChange(-2);
+            }
             child = child.getNext();
             i++;
         }

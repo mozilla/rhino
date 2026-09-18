@@ -2085,6 +2085,7 @@ class BodyCodegen {
 
     private void visitEnterScope(Node node, Node child) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
 
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
@@ -2094,15 +2095,25 @@ class BodyCodegen {
         cfw.addAStore(variableObjectLocal);
         int i = 0;
         while (child != null) {
-            cfw.add(ByteCode.DUP);
-            cfw.add(ByteCode.DUP);
             String id = (String) properties[i];
-            generateExpression(child, node);
-            cfw.add(ByteCode.SWAP);
-            cfw.addALoad(contextLocal);
-            cfw.add(ByteCode.SWAP);
-            addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
-            cfw.add(ByteCode.POP);
+            if (consts != null && consts[i]) {
+                // The declaration in the body of the scope initializes this one,
+                // so there is no initializer to evaluate here.
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(id);
+                addScriptRuntimeInvoke(
+                        "defineConst",
+                        "(Lorg/mozilla/javascript/VarScope;" + "Ljava/lang/String;" + ")V");
+            } else {
+                cfw.add(ByteCode.DUP);
+                cfw.add(ByteCode.DUP);
+                generateExpression(child, node);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+                cfw.add(ByteCode.POP);
+            }
             child = child.getNext();
             i++;
         }
