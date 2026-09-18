@@ -240,7 +240,7 @@ class ConstLetScopingTest {
     void constInLoopStillRejectsAssignment() {
         Utils.assertWithAllModes_ES6(
                 "protected",
-                "function f() { for (var i = 0; i < 2; i++) { const x = i; x = 99;"
+                "function f() { for (var i = 0; i < 2; i++) { const x = i; try { x = 99 } catch (e) {};"
                         + " if (x !== i) return 'leaked'; } return 'protected'; } f();");
     }
 
