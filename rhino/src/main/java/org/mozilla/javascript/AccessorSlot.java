@@ -1,7 +1,6 @@
 package org.mozilla.javascript;
 
 import java.io.Serial;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * This is a specialization of Slot to store various types of values that are retrieved dynamically
@@ -46,22 +45,22 @@ public class AccessorSlot extends StandardSlot<Scriptable> {
     }
 
     @Override
-    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+    PropertyDescriptor getPropertyDescriptor(Context cx, Scriptable scope) {
         // It sounds logical that this would be the same as the logic for a normal Slot,
         // but the spec is super pedantic about things like the order of properties here,
         // so we need special support here.
 
         int attr = getAttributes();
-        DescriptorInfo desc;
+        PropertyDescriptor desc;
         boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
         if (es6) {
-            desc = new DescriptorInfo(ScriptableObject.NOT_FOUND, attr, false);
+            desc = new PropertyDescriptor(ScriptableObject.NOT_FOUND, attr, false);
             if (getter == null && setter == null) {
                 desc.writable = (attr & ScriptableObject.READONLY) == 0;
             }
         } else {
             desc =
-                    new DescriptorInfo(
+                    new PropertyDescriptor(
                             ScriptableObject.NOT_FOUND, attr, getter == null && setter == null);
         }
 

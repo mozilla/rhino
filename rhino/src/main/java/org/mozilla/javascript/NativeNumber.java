@@ -71,12 +71,14 @@ final class NativeNumber extends ScriptableObject {
                                 CTOR,
                                 "parseFloat",
                                 (c, s, o) ->
-                                        new DescriptorInfo(s.get("parseFloat", s), DONTENUM, true))
+                                        new PropertyDescriptor(
+                                                s.get("parseFloat", s), DONTENUM, true))
                         .withProp(
                                 CTOR,
                                 "parseInt",
                                 (c, s, o) ->
-                                        new DescriptorInfo(s.get("parseInt", s), DONTENUM, true))
+                                        new PropertyDescriptor(
+                                                s.get("parseInt", s), DONTENUM, true))
                         .withMethod(PROTO, "toString", 1, NativeNumber::js_toString)
                         .withMethod(PROTO, "toLocaleString", 0, NativeNumber::js_toLocaleString)
                         .withMethod(PROTO, "toSource", 0, NativeNumber::js_toSource)

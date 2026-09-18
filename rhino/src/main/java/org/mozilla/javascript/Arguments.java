@@ -250,7 +250,7 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         if (ScriptRuntime.isSymbol(id) || id instanceof Scriptable) {
             return super.getOwnPropertyDescriptor(cx, id);
         }
@@ -268,7 +268,7 @@ class Arguments extends ScriptableObject {
             value = getFromActivation(index);
         }
         if (super.has(index, this)) { // the descriptor has been redefined
-            DescriptorInfo desc = super.getOwnPropertyDescriptor(cx, id);
+            PropertyDescriptor desc = super.getOwnPropertyDescriptor(cx, id);
             desc.value = value;
             return desc;
         }
@@ -276,8 +276,8 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    protected boolean defineOwnProperty(
-            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
+    public boolean defineOwnProperty(
+            Context cx, Object id, PropertyDescriptor desc, boolean checkValid) {
         super.defineOwnProperty(cx, id, desc, checkValid);
         if (ScriptRuntime.isSymbol(id)) {
             return true;

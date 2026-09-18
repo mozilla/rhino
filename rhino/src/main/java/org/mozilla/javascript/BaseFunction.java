@@ -280,7 +280,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             BaseFunction builtIn,
             BuiltInSlot<BaseFunction> current,
             Object id,
-            ScriptableObject.DescriptorInfo info,
+            PropertyDescriptor info,
             boolean checkValid,
             Object key,
             int index) {
@@ -303,9 +303,9 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    static DescriptorInfo createThrowingProp(Context cx, VarScope scope, ScriptableObject obj) {
+    static PropertyDescriptor createThrowingProp(Context cx, VarScope scope, ScriptableObject obj) {
         var thrower = ScriptRuntime.typeErrorThrower(scope);
-        return new DescriptorInfo(false, NOT_FOUND, true, thrower, thrower, null);
+        return new PropertyDescriptor(false, NOT_FOUND, true, thrower, thrower, null);
     }
 
     protected final boolean defaultHas(String name) {
