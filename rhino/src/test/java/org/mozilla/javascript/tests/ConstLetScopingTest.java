@@ -270,4 +270,130 @@ class ConstLetScopingTest {
                 "function f(n) { var o = []; for (var i = 0; i < n; i++) { const x = i;"
                         + " o.push(x); } return o.join(); } f(3);");
     }
+
+    // --- for-in and for-of heads ---
+    //
+    // A for-in/of head binds afresh in a scope of its own on each iteration, rather than carrying
+    // the previous iteration's bindings over as a "for (let i = ...; ...)" head does. The scripts
+    // below are not wrapped in a function, so their block scopes are reified and a closure can
+    // hold on to one iteration's bindings after the next has begun.
+
+    @Test
+    void constForOfHeadIsBoundEachIterationWithReifiedScopes() {
+        Utils.assertWithAllModes_ES6(
+                "1,2,3", "var o = []; for (const x of [1, 2, 3]) { o.push(x); } o.join();");
+    }
+
+    @Test
+    void constForInHeadIsBoundEachIterationWithReifiedScopes() {
+        Utils.assertWithAllModes_ES6(
+                "a,b", "var o = []; for (const k in {a: 1, b: 2}) { o.push(k); } o.join();");
+    }
+
+    @Test
+    void constForOfHeadGivesEachIterationItsOwnBinding() {
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "var f = []; for (const x of [1, 2, 3]) { f.push(function() { return x; }); }"
+                        + " f.map(function(g) { return g(); }).join();");
+    }
+
+    @Test
+    void constForInHeadGivesEachIterationItsOwnBinding() {
+        Utils.assertWithAllModes_ES6(
+                "a,b",
+                "var f = []; for (const k in {a: 1, b: 2}) { f.push(function() { return k; }); }"
+                        + " f.map(function(g) { return g(); }).join();");
+    }
+
+    @Test
+    void letForOfHeadGivesEachIterationItsOwnBinding() {
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "var f = []; for (let x of [1, 2, 3]) { f.push(function() { return x; }); }"
+                        + " f.map(function(g) { return g(); }).join();");
+    }
+
+    @Test
+    void constForOfHeadGivesItsOwnBindingAfterContinue() {
+        Utils.assertWithAllModes_ES6(
+                "1,3",
+                "var f = []; for (const x of [1, 2, 3]) { if (x === 2) continue;"
+                        + " f.push(function() { return x; }); }"
+                        + " f.map(function(g) { return g(); }).join();");
+    }
+
+    @Test
+    void constForOfHeadAndBodyBlockGiveEachIterationTheirOwnBindings() {
+        Utils.assertWithAllModes_ES6(
+                "1:10,2:20",
+                "var f = []; for (const x of [1, 2]) { let y = x * 10;"
+                        + " f.push(function() { return x + ':' + y; }); }"
+                        + " f.map(function(g) { return g(); }).join();");
+    }
+
+    @Test
+    void destructuringConstForOfHeadGivesEachIterationItsOwnBindings() {
+        Utils.assertWithAllModes_ES6(
+                "1/2,3/4",
+                "var f = []; for (const [p, q] of [[1, 2], [3, 4]]) {"
+                        + " f.push(function() { return p + '/' + q; }); }"
+                        + " f.map(function(g) { return g(); }).join();");
+    }
+
+    @Test
+    void constForOfHeadRejectsAssignmentOnEveryIteration() {
+        // The binding the iteration declares is a const, so the body cannot write to it: the
+        // mutable binding of the same name in the loop's own scope must not be found instead
+        Utils.assertWithAllModes_ES6(
+                "TypeError,TypeError",
+                "var o = []; for (const x of [1, 2]) { try { x = 9; o.push('assigned'); }"
+                        + " catch (e) { o.push(e.name); } } o.join();");
+    }
+
+    @Test
+    void constForOfHeadIsBoundEachIterationWithCatchInBody() {
+        // A catch clause in the body makes the function reify its scopes, so the same loop takes
+        // the reified path even though nothing closes over the binding
+        Utils.assertWithAllModes_ES6(
+                "1,2,3",
+                "function f(a) { var o = []; for (const x of a) { try { x = 9; }"
+                        + " catch (e) { o.push(x); } } return o.join(); } f([1, 2, 3]);");
+    }
+
+    @Test
+    void forOfHeadBindingIsVisibleToTheIteratedExpression() {
+        // The loop's own scope shadows the outer binding of the same name while the iterated
+        // expression is evaluated. A spec-compliant engine throws a ReferenceError here, since
+        // the binding is in its temporal dead zone; Rhino has no TDZ and reads undefined
+        Utils.assertWithAllModes_ES6(
+                "undefined,outside",
+                "let x = 'outside'; var seen;"
+                        + " for (const x of [x]) { seen = String(x); } [seen, x].join();");
+    }
+
+    @Test
+    void forOfHeadBindingDoesNotOutliveTheLoop() {
+        Utils.assertWithAllModes_ES6(
+                "outside", "let x = 'outside'; for (const x of ['inside']) ; x;");
+    }
+
+    @Test
+    void forOfHeadBindingIsInScopeForItsOwnDestructuringDefaults() {
+        // The iteration scope is entered before the head's bindings are assigned, so a closure
+        // created by a destructuring default sees the binding this iteration declared
+        Utils.assertWithAllModes_ES6(
+                "inside,inside,outside",
+                "let x = 'outside'; var probeDecl, probeBody;"
+                        + " for (const [x, _ = (probeDecl = function() { return x; })]"
+                        + " of [['inside']]) probeBody = function() { return x; };"
+                        + " [probeDecl(), probeBody(), x].join();");
+    }
+
+    @Test
+    void legacyConstForInHeadStillAssignsOnce() {
+        // Pre-ES6 const is hoisted out of the loop and keeps its "assign once" behaviour
+        Utils.assertWithAllModes_1_8(
+                "a,a", "var o = []; for (const k in {a: 1, b: 2}) { o.push(k); } o.join();");
+    }
 }
