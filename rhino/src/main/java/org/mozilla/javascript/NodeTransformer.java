@@ -115,9 +115,11 @@ public class NodeTransformer {
                     for (Symbol symbol : newScope.getSymbolTable().values()) {
                         Node name = Node.newString(Token.NAME, symbol.getName());
                         // Const bindings must be created uninitialized, so that the
-                        // declaration itself can initialize them. Loop scopes are
-                        // excluded because for-in and for-of assign to their variable
-                        // on every iteration.
+                        // declaration itself can initialize them. A loop scope is
+                        // excluded: it belongs to a for-in/of head, whose bindings are
+                        // declared afresh in each iteration's own scope, and all this
+                        // one does is shadow an outer binding of the same name while
+                        // the iterated expression is evaluated.
                         if (symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK) {
                             name.putIntProp(Node.IS_CONST_PROP, 1);
                         }
@@ -368,6 +370,32 @@ public class NodeTransformer {
                         break;
                     }
 
+                case Token.ITERATION_SCOPE:
+                    {
+                        // A for-in/of head binds afresh on each iteration rather than carrying
+                        // the previous iteration's bindings over: what that iteration handed to
+                        // any closure it created has to stay as it was, and a const has to be
+                        // created uninitialized for the assignment of the enumerated value to
+                        // initialize it. Leaving the current scope and entering a new one does
+                        // both; what the first iteration leaves is the loop's own scope, which
+                        // has no further use once the iterated expression has been evaluated.
+                        // A flattened scope keeps one slot per binding for the whole call and
+                        // nothing can capture it, so INITCONSTVAR storing into that slot again
+                        // is all the freshness it needs.
+                        Node replacement;
+                        if (createScopeObjects
+                                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            replacement = new Node(Token.BLOCK);
+                            replacement.addChildToBack(new Node(Token.LEAVE_SCOPE));
+                            replacement.addChildToBack(enterIterationScope(node));
+                        } else {
+                            replacement = new Node(Token.EMPTY);
+                        }
+                        replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
+                        node = replaceCurrent(parent, previous, node, replacement);
+                        break;
+                    }
+
                 case Token.TYPEOFNAME:
                     {
                         Scope defining = scope.getDefiningScope(node.getString());
@@ -580,6 +608,24 @@ public class NodeTransformer {
             }
         }
         return names;
+    }
+
+    /**
+     * Builds the {@code ENTER_SCOPE} that creates a for-in/of head's bindings in a new iteration
+     * environment. A const is created uninitialized, for its declaration to initialize; anything
+     * else starts out undefined. Both back ends walk the names and the children in step, and
+     * evaluate no child for a name they create as a const.
+     */
+    private static Node enterIterationScope(Node iterationScope) {
+        Object[] names = (Object[]) iterationScope.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) iterationScope.getProp(Node.CONST_IDS_PROP);
+        Node enter = new Node(Token.ENTER_SCOPE);
+        enter.putProp(Node.OBJECT_IDS_PROP, names);
+        enter.putProp(Node.CONST_IDS_PROP, consts);
+        for (int i = 0; i < names.length; i++) {
+            enter.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
+        }
+        return enter;
     }
 
     protected void visitNew(Node node, ScriptNode tree) {}

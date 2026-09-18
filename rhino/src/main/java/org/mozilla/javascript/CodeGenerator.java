@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.InstrumentEmitter.Type;
-import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;

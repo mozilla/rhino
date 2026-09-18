@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import org.mozilla.javascript.ast.AbstractObjectProperty;
@@ -1715,6 +1716,45 @@ public final class IRFactory {
         return loop;
     }
 
+    /**
+     * Creates the node that begins a new iteration environment for a for-in/of head, declaring
+     * afresh the names the head binds. The loop's own scope keeps a mutable binding for each of
+     * those names, which is all it is for: shadowing an outer binding of the same name while the
+     * iterated expression is evaluated.
+     *
+     * @return {@code null} if the head has no lexical bindings of its own, as a {@code var} head or
+     *     an array comprehension loop does.
+     */
+    private static Node createIterationScope(Node loop, int declType) {
+        if ((declType != Token.LET && declType != Token.CONST) || !(loop instanceof Scope)) {
+            return null;
+        }
+        Map<String, Symbol> symbolTable = ((Scope) loop).getSymbolTable();
+        if (symbolTable == null) {
+            return null;
+        }
+        List<Object> names = new ArrayList<>(symbolTable.size());
+        List<Boolean> consts = new ArrayList<>(symbolTable.size());
+        for (Symbol symbol : symbolTable.values()) {
+            if (!symbol.isDeclTypeLexical()) {
+                continue;
+            }
+            names.add(symbol.getName());
+            consts.add(symbol.getDeclType() == Symbol.Type.CONST);
+        }
+        if (names.isEmpty()) {
+            return null;
+        }
+        boolean[] constFlags = new boolean[consts.size()];
+        for (int i = 0; i < constFlags.length; i++) {
+            constFlags[i] = consts.get(i);
+        }
+        Node node = new Node(Token.ITERATION_SCOPE, loop.getLineno(), loop.getColumn());
+        node.putProp(Node.OBJECT_IDS_PROP, names.toArray());
+        node.putProp(Node.CONST_IDS_PROP, constFlags);
+        return node;
+    }
+
     /** Generate IR for a for..in loop. */
     private Node createForIn(
             int declType,
@@ -1796,11 +1836,11 @@ public final class IRFactory {
             } else {
                 assign = parser.simpleAssignment(lvalue, id);
             }
-            if (declType == Token.LET || declType == Token.CONST) {
+            Node iterationScope = createIterationScope(loop, declType);
+            if (iterationScope != null) {
                 // A lexical head binds afresh on every iteration, before the value the
                 // enumeration just produced is assigned to it.
-                newBody.addChildToBack(
-                        new Node(Token.ITERATION, loop.getLineno(), loop.getColumn()));
+                newBody.addChildToBack(iterationScope);
             }
             newBody.addChildToBack(new Node(Token.EXPR_VOID, assign));
             newBody.addChildToBack(body);
