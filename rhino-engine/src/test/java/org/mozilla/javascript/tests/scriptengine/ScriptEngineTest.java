@@ -2,6 +2,7 @@ package org.mozilla.javascript.tests.scriptengine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -273,5 +274,48 @@ public class ScriptEngineTest {
         engine.put("file", f);
         Object result = engine.eval("file.getAbsolutePath();");
         assertEquals(absVal, result);
+    }
+
+    @Test
+    public void javaObjectBindingRoundTrip() throws ScriptException {
+        checkJavaObjectBindingRoundTrip(false, false);
+    }
+
+    @Test
+    public void javaObjectBindingRoundTripInterpreted() throws ScriptException {
+        checkJavaObjectBindingRoundTrip(true, false);
+    }
+
+    @Test
+    public void compiledJavaObjectBindingRoundTrip() throws ScriptException {
+        checkJavaObjectBindingRoundTrip(false, true);
+    }
+
+    @Test
+    public void compiledJavaObjectBindingRoundTripInterpreted() throws ScriptException {
+        checkJavaObjectBindingRoundTrip(true, true);
+    }
+
+    private void checkJavaObjectBindingRoundTrip(boolean interpreted, boolean compiled)
+            throws ScriptException {
+        engine.put(RhinoScriptEngine.INTERPRETED_MODE, interpreted);
+        File file = new File("binding-test.txt");
+        engine.put("file", file);
+        String script = "var copy = file; copy.getName()";
+        Object result = compiled ? cEngine.compile(script).eval() : engine.eval(script);
+        assertEquals(file.getName(), result);
+        assertSame(file, engine.get("copy"));
+        assertSame(file, engine.getBindings(ScriptContext.ENGINE_SCOPE).get("copy"));
+    }
+
+    @Test
+    public void globalJavaObjectBindingRoundTrip() throws ScriptException {
+        File file = new File("global-binding-test.txt");
+        Bindings globals = new SimpleBindings();
+        globals.put("file", file);
+        engine.setBindings(globals, ScriptContext.GLOBAL_SCOPE);
+        engine.eval("var copy = file;");
+        assertSame(file, engine.get("copy"));
+        assertSame(file, globals.get("file"));
     }
 }

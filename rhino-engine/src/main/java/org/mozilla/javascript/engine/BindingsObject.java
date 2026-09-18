@@ -36,12 +36,12 @@ public class BindingsObject extends ScriptableObject {
         if (!bindings.containsKey(name)) {
             return Scriptable.NOT_FOUND;
         }
-        return Context.jsToJava(bindings.get(name), Object.class);
+        return Context.javaToJS(bindings.get(name), parentScope);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        bindings.put(name, Context.javaToJS(value, parentScope));
+        bindings.put(name, Context.jsToJava(value, Object.class));
     }
 
     @Override
