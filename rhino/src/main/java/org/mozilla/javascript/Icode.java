@@ -168,8 +168,11 @@ abstract class Icode {
             // object rest - create object excluding extracted keys
             OBJECT_REST = SPREAD - 1,
 
+            // Create an uninitialized const binding in the current scope
+            DEF_CONST = OBJECT_REST - 1,
+
             // Last icode
-            MIN_ICODE = OBJECT_REST;
+            MIN_ICODE = DEF_CONST;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -363,6 +366,8 @@ abstract class Icode {
                 return "SPREAD";
             case OBJECT_REST:
                 return "OBJECT_REST";
+            case DEF_CONST:
+                return "DEF_CONST";
         }
 
         // icode without name

@@ -17,6 +17,7 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.Symbol;
 
 /**
  * This class transforms a tree to a lower-level representation for codegen.
@@ -95,8 +96,16 @@ public class NodeTransformer {
                     Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR : Token.LET);
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
-                    for (String name : newScope.getSymbolTable().keySet()) {
-                        innerLet.addChildToBack(Node.newString(Token.NAME, name));
+                    for (Symbol symbol : newScope.getSymbolTable().values()) {
+                        Node name = Node.newString(Token.NAME, symbol.getName());
+                        // Const bindings must be created uninitialized, so that the
+                        // declaration itself can initialize them. Loop scopes are
+                        // excluded because for-in and for-of assign to their variable
+                        // on every iteration.
+                        if (symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK) {
+                            name.putIntProp(Node.IS_CONST_PROP, 1);
+                        }
+                        innerLet.addChildToBack(name);
                     }
                     newScope.setSymbolTable(null); // so we don't transform again
                     Node oldNode = node;
@@ -459,6 +468,7 @@ public class NodeTransformer {
             result = new Node(isExpression ? Token.SCOPEEXPR : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
+            ArrayList<Boolean> consts = new ArrayList<>();
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
                 if (current.getType() == Token.LETEXPR) {
@@ -478,6 +488,7 @@ public class NodeTransformer {
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
                         for (int i = 0; i < destructuringNames.size(); i++) {
+                            consts.add(Boolean.FALSE);
                             newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
@@ -487,6 +498,7 @@ public class NodeTransformer {
                     for (Node child = c.getFirstChild(); child != null; child = child.getNext()) {
                         if (child.getType() != Token.NAME) throw Kit.codeBug();
                         list.add(ScriptRuntime.getIndexObject(child.getString()));
+                        consts.add(Boolean.FALSE);
                         Node init = child.getFirstChild();
                         if (init == null) {
                             init = new Node(Token.VOID, Node.newNumber(0.0));
@@ -497,13 +509,26 @@ public class NodeTransformer {
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
+                boolean isConst = current.getIntProp(Node.IS_CONST_PROP, 0) != 0;
+                consts.add(isConst);
                 Node init = current.getFirstChild();
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (isConst) {
+                    // A const binding is only ever created here, never initialized:
+                    // the declaration in the body of the scope does that.
+                    throw Kit.codeBug();
                 }
                 newVars.addChildToBack(init);
             }
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
+            if (consts.contains(Boolean.TRUE)) {
+                boolean[] constFlags = new boolean[consts.size()];
+                for (int i = 0; i < constFlags.length; i++) {
+                    constFlags[i] = consts.get(i);
+                }
+                newVars.putProp(Node.CONST_IDS_PROP, constFlags);
+            }
             result.addChildToBack(newVars);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
             result.addChildToBack(new Node(Token.LEAVE_SCOPE));
