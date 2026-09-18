@@ -31,10 +31,12 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.parallel.Execution;
@@ -422,11 +424,9 @@ public class Test262SuiteTest {
                                     testCase.hasEarlyError ? "early" : "runtime"));
                 }
 
-                synchronized (RESULT_TRACKERS) {
-                    TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
-                    if (tracker != null) {
-                        tracker.passes(testMode, useStrict);
-                    }
+                TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
+                if (tracker != null) {
+                    tracker.passes(testMode, useStrict);
                 }
             } catch (RhinoException ex) {
                 if (!testCase.isNegative()) {
@@ -454,11 +454,9 @@ public class Test262SuiteTest {
                     throw aex;
                 }
 
-                synchronized (RESULT_TRACKERS) {
-                    TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
-                    if (tracker != null) {
-                        tracker.passes(testMode, useStrict);
-                    }
+                TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
+                if (tracker != null) {
+                    tracker.passes(testMode, useStrict);
                 }
             } catch (RuntimeException ex) {
                 // enable line below to print out stacktraces of unexpected exceptions
@@ -880,12 +878,16 @@ public class Test262SuiteTest {
         private final boolean shouldRun;
         private final boolean isDebug;
         private final Consumer<Context> setup;
+        private final String nonStrictKey;
+        private final String strictKey;
 
         TestMode(String name, boolean shouldRun, boolean isDebug, Consumer<Context> setup) {
             this.shouldRun = shouldRun;
             this.isDebug = isDebug;
             this.keyPart = name;
             this.setup = setup;
+            this.nonStrictKey = trackerNameInt(false);
+            this.strictKey = trackerNameInt(true);
         }
 
         public String keyPart() {
@@ -900,8 +902,12 @@ public class Test262SuiteTest {
             return shouldRun && ((isDebug && debugEnabled) || (!isDebug && normalEnabled));
         }
 
-        public String trackerName(boolean strict) {
+        private String trackerNameInt(boolean strict) {
             return keyPart() + "-" + (strict ? "strict" : "non-strict");
+        }
+
+        public String trackerName(boolean strict) {
+            return strict ? strictKey : nonStrictKey;
         }
 
         public static TestMode[] valuesShouldRun() {
@@ -916,7 +922,7 @@ public class Test262SuiteTest {
     }
 
     static class TestResultTracker {
-        private final Set<String> modes = new HashSet<>();
+        private final HashMap<String, AtomicBoolean> modes = new HashMap<>();
         private boolean onlyStrict;
         private boolean noStrict;
         private boolean expectedFailure;
@@ -937,28 +943,28 @@ public class Test262SuiteTest {
                 boolean noStrict,
                 boolean expectedFailure) {
 
-            modes.add(makeKey(mode, useStrict));
+            modes.put(makeKey(mode, useStrict), new AtomicBoolean(false));
             this.onlyStrict = onlyStrict;
             this.noStrict = noStrict;
             this.expectedFailure = expectedFailure;
         }
 
         public boolean expectationsMet() {
-            return modes.isEmpty();
+            return modes.entrySet().stream().allMatch(e -> e.getValue().get());
         }
 
         public void passes(TestMode mode, boolean useStrict) {
-            modes.remove(makeKey(mode, useStrict));
+            modes.get(makeKey(mode, useStrict)).set(true);
         }
 
         public String getResult(Test262Case tc) {
             // success on all optLevels in both strict and non-strict mode
-            if (modes.isEmpty()) {
+            if (expectationsMet()) {
                 return null;
             }
 
             // Test skipped due to dependencies on unsupported features/environment
-            if (modes.contains("skipped-strict")) {
+            if (modes.containsKey("skipped-strict")) {
                 List<String> feats = new ArrayList<>();
 
                 if (tc.features != null) {
@@ -980,13 +986,24 @@ public class Test262SuiteTest {
                 return "{unsupported: " + Arrays.toString(feats.toArray()) + "}";
             }
 
+            boolean allFailed = modes.entrySet().stream().allMatch(e -> !e.getValue().get());
+            boolean allCovered = (modes.size() == TestMode.values().length * 2 - 2);
+
             // failure on all optLevels in both strict and non-strict mode
-            if (modes.size() == TestMode.values().length * 2 - 2) {
+            if (allCovered && allFailed) {
                 return "";
             }
 
             // simplify the output for some cases
-            ArrayList<String> res = new ArrayList<>(modes);
+            List<String> res =
+                    modes.entrySet().stream()
+                            .filter(e -> !e.getValue().get())
+                            .map(e -> e.getKey())
+                            .collect(Collectors.toList());
+            System.out.println("Initial list...");
+            for (var e : res) {
+                System.out.printf("  %s\n", e);
+            }
             if (containsAllModes(res, false)) {
                 removeAllModes(res, false);
                 res.add("non-strict");
