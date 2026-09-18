@@ -119,7 +119,6 @@ public class Test262SuiteTest {
                             "class",
                             "class-fields-private",
                             "class-fields-public",
-                            "SharedArrayBuffer",
                             "tail-call-optimization",
                             "Temporal",
                             "upsert",

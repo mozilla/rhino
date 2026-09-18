@@ -21,6 +21,7 @@ import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.ScriptRuntimeES6;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
@@ -31,17 +32,21 @@ import org.mozilla.javascript.VarScope;
 /**
  * A NativeArrayBuffer is the backing buffer for a typed array. Used inside JavaScript code, it
  * implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
+ * NativeArrayBuffer is the implementation class for both ArrayBuffer and SharedArrayBuffer. Both
+ * classes have the same internal methods but different constructors and prototypes.
  */
 public class NativeArrayBuffer extends ScriptableObject {
     @Serial private static final long serialVersionUID = 3110411773054879549L;
 
-    public static final String CLASS_NAME = "ArrayBuffer";
+    public static final String ARRAY_CLASS_NAME = "ArrayBuffer";
+    public static final String SHARED_CLASS_NAME = "SharedArrayBuffer";
 
-    private static final ClassDescriptor DESCRIPTOR;
+    private static final ClassDescriptor ARRAY_DESCRIPTOR;
+    private static final ClassDescriptor SHARED_ARRAY_DESCRIPTOR;
 
     static {
-        DESCRIPTOR =
-                new ClassDescriptor.Builder("ArrayBuffer", 1, NativeArrayBuffer::js_constructor)
+        ARRAY_DESCRIPTOR =
+                new ClassDescriptor.Builder(ARRAY_CLASS_NAME, 1, NativeArrayBuffer::js_constructor)
                         .withMethod(CTOR, "isView", 1, NativeArrayBuffer::js_isView)
                         .withMethod(PROTO, "slice", 2, NativeArrayBuffer::js_slice)
                         .withMethod(PROTO, "transfer", 0, NativeArrayBuffer::js_transfer)
@@ -69,7 +74,41 @@ public class NativeArrayBuffer extends ScriptableObject {
                         .withProp(
                                 PROTO,
                                 SymbolKey.TO_STRING_TAG,
-                                value("ArrayBuffer", DONTENUM | READONLY))
+                                value(ARRAY_CLASS_NAME, DONTENUM | READONLY))
+                        .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
+                        .build();
+
+        SHARED_ARRAY_DESCRIPTOR =
+                new ClassDescriptor.Builder(
+                                SHARED_CLASS_NAME, 1, NativeArrayBuffer::js_sharedConstructor)
+                        .withMethod(CTOR, "isView", 1, NativeArrayBuffer::js_isView)
+                        .withMethod(PROTO, "slice", 2, NativeArrayBuffer::js_sharedSlice)
+                        .withMethod(PROTO, "grow", 1, NativeArrayBuffer::js_sharedGrow)
+                        .withMethod(PROTO, "transfer", 0, NativeArrayBuffer::js_throwNotBuffer)
+                        .withMethod(PROTO, "resize", 1, NativeArrayBuffer::js_throwNotBuffer)
+                        .withProp(
+                                PROTO,
+                                "byteLength",
+                                NativeArrayBuffer::js_sharedByteLength,
+                                null,
+                                DONTENUM)
+                        .withProp(
+                                PROTO,
+                                "maxByteLength",
+                                NativeArrayBuffer::js_sharedMaxByteLength,
+                                null,
+                                DONTENUM)
+                        .withProp(
+                                PROTO,
+                                "growable",
+                                NativeArrayBuffer::js_sharedGrowable,
+                                null,
+                                DONTENUM)
+                        .withProp(
+                                PROTO,
+                                SymbolKey.TO_STRING_TAG,
+                                value(SHARED_CLASS_NAME, DONTENUM | READONLY))
+                        .withProp(CTOR, SymbolKey.SPECIES, ScriptRuntimeES6::symbolSpecies)
                         .build();
     }
 
@@ -79,37 +118,53 @@ public class NativeArrayBuffer extends ScriptableObject {
     protected final ByteOrder byteOrder;
     // ES2024: maxByteLength for resizable buffers (-1 = fixed-length)
     private int maxByteLength = -1;
+    private final boolean shared;
 
     @Override
     public String getClassName() {
-        return CLASS_NAME;
+        return shared ? SHARED_CLASS_NAME : ARRAY_CLASS_NAME;
     }
 
     public static Object init(Context cx, VarScope scope, boolean sealed) {
-        return DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
+        return ARRAY_DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
+    }
+
+    public static Object initShared(Context cx, VarScope scope, boolean sealed) {
+        return SHARED_ARRAY_DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
     }
 
     /** Create an empty buffer. */
     public NativeArrayBuffer() {
-        this(0);
+        this(false);
+    }
+
+    public NativeArrayBuffer(boolean shared) {
+        byteOrder = defaultByteOrder();
+        buffer = allocateBuffer(0, shared);
+        this.shared = shared;
+    }
+
+    public NativeArrayBuffer(int len) {
+        this(len, false);
     }
 
     /** Create a buffer of the specified length in bytes. */
-    public NativeArrayBuffer(double len) {
-        this(ScriptRuntime.toIndex(len));
+    public NativeArrayBuffer(double len, boolean shared) {
+        this(ScriptRuntime.toIndex(len), shared);
     }
 
-    private NativeArrayBuffer(int len) {
+    private NativeArrayBuffer(int len, boolean shared) {
         byteOrder = defaultByteOrder();
+        this.shared = shared;
         try {
-            buffer = allocateBuffer(len);
+            buffer = allocateBuffer(len, shared);
         } catch (OutOfMemoryError e) {
             throw ScriptRuntime.rangeErrorById("msg.arraybuf.oom");
         }
     }
 
-    private ByteBuffer allocateBuffer(int len) {
-        var buf = ByteBuffer.allocate(len);
+    private ByteBuffer allocateBuffer(int len, boolean allocateShared) {
+        var buf = allocateShared ? ByteBuffer.allocateDirect(len) : ByteBuffer.allocate(len);
         buf.order(byteOrder);
         return buf;
     }
@@ -123,6 +178,12 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static ByteOrder defaultByteOrder() {
         Context cx = Context.getCurrentContext();
         return cx == null ? ByteOrder.BIG_ENDIAN : defaultByteOrder(cx);
+    }
+
+    protected void checkDetached() {
+        if (isDetached()) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
+        }
     }
 
     /** Get the number of bytes in the buffer. */
@@ -161,36 +222,65 @@ public class NativeArrayBuffer extends ScriptableObject {
         return buffer == null;
     }
 
+    public boolean isShared() {
+        return shared;
+    }
+
     private static NativeArrayBuffer getSelf(Object thisObj) {
-        return LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
+        var self = LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
+        if (self.shared) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.notarraybuf");
+        }
+        return self;
+    }
+
+    private static NativeArrayBuffer getSharedSelf(Object thisObj) {
+        var self = LambdaConstructor.convertThisObject(thisObj, NativeArrayBuffer.class);
+        if (!self.shared) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.notsharedarraybuf");
+        }
+        return self;
     }
 
     private static NativeArrayBuffer js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double length = isArg(args, 0) ? ScriptRuntime.toIndex(args[0]) : 0;
+        int maxByteLength = getMaxByteLength(args, length);
+        NativeArrayBuffer buffer = new NativeArrayBuffer(length, false);
+        buffer.maxByteLength = maxByteLength;
+        ScriptRuntime.setBuiltinProtoAndParent(buffer, f, nt, s, TopLevel.Builtins.ArrayBuffer);
+        return buffer;
+    }
 
-        // ES2024: Check for options parameter with maxByteLength
-        int maxByteLength = -1;
+    private static NativeArrayBuffer js_sharedConstructor(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        double length = isArg(args, 0) ? ScriptRuntime.toIndex(args[0]) : 0;
+        int maxByteLength = getMaxByteLength(args, length);
+        NativeArrayBuffer buffer = new NativeArrayBuffer(length, true);
+        buffer.maxByteLength = maxByteLength;
+        ScriptRuntime.setBuiltinProtoAndParent(
+                buffer, f, nt, s, TopLevel.Builtins.SharedArrayBuffer);
+        return buffer;
+    }
+
+    private static int getMaxByteLength(Object[] args, double length) {
+        int maxLen = -1;
         if (isArg(args, 1) && args[1] instanceof Scriptable) {
             Scriptable options = (Scriptable) args[1];
             Object maxByteLengthValue = ScriptableObject.getProperty(options, "maxByteLength");
             if (maxByteLengthValue != Scriptable.NOT_FOUND
                     && !Undefined.isUndefined(maxByteLengthValue)) {
-                maxByteLength = ScriptRuntime.toIndex(maxByteLengthValue);
-                if (length > maxByteLength) {
+                maxLen = ScriptRuntime.toIndex(maxByteLengthValue);
+                if (length > maxLen) {
                     throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.mismatch");
                 }
-                if (maxByteLength > Runtime.getRuntime().maxMemory()) {
+                if (maxLen > Runtime.getRuntime().maxMemory()) {
                     // Sanity check (in the 262 tests) to avoid an impossibly-large maximum
                     throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.toobig");
                 }
             }
         }
-
-        NativeArrayBuffer buffer = new NativeArrayBuffer(length);
-        buffer.maxByteLength = maxByteLength;
-        ScriptRuntime.setBuiltinProtoAndParent(buffer, f, nt, s, TopLevel.Builtins.ArrayBuffer);
-        return buffer;
+        return maxLen;
     }
 
     private static Boolean js_isView(
@@ -201,41 +291,40 @@ public class NativeArrayBuffer extends ScriptableObject {
     private static NativeArrayBuffer js_slice(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeArrayBuffer self = getSelf(thisObj);
+        return self.sliceImpl(cx, s, args);
+    }
 
-        if (self.isDetached()) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
-        }
+    private static NativeArrayBuffer js_sharedSlice(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        NativeArrayBuffer self = getSharedSelf(thisObj);
+        return self.sliceImpl(cx, s, args);
+    }
 
+    private NativeArrayBuffer sliceImpl(Context cx, VarScope s, Object[] args) {
+        checkDetached();
         double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
-        double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.getLength();
+        double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : getLength();
         int endI =
                 ScriptRuntime.toInt32(
-                        Math.max(
-                                0,
-                                Math.min(
-                                        self.getLength(),
-                                        (end < 0 ? self.getLength() + end : end))));
+                        Math.max(0, Math.min(getLength(), (end < 0 ? getLength() + end : end))));
         int startI =
                 ScriptRuntime.toInt32(
-                        Math.min(
-                                endI, Math.max(0, (start < 0 ? self.getLength() + start : start))));
+                        Math.min(endI, Math.max(0, (start < 0 ? getLength() + start : start))));
         int len = endI - startI;
 
+        var species = shared ? TopLevel.Builtins.SharedArrayBuffer : TopLevel.Builtins.ArrayBuffer;
         Constructable constructor =
                 AbstractEcmaObjectOperations.speciesConstructor(
                         cx,
-                        self,
-                        TopLevel.getBuiltinCtor(
-                                cx,
-                                ScriptableObject.getTopLevelScope(s),
-                                TopLevel.Builtins.ArrayBuffer));
+                        this,
+                        TopLevel.getBuiltinCtor(cx, ScriptableObject.getTopLevelScope(s), species));
         Scriptable newBuf = constructor.construct(cx, s, new Object[] {len});
         if (!(newBuf instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
         }
         NativeArrayBuffer buf = (NativeArrayBuffer) newBuf;
 
-        if (buf == self) {
+        if (buf == this) {
             throw ScriptRuntime.typeErrorById("msg.arraybuf.same");
         }
 
@@ -244,7 +333,7 @@ public class NativeArrayBuffer extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.arraybuf.smaller.len", len, actualLength);
         }
 
-        var tmp = self.buffer.duplicate();
+        var tmp = buffer.duplicate();
         tmp.position(startI);
         tmp.limit(startI + len);
         buf.buffer.put(tmp);
@@ -256,21 +345,24 @@ public class NativeArrayBuffer extends ScriptableObject {
         return getSelf(thisObj).getLength();
     }
 
+    private static Object js_sharedByteLength(Scriptable thisObj) {
+        return getSharedSelf(thisObj).getLength();
+    }
+
     private static Object js_detached(Scriptable thisObj) {
         return getSelf(thisObj).isDetached();
     }
 
     private NativeArrayBuffer copyAndDetach(
             Context cx, VarScope scope, Object lenObj, boolean preserveResizability) {
+        assert !shared;
         int newLength;
         if (Undefined.isUndefined(lenObj)) {
             newLength = getLength();
         } else {
             newLength = ScriptRuntime.toIndex(lenObj);
         }
-        if (isDetached()) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
-        }
+        checkDetached();
 
         var arg2 = cx.newObject(scope);
         if (preserveResizability && maxByteLength >= 0) {
@@ -330,9 +422,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         }
         var arg1 = args.length > 0 ? args[0] : Undefined.instance;
         int newLength = ScriptRuntime.toIndex(arg1);
-        if (self.isDetached()) {
-            throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
-        }
+        self.checkDetached();
         if (newLength > self.maxByteLength) {
             throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.exceedsmax", self.maxByteLength);
         }
@@ -342,7 +432,7 @@ public class NativeArrayBuffer extends ScriptableObject {
             return Undefined.instance;
         }
 
-        var newBuffer = self.allocateBuffer(newLength);
+        var newBuffer = self.allocateBuffer(newLength, false);
         int copyLength = Math.min(newLength, oldLength);
 
         if (copyLength > 0) {
@@ -357,8 +447,43 @@ public class NativeArrayBuffer extends ScriptableObject {
         return Undefined.instance;
     }
 
-    /** Return true if this ArrayBuffer is resizable (ES2024). */
+    private static Object js_sharedGrow(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        NativeArrayBuffer self = getSharedSelf(thisObj);
+        if (!self.isGrowable()) {
+            throw ScriptRuntime.typeErrorById("msg.arraybuf.notresizeable");
+        }
+        var arg1 = args.length > 0 ? args[0] : Undefined.instance;
+        int newLength = ScriptRuntime.toIndex(arg1);
+        if (newLength > self.maxByteLength) {
+            throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.exceedsmax", self.maxByteLength);
+        }
+        int oldLength = self.getLength();
+        if (newLength <= oldLength) {
+            // No resize needed
+            return Undefined.instance;
+        }
+
+        var newBuffer = self.allocateBuffer(newLength, true);
+        int copyLength = Math.min(newLength, oldLength);
+
+        if (copyLength > 0) {
+            var tmp = self.buffer.duplicate();
+            tmp.limit(copyLength);
+            newBuffer.put(tmp);
+            newBuffer.rewind();
+        }
+
+        // New bytes are automatically initialized to 0 in Java
+        self.buffer = newBuffer;
+        return Undefined.instance;
+    }
+
     public boolean isResizable() {
+        return maxByteLength >= 0;
+    }
+
+    public boolean isGrowable() {
         return maxByteLength >= 0;
     }
 
@@ -367,6 +492,12 @@ public class NativeArrayBuffer extends ScriptableObject {
         NativeArrayBuffer self = getSelf(thisObj);
         // A buffer is resizable if maxByteLength was specified in constructor
         return self.isResizable();
+    }
+
+    private static Object js_sharedGrowable(Scriptable thisObj) {
+        NativeArrayBuffer self = getSharedSelf(thisObj);
+        // A buffer is resizable if maxByteLength was specified in constructor
+        return self.isGrowable();
     }
 
     // ES2024 ArrayBuffer.prototype.maxByteLength getter
@@ -379,5 +510,21 @@ public class NativeArrayBuffer extends ScriptableObject {
         } else {
             return self.getLength();
         }
+    }
+
+    private static Object js_sharedMaxByteLength(Scriptable thisObj) {
+        NativeArrayBuffer self = getSharedSelf(thisObj);
+        // For fixed-length buffers, maxByteLength = byteLength
+        // For resizable buffers, return the maxByteLength
+        if (self.maxByteLength >= 0) {
+            return self.maxByteLength;
+        } else {
+            return self.getLength();
+        }
+    }
+
+    private static Object js_throwNotBuffer(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        throw ScriptRuntime.typeErrorById("msg.arraybuf.notarraybuf");
     }
 }
