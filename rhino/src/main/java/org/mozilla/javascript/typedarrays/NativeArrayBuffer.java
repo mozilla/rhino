@@ -34,6 +34,31 @@ import org.mozilla.javascript.VarScope;
  * implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
  * NativeArrayBuffer is the implementation class for both ArrayBuffer and SharedArrayBuffer. Both
  * classes have the same internal methods but different constructors and prototypes.
+ *
+ * <p><b>Design<b>
+ *
+ * <p>The data for an ArrayBuffer is stored in a ByteBuffer. A "heap" buffer is used for regular
+ * ArrayBuffers and a direct buffer is used for shared buffers. This is necessary because the most
+ * efficient way to atomically update individual fields of a typed buffer is using the VarHandle
+ * classes, and those only support atomic access for direct buffers.
+ *
+ * <p>The position is normally set to zero and the limit is set to the allocated length of the
+ * buffer.
+ *
+ * <p>Views of the buffer created by typed arrays and the "slice" method maintain their own offsets
+ * and lengths on the underlying buffer. An alternative would be to actually "duplicate" the
+ * original buffer and manipulate the position and limit. However, that would require extra
+ * bookkeeping when the underlying buffer is resized while various views are attached.
+ *
+ * <p>Non-shared ArrayBuffers are detached by simply nulling out the buffer and letting it be GCed.
+ *
+ * <p>ArrayBuffers are resized by creating a new buffer of the appropriate size and copying the
+ * contents.
+ *
+ * <p>Typed array buffers are all separate subclasses that reference the underlying view. These
+ * classes, and the DataView class, use the native "put" and "get" methods on ByteBuffer. On modern
+ * Java implementations these are efficiently implemented using intrinsics so that many operations
+ * are just one instruction. This prevents "tearing" for non-atomic access in shared buffers.
  */
 public class NativeArrayBuffer extends ScriptableObject {
     @Serial private static final long serialVersionUID = 3110411773054879549L;
