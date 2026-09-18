@@ -151,8 +151,15 @@ public final class OptRuntime extends ScriptRuntime {
         return result;
     }
 
-    public static void initFunction(JSFunction fn, int functionType, VarScope scope, Context cx) {
+    public static void initFunction(
+            JSFunction fn, int functionType, boolean hoist, VarScope scope, Context cx) {
         ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
+        if (hoist) {
+            while (scope.isNestedScope()) {
+                scope = scope.getParentScope();
+            }
+            scope.put(fn.getFunctionName(), scope, fn);
+        }
     }
 
     public static Object callSpecial(

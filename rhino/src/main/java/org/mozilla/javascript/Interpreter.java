@@ -330,6 +330,9 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             case Icode.OBJECT_REST:
                 // computedKeyCount byte
                 return 1 + 1;
+            case Icode.CLOSURE_STMT:
+                // hoisted indicator byte
+                return 1 + 1;
         }
         if (!Icode.validBytecode(bytecode)) throw Kit.codeBug();
         return 1;
@@ -381,10 +384,21 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     }
 
     static void initFunction(Context cx, VarScope scope, JSDescriptor<?> parent, int index) {
+        initFunction(cx, scope, parent, index, false);
+    }
+
+    static void initFunction(
+            Context cx, VarScope scope, JSDescriptor<?> parent, int index, boolean hoist) {
         JSFunction fn;
         fn = JSFunction.createFunction(cx, scope, parent, index, null);
         var desc = fn.getDescriptor();
         ScriptRuntime.initFunction(cx, scope, fn, desc.getFunctionType(), parent.isEvalFunction());
+        if (hoist) {
+            while (scope.isNestedScope()) {
+                scope = scope.getParentScope();
+            }
+            scope.put(fn.getFunctionName(), scope, fn);
+        }
     }
 
     static <T extends ScriptOrFn<T>> Object interpret(
@@ -742,7 +756,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode.UNDEF] = new DoUndef();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
-        instructionObjs[base + Token.LEAVEWITH] = new DoLeaveWith();
+        instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
+        instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
@@ -3368,10 +3383,19 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         }
     }
 
-    private static class DoLeaveWith extends InstructionClass {
+    private static class DoEnterScope extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            frame.scope = ScriptRuntime.leaveWith(frame.scope);
+            frame.scope = new LocalScope(frame.scope);
+            frame.stack[++frame.stackTop] = frame.scope;
+            return null;
+        }
+    }
+
+    private static class DoLeaveScope extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope = ScriptRuntime.leaveScope(frame.scope);
             return null;
         }
     }
@@ -3388,15 +3412,17 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
 
             boolean afterFirstScope = (frame.compilerData.itsICode[frame.pc] != 0);
             Throwable caughtException = (Throwable) frame.stack[frame.stackTop + 1];
-            Scriptable lastCatchScope;
+            VarScope lastCatchScope;
             if (!afterFirstScope) {
                 lastCatchScope = null;
             } else {
-                lastCatchScope = (Scriptable) frame.stack[state.indexReg];
+                lastCatchScope = (VarScope) frame.stack[state.indexReg];
             }
-            frame.stack[state.indexReg] =
+            VarScope catchScope =
                     ScriptRuntime.newCatchScope(
                             caughtException, lastCatchScope, state.stringReg, cx, frame.scope);
+            frame.stack[state.indexReg] = catchScope;
+            frame.scope = catchScope;
             ++frame.pc;
             return null;
         }
@@ -3570,13 +3596,15 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoClosureStatement extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            initFunction(cx, frame.scope, frame.fnOrScript.getDescriptor(), state.indexReg);
+            boolean hoist = frame.compilerData.itsICode[frame.pc++] != 0;
+            initFunction(cx, frame.scope, frame.fnOrScript.getDescriptor(), state.indexReg, hoist);
             return null;
         }
 
         @Override
         void dumpICode(int op, String tname, ICodeDumpContext ctx) {
-            ctx.out.println(tname + " #" + ctx.indexReg);
+            boolean hoist = ctx.compilerData.itsICode[ctx.pc++] != 0;
+            ctx.out.println(tname + " #" + ctx.indexReg + (hoist ? "hoisted" : "un-hoisted"));
         }
     }
 

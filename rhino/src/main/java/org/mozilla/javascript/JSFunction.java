@@ -202,8 +202,8 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         return descriptor.hasDefaultParameters();
     }
 
-    public boolean hasFunctionNamed(String name) {
-        return descriptor.hasFunctionNamed(name);
+    public boolean hasNoFunctionStatementNamed(String name) {
+        return descriptor.hasNoFunctionStatementNamed(name);
     }
 
     @Override

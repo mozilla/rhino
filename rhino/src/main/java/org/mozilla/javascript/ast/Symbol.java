@@ -12,13 +12,36 @@ import org.mozilla.javascript.Token;
 /** Represents a symbol-table entry. */
 public class Symbol {
 
-    // One of Token.FUNCTION, Token.LP (for parameters), Token.VAR,
-    // Token.LET, or Token.CONST
-    private int declType;
+    public enum Type {
+        FUNCTION_VAR,
+        FUNCTION_LET,
+        LP,
+        VAR,
+        LET,
+        CONST;
+
+        public static Type fromToken(int token) {
+            return switch (token) {
+                case Token.FUNCTION -> FUNCTION_VAR;
+                case Token.LP -> LP;
+                case Token.VAR -> VAR;
+                case Token.LET -> LET;
+                case Token.CONST -> CONST;
+                default -> {
+                    throw new IllegalArgumentException("Invalid declType: " + token);
+                }
+            };
+        }
+    }
+
+    private Type declType;
     private int index = -1;
     private String name;
     private Node node;
     private Scope containingTable;
+    // For VAR (and pre-ES6 CONST/FUNCTION) symbols, the lexical scope in which
+    // the declaration actually appears, before hoisting to containingTable.
+    private Scope declaredScope;
 
     public Symbol() {}
 
@@ -28,24 +51,18 @@ public class Symbol {
      * @param declType {@link Token#FUNCTION}, {@link Token#LP} (for params), {@link Token#VAR},
      *     {@link Token#LET} or {@link Token#CONST}
      */
-    public Symbol(int declType, String name) {
+    public Symbol(Type declType, String name) {
         setName(name);
         setDeclType(declType);
     }
 
     /** Returns symbol declaration type */
-    public int getDeclType() {
+    public Type getDeclType() {
         return declType;
     }
 
     /** Sets symbol declaration type */
-    public void setDeclType(int declType) {
-        if (!(declType == Token.FUNCTION
-                || declType == Token.LP
-                || declType == Token.VAR
-                || declType == Token.LET
-                || declType == Token.CONST))
-            throw new IllegalArgumentException("Invalid declType: " + declType);
+    public void setDeclType(Type declType) {
         this.declType = declType;
     }
 
@@ -89,8 +106,30 @@ public class Symbol {
         this.containingTable = containingTable;
     }
 
+    /**
+     * Returns the lexical scope in which this symbol was declared, or {@code null} if not set. For
+     * VAR symbols this is the block scope containing the declaration, which may differ from {@link
+     * #getContainingTable()} (the enclosing function/script to which the var is hoisted).
+     */
+    public Scope getDeclaredScope() {
+        return declaredScope;
+    }
+
+    /** Sets the lexical scope in which this symbol was declared. */
+    public void setDeclaredScope(Scope declaredScope) {
+        this.declaredScope = declaredScope;
+    }
+
     public String getDeclTypeName() {
-        return Token.typeToName(declType);
+        return declType.name();
+    }
+
+    public boolean isDeclTypeLexical() {
+        return declType == Type.FUNCTION_LET || declType == Type.LET || declType == Type.CONST;
+    }
+
+    public static boolean isDeclTypeLexical(Type declType) {
+        return declType == Type.FUNCTION_LET || declType == Type.LET || declType == Type.CONST;
     }
 
     @Override

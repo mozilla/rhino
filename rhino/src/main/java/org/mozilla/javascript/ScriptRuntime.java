@@ -2429,8 +2429,8 @@ public class ScriptRuntime {
                         break;
                     }
                 }
-            } else if (scope instanceof NativeCall) {
-                // NativeCall does not prototype chain and Scriptable.get
+            } else if (scope instanceof CatchScope || scope instanceof NativeCall) {
+                // Scopes do not have a prototype chain and Scriptable.get
                 // can be called directly.
                 result = scope.get(name, scope);
                 if (result != Scriptable.NOT_FOUND) {
@@ -2513,7 +2513,7 @@ public class ScriptRuntime {
                         break;
                     }
                 }
-            } else if (scope instanceof NativeCall) {
+            } else if (scope instanceof CatchScope || scope instanceof NativeCall) {
                 // NativeCall does not prototype chain and Scriptable.get
                 // can be called directly.
                 result = scope.get(name, scope);
@@ -2576,18 +2576,24 @@ public class ScriptRuntime {
         childScopesChecks:
         if (parent != null) {
             // Check for possibly nested "with" scopes first
-            while (scope instanceof WithScope) {
-                Scriptable withObj = ((WithScope) scope).getObject();
-                if (withObj instanceof XMLObject) {
-                    XMLObject xmlObject = (XMLObject) withObj;
-                    if (xmlObject.has(cx, id)) {
-                        return new WithScope(scope.getParentScope(), xmlObject);
-                    }
-                    if (firstXMLScope == null) {
-                        firstXMLScope = scope;
+            while (scope.isNestedScope()) {
+                if (scope instanceof WithScope) {
+                    Scriptable withObj = ((WithScope) scope).getObject();
+                    if (withObj instanceof XMLObject) {
+                        XMLObject xmlObject = (XMLObject) withObj;
+                        if (xmlObject.has(cx, id)) {
+                            return new WithScope(scope.getParentScope(), xmlObject);
+                        }
+                        if (firstXMLScope == null) {
+                            firstXMLScope = scope;
+                        }
+                    } else {
+                        if (ScriptableObject.hasProperty(withObj, id)) {
+                            return scope;
+                        }
                     }
                 } else {
-                    if (ScriptableObject.hasProperty(withObj, id)) {
+                    if (scope.has(id, scope)) {
                         return scope;
                     }
                 }
@@ -5046,7 +5052,7 @@ public class ScriptRuntime {
             VarScope varScope = scope;
             // Never define any variables from var statements inside with
             // object. See bug 38590.
-            while (varScope instanceof WithScope) {
+            while (varScope.isNestedScope()) {
                 varScope = varScope.getParentScope();
             }
 
@@ -5059,7 +5065,7 @@ public class ScriptRuntime {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(varScope, name);
                     } else if (!evalScript) {
-                        if (desc.hasFunctionNamed(name)) {
+                        if (desc.hasNoFunctionStatementNamed(name)) {
                             // Global var definitions are supposed to be DONTDELETE
                             ScriptableObject.defineProperty(
                                     varScope, name, Undefined.instance, ScriptableObject.PERMANENT);
@@ -5137,9 +5143,9 @@ public class ScriptRuntime {
         return null;
     }
 
-    public static Scriptable newCatchScope(
+    public static VarScope newCatchScope(
             Throwable t,
-            Scriptable lastCatchScope,
+            VarScope lastCatchScope,
             String exceptionName,
             Context cx,
             VarScope scope) {
@@ -5157,8 +5163,7 @@ public class ScriptRuntime {
             // the previous scope object
 
             if (lastCatchScope != null) {
-                NativeObject last = (NativeObject) lastCatchScope;
-                obj = last.getAssociatedValue(t);
+                obj = ((DeclarationScope) lastCatchScope).getAssociatedValue(t);
                 if (obj == null) Kit.codeBug();
                 break getObj;
             }
@@ -5245,26 +5250,26 @@ public class ScriptRuntime {
             obj = errorObject;
         }
 
-        NativeObject catchScopeObject = new NativeObject();
+        var catchScope = new CatchScope(scope);
         // See ECMA 12.4
         if (exceptionName != null) {
-            catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
+            catchScope.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
         }
 
         if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) && isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch
             // scope that can be used to retrieve the Java exception associated
             // with the JavaScript exception (to get stack trace info, etc.)
-            catchScopeObject.defineProperty(
+            catchScope.defineProperty(
                     "__exception__",
                     Context.javaToJS(t, scope),
                     ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
         }
 
         if (cacheObj) {
-            catchScopeObject.associateValue(t, obj);
+            catchScope.associateValue(t, obj);
         }
-        return catchScopeObject;
+        return catchScope;
     }
 
     public static Scriptable wrapException(Throwable t, VarScope scope, Context cx) {
@@ -5361,9 +5366,12 @@ public class ScriptRuntime {
         return new WithScope(scope, sobj);
     }
 
-    public static VarScope leaveWith(VarScope scope) {
-        WithScope nw = (WithScope) scope;
-        return nw.getParentScope();
+    public static VarScope enterScope(VarScope scope) {
+        return new LocalScope(scope);
+    }
+
+    public static VarScope leaveScope(VarScope scope) {
+        return scope.getParentScope();
     }
 
     public static VarScope enterDotQuery(Object value, VarScope scope) {
@@ -5511,12 +5519,16 @@ public class ScriptRuntime {
         } else if (type == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
             String name = function.getFunctionName();
             if (name != null && name.length() != 0) {
-                // Always put function expression statements into initial
-                // activation object ignoring the with statement to follow
-                // SpiderMonkey
-                while (scope instanceof WithScope) {
+                // Pre-ES6: always hoist to the enclosing function/script scope.
+                while (scope.isNestedScope()) {
                     scope = scope.getParentScope();
                 }
+                scope.put(name, scope, function);
+            }
+        } else if (type == FunctionNode.FUNCTION_BLOCK_SCOPED) {
+            String name = function.getFunctionName();
+            if (name != null && name.length() != 0) {
+                // Block-scoped function: bind in the current (block) scope.
                 scope.put(name, scope, function);
             }
         } else {

@@ -669,6 +669,7 @@ class BodyCodegen {
             case Token.WITH:
             case Token.SCRIPT:
             case Token.BLOCK:
+            case Token.SCOPE_BLOCK:
             case Token.EMPTY:
                 // no-ops.
                 if (compilerEnv.isGenerateObserverCount()) {
@@ -707,7 +708,8 @@ class BodyCodegen {
                     int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
                     OptFunctionNode ofn = OptFunctionNode.get(scriptOrFn, fnIndex);
                     int t = ofn.fnode.getFunctionType();
-                    if (t == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
+                    if (t == FunctionNode.FUNCTION_EXPRESSION_STATEMENT
+                            || t == FunctionNode.FUNCTION_BLOCK_SCOPED) {
                         visitFunction(ofn, t);
                     } else {
                         if (t != FunctionNode.FUNCTION_STATEMENT) {
@@ -752,12 +754,15 @@ class BodyCodegen {
                     addScriptRuntimeInvoke(
                             "newCatchScope",
                             "(Ljava/lang/Throwable;"
-                                    + "Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/VarScope;"
                                     + "Ljava/lang/String;"
                                     + "Lorg/mozilla/javascript/Context;"
                                     + "Lorg/mozilla/javascript/VarScope;"
-                                    + ")Lorg/mozilla/javascript/Scriptable;");
+                                    + ")Lorg/mozilla/javascript/VarScope;");
                     cfw.addAStore(local);
+                    cfw.addALoad(local);
+                    cfw.addAStore(variableObjectLocal);
+                    incReferenceWordLocal(variableObjectLocal);
                 }
                 break;
 
@@ -815,10 +820,14 @@ class BodyCodegen {
                 incReferenceWordLocal(variableObjectLocal);
                 break;
 
-            case Token.LEAVEWITH:
+            case Token.ENTER_SCOPE:
+                visitEnterScope(node, child);
+                break;
+
+            case Token.LEAVE_SCOPE:
                 cfw.addALoad(variableObjectLocal);
                 addScriptRuntimeInvoke(
-                        "leaveWith",
+                        "leaveScope",
                         "(Lorg/mozilla/javascript/VarScope;"
                                 + ")Lorg/mozilla/javascript/VarScope;");
                 cfw.addAStore(variableObjectLocal);
@@ -1769,6 +1778,16 @@ class BodyCodegen {
                     break;
                 }
 
+            case Token.SCOPEEXPR:
+                {
+                    Node expr = child.getNext();
+                    Node leave = expr.getNext();
+                    generateStatement(child);
+                    generateExpression(expr.getFirstChild(), expr);
+                    generateStatement(leave);
+                    break;
+                }
+
             case Token.ARRAYCOMP:
                 {
                     Node expr = child.getNext();
@@ -2064,6 +2083,34 @@ class BodyCodegen {
         }
     }
 
+    private void visitEnterScope(Node node, Node child) {
+        Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+
+        cfw.addALoad(variableObjectLocal);
+        addScriptRuntimeInvoke(
+                "enterScope",
+                "(Lorg/mozilla/javascript/VarScope;" + ")Lorg/mozilla/javascript/VarScope;");
+        cfw.add(ByteCode.DUP);
+        cfw.addAStore(variableObjectLocal);
+        int i = 0;
+        while (child != null) {
+            cfw.add(ByteCode.DUP);
+            cfw.add(ByteCode.DUP);
+            String id = (String) properties[i];
+            generateExpression(child, node);
+            cfw.add(ByteCode.SWAP);
+            cfw.addALoad(contextLocal);
+            cfw.add(ByteCode.SWAP);
+            addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+            cfw.add(ByteCode.POP);
+            child = child.getNext();
+            i++;
+        }
+        cfw.add(ByteCode.POP);
+
+        incReferenceWordLocal(variableObjectLocal);
+    }
+
     private void visitFunction(OptFunctionNode ofn, int functionType) {
         int fnIndex = codegen.getIndex(ofn.fnode);
         cfw.add(ByteCode.NEW, Codegen.JSFUNCTION_CLASS_NAME);
@@ -2115,12 +2162,13 @@ class BodyCodegen {
             return;
         }
         cfw.addPush(functionType);
+        cfw.addPush(ofn.fnode.isAnnexBHoisted());
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(contextLocal); // load 'cx'
         addOptRuntimeInvoke(
                 "initFunction",
                 "(Lorg/mozilla/javascript/JSFunction;"
-                        + "I"
+                        + "IZ"
                         + "Lorg/mozilla/javascript/VarScope;"
                         + "Lorg/mozilla/javascript/Context;"
                         + ")V");
@@ -2417,7 +2465,7 @@ class BodyCodegen {
     }
 
     /** load two arrays with property ids and values */
-    private void addLoadProperty(Node node, Node child, Object[] properties, int count) {
+    private void addLoadProperties(Node node, Node child, Object[] properties, int count) {
         cfw.addALoad(contextLocal);
         cfw.addLoadConstant(count - node.getIntProp(Node.NUMBER_OF_SPREAD, 0));
         cfw.addLoadConstant(1);
@@ -2625,7 +2673,7 @@ class BodyCodegen {
         cfw.addAStore(savedHomeObjectLocal);
         cfw.add(ByteCode.DUP);
 
-        addLoadProperty(node, child, properties, count);
+        addLoadProperties(node, child, properties, count);
 
         // stack: [store]
         cfw.add(ByteCode.DUP); // stack: [store, store]

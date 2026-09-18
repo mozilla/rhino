@@ -398,9 +398,20 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
     }
 
     public static void initFunction(Context cx, VarScope scope, JSDescriptor<?> parent, int index) {
+        initFunction(cx, scope, parent, index, false);
+    }
+
+    public static void initFunction(
+            Context cx, VarScope scope, JSDescriptor<?> parent, int index, boolean hoist) {
         JSFunction fn = JSFunction.createFunction(cx, scope, parent, index, null);
         ScriptRuntime.initFunction(
                 cx, scope, fn, fn.getDescriptor().getFunctionType(), parent.isEvalFunction());
+        if (hoist) {
+            while (scope.isNestedScope()) {
+                scope = scope.getParentScope();
+            }
+            scope.put(fn.getFunctionName(), scope, fn);
+        }
     }
 
     public static <T extends ScriptOrFn<T>> Object interpret(

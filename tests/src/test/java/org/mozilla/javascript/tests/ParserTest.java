@@ -1498,6 +1498,29 @@ public class ParserTest {
     }
 
     @Test
+    public void errorOnForOfWithInitializer() {
+        environment.setLanguageVersion(Context.VERSION_ES6);
+        String error = "for-in/for-of loop variable declaration may not have an initializer.";
+        expectParseErrors("for (const x = 1 of []) {}", new String[] {error});
+        expectParseErrors("for (let x = 1 of []) {}", new String[] {error});
+        expectParseErrors("for (var x = 1 of []) {}", new String[] {error});
+    }
+
+    @Test
+    public void errorOnForInWithInitializer() {
+        environment.setLanguageVersion(Context.VERSION_ES6);
+        String error = "for-in/for-of loop variable declaration may not have an initializer.";
+        expectParseErrors("for (const x = 1 in {}) {}", new String[] {error});
+        expectParseErrors("for (let x = 1 in {}) {}", new String[] {error});
+    }
+
+    @Test
+    public void legacyForInWithVarInitializerAllowed() {
+        // Annex B legacy grammar: a "var" declaration with an initializer is tolerated in for-in.
+        parse("for (var x = 1 in {}) {}");
+    }
+
+    @Test
     public void commentValueIsNotTruncatedBecauseOfEof() {
         String source = "// comment";
 

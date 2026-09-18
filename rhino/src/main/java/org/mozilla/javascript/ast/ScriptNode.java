@@ -31,6 +31,10 @@ public class ScriptNode extends Scope {
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
     private List<Symbol> symbols = new ArrayList<>(4);
+    // ES2024, B.3.2.1: block-level function declarations that are candidates
+    // for var-hoisting in non-strict mode. Each entry pairs a LET Symbol
+    // (the block-scoped binding) with its FunctionNode.
+    private List<Object[]> annexBFunctions;
     private int paramCount = 0;
     private String[] variableNames;
     private boolean[] isConsts;
@@ -263,9 +267,16 @@ public class ScriptNode extends Scope {
     // Overridden in FunctionNode
     public void putDestructuringRvalues(Node left, Node right) {}
 
+    public void addAnnexBFunction(Symbol letSymbol, FunctionNode fn) {
+        if (annexBFunctions == null) {
+            annexBFunctions = new ArrayList<>(4);
+        }
+        annexBFunctions.add(new Object[] {letSymbol, fn});
+    }
+
     void addSymbol(Symbol symbol) {
         if (variableNames != null) codeBug();
-        if (symbol.getDeclType() == Token.LP) {
+        if (symbol.getDeclType() == Symbol.Type.LP) {
             paramCount++;
         }
         symbols.add(symbol);
@@ -286,6 +297,57 @@ public class ScriptNode extends Scope {
      * @param flattenAllTables if true, flatten all symbol tables, included nested block scope
      *     symbol tables. If false, just flatten the script's or function's symbol table.
      */
+    /**
+     * ES2024, B.3.2.1: resolve Annex B block function hoisting. For each non-strict candidate,
+     * check if a let/const/param conflict exists. No conflict: add a var-hoisted symbol and set
+     * annexBHoisted on the FunctionNode. Conflict: leave as block-scoped only.
+     */
+    public void doAnnexBHoisting() {
+        if (annexBFunctions == null) return;
+        for (Object[] entry : annexBFunctions) {
+            Symbol letSym = (Symbol) entry[0];
+            FunctionNode fn = (FunctionNode) entry[1];
+            if (!hasAnnexBConflict(letSym)) {
+                // No conflict: add var-hoisted slot and mark function.
+                Symbol varSym = new Symbol(Symbol.Type.FUNCTION_VAR, letSym.getName());
+                putSymbol(varSym);
+                fn.setAnnexBHoisted(true);
+            }
+        }
+    }
+
+    /**
+     * ES2024, B.3.2.1: checks whether an Annex B block function has a conflicting let/const/param
+     * binding or is named "arguments".
+     */
+    private boolean hasAnnexBConflict(Symbol sym) {
+        String name = sym.getName();
+        if ("arguments".equals(name)) {
+            return true;
+        }
+        // Walk from the symbol's containing scope's parent up to (and
+        // including) this function scope. Skip containingTable itself since
+        // it holds the function's own LET binding.
+        Scope start = sym.getContainingTable();
+        if (start != null && start != this) {
+            start = start.getParentScope();
+        }
+        for (Scope s = start; s != null; s = s.getParentScope()) {
+            Symbol existing = s.getSymbol(name);
+            if (existing != null && existing != sym) {
+                Symbol.Type dt = existing.getDeclType();
+                switch (dt) {
+                    case FUNCTION_LET, LET, CONST, LP -> {
+                        return true;
+                    }
+                    default -> {}
+                }
+            }
+            if (s == this) break;
+        }
+        return false;
+    }
+
     public void flattenSymbolTable(boolean flattenAllTables) {
         if (!flattenAllTables) {
             List<Symbol> newSymbols = new ArrayList<>();
@@ -306,7 +368,7 @@ public class ScriptNode extends Scope {
         for (int i = 0; i < symbols.size(); i++) {
             Symbol symbol = symbols.get(i);
             variableNames[i] = symbol.getName();
-            isConsts[i] = symbol.getDeclType() == Token.CONST;
+            isConsts[i] = symbol.getDeclType() == Symbol.Type.CONST;
             symbol.setIndex(i);
         }
     }

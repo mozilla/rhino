@@ -87,7 +87,7 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
                 // block ("catch" implicitly uses WithScope to create a scope
                 // to expose the exception variable).
                 for (; ; ) {
-                    if (scope instanceof WithScope) {
+                    if (!(scope instanceof NativeCall)) {
                         scope = scope.getParentScope();
                         if (scope == null
                                 || (frame.parentFrame != null

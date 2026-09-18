@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 
 /**
@@ -231,10 +232,10 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return (flags & HAS_DEFAULT_PARAMETERS_FLAG) != 0;
     }
 
-    public boolean hasFunctionNamed(String name) {
+    public boolean hasNoFunctionStatementNamed(String name) {
         for (int f = 0; f < getFunctionCount(); f++) {
             var functionData = getFunction(f);
-            if (!functionData.declaredAsFunctionExpression()
+            if (functionData.getFunctionType() == FunctionNode.FUNCTION_STATEMENT
                     && name.equals(functionData.getFunctionName())) {
                 return false;
             }

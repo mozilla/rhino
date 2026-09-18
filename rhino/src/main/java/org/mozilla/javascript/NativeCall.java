@@ -81,7 +81,9 @@ public final class NativeCall extends DeclarationScope {
                 if (!super.has(name, this)) {
                     if (function.getParamOrVarConst(i)) {
                         defineProperty(name, Undefined.instance, CONST);
-                    } else if (function.hasFunctionNamed(name)) {
+                    } else if (function.hasNoFunctionStatementNamed(name)) {
+                        // Properties for FUNCTION_STATEMENTs are created in
+                        // Interpreter.CallFrame.initializeArgs().
                         defineProperty(name, Undefined.instance, PERMANENT);
                     }
                 }

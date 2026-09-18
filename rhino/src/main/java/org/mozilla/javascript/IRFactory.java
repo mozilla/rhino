@@ -531,13 +531,15 @@ public final class IRFactory {
             List<Node> functions = new ArrayList<>();
 
             for (Node kid : node) {
-                if (kid instanceof FunctionNode
-                        && ((FunctionNode) kid).getFunctionType()
-                                == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
-                    functions.add(transform((AstNode) kid));
-                } else {
-                    kids.add(transform((AstNode) kid));
+                if (kid instanceof FunctionNode) {
+                    int fnType = ((FunctionNode) kid).getFunctionType();
+                    if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT
+                            || fnType == FunctionNode.FUNCTION_BLOCK_SCOPED) {
+                        functions.add(transform((AstNode) kid));
+                        continue;
+                    }
                 }
+                kids.add(transform((AstNode) kid));
             }
             node.removeChildren();
 
@@ -1565,7 +1567,7 @@ public final class IRFactory {
                 // function's name to the function value, but only if the
                 // function doesn't already define a formal parameter, var,
                 // or nested function with the same name.
-                fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
+                fnNode.putSymbol(new Symbol(Symbol.Type.FUNCTION_VAR, name.getIdentifier()));
                 Node setFn =
                         new Node(
                                 Token.EXPR_VOID,
@@ -1702,7 +1704,7 @@ public final class IRFactory {
             int destructuringLen = 0;
             Node lvalue;
             int type = lhs.getType();
-            if (type == Token.VAR || type == Token.LET) {
+            if (type == Token.VAR || type == Token.LET || type == Token.CONST) {
                 Node kid = lhs.getLastChild();
                 int kidType = kid.getType();
                 if (kidType == Token.ARRAYLIT || kidType == Token.OBJECTLIT) {
@@ -1893,7 +1895,7 @@ public final class IRFactory {
                 // but prefix it with LEAVEWITH since try..catch produces
                 // "with"code in order to limit the scope of the exception
                 // object.
-                catchStatement.addChildToBack(new Node(Token.LEAVEWITH));
+                catchStatement.addChildToBack(new Node(Token.LEAVE_SCOPE));
                 catchStatement.addChildToBack(makeJump(Token.GOTO, endCatch));
 
                 // Create condition "if" when present
@@ -1912,13 +1914,9 @@ public final class IRFactory {
                 catchScope.putIntProp(Node.CATCH_SCOPE_PROP, scopeIndex);
                 catchScopeBlock.addChildToBack(catchScope);
 
-                // Add with statement based on catch scope object
-                catchScopeBlock.addChildToBack(
-                        createWith(
-                                createUseLocal(catchScopeBlock),
-                                condStmt,
-                                catchLineno,
-                                catchColumn));
+                parser.setRequiresActivation();
+                catchScopeBlock.addChildToBack(condStmt);
+                catchScopeBlock.addChildToBack(new Node(Token.LEAVE_SCOPE));
 
                 // move to next cb
                 cb = cb.getNext();
@@ -1963,7 +1961,7 @@ public final class IRFactory {
         result.addChildToBack(new Node(Token.ENTERWITH, obj));
         Node bodyNode = new Node(Token.WITH, body, lineno, column);
         result.addChildrenToBack(bodyNode);
-        result.addChildToBack(new Node(Token.LEAVEWITH));
+        result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         return result;
     }
 
