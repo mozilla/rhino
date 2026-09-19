@@ -52,7 +52,7 @@ public class NativeInt16Array extends NativeTypedArrayView<Short> {
     }
 
     public NativeInt16Array(int len) {
-        this(new NativeArrayBuffer((double) len * BYTES_PER_ELEMENT), 0, len);
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
