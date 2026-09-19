@@ -6,6 +6,7 @@ import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.mozilla.javascript.tools.Console;
 
@@ -15,7 +16,9 @@ public class JLineConsole implements Console {
 
     JLineConsole(Terminal t) {
         this.terminal = t;
-        this.reader = LineReaderBuilder.builder().terminal(t).build();
+        var parser = new DefaultParser();
+        parser.setEscapeChars(null);
+        this.reader = LineReaderBuilder.builder().terminal(t).parser(parser).build();
     }
 
     @Override

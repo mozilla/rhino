@@ -40,6 +40,7 @@ jar {
                 'javax.swing*;resolution:=optional',
                 'java.awt*;resolution:=optional',
                 'org.jline.reader;resolution:=optional',
+                'org.jline.reader.impl;resolution:=optional',
                 'org.jline.terminal;resolution:=optional',
                 '*',
             ].join(','),
