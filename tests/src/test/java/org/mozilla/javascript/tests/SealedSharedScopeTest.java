@@ -15,11 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.reflect.ImporterTopLevel;
 
 public class SealedSharedScopeTest {
 

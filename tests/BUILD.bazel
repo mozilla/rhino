@@ -27,6 +27,7 @@ java_library(
     javacopts = TEST_OPTS,
     deps = [
         "//rhino",
+        "//rhino-reflect",
         "//rhino-tools",
         "//rhino-xml",
         "//testutils",
@@ -71,6 +72,7 @@ java_test_suite(
         ":rhino-tests-lib",
         "//examples",
         "//rhino",
+        "//rhino-reflect",
         "//rhino-tools",
         "//rhino-xml",
         "//testutils",

@@ -14,6 +14,7 @@ configurations {
 
 dependencies {
     implementation project(':rhino')
+    implementation project(':rhino-reflect')
     // Dependencies that ensure that we can compile with the JLine library
     compileOnly libs.jline.terminal
     compileOnly libs.jline.reader
@@ -41,6 +42,7 @@ jar {
                 'java.awt*;resolution:=optional',
                 'org.jline.reader;resolution:=optional',
                 'org.jline.terminal;resolution:=optional',
+                'org.mozilla.javascript.reflect;resolution:=optional',
                 '*',
             ].join(','),
             'Provide-Capability': [

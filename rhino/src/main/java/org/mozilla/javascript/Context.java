@@ -985,7 +985,7 @@ public class Context implements Closeable {
         throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
     }
 
-    static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
+    public static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
         String msg = ScriptRuntime.getMessageById(messageId, args);
         return reportRuntimeError(msg);
     }
@@ -1878,6 +1878,11 @@ public class Context implements Closeable {
      * Convert a JavaScript value into the desired type. Uses the semantics defined with
      * LiveConnect3 and throws an Illegal argument exception if the conversion cannot be performed.
      *
+     * <p>If the LiveConnect implementation is not available, the value is returned as is when the
+     * requested type is {@link Object}; for any other non-primitive type, an exception is thrown.
+     * Otherwise, it will make a reasonable effort to convert the object to the requested primitive
+     * type without relying on Java reflection.
+     *
      * @param value the JavaScript value to convert
      * @param desiredType the Java type to convert to. Primitive Java types are represented using
      *     the TYPE fields in the corresponding wrapper class in java.lang.
@@ -1888,8 +1893,22 @@ public class Context implements Closeable {
         return jsToJava(value, TypeInfoFactory.GLOBAL.create(desiredType));
     }
 
+    /**
+     * Convert a JavaScript value into the desired type. Uses the semantics defined with
+     * LiveConnect3 and throws an Illegal argument exception if the conversion cannot be performed.
+     *
+     * <p>If the LiveConnect implementation is not available, the value is returned as is when the
+     * requested type is {@link Object}; for any other non-primitive type, an exception is thrown.
+     * Otherwise, it will make a reasonable effort to convert the object to the requested primitive
+     * type without relying on Java reflection.
+     *
+     * @param value the JavaScript value to convert
+     * @param desiredType the type to convert to
+     * @return the converted value
+     * @throws EvaluatorException if the conversion cannot be performed
+     */
     public static Object jsToJava(Object value, TypeInfo desiredType) throws EvaluatorException {
-        return NativeJavaObject.coerceTypeImpl(desiredType, value);
+        return LiveConnectSupport.get().coerceType(desiredType, value);
     }
 
     /**
@@ -2206,7 +2225,7 @@ public class Context implements Closeable {
         hasClassShutter = true;
     }
 
-    final synchronized ClassShutter getClassShutter() {
+    public final synchronized ClassShutter getClassShutter() {
         return classShutter;
     }
 

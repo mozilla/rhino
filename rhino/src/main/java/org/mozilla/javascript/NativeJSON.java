@@ -308,8 +308,9 @@ public final class NativeJSON extends ScriptableObject {
         } else if (state.cx.getLanguageVersion() >= Context.VERSION_ES6
                 && value instanceof NativeBigInt) {
             value = ((NativeBigInt) value).getDefaultValue(ScriptRuntime.BigIntegerClass);
-        } else if (value instanceof NativeJavaObject) {
-            unwrappedJavaValue = ((NativeJavaObject) value).unwrap();
+        } else if (value instanceof Wrapper w) {
+            // TODO check this, since it previously checked only for NativeJavaObject
+            unwrappedJavaValue = w.unwrap();
             if (!(unwrappedJavaValue instanceof Map
                     || unwrappedJavaValue instanceof Collection
                     || unwrappedJavaValue.getClass().isArray())) {
@@ -597,8 +598,8 @@ public final class NativeJSON extends ScriptableObject {
         if (o instanceof NativeArray) {
             return true;
         }
-        if (o instanceof NativeJavaObject) {
-            Object unwrapped = ((NativeJavaObject) o).unwrap();
+        if (o instanceof Wrapper w) {
+            Object unwrapped = w.unwrap();
             return (unwrapped instanceof Collection) || unwrapped.getClass().isArray();
         }
         return false;

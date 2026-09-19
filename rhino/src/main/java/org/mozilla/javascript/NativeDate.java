@@ -32,7 +32,7 @@ import java.util.Locale;
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
 // java.time.format API added in API level 26
-final class NativeDate extends ScriptableObject {
+public final class NativeDate extends ScriptableObject {
     @Serial private static final long serialVersionUID = -8307438915861678966L;
 
     private static final String CLASS_NAME = "Date";
@@ -131,7 +131,7 @@ final class NativeDate extends ScriptableObject {
         return super.getDefaultValue(typeHint);
     }
 
-    double getJSTimeValue() {
+    public double getJSTimeValue() {
         return date;
     }
 

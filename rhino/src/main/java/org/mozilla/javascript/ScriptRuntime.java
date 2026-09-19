@@ -13,7 +13,6 @@ import static org.mozilla.javascript.Symbol.Kind.REGULAR;
 import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -225,7 +224,6 @@ public class ScriptRuntime {
         scope.clearCache();
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
 
-        new ClassCache().associate(scope);
         var typeFactory =
                 (androidApi >= 34 || androidApi < 0)
                         ? new ClassValueCacheFactory.Concurrent()
@@ -268,9 +266,6 @@ public class ScriptRuntime {
         NativeArrayIterator.init(cx, scope, sealed);
         NativeStringIterator.init(cx, scope, sealed);
         registerRegExp(cx, scope, sealed);
-
-        NativeJavaObject.init(cx, scope, sealed);
-        NativeJavaMap.init(cx, scope, sealed);
 
         // define lazy-loaded properties using their class name
         // Depends on the old reflection-based lazy loading mechanism
@@ -320,6 +315,10 @@ public class ScriptRuntime {
                     scope, "FinalizationRegistry", sealed, true, NativeFinalizationRegistry::init);
         }
 
+        for (BuiltInLoader svc : ServiceLoader.load(BuiltInLoader.class)) {
+            svc.initSafeStandardObjects(cx, scope, sealed);
+        }
+
         scope.cacheBuiltins(sealed);
 
         return scope;
@@ -343,30 +342,16 @@ public class ScriptRuntime {
 
     private static TopLevel initStandardObjectsInt(Context cx, TopLevel scope, boolean sealed) {
         TopLevel s = initSafeStandardObjects(cx, scope, sealed);
-
-        // These depend on the legacy initialization behavior of the lazy loading mechanism
-        new LazilyLoadedCtor<>(
-                s, "Packages", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor<>(
-                s, "getClass", "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor<>(
-                s, "JavaAdapter", "org.mozilla.javascript.JavaAdapter", sealed, true);
-        new LazilyLoadedCtor<>(
-                s, "JavaImporter", "org.mozilla.javascript.ImporterTopLevel", sealed, true);
-
-        for (String packageName : getTopPackageNames()) {
-            new LazilyLoadedCtor<>(
-                    s, packageName, "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        // Force the LiveConnect service lookup to happen here, in the embedding's security
+        // context, rather than lazily during script execution. The lookup reads the classpath,
+        // which can be denied (silently) if the first access happens under a restricted
+        // access control context, making LiveConnect appear unavailable.
+        LiveConnectSupport.get();
+        for (var it = ServiceLoader.load(BuiltInLoader.class).iterator(); it.hasNext(); ) {
+            var svc = it.next();
+            svc.initStandardObjects(cx, s, sealed);
         }
-
         return s;
-    }
-
-    static String[] getTopPackageNames() {
-        // Include "android" top package if running on Android
-        return androidApi > 0
-                ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
-                : new String[] {"java", "javax", "org", "com", "edu", "net"};
     }
 
     public static ScopeObject getLibraryScopeOrNull(VarScope scope) {
@@ -4901,6 +4886,8 @@ public class ScriptRuntime {
     // ------------------
 
     public static TopLevel getGlobal(Context cx) {
+        throw new AssertionError("not supported");
+        /*
         final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
         Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
         if (globalClass != null) {
@@ -4916,6 +4903,7 @@ public class ScriptRuntime {
             }
         }
         return new ImporterTopLevel(cx);
+         */
     }
 
     public static boolean hasTopCall(Context cx) {
@@ -5349,7 +5337,14 @@ public class ScriptRuntime {
         return errorObject;
     }
 
+    /**
+     * Return whether a class should be visible as a Java object. This depends on the ClassShutter
+     * and also on whether LiveConnect is available at all.
+     */
     private static boolean isVisible(Context cx, Object obj) {
+        if (!LiveConnectSupport.get().isAvailable()) {
+            return false;
+        }
         ClassShutter shutter = cx.getClassShutter();
         return shutter == null || shutter.visibleToScripts(obj.getClass().getName());
     }
@@ -6353,8 +6348,12 @@ public class ScriptRuntime {
         }
     }
 
-    private static int detectAndroidApi() {
+    /** This value holds the current android API version (or -1) if not running on android */
+    public static int getAndroidApiVersion() {
+        return androidApi;
+    }
 
+    private static int detectAndroidApi() {
         try {
             Class<?> versionClass = Class.forName("android.os.Build$VERSION");
             Field sdkInt = versionClass.getField("SDK_INT");
