@@ -17,6 +17,8 @@ import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EagerSourceCodeProvider;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
@@ -121,70 +123,75 @@ public class ClassCompiler {
      */
     public Object[] compileToClassFiles(
             String source, String sourceLocation, int lineno, String mainClassName) {
-        Parser p = new Parser(compilerEnv);
-        AstRoot ast = p.parse(source, sourceLocation, lineno);
-        IRFactory irf = new IRFactory(compilerEnv, source);
-        ScriptNode tree = irf.transformTree(ast);
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(compilerEnv.getLanguageVersion());
+            var global = ScriptRuntime.initSafeStandardObjects(cx, null, false);
+            Parser p = new Parser(compilerEnv);
+            AstRoot ast = p.parse(source, sourceLocation, lineno);
+            IRFactory irf = new IRFactory(compilerEnv, source);
+            ScriptNode tree = irf.transformTree(ast);
 
-        if (compilerEnv.isGeneratingSource()) {
-            tree.setRawSource(source);
-            tree.setRawSourceBounds(0, source.length());
-            compilerEnv.setSourceCodeProvider(SourceCodeProvider.make(true, null, source));
-        }
+            if (compilerEnv.isGeneratingSource()) {
+                tree.setRawSource(source);
+                tree.setRawSourceBounds(0, source.length());
+                compilerEnv.setSourceCodeProvider(SourceCodeProvider.make(true, null, source));
+            }
 
-        // release reference to original parse tree & parser
-        irf = null;
-        ast = null;
-        p = null;
+            // release reference to original parse tree & parser
+            irf = null;
+            ast = null;
+            p = null;
 
-        Class<?> superClass = getTargetExtends();
-        Class<?>[] interfaces = getTargetImplements();
-        String scriptClassName;
-        boolean isPrimary = (interfaces == null && superClass == null);
-        if (isPrimary) {
-            scriptClassName = mainClassName;
-        } else {
-            scriptClassName = makeAuxiliaryClassName(mainClassName, "1");
-        }
+            Class<?> superClass = getTargetExtends();
+            Class<?>[] interfaces = getTargetImplements();
+            String scriptClassName;
+            boolean isPrimary = (interfaces == null && superClass == null);
+            if (isPrimary) {
+                scriptClassName = mainClassName;
+            } else {
+                scriptClassName = makeAuxiliaryClassName(mainClassName, "1");
+            }
 
-        Codegen codegen = new Codegen();
-        codegen.setMainMethodClass(mainMethodClassName);
-        JSDescriptor.Builder<?> builder = new JSDescriptor.Builder<>();
-        MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
-        byte[] scriptClassBytes =
-                codegen.compileToClassFile(
-                        compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
-        Object[] auxilaryClasses = buildDescriptorsAndMain(scriptClassName, builder);
-        if (isPrimary) {
-            var result = new Object[auxilaryClasses.length + 2];
-            System.arraycopy(auxilaryClasses, 0, result, 2, auxilaryClasses.length);
-            result[0] = scriptClassName;
-            result[1] = scriptClassBytes;
+            Codegen codegen = new Codegen();
+            codegen.setMainMethodClass(mainMethodClassName);
+            JSDescriptor.Builder<?> builder = new JSDescriptor.Builder<>();
+            MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
+            byte[] scriptClassBytes =
+                    codegen.compileToClassFile(
+                            compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
+            Object[] auxilaryClasses =
+                    buildDescriptorsAndMain(scriptClassName, builderEnv, builder);
+            if (isPrimary) {
+                var result = new Object[auxilaryClasses.length + 2];
+                System.arraycopy(auxilaryClasses, 0, result, 2, auxilaryClasses.length);
+                result[0] = scriptClassName;
+                result[1] = scriptClassBytes;
+                return result;
+            }
+            int functionCount = tree.getFunctionCount();
+            HashMap<String, Integer> functionNames = new HashMap<>();
+            for (int i = 0; i != functionCount; ++i) {
+                FunctionNode ofn = tree.getFunctionNode(i);
+                String name = ofn.getName();
+                if (name != null && name.length() != 0) {
+                    functionNames.put(name, ofn.getParamCount());
+                }
+            }
+            if (superClass == null) {
+                superClass = ScriptRuntime.ObjectClass;
+            }
+            byte[] mainClassBytes =
+                    JavaAdapter.createAdapterCode(
+                            functionNames, mainClassName, superClass, interfaces, scriptClassName);
+
+            var result = new Object[auxilaryClasses.length + 4];
+            System.arraycopy(auxilaryClasses, 0, result, 4, auxilaryClasses.length);
+            result[0] = mainClassName;
+            result[1] = mainClassBytes;
+            result[2] = scriptClassName;
+            result[3] = scriptClassBytes;
             return result;
         }
-        int functionCount = tree.getFunctionCount();
-        HashMap<String, Integer> functionNames = new HashMap<>();
-        for (int i = 0; i != functionCount; ++i) {
-            FunctionNode ofn = tree.getFunctionNode(i);
-            String name = ofn.getName();
-            if (name != null && name.length() != 0) {
-                functionNames.put(name, ofn.getParamCount());
-            }
-        }
-        if (superClass == null) {
-            superClass = ScriptRuntime.ObjectClass;
-        }
-        byte[] mainClassBytes =
-                JavaAdapter.createAdapterCode(
-                        functionNames, mainClassName, superClass, interfaces, scriptClassName);
-
-        var result = new Object[auxilaryClasses.length + 4];
-        System.arraycopy(auxilaryClasses, 0, result, 4, auxilaryClasses.length);
-        result[0] = mainClassName;
-        result[1] = mainClassBytes;
-        result[2] = scriptClassName;
-        result[3] = scriptClassBytes;
-        return result;
     }
 
     /**
@@ -193,14 +200,22 @@ public class ClassCompiler {
      * first descriptor and pass that to the main method in the runtime.
      */
     private Object[] buildDescriptorsAndMain(
-            String mainClassName, JSDescriptor.Builder<?> builder) {
+            String mainClassName, MHJSCode.BuilderEnv builderEnv, JSDescriptor.Builder<?> builder) {
         var classes = new HashMap<String, byte[]>();
         var mainName = mainClassName + "Main";
 
         var cfw = new ClassFileWriter(mainName, "java.lang.Object", "");
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
         buildDescriptor(cfw, builder, builder, classes, builders, mainClassName);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);
+        if (builderEnv.hasTemplateLiterals) {
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    mainClassName,
+                    Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                    Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+        }
         cfw.addLoadConstant(builders.size());
         cfw.add(ByteCode.ANEWARRAY, "org/mozilla/javascript/JSDescriptor");
         for (var b : builders) {
@@ -313,14 +328,8 @@ public class ClassCompiler {
         cfw.add(builder.hasRestArg ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.addLoadConstant(builder.sourceFile);
         if (compilerEnv.isGeneratingSource()) {
-            cfw.add(ByteCode.NEW, "org.mozilla.javascript.EagerSourceCodeProvider");
-            cfw.add(ByteCode.DUP);
-            cfw.addLoadConstant(root.sourceCodeProvider.getRawSource());
-            cfw.addInvoke(
-                    ByteCode.INVOKESPECIAL,
-                    "org.mozilla.javascript.EagerSourceCodeProvider",
-                    "<init>",
-                    "(Ljava/lang/String;)V");
+            cfw.addLoadDynamicConstant(
+                    new EagerSourceCodeProvider(root.sourceCodeProvider.getRawSource()));
         } else {
             cfw.add(ByteCode.ACONST_NULL);
         }

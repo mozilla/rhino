@@ -9,29 +9,87 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import org.junit.jupiter.api.Test;
+import java.util.Collection;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.DefiningClassLoader;
 import org.mozilla.javascript.optimizer.ClassCompiler;
 
 public class ClassCompilerTest {
-    private static String SOURCE =
-            "function f(str) { return (s) => (str + s); }\n"
-                    + "\n"
-                    + "function g() {\n"
-                    + "    function h() {\n"
-                    + "        function i() {\n"
-                    + "        }\n"
-                    + "    }\n"
-                    + "}\n"
-                    + "\n"
-                    + "java.lang.System.out.println(f('hi, ')('mom!'));\n";
+    public static Collection<Object[]> testSources() {
+        var res = new ArrayList<Object[]>();
+        res.add(
+                new Object[] {
+                    """
+                function f(str) { return (s) => (str + s); }
 
-    @Test
-    public void testClassesCompile() {
+                function g() {
+                  function h() {
+                    function i() {
+                    }
+                  }
+                }
+
+                java.lang.System.out.println(f('hi, ')('mom!'));
+                """
+                });
+        res.add(
+                new Object[] {
+                    """
+                function f(str) { return (s) => (str.replaceAll(/i/g, 'ello'), + s); }
+
+                function g() {
+                  function h() {
+                    function i() {
+                    }
+                  }
+                }
+
+                java.lang.System.out.println(f('hi, ')('mom!'));
+                """
+                });
+        res.add(
+                new Object[] {
+                    """
+                function f(str) { return (s) => (`${str}${s}`); }
+
+                function g() {
+                  function h() {
+                    function i() {
+                    }
+                  }
+                }
+
+                java.lang.System.out.println(f('hi, ')('mom!'));
+                """
+                });
+        res.add(
+                new Object[] {
+                    """
+                function f(str) { return (s) => (greeting`${str}, ${s}`); }
+                function greeting(strings, greet, person) {
+                  return greet + strings[1] + person;
+                }
+                function g() {
+                  function h() {
+                    function i() {
+                    }
+                  }
+                }
+
+                java.lang.System.out.println(f('hi')('mom!'));
+                """
+                });
+        return res;
+    }
+
+    @ParameterizedTest
+    @MethodSource("testSources")
+    public void testClassesCompile(String source) {
         var compilerEnv = new CompilerEnvirons();
         ClassCompiler compiler = new ClassCompiler(compilerEnv);
-        var result = compiler.compileToClassFiles(SOURCE, "test", 0, "test");
+        var result = compiler.compileToClassFiles(source, "test", 0, "test");
         assertTrue(result.length > 0, "Expected > 0 entries in result array");
         assertTrue(result.length % 2 == 0, "Expected even number of results");
         boolean foundMain = false;
@@ -49,11 +107,12 @@ public class ClassCompilerTest {
         assertTrue(foundMain, "Expected an entry for our main class");
     }
 
-    @Test
-    public void testClassesLoadAndLink() {
+    @ParameterizedTest
+    @MethodSource("testSources")
+    public void testClassesLoadAndLink(String source) {
         var compilerEnv = new CompilerEnvirons();
         ClassCompiler compiler = new ClassCompiler(compilerEnv);
-        var result = compiler.compileToClassFiles(SOURCE, "test", 0, "test");
+        var result = compiler.compileToClassFiles(source, "test", 0, "test");
         var loader = new DefiningClassLoader();
 
         var classes = new ArrayList<Class<?>>();
@@ -68,12 +127,13 @@ public class ClassCompilerTest {
         }
     }
 
-    @Test
-    public void testMainMethodExecutesWithoutError()
+    @ParameterizedTest
+    @MethodSource("testSources")
+    public void testMainMethodExecutesWithoutError(String source)
             throws IllegalAccessException, InvocationTargetException {
         var compilerEnv = new CompilerEnvirons();
         ClassCompiler compiler = new ClassCompiler(compilerEnv);
-        var result = compiler.compileToClassFiles(SOURCE, "test", 0, "test");
+        var result = compiler.compileToClassFiles(source, "test", 0, "test");
         var loader = new DefiningClassLoader();
 
         var classes = new ArrayList<Class<?>>();

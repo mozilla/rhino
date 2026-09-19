@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript.regexp;
 
+import java.util.List;
+import org.mozilla.classfile.DynamicConstantDescriber;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Kit;
@@ -35,6 +37,16 @@ public class RegExpImpl implements RegExpProxy {
     @Override
     public Object compileRegExp(Context cx, String source, String flags) {
         return NativeRegExp.compileRE(cx, source, flags, false);
+    }
+
+    @Override
+    public Object prepareRegExpConstant(Context cx, String source, String flags) {
+        return NativeRegExp.compileRE(cx, source, flags, false);
+    }
+
+    @Override
+    public List<DynamicConstantDescriber<?>> getDynamicConstantDescribers() {
+        return List.of(new RECompiledDescriber());
     }
 
     @Override

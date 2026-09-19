@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.classfile.DynamicConstant;
+import org.mozilla.classfile.DynamicConstantDescriber;
 import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilationResult;
 import org.mozilla.javascript.CompilerEnvirons;
@@ -32,11 +34,14 @@ import org.mozilla.javascript.InstrumentEmitter.Type;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
+import org.mozilla.javascript.RegExpProxy;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptOrFn;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
@@ -191,10 +196,6 @@ public class Codegen implements Evaluator {
             var descs = new ArrayList<JSDescriptor<?>>();
             JSDescriptor<T> desc = compiled.builder.build(d -> descs.add(d));
             cl.getField(DESCRIPTORS_FIELD_NAME).set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.builderEnv.hasRegExpLiterals) {
-                cl.getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
-                        .invoke(null, Context.getCurrentContext());
-            }
             if (compiled.builderEnv.hasTemplateLiterals) {
                 cl.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
             }
@@ -244,7 +245,7 @@ public class Codegen implements Evaluator {
 
         initScriptNodesData(scriptOrFn, builder, builderEnv);
 
-        return generateCode(rawSource);
+        return generateCode(rawSource, builderEnv);
     }
 
     private void transform(ScriptNode tree) {
@@ -366,10 +367,18 @@ public class Codegen implements Evaluator {
                                 ? "org.mozilla.javascript.optimizer.OptJSFunctionCode"
                                 : "org.mozilla.javascript.optimizer.OptJSScriptCode",
                         sourceFile);
+        installConstantDescribers(cfw);
         generateOptJSCodeCtor(cfw, isFunction);
         generateOptJSCodeExecute(cfw, mainClass, methodName, methodType);
         generateOptJSCodeResume(cfw, mainClass, resumeName, GENERATOR_METHOD_SIGNATURE);
         return cfw.toByteArray();
+    }
+
+    /** Teach a writer about the runtime types that can be emitted as dynamic constants. */
+    private static void installConstantDescribers(ClassFileWriter cfw) {
+        cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
     }
 
     private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
@@ -420,13 +429,15 @@ public class Codegen implements Evaluator {
         // 5: this, cx, js function, new.target, scope, js this, args[]
     }
 
-    private byte[] generateCode(String rawSource) {
+    private byte[] generateCode(String rawSource, MHJSCode.BuilderEnv builderEnv) {
         boolean hasScript = (scriptOrFnNodes[0].getType() == Token.SCRIPT);
         boolean hasFunctions = (scriptOrFnNodes.length > 1 || !hasScript);
         boolean isStrictMode = scriptOrFnNodes[0].isInStrictMode();
 
         String sourceFile = scriptOrFnNodes[0].getSourceName();
         ClassFileWriter cfw = new ClassFileWriter(mainClassName, SUPER_CLASS_NAME, sourceFile);
+        installConstantDescribers(cfw);
+        prepareRegExpConstants(cfw, builderEnv);
         cfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
         cfw.addField(
                 DESCRIPTORS_FIELD_NAME,
@@ -467,7 +478,6 @@ public class Codegen implements Evaluator {
             }
         }
 
-        emitRegExpInit(cfw);
         emitTemplateLiteralInit(cfw);
         emitConstantDudeInitializers(cfw);
 
@@ -621,71 +631,53 @@ public class Codegen implements Evaluator {
         cfw.stopMethod(0);
     }
 
-    private void emitRegExpInit(ClassFileWriter cfw) {
-        // precompile all regexp literals
-
-        int totalRegCount = 0;
-        for (int i = 0; i != scriptOrFnNodes.length; ++i) {
-            totalRegCount += scriptOrFnNodes[i].getRegexpCount();
-        }
-        if (totalRegCount == 0) {
+    /**
+     * Compile the regexp literals ahead of time so that they can be written to the class file as
+     * dynamic constants, and register the describers that will write them.
+     *
+     * <p>Preparing them here is what lets the constants be resolved later without a context: the
+     * regexp implementation reports anything wrong with an expression now, while there is still a
+     * script being compiled to report it against.
+     */
+    private void prepareRegExpConstants(ClassFileWriter cfw, MHJSCode.BuilderEnv builderEnv) {
+        if (!builderEnv.hasRegExpLiterals) {
             return;
         }
+        Context cx = Context.getCurrentContext();
+        RegExpProxy proxy = cx == null ? null : ScriptRuntime.getRegExpProxy(cx);
+        if (proxy == null) {
+            throw new IllegalStateException(
+                    "Compilation of regexps literals requires an enclosing context.");
+        }
 
-        cfw.startMethod(
-                REGEXP_INIT_METHOD_NAME,
-                REGEXP_INIT_METHOD_SIGNATURE,
-                (short) (ACC_STATIC | ACC_PUBLIC));
-        cfw.addField("_reInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
-        cfw.add(ByteCode.GETSTATIC, mainClassName, "_reInitDone", "Z");
-        int doInit = cfw.acquireLabel();
-        cfw.add(ByteCode.IFEQ, doInit);
-        cfw.add(ByteCode.RETURN);
-        cfw.markLabel(doInit);
-
-        // get regexp proxy and store it in local slot 1
-        cfw.addALoad(0); // context
-        cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "checkRegExpProxy",
-                "(Lorg/mozilla/javascript/Context;" + ")Lorg/mozilla/javascript/RegExpProxy;");
-        cfw.addAStore(1); // proxy
-
-        // We could apply double-checked locking here but concurrency
-        // shouldn't be a problem in practice
+        DynamicConstant[][] constants = new DynamicConstant[scriptOrFnNodes.length][];
         for (int i = 0; i != scriptOrFnNodes.length; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
             int regCount = n.getRegexpCount();
+            constants[i] = new DynamicConstant[regCount];
             for (int j = 0; j != regCount; ++j) {
-                String reFieldName = getCompiledRegexpName(n, j);
-                String reFieldType = "Ljava/lang/Object;";
-                String reString = n.getRegexpString(j);
-                String reFlags = n.getRegexpFlags(j);
-                cfw.addField(reFieldName, reFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
-                cfw.addALoad(1); // proxy
-                cfw.addALoad(0); // context
-                cfw.addPush(reString);
-                if (reFlags == null) {
-                    cfw.add(ByteCode.ACONST_NULL);
-                } else {
-                    cfw.addPush(reFlags);
+                Object constant =
+                        proxy.prepareRegExpConstant(cx, n.getRegexpString(j), n.getRegexpFlags(j));
+                if (!(constant instanceof DynamicConstant)) {
+                    // This implementation has no constant form, so compile every literal of this
+                    // class at run time rather than mixing the two ways of doing it.
+                    return;
                 }
-                cfw.addInvoke(
-                        ByteCode.INVOKEINTERFACE,
-                        "org/mozilla/javascript/RegExpProxy",
-                        "compileRegExp",
-                        "(Lorg/mozilla/javascript/Context;"
-                                + "Ljava/lang/String;Ljava/lang/String;"
-                                + ")Ljava/lang/Object;");
-                cfw.add(ByteCode.PUTSTATIC, mainClassName, reFieldName, reFieldType);
+                constants[i][j] = (DynamicConstant) constant;
             }
         }
 
-        cfw.addPush(1);
-        cfw.add(ByteCode.PUTSTATIC, mainClassName, "_reInitDone", "Z");
-        cfw.add(ByteCode.RETURN);
-        cfw.stopMethod(2);
+        for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
+            cfw.registerDynamicConstantDescriber(describer);
+        }
+        regExpConstants = constants;
+        // With the literals in the constant pool there is nothing left to initialize.
+        builderEnv.hasRegExpLiterals = false;
+    }
+
+    /** The prepared constant for a regexp literal, or null if it is compiled at run time. */
+    DynamicConstant getRegExpConstant(ScriptNode n, int regexpIndex) {
+        return regExpConstants == null ? null : regExpConstants[getIndex(n)][regexpIndex];
     }
 
     /**
@@ -884,11 +876,7 @@ public class Codegen implements Evaluator {
     }
 
     static void pushUndefined(ClassFileWriter cfw) {
-        cfw.add(
-                ByteCode.GETSTATIC,
-                "org/mozilla/javascript/Undefined",
-                "instance",
-                "Ljava/lang/Object;");
+        cfw.addLoadDynamicConstant(Undefined.instance);
     }
 
     int getIndex(ScriptNode n) {
@@ -998,7 +986,6 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
-    static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
 
     static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";
@@ -1043,6 +1030,12 @@ public class Codegen implements Evaluator {
 
     String mainClassName;
     String mainClassSignature;
+
+    /**
+     * The prepared form of every regexp literal, indexed as {@link #scriptOrFnNodes} is and then by
+     * the index of the literal, or null when the literals are compiled at run time instead.
+     */
+    private DynamicConstant[][] regExpConstants;
 
     private double[] itsConstantList;
     private int itsConstantListSize;
