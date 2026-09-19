@@ -1534,6 +1534,12 @@ final class NativeDate extends ScriptableObject {
             }
         }
         if (year < 0 || mon < 0 || mday < 0) return ScriptRuntime.NaN;
+        // Reject out of range fields (output NaN instead of rolling over).
+        if (mon > 11) return ScriptRuntime.NaN;
+        if (mday < 1 || mday > DaysInMonth(year, mon + 1)) return ScriptRuntime.NaN;
+        if (hour > 24 || min > 59 || sec > 59) return ScriptRuntime.NaN;
+        if (hour == 24 && (min > 0 || sec > 0)) return ScriptRuntime.NaN;
+
         if (sec < 0) sec = 0;
         if (min < 0) min = 0;
         if (hour < 0) hour = 0;
