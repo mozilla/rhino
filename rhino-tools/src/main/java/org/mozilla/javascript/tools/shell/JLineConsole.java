@@ -2,6 +2,7 @@ package org.mozilla.javascript.tools.shell;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -13,7 +14,7 @@ public class JLineConsole implements Console {
     private final Terminal terminal;
     private final LineReader reader;
 
-    JLineConsole(Terminal t) {
+    public JLineConsole(Terminal t) {
         this.terminal = t;
         this.reader = LineReaderBuilder.builder().terminal(t).build();
     }
@@ -47,19 +48,28 @@ public class JLineConsole implements Console {
         }
     }
 
+    // JLine only flushes the terminal writer when the terminal is active (during an
+    // interactive readLine), so flush explicitly or output is lost in script mode.
+
     @Override
     public void print(String msg) {
-        terminal.writer().print(msg);
+        PrintWriter w = terminal.writer();
+        w.print(msg);
+        w.flush();
     }
 
     @Override
     public void println(String msg) {
-        terminal.writer().println(msg);
+        PrintWriter w = terminal.writer();
+        w.println(msg);
+        w.flush();
     }
 
     @Override
     public void println() {
-        terminal.writer().println();
+        PrintWriter w = terminal.writer();
+        w.println();
+        w.flush();
     }
 
     @Override
@@ -74,6 +84,7 @@ public class JLineConsole implements Console {
 
     @Override
     public PrintStream getErr() {
-        return new PrintStream(terminal.output());
+        // Errors (e.g. from the error reporter) must go to stderr, not the terminal.
+        return System.err;
     }
 }
