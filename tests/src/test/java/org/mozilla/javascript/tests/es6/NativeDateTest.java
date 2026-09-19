@@ -578,6 +578,54 @@ public class NativeDateTest {
     }
 
     @Test
+    public void parseLegacyMonthOutOfRange() {
+        // 20 is not a valid month in month/day/year order (issue #2411)
+        // Previously it used to roll over and give a number - needs NaN now.
+        ctorDateTimeString("NaN", "String(Date.parse('20/15/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('13/01/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('20/13/2024'))");
+        ctorDateTimeString("NaN", "String(Date.parse('29/02/2024'))");
+    }
+
+    @Test
+    public void parseLegacyDayOutOfRange() {
+        // Same - Needs to give NaN if the day is out of range
+        ctorDateTimeString("NaN", "String(Date.parse('12/32/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('02/30/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('04/31/2026'))");
+    }
+
+    @Test
+    public void parseLegacyLeapDay() {
+        // Parsing a leap year.
+        ctorDateTimeString("2024-02-29T00:00:00.000Z", "new Date('02/29/2024').toISOString()");
+        ctorDateTimeString("NaN", "String(Date.parse('02/29/2025'))");
+    }
+
+    @Test
+    public void parseLegacyTimeOutOfRange() {
+        // Parsing a time that is out of range - Needs to give an NaN.
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 25:00'))");
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 10:75'))");
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 10:30:75'))");
+    }
+
+    @Test
+    public void parseLegacyValidDatesStillWork() {
+        // Ensure that the old valid dates are still parsed effectively.
+        ctorDateTimeString("2026-12-31T00:00:00.000Z", "new Date('12/31/2026').toISOString()");
+        ctorDateTimeString("1995-12-25T00:00:00.000Z", "new Date('Dec 25, 1995').toISOString()");
+    }
+
+    @Test
+    public void ctorInvalidLegacyStringGivesInvalidDate() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('20/15/2026').toISOString()");
+    }
+
+    @Test
     public void toLocaleEnUs() {
         toLocale("12/18/2021, 10:23:00 PM", "new Date('2021-12-18T22:23').toLocaleString('en-US')");
         toLocale("12/18/2021", "new Date('2021-12-18T22:23').toLocaleDateString('en-US')");
