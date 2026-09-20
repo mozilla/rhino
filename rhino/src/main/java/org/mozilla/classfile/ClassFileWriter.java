@@ -975,7 +975,7 @@ public class ClassFileWriter {
 
     /** Generate the load constant bytecode for an already described constant. */
     void addLoadConstant(ConstantDesc desc) {
-        int index = itsConstantPool.addConstantDesc(desc);
+        int index = itsConstantPool.addConstantDesc(desc) & 0xffff;
         add(isTwoWordConstant(desc) ? ByteCode.LDC2_W : ByteCode.LDC, index);
     }
 
