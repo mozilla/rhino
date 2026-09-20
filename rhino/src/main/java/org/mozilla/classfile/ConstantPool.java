@@ -204,9 +204,9 @@ final class ConstantPool {
             if (tooBigString) {
                 throw new IllegalArgumentException("Too big string");
             }
+            setConstantData(theIndex, k);
+            itsPoolTypes.put(theIndex, CONSTANT_Utf8);
         }
-        setConstantData(theIndex, k);
-        itsPoolTypes.put(theIndex, CONSTANT_Utf8);
         return (short) theIndex;
     }
 
@@ -243,9 +243,9 @@ final class ConstantPool {
                     itsClassHash.put(className, theIndex);
                 }
             }
+            setConstantData(theIndex, className);
+            itsPoolTypes.put(theIndex, CONSTANT_Class);
         }
-        setConstantData(theIndex, className);
-        itsPoolTypes.put(theIndex, CONSTANT_Class);
         return (short) theIndex;
     }
 
@@ -262,9 +262,9 @@ final class ConstantPool {
             itsTop = ClassFileWriter.putInt16(ntIndex, itsPool, itsTop);
             theIndex = itsTopIndex++;
             itsFieldRefHash.put(ref, theIndex);
+            setConstantData(theIndex, ref);
+            itsPoolTypes.put(theIndex, CONSTANT_Fieldref);
         }
-        setConstantData(theIndex, ref);
-        itsPoolTypes.put(theIndex, CONSTANT_Fieldref);
         return (short) theIndex;
     }
 
@@ -281,23 +281,28 @@ final class ConstantPool {
             itsTop = ClassFileWriter.putInt16(ntIndex, itsPool, itsTop);
             theIndex = itsTopIndex++;
             itsMethodRefHash.put(ref, theIndex);
+            setConstantData(theIndex, ref);
+            itsPoolTypes.put(theIndex, CONSTANT_Methodref);
         }
-        setConstantData(theIndex, ref);
-        itsPoolTypes.put(theIndex, CONSTANT_Methodref);
         return (short) theIndex;
     }
 
     short addInterfaceMethodRef(String className, String methodName, String methodType) {
-        short ntIndex = addNameAndType(methodName, methodType);
-        short classIndex = addClass(className);
-        ensure(5);
-        itsPool[itsTop++] = CONSTANT_InterfaceMethodref;
-        itsTop = ClassFileWriter.putInt16(classIndex, itsPool, itsTop);
-        itsTop = ClassFileWriter.putInt16(ntIndex, itsPool, itsTop);
         FieldOrMethodRef r = new FieldOrMethodRef(className, methodName, methodType);
-        setConstantData(itsTopIndex, r);
-        itsPoolTypes.put(itsTopIndex, CONSTANT_InterfaceMethodref);
-        return (short) itsTopIndex++;
+
+        int index = itsConstantHash.getOrDefault(r, -1);
+        if (index == -1) {
+            short ntIndex = addNameAndType(methodName, methodType);
+            short classIndex = addClass(className);
+            ensure(5);
+            itsPool[itsTop++] = CONSTANT_InterfaceMethodref;
+            itsTop = ClassFileWriter.putInt16(classIndex, itsPool, itsTop);
+            itsTop = ClassFileWriter.putInt16(ntIndex, itsPool, itsTop);
+            setConstantData(itsTopIndex, r);
+            itsPoolTypes.put(itsTopIndex, CONSTANT_InterfaceMethodref);
+            index = itsTopIndex++;
+        }
+        return (short) index;
     }
 
     short addInvokeDynamic(String methodName, String methodType, int bootstrapIndex) {
@@ -348,6 +353,9 @@ final class ConstantPool {
     }
 
     void setConstantData(int index, Object data) {
+        if ((index & 0xffff) != index) {
+            throw new ClassFileWriter.ClassSizeException("Constant pool overflow");
+        }
         itsConstantData.put(index, data);
     }
 
