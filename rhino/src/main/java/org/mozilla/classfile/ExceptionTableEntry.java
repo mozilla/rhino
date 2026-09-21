@@ -7,7 +7,7 @@
 package org.mozilla.classfile;
 
 final class ExceptionTableEntry {
-    ExceptionTableEntry(int startLabel, int endLabel, int handlerLabel, short catchType) {
+    ExceptionTableEntry(int startLabel, int endLabel, int handlerLabel, int catchType) {
         itsStartLabel = startLabel;
         itsEndLabel = endLabel;
         itsHandlerLabel = handlerLabel;
@@ -17,5 +17,5 @@ final class ExceptionTableEntry {
     int itsStartLabel;
     int itsEndLabel;
     int itsHandlerLabel;
-    short itsCatchType;
+    int itsCatchType;
 }
