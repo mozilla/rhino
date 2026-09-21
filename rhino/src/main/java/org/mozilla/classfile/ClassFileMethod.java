@@ -7,7 +7,7 @@
 package org.mozilla.classfile;
 
 final class ClassFileMethod {
-    ClassFileMethod(String name, short nameIndex, String type, short typeIndex, short flags) {
+    ClassFileMethod(String name, int nameIndex, String type, int typeIndex, short flags) {
         itsName = name;
         itsNameIndex = nameIndex;
         itsType = type;
@@ -48,8 +48,8 @@ final class ClassFileMethod {
 
     private String itsName;
     private String itsType;
-    private short itsNameIndex;
-    private short itsTypeIndex;
+    private int itsNameIndex;
+    private int itsTypeIndex;
     private short itsFlags;
     private byte[] itsCodeAttribute;
 }

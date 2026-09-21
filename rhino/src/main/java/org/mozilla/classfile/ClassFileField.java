@@ -7,14 +7,14 @@
 package org.mozilla.classfile;
 
 final class ClassFileField {
-    ClassFileField(short nameIndex, short typeIndex, short flags) {
+    ClassFileField(int nameIndex, int typeIndex, short flags) {
         itsNameIndex = nameIndex;
         itsTypeIndex = typeIndex;
         itsFlags = flags;
         itsHasAttributes = false;
     }
 
-    void setAttributes(short attr1, short attr2, short attr3, int index) {
+    void setAttributes(int attr1, short attr2, short attr3, int index) {
         itsHasAttributes = true;
         itsAttr1 = attr1;
         itsAttr2 = attr2;
@@ -49,10 +49,14 @@ final class ClassFileField {
         return size;
     }
 
-    private short itsNameIndex;
-    private short itsTypeIndex;
+    private int itsNameIndex;
+    private int itsTypeIndex;
     private short itsFlags;
     private boolean itsHasAttributes;
-    private short itsAttr1, itsAttr2, itsAttr3;
+    private int itsAttr1;
+
+    /** The two halves of the attribute_length, not constant pool indices. */
+    private short itsAttr2, itsAttr3;
+
     private int itsIndex;
 }
