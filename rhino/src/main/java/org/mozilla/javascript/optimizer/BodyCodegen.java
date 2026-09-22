@@ -2100,10 +2100,14 @@ class BodyCodegen {
                 // The declaration in the body of the scope initializes this one,
                 // so there is no initializer to evaluate here.
                 cfw.add(ByteCode.DUP);
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
                 cfw.addPush(id);
                 addScriptRuntimeInvoke(
                         "defineConst",
-                        "(Lorg/mozilla/javascript/VarScope;" + "Ljava/lang/String;" + ")V");
+                        "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/VarScope;"
+                                + "Ljava/lang/String;"
+                                + ")V");
             } else {
                 cfw.add(ByteCode.DUP);
                 cfw.add(ByteCode.DUP);
@@ -3901,22 +3905,59 @@ class BodyCodegen {
                 int reg = varRegisters[varIndex];
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
-                    cfw.addPush("msg.modify.readonly");
-                    cfw.addPush(1);
-                    cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
-                    cfw.add(ByteCode.DUP);
-                    cfw.addPush(0);
-                    cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
-                    cfw.add(ByteCode.AASTORE);
-                    addOptRuntimeInvoke(
-                            "throwTypeErrorById",
-                            "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
-                    if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                        cfw.addPush(1.0);
-                    } else {
-                        cfw.addPush(1.0);
-                        addDoubleWrap();
+                    if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                        cfw.addPush("msg.modify.readonly");
+                        cfw.addPush(1);
+                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                        cfw.add(ByteCode.DUP);
+                        cfw.addPush(0);
+                        cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                        cfw.add(ByteCode.AASTORE);
+                        addOptRuntimeInvoke(
+                                "throwTypeErrorById",
+                                "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+                        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                            cfw.addPush(1.0);
+                        } else {
+                            cfw.addPush(1.0);
+                            addDoubleWrap();
+                        }
+                        break;
                     }
+                    if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                        int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
+                        cfw.addDLoad(reg + offset);
+                        if (!post) {
+                            cfw.addPush(1.0);
+                            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                                cfw.add(ByteCode.DADD);
+                            } else {
+                                cfw.add(ByteCode.DSUB);
+                            }
+                        }
+                    } else {
+                        if (varIsDirectCallParameter(varIndex)) {
+                            dcpLoadAsObject(reg);
+                        } else {
+                            cfw.addALoad(reg);
+                        }
+                        if (post) {
+                            cfw.add(ByteCode.DUP);
+                            addObjectToDouble();
+                            cfw.add(ByteCode.POP2);
+                        } else {
+                            addObjectToDouble();
+                            cfw.addPush(1.0);
+                            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                                cfw.add(ByteCode.DADD);
+                            } else {
+                                cfw.add(ByteCode.DSUB);
+                            }
+                            addDoubleWrap();
+                        }
+                    }
+
+                    break;
                 }
                 if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
                     int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
@@ -4584,15 +4625,17 @@ class BodyCodegen {
         int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
         if (constDeclarations[varIndex]) {
-            cfw.addPush("msg.modify.readonly");
-            cfw.addPush(1);
-            cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(0);
-            cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
-            cfw.add(ByteCode.AASTORE);
-            addOptRuntimeInvoke(
-                    "throwTypeErrorById", "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                cfw.addPush("msg.modify.readonly");
+                cfw.addPush(1);
+                cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(0);
+                cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                cfw.add(ByteCode.AASTORE);
+                addOptRuntimeInvoke(
+                        "throwTypeErrorById", "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+            }
             if (!needValue) {
                 if (isNumber) cfw.add(ByteCode.POP2);
                 else cfw.add(ByteCode.POP);
