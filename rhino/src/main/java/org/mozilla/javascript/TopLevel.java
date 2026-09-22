@@ -6,9 +6,6 @@
 
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.ScriptableObject.LEGACY_CONST;
-import static org.mozilla.javascript.ScriptableObject.PERMANENT;
-import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.IOException;
@@ -477,7 +474,7 @@ public class TopLevel extends ScopeObject {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             return super.isConst(cx, name);
         } else {
-            return (globalThis.getAttributes(name) & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
+            return globalThis.isConst(cx, name);
         }
     }
 
@@ -486,7 +483,7 @@ public class TopLevel extends ScopeObject {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             super.putConst(cx, name, start, value);
         } else {
-            globalThis.defineProperty(name, value, PERMANENT | READONLY);
+            globalThis.putConst(cx, name, globalThis, value);
         }
     }
 
@@ -495,7 +492,7 @@ public class TopLevel extends ScopeObject {
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             super.defineConst(cx, name, start);
         } else {
-            globalThis.defineProperty(name, Undefined.instance, LEGACY_CONST);
+            globalThis.defineConst(cx, name, globalThis);
         }
     }
 

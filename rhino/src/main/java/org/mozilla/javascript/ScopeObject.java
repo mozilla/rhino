@@ -301,7 +301,8 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
 
     @Override
     public void defineConst(Context cx, String name, VarScope start) {
-        if (putConstImpl(cx, name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
+        if (putConstImpl(
+                cx, name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -345,9 +346,10 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
             }
         } else {
             // either const hoisted declaration or initialization
-            var flags = cx.getLanguageVersion() >= Context.VERSION_ES6
-                ? ScriptableObject.CONST
-                : ScriptableObject.LEGACY_CONST;
+            var flags =
+                    cx.getLanguageVersion() >= Context.VERSION_ES6
+                            ? ScriptableObject.CONST
+                            : ScriptableObject.LEGACY_CONST;
             slot = getMap().modify(this, name, index, flags);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)

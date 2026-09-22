@@ -5375,8 +5375,8 @@ public class ScriptRuntime {
     }
 
     /** Creates an uninitialized const binding, to be initialized by its declaration. */
-    public static void defineConst(VarScope scope, String name) {
-        scope.defineConst(name, scope);
+    public static void defineConst(Context cx, VarScope scope, String name) {
+        scope.defineConst(cx, name, scope);
     }
 
     public static VarScope enterDotQuery(Object value, VarScope scope) {

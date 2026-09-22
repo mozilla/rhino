@@ -3102,6 +3102,10 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
+            } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             return null;
         }
@@ -3129,6 +3133,10 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
+            } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             return null;
         }
@@ -3419,7 +3427,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoDefConst extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            ScriptRuntime.defineConst(frame.scope, state.stringReg);
+            ScriptRuntime.defineConst(cx, frame.scope, state.stringReg);
             return null;
         }
     }

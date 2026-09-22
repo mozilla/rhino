@@ -50,7 +50,11 @@ import org.mozilla.javascript.debug.DebuggableObject;
  * @author Norris Boyd
  */
 public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
-        implements Scriptable, SymbolScriptable, Serializable, DebuggableObject {
+        implements Scriptable,
+                SymbolScriptable,
+                Serializable,
+                DebuggableObject,
+                ConstProperties<Scriptable> {
 
     @Serial private static final long serialVersionUID = 2829861078851942586L;
 
@@ -362,6 +366,69 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             return slot;
         }
         return null;
+    }
+
+    /**
+     * Sets the value of the named const property, creating it if need be.
+     *
+     * <p>If the property was created using defineProperty, the appropriate setter method is called.
+     *
+     * <p>If the property's attributes include READONLY, no action is taken. This method will
+     * actually set the property in the start object.
+     *
+     * @param name the name of the property
+     * @param start the object whose property is being set
+     * @param value value to set the property to
+     */
+    @Override
+    public void putConst(Context cx, String name, Scriptable start, Object value) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Kit.codeBug("Should set constants on ES6 objects.");
+        }
+
+        if (putConstImpl(cx, name, 0, start, value, READONLY)) return;
+
+        if (start == this) throw Kit.codeBug();
+        if (start instanceof ConstProperties) {
+            @SuppressWarnings("unchecked")
+            var cstart = ((ConstProperties<Scriptable>) start);
+            cstart.putConst(cx, name, start, value);
+        } else start.put(name, start, value);
+    }
+
+    @Override
+    public void defineConst(Context cx, String name, Scriptable start) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Kit.codeBug("Should set constants on ES6 objects.");
+        }
+
+        if (putConstImpl(cx, name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
+
+        if (start == this) throw Kit.codeBug();
+        if (start instanceof ConstProperties) {
+            @SuppressWarnings("unchecked")
+            var cstart = ((ConstProperties<Scriptable>) start);
+            cstart.defineConst(cx, name, start);
+        }
+    }
+
+    /**
+     * Returns true if the named property is defined as a const on this object.
+     *
+     * @param name the name of the property
+     * @return true if the named property is defined as a const, false otherwise.
+     */
+    @Override
+    public boolean isConst(Context cx, String name) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Kit.codeBug("Should set constants on ES6 objects.");
+        }
+
+        var slot = getMap().query(name, 0);
+        if (slot == null) {
+            return false;
+        }
+        return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
     }
 
     /** Implement the legacy "__defineGetter__" and "__defineSetter__" methods. */
@@ -1211,7 +1278,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             @SuppressWarnings("unchecked")
             var cp = (ConstProperties<T>) destination;
             cp.defineConst(cx, propertyName, destination);
-        } else defineProperty(destination, propertyName, Undefined.instance, CONST);
+        } else defineProperty(destination, propertyName, Undefined.instance, LEGACY_CONST);
     }
 
     /**
@@ -2818,10 +2885,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *     and a READONLY slot was found.
      */
     private boolean putConstImpl(
-            String name, int index, Scriptable start, Object value, int constFlag) {
+            Context cx, String name, int index, Scriptable start, Object value, int constFlag) {
         assert (constFlag != EMPTY);
         if (!isExtensible) {
-            Context cx = Context.getContext();
             if (cx.isStrictMode()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
             }
@@ -2840,7 +2906,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            slot = getMap().modify(this, name, index, CONST);
+            slot = getMap().modify(this, name, index, LEGACY_CONST);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
                 throw Context.reportRuntimeErrorById("msg.var.redecl", name);

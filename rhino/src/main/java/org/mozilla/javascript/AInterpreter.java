@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.print.DocFlavor.READER;
-
 public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompilerData<?, U>>
         implements Evaluator {
 
@@ -273,12 +271,12 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         @Override
         public boolean isConst(Context cx, String name) {
             int offset = getOffsets().getOrDefault(name, -1);
-            var flags = cx.getLanguageVersion() >= Context.VERSION_ES6
-                ? PERMANENT | READONLY | STRICTLY_READONLY
-                : PERMANENT | READONLY;
+            var flags =
+                    cx.getLanguageVersion() >= Context.VERSION_ES6
+                            ? PERMANENT | READONLY | STRICTLY_READONLY
+                            : PERMANENT | READONLY;
             if (offset >= 0) {
-                return (frame.stackAttributes[offset] & flags)
-                        == flags;
+                return (frame.stackAttributes[offset] & flags) == flags;
             } else {
                 return false;
             }
