@@ -70,6 +70,20 @@ public class ModuleScript implements Serializable {
      * @return true if this script is contained within its sandbox base URI.
      */
     public boolean isSandboxed() {
-        return base != null && uri != null && !base.relativize(uri).isAbsolute();
+        if (base == null || uri == null) {
+            return false;
+        }
+        URI relative = base.relativize(uri);
+        if (relative.isAbsolute()) {
+            return false;
+        }
+        // relativize() only normalises literal dot segments; percent-encoded ones such as
+        // %2e%2e survive it and are decoded again by the URL handler before the file is opened
+        for (String segment : relative.getPath().split("[/\\\\]", -1)) {
+            if ("..".equals(segment)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

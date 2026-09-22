@@ -129,6 +129,36 @@ public class RequireTest {
     }
 
     @Test
+    public void sandboxRejectsEncodedDotSegments() throws Exception {
+        try (Context cx = createContext()) {
+            TopLevel scope = cx.initStandardObjects();
+            // root the sandbox at the "x" subdirectory, so assert.js one level up is outside it
+            final URI root =
+                    Path.of(TestSource.resolveDirectory("testsrc/commonjs/module/x/modx.js"))
+                            .toUri();
+            final Require require =
+                    new Require(
+                            cx,
+                            scope,
+                            new StrongCachingModuleScriptProvider(
+                                    new UrlModuleSourceProvider(Collections.singleton(root), null)),
+                            null,
+                            null,
+                            true);
+            require.install(scope);
+            for (String id : new String[] {"%2e%2e/assert", "..%2Fassert", "%2e%2e%2Fassert"}) {
+                RhinoException e =
+                        assertThrows(
+                                RhinoException.class,
+                                () ->
+                                        cx.evaluateString(
+                                                scope, "require('" + id + "')", "test", 1, null));
+                assertTrue(e.getMessage().contains("is not contained in sandbox"), e.getMessage());
+            }
+        }
+    }
+
+    @Test
     public void setMainForAlreadyLoadedModule() throws Exception {
         try (Context cx = createContext()) {
             TopLevel scope = cx.initStandardObjects();
