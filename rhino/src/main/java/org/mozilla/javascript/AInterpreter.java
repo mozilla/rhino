@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
 import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.Serializable;
@@ -10,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import javax.print.DocFlavor.READER;
 
 public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompilerData<?, U>>
         implements Evaluator {
@@ -262,24 +265,27 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         }
 
         @Override
-        public void defineConst(String name, VarScope start) {
+        public void defineConst(Context cx, String name, VarScope start) {
             // TODO Auto-generated method stub
 
         }
 
         @Override
-        public boolean isConst(String name) {
+        public boolean isConst(Context cx, String name) {
             int offset = getOffsets().getOrDefault(name, -1);
+            var flags = cx.getLanguageVersion() >= Context.VERSION_ES6
+                ? PERMANENT | READONLY | STRICTLY_READONLY
+                : PERMANENT | READONLY;
             if (offset >= 0) {
-                return (frame.stackAttributes[offset] & (PERMANENT | READONLY))
-                        == (PERMANENT | READONLY);
+                return (frame.stackAttributes[offset] & flags)
+                        == flags;
             } else {
                 return false;
             }
         }
 
         @Override
-        public void putConst(String name, VarScope start, Object value) {
+        public void putConst(Context cx, String name, VarScope start, Object value) {
             // TODO Auto-generated method stub
 
         }

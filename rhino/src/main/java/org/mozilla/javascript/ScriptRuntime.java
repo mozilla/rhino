@@ -2670,7 +2670,7 @@ public class ScriptRuntime {
     }
 
     public static Object setConst(VarScope bound, Object value, Context cx, String id) {
-        ScriptableObject.putConstProperty(bound, id, value);
+        ScriptableObject.putConstProperty(cx, bound, id, value);
         return value;
     }
 
@@ -5063,7 +5063,7 @@ public class ScriptRuntime {
                 // or prototypes of object.
                 if (!ScriptableObject.hasProperty(scope, name)) {
                     if (isConst) {
-                        ScriptableObject.defineConstProperty(varScope, name);
+                        ScriptableObject.defineConstProperty(cx, varScope, name);
                     } else if (!evalScript) {
                         if (desc.hasNoFunctionStatementNamed(name)) {
                             // Global var definitions are supposed to be DONTDELETE
@@ -5074,7 +5074,7 @@ public class ScriptRuntime {
                         varScope.put(name, varScope, Undefined.instance);
                     }
                 } else {
-                    ScriptableObject.redefineProperty(scope, name, isConst);
+                    ScriptableObject.redefineProperty(cx, scope, name, isConst);
                 }
             }
         }

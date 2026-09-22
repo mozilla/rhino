@@ -101,6 +101,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     public static final int STRICTLY_READONLY = 0x10;
 
+    public static final int LEGACY_CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+
     public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST | STRICTLY_READONLY;
 
     /** The prototype of this object. */
@@ -1204,11 +1206,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param propertyName the name of the property to define.
      */
     public static <T extends PropHolder<T>> void defineConstProperty(
-            T destination, String propertyName) {
+            Context cx, T destination, String propertyName) {
         if (destination instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
             var cp = (ConstProperties<T>) destination;
-            cp.defineConst(propertyName, destination);
+            cp.defineConst(cx, propertyName, destination);
         } else defineProperty(destination, propertyName, Undefined.instance, CONST);
     }
 
@@ -2436,22 +2438,22 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * <p>A property redefinition is incompatible if the first definition was a const declaration or
      * if this one is. They are compatible only if neither was const.
      */
-    public static void redefineProperty(Scriptable obj, String name, boolean isConst) {
+    public static void redefineProperty(Context cx, Scriptable obj, String name, boolean isConst) {
         Scriptable base = getBase(obj, name);
         if (base == null) return;
         if (base instanceof ConstProperties<?>) {
             @SuppressWarnings("unchecked")
             var cp = (ConstProperties<Scriptable>) base;
 
-            if (cp.isConst(name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
+            if (cp.isConst(cx, name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
         }
         if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
     }
 
-    public static void redefineProperty(VarScope obj, String name, boolean isConst) {
+    public static void redefineProperty(Context cx, VarScope obj, String name, boolean isConst) {
         VarScope base = getBase(obj, name);
         if (base == null) return;
-        if (base.isConst(name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
+        if (base.isConst(cx, name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
         if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
     }
 
@@ -2538,18 +2540,18 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putConstProperty(Scriptable obj, String name, Object value) {
+    public static void putConstProperty(Context cx, Scriptable obj, String name, Object value) {
         Scriptable base = getBase(obj, name);
         if (base == null) base = obj;
         if (base instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
             var cbase = ((ConstProperties<Scriptable>) base);
-            cbase.putConst(name, obj, value);
+            cbase.putConst(cx, name, obj, value);
         }
     }
 
-    public static void putConstProperty(VarScope obj, String name, Object value) {
-        obj.putConst(name, obj, value);
+    public static void putConstProperty(Context cx, VarScope obj, String name, Object value) {
+        obj.putConst(cx, name, obj, value);
     }
 
     /**
