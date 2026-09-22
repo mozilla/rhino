@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.LEGACY_CONST;
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
 
 import java.io.IOException;
@@ -460,6 +463,39 @@ public class TopLevel extends ScopeObject {
             return super.getAttributes(name);
         } else {
             return globalThis.getAttributes(name);
+        }
+    }
+
+    // Technically this is wrong, but there are currently tests that
+    // depend const variable being defined on globalThis.
+    //
+    // In a compliant implementation const declarations should bind
+    // the values on the global scope but not on the global object.
+
+    @Override
+    public boolean isConst(Context cx, String name) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            return super.isConst(cx, name);
+        } else {
+            return (globalThis.getAttributes(name) & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
+        }
+    }
+
+    @Override
+    public void putConst(Context cx, String name, VarScope start, Object value) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            super.putConst(cx, name, start, value);
+        } else {
+            globalThis.defineProperty(name, value, PERMANENT | READONLY);
+        }
+    }
+
+    @Override
+    public void defineConst(Context cx, String name, VarScope start) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            super.defineConst(cx, name, start);
+        } else {
+            globalThis.defineProperty(name, Undefined.instance, LEGACY_CONST);
         }
     }
 
