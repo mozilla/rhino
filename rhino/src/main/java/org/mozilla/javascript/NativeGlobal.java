@@ -382,7 +382,7 @@ public class NativeGlobal implements Serializable {
             } else {
                 if (sb == null) {
                     sb = new StringBuilder(L + 3);
-                    sb.append(s);
+                    sb.append(str);
                     sb.setLength(k);
                 }
 
