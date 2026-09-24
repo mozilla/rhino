@@ -495,6 +495,10 @@ class JavaMembers {
     private static int compareAmbiguousMethod(ExecutableBox a, ExecutableBox b) {
         // more accessible if declaring class is public
         int result = Boolean.compare(declareByPublicClass(a), declareByPublicClass(b));
+        if (Modifier.isStatic(a.member().getModifiers())) {
+            // static method does not participate in inheritance, so skip later comparisons
+            return result;
+        }
 
         if (result == 0) {
             var returnTypeA = a.getReturnType().asClass();
