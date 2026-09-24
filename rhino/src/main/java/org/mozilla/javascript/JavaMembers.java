@@ -473,7 +473,7 @@ class JavaMembers {
                         member.setAccessible(true);
                     } catch (InaccessibleObjectException | SecurityException ignored) {
                         // discard inaccessible members
-                        entry.setValue(null);
+                        distinctEntry.setValue(null);
                     }
                 }
             }
