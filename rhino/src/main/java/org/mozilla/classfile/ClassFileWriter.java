@@ -43,12 +43,20 @@ public class ClassFileWriter {
         public ClassFileFormatException(String message) {
             super(message);
         }
+
+        public ClassFileFormatException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     public static class ClassSizeException extends ClassFileFormatException {
 
         public ClassSizeException(String message) {
             super(message);
+        }
+
+        public ClassSizeException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -903,6 +911,9 @@ public class ClassFileWriter {
 
     public void addInvokeDynamic(
             String methodName, String methodType, MHandle bsm, Object... bsmArgs) {
+        if (invokeDynamicCount++ > 30000) {
+            throw new ClassSizeException("Too many indy instructions.");
+        }
         if (DEBUGCODE) {
             if (DEBUGCODEORIGINS) {
                 printOrigin();
@@ -4686,11 +4697,9 @@ public class ClassFileWriter {
     @SuppressWarnings("AndroidJdkLibsChecker")
     private static void printOrigin() {
         StackWalker walker = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
-        var callerFrame =
-                walker.walk(
-                        s ->
-                                s.filter(x -> x.getDeclaringClass() != ClassFileWriter.class)
-                                        .findFirst());
+        var callerFrame = walker.walk(
+                s -> s.filter(x -> x.getDeclaringClass() != ClassFileWriter.class)
+                        .findFirst());
         var f = callerFrame.orElseThrow();
         System.err.printf("%s:%d ", f.getDeclaringClass().getSimpleName(), f.getLineNumber());
     }
@@ -4703,6 +4712,8 @@ public class ClassFileWriter {
     private static final boolean DEBUGCODEORIGINS =
             RhinoConfig.get("rhino.cfw.debugCallers", false);
     private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
+
+    private int invokeDynamicCount = 0;
 
     private String generatedClassName;
 
