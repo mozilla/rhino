@@ -617,6 +617,19 @@ public class Node implements Iterable<Node> {
         putIntProp(LABEL_ID_PROP, labelId);
     }
 
+    public void clearLabelId() {
+        removeProp(LABEL_ID_PROP);
+    }
+
+    public void clearAllLabelIds() {
+        clearLabelId();
+        var child = getFirstChild();
+        while (child != null) {
+            child.clearAllLabelIds();
+            child = child.getNext();
+        }
+    }
+
     /**
      * Does consistent-return analysis on the function body when strict mode is enabled.
      *

@@ -15,6 +15,7 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -72,22 +73,32 @@ public class Codegen implements Evaluator {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * A single generated class file, and the builder environment used to build the {@link MHJSCode}
+     * objects for whichever script/function bodies it contains.
+     */
+    private static final class CompileUnit {
+        final String className;
+        final byte[] bytecode;
+        final MHJSCode.BuilderEnv env;
+
+        CompileUnit(String className, byte[] bytecode, MHJSCode.BuilderEnv env) {
+            this.className = className;
+            this.bytecode = bytecode;
+            this.env = env;
+        }
+    }
+
     private static class CodegenCompilationResult<T extends ScriptOrFn<T>>
             implements CompilationResult<T> {
         final JSDescriptor.Builder<T> builder;
-        final String className;
-        final byte[] bytecode;
-        final MHJSCode.BuilderEnv builderEnv;
 
-        CodegenCompilationResult(
-                JSDescriptor.Builder<T> builder,
-                String className,
-                byte[] bytecode,
-                MHJSCode.BuilderEnv builderEnv) {
+        /** The main class is always {@code units.get(0)}; any others are auxiliary chunks. */
+        final List<CompileUnit> units;
+
+        CodegenCompilationResult(JSDescriptor.Builder<T> builder, List<CompileUnit> units) {
             this.builder = builder;
-            this.className = className;
-            this.bytecode = bytecode;
-            this.builderEnv = builderEnv;
+            this.units = units;
         }
 
         @Override
@@ -143,18 +154,11 @@ public class Codegen implements Evaluator {
         String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
         JSDescriptor.Builder<T> builder = new JSDescriptor.Builder<>();
-        MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(mainClassName);
-        byte[] mainClassBytes =
-                compileToClassFile(
-                        compilerEnv,
-                        builder,
-                        builderEnv,
-                        mainClassName,
-                        tree,
-                        rawSource,
-                        returnFunction);
+        List<CompileUnit> units =
+                compileToClassFileWithSplitting(
+                        compilerEnv, builder, mainClassName, tree, rawSource, returnFunction);
 
-        return new CodegenCompilationResult<>(builder, mainClassName, mainClassBytes, builderEnv);
+        return new CodegenCompilationResult<>(builder, units);
     }
 
     @Override
@@ -185,18 +189,30 @@ public class Codegen implements Evaluator {
         loader = SecurityController.createLoader(rhinoLoader, staticSecurityDomain);
         Exception e;
         try {
-            Class<?> cl = loader.defineClass(compiled.className, compiled.bytecode);
-            loader.linkClass(cl);
-            compiled.builderEnv.compiledClass = cl;
+            // The main class (units.get(0)) must be defined first: any auxiliary chunk classes
+            // reference its fields (descriptors, cached constants, template literals), but not
+            // the reverse.
+            Class<?> mainClass = null;
+            for (CompileUnit unit : compiled.units) {
+                Class<?> cl = loader.defineClass(unit.className, unit.bytecode);
+                loader.linkClass(cl);
+                unit.env.compiledClass = cl;
+                if (mainClass == null) {
+                    mainClass = cl;
+                }
+            }
             var descs = new ArrayList<JSDescriptor<?>>();
             JSDescriptor<T> desc = compiled.builder.build(d -> descs.add(d));
-            cl.getField(DESCRIPTORS_FIELD_NAME).set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.builderEnv.hasRegExpLiterals) {
-                cl.getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
+            mainClass
+                    .getField(DESCRIPTORS_FIELD_NAME)
+                    .set(null, descs.toArray(new JSDescriptor[0]));
+            if (compiled.units.get(0).env.hasRegExpLiterals) {
+                mainClass
+                        .getMethod(REGEXP_INIT_METHOD_NAME, Context.class)
                         .invoke(null, Context.getCurrentContext());
             }
-            if (compiled.builderEnv.hasTemplateLiterals) {
-                cl.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
+            if (compiled.units.get(0).env.hasTemplateLiterals) {
+                mainClass.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
             }
             return desc;
         } catch (InvocationTargetException x) {
@@ -223,6 +239,79 @@ public class Codegen implements Evaluator {
             ScriptNode scriptOrFn,
             String rawSource,
             boolean returnFunction) {
+        scriptOrFn =
+                prepareForCodegen(
+                        compilerEnv, builder, mainClassName, scriptOrFn, rawSource, returnFunction);
+        initScriptNodesData(scriptOrFn, builder, builderEnv);
+        return generateCode(
+                rawSource, new MHJSCode.BuilderEnv[] {builderEnv}, new String[] {mainClassName})[0];
+    }
+
+    /**
+     * Compile a script or function, splitting the generated code across multiple class files (and
+     * therefore multiple constant pools) if a single class would exceed a JVM class file limit.
+     *
+     * <p>Splitting only ever happens across separate script/function bodies: a single body that by
+     * itself overflows a class file is not split further, and this method rethrows the {@link
+     * ClassFileWriter.ClassSizeException} in that case so that the caller can fall back to the
+     * interpreter as before.
+     */
+    <T extends ScriptOrFn<T>> List<CompileUnit> compileToClassFileWithSplitting(
+            CompilerEnvirons compilerEnv,
+            JSDescriptor.Builder<T> builder,
+            String mainClassName,
+            ScriptNode scriptOrFn,
+            String rawSource,
+            boolean returnFunction) {
+        scriptOrFn =
+                prepareForCodegen(
+                        compilerEnv, builder, mainClassName, scriptOrFn, rawSource, returnFunction);
+
+        MHJSCode.BuilderEnv mainEnv = new MHJSCode.BuilderEnv(mainClassName);
+        initScriptNodesData(scriptOrFn, builder, mainEnv);
+
+        int numChunks = 1;
+        MHJSCode.BuilderEnv[] chunkEnvs = {mainEnv};
+        String[] chunkClassNames = {mainClassName};
+
+        while (true) {
+            try {
+                byte[][] bytecode = generateCode(rawSource, chunkEnvs, chunkClassNames);
+                List<CompileUnit> units = new ArrayList<>(numChunks);
+                for (int i = 0; i != numChunks; ++i) {
+                    units.add(new CompileUnit(chunkClassNames[i], bytecode[i], chunkEnvs[i]));
+                }
+                return units;
+            } catch (ClassFileWriter.ClassSizeException e) {
+                int nextNumChunks = numChunks * 2;
+                if (numChunks >= scriptOrFnNodes.length || nextNumChunks > MAX_SPLIT_CHUNKS) {
+                    // Either we can't split any further (down to one body per chunk) or we've
+                    // hit a sanity limit on how many chunks we'll try: give up and let the
+                    // caller fall back to the interpreter, as before this feature existed.
+                    throw new ClassFileWriter.ClassSizeException("Class splitting failed", e);
+                }
+                numChunks = Math.min(nextNumChunks, scriptOrFnNodes.length);
+                chunkClassNames = new String[numChunks];
+                chunkEnvs = new MHJSCode.BuilderEnv[numChunks];
+                chunkClassNames[0] = mainClassName;
+                chunkEnvs[0] = mainEnv;
+                for (int i = 1; i != numChunks; ++i) {
+                    chunkClassNames[i] = mainClassName + "$part" + i;
+                    chunkEnvs[i] = new MHJSCode.BuilderEnv(chunkClassNames[i]);
+                }
+                rebindBuildersToChunks(numChunks, chunkEnvs);
+            }
+        }
+    }
+
+    /** Common setup shared by every codegen entry point: transform the tree and fill in builder. */
+    private ScriptNode prepareForCodegen(
+            CompilerEnvirons compilerEnv,
+            JSDescriptor.Builder<?> builder,
+            String mainClassName,
+            ScriptNode scriptOrFn,
+            String rawSource,
+            boolean returnFunction) {
         this.compilerEnv = compilerEnv;
 
         transform(scriptOrFn);
@@ -241,11 +330,48 @@ public class Codegen implements Evaluator {
 
         this.mainClassName = mainClassName;
         this.mainClassSignature = ClassFileWriter.classNameToSignature(mainClassName);
-
-        initScriptNodesData(scriptOrFn, builder, builderEnv);
-
-        return generateCode(rawSource);
+        return scriptOrFn;
     }
+
+    /**
+     * Reassign every script/function body's {@link MHJSCode.Builder} to the {@link
+     * MHJSCode.BuilderEnv} for the chunk it has been placed in, splitting {@link #scriptOrFnNodes}
+     * into {@code numChunks} contiguous groups (the first of which is always the main chunk, so
+     * that the top-level script/function - always index 0 - keeps its original class name).
+     */
+    private void rebindBuildersToChunks(int numChunks, MHJSCode.BuilderEnv[] chunkEnvs) {
+        int count = scriptOrFnNodes.length;
+        int groupSize = (count + numChunks - 1) / numChunks;
+        for (int i = 0; i != count; ++i) {
+            ScriptNode n = scriptOrFnNodes[i];
+            int chunk = Math.min(i / groupSize, numChunks - 1);
+            MHJSCode.BuilderEnv env = chunkEnvs[chunk];
+
+            @SuppressWarnings("unchecked")
+            MHJSCode.Builder code =
+                    (n instanceof FunctionNode)
+                            ? new MHJSFunctionCode.Builder(env)
+                            : new MHJSScriptCode.Builder(env);
+            code.index = i;
+            code.methodName = getBodyMethodName(n, i);
+            code.methodType = getNonDirectBodyMethodSIgnature(n);
+            if (isGenerator(n)) {
+                code.resumeName = code.methodName + "_gen";
+                code.resumeType = GENERATOR_METHOD_SIGNATURE;
+            }
+
+            JSDescriptor.Builder builder = builders[i];
+            builder.setCode(code);
+            CodeGenUtils.setConstructor(builder, n);
+        }
+    }
+
+    /** The class name of whichever chunk {@code n}'s body method has been placed in. */
+    String getClassNameForNode(ScriptNode n) {
+        return ((MHJSCode.Builder<?>) builders[getIndex(n)].code).env.className;
+    }
+
+    private static final int MAX_SPLIT_CHUNKS = 1024;
 
     private void transform(ScriptNode tree) {
         initOptFunctions_r(tree);
@@ -420,24 +546,43 @@ public class Codegen implements Evaluator {
         // 5: this, cx, js function, new.target, scope, js this, args[]
     }
 
-    private byte[] generateCode(String rawSource) {
-        boolean hasScript = (scriptOrFnNodes[0].getType() == Token.SCRIPT);
-        boolean hasFunctions = (scriptOrFnNodes.length > 1 || !hasScript);
-        boolean isStrictMode = scriptOrFnNodes[0].isInStrictMode();
-
+    /**
+     * Generate one class file per entry in {@code chunkEnvs}/{@code chunkClassNames} (in the same
+     * order), placing each script/function body in {@link #scriptOrFnNodes} into whichever chunk
+     * its {@link MHJSCode.Builder} was bound to (see {@link #rebindBuildersToChunks}). Numeric
+     * constants, template literals and the descriptors array are always centralized on chunk 0 (the
+     * main class), since those are read via a hardcoded {@link #mainClassName} reference from
+     * whichever chunk needs them.
+     *
+     * @throws ClassFileWriter.ClassSizeException if any single chunk overflows a JVM class file
+     *     limit; the caller decides whether to retry with more, smaller chunks.
+     */
+    private byte[][] generateCode(
+            String rawSource, MHJSCode.BuilderEnv[] chunkEnvs, String[] chunkClassNames) {
         String sourceFile = scriptOrFnNodes[0].getSourceName();
-        ClassFileWriter cfw = new ClassFileWriter(mainClassName, SUPER_CLASS_NAME, sourceFile);
-        cfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
-        cfw.addField(
+
+        int numChunks = chunkEnvs.length;
+        ClassFileWriter[] cfws = new ClassFileWriter[numChunks];
+        IdentityHashMap<MHJSCode.BuilderEnv, ClassFileWriter> cfwForEnv = new IdentityHashMap<>();
+        for (int c = 0; c != numChunks; ++c) {
+            cfws[c] = new ClassFileWriter(chunkClassNames[c], SUPER_CLASS_NAME, sourceFile);
+            generateLookupAccessor(cfws[c]);
+            cfwForEnv.put(chunkEnvs[c], cfws[c]);
+        }
+        ClassFileWriter mainCfw = cfws[0];
+
+        mainCfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
+        mainCfw.addField(
                 DESCRIPTORS_FIELD_NAME,
                 "[Lorg/mozilla/javascript/JSDescriptor;",
                 (short) (ACC_PUBLIC | ACC_STATIC));
 
-        generateLookupAccessor(cfw);
-
         int count = scriptOrFnNodes.length;
         for (int i = 0; i != count; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
+            n.clearAllLabelIds();
+            MHJSCode.BuilderEnv env = ((MHJSCode.Builder<?>) builders[i].code).env;
+            ClassFileWriter cfw = cfwForEnv.get(env);
 
             BodyCodegen bodygen = new BodyCodegen();
             bodygen.cfw = cfw;
@@ -467,11 +612,15 @@ public class Codegen implements Evaluator {
             }
         }
 
-        emitRegExpInit(cfw);
-        emitTemplateLiteralInit(cfw);
-        emitConstantDudeInitializers(cfw);
+        emitRegExpInit(mainCfw);
+        emitTemplateLiteralInit(mainCfw);
+        emitConstantDudeInitializers(mainCfw);
 
-        return cfw.toByteArray();
+        byte[][] result = new byte[numChunks][];
+        for (int c = 0; c != numChunks; ++c) {
+            result[c] = cfws[c].toByteArray();
+        }
+        return result;
     }
 
     private void emitNonDirectCall(ClassFileWriter cfw, OptFunctionNode ofn) {
@@ -517,7 +666,7 @@ public class Codegen implements Evaluator {
 
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                mainClassName,
+                cfw.getClassName(),
                 getBodyMethodName(ofn.fnode),
                 getBodyMethodSignature(ofn.fnode));
         cfw.add(ByteCode.ARETURN);
@@ -573,7 +722,7 @@ public class Codegen implements Evaluator {
         cfw.addALoad(5 + argCount * 3);
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                mainClassName,
+                cfw.getClassName(),
                 getBodyMethodName(ofn.fnode),
                 getBodyMethodSignature(ofn.fnode));
         int exitLabel = cfw.acquireLabel();
@@ -729,7 +878,9 @@ public class Codegen implements Evaluator {
             if (qCount == 0) continue;
             String qFieldName = getTemplateLiteralName(n);
             String qFieldType = "[Ljava/lang/Object;";
-            cfw.addField(qFieldName, qFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
+            // Public: a body method that ends up in a different (split) chunk class needs to
+            // read this field via a cross-class GETSTATIC.
+            cfw.addField(qFieldName, qFieldType, (short) (ACC_STATIC | ACC_PUBLIC));
             cfw.addPush(qCount);
             cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
             for (int j = 0; j < qCount; ++j) {
@@ -777,7 +928,9 @@ public class Codegen implements Evaluator {
             double num = array[i];
             String constantName = "_k" + i;
             String constantType = getStaticConstantWrapperType(num);
-            cfw.addField(constantName, constantType, (short) (ACC_STATIC | ACC_PRIVATE));
+            // Public: a body method that ends up in a different (split) chunk class needs to
+            // read this field via a cross-class GETSTATIC.
+            cfw.addField(constantName, constantType, (short) (ACC_STATIC | ACC_PUBLIC));
             int inum = (int) num;
             if (inum == num) {
                 cfw.addPush(inum);
