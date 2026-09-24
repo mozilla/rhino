@@ -700,7 +700,17 @@ class JavaMembers {
                                 + " due to lack of privileges.");
             }
         }
-        return cl.getConstructors();
+        try {
+            var constructors = cl.getConstructors();
+            AccessibleObject.setAccessible(constructors, true);
+            return constructors;
+        } catch (InaccessibleObjectException | SecurityException e) {
+            // if we're unable to make one constructor accessible, it's very likely that we can't
+            // make any constructor accessible, due to the class being not exported or
+            // SecurityManager blocking access change.
+            // NoClassDefFoundError: param type absent at runtime, similar to method
+            return new Constructor[0];
+        }
     }
 
     @SuppressWarnings("deprecation")
