@@ -81,7 +81,7 @@ public class NodeTransformer {
             boolean inLoop) {
         Node node = null;
         for (; ; ) {
-            node = processNode(node, tree, parent, scope, createScopeObjects, inStrictMode);
+            node = processNode(node, tree, parent, scope, createScopeObjects, inStrictMode, inLoop);
             if (node == null) {
                 break;
             } else if (node == CONTINUE_NODE) {
@@ -104,7 +104,8 @@ public class NodeTransformer {
             final Node parent,
             final Scope scope,
             final boolean createScopeObjects,
-            final boolean inStrictMode) {
+            final boolean inStrictMode,
+            final boolean inLoop) {
         Node previous = null;
         if (node == null) {
             node = parent.getFirstChild();
@@ -243,7 +244,7 @@ public class NodeTransformer {
                             unwindBlock.addChildToBack(returnNode);
                             // transform return expression
                             transformCompilationUnit_r(
-                                    tree, store, scope, createScopeObjects, inStrictMode);
+                                tree, store, scope, createScopeObjects, inStrictMode, inLoop);
                         }
                         // skip transformCompilationUnit_r to avoid infinite loop
                         return CONTINUE_NODE;
@@ -499,7 +500,7 @@ public class NodeTransformer {
                                     (Node) propertyId,
                                     node instanceof Scope ? (Scope) node : scope,
                                     createScopeObjects,
-                                    inStrictMode);
+                                inStrictMode, inLoop);
                         }
                     }
                 }
