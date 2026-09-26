@@ -118,6 +118,16 @@ public class NodeTransformer {
         }
 
         int type = node.getType();
+        if ((type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
+                && (node instanceof Scope)
+                && !createScopeObjects
+                && inLoop
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+            // The scope is not reified, so its bindings keep the same slots for the whole
+            // call. A loop can enter the scope again, and the bindings must be fresh when
+            // it does.
+            addScopeReinit((Scope) node);
+        }
         if (createScopeObjects
                 && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
                 && (node instanceof Scope)) {
@@ -128,8 +138,18 @@ public class NodeTransformer {
                 Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR : Token.LET);
                 Node innerLet = new Node(Token.LET);
                 let.addChildToBack(innerLet);
-                for (String name : newScope.getSymbolTable().keySet()) {
-                    innerLet.addChildToBack(Node.newString(Token.NAME, name));
+                for (Symbol symbol : newScope.getSymbolTable().values()) {
+                    Node name = Node.newString(Token.NAME, symbol.getName());
+                    // Const bindings must be created uninitialized, so that the
+                    // declaration itself can initialize them. A loop scope is
+                    // excluded: it belongs to a for-in/of head, whose bindings are
+                    // declared afresh in each iteration's own scope, and all this
+                    // one does is shadow an outer binding of the same name while
+                    // the iterated expression is evaluated.
+                    if (symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK) {
+                        name.putIntProp(Node.IS_CONST_PROP, 1);
+                    }
+                    innerLet.addChildToBack(name);
                 }
                 newScope.setSymbolTable(null); // so we don't transform again
                 Node oldNode = node;
@@ -244,7 +264,7 @@ public class NodeTransformer {
                             unwindBlock.addChildToBack(returnNode);
                             // transform return expression
                             transformCompilationUnit_r(
-                                tree, store, scope, createScopeObjects, inStrictMode, inLoop);
+                                    tree, store, scope, createScopeObjects, inStrictMode, inLoop);
                         }
                         // skip transformCompilationUnit_r to avoid infinite loop
                         return CONTINUE_NODE;
@@ -307,9 +327,10 @@ public class NodeTransformer {
             case Token.LET:
                 {
                     Node child = node.getFirstChild();
-                    if (child.getType() == Token.LET) {
+                    if (child.getType() == Token.LET || child.getType() == Token.CONST) {
                         // We have a let statement or expression rather than a
-                        // let declaration
+                        // let declaration. A CONST child means a "for (const ...; ...)"
+                        // head that createFor split into a scope of its own.
                         boolean createWith =
                                 tree.getType() != Token.FUNCTION
                                         || ((FunctionNode) tree).requiresActivation();
@@ -351,48 +372,47 @@ public class NodeTransformer {
                     break;
                 }
 
-
             case Token.ITERATION:
                 {
                     // A reified iteration environment is copied, so that the bindings the
-                        // iteration just finished handed to any closure it created stay as they
-                        // were. A flattened scope keeps one slot per binding for the whole call
-                        // and nothing can capture it, so the RESETVAR stores that addScopeReinit
-                        // prepends are all the freshness it needs.
-                        boolean copyScope =
-                                createScopeObjects
-                                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
-                        Node replacement = new Node(copyScope ? Token.SCOPE_REPLACE : Token.EMPTY);
-                        replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
-                        node = replaceCurrent(parent, previous, node, replacement);
-                        break;
-                    }
+                    // iteration just finished handed to any closure it created stay as they
+                    // were. A flattened scope keeps one slot per binding for the whole call
+                    // and nothing can capture it, so the RESETVAR stores that addScopeReinit
+                    // prepends are all the freshness it needs.
+                    boolean copyScope =
+                            createScopeObjects
+                                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+                    Node replacement = new Node(copyScope ? Token.SCOPE_REPLACE : Token.EMPTY);
+                    replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
+                    node = replaceCurrent(parent, previous, node, replacement);
+                    break;
+                }
 
-                case Token.ITERATION_SCOPE:
-                    {
-                        // A for-in/of head binds afresh on each iteration rather than carrying
-                        // the previous iteration's bindings over: what that iteration handed to
-                        // any closure it created has to stay as it was, and a const has to be
-                        // created uninitialized for the assignment of the enumerated value to
-                        // initialize it. Leaving the current scope and entering a new one does
-                        // both; what the first iteration leaves is the loop's own scope, which
-                        // has no further use once the iterated expression has been evaluated.
-                        // A flattened scope keeps one slot per binding for the whole call and
-                        // nothing can capture it, so INITCONSTVAR storing into that slot again
-                        // is all the freshness it needs.
-                        Node replacement;
-                        if (createScopeObjects
-                                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
-                            replacement = new Node(Token.BLOCK);
-                            replacement.addChildToBack(new Node(Token.LEAVE_SCOPE));
-                            replacement.addChildToBack(enterIterationScope(node));
-                        } else {
-                            replacement = new Node(Token.EMPTY);
-                        }
-                        replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
-                        node = replaceCurrent(parent, previous, node, replacement);
-                        break;
+            case Token.ITERATION_SCOPE:
+                {
+                    // A for-in/of head binds afresh on each iteration rather than carrying
+                    // the previous iteration's bindings over: what that iteration handed to
+                    // any closure it created has to stay as it was, and a const has to be
+                    // created uninitialized for the assignment of the enumerated value to
+                    // initialize it. Leaving the current scope and entering a new one does
+                    // both; what the first iteration leaves is the loop's own scope, which
+                    // has no further use once the iterated expression has been evaluated.
+                    // A flattened scope keeps one slot per binding for the whole call and
+                    // nothing can capture it, so INITCONSTVAR storing into that slot again
+                    // is all the freshness it needs.
+                    Node replacement;
+                    if (createScopeObjects
+                            && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                        replacement = new Node(Token.BLOCK);
+                        replacement.addChildToBack(new Node(Token.LEAVE_SCOPE));
+                        replacement.addChildToBack(enterIterationScope(node));
+                    } else {
+                        replacement = new Node(Token.EMPTY);
                     }
+                    replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
+                    node = replaceCurrent(parent, previous, node, replacement);
+                    break;
+                }
 
             case Token.TYPEOFNAME:
                 {
@@ -476,7 +496,14 @@ public class NodeTransformer {
                             node.setType(Token.SETVAR);
                             nameSource.setType(Token.STRING);
                         } else if (type == Token.SETCONST) {
-                            node.setType(Token.SETCONSTVAR);
+                            // A loop can run a block scoped declaration more than once, and
+                            // each run re-binds. Pre-ES6 const is hoisted to the function
+                            // scope instead, and keeps its "assign once" behaviour.
+                            boolean reinitialized =
+                                    compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                                            && inLoop
+                                            && defining != tree;
+                            node.setType(reinitialized ? Token.INITCONSTVAR : Token.SETCONSTVAR);
                             nameSource.setType(Token.STRING);
                         } else if (type == Token.DELPROP) {
                             // Local variables are by definition permanent
@@ -500,7 +527,8 @@ public class NodeTransformer {
                                     (Node) propertyId,
                                     node instanceof Scope ? (Scope) node : scope,
                                     createScopeObjects,
-                                inStrictMode, inLoop);
+                                    inStrictMode,
+                                    inLoop);
                         }
                     }
                 }
