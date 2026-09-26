@@ -27,5 +27,4 @@ public class DefConst extends Instruction {
     public String toDebugString() {
         return InstructionFormatter.formatInstruction(this, "varName", varName);
     }
-
 }

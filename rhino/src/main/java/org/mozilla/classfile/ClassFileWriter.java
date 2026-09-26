@@ -4697,9 +4697,11 @@ public class ClassFileWriter {
     @SuppressWarnings("AndroidJdkLibsChecker")
     private static void printOrigin() {
         StackWalker walker = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
-        var callerFrame = walker.walk(
-                s -> s.filter(x -> x.getDeclaringClass() != ClassFileWriter.class)
-                        .findFirst());
+        var callerFrame =
+                walker.walk(
+                        s ->
+                                s.filter(x -> x.getDeclaringClass() != ClassFileWriter.class)
+                                        .findFirst());
         var f = callerFrame.orElseThrow();
         System.err.printf("%s:%d ", f.getDeclaringClass().getSimpleName(), f.getLineNumber());
     }

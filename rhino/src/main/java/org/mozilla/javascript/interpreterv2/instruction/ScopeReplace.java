@@ -3,13 +3,11 @@ package org.mozilla.javascript.interpreterv2.instruction;
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 
 public class ScopeReplace extends Instruction {
 
-    public ScopeReplace() {
-    }
+    public ScopeReplace() {}
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
@@ -26,5 +24,4 @@ public class ScopeReplace extends Instruction {
     public String toDebugString() {
         return InstructionFormatter.formatInstruction(this);
     }
-
 }

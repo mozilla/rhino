@@ -751,7 +751,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
             } else {
                 visitExpression(child, 0);
                 addInstruction(
-                    new SetName(PeekOperand.instance, (String) names[i], PopOperand.instance));
+                        new SetName(PeekOperand.instance, (String) names[i], PopOperand.instance));
                 addInstruction(Pop.instance);
             }
             child = child.getNext();

@@ -19,8 +19,7 @@ public class InitConstVar extends Instruction {
     public void interpret(Context cx, CallFrameV2 frame) {
         if ((frame.getVarAttribute(index) & ScriptableObject.READONLY) == 0) {
             throw Context.reportRuntimeErrorById(
-                "msg.var.redecl",
-                frame.fnOrScript.getDescriptor().getParamOrVarName(index));
+                    "msg.var.redecl", frame.fnOrScript.getDescriptor().getParamOrVarName(index));
         }
         if ((frame.getVarAttribute(index) & ScriptableObject.UNINITIALIZED_CONST) != 0) {
             if (value.isDouble(frame)) {
@@ -46,5 +45,4 @@ public class InitConstVar extends Instruction {
     public String toDebugString() {
         return InstructionFormatter.formatInstruction(this, "index", index, "value", value);
     }
-
 }
