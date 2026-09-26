@@ -38,6 +38,7 @@ import org.mozilla.javascript.interpreterv2.instruction.ClosureExpression;
 import org.mozilla.javascript.interpreterv2.instruction.ClosureStatement;
 import org.mozilla.javascript.interpreterv2.instruction.Comparison;
 import org.mozilla.javascript.interpreterv2.instruction.DebuggerInstruction;
+import org.mozilla.javascript.interpreterv2.instruction.DefConst;
 import org.mozilla.javascript.interpreterv2.instruction.DefaultNamespace;
 import org.mozilla.javascript.interpreterv2.instruction.DelName;
 import org.mozilla.javascript.interpreterv2.instruction.DelProp;
@@ -78,6 +79,7 @@ import org.mozilla.javascript.interpreterv2.instruction.IfNe;
 import org.mozilla.javascript.interpreterv2.instruction.IfNotNullUndefined;
 import org.mozilla.javascript.interpreterv2.instruction.IfNullUndefined;
 import org.mozilla.javascript.interpreterv2.instruction.In;
+import org.mozilla.javascript.interpreterv2.instruction.InitConstVar;
 import org.mozilla.javascript.interpreterv2.instruction.Instanceof;
 import org.mozilla.javascript.interpreterv2.instruction.Instruction;
 import org.mozilla.javascript.interpreterv2.instruction.Int;
@@ -122,6 +124,7 @@ import org.mozilla.javascript.interpreterv2.instruction.RefNsMember;
 import org.mozilla.javascript.interpreterv2.instruction.RefNsName;
 import org.mozilla.javascript.interpreterv2.instruction.RefSpecial;
 import org.mozilla.javascript.interpreterv2.instruction.Regexp;
+import org.mozilla.javascript.interpreterv2.instruction.ResetConstVar;
 import org.mozilla.javascript.interpreterv2.instruction.Rethrow;
 import org.mozilla.javascript.interpreterv2.instruction.Return;
 import org.mozilla.javascript.interpreterv2.instruction.ReturnResult;
@@ -129,6 +132,7 @@ import org.mozilla.javascript.interpreterv2.instruction.ReturnSubroutine;
 import org.mozilla.javascript.interpreterv2.instruction.ReturnUndefined;
 import org.mozilla.javascript.interpreterv2.instruction.RightShift;
 import org.mozilla.javascript.interpreterv2.instruction.SaveScope;
+import org.mozilla.javascript.interpreterv2.instruction.ScopeReplace;
 import org.mozilla.javascript.interpreterv2.instruction.SetConst;
 import org.mozilla.javascript.interpreterv2.instruction.SetConstVar;
 import org.mozilla.javascript.interpreterv2.instruction.SetElem;
@@ -441,6 +445,9 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     }
                     return;
                 }
+            case Token.RESETVAR:
+                visitResetVar(child);
+                return;
             case Token.ENTERWITH:
                 visitUnaryOperation(child, obj -> new EnterWith(obj));
                 return;
@@ -451,6 +458,11 @@ public class Compiler<T extends ScriptOrFn<T>> {
             case Token.LEAVE_SCOPE:
                 {
                     addInstruction(LeaveScope.instance);
+                    return;
+                }
+            case Token.SCOPE_REPLACE:
+                {
+                    addInstruction(new ScopeReplace());
                     return;
                 }
             case Token.LOCAL_BLOCK:
@@ -731,12 +743,17 @@ public class Compiler<T extends ScriptOrFn<T>> {
     private void visitEnterScope(Node node, Node child) {
         addInstruction(EnterScope.instance);
         Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
         int i = 0;
         while (child != null) {
-            visitExpression(child, 0);
-            addInstruction(
+            if (consts != null && consts[i]) {
+                addInstruction(new DefConst((String) names[i]));
+            } else {
+                visitExpression(child, 0);
+                addInstruction(
                     new SetName(PeekOperand.instance, (String) names[i], PopOperand.instance));
-            addInstruction(Pop.instance);
+                addInstruction(Pop.instance);
+            }
             child = child.getNext();
             i++;
         }
@@ -918,6 +935,9 @@ public class Compiler<T extends ScriptOrFn<T>> {
                 return;
             case Token.SETCONSTVAR:
                 visitSetConstVar(child);
+                return;
+            case Token.INITCONSTVAR:
+                visitInitConstVar(child);
                 return;
             case Token.NULL:
                 addInstruction(PushConstant.pushNull);
@@ -1208,6 +1228,24 @@ public class Compiler<T extends ScriptOrFn<T>> {
         child = child.getNext();
         var value = getOperand(child, 0);
         addInstruction(new SetConstVar(index, value));
+    }
+
+    private void visitInitConstVar(Node child) {
+        if (descBuilder.requiresActivationFrame) {
+            Kit.codeBug();
+        }
+        int index = scriptOrFn.getIndexForNameNode(child);
+        child = child.getNext();
+        var value = getOperand(child, 0);
+        addInstruction(new InitConstVar(index, value));
+    }
+
+    private void visitResetVar(Node child) {
+        if (descBuilder.requiresActivationFrame) {
+            Kit.codeBug();
+        }
+        int index = scriptOrFn.getIndexForNameNode(child);
+        addInstruction(new ResetConstVar(index));
     }
 
     private void visitRegexp(Node node) {
