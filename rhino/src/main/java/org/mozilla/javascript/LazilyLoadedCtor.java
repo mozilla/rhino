@@ -6,6 +6,10 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -172,5 +176,22 @@ public final class LazilyLoadedCtor<T extends PropHolder<T>> implements Serializ
     @SuppressWarnings("unchecked")
     private static Class<? extends Scriptable> cast(Class<?> cl) {
         return (Class<? extends Scriptable>) cl;
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    @Serial
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    @Serial
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

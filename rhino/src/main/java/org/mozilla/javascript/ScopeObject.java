@@ -6,6 +6,7 @@ import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
 import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serial;
@@ -370,13 +371,20 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
 
     @Serial
     private void writeObject(ObjectOutputStream out) throws IOException {
+        Context.checkSerializationEnabled();
         out.defaultWriteObject();
         writeMaps(out);
     }
 
     @Serial
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         in.defaultReadObject();
         readMaps(in);
+    }
+
+    @Serial
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized ScopeObject data");
     }
 }

@@ -4,9 +4,14 @@
 
 package org.mozilla.javascript.commonjs.module.provider;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.StringTokenizer;
+import org.mozilla.javascript.Context;
 
 /**
  * Breaks a "contentType; charset=encoding" MIME type into content type and encoding parts.
@@ -71,5 +76,22 @@ public final class ParsedContentType implements Serializable {
      */
     public String getEncoding() {
         return encoding;
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    @Serial
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    @Serial
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

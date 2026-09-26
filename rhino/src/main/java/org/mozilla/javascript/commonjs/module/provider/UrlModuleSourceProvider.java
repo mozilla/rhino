@@ -7,6 +7,9 @@ package org.mozilla.javascript.commonjs.module.provider;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.Serial;
 import java.io.Serializable;
@@ -17,6 +20,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.List;
+import org.mozilla.javascript.Context;
 
 /**
  * A URL-based script provider that can load modules against a set of base privileged and fallback
@@ -339,6 +343,24 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
 
         boolean entityNeedsRevalidation() {
             return System.currentTimeMillis() > expiry;
+        }
+
+        @Serial
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        @Serial
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        @Serial
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
     }
 }

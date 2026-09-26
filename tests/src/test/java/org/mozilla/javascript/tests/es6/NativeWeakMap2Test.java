@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeWeakMap;
 
 public class NativeWeakMap2Test {
@@ -22,7 +23,8 @@ public class NativeWeakMap2Test {
 
         NativeWeakMap weakMap = new NativeWeakMap();
 
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (Context cx = org.mozilla.javascript.testutils.SerializationTestContext.enter();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oout = new ObjectOutputStream(bos)) {
             oout.writeObject(weakMap);
 

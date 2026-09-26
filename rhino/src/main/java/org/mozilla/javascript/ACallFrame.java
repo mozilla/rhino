@@ -6,6 +6,11 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import org.mozilla.javascript.debug.DebugFrame;
@@ -19,6 +24,23 @@ import org.mozilla.javascript.debug.DebuggableScript;
 public abstract class ACallFrame<T extends ACallFrame<T, U>, U extends ACompilerData<?, U>>
         implements Serializable {
     private static final long serialVersionUID = 6100049821156242226L;
+
+    @Serial
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        Context.checkSerializationEnabled();
+        out.defaultWriteObject();
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        in.defaultReadObject();
+    }
+
+    @Serial
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized call-frame data");
+    }
 
     public final T parentFrame;
     public final short frameIndex;

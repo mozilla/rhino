@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serial;
@@ -309,6 +310,24 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 }
             }
             return value;
+        }
+
+        @Serial
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        @Serial
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        @Serial
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
     }
 
@@ -1005,6 +1024,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     @Serial
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         stream.defaultReadObject();
         int maxPrototypeId = stream.readInt();
         if (maxPrototypeId != 0) {
@@ -1014,6 +1034,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     @Serial
     private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
         stream.defaultWriteObject();
         int maxPrototypeId = 0;
         if (prototypeValues != null) {
