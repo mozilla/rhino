@@ -91,7 +91,10 @@ public class DoctestsTest {
     public void runDoctest(String name, String source, EvaluationMethod evalMethod)
             throws Exception {
         initDoctestsTest(name, source, interpretedMode);
-        ContextFactory factory = ContextFactory.getGlobal();
+        ContextFactory factory =
+                name.equals("serialize.doctest") || name.equals("442922.doctest")
+                        ? org.mozilla.javascript.testutils.SerializationTestContext.factory()
+                        : ContextFactory.getGlobal();
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setEvaluationMethod(evalMethod);

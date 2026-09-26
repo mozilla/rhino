@@ -153,6 +153,7 @@ public class NativeWeakMap extends ScriptableObject {
     }
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         stream.defaultReadObject();
         map = new WeakHashMap<>();
     }

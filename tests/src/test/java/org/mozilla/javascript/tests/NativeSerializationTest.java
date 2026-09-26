@@ -23,7 +23,7 @@ public class NativeSerializationTest {
 
     @BeforeEach
     public void init() {
-        cx = Context.enter();
+        cx = org.mozilla.javascript.testutils.SerializationTestContext.enter();
         scope = new Global(cx);
         scope.setFileLoadPrefix(TestSource.getPrefix());
     }

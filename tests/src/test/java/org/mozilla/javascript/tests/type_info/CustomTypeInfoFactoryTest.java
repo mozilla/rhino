@@ -56,7 +56,7 @@ public class CustomTypeInfoFactoryTest {
 
     @Test
     public void serdeCustom() throws Exception {
-        var contextFactory = new ContextFactory();
+        var contextFactory = org.mozilla.javascript.testutils.SerializationTestContext.factory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
             var scope = new TopLevel();
@@ -76,7 +76,7 @@ public class CustomTypeInfoFactoryTest {
 
     @Test
     public void serdeGlobal() throws Exception {
-        var contextFactory = new ContextFactory();
+        var contextFactory = org.mozilla.javascript.testutils.SerializationTestContext.factory();
         byte[] data;
         try (var cx = contextFactory.enterContext()) {
             var scope = new TopLevel();

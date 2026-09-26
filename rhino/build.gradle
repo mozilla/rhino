@@ -176,5 +176,8 @@ decycle {
     ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.lc.type.*"
     ignoring from: "org.mozilla.javascript.ScriptRuntime", to: "org.mozilla.javascript.lc.type.impl.factory.ConcurrentFactory"
 
+    // `AbstractCacheFactory.readObjectNoData` needs the serialization guard in the root package
+    ignoring from: "org.mozilla.javascript.lc.type.impl.factory.*", to: "org.mozilla.javascript.Context"
+
     /// --- LiveConnect end ---
 }

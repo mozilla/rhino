@@ -60,6 +60,7 @@ public class NativeCollectionIterator extends ES6Iterator {
 
     @Serial
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         stream.defaultReadObject();
         className = (String) stream.readObject();
         type = (Type) stream.readObject();
@@ -68,6 +69,7 @@ public class NativeCollectionIterator extends ES6Iterator {
 
     @Serial
     private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
         stream.defaultWriteObject();
         stream.writeObject(className);
         stream.writeObject(type);
