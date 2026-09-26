@@ -26,7 +26,7 @@ public class NativeArrayIteratorTest {
 
     @Before
     public void init() {
-        cx = Context.enter();
+        cx = org.mozilla.javascript.testutils.SerializationTestContext.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
         cx.setGeneratingDebug(true);
 

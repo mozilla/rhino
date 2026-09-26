@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -857,6 +858,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
+        Context.checkSerializationEnabled();
         out.defaultWriteObject();
 
         out.writeBoolean(isAdapter);
@@ -882,6 +884,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         in.defaultReadObject();
 
         isAdapter = in.readBoolean();
@@ -1013,5 +1016,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     @Override
     public int hashCode() {
         return javaObject == null ? 0 : javaObject.hashCode();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

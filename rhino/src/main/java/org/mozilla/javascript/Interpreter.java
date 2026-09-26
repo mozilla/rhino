@@ -8,6 +8,10 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -490,6 +494,21 @@ public final class Interpreter extends Icode implements Evaluator {
                 stack[offset] = value;
             }
         }
+
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
+        }
     }
 
     /**
@@ -664,6 +683,21 @@ public final class Interpreter extends Icode implements Evaluator {
                 this.branchFrame = chain1;
                 if (this.branchFrame != null && !this.branchFrame.frozen) Kit.codeBug();
             }
+        }
+
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
     }
 

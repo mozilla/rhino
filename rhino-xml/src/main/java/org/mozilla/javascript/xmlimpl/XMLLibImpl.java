@@ -6,6 +6,10 @@
 
 package org.mozilla.javascript.xmlimpl;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Kit;
@@ -644,5 +648,19 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
 
         return xmlPrimaryReference(cx, xmlName, scope);
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

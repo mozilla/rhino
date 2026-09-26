@@ -10,6 +10,10 @@ import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import org.mozilla.javascript.xml.XMLLib;
 
@@ -88,6 +92,22 @@ public class NativeGlobal implements Serializable {
                                 return NativeError.makeAggregate(
                                         callCx, callScope, lateBoundCtor, args);
                             }
+
+                            private void readObject(ObjectInputStream stream)
+                                    throws IOException, ClassNotFoundException {
+                                Context.checkDeserializationEnabled();
+                                stream.defaultReadObject();
+                            }
+
+                            private void writeObject(ObjectOutputStream stream) throws IOException {
+                                Context.checkSerializationEnabled();
+                                stream.defaultWriteObject();
+                            }
+
+                            private void readObjectNoData() throws InvalidObjectException {
+                                throw new InvalidObjectException(
+                                        "Missing serialized Rhino object data");
+                            }
                         };
                 ctor =
                         new LambdaConstructor(scope, name, 2, target) {
@@ -109,6 +129,22 @@ public class NativeGlobal implements Serializable {
                             public Scriptable construct(
                                     Context callCx, Scriptable callScope, Object[] args) {
                                 return NativeError.make(callCx, callScope, lateBoundCtor, args);
+                            }
+
+                            private void readObject(ObjectInputStream stream)
+                                    throws IOException, ClassNotFoundException {
+                                Context.checkDeserializationEnabled();
+                                stream.defaultReadObject();
+                            }
+
+                            private void writeObject(ObjectOutputStream stream) throws IOException {
+                                Context.checkSerializationEnabled();
+                                stream.defaultWriteObject();
+                            }
+
+                            private void readObjectNoData() throws InvalidObjectException {
+                                throw new InvalidObjectException(
+                                        "Missing serialized Rhino object data");
                             }
                         };
                 ctor = new LambdaConstructor(scope, name, 1, target);
@@ -757,5 +793,19 @@ public class NativeGlobal implements Serializable {
                     (callCx, callScope, thisObj, args) ->
                             NativeGlobal.js_eval(callCx, callScope, args));
         }
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

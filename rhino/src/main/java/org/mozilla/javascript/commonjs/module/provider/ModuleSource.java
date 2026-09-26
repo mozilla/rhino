@@ -4,9 +4,14 @@
 
 package org.mozilla.javascript.commonjs.module.provider;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.Serializable;
 import java.net.URI;
+import org.mozilla.javascript.Context;
 
 /**
  * Represents the source text of the module as a tuple of a reader, a URI, a security domain, and a
@@ -101,5 +106,19 @@ public class ModuleSource implements Serializable {
      */
     public Object getValidator() {
         return validator;
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

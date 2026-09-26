@@ -4,6 +4,10 @@ import static org.mozilla.javascript.NativeArray.getLengthProperty;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Comparator;
 import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
@@ -404,17 +408,41 @@ public class ArrayLikeAbstractOperations {
 
         private static final long serialVersionUID = 5299017659728190979L;
 
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            Context.checkSerializationEnabled();
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            in.defaultReadObject();
+        }
+
         @Override
         public int compare(final Object x, final Object y) {
             final String a = ScriptRuntime.toString(x);
             final String b = ScriptRuntime.toString(y);
             return a.compareTo(b);
         }
+
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
+        }
     }
 
     public static final class ElementComparator implements Comparator<Object>, Serializable {
 
         private static final long serialVersionUID = -1189948017688708858L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            Context.checkSerializationEnabled();
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            in.defaultReadObject();
+        }
 
         private final Comparator<Object> child;
 
@@ -450,6 +478,10 @@ public class ArrayLikeAbstractOperations {
             }
 
             return child.compare(x, y);
+        }
+
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
     }
 }

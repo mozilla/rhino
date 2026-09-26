@@ -503,6 +503,7 @@ public class FunctionObject extends BaseFunction {
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         in.defaultReadObject();
         if (parmsLength > 0) {
             var types = member.getArgTypes();

@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -451,6 +452,7 @@ final class MemberBox implements Serializable {
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         in.defaultReadObject();
         Member member = readMember(in);
         if (member instanceof Method) {
@@ -461,8 +463,13 @@ final class MemberBox implements Serializable {
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
+        Context.checkSerializationEnabled();
         out.defaultWriteObject();
         writeMember(out, memberObject);
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 
     /**

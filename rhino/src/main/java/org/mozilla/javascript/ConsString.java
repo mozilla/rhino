@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 
@@ -47,6 +49,14 @@ public class ConsString implements CharSequence, Serializable {
     // Replace with string representation when serializing
     private Object writeReplace() {
         return this.toString();
+    }
+
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("ConsString must be serialized as a String");
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("ConsString must be serialized as a String");
     }
 
     @Override

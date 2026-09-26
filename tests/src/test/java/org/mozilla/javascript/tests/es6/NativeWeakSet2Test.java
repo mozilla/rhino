@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeWeakSet;
 
 public class NativeWeakSet2Test {
@@ -22,7 +23,8 @@ public class NativeWeakSet2Test {
 
         NativeWeakSet weakSet = new NativeWeakSet();
 
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (Context cx = org.mozilla.javascript.testutils.SerializationTestContext.enter();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oout = new ObjectOutputStream(bos)) {
             oout.writeObject(weakSet);
 

@@ -20,6 +20,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.testutils.SerializationTestContext;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -87,7 +88,7 @@ public class DoctestsTest {
 
     @Test
     public void runDoctest() throws Exception {
-        ContextFactory factory = ContextFactory.getGlobal();
+        ContextFactory factory = SerializationTestContext.factory();
         try (Context cx = factory.enterContext()) {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setInterpretedMode(interpretedMode);

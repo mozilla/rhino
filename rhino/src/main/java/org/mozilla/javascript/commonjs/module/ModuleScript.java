@@ -4,8 +4,13 @@
 
 package org.mozilla.javascript.commonjs.module;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 
 /**
@@ -69,6 +74,34 @@ public class ModuleScript implements Serializable {
      * @return true if this script is contained within its sandbox base URI.
      */
     public boolean isSandboxed() {
-        return base != null && uri != null && !base.relativize(uri).isAbsolute();
+        if (base == null || uri == null) {
+            return false;
+        }
+        URI relative = base.relativize(uri);
+        if (relative.isAbsolute()) {
+            return false;
+        }
+        // relativize() only normalises literal dot segments; percent-encoded ones such as
+        // %2e%2e survive it and are decoded again by the URL handler before the file is opened
+        for (String segment : relative.getPath().split("[/\\\\]", -1)) {
+            if ("..".equals(segment)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
+        stream.defaultReadObject();
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

@@ -5,7 +5,9 @@
 package org.mozilla.javascript.xmlimpl;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,7 @@ class XmlProcessor implements Serializable {
     private RhinoSAXErrorHandler errorHandler = new RhinoSAXErrorHandler();
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         stream.defaultReadObject();
         this.dom = DocumentBuilderFactory.newInstance();
         this.dom.setNamespaceAware(true);
@@ -146,6 +149,21 @@ class XmlProcessor implements Serializable {
         @Override
         public void warning(SAXParseException e) {
             Context.reportWarning(e.getMessage());
+        }
+
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
     }
 
@@ -356,7 +374,7 @@ class XmlProcessor implements Serializable {
                 document.getDocumentElement().removeChild(node);
                 return node;
             }
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Unreachable.");
         } catch (javax.xml.parsers.ParserConfigurationException e) {
             throw new RuntimeException(e);
@@ -527,5 +545,14 @@ class XmlProcessor implements Serializable {
         if (indentChildren) {
             e.appendChild(e.getOwnerDocument().createTextNode(afterContent));
         }
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        Context.checkSerializationEnabled();
+        stream.defaultWriteObject();
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized Rhino object data");
     }
 }

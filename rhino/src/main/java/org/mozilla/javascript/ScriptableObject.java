@@ -9,6 +9,7 @@
 package org.mozilla.javascript;
 
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -3180,6 +3181,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
+        Context.checkSerializationEnabled();
         out.defaultWriteObject();
         try (var map = startCompoundOp(false)) {
             int objectsCount = map.dirtySize();
@@ -3195,6 +3197,7 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         in.defaultReadObject();
 
         int tableSize = in.readInt();
@@ -3203,6 +3206,10 @@ public abstract class ScriptableObject extends SlotMapOwner
             Slot slot = (Slot) in.readObject();
             getMap().add(this, slot);
         }
+    }
+
+    private void readObjectNoData() throws InvalidObjectException {
+        throw new InvalidObjectException("Missing serialized ScriptableObject data");
     }
 
     protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
@@ -3275,6 +3282,21 @@ public abstract class ScriptableObject extends SlotMapOwner
                 return 1;
             }
             return 0;
+        }
+
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
     }
 

@@ -12,6 +12,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.NotSerializableException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -383,6 +385,17 @@ public class Context implements Closeable {
      * @since 1.7 Release 15
      */
     public static final int FEATURE_INTL_402 = 22;
+
+    /**
+     * Enables Java serialization of guarded Rhino runtime objects for trusted compatibility data.
+     *
+     * <p>The default value comes from {@code rhino.serialization.enabled} in RhinoConfig, which is
+     * resolved once per process on first use; later configuration changes have no effect. It can be
+     * overridden per context through {@link ContextFactory#hasFeature(Context, int)}.
+     *
+     * <p>This feature does not make untrusted Java deserialization safe.
+     */
+    public static final int FEATURE_JAVA_SERIALIZATION = 23;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
@@ -2796,6 +2809,40 @@ public class Context implements Closeable {
             return false;
         }
         return cx.isStrictMode();
+    }
+
+    /**
+     * Throws unless Java serialization is enabled for the current context, or for the process if
+     * there is no current context.
+     *
+     * <p>When a context is current, the value of {@link #FEATURE_JAVA_SERIALIZATION} from its
+     * {@link ContextFactory} is used; otherwise the process-wide value of {@code
+     * rhino.serialization.enabled} applies, resolved once per process.
+     */
+    public static void checkSerializationEnabled() throws NotSerializableException {
+        Context cx = getCurrentContext();
+        if (cx == null) {
+            JavaSerializationPolicy.checkSerializationEnabled();
+        } else if (!cx.hasFeature(FEATURE_JAVA_SERIALIZATION)) {
+            throw new NotSerializableException("Java serialization is disabled in Rhino");
+        }
+    }
+
+    /**
+     * Throws unless Java deserialization is enabled for the current context, or for the process if
+     * there is no current context.
+     *
+     * <p>When a context is current, the value of {@link #FEATURE_JAVA_SERIALIZATION} from its
+     * {@link ContextFactory} is used; otherwise the process-wide value of {@code
+     * rhino.serialization.enabled} applies, resolved once per process.
+     */
+    public static void checkDeserializationEnabled() throws InvalidObjectException {
+        Context cx = getCurrentContext();
+        if (cx == null) {
+            JavaSerializationPolicy.checkDeserializationEnabled();
+        } else if (!cx.hasFeature(FEATURE_JAVA_SERIALIZATION)) {
+            throw new InvalidObjectException("Java deserialization is disabled in Rhino");
+        }
     }
 
     private final ContextFactory factory;
