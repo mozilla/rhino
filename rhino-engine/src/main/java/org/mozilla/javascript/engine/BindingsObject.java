@@ -9,6 +9,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.VarScope;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * This class makes the Bindings object into a Scriptable. That way, we can query and modify the
@@ -36,12 +37,12 @@ public class BindingsObject extends ScriptableObject {
         if (!bindings.containsKey(name)) {
             return Scriptable.NOT_FOUND;
         }
-        return Context.jsToJava(bindings.get(name), Object.class);
+        return Context.javaToJS(bindings.get(name), parentScope);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        bindings.put(name, Context.javaToJS(value, parentScope));
+        bindings.put(name, value instanceof Wrapper ? ((Wrapper) value).unwrap() : value);
     }
 
     @Override
