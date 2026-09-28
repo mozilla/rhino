@@ -124,7 +124,7 @@ import org.mozilla.javascript.interpreterv2.instruction.RefNsMember;
 import org.mozilla.javascript.interpreterv2.instruction.RefNsName;
 import org.mozilla.javascript.interpreterv2.instruction.RefSpecial;
 import org.mozilla.javascript.interpreterv2.instruction.Regexp;
-import org.mozilla.javascript.interpreterv2.instruction.ResetConstVar;
+import org.mozilla.javascript.interpreterv2.instruction.ResetVar;
 import org.mozilla.javascript.interpreterv2.instruction.Rethrow;
 import org.mozilla.javascript.interpreterv2.instruction.Return;
 import org.mozilla.javascript.interpreterv2.instruction.ReturnResult;
@@ -1245,7 +1245,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
             Kit.codeBug();
         }
         int index = scriptOrFn.getIndexForNameNode(child);
-        addInstruction(new ResetConstVar(index));
+        addInstruction(new ResetVar(index));
     }
 
     private void visitRegexp(Node node) {

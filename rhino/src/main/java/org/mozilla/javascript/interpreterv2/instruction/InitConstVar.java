@@ -21,18 +21,17 @@ public class InitConstVar extends Instruction {
             throw Context.reportRuntimeErrorById(
                     "msg.var.redecl", frame.fnOrScript.getDescriptor().getParamOrVarName(index));
         }
-        if ((frame.getVarAttribute(index) & ScriptableObject.UNINITIALIZED_CONST) != 0) {
-            if (value.isDouble(frame)) {
-                var doubleValue = value.retrieveDouble(frame);
-                frame.setVar(index, doubleValue);
-                frame.push(doubleValue);
-            } else {
-                var value = this.value.retrieve(cx, frame);
-                frame.setVar(index, value);
-                frame.push(value);
-            }
-            frame.setVarAttribute(index, ScriptableObject.UNINITIALIZED_CONST);
+        if (value.isDouble(frame)) {
+            var doubleValue = value.retrieveDouble(frame);
+            frame.setVar(index, doubleValue);
+            frame.push(doubleValue);
+        } else {
+            var value = this.value.retrieve(cx, frame);
+            frame.setVar(index, value);
+            frame.push(value);
         }
+        int newAttrs = frame.getVarAttribute(index) & ~ScriptableObject.UNINITIALIZED_CONST;
+        frame.resetVarAttributes(index, newAttrs);
         frame.pc += 1;
     }
 

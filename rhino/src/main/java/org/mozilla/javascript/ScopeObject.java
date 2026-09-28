@@ -321,9 +321,10 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
         if (slot == null) {
             return false;
         }
-        int flags =  (cx.getLanguageVersion() >= Context.VERSION_ES6)
-            ? PERMANENT | READONLY | STRICTLY_READONLY
-            : PERMANENT | READONLY | READONLY;
+        int flags =
+                (cx.getLanguageVersion() >= Context.VERSION_ES6)
+                        ? PERMANENT | READONLY | STRICTLY_READONLY
+                        : PERMANENT | READONLY | READONLY;
         return (slot.getAttributes() & flags) == flags;
     }
 

@@ -305,6 +305,10 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
         varSource.stackAttributes[index] &= (byte) ~attributes;
     }
 
+    public void resetVarAttributes(int index, int attributes) {
+        varSource.stackAttributes[index] = (byte) attributes;
+    }
+
     public Object getLocal(int index) {
         return stack[localShift + index];
     }
