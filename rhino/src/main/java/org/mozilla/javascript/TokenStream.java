@@ -733,7 +733,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                                     break;
                                 }
                                 escapeVal = Kit.xDigitToInt(c, escapeVal);
-                                if (escapeVal < 0) {
+                                if (escapeVal < 0 || escapeVal > 0x10FFFF) {
                                     break;
                                 }
                             }
@@ -1057,7 +1057,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                                             break;
                                         }
                                         escapeVal = Kit.xDigitToInt(c, escapeVal);
-                                        if (escapeVal < 0) {
+                                        if (escapeVal < 0 || escapeVal > 0x10FFFF) {
                                             break;
                                         }
                                         addToString(c);
@@ -1775,6 +1775,9 @@ class TokenStream implements Parser.CurrentPositionReporter {
                                             break;
                                         }
                                         escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                        if (escapeVal > 0x10FFFF) {
+                                            break;
+                                        }
                                     }
 
                                     if (escapeVal < 0 || escapeVal > 0x10FFFF) {
