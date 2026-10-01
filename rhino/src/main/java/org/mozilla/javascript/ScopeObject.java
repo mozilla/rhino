@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
 import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 
 import java.io.IOException;
@@ -291,20 +292,21 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      * @param value value to set the property to
      */
     @Override
-    public void putConst(String name, VarScope start, Object value) {
-        if (putConstImpl(name, 0, start, value, ScriptableObject.READONLY)) return;
+    public void putConst(Context cx, String name, VarScope start, Object value) {
+        if (putConstImpl(cx, name, 0, start, value, ScriptableObject.READONLY)) return;
 
         if (start == this) throw Kit.codeBug();
-        start.putConst(name, start, value);
+        start.putConst(cx, name, start, value);
     }
 
     @Override
-    public void defineConst(String name, VarScope start) {
-        if (putConstImpl(name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
+    public void defineConst(Context cx, String name, VarScope start) {
+        if (putConstImpl(
+                cx, name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
             return;
 
         if (start == this) throw Kit.codeBug();
-        start.defineConst(name, start);
+        start.defineConst(cx, name, start);
     }
 
     /**
@@ -314,12 +316,16 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      * @return true if the named property is defined as a const, false otherwise.
      */
     @Override
-    public boolean isConst(String name) {
+    public boolean isConst(Context cx, String name) {
         var slot = getMap().query(name, 0);
         if (slot == null) {
             return false;
         }
-        return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
+        int flags =
+                (cx.getLanguageVersion() >= Context.VERSION_ES6)
+                        ? PERMANENT | READONLY | STRICTLY_READONLY
+                        : PERMANENT | READONLY | READONLY;
+        return (slot.getAttributes() & flags) == flags;
     }
 
     /**
@@ -333,7 +339,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      *     and a READONLY slot was found.
      */
     private boolean putConstImpl(
-            String name, int index, VarScope start, Object value, int constFlag) {
+            Context cx, String name, int index, VarScope start, Object value, int constFlag) {
         assert (constFlag != ScriptableObject.EMPTY);
         Slot<VarScope> slot;
         if (this != start) {
@@ -343,7 +349,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
             }
         } else {
             // either const hoisted declaration or initialization
-            slot = getMap().modify(this, name, index, ScriptableObject.CONST);
+            var flags =
+                    cx.getLanguageVersion() >= Context.VERSION_ES6
+                            ? ScriptableObject.CONST
+                            : ScriptableObject.LEGACY_CONST;
+            slot = getMap().modify(this, name, index, flags);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
                 throw Context.reportRuntimeErrorById("msg.var.redecl", name);

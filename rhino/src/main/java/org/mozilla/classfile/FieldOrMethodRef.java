@@ -45,6 +45,11 @@ final class FieldOrMethodRef {
         return hashCode;
     }
 
+    @Override
+    public String toString() {
+        return "(" + className + ", " + name + ", " + type + ")";
+    }
+
     private String className;
     private String name;
     private String type;

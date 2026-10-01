@@ -2670,7 +2670,7 @@ public class ScriptRuntime {
     }
 
     public static Object setConst(VarScope bound, Object value, Context cx, String id) {
-        ScriptableObject.putConstProperty(bound, id, value);
+        ScriptableObject.putConstProperty(cx, bound, id, value);
         return value;
     }
 
@@ -5063,7 +5063,7 @@ public class ScriptRuntime {
                 // or prototypes of object.
                 if (!ScriptableObject.hasProperty(scope, name)) {
                     if (isConst) {
-                        ScriptableObject.defineConstProperty(varScope, name);
+                        ScriptableObject.defineConstProperty(cx, varScope, name);
                     } else if (!evalScript) {
                         if (desc.hasNoFunctionStatementNamed(name)) {
                             // Global var definitions are supposed to be DONTDELETE
@@ -5074,7 +5074,7 @@ public class ScriptRuntime {
                         varScope.put(name, varScope, Undefined.instance);
                     }
                 } else {
-                    ScriptableObject.redefineProperty(scope, name, isConst);
+                    ScriptableObject.redefineProperty(cx, scope, name, isConst);
                 }
             }
         }
@@ -5372,6 +5372,19 @@ public class ScriptRuntime {
 
     public static VarScope leaveScope(VarScope scope) {
         return scope.getParentScope();
+    }
+
+    /** Creates an uninitialized const binding, to be initialized by its declaration. */
+    public static void defineConst(Context cx, VarScope scope, String name) {
+        scope.defineConst(cx, name, scope);
+    }
+
+    /**
+     * Gives the next iteration of a loop its own copy of the loop's block scope, leaving the one
+     * the finished iteration may have handed to a closure untouched.
+     */
+    public static VarScope replaceScope(VarScope scope) {
+        return scope.copyScope();
     }
 
     public static VarScope enterDotQuery(Object value, VarScope scope) {

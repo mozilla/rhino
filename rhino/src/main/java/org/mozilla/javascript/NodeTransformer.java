@@ -10,13 +10,18 @@ import static org.mozilla.javascript.Context.reportError;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.Symbol;
 
 /**
  * This class transforms a tree to a lower-level representation for codegen.
@@ -33,6 +38,7 @@ public class NodeTransformer {
     }
 
     public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env) {
+        compilerEnv = env;
         boolean useStrictMode = inStrictMode;
         // Support strict mode inside a function only for "ES6" language level
         // and above. Otherwise, we will end up breaking backward compatibility for
@@ -61,7 +67,7 @@ public class NodeTransformer {
 
         // uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
-        transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode);
+        transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode, false);
     }
 
     private void transformCompilationUnit_r(
@@ -69,7 +75,8 @@ public class NodeTransformer {
             final Node parent,
             Scope scope,
             boolean createScopeObjects,
-            boolean inStrictMode) {
+            boolean inStrictMode,
+            boolean inLoop) {
         Node node = null;
         siblingLoop:
         for (; ; ) {
@@ -85,6 +92,16 @@ public class NodeTransformer {
             }
 
             int type = node.getType();
+            if ((type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
+                    && (node instanceof Scope)
+                    && !createScopeObjects
+                    && inLoop
+                    && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                // The scope is not reified, so its bindings keep the same slots for the whole
+                // call. A loop can enter the scope again, and the bindings must be fresh when
+                // it does.
+                addScopeReinit((Scope) node);
+            }
             if (createScopeObjects
                     && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
                     && (node instanceof Scope)) {
@@ -95,8 +112,18 @@ public class NodeTransformer {
                     Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR : Token.LET);
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
-                    for (String name : newScope.getSymbolTable().keySet()) {
-                        innerLet.addChildToBack(Node.newString(Token.NAME, name));
+                    for (Symbol symbol : newScope.getSymbolTable().values()) {
+                        Node name = Node.newString(Token.NAME, symbol.getName());
+                        // Const bindings must be created uninitialized, so that the
+                        // declaration itself can initialize them. A loop scope is
+                        // excluded: it belongs to a for-in/of head, whose bindings are
+                        // declared afresh in each iteration's own scope, and all this
+                        // one does is shadow an outer binding of the same name while
+                        // the iterated expression is evaluated.
+                        if (symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK) {
+                            name.putIntProp(Node.IS_CONST_PROP, 1);
+                        }
+                        innerLet.addChildToBack(name);
                     }
                     newScope.setSymbolTable(null); // so we don't transform again
                     Node oldNode = node;
@@ -212,7 +239,12 @@ public class NodeTransformer {
                                 unwindBlock.addChildToBack(returnNode);
                                 // transform return expression
                                 transformCompilationUnit_r(
-                                        tree, store, scope, createScopeObjects, inStrictMode);
+                                        tree,
+                                        store,
+                                        scope,
+                                        createScopeObjects,
+                                        inStrictMode,
+                                        inLoop);
                             }
                             // skip transformCompilationUnit_r to avoid infinite loop
                             continue siblingLoop;
@@ -275,9 +307,10 @@ public class NodeTransformer {
                 case Token.LET:
                     {
                         Node child = node.getFirstChild();
-                        if (child.getType() == Token.LET) {
+                        if (child.getType() == Token.LET || child.getType() == Token.CONST) {
                             // We have a let statement or expression rather than a
-                            // let declaration
+                            // let declaration. A CONST child means a "for (const ...; ...)"
+                            // head that createFor split into a scope of its own.
                             boolean createWith =
                                     tree.getType() != Token.FUNCTION
                                             || ((FunctionNode) tree).requiresActivation();
@@ -318,6 +351,48 @@ public class NodeTransformer {
                             result.addChildToBack(pop);
                         }
                         node = replaceCurrent(parent, previous, node, result);
+                        break;
+                    }
+
+                case Token.ITERATION:
+                    {
+                        // A reified iteration environment is copied, so that the bindings the
+                        // iteration just finished handed to any closure it created stay as they
+                        // were. A flattened scope keeps one slot per binding for the whole call
+                        // and nothing can capture it, so the RESETVAR stores that addScopeReinit
+                        // prepends are all the freshness it needs.
+                        boolean copyScope =
+                                createScopeObjects
+                                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+                        Node replacement = new Node(copyScope ? Token.SCOPE_REPLACE : Token.EMPTY);
+                        replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
+                        node = replaceCurrent(parent, previous, node, replacement);
+                        break;
+                    }
+
+                case Token.ITERATION_SCOPE:
+                    {
+                        // A for-in/of head binds afresh on each iteration rather than carrying
+                        // the previous iteration's bindings over: what that iteration handed to
+                        // any closure it created has to stay as it was, and a const has to be
+                        // created uninitialized for the assignment of the enumerated value to
+                        // initialize it. Leaving the current scope and entering a new one does
+                        // both; what the first iteration leaves is the loop's own scope, which
+                        // has no further use once the iterated expression has been evaluated.
+                        // A flattened scope keeps one slot per binding for the whole call and
+                        // nothing can capture it, so INITCONSTVAR storing into that slot again
+                        // is all the freshness it needs.
+                        Node replacement;
+                        if (createScopeObjects
+                                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            replacement = new Node(Token.BLOCK);
+                            replacement.addChildToBack(new Node(Token.LEAVE_SCOPE));
+                            replacement.addChildToBack(enterIterationScope(node));
+                        } else {
+                            replacement = new Node(Token.EMPTY);
+                        }
+                        replacement.setLineColumnNumber(node.getLineno(), node.getColumn());
+                        node = replaceCurrent(parent, previous, node, replacement);
                         break;
                     }
 
@@ -404,7 +479,15 @@ public class NodeTransformer {
                                 node.setType(Token.SETVAR);
                                 nameSource.setType(Token.STRING);
                             } else if (type == Token.SETCONST) {
-                                node.setType(Token.SETCONSTVAR);
+                                // A loop can run a block scoped declaration more than once, and
+                                // each run re-binds. Pre-ES6 const is hoisted to the function
+                                // scope instead, and keeps its "assign once" behaviour.
+                                boolean reinitialized =
+                                        compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                                                && inLoop
+                                                && defining != tree;
+                                node.setType(
+                                        reinitialized ? Token.INITCONSTVAR : Token.SETCONSTVAR);
                                 nameSource.setType(Token.STRING);
                             } else if (type == Token.DELPROP) {
                                 // Local variables are by definition permanent
@@ -428,7 +511,8 @@ public class NodeTransformer {
                                         (Node) propertyId,
                                         node instanceof Scope ? (Scope) node : scope,
                                         createScopeObjects,
-                                        inStrictMode);
+                                        inStrictMode,
+                                        inLoop);
                             }
                         }
                     }
@@ -439,8 +523,109 @@ public class NodeTransformer {
                     node,
                     node instanceof Scope ? (Scope) node : scope,
                     createScopeObjects,
-                    inStrictMode);
+                    inStrictMode,
+                    inLoop || node.getType() == Token.LOOP);
         }
+    }
+
+    /**
+     * Prepends to a flattened block scope the stores that re-entering it implies. Because the scope
+     * is not reified, each of its bindings keeps one slot for the whole call, so a declaration that
+     * ran on an earlier iteration is still in effect: {@code SETCONSTVAR} stores only into a slot
+     * still marked uninitialized, and a {@code let} without an initializer stores nothing at all.
+     *
+     * <p>Only bindings that the scope does not itself initialize on entry need this. A declaration
+     * among the scope's leading statements always runs before anything can read the binding, so it
+     * is left to do the initializing; one that a jump can bypass — a {@code case} clause of a
+     * switch, or the head of a for-in/for-of loop — is not.
+     */
+    private static void addScopeReinit(Scope scope) {
+        Map<String, Symbol> symbolTable = scope.getSymbolTable();
+        if (symbolTable == null || symbolTable.isEmpty()) {
+            return;
+        }
+        List<String> initializedOnEntry = namesInitializedOnEntry(scope);
+        Node previous = null;
+        for (Symbol symbol : symbolTable.values()) {
+            if (!symbol.isDeclTypeLexical() || initializedOnEntry.contains(symbol.getName())) {
+                continue;
+            }
+            Node name = Node.newString(symbol.getName());
+            name.setScope(scope);
+            Node reset = new Node(Token.RESETVAR, name);
+            reset.setLineColumnNumber(scope.getLineno(), scope.getColumn());
+            if (previous == null) {
+                scope.addChildToFront(reset);
+            } else {
+                scope.addChildAfter(reset, previous);
+            }
+            previous = reset;
+        }
+    }
+
+    /**
+     * Collects the names that the leading statements of a scope declare with an initializer. The
+     * walk stops at the first {@link Token#TARGET}, since from there on a jump can land past a
+     * declaration and leave the binding holding whatever an earlier iteration left in its slot.
+     */
+    private static List<String> namesInitializedOnEntry(Scope scope) {
+        List<String> names = new ArrayList<>(4);
+        for (Node child = scope.getFirstChild(); child != null; child = child.getNext()) {
+            int type = child.getType();
+            if (type == Token.TARGET) {
+                break;
+            }
+            if (type != Token.LET && type != Token.CONST && type != Token.VAR) {
+                continue;
+            }
+            for (Node decl = child.getFirstChild(); decl != null; decl = decl.getNext()) {
+                if (decl.getType() == Token.NAME && decl.hasChildren()) {
+                    names.add(decl.getString());
+                }
+            }
+        }
+        return names;
+    }
+
+    /**
+     * Collects the names a let wrapper scope declares as {@code const}. Only a {@code for (const
+     * ...; ...; ...)} head, which {@link IRFactory} splits into a scope of its own, still carries a
+     * symbol table by the time it gets here; the wrappers synthesized for ordinary blocks have
+     * already given their symbols away.
+     */
+    private static Set<String> constNames(Node scopeNode) {
+        if (!(scopeNode instanceof Scope)) {
+            return Collections.emptySet();
+        }
+        Map<String, Symbol> symbolTable = ((Scope) scopeNode).getSymbolTable();
+        if (symbolTable == null) {
+            return Collections.emptySet();
+        }
+        Set<String> names = new HashSet<>(4);
+        for (Symbol symbol : symbolTable.values()) {
+            if (symbol.getDeclType() == Symbol.Type.CONST) {
+                names.add(symbol.getName());
+            }
+        }
+        return names;
+    }
+
+    /**
+     * Builds the {@code ENTER_SCOPE} that creates a for-in/of head's bindings in a new iteration
+     * environment. A const is created uninitialized, for its declaration to initialize; anything
+     * else starts out undefined. Both back ends walk the names and the children in step, and
+     * evaluate no child for a name they create as a const.
+     */
+    private static Node enterIterationScope(Node iterationScope) {
+        Object[] names = (Object[]) iterationScope.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) iterationScope.getProp(Node.CONST_IDS_PROP);
+        Node enter = new Node(Token.ENTER_SCOPE);
+        enter.putProp(Node.OBJECT_IDS_PROP, names);
+        enter.putProp(Node.CONST_IDS_PROP, consts);
+        for (int i = 0; i < names.length; i++) {
+            enter.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
+        }
+        return enter;
     }
 
     protected void visitNew(Node node, ScriptNode tree) {}
@@ -450,6 +635,7 @@ public class NodeTransformer {
     protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();
         Node body = vars.getNext();
+        Set<String> constNames = constNames(scopeNode);
         scopeNode.removeChild(vars);
         scopeNode.removeChild(body);
         boolean isExpression = scopeNode.getType() == Token.LETEXPR;
@@ -459,6 +645,7 @@ public class NodeTransformer {
             result = new Node(isExpression ? Token.SCOPEEXPR : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
+            ArrayList<Boolean> consts = new ArrayList<>();
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
                 if (current.getType() == Token.LETEXPR) {
@@ -478,6 +665,7 @@ public class NodeTransformer {
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
                         for (int i = 0; i < destructuringNames.size(); i++) {
+                            consts.add(Boolean.FALSE);
                             newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
@@ -487,6 +675,7 @@ public class NodeTransformer {
                     for (Node child = c.getFirstChild(); child != null; child = child.getNext()) {
                         if (child.getType() != Token.NAME) throw Kit.codeBug();
                         list.add(ScriptRuntime.getIndexObject(child.getString()));
+                        consts.add(Boolean.FALSE);
                         Node init = child.getFirstChild();
                         if (init == null) {
                             init = new Node(Token.VOID, Node.newNumber(0.0));
@@ -497,13 +686,26 @@ public class NodeTransformer {
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
+                boolean isConst = current.getIntProp(Node.IS_CONST_PROP, 0) != 0;
+                consts.add(isConst);
                 Node init = current.getFirstChild();
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (isConst) {
+                    // A const binding is only ever created here, never initialized:
+                    // the declaration in the body of the scope does that.
+                    throw Kit.codeBug();
                 }
                 newVars.addChildToBack(init);
             }
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
+            if (consts.contains(Boolean.TRUE)) {
+                boolean[] constFlags = new boolean[consts.size()];
+                for (int i = 0; i < constFlags.length; i++) {
+                    constFlags[i] = consts.get(i);
+                }
+                newVars.putProp(Node.CONST_IDS_PROP, constFlags);
+            }
             result.addChildToBack(newVars);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
             result.addChildToBack(new Node(Token.LEAVE_SCOPE));
@@ -547,7 +749,13 @@ public class NodeTransformer {
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 }
-                newVars.addChildToBack(new Node(Token.SETVAR, stringNode, init));
+                // A const slot rejects SETVAR, and the declaration may run again if an outer
+                // loop re-enters, so initialize it unconditionally.
+                int setOp =
+                        constNames.contains(current.getString())
+                                ? Token.INITCONSTVAR
+                                : Token.SETVAR;
+                newVars.addChildToBack(new Node(setOp, stringNode, init));
             }
             if (isExpression) {
                 result.addChildToBack(newVars);
@@ -560,8 +768,8 @@ public class NodeTransformer {
                     ((Scope) scopeNode).setParentScope(scopeParent);
                 }
             } else {
-                result.addChildToBack(new Node(Token.EXPR_VOID, newVars));
                 scopeNode.setType(Token.BLOCK);
+                scopeNode.addChildToFront(new Node(Token.EXPR_VOID, newVars));
                 result.addChildToBack(scopeNode);
                 scopeNode.addChildrenToBack(body);
                 if (body instanceof Scope) {
@@ -602,4 +810,5 @@ public class NodeTransformer {
     private Deque<Node> loops;
     private Deque<Node> loopEnds;
     private boolean hasFinally;
+    private CompilerEnvirons compilerEnv;
 }

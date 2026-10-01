@@ -168,8 +168,18 @@ abstract class Icode {
             // object rest - create object excluding extracted keys
             OBJECT_REST = SPREAD - 1,
 
+            // Create an uninitialized const binding in the current scope
+            DEF_CONST = OBJECT_REST - 1,
+
+            // block scoped bindings held in flattened slots
+            INITCONSTVAR = DEF_CONST - 1,
+            RESETVAR = INITCONSTVAR - 1,
+
+            // replace the current block scope with a copy of itself
+            SCOPE_REPLACE = RESETVAR - 1,
+
             // Last icode
-            MIN_ICODE = OBJECT_REST;
+            MIN_ICODE = SCOPE_REPLACE;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -323,6 +333,12 @@ abstract class Icode {
                 return "SETCONSTVAR";
             case SETCONSTVAR1:
                 return "SETCONSTVAR1";
+            case INITCONSTVAR:
+                return "INITCONSTVAR";
+            case RESETVAR:
+                return "RESETVAR";
+            case SCOPE_REPLACE:
+                return "SCOPE_REPLACE";
             case GENERATOR:
                 return "GENERATOR";
             case GENERATOR_END:
@@ -363,6 +379,8 @@ abstract class Icode {
                 return "SPREAD";
             case OBJECT_REST:
                 return "OBJECT_REST";
+            case DEF_CONST:
+                return "DEF_CONST";
         }
 
         // icode without name

@@ -139,7 +139,12 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
 
         int varCount = desc.getParamAndVarCount();
         for (int i = 0; i < varCount; i++) {
-            if (desc.getParamOrVarConst(i)) stackAttributes[i] = ScriptableObject.CONST;
+            if (desc.getParamOrVarConst(i))
+                stackAttributes[i] =
+                        (byte)
+                                ((cx.getLanguageVersion() >= Context.VERSION_ES6)
+                                        ? ScriptableObject.CONST
+                                        : ScriptableObject.LEGACY_CONST);
         }
         int definedArgs = desc.getParamCount();
         if (definedArgs > argCount) {

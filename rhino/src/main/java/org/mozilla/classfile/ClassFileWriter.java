@@ -10,9 +10,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.StackWalker.Option;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DynamicConstantDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.config.RhinoConfig;
 
@@ -37,12 +43,20 @@ public class ClassFileWriter {
         public ClassFileFormatException(String message) {
             super(message);
         }
+
+        public ClassFileFormatException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     public static class ClassSizeException extends ClassFileFormatException {
 
         public ClassSizeException(String message) {
             super(message);
+        }
+
+        public ClassSizeException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -84,8 +98,7 @@ public class ClassFileWriter {
      *     full package qualification.
      */
     public void addInterface(String interfaceName) {
-        short interfaceIndex = itsConstantPool.addClass(interfaceName);
-        itsInterfaces.add(Short.valueOf(interfaceIndex));
+        itsInterfaces.add(itsConstantPool.addClass(interfaceName));
     }
 
     public static final short ACC_PUBLIC = 0x0001,
@@ -143,8 +156,8 @@ public class ClassFileWriter {
      * @param flags the attributes of the field, such as ACC_PUBLIC, etc. bitwise or'd together
      */
     public void addField(String fieldName, String type, short flags) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         itsFields.add(new ClassFileField(fieldNameIndex, typeIndex, flags));
     }
 
@@ -157,8 +170,8 @@ public class ClassFileWriter {
      * @param value an initial integral value
      */
     public void addField(String fieldName, String type, short flags, int value) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         ClassFileField field = new ClassFileField(fieldNameIndex, typeIndex, flags);
         field.setAttributes(
                 itsConstantPool.addUtf8("ConstantValue"),
@@ -177,8 +190,8 @@ public class ClassFileWriter {
      * @param value an initial long value
      */
     public void addField(String fieldName, String type, short flags, long value) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         ClassFileField field = new ClassFileField(fieldNameIndex, typeIndex, flags);
         field.setAttributes(
                 itsConstantPool.addUtf8("ConstantValue"),
@@ -197,8 +210,8 @@ public class ClassFileWriter {
      * @param value an initial double value
      */
     public void addField(String fieldName, String type, short flags, double value) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         ClassFileField field = new ClassFileField(fieldNameIndex, typeIndex, flags);
         field.setAttributes(
                 itsConstantPool.addUtf8("ConstantValue"),
@@ -245,8 +258,8 @@ public class ClassFileWriter {
             }
             System.err.printf("Method start %s%s, %x.\n", methodName, type, flags);
         }
-        short methodNameIndex = itsConstantPool.addUtf8(methodName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int methodNameIndex = itsConstantPool.addUtf8(methodName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         itsCurrentMethod = new ClassFileMethod(methodName, methodNameIndex, type, typeIndex, flags);
         itsJumpFroms = new HashMap<>();
         itsMethods.add(itsCurrentMethod);
@@ -352,7 +365,7 @@ public class ClassFileWriter {
                 int startPC = getLabelPC(ete.itsStartLabel);
                 int endPC = getLabelPC(ete.itsEndLabel);
                 int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                short catchType = ete.itsCatchType;
+                int catchType = ete.itsCatchType;
                 if (startPC == -1) throw new IllegalStateException("start label not defined");
                 if (endPC == -1) throw new IllegalStateException("end label not defined");
                 if (handlerPC == -1) throw new IllegalStateException("handler label not defined");
@@ -783,7 +796,7 @@ public class ClassFileWriter {
             case ByteCode.CHECKCAST:
             case ByteCode.INSTANCEOF:
                 {
-                    short classIndex = itsConstantPool.addClass(className);
+                    int classIndex = itsConstantPool.addClass(className);
                     addToCodeBuffer(theOpCode);
                     addToCodeInt16(classIndex);
                 }
@@ -830,7 +843,7 @@ public class ClassFileWriter {
                 throw new IllegalArgumentException("bad opcode for field reference");
         }
         if (newStack < 0 || Short.MAX_VALUE < newStack) badStack(newStack);
-        short fieldRefIndex = itsConstantPool.addFieldRef(className, fieldName, fieldType);
+        int fieldRefIndex = itsConstantPool.addFieldRef(className, fieldName, fieldType);
         addToCodeBuffer(theOpCode);
         addToCodeInt16(fieldRefIndex);
 
@@ -872,14 +885,14 @@ public class ClassFileWriter {
                 {
                     addToCodeBuffer(theOpCode);
                     if (theOpCode == ByteCode.INVOKEINTERFACE) {
-                        short ifMethodRefIndex =
+                        int ifMethodRefIndex =
                                 itsConstantPool.addInterfaceMethodRef(
                                         className, methodName, methodType);
                         addToCodeInt16(ifMethodRefIndex);
                         addToCodeBuffer(parameterCount + 1);
                         addToCodeBuffer(0);
                     } else {
-                        short methodRefIndex =
+                        int methodRefIndex =
                                 itsConstantPool.addMethodRef(className, methodName, methodType);
                         addToCodeInt16(methodRefIndex);
                     }
@@ -898,6 +911,9 @@ public class ClassFileWriter {
 
     public void addInvokeDynamic(
             String methodName, String methodType, MHandle bsm, Object... bsmArgs) {
+        if (invokeDynamicCount++ > 30000) {
+            throw new ClassSizeException("Too many indy instructions.");
+        }
         if (DEBUGCODE) {
             if (DEBUGCODEORIGINS) {
                 printOrigin();
@@ -917,19 +933,9 @@ public class ClassFileWriter {
         int newStack = itsStackTop + stackDiff;
         if (newStack < 0 || Short.MAX_VALUE < newStack) badStack(newStack);
 
-        BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
+        int bootstrapIndex = getBootstrapMethodIndex(bsm, bsmArgs);
 
-        if (itsBootstrapMethods == null) {
-            itsBootstrapMethods = new ArrayList<>();
-        }
-        int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
-        if (bootstrapIndex == -1) {
-            bootstrapIndex = itsBootstrapMethods.size();
-            itsBootstrapMethods.add(bsmEntry);
-            itsBootstrapMethodsLength += bsmEntry.code.length;
-        }
-
-        short invokedynamicIndex =
+        int invokedynamicIndex =
                 itsConstantPool.addInvokeDynamic(methodName, methodType, bootstrapIndex);
 
         addToCodeBuffer(ByteCode.INVOKEDYNAMIC);
@@ -941,6 +947,93 @@ public class ClassFileWriter {
         if (DEBUGSTACK) {
             System.err.println("After invokedynamic stack = " + itsStackTop);
         }
+    }
+
+    /**
+     * Register a describer that this writer will use to turn values of {@link
+     * DynamicConstantDescriber#describedType} into dynamic constants.
+     *
+     * <p>A value is matched to a describer by walking up its superclasses, so a describer also
+     * covers the subclasses of its type. Describers must therefore be keyed on a class rather than
+     * on an interface.
+     */
+    public <T extends DynamicConstant> void registerDynamicConstantDescriber(
+            DynamicConstantDescriber<T> describer) {
+        itsConstantDescribers.put(describer.describedType(), describer);
+    }
+
+    /**
+     * Generate the load constant bytecode for the given value, using the describer registered for
+     * its type. Both the constant and its bootstrap method are added to the constant pool, and the
+     * bootstrap method is shared with any invokedynamic instruction using the same one.
+     *
+     * @param constant the constant
+     */
+    public <T extends DynamicConstant> void addLoadDynamicConstant(T constant) {
+        // Class file version 55 is required for CONSTANT_Dynamic
+        if (MajorVersion < 55) {
+            throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
+        }
+
+        @SuppressWarnings("unchecked")
+        var type = (Class<T>) constant.getClass();
+        var describer = (DynamicConstantDescriber<T>) findConstantDescriber(type);
+        if (describer == null) {
+            throw new IllegalArgumentException("no dynamic constant describer for " + type);
+        }
+        addLoadConstant(describer.describe(constant));
+    }
+
+    /** Generate the load constant bytecode for an already described constant. */
+    void addLoadConstant(ConstantDesc desc) {
+        int index = itsConstantPool.addConstantDesc(desc) & 0xffff;
+        add(isTwoWordConstant(desc) ? ByteCode.LDC2_W : ByteCode.LDC, index);
+    }
+
+    /**
+     * Whether an "ldc" of the given constant pushes two words, and so must use "ldc2_w". Only
+     * dynamic constants can vary here; every other kind of description we can write is either
+     * always one word or has its own dedicated addLoadConstant overload.
+     */
+    private static boolean isTwoWordConstant(ConstantDesc desc) {
+        if (desc instanceof DynamicConstantDesc) {
+            ClassDesc type = ((DynamicConstantDesc<?>) desc).constantType();
+            return ConstantDescs.CD_long.equals(type) || ConstantDescs.CD_double.equals(type);
+        }
+        return desc instanceof Long || desc instanceof Double;
+    }
+
+    /** Find the describer registered for a type. */
+    private <T extends DynamicConstant> DynamicConstantDescriber<T> findConstantDescriber(
+            Class<T> type) {
+        @SuppressWarnings("unchecked")
+        var res = (DynamicConstantDescriber<T>) itsConstantDescribers.get(type);
+        return res;
+    }
+
+    /**
+     * The index in the BootstrapMethods attribute of the given bootstrap method, adding it if it is
+     * not already present. The attribute is shared between invokedynamic instructions and dynamic
+     * constants.
+     */
+    int getBootstrapMethodIndex(MHandle bsm, Object... bsmArgs) {
+        BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
+
+        if (itsBootstrapMethods == null) {
+            itsBootstrapMethods = new ArrayList<>();
+        }
+        int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
+        if (bootstrapIndex == -1) {
+            bootstrapIndex = itsBootstrapMethods.size();
+            itsBootstrapMethods.add(bsmEntry);
+            itsBootstrapMethodsLength += bsmEntry.code.length;
+        }
+        return bootstrapIndex;
+    }
+
+    int getBootstrapMethodIndex(DynamicConstantDesc<?> desc) {
+        DirectMethodHandleDesc bsm = desc.bootstrapMethod();
+        return getBootstrapMethodIndex(MHandle.of(bsm), (Object[]) desc.bootstrapArgs());
     }
 
     /**
@@ -1423,7 +1516,7 @@ public class ClassFileWriter {
          * means catch everything.  (Even when the verifier has let you throw
          * something other than a Throwable.)
          */
-        short catch_type_index =
+        int catch_type_index =
                 (catchClassName == null) ? 0 : itsConstantPool.addClass(catchClassName);
         ExceptionTableEntry newEntry =
                 new ExceptionTableEntry(startLabel, endLabel, handlerLabel, catch_type_index);
@@ -2212,6 +2305,14 @@ public class ClassFileWriter {
                         case ConstantPool.CONSTANT_Class:
                             push(TypeInfo.OBJECT("java/lang/Class", itsConstantPool));
                             break;
+                        case ConstantPool.CONSTANT_Dynamic:
+                            String constDescriptor =
+                                    (String) itsConstantPool.getConstantData(index);
+                            push(
+                                    TypeInfo.fromType(
+                                            descriptorToInternalName(constDescriptor),
+                                            itsConstantPool));
+                            break;
                         default:
                             throw new IllegalArgumentException("bad const type " + constType);
                     }
@@ -2223,7 +2324,7 @@ public class ClassFileWriter {
                     pop();
                     char componentType = arrayTypeToName(itsCodeBuffer[bci + 1]);
                     index = itsConstantPool.addClass("[" + componentType);
-                    push(TypeInfo.OBJECT((short) index));
+                    push(TypeInfo.OBJECT(index));
                     break;
                 case ByteCode.ANEWARRAY:
                     index = getOperand(bci + 1, 2);
@@ -2693,7 +2794,7 @@ public class ClassFileWriter {
      *
      * <p>For example, descriptor Ljava/lang/Object; becomes java/lang/Object.
      */
-    private static String classDescriptorToInternalName(String descriptor) {
+    static String classDescriptorToInternalName(String descriptor) {
         return descriptor.substring(1, descriptor.length() - 1);
     }
 
@@ -2841,10 +2942,10 @@ public class ClassFileWriter {
 
     /** Get the class file as array of bytesto the OutputStream. */
     public byte[] toByteArray() {
-        short bootstrapMethodsAttrNameIndex = 0;
+        int bootstrapMethodsAttrNameIndex = 0;
         int attributeCount = 0;
 
-        short sourceFileAttributeNameIndex = 0;
+        int sourceFileAttributeNameIndex = 0;
         if (itsBootstrapMethods != null) {
             ++attributeCount;
             bootstrapMethodsAttrNameIndex = itsConstantPool.addUtf8("BootstrapMethods");
@@ -2870,8 +2971,7 @@ public class ClassFileWriter {
         offset = putInt16(itsSuperClassIndex, data, offset);
         offset = putInt16(itsInterfaces.size(), data, offset);
         for (int i = 0; i < itsInterfaces.size(); i++) {
-            int interfaceIndex = ((Short) itsInterfaces.get(i)).shortValue();
-            offset = putInt16(interfaceIndex, data, offset);
+            offset = putInt16(itsInterfaces.get(i).intValue(), data, offset);
         }
         offset = putInt16(itsFields.size(), data, offset);
         for (int i = 0; i < itsFields.size(); i++) {
@@ -4536,12 +4636,35 @@ public class ClassFileWriter {
         final String owner;
         final String name;
         final String desc;
+        final boolean isInterface;
 
         public MHandle(byte tag, String owner, String name, String desc) {
+            this(tag, owner, name, desc, false);
+        }
+
+        /**
+         * @param isInterface whether the owner is an interface. This must be set for the static and
+         *     special reference kinds, whose tags do not otherwise distinguish an interface owner,
+         *     so that the handle refers to a CONSTANT_InterfaceMethodref.
+         */
+        public MHandle(byte tag, String owner, String name, String desc, boolean isInterface) {
             this.tag = tag;
             this.owner = owner;
             this.name = name;
             this.desc = desc;
+            this.isInterface = isInterface;
+        }
+
+        /** Convert a {@code java.lang.constant} method handle description into a handle. */
+        static MHandle of(DirectMethodHandleDesc desc) {
+            // Kind.refKind is the JVMS reference kind, which is exactly what ByteCode.MH_*
+            // holds, so the tag needs no translation.
+            return new MHandle(
+                    (byte) desc.kind().refKind,
+                    classDescriptorToInternalName(desc.owner().descriptorString()),
+                    desc.methodName(),
+                    desc.lookupDescriptor(),
+                    desc.isOwnerInterface());
         }
 
         @Override
@@ -4554,6 +4677,7 @@ public class ClassFileWriter {
             }
             MHandle mh = (MHandle) obj;
             return tag == mh.tag
+                    && isInterface == mh.isInterface
                     && owner.equals(mh.owner)
                     && name.equals(mh.name)
                     && desc.equals(mh.desc);
@@ -4591,6 +4715,8 @@ public class ClassFileWriter {
             RhinoConfig.get("rhino.cfw.debugCallers", false);
     private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
 
+    private int invokeDynamicCount = 0;
+
     private String generatedClassName;
 
     private ExceptionTableEntry[] itsExceptionTable;
@@ -4613,7 +4739,7 @@ public class ClassFileWriter {
 
     private ArrayList<ClassFileMethod> itsMethods = new ArrayList<>();
     private ArrayList<ClassFileField> itsFields = new ArrayList<>();
-    private ArrayList<Short> itsInterfaces = new ArrayList<>();
+    private ArrayList<Integer> itsInterfaces = new ArrayList<>();
 
     private int itsFlags;
     private int itsThisClassIndex;
@@ -4631,6 +4757,10 @@ public class ClassFileWriter {
     private ArrayList<int[]> itsVarDescriptors;
     private ArrayList<BootstrapEntry> itsBootstrapMethods;
     private int itsBootstrapMethodsLength = 0;
+    private final Map<
+                    Class<? extends DynamicConstant>,
+                    DynamicConstantDescriber<? extends DynamicConstant>>
+            itsConstantDescribers = new HashMap<>();
 
     private char[] tmpCharBuffer = new char[64];
 }
