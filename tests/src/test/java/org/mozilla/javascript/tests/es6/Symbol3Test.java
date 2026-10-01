@@ -80,6 +80,15 @@ public class Symbol3Test {
     }
 
     @Test
+    public void keyForSymbolObject() {
+        final String code =
+                "try {\n"
+                        + "  Symbol.keyFor(Object(Symbol.for('key')));\n"
+                        + "} catch (e) { e.name; }";
+        Utils.assertWithAllModes_ES6("TypeError", code);
+    }
+
+    @Test
     public void symbolProperty() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
