@@ -100,8 +100,28 @@ public class Bootstrapper {
     }
 
     private static CallSiteDescriptor dedupDesc(CallSiteDescriptor desc) {
+        /* We need to guard against failure very carefullly here. We
+           originally got null very occasionally from this via the
+           following route:
+
+           1. We find some desc2 in the weak map that is equal to desc,
+           and return the WeakReference to that.
+
+           2. The GC runs at the most inconvenient time and succeeds
+           in collected desc2.
+
+           3. We got `get` on the weak reference and get null.
+
+           4. Call sites fail to initialise.
+        */
         synchronized (CALLSITE_DESC_CACHE) {
-            return CALLSITE_DESC_CACHE.computeIfAbsent(desc, k -> new WeakReference<>(desc)).get();
+            var desc2 =
+                    CALLSITE_DESC_CACHE.computeIfAbsent(desc, k -> new WeakReference<>(desc)).get();
+            if (desc2 == null) {
+                CALLSITE_DESC_CACHE.put(desc, new WeakReference<>(desc));
+                desc2 = desc;
+            }
+            return desc2;
         }
     }
 
