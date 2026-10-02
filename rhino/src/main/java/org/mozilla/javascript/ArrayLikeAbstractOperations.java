@@ -6,7 +6,6 @@ import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /** Contains implementation of shared methods useful for arrays and typed arrays. */
 public class ArrayLikeAbstractOperations {
@@ -231,7 +230,7 @@ public class ArrayLikeAbstractOperations {
         if (!(target instanceof NativeArray && ((NativeArray) target).getDenseOnly())
                 && target instanceof ScriptableObject) {
             var so = (ScriptableObject) target;
-            var desc = new DescriptorInfo(true, true, true, value);
+            var desc = new PropertyDescriptor(true, true, true, value);
             so.defineOwnProperty(cx, index, desc);
             return;
         }

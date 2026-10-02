@@ -126,8 +126,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    protected static DescriptorInfo buildDataDescriptor(Object value, int attributes) {
-        return new DescriptorInfo(value, attributes, true);
+    protected static PropertyDescriptor buildDataDescriptor(Object value, int attributes) {
+        return new PropertyDescriptor(value, attributes, true);
     }
 
     protected void setCommonDescriptorProperties(int attributes, boolean defineWritable) {
@@ -1457,10 +1457,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         try (var map = props.startCompoundOp(false)) {
             ids = props.getIds(map, false, true);
         }
-        DescriptorInfo[] descs = new DescriptorInfo[ids.length];
+        PropertyDescriptor[] descs = new PropertyDescriptor[ids.length];
         for (int i = 0, len = ids.length; i < len; ++i) {
             Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
-            var desc = new DescriptorInfo(ensureScriptableObject(descObj));
+            var desc = new PropertyDescriptor(ensureScriptableObject(descObj));
             checkPropertyDefinition(desc);
             descs[i] = desc;
         }
@@ -1478,10 +1478,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public boolean defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
         checkPropertyDefinition(desc);
-        return defineOwnProperty(cx, id, new DescriptorInfo(desc), true);
+        return defineOwnProperty(cx, id, new PropertyDescriptor(desc), true);
     }
 
-    public boolean defineOwnProperty(Context cx, Object id, DescriptorInfo desc) {
+    @Override
+    public boolean defineOwnProperty(Context cx, Object id, PropertyDescriptor desc) {
         return defineOwnProperty(cx, id, desc, true);
     }
 
@@ -1498,7 +1499,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @return always true at the moment
      */
     protected boolean defineOwnProperty(
-            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
+            Context cx, Object id, PropertyDescriptor desc, boolean checkValid) {
 
         Object key = null;
         int index = 0;
@@ -1543,140 +1544,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    public static final class DescriptorInfo {
-        public Object enumerable = NOT_FOUND;
-        public Object writable = NOT_FOUND;
-        public Object configurable = NOT_FOUND;
-        public Object getter = NOT_FOUND;
-        public Object setter = NOT_FOUND;
-        public Object value = NOT_FOUND;
-        boolean accessorDescriptor;
-
-        public DescriptorInfo(ScriptableObject desc) {
-            enumerable = getProperty(desc, "enumerable");
-            writable = getProperty(desc, "writable");
-            configurable = getProperty(desc, "configurable");
-            getter = getProperty(desc, "get");
-            setter = getProperty(desc, "set");
-            value = getProperty(desc, "value");
-            accessorDescriptor = getter != NOT_FOUND || setter != NOT_FOUND;
-        }
-
-        public DescriptorInfo(
-                boolean enumerable, boolean writable, boolean configurable, Object value) {
-            this.enumerable = enumerable;
-            this.writable = writable;
-            this.configurable = configurable;
-            this.getter = NOT_FOUND;
-            this.setter = NOT_FOUND;
-            this.value = value;
-            accessorDescriptor = false;
-        }
-
-        public DescriptorInfo(
-                Object enumerable,
-                Object writable,
-                Object configurable,
-                Object getter,
-                Object setter,
-                Object value) {
-            this.enumerable = enumerable;
-            this.writable = writable;
-            this.configurable = configurable;
-            this.getter = getter;
-            this.setter = setter;
-            this.value = value;
-            accessorDescriptor = getter != NOT_FOUND || setter != NOT_FOUND;
-        }
-
-        DescriptorInfo(Object value, int attributes, boolean defineWritable) {
-            this.value = value;
-            if (defineWritable) {
-                writable = (attributes & READONLY) == 0;
-            }
-            enumerable = (attributes & DONTENUM) == 0;
-            configurable = (attributes & PERMANENT) == 0;
-        }
-
-        Scriptable toObject(VarScope scope) {
-            ScriptableObject desc = new NativeObject();
-            ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-            if (hasValue()) desc.defineProperty("value", value, EMPTY);
-            if (hasWritable()) desc.defineProperty("writable", writable, EMPTY);
-            if (hasGetter()) desc.defineProperty("get", getter, EMPTY);
-            if (hasSetter()) desc.defineProperty("set", setter, EMPTY);
-            if (hasEnumerable()) desc.defineProperty("enumerable", enumerable, EMPTY);
-            if (hasConfigurable()) desc.defineProperty("configurable", configurable, EMPTY);
-            return desc;
-        }
-
-        public boolean isWritable() {
-            return Boolean.TRUE.equals(writable);
-        }
-
-        public boolean isWritable(boolean value) {
-            return ((Boolean) value).equals(writable);
-        }
-
-        public boolean hasWritable() {
-            return writable != NOT_FOUND;
-        }
-
-        public boolean isEnumerable() {
-            return Boolean.TRUE.equals(enumerable);
-        }
-
-        public boolean isEnumerable(boolean value) {
-            return ((Boolean) value).equals(enumerable);
-        }
-
-        public boolean hasEnumerable() {
-            return enumerable != NOT_FOUND;
-        }
-
-        public boolean isConfigurable() {
-            return Boolean.TRUE.equals(configurable);
-        }
-
-        public boolean isConfigurable(boolean value) {
-            return ((Boolean) value).equals(configurable);
-        }
-
-        public boolean hasConfigurable() {
-            return configurable != NOT_FOUND;
-        }
-
-        public boolean hasValue() {
-            return value != NOT_FOUND;
-        }
-
-        public boolean hasGetter() {
-            return getter != NOT_FOUND;
-        }
-
-        public boolean hasSetter() {
-            return setter != NOT_FOUND;
-        }
-
-        public boolean isDataDescriptor() {
-            return hasValue() || hasWritable();
-        }
-
-        public boolean isAccessorDescriptor() {
-            return hasGetter() || hasSetter();
-        }
-
-        public boolean isGenericDescriptor() {
-            return !isDataDescriptor() && !isAccessorDescriptor();
-        }
-    }
-
     static boolean defineOrdinaryProperty(
             PropDescValueSetter descValueSetter,
             ScriptableObject owner,
             CompoundOperationMap<Scriptable> compoundOp,
             Object id,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             boolean checkValid,
             Object key,
             int index) {
@@ -1725,7 +1598,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     interface PropDescValueSetter {
         Slot<Scriptable> execute(
                 ScriptableObject owner,
-                DescriptorInfo info,
+                PropertyDescriptor info,
                 Object key,
                 Slot<Scriptable> existing,
                 CompoundOperationMap<Scriptable> map,
@@ -1734,7 +1607,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     static Slot<Scriptable> setSlotValue(
             ScriptableObject owner,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             Object key,
             Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
@@ -1935,7 +1808,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    protected static void checkPropertyDefinition(DescriptorInfo desc) {
+    protected static void checkPropertyDefinition(PropertyDescriptor desc) {
         Object getter = desc.getter;
         if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(getter);
@@ -1951,11 +1824,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     protected final void checkPropertyChangeForSlot(
             Object id, Slot<?> current, ScriptableObject desc) {
-        checkPropertyChangeForSlot(id, current, new DescriptorInfo(desc));
+        checkPropertyChangeForSlot(id, current, new PropertyDescriptor(desc));
     }
 
     protected final void checkPropertyChangeForSlot(
-            Object id, Slot<?> current, DescriptorInfo info) {
+            Object id, Slot<?> current, PropertyDescriptor info) {
 
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
@@ -2085,7 +1958,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return hasProperty(desc, "get") || hasProperty(desc, "set");
     }
 
-    protected static boolean isAccessorDescriptor(DescriptorInfo desc) {
+    protected static boolean isAccessorDescriptor(PropertyDescriptor desc) {
         return desc.hasGetter() || desc.hasSetter();
     }
 
@@ -2099,7 +1972,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
-    protected static boolean isGenericDescriptor(DescriptorInfo desc) {
+    protected static boolean isGenericDescriptor(PropertyDescriptor desc) {
         return desc.isDataDescriptor() && !desc.isAccessorDescriptor();
     }
 
@@ -3017,7 +2890,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         readMaps(in);
     }
 
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    @Override
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         var slot = querySlot(cx, id);
         if (slot == null) return null;
         return slot.getPropertyDescriptor(cx, this);
