@@ -396,7 +396,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return (NativeArrayBuffer)
                 cx.newObject(
                         scope,
-                        NativeArrayBuffer.CLASS_NAME,
+                        NativeArrayBuffer.ARRAY_CLASS_NAME,
                         new Object[] {(double) len * bytesPerElement});
     }
 
