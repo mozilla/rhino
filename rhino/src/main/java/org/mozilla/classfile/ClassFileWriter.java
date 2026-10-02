@@ -37,12 +37,20 @@ public class ClassFileWriter {
         public ClassFileFormatException(String message) {
             super(message);
         }
+
+        public ClassFileFormatException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     public static class ClassSizeException extends ClassFileFormatException {
 
         public ClassSizeException(String message) {
             super(message);
+        }
+
+        public ClassSizeException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -84,8 +92,7 @@ public class ClassFileWriter {
      *     full package qualification.
      */
     public void addInterface(String interfaceName) {
-        short interfaceIndex = itsConstantPool.addClass(interfaceName);
-        itsInterfaces.add(Short.valueOf(interfaceIndex));
+        itsInterfaces.add(itsConstantPool.addClass(interfaceName));
     }
 
     public static final short ACC_PUBLIC = 0x0001,
@@ -143,8 +150,8 @@ public class ClassFileWriter {
      * @param flags the attributes of the field, such as ACC_PUBLIC, etc. bitwise or'd together
      */
     public void addField(String fieldName, String type, short flags) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         itsFields.add(new ClassFileField(fieldNameIndex, typeIndex, flags));
     }
 
@@ -157,8 +164,8 @@ public class ClassFileWriter {
      * @param value an initial integral value
      */
     public void addField(String fieldName, String type, short flags, int value) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         ClassFileField field = new ClassFileField(fieldNameIndex, typeIndex, flags);
         field.setAttributes(
                 itsConstantPool.addUtf8("ConstantValue"),
@@ -177,8 +184,8 @@ public class ClassFileWriter {
      * @param value an initial long value
      */
     public void addField(String fieldName, String type, short flags, long value) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         ClassFileField field = new ClassFileField(fieldNameIndex, typeIndex, flags);
         field.setAttributes(
                 itsConstantPool.addUtf8("ConstantValue"),
@@ -197,8 +204,8 @@ public class ClassFileWriter {
      * @param value an initial double value
      */
     public void addField(String fieldName, String type, short flags, double value) {
-        short fieldNameIndex = itsConstantPool.addUtf8(fieldName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int fieldNameIndex = itsConstantPool.addUtf8(fieldName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         ClassFileField field = new ClassFileField(fieldNameIndex, typeIndex, flags);
         field.setAttributes(
                 itsConstantPool.addUtf8("ConstantValue"),
@@ -245,8 +252,8 @@ public class ClassFileWriter {
             }
             System.err.printf("Method start %s%s, %x.\n", methodName, type, flags);
         }
-        short methodNameIndex = itsConstantPool.addUtf8(methodName);
-        short typeIndex = itsConstantPool.addUtf8(type);
+        int methodNameIndex = itsConstantPool.addUtf8(methodName);
+        int typeIndex = itsConstantPool.addUtf8(type);
         itsCurrentMethod = new ClassFileMethod(methodName, methodNameIndex, type, typeIndex, flags);
         itsJumpFroms = new HashMap<>();
         itsMethods.add(itsCurrentMethod);
@@ -352,7 +359,7 @@ public class ClassFileWriter {
                 int startPC = getLabelPC(ete.itsStartLabel);
                 int endPC = getLabelPC(ete.itsEndLabel);
                 int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                short catchType = ete.itsCatchType;
+                int catchType = ete.itsCatchType;
                 if (startPC == -1) throw new IllegalStateException("start label not defined");
                 if (endPC == -1) throw new IllegalStateException("end label not defined");
                 if (handlerPC == -1) throw new IllegalStateException("handler label not defined");
@@ -783,7 +790,7 @@ public class ClassFileWriter {
             case ByteCode.CHECKCAST:
             case ByteCode.INSTANCEOF:
                 {
-                    short classIndex = itsConstantPool.addClass(className);
+                    int classIndex = itsConstantPool.addClass(className);
                     addToCodeBuffer(theOpCode);
                     addToCodeInt16(classIndex);
                 }
@@ -830,7 +837,7 @@ public class ClassFileWriter {
                 throw new IllegalArgumentException("bad opcode for field reference");
         }
         if (newStack < 0 || Short.MAX_VALUE < newStack) badStack(newStack);
-        short fieldRefIndex = itsConstantPool.addFieldRef(className, fieldName, fieldType);
+        int fieldRefIndex = itsConstantPool.addFieldRef(className, fieldName, fieldType);
         addToCodeBuffer(theOpCode);
         addToCodeInt16(fieldRefIndex);
 
@@ -872,14 +879,14 @@ public class ClassFileWriter {
                 {
                     addToCodeBuffer(theOpCode);
                     if (theOpCode == ByteCode.INVOKEINTERFACE) {
-                        short ifMethodRefIndex =
+                        int ifMethodRefIndex =
                                 itsConstantPool.addInterfaceMethodRef(
                                         className, methodName, methodType);
                         addToCodeInt16(ifMethodRefIndex);
                         addToCodeBuffer(parameterCount + 1);
                         addToCodeBuffer(0);
                     } else {
-                        short methodRefIndex =
+                        int methodRefIndex =
                                 itsConstantPool.addMethodRef(className, methodName, methodType);
                         addToCodeInt16(methodRefIndex);
                     }
@@ -898,6 +905,9 @@ public class ClassFileWriter {
 
     public void addInvokeDynamic(
             String methodName, String methodType, MHandle bsm, Object... bsmArgs) {
+        if (invokeDynamicCount++ > 30000) {
+            throw new ClassSizeException("Too many indy instructions.");
+        }
         if (DEBUGCODE) {
             if (DEBUGCODEORIGINS) {
                 printOrigin();
@@ -929,7 +939,7 @@ public class ClassFileWriter {
             itsBootstrapMethodsLength += bsmEntry.code.length;
         }
 
-        short invokedynamicIndex =
+        int invokedynamicIndex =
                 itsConstantPool.addInvokeDynamic(methodName, methodType, bootstrapIndex);
 
         addToCodeBuffer(ByteCode.INVOKEDYNAMIC);
@@ -1423,7 +1433,7 @@ public class ClassFileWriter {
          * means catch everything.  (Even when the verifier has let you throw
          * something other than a Throwable.)
          */
-        short catch_type_index =
+        int catch_type_index =
                 (catchClassName == null) ? 0 : itsConstantPool.addClass(catchClassName);
         ExceptionTableEntry newEntry =
                 new ExceptionTableEntry(startLabel, endLabel, handlerLabel, catch_type_index);
@@ -2223,7 +2233,7 @@ public class ClassFileWriter {
                     pop();
                     char componentType = arrayTypeToName(itsCodeBuffer[bci + 1]);
                     index = itsConstantPool.addClass("[" + componentType);
-                    push(TypeInfo.OBJECT((short) index));
+                    push(TypeInfo.OBJECT(index));
                     break;
                 case ByteCode.ANEWARRAY:
                     index = getOperand(bci + 1, 2);
@@ -2841,10 +2851,10 @@ public class ClassFileWriter {
 
     /** Get the class file as array of bytesto the OutputStream. */
     public byte[] toByteArray() {
-        short bootstrapMethodsAttrNameIndex = 0;
+        int bootstrapMethodsAttrNameIndex = 0;
         int attributeCount = 0;
 
-        short sourceFileAttributeNameIndex = 0;
+        int sourceFileAttributeNameIndex = 0;
         if (itsBootstrapMethods != null) {
             ++attributeCount;
             bootstrapMethodsAttrNameIndex = itsConstantPool.addUtf8("BootstrapMethods");
@@ -2870,8 +2880,7 @@ public class ClassFileWriter {
         offset = putInt16(itsSuperClassIndex, data, offset);
         offset = putInt16(itsInterfaces.size(), data, offset);
         for (int i = 0; i < itsInterfaces.size(); i++) {
-            int interfaceIndex = ((Short) itsInterfaces.get(i)).shortValue();
-            offset = putInt16(interfaceIndex, data, offset);
+            offset = putInt16(itsInterfaces.get(i).intValue(), data, offset);
         }
         offset = putInt16(itsFields.size(), data, offset);
         for (int i = 0; i < itsFields.size(); i++) {
@@ -4591,6 +4600,8 @@ public class ClassFileWriter {
             RhinoConfig.get("rhino.cfw.debugCallers", false);
     private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
 
+    private int invokeDynamicCount = 0;
+
     private String generatedClassName;
 
     private ExceptionTableEntry[] itsExceptionTable;
@@ -4613,7 +4624,7 @@ public class ClassFileWriter {
 
     private ArrayList<ClassFileMethod> itsMethods = new ArrayList<>();
     private ArrayList<ClassFileField> itsFields = new ArrayList<>();
-    private ArrayList<Short> itsInterfaces = new ArrayList<>();
+    private ArrayList<Integer> itsInterfaces = new ArrayList<>();
 
     private int itsFlags;
     private int itsThisClassIndex;

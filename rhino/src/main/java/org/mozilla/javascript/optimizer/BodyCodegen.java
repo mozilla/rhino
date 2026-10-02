@@ -1072,7 +1072,12 @@ class BodyCodegen {
                         OptFunctionNode target;
                         target = (OptFunctionNode) node.getProp(Node.DIRECTCALL_PROP);
 
-                        if (target != null) {
+                        // The direct-call fast path invokes the target's body method with a
+                        // same-class INVOKESTATIC, so it's only valid when the caller and the
+                        // target ended up in the same (possibly split) generated class.
+                        if (target != null
+                                && cfw.getClassName()
+                                        .equals(codegen.getClassNameForNode(target.fnode))) {
                             visitOptimizedCall(node, target, type, child);
                         } else if (type == Token.CALL) {
                             visitStandardCall(node, child);
@@ -2118,9 +2123,11 @@ class BodyCodegen {
         cfw.add(ByteCode.DUP);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
+        // The descriptors array always lives on the main class, even when this body method has
+        // been placed in a different (split) chunk class.
         cfw.add(
                 ByteCode.GETSTATIC,
-                cfw.getClassName(),
+                codegen.mainClassName,
                 Codegen.DESCRIPTORS_FIELD_NAME,
                 Codegen.DESCRIPTORS_FIELD_SIGNATURE);
         cfw.addPush(fnIndex);
@@ -2286,7 +2293,9 @@ class BodyCodegen {
             cfw.addALoad(argsLocal);
             cfw.addInvoke(
                     ByteCode.INVOKESTATIC,
-                    codegen.mainClassName,
+                    // This extracted method is always emitted into the same chunk class as the
+                    // caller, so a same-class reference is correct even when split.
+                    cfw.getClassName(),
                     methodName,
                     "(Lorg/mozilla/javascript/Context;"
                             + scriptOrFnType
@@ -2649,7 +2658,9 @@ class BodyCodegen {
             cfw.addALoad(argsLocal);
             cfw.addInvoke(
                     ByteCode.INVOKESTATIC,
-                    codegen.mainClassName,
+                    // This extracted method is always emitted into the same chunk class as the
+                    // caller, so a same-class reference is correct even when split.
+                    cfw.getClassName(),
                     methodName,
                     "(Lorg/mozilla/javascript/Context;"
                             + scriptOrFnType
@@ -2942,9 +2953,11 @@ class BodyCodegen {
                 className,
                 "getDescriptor",
                 "()" + Codegen.DESCRIPTOR_CLASS_SIGNATURE);
+        // The descriptors array always lives on the main class, even when this call site has
+        // been placed in a different (split) chunk class.
         cfw.add(
                 ByteCode.GETSTATIC,
-                cfw.getClassName(),
+                codegen.mainClassName,
                 Codegen.DESCRIPTORS_FIELD_NAME,
                 Codegen.DESCRIPTORS_FIELD_SIGNATURE);
         cfw.addPush(codegen.getIndex(target.fnode));
@@ -3020,9 +3033,12 @@ class BodyCodegen {
                 "org/mozilla/javascript/ScriptRuntime",
                 "emptyArgs",
                 "[Ljava/lang/Object;");
+        // Reaching this point requires the caller to have verified that the target's body
+        // method is in this same (possibly split) chunk class - see visitStatement's
+        // DIRECTCALL_PROP handling.
         cfw.addInvoke(
                 ByteCode.INVOKESTATIC,
-                codegen.mainClassName,
+                cfw.getClassName(),
                 (type == Token.NEW)
                         ? codegen.getDirectCtorName(target.fnode)
                         : codegen.getBodyMethodName(target.fnode),
