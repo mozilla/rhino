@@ -1533,10 +1533,28 @@ final class NativeDate extends ScriptableObject {
                 }
             }
         }
-        if (year < 0 || mon < 0 || mday < 0) return ScriptRuntime.NaN;
-        if (sec < 0) sec = 0;
-        if (min < 0) min = 0;
-        if (hour < 0) hour = 0;
+
+        if (year < 0) return ScriptRuntime.NaN;
+        if (mon < 0 || mon > 11) return ScriptRuntime.NaN;
+        if (mday < 1 || mday > DaysInMonth(year, mon + 1)) return ScriptRuntime.NaN;
+
+        if (hour < 0) {
+            hour = 0;
+        } else if (hour > 24 || (hour == 24 && (min > 0 || sec > 0))) {
+            return ScriptRuntime.NaN;
+        }
+
+        if (min < 0) {
+            min = 0;
+        } else if (min > 59) {
+            return ScriptRuntime.NaN;
+        }
+
+        if (sec < 0) {
+            sec = 0;
+        } else if (sec > 59) {
+            return ScriptRuntime.NaN;
+        }
 
         double msec = date_msecFromDate(year, mon, mday, hour, min, sec, 0);
         if (tzoffset == -1) {

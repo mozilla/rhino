@@ -578,6 +578,89 @@ public class NativeDateTest {
     }
 
     @Test
+    public void parseLegacyMonthOutOfRange() {
+        // 20 is not a valid month in month/day/year order (issue #2411)
+        // Previously it used to roll over and give a number - needs NaN now.
+        ctorDateTimeString("NaN", "String(Date.parse('20/15/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('13/01/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('20/13/2024'))");
+        ctorDateTimeString("NaN", "String(Date.parse('29/02/2024'))");
+    }
+
+    @Test
+    public void parseLegacyDayOutOfRange() {
+        // Same - Needs to give NaN if the day is out of range
+        ctorDateTimeString("NaN", "String(Date.parse('12/32/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('02/30/2026'))");
+        ctorDateTimeString("NaN", "String(Date.parse('04/31/2026'))");
+    }
+
+    @Test
+    public void parseLegacyLeapDay() {
+        // Parsing a leap year.
+        ctorDateTimeString("2024-02-29T00:00:00.000Z", "new Date('02/29/2024').toISOString()");
+        ctorDateTimeString("NaN", "String(Date.parse('02/29/2025'))");
+    }
+
+    @Test
+    public void parseLegacyTimeOutOfRange() {
+        // Parsing a time that is out of range - Needs to give an NaN.
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 25:00'))");
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 10:75'))");
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 10:30:75'))");
+    }
+
+    @Test
+    public void parseLegacyMinuteOutOfRange() {
+        // min=59 is the top of the valid range.
+        ctorDateTimeString(
+                "2026-01-01T10:59:00.000Z", "new Date('01/01/2026 10:59:00').toISOString()");
+        // min=60 must be rejected rather than rolling over into the next hour.
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 10:60:00'))");
+    }
+
+    @Test
+    public void parseLegacySecondOutOfRange() {
+        // sec=59 is the top of the valid range.
+        ctorDateTimeString(
+                "2026-01-01T10:30:59.000Z", "new Date('01/01/2026 10:30:59').toISOString()");
+        // sec=60 must be rejected rather than rolling over into the next minute.
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 10:30:60'))");
+    }
+
+    @Test
+    public void parseLegacyHourOutOfRange() {
+        // hour=23 is a normal, valid hour.
+        ctorDateTimeString(
+                "2026-01-01T23:00:00.000Z", "new Date('01/01/2026 23:00:00').toISOString()");
+        // hour=24 is only valid as the ECMA/ISO midnight special case, i.e. when
+        // minutes and seconds are both 0; it then rolls to the next day's midnight.
+        ctorDateTimeString(
+                "2026-01-02T00:00:00.000Z", "new Date('01/01/2026 24:00:00').toISOString()");
+        // hour=24 combined with a nonzero minute or second is not the midnight
+        // special case and must be rejected.
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 24:01:00'))");
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 24:00:01'))");
+        // hour=25 is out of range outright.
+        ctorDateTimeString("NaN", "String(Date.parse('01/01/2026 25:00:00'))");
+    }
+
+    @Test
+    public void parseLegacyValidDatesStillWork() {
+        // Ensure that the old valid dates are still parsed effectively.
+        ctorDateTimeString("2026-12-31T00:00:00.000Z", "new Date('12/31/2026').toISOString()");
+        ctorDateTimeString("1995-12-25T00:00:00.000Z", "new Date('Dec 25, 1995').toISOString()");
+    }
+
+    @Test
+    public void ctorInvalidLegacyStringGivesInvalidDate() {
+        ctorDateTimeStringThrows(
+                EcmaError.class,
+                "RangeError: Date is invalid.",
+                "new Date('20/15/2026').toISOString()");
+    }
+
+    @Test
     public void toLocaleEnUs() {
         toLocale("12/18/2021, 10:23:00 PM", "new Date('2021-12-18T22:23').toLocaleString('en-US')");
         toLocale("12/18/2021", "new Date('2021-12-18T22:23').toLocaleDateString('en-US')");
