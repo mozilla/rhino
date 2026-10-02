@@ -834,6 +834,17 @@ class BodyCodegen {
                 decReferenceWordLocal(variableObjectLocal);
                 break;
 
+            case Token.SCOPE_REPLACE:
+                // Swaps one scope for another at the same depth, so the reference count of the
+                // local holding it does not change.
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                        "replaceScope",
+                        "(Lorg/mozilla/javascript/VarScope;"
+                                + ")Lorg/mozilla/javascript/VarScope;");
+                cfw.addAStore(variableObjectLocal);
+                break;
+
             case Token.ENUM_INIT_KEYS:
             case Token.ENUM_INIT_VALUES:
             case Token.ENUM_INIT_ARRAY:
@@ -868,7 +879,8 @@ class BodyCodegen {
                     /* special case this so as to avoid unnecessary
                     load's & pop's */
                     visitSetVar(child, child.getFirstChild(), false);
-                } else if (child.getType() == Token.SETCONSTVAR) {
+                } else if (child.getType() == Token.SETCONSTVAR
+                        || child.getType() == Token.INITCONSTVAR) {
                     /* special case this so as to avoid unnecessary
                     load's & pop's */
                     visitSetConstVar(child, child.getFirstChild(), false);
@@ -880,6 +892,10 @@ class BodyCodegen {
                     if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) cfw.add(ByteCode.POP2);
                     else cfw.add(ByteCode.POP);
                 }
+                break;
+
+            case Token.RESETVAR:
+                visitResetVar(node);
                 break;
 
             case Token.EXPR_RESULT:
@@ -1548,6 +1564,7 @@ class BodyCodegen {
                 break;
 
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 visitSetConstVar(node, child, true);
                 break;
 
@@ -2085,6 +2102,7 @@ class BodyCodegen {
 
     private void visitEnterScope(Node node, Node child) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
 
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
@@ -2094,15 +2112,29 @@ class BodyCodegen {
         cfw.addAStore(variableObjectLocal);
         int i = 0;
         while (child != null) {
-            cfw.add(ByteCode.DUP);
-            cfw.add(ByteCode.DUP);
             String id = (String) properties[i];
-            generateExpression(child, node);
-            cfw.add(ByteCode.SWAP);
-            cfw.addALoad(contextLocal);
-            cfw.add(ByteCode.SWAP);
-            addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
-            cfw.add(ByteCode.POP);
+            if (consts != null && consts[i]) {
+                // The declaration in the body of the scope initializes this one,
+                // so there is no initializer to evaluate here.
+                cfw.add(ByteCode.DUP);
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.addPush(id);
+                addScriptRuntimeInvoke(
+                        "defineConst",
+                        "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/VarScope;"
+                                + "Ljava/lang/String;"
+                                + ")V");
+            } else {
+                cfw.add(ByteCode.DUP);
+                cfw.add(ByteCode.DUP);
+                generateExpression(child, node);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+                cfw.add(ByteCode.POP);
+            }
             child = child.getNext();
             i++;
         }
@@ -3890,6 +3922,25 @@ class BodyCodegen {
                 int reg = varRegisters[varIndex];
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
+                    if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                        cfw.addPush("msg.modify.readonly");
+                        cfw.addPush(1);
+                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                        cfw.add(ByteCode.DUP);
+                        cfw.addPush(0);
+                        cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                        cfw.add(ByteCode.AASTORE);
+                        addOptRuntimeInvoke(
+                                "throwTypeErrorById",
+                                "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+                        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                            cfw.addPush(1.0);
+                        } else {
+                            cfw.addPush(1.0);
+                            addDoubleWrap();
+                        }
+                        break;
+                    }
                     if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
                         int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
                         cfw.addDLoad(reg + offset);
@@ -3922,6 +3973,7 @@ class BodyCodegen {
                             addDoubleWrap();
                         }
                     }
+
                     break;
                 }
                 if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
@@ -4590,6 +4642,17 @@ class BodyCodegen {
         int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
         if (constDeclarations[varIndex]) {
+            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                cfw.addPush("msg.modify.readonly");
+                cfw.addPush(1);
+                cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(0);
+                cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                cfw.add(ByteCode.AASTORE);
+                addOptRuntimeInvoke(
+                        "throwTypeErrorById", "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+            }
             if (!needValue) {
                 if (isNumber) cfw.add(ByteCode.POP2);
                 else cfw.add(ByteCode.POP);
@@ -4640,40 +4703,60 @@ class BodyCodegen {
         generateExpression(child.getNext(), node);
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         int reg = varRegisters[varIndex];
+        // A block scoped declaration reached more than once must re-bind, so INITCONSTVAR
+        // stores without consulting the "already initialized" flag register.
+        boolean force = node.getType() == Token.INITCONSTVAR;
+        int flagReg = reg + (isNumber ? 2 : 1);
         int beyond = cfw.acquireLabel();
-        int noAssign = cfw.acquireLabel();
+        int noAssign = force ? -1 : cfw.acquireLabel();
+        if (!force) {
+            cfw.addILoad(flagReg);
+            cfw.add(ByteCode.IFNE, noAssign);
+        }
+        int stack = cfw.getStackTop();
+        cfw.addPush(1);
+        cfw.addIStore(flagReg);
         if (isNumber) {
-            cfw.addILoad(reg + 2);
-            cfw.add(ByteCode.IFNE, noAssign);
-            int stack = cfw.getStackTop();
-            cfw.addPush(1);
-            cfw.addIStore(reg + 2);
             cfw.addDStore(reg);
-            if (needValue) {
-                cfw.addDLoad(reg);
-                cfw.markLabel(noAssign, stack);
-            } else {
-                cfw.add(ByteCode.GOTO, beyond);
-                cfw.markLabel(noAssign, stack);
-                cfw.add(ByteCode.POP2);
-            }
         } else {
-            cfw.addILoad(reg + 1);
-            cfw.add(ByteCode.IFNE, noAssign);
-            int stack = cfw.getStackTop();
-            cfw.addPush(1);
-            cfw.addIStore(reg + 1);
             cfw.addAStore(reg);
-            if (needValue) {
-                cfw.addALoad(reg);
-                cfw.markLabel(noAssign, stack);
+        }
+        if (needValue) {
+            if (isNumber) {
+                cfw.addDLoad(reg);
             } else {
-                cfw.add(ByteCode.GOTO, beyond);
-                cfw.markLabel(noAssign, stack);
-                cfw.add(ByteCode.POP);
+                cfw.addALoad(reg);
             }
+            if (!force) {
+                cfw.markLabel(noAssign, stack);
+            }
+        } else if (!force) {
+            cfw.add(ByteCode.GOTO, beyond);
+            cfw.markLabel(noAssign, stack);
+            cfw.add(isNumber ? ByteCode.POP2 : ByteCode.POP);
         }
         cfw.markLabel(beyond);
+    }
+
+    /**
+     * Restores a block scoped slot held in a register to the state it has on entry to its block:
+     * undefined, and uninitialized again if the slot holds a const. Emitted at the top of a
+     * flattened block scope that a loop can re-enter.
+     */
+    private void visitResetVar(Node node) {
+        if (!hasVarsInRegs) Kit.codeBug();
+        int varIndex = fnCurrent.getVarIndex(node);
+        if (fnCurrent.isNumberVar(varIndex)) {
+            // RESETVAR forces the slot to AnyType during flow analysis, so this cannot happen.
+            throw Kit.codeBug();
+        }
+        int reg = varRegisters[varIndex];
+        Codegen.pushUndefined(cfw);
+        cfw.addAStore(reg);
+        if (fnCurrent.fnode.getParamAndVarConst()[varIndex]) {
+            cfw.addPush(0);
+            cfw.addIStore(reg + 1);
+        }
     }
 
     private void visitGetProp(Node node, Node child) {

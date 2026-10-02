@@ -103,7 +103,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public static final int UNINITIALIZED_CONST = 0x08;
 
-    public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+    public static final int STRICTLY_READONLY = 0x10;
+
+    public static final int LEGACY_CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+
+    public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST | STRICTLY_READONLY;
 
     /** The prototype of this object. */
     private Scriptable prototypeObject;
@@ -139,7 +143,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static void checkValidAttributes(int attributes) {
-        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST;
+        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST | STRICTLY_READONLY;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -377,26 +381,34 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value value to set the property to
      */
     @Override
-    public void putConst(String name, Scriptable start, Object value) {
-        if (putConstImpl(name, 0, start, value, READONLY)) return;
+    public void putConst(Context cx, String name, Scriptable start, Object value) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Kit.codeBug("Should set constants on ES6 objects.");
+        }
+
+        if (putConstImpl(cx, name, 0, start, value, READONLY)) return;
 
         if (start == this) throw Kit.codeBug();
         if (start instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
             var cstart = ((ConstProperties<Scriptable>) start);
-            cstart.putConst(name, start, value);
+            cstart.putConst(cx, name, start, value);
         } else start.put(name, start, value);
     }
 
     @Override
-    public void defineConst(String name, Scriptable start) {
-        if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
+    public void defineConst(Context cx, String name, Scriptable start) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Kit.codeBug("Should set constants on ES6 objects.");
+        }
+
+        if (putConstImpl(cx, name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
 
         if (start == this) throw Kit.codeBug();
         if (start instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
             var cstart = ((ConstProperties<Scriptable>) start);
-            cstart.defineConst(name, start);
+            cstart.defineConst(cx, name, start);
         }
     }
 
@@ -407,7 +419,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @return true if the named property is defined as a const, false otherwise.
      */
     @Override
-    public boolean isConst(String name) {
+    public boolean isConst(Context cx, String name) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Kit.codeBug("Should set constants on ES6 objects.");
+        }
+
         var slot = getMap().query(name, 0);
         if (slot == null) {
             return false;
@@ -1257,12 +1273,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param propertyName the name of the property to define.
      */
     public static <T extends PropHolder<T>> void defineConstProperty(
-            T destination, String propertyName) {
+            Context cx, T destination, String propertyName) {
         if (destination instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
             var cp = (ConstProperties<T>) destination;
-            cp.defineConst(propertyName, destination);
-        } else defineProperty(destination, propertyName, Undefined.instance, CONST);
+            cp.defineConst(cx, propertyName, destination);
+        } else defineProperty(destination, propertyName, Undefined.instance, LEGACY_CONST);
     }
 
     /**
@@ -2489,22 +2505,22 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * <p>A property redefinition is incompatible if the first definition was a const declaration or
      * if this one is. They are compatible only if neither was const.
      */
-    public static void redefineProperty(Scriptable obj, String name, boolean isConst) {
+    public static void redefineProperty(Context cx, Scriptable obj, String name, boolean isConst) {
         Scriptable base = getBase(obj, name);
         if (base == null) return;
         if (base instanceof ConstProperties<?>) {
             @SuppressWarnings("unchecked")
             var cp = (ConstProperties<Scriptable>) base;
 
-            if (cp.isConst(name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
+            if (cp.isConst(cx, name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
         }
         if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
     }
 
-    public static void redefineProperty(VarScope obj, String name, boolean isConst) {
+    public static void redefineProperty(Context cx, VarScope obj, String name, boolean isConst) {
         VarScope base = getBase(obj, name);
         if (base == null) return;
-        if (base.isConst(name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
+        if (base.isConst(cx, name)) throw ScriptRuntime.typeErrorById("msg.const.redecl", name);
         if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
     }
 
@@ -2591,18 +2607,18 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putConstProperty(Scriptable obj, String name, Object value) {
+    public static void putConstProperty(Context cx, Scriptable obj, String name, Object value) {
         Scriptable base = getBase(obj, name);
         if (base == null) base = obj;
         if (base instanceof ConstProperties) {
             @SuppressWarnings("unchecked")
             var cbase = ((ConstProperties<Scriptable>) base);
-            cbase.putConst(name, obj, value);
+            cbase.putConst(cx, name, obj, value);
         }
     }
 
-    public static void putConstProperty(VarScope obj, String name, Object value) {
-        obj.putConst(name, obj, value);
+    public static void putConstProperty(Context cx, VarScope obj, String name, Object value) {
+        obj.putConst(cx, name, obj, value);
     }
 
     /**
@@ -2869,10 +2885,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      *     and a READONLY slot was found.
      */
     private boolean putConstImpl(
-            String name, int index, Scriptable start, Object value, int constFlag) {
+            Context cx, String name, int index, Scriptable start, Object value, int constFlag) {
         assert (constFlag != EMPTY);
         if (!isExtensible) {
-            Context cx = Context.getContext();
             if (cx.isStrictMode()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
             }
@@ -2891,7 +2906,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            slot = getMap().modify(this, name, index, CONST);
+            slot = getMap().modify(this, name, index, LEGACY_CONST);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
                 throw Context.reportRuntimeErrorById("msg.var.redecl", name);
