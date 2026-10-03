@@ -59,22 +59,22 @@ public class Base64CodecTest {
 
     private static byte[] decodedBytes(String encoded, boolean isBase64Url) {
         var result = Base64Codec.decode(encoded, isBase64Url, Base64Codec.LOOSE);
-        assertNull(result.error());
+        assertNull(result.error);
         return trim(result);
     }
 
     private static byte[] trim(DecodeResult result) {
-        var trimmed = new byte[result.written()];
-        System.arraycopy(result.bytes(), 0, trimmed, 0, trimmed.length);
+        var trimmed = new byte[result.written];
+        System.arraycopy(result.bytes, 0, trimmed, 0, trimmed.length);
         return trimmed;
     }
 
     @Test
     public void decodeSkipsAsciiWhitespace() {
         var result = Base64Codec.decode(" Zm9v\tYmFy\n", false, Base64Codec.LOOSE);
-        assertNull(result.error());
+        assertNull(result.error);
         assertArrayEquals(bytesOf("foobar"), trim(result));
-        assertEquals(11, result.read());
+        assertEquals(11, result.read);
     }
 
     @Test
@@ -82,23 +82,23 @@ public class Base64CodecTest {
         var bytes = new byte[] {(byte) 0xfb, (byte) 0xef, 0x3c, 0x00, 0x7f};
         var encoded = Base64Codec.encode(bytes, true, false);
         var result = Base64Codec.decode(encoded, true, Base64Codec.LOOSE);
-        assertNull(result.error());
+        assertNull(result.error);
         assertArrayEquals(bytes, trim(result));
     }
 
     @Test
     public void decodeRejectsPlusAndSlashWhenUrlAlphabetRequested() {
         var result = Base64Codec.decode("+", true, Base64Codec.LOOSE);
-        assertInstanceOf(EcmaError.class, result.error());
+        assertInstanceOf(EcmaError.class, result.error);
     }
 
     @Test
     public void decodeRejectsInvalidCharacter() {
         var result = Base64Codec.decode("Zm9v!", false, Base64Codec.LOOSE);
-        assertInstanceOf(EcmaError.class, result.error());
+        assertInstanceOf(EcmaError.class, result.error);
         // The leading, complete "Zm9v" ("foo") group was still consumed before the error.
-        assertEquals(4, result.read());
-        assertEquals(3, result.written());
+        assertEquals(4, result.read);
+        assertEquals(3, result.written);
         assertArrayEquals(bytesOf("foo"), trim(result));
     }
 
@@ -107,9 +107,9 @@ public class Base64CodecTest {
         // "Zg==" decodes to "f": the two padding bits in the final sextet are zero, so strict
         // mode has nothing to reject.
         var result = Base64Codec.decode("Zg==", false, Base64Codec.STRICT);
-        assertNull(result.error());
+        assertNull(result.error);
         assertArrayEquals(bytesOf("f"), trim(result));
-        assertEquals(4, result.read());
+        assertEquals(4, result.read);
     }
 
     @Test
@@ -117,19 +117,19 @@ public class Base64CodecTest {
         // "TR==" decodes 'T' and 'R' into a 2-character group whose padding sextet has
         // non-zero low bits, which strict mode must reject even though it is properly padded.
         var result = Base64Codec.decode("TR==", false, Base64Codec.STRICT);
-        assertInstanceOf(EcmaError.class, result.error());
+        assertInstanceOf(EcmaError.class, result.error);
         // The malformed group produced no output at all.
-        assertEquals(0, result.read());
-        assertEquals(0, result.written());
+        assertEquals(0, result.read);
+        assertEquals(0, result.written);
     }
 
     @Test
     public void decodeLooseAcceptsNonCanonicalPaddingBits() {
         // The same non-canonical group decodes fine outside of strict mode.
         var result = Base64Codec.decode("TR==", false, Base64Codec.LOOSE);
-        assertNull(result.error());
-        assertEquals(1, result.written());
-        assertEquals(4, result.read());
+        assertNull(result.error);
+        assertEquals(1, result.written);
+        assertEquals(4, result.read);
     }
 
     @Test
@@ -137,29 +137,29 @@ public class Base64CodecTest {
         // "Zm9v" decodes to "foo", leaving a single dangling 'Y' that can never form a valid
         // group on its own, even in loose mode.
         var result = Base64Codec.decode("Zm9vY", false, Base64Codec.LOOSE);
-        assertNotNull(result.error());
-        assertEquals(4, result.read());
-        assertEquals(3, result.written());
+        assertNotNull(result.error);
+        assertEquals(4, result.read);
+        assertEquals(3, result.written);
         assertArrayEquals(bytesOf("foo"), trim(result));
     }
 
     @Test
     public void decodeStopBeforePartialSilentlyDropsDanglingSingleCharacter() {
         var result = Base64Codec.decode("Zm9v1", false, Base64Codec.STOP_BEFORE_PARTIAL);
-        assertNull(result.error());
+        assertNull(result.error);
         // The dangling '1' never joins a complete group, so it contributes nothing and is not
         // reflected in "read" even though it was scanned past.
         assertArrayEquals(bytesOf("foo"), trim(result));
-        assertEquals(4, result.read());
+        assertEquals(4, result.read);
     }
 
     @Test
     public void decodeRejectsMisplacedPaddingCharacter() {
         // A single leading character followed directly by '=' can never be a valid group.
         var result = Base64Codec.decode("Z=", false, Base64Codec.LOOSE);
-        assertNotNull(result.error());
-        assertEquals(0, result.read());
-        assertEquals(0, result.written());
+        assertNotNull(result.error);
+        assertEquals(0, result.read);
+        assertEquals(0, result.written);
     }
 
     @Test
@@ -168,9 +168,9 @@ public class Base64CodecTest {
         // would produce 2 bytes once its 3rd character is read, so decoding must stop right
         // before that 3rd character is even appended to the pending group.
         var result = Base64Codec.decode("Zm9vYgF", false, Base64Codec.LOOSE, 4);
-        assertNull(result.error());
-        assertEquals(3, result.written());
-        assertEquals(4, result.read());
+        assertNull(result.error);
+        assertEquals(3, result.written);
+        assertEquals(4, result.read);
         assertArrayEquals(bytesOf("foo"), trim(result));
     }
 
@@ -180,9 +180,9 @@ public class Base64CodecTest {
         // produce 3 bytes once its 4th character is read, so decoding must stop right before
         // that 4th character is appended.
         var result = Base64Codec.decode("Zm9vYgFy", false, Base64Codec.LOOSE, 5);
-        assertNull(result.error());
-        assertEquals(3, result.written());
-        assertEquals(4, result.read());
+        assertNull(result.error);
+        assertEquals(3, result.written);
+        assertEquals(4, result.read);
         assertArrayEquals(bytesOf("foo"), trim(result));
     }
 
@@ -190,51 +190,51 @@ public class Base64CodecTest {
     public void decodeLooseAllowsUnpaddedTrailingPartialChunk() {
         // "Zm9vYg" is "foob" without its trailing "==" padding.
         var result = Base64Codec.decode("Zm9vYg", false, Base64Codec.LOOSE);
-        assertNull(result.error());
+        assertNull(result.error);
         assertArrayEquals(bytesOf("foob"), trim(result));
-        assertEquals(6, result.read());
+        assertEquals(6, result.read);
     }
 
     @Test
     public void decodeStrictRejectsUnpaddedTrailingPartialChunk() {
         var result = Base64Codec.decode("Zm9vYg", false, Base64Codec.STRICT);
-        assertNotNull(result.error());
+        assertNotNull(result.error);
         // Only the leading, complete "Zm9v" ("foo") group was consumed before the error.
-        assertEquals(4, result.read());
-        assertEquals(3, result.written());
+        assertEquals(4, result.read);
+        assertEquals(3, result.written);
         assertArrayEquals(bytesOf("foo"), trim(result));
     }
 
     @Test
     public void decodeStopBeforePartialStopsAtIncompleteTrailingChunk() {
         var result = Base64Codec.decode("Zm9vYg", false, Base64Codec.STOP_BEFORE_PARTIAL);
-        assertNull(result.error());
+        assertNull(result.error);
         assertArrayEquals(bytesOf("foo"), trim(result));
-        assertEquals(4, result.read());
+        assertEquals(4, result.read);
     }
 
     @Test
     public void decodeHonorsMaxLength() {
         var result = Base64Codec.decode("Zm9vYmFy", false, Base64Codec.LOOSE, 3);
-        assertNull(result.error());
-        assertEquals(3, result.written());
-        assertEquals(4, result.read());
+        assertNull(result.error);
+        assertEquals(3, result.written);
+        assertEquals(4, result.read);
         assertArrayEquals(bytesOf("foo"), trim(result));
     }
 
     @Test
     public void decodeWithMaxLengthZeroReturnsEmptyResult() {
         var result = Base64Codec.decode("Zm9vYmFy", false, Base64Codec.LOOSE, 0);
-        assertNull(result.error());
-        assertEquals(0, result.written());
-        assertEquals(0, result.read());
+        assertNull(result.error);
+        assertEquals(0, result.written);
+        assertEquals(0, result.read);
     }
 
     @Test
     public void decodeEmptyStringProducesEmptyResult() {
         var result = Base64Codec.decode("", false, Base64Codec.LOOSE);
-        assertNull(result.error());
-        assertEquals(0, result.written());
-        assertEquals(0, result.read());
+        assertNull(result.error);
+        assertEquals(0, result.written);
+        assertEquals(0, result.read);
     }
 }

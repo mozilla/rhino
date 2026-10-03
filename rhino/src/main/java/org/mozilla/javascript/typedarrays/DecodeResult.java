@@ -12,7 +12,21 @@ import org.mozilla.javascript.EcmaError;
  * The result of decoding a base64 or hex string into bytes, as returned by {@link
  * Base64Codec#decode} and {@link HexCodec#decode}.
  *
- * @param bytes the decoded bytes; may be longer than {@code written} since the buffer is sized to
- *     the longest possible result up front. Only the first {@code written} bytes are valid.
  */
-public record DecodeResult(int read, int written, byte[] bytes, EcmaError error) {}
+public final class DecodeResult {
+	public final int read;
+	public final int written;
+	public final byte[] bytes;
+	public final EcmaError error;
+
+	/**
+	 * @param bytes the decoded bytes; may be longer than {@code written} since the buffer is sized to
+	 *              the longest possible result up front. Only the first {@code written} bytes are valid.
+	 */
+	public DecodeResult(int read, int written, byte[] bytes, EcmaError error) {
+		this.read = read;
+		this.written = written;
+		this.bytes = bytes;
+		this.error = error;
+	}
+}
