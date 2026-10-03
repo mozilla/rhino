@@ -170,27 +170,27 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 
     private static NativeTypedArrayView<?> constructFromDecodeResult(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, DecodeResult result) {
-        if (result.error() != null) {
-            throw result.error();
+        if (result.error != null) {
+            throw result.error;
         }
 
-        var resultLength = result.written();
+        var resultLength = result.written;
         var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
-        System.arraycopy(result.bytes(), 0, ta.arrayBuffer.buffer, ta.offset, resultLength);
+        System.arraycopy(result.bytes, 0, ta.arrayBuffer.buffer, ta.offset, resultLength);
         return ta;
     }
 
     private static Object setFromDecodeResult(
             Context cx, VarScope s, NativeTypedArrayView<?> into, DecodeResult result) {
-        var written = result.written();
-        System.arraycopy(result.bytes(), 0, into.arrayBuffer.buffer, into.offset, written);
+        var written = result.written;
+        System.arraycopy(result.bytes, 0, into.arrayBuffer.buffer, into.offset, written);
 
-        if (result.error() != null) {
-            throw result.error();
+        if (result.error != null) {
+            throw result.error;
         }
 
         var resultObj = cx.newObject(s);
-        resultObj.put("read", resultObj, result.read());
+        resultObj.put("read", resultObj, result.read);
         resultObj.put("written", resultObj, written);
         return resultObj;
     }
