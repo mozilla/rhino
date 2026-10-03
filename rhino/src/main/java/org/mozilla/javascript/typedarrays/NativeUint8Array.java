@@ -10,17 +10,11 @@ import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.Serial;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import org.mozilla.javascript.ClassDescriptor;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.LambdaConstructor;
-import org.mozilla.javascript.NativeNumber;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptRuntimeES6;
@@ -40,13 +34,6 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
     private static final String CLASS_NAME = "Uint8Array";
 
     private static final ClassDescriptor DESCRIPTOR;
-
-    private static final String BASE_64 = "base64";
-    private static final String BASE_64_URL = "base64url";
-
-    private static final String LOOSE = "loose";
-    private static final String STRICT = "strict";
-    private static final String STOP_BEFORE_PARTIAL = "stop-before-partial";
 
     static {
         DESCRIPTOR =
@@ -111,217 +98,101 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 
     private static Object js_fromBase64(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
-            throw ScriptRuntime.typeErrorById("msg.not.a.string");
-        }
-
-        var string = args[0].toString();
+        var string = requireStringArg(args);
         var options = getOptionsObject(args, 1);
+        var isBase64Url = getBase64AlphabetOption(options);
+        var lastChunkHandlingString = getLastChunkHandlingOption(options);
 
-        var alphabet = ScriptableObject.getProperty(options, "alphabet");
-        if (alphabet == NOT_FOUND || Undefined.isUndefined(alphabet)) {
-            alphabet = BASE_64;
-        }
-        var alphabetString = alphabet.toString();
-
-        if (!(alphabet instanceof CharSequence)
-                || (!alphabetString.equals(BASE_64) && !alphabetString.equals(BASE_64_URL))) {
-            throw ScriptRuntime.typeErrorById("msg.bad.alphabet");
-        }
-
-        var lastChunkHandling = ScriptableObject.getProperty(options, "lastChunkHandling");
-        if (lastChunkHandling == NOT_FOUND || Undefined.isUndefined(lastChunkHandling)) {
-            lastChunkHandling = LOOSE;
-        }
-        var lastChunkHandlingString = lastChunkHandling.toString();
-
-        if (!(lastChunkHandling instanceof CharSequence)
-                || (!lastChunkHandlingString.equals(LOOSE)
-                        && !lastChunkHandlingString.equals(STRICT)
-                        && !lastChunkHandlingString.equals(STOP_BEFORE_PARTIAL))) {
-            throw ScriptRuntime.typeErrorById("msg.bad.lastchunkhandling");
-        }
-
-        try {
-            var result = Result.fromBase64(string, alphabetString, lastChunkHandlingString);
-            if (result.error != null) {
-                throw result.error;
-            }
-
-            var resultLength = result.bytes.length;
-            var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
-            ta.arrayBuffer.buffer = result.bytes;
-            return ta;
-        } catch (IOException exception) {
-            throw ScriptRuntime.constructError("Error", "Error decoding base64");
-        }
+        var result = Base64Codec.decode(string, isBase64Url, lastChunkHandlingString);
+        return constructFromDecodeResult(cx, f, nt, s, thisObj, result);
     }
 
     private static Object js_fromHex(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
-            throw ScriptRuntime.typeErrorById("msg.not.a.string");
-        }
+        var string = requireStringArg(args);
 
-        var string = args[0].toString();
-
-        var result = Result.fromHex(string);
-        if (result.error != null) {
-            throw result.error;
-        }
-
-        var resultLength = result.bytes.length;
-        var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
-        ta.arrayBuffer.buffer = result.bytes;
-        return ta;
+        var result = HexCodec.decode(string);
+        return constructFromDecodeResult(cx, f, nt, s, thisObj, result);
     }
 
     private static Object js_setFromBase64(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var into = realThis(thisObj);
-
-        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
-            throw ScriptRuntime.typeErrorById("msg.not.a.string");
-        }
-
-        var string = args[0].toString();
+        var string = requireStringArg(args);
         var options = getOptionsObject(args, 1);
-
-        var alphabet = ScriptableObject.getProperty(options, "alphabet");
-        if (alphabet == NOT_FOUND || Undefined.isUndefined(alphabet)) {
-            alphabet = BASE_64;
-        }
-        var alphabetString = alphabet.toString();
-
-        if (!(alphabet instanceof CharSequence)
-                || (!alphabetString.equals(BASE_64) && !alphabetString.equals(BASE_64_URL))) {
-            throw ScriptRuntime.typeErrorById("msg.bad.alphabet");
-        }
-
-        var lastChunkHandling = ScriptableObject.getProperty(options, "lastChunkHandling");
-        if (lastChunkHandling == NOT_FOUND || Undefined.isUndefined(lastChunkHandling)) {
-            lastChunkHandling = LOOSE;
-        }
-        var lastChunkHandlingString = lastChunkHandling.toString();
-
-        if (!(lastChunkHandling instanceof CharSequence)
-                || (!lastChunkHandlingString.equals(LOOSE)
-                        && !lastChunkHandlingString.equals(STRICT)
-                        && !lastChunkHandlingString.equals(STOP_BEFORE_PARTIAL))) {
-            throw ScriptRuntime.typeErrorById("msg.bad.lastchunkhandling");
-        }
+        var isBase64Url = getBase64AlphabetOption(options);
+        var lastChunkHandlingString = getLastChunkHandlingOption(options);
 
         var length = into.validateAndGetLength();
-
-        try {
-            var result = Result.fromBase64(string, alphabetString, lastChunkHandlingString, length);
-            var bytes = result.bytes;
-
-            for (int i = 0; i < bytes.length; i++) {
-                into.js_set(i, bytes[i]);
-            }
-
-            if (result.error != null) {
-                throw result.error;
-            }
-
-            var resultObj = cx.newObject(s);
-            resultObj.put("read", resultObj, result.read);
-            resultObj.put("written", resultObj, bytes.length);
-            return resultObj;
-        } catch (IOException exception) {
-            throw ScriptRuntime.constructError("Error", "Error decoding base64");
-        }
+        var result = Base64Codec.decode(string, isBase64Url, lastChunkHandlingString, length);
+        return setFromDecodeResult(cx, s, into, result);
     }
 
     private static Object js_setFromHex(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var into = realThis(thisObj);
-
-        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
-            throw ScriptRuntime.typeErrorById("msg.not.a.string");
-        }
-
-        var string = args[0].toString();
+        var string = requireStringArg(args);
         var length = into.validateAndGetLength();
 
-        var result = Result.fromHex(string, length);
-        var bytes = result.bytes;
-
-        for (int i = 0; i < bytes.length; i++) {
-            into.js_set(i, bytes[i]);
-        }
-
-        if (result.error != null) {
-            throw result.error;
-        }
-
-        var resultObj = cx.newObject(s);
-        resultObj.put("read", resultObj, result.read);
-        resultObj.put("written", resultObj, bytes.length);
-        return resultObj;
+        var result = HexCodec.decode(string, length);
+        return setFromDecodeResult(cx, s, into, result);
     }
 
     private static Object js_toBase64(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var self = realThis(thisObj);
         var options = getOptionsObject(args, 0);
+        var isBase64Url = getBase64AlphabetOption(options);
+        var omitPadding = getOmitPaddingOption(options);
 
-        var alphabet = ScriptableObject.getProperty(options, "alphabet");
-        if (alphabet == NOT_FOUND || Undefined.isUndefined(alphabet)) {
-            alphabet = BASE_64;
-        }
-        var alphabetString = alphabet.toString();
-
-        if (!(alphabet instanceof CharSequence)
-                || (!alphabetString.equals(BASE_64) && !alphabetString.equals(BASE_64_URL))) {
-            throw ScriptRuntime.typeErrorById("msg.bad.alphabet");
-        }
-
-        var omitPaddingField = ScriptableObject.getProperty(options, "omitPadding");
-        if (omitPaddingField == NOT_FOUND) {
-            omitPaddingField = Undefined.instance;
-        }
-        var omitPadding = ScriptRuntime.toBoolean(omitPaddingField);
-
-        var length = self.validateAndGetLength();
-        var bytes = new ByteArrayOutputStream();
-        var index = 0;
-        while (index < length) {
-            bytes.write(self.get(index));
-            index++;
-        }
-
-        var encoder = alphabetString.equals(BASE_64) ? Base64.getEncoder() : Base64.getUrlEncoder();
-        var result = encoder.encodeToString(bytes.toByteArray());
-        if (omitPadding) {
-            if (result.endsWith("==")) {
-                return result.substring(0, result.length() - 2);
-            }
-            if (result.endsWith("=")) {
-                return result.substring(0, result.length() - 1);
-            }
-        }
-        return result;
+        return Base64Codec.encode(copyBytes(self), isBase64Url, omitPadding);
     }
 
     private static Object js_toHex(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         var self = realThis(thisObj);
+        return HexCodec.encode(copyBytes(self));
+    }
 
+    private static String requireStringArg(Object[] args) {
+        if (!(isArg(args, 0) && args[0] instanceof CharSequence)) {
+            throw ScriptRuntime.typeErrorById("msg.not.a.string");
+        }
+        return args[0].toString();
+    }
+
+    private static byte[] copyBytes(NativeTypedArrayView<?> self) {
         var length = self.validateAndGetLength();
-        var out = new StringBuilder();
-        var index = 0;
-        while (index < length) {
-            var digit = ScriptRuntime.numberToString(self.get(index), 16);
-            if (digit.length() == 1) {
-                out.append(0);
-            }
-            out.append(digit);
-            index++;
+        var bytes = new byte[(int) length];
+        System.arraycopy(self.arrayBuffer.buffer, self.offset, bytes, 0, bytes.length);
+        return bytes;
+    }
+
+    private static NativeTypedArrayView<?> constructFromDecodeResult(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, DecodeResult result) {
+        if (result.error() != null) {
+            throw result.error();
         }
 
-        return out.toString();
+        var resultLength = result.written();
+        var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
+        System.arraycopy(result.bytes(), 0, ta.arrayBuffer.buffer, ta.offset, resultLength);
+        return ta;
+    }
+
+    private static Object setFromDecodeResult(
+            Context cx, VarScope s, NativeTypedArrayView<?> into, DecodeResult result) {
+        var written = result.written();
+        System.arraycopy(result.bytes(), 0, into.arrayBuffer.buffer, into.offset, written);
+
+        if (result.error() != null) {
+            throw result.error();
+        }
+
+        var resultObj = cx.newObject(s);
+        resultObj.put("read", resultObj, result.read());
+        resultObj.put("written", resultObj, written);
+        return resultObj;
     }
 
     private static NativeObject getOptionsObject(Object[] args, int index) {
@@ -334,237 +205,55 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
         throw ScriptRuntime.typeErrorById("msg.not.an.object");
     }
 
-    private static class Result {
-        private final int read;
-        private final byte[] bytes;
-        private final EcmaError error;
+    private static boolean getBase64AlphabetOption(NativeObject options) {
+        var alphabet =
+                getStringOption(
+                        options,
+                        "alphabet",
+                        Base64Codec.BASE_64,
+                        "msg.bad.alphabet",
+                        new String[] {Base64Codec.BASE_64, Base64Codec.BASE_64_URL});
+        return alphabet.equals(Base64Codec.BASE_64_URL);
+    }
 
-        private Result(int read, byte[] bytes, EcmaError error) {
-            this.read = read;
-            this.bytes = bytes;
-            this.error = error;
+    private static String getLastChunkHandlingOption(NativeObject options) {
+        return getStringOption(
+                options,
+                "lastChunkHandling",
+                Base64Codec.LOOSE,
+                "msg.bad.lastchunkhandling",
+                new String[] {
+                    Base64Codec.LOOSE, Base64Codec.STRICT, Base64Codec.STOP_BEFORE_PARTIAL
+                });
+    }
+
+    private static boolean getOmitPaddingOption(NativeObject options) {
+        var omitPaddingField = ScriptableObject.getProperty(options, "omitPadding");
+        if (omitPaddingField == NOT_FOUND) {
+            omitPaddingField = Undefined.instance;
         }
+        return ScriptRuntime.toBoolean(omitPaddingField);
+    }
 
-        private static boolean isAsciiWhitespace(char c) {
-            return c == '\t' || c == '\n' || c == '\f' || c == '\r' || c == ' ';
+    private static String getStringOption(
+            NativeObject options,
+            String name,
+            String defaultValue,
+            String errorMessageId,
+            String[] allowedValues) {
+        var value = ScriptableObject.getProperty(options, name);
+        if (value == NOT_FOUND || Undefined.isUndefined(value)) {
+            value = defaultValue;
         }
-
-        private static int skipWhitespace(String string, int index) {
-            var length = string.length();
-            while (index < length && isAsciiWhitespace(string.charAt(index))) {
-                index++;
-            }
-            return index;
-        }
-
-        private static Result fromBase64(String string, String alphabet, String lastChunkHandling)
-                throws IOException {
-            return fromBase64(string, alphabet, lastChunkHandling, NativeNumber.MAX_SAFE_INTEGER);
-        }
-
-        private static Result fromBase64(
-                String string, String alphabet, String lastChunkHandling, double maxLength)
-                throws IOException {
-            if (maxLength == 0) {
-                return new Result(0, new byte[0], null);
-            }
-
-            var read = 0;
-            var bytes = new ByteArrayOutputStream();
-            var chunk = new StringBuilder();
-            var index = 0;
-            var length = string.length();
-
-            while (true) {
-                index = skipWhitespace(string, index);
-
-                if (index == length) {
-                    if (!chunk.isEmpty()) {
-                        switch (lastChunkHandling) {
-                            case STOP_BEFORE_PARTIAL:
-                                return new Result(read, bytes.toByteArray(), null);
-                            case STRICT:
-                                return new Result(
-                                        read,
-                                        bytes.toByteArray(),
-                                        ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
-                            case LOOSE:
-                            default:
-                                if (chunk.length() == 1) {
-                                    return new Result(
-                                            read,
-                                            bytes.toByteArray(),
-                                            ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
-                                }
-                                bytes.write(DecodeFinalBase64Chunk(chunk, false));
-                        }
-                    }
-                    return new Result(length, bytes.toByteArray(), null);
-                }
-
-                var c = string.charAt(index);
-                index++;
-
-                if (c == '=') {
-                    if (chunk.length() < 2) {
-                        return new Result(
-                                read,
-                                bytes.toByteArray(),
-                                ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
-                    }
-
-                    index = skipWhitespace(string, index);
-
-                    if (chunk.length() == 2) {
-                        if (index == length) {
-                            if (lastChunkHandling.equals(STOP_BEFORE_PARTIAL)) {
-                                return new Result(read, bytes.toByteArray(), null);
-                            }
-                            return new Result(
-                                    read,
-                                    bytes.toByteArray(),
-                                    ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
-                        }
-
-                        c = string.charAt(index);
-                        if (c == '=') {
-                            index = skipWhitespace(string, index + 1);
-                        }
-                    }
-
-                    if (index < length) {
-                        return new Result(
-                                read,
-                                bytes.toByteArray(),
-                                ScriptRuntime.syntaxErrorById("msg.invalid.base64"));
-                    }
-
-                    var throwOnExtraBits = lastChunkHandling.equals(STRICT);
-                    try {
-                        bytes.write(DecodeFinalBase64Chunk(chunk, throwOnExtraBits));
-                        return new Result(length, bytes.toByteArray(), null);
-                    } catch (EcmaError error) {
-                        return new Result(read, bytes.toByteArray(), error);
-                    }
-                }
-
-                if (alphabet.equals(BASE_64_URL)) {
-                    if (c == '+' || c == '/') {
-                        return new Result(
-                                read,
-                                bytes.toByteArray(),
-                                ScriptRuntime.syntaxErrorById("msg.not.base64", c));
-                    } else if (c == '-') {
-                        c = '+';
-                    } else if (c == '_') {
-                        c = '/';
-                    }
-                }
-
-                if (!isBase64(c)) {
-                    return new Result(
-                            read,
-                            bytes.toByteArray(),
-                            ScriptRuntime.syntaxErrorById("msg.not.base64", c));
-                }
-
-                var remaining = maxLength - bytes.size();
-                if ((remaining == 1 && chunk.length() == 2)
-                        || (remaining == 2 && chunk.length() == 3)) {
-                    return new Result(read, bytes.toByteArray(), null);
-                }
-
-                chunk.append(c);
-
-                if (chunk.length() == 4) {
-                    bytes.write(DecodeFullBase64Chunk(chunk));
-                    chunk.setLength(0);
-                    read = index;
-
-                    if (bytes.size() == maxLength) {
-                        return new Result(read, bytes.toByteArray(), null);
-                    }
+        var stringValue = value.toString();
+        if (value instanceof CharSequence) {
+            for (var allowed : allowedValues) {
+                if (allowed.equals(stringValue)) {
+                    return stringValue;
                 }
             }
         }
-
-        private static boolean isBase64(char c) {
-            return ('A' <= c && c <= 'Z')
-                    || ('a' <= c && c <= 'z')
-                    || ('0' <= c && c <= '9')
-                    || (c == '+')
-                    || (c == '/');
-        }
-
-        private static boolean isHex(char c) {
-            return ('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f');
-        }
-
-        private static byte[] DecodeFinalBase64Chunk(
-                StringBuilder chunk, boolean throwOnExtraBits) {
-            var chunkLength = chunk.length();
-            if (chunkLength == 2) {
-                chunk.append('A');
-            }
-            chunk.append('A');
-
-            var bytes = DecodeFullBase64Chunk(chunk);
-
-            if (chunkLength == 2) {
-                if (throwOnExtraBits && bytes[1] != 0) {
-                    throw ScriptRuntime.syntaxErrorById("msg.invalid.base64");
-                }
-                return new byte[] {bytes[0]};
-            }
-
-            if (throwOnExtraBits && bytes[2] != 0) {
-                throw ScriptRuntime.syntaxErrorById("msg.invalid.base64");
-            }
-            return new byte[] {bytes[0], bytes[1]};
-        }
-
-        private static byte[] DecodeFullBase64Chunk(StringBuilder chunk) {
-            return Base64.getDecoder().decode(chunk.toString().getBytes(StandardCharsets.UTF_8));
-        }
-
-        private static Result fromHex(String string) {
-            return fromHex(string, NativeNumber.MAX_SAFE_INTEGER);
-        }
-
-        private static Result fromHex(String string, double maxLength) {
-            var length = string.length();
-            var bytes = new ByteArrayOutputStream();
-            var read = 0;
-            if (length % 2 != 0) {
-                return new Result(
-                        read,
-                        bytes.toByteArray(),
-                        ScriptRuntime.syntaxErrorById("msg.hex.not.even"));
-            }
-
-            while (read < length && bytes.size() < maxLength) {
-                char c1 = string.charAt(read);
-                char c2 = string.charAt(read + 1);
-                if (!isHex(c1)) {
-                    return new Result(
-                            read,
-                            bytes.toByteArray(),
-                            ScriptRuntime.syntaxErrorById("msg.bad.hex", c1));
-                }
-
-                if (!isHex(c2)) {
-                    return new Result(
-                            read,
-                            bytes.toByteArray(),
-                            ScriptRuntime.syntaxErrorById("msg.bad.hex", c2));
-                }
-
-                bytes.write((Character.digit(c1, 16) << 4) + Character.digit(c2, 16));
-                read += 2;
-            }
-
-            return new Result(read, bytes.toByteArray(), null);
-        }
+        throw ScriptRuntime.typeErrorById(errorMessageId);
     }
 
     @Override
