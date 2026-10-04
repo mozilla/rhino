@@ -26,10 +26,6 @@ public class LiveConnectSupport {
         return liveConnect != null;
     }
 
-    public AutomaticWrapper getWrapProcessor() {
-        return liveConnect == null ? null : liveConnect.getWrapProcessor();
-    }
-
     /**
      * Convert "value" to the requested Java class. If LiveConnect is available, follow the LC spec.
      * If it is not available, then try to convert to a primitive, or throw an Error.
@@ -62,5 +58,31 @@ public class LiveConnectSupport {
             return value;
         }
         throw ScriptRuntime.typeErrorById("msg.conversion.not.allowed", String.valueOf(value));
+    }
+
+    Object wrap(Context cx, VarScope scope, Object obj, TypeInfo type, boolean wrapPrimitives) {
+        checkReflectionSupport();
+        return liveConnect.wrap(cx, scope, obj, type, wrapPrimitives);
+    }
+
+    Scriptable wrapNewObject(Context cx, VarScope scope, Object obj) {
+        checkReflectionSupport();
+        return liveConnect.wrapNewObject(cx, scope, obj);
+    }
+
+    Scriptable wrapAsJavaObject(Context cx, VarScope scope, Object javaObject, TypeInfo type) {
+        checkReflectionSupport();
+        return liveConnect.wrapAsJavaObject(cx, scope, javaObject, type);
+    }
+
+    Scriptable wrapJavaClass(Context cx, VarScope scope, Class<?> javaClass) {
+        checkReflectionSupport();
+        return liveConnect.wrapJavaClass(cx, scope, javaClass);
+    }
+
+    public void checkReflectionSupport() {
+        if (liveConnect == null) {
+            throw Context.reportRuntimeErrorById("msg.no.reflection.support");
+        }
     }
 }

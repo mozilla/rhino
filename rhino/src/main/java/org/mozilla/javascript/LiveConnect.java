@@ -15,5 +15,11 @@ import org.mozilla.javascript.lc.type.TypeInfo;
 public interface LiveConnect {
     Object coerceType(TypeInfo type, Object value);
 
-    AutomaticWrapper getWrapProcessor();
+    Object wrap(Context cx, VarScope scope, Object obj, TypeInfo type, boolean wrapPrimitives);
+
+    Scriptable wrapNewObject(Context cx, VarScope scope, Object obj);
+
+    Scriptable wrapAsJavaObject(Context cx, VarScope scope, Object javaObject, TypeInfo type);
+
+    Scriptable wrapJavaClass(Context cx, VarScope scope, Class<?> javaClass);
 }
