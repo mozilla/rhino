@@ -27,7 +27,8 @@ class ConstLetScopingTest {
     @Test
     void constRedeclarationInSameScopeIsError() {
         // Two const declarations for the same name in the same scope must be an error
-        Utils.assertEvaluatorExceptionES6("redeclaration of const x", "const x = 1; const x = 2;");
+        Utils.assertEvaluatorExceptionES6(
+                "redeclaration of const \"x\"", "const x = 1; const x = 2;");
     }
 
     @Test
@@ -93,14 +94,15 @@ class ConstLetScopingTest {
     @Test
     void constInSingleStatementIfBodyIsAllowedPreES6() {
         // In pre-ES6 mode the parser must not reject this
-        Utils.assertEvaluatorException_1_8("redeclaration of const x", "const x = 1; const x = 2;");
+        Utils.assertEvaluatorException_1_8(
+                "redeclaration of const \"x\"", "const x = 1; const x = 2;");
     }
 
     @Test
     void constShadowingIsErrorPreES6() {
         // Pre-ES6: const is function-scoped, so inner const x is a redeclaration error
         Utils.assertEvaluatorException_1_8(
-                "redeclaration of const x", "const x = 1; { const x = 2; }");
+                "redeclaration of const \"x\"", "const x = 1; { const x = 2; }");
     }
 
     // --- block-scoped function declarations in strict mode ---
