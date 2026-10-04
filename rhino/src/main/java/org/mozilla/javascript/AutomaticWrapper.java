@@ -8,15 +8,15 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.lc.type.TypeInfo;
 
-public interface WrapProcessor {
-    Object wrap(
-            Context cx, VarScope scope, Object obj, Class<?> staticType, boolean wrapPrimitives);
-
+/**
+ * This is the abstract interface for wrapping Java objects as JavaScript objects using reflection,
+ * based mostly on the LiveConnect standard. It is loaded on demand from the rhino-reflect module
+ * when it is present.
+ */
+public interface AutomaticWrapper {
     Object wrap(Context cx, VarScope scope, Object obj, TypeInfo type, boolean wrapPrimitives);
 
     Scriptable wrapNewObject(Context cx, VarScope scope, Object obj);
-
-    Scriptable wrapAsJavaObject(Context cx, VarScope scope, Object javaObject, Class<?> staticType);
 
     Scriptable wrapAsJavaObject(Context cx, VarScope scope, Object javaObject, TypeInfo type);
 

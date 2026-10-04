@@ -6,14 +6,14 @@
 
 package org.mozilla.javascript.reflect;
 
+import org.mozilla.javascript.AutomaticWrapper;
 import org.mozilla.javascript.LiveConnect;
-import org.mozilla.javascript.WrapProcessor;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 public class LiveConnectImpl implements LiveConnect {
     @Override
-    public WrapProcessor getWrapProcessor() {
-        return new WrapProcessorImpl();
+    public AutomaticWrapper getWrapProcessor() {
+        return new AutomaticWrapperImpl();
     }
 
     @Override

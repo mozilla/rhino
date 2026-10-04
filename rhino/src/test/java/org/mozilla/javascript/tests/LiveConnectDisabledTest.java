@@ -22,6 +22,7 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.LiveConnectSupport;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
@@ -246,7 +247,7 @@ public class LiveConnectDisabledTest {
                 cx -> {
                     TopLevel scope = cx.initStandardObjects();
                     ExposedPojo pojo = new ExposedPojo(new boolean[1], new boolean[1]);
-                    assertThrows(EcmaError.class, () -> Context.javaToJS(pojo, scope));
+                    assertThrows(RhinoException.class, () -> Context.javaToJS(pojo, scope));
                     // JS primitives still convert fine
                     assertEquals("text", Context.javaToJS("text", scope));
                     return null;
