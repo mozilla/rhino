@@ -26,7 +26,7 @@ public class LiveConnectSupport {
         return liveConnect != null;
     }
 
-    public WrapProcessor getWrapProcessor() {
+    public AutomaticWrapper getWrapProcessor() {
         return liveConnect == null ? null : liveConnect.getWrapProcessor();
     }
 

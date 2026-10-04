@@ -15,5 +15,5 @@ import org.mozilla.javascript.lc.type.TypeInfo;
 public interface LiveConnect {
     Object coerceType(TypeInfo type, Object value);
 
-    WrapProcessor getWrapProcessor();
+    AutomaticWrapper getWrapProcessor();
 }

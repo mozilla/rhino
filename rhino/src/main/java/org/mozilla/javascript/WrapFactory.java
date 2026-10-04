@@ -9,6 +9,7 @@
 package org.mozilla.javascript;
 
 import org.mozilla.javascript.lc.type.TypeInfo;
+import org.mozilla.javascript.lc.type.TypeInfoFactory;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java objects may extend this class
@@ -17,11 +18,15 @@ import org.mozilla.javascript.lc.type.TypeInfo;
  * context), Rhino will call the methods of this class whenever it needs to wrap a value resulting
  * from calling a Java method or accessing a Java field.
  *
+ * <p>The default behavior of this class is to use the "rhino-reflect" module to wrap Java objects
+ * using reflection if it is available. If it is not available, attempts to access these functions
+ * results in a JavaScript Error being thrown.
+ *
  * @see org.mozilla.javascript.Context#setWrapFactory(WrapFactory)
  * @since 1.5 Release 4
  */
 public class WrapFactory {
-    private final WrapProcessor processor;
+    private final AutomaticWrapper processor;
 
     private boolean javaPrimitiveWrap = true;
 
@@ -54,7 +59,8 @@ public class WrapFactory {
      */
     public Object wrap(Context cx, VarScope scope, Object obj, Class<?> staticType) {
         checkReflectionSupport();
-        return processor.wrap(cx, scope, obj, staticType, javaPrimitiveWrap);
+        return processor.wrap(
+                cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType), javaPrimitiveWrap);
     }
 
     public Object wrap(Context cx, VarScope scope, Object obj, TypeInfo type) {
@@ -96,7 +102,8 @@ public class WrapFactory {
     public Scriptable wrapAsJavaObject(
             Context cx, VarScope scope, Object javaObject, Class<?> staticType) {
         checkReflectionSupport();
-        return processor.wrapAsJavaObject(cx, scope, javaObject, staticType);
+        return processor.wrapAsJavaObject(
+                cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
     }
 
     public Scriptable wrapAsJavaObject(
@@ -150,8 +157,7 @@ public class WrapFactory {
 
     private void checkReflectionSupport() {
         if (processor == null) {
-            // TODO message
-            throw ScriptRuntime.constructError("Error", "Java reflection is not supported");
+            throw Context.reportRuntimeErrorById("msg.no.reflection.support");
         }
     }
 }
