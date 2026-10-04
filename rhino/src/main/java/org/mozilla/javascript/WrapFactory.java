@@ -26,14 +26,7 @@ import org.mozilla.javascript.lc.type.TypeInfoFactory;
  * @since 1.5 Release 4
  */
 public class WrapFactory {
-    private final AutomaticWrapper processor;
-
     private boolean javaPrimitiveWrap = true;
-
-    public WrapFactory() {
-        // Set the processor to null if reflection is not available
-        processor = LiveConnectSupport.get().getWrapProcessor();
-    }
 
     /**
      * Wrap the object.
@@ -58,14 +51,12 @@ public class WrapFactory {
      * @since 1.9.0
      */
     public Object wrap(Context cx, VarScope scope, Object obj, Class<?> staticType) {
-        checkReflectionSupport();
-        return processor.wrap(
-                cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType), javaPrimitiveWrap);
+        return LiveConnectSupport.get()
+                .wrap(cx, scope, obj, TypeInfoFactory.GLOBAL.create(staticType), javaPrimitiveWrap);
     }
 
     public Object wrap(Context cx, VarScope scope, Object obj, TypeInfo type) {
-        checkReflectionSupport();
-        return processor.wrap(cx, scope, obj, type, javaPrimitiveWrap);
+        return LiveConnectSupport.get().wrap(cx, scope, obj, type, javaPrimitiveWrap);
     }
 
     /**
@@ -77,8 +68,7 @@ public class WrapFactory {
      * @return the wrapped value.
      */
     public Scriptable wrapNewObject(Context cx, VarScope scope, Object obj) {
-        checkReflectionSupport();
-        return processor.wrapNewObject(cx, scope, obj);
+        return LiveConnectSupport.get().wrapNewObject(cx, scope, obj);
     }
 
     /**
@@ -101,15 +91,13 @@ public class WrapFactory {
      */
     public Scriptable wrapAsJavaObject(
             Context cx, VarScope scope, Object javaObject, Class<?> staticType) {
-        checkReflectionSupport();
-        return processor.wrapAsJavaObject(
-                cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
+        return LiveConnectSupport.get()
+                .wrapAsJavaObject(cx, scope, javaObject, TypeInfoFactory.GLOBAL.create(staticType));
     }
 
     public Scriptable wrapAsJavaObject(
             Context cx, VarScope scope, Object javaObject, TypeInfo type) {
-        checkReflectionSupport();
-        return processor.wrapAsJavaObject(cx, scope, javaObject, type);
+        return LiveConnectSupport.get().wrapAsJavaObject(cx, scope, javaObject, type);
     }
 
     /**
@@ -125,8 +113,7 @@ public class WrapFactory {
      * @since 1.7R3
      */
     public Scriptable wrapJavaClass(Context cx, VarScope scope, Class<?> javaClass) {
-        checkReflectionSupport();
-        return processor.wrapJavaClass(cx, scope, javaClass);
+        return LiveConnectSupport.get().wrapJavaClass(cx, scope, javaClass);
     }
 
     /**
@@ -146,18 +133,12 @@ public class WrapFactory {
      */
     public final void setJavaPrimitiveWrap(boolean value) {
         if (value) {
-            checkReflectionSupport();
+            LiveConnectSupport.get().checkReflectionSupport();
         }
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.isSealed()) {
             Context.onSealedMutation();
         }
         javaPrimitiveWrap = value;
-    }
-
-    private void checkReflectionSupport() {
-        if (processor == null) {
-            throw Context.reportRuntimeErrorById("msg.no.reflection.support");
-        }
     }
 }
