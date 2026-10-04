@@ -988,15 +988,16 @@ public class Codegen implements Evaluator {
         mainMethodClass = className;
     }
 
-    static final String DEFAULT_MAIN_METHOD_CLASS = "org.mozilla.javascript.optimizer.OptRuntime";
+    public static final String DEFAULT_MAIN_METHOD_CLASS =
+            "org.mozilla.javascript.optimizer.OptRuntime";
 
     private static final String SUPER_CLASS_NAME = "java.lang.Object";
 
     static final String ID_FIELD_NAME = "_id";
 
-    static final String DESCRIPTOR_CLASS_SIGNATURE = "Lorg/mozilla/javascript/JSDescriptor;";
-    static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
-    static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
+    public static final String DESCRIPTOR_CLASS_SIGNATURE = "Lorg/mozilla/javascript/JSDescriptor;";
+    public static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
+    public static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
 
     static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
