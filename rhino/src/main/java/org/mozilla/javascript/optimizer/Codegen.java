@@ -811,7 +811,7 @@ public class Codegen implements Evaluator {
                 String reFieldType = "Ljava/lang/Object;";
                 String reString = n.getRegexpString(j);
                 String reFlags = n.getRegexpFlags(j);
-                cfw.addField(reFieldName, reFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
+                cfw.addField(reFieldName, reFieldType, (short) (ACC_STATIC | ACC_PUBLIC));
                 cfw.addALoad(1); // proxy
                 cfw.addALoad(0); // context
                 cfw.addPush(reString);
