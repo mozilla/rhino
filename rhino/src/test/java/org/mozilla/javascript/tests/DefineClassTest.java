@@ -5,11 +5,15 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.annotations.JSConstructor;
@@ -62,6 +66,17 @@ public class DefineClassTest {
         }
     }
 
+    @Test
+    public void ctorVarargsHostObject() {
+        try (Context cx = Context.enter()) {
+            Object result = evaluate(cx, "new CtorVarargsHostObject();");
+            assertTrue(((CtorVarargsHostObject) result).getConstructedFromNew());
+
+            result = evaluate(cx, "CtorVarargsHostObject();");
+            assertFalse(((CtorVarargsHostObject) result).getConstructedFromNew());
+        }
+    }
+
     private Object evaluate(Context cx, String str) {
         return cx.evaluateString(scope, str, "<testsrc>", 0, null);
     }
@@ -72,6 +87,7 @@ public class DefineClassTest {
             scope = cx.initStandardObjects();
             ScriptableObject.defineClass(scope, AnnotatedHostObject.class);
             ScriptableObject.defineClass(scope, TraditionalHostObject.class);
+            ScriptableObject.defineClass(scope, CtorVarargsHostObject.class);
         }
     }
 
@@ -169,6 +185,32 @@ public class DefineClassTest {
         // not a JS setter
         public void setBar(String bar) {
             this.bar = bar.toUpperCase();
+        }
+    }
+
+    public static class CtorVarargsHostObject extends ScriptableObject {
+
+        private boolean constructedFromNew;
+
+        @Override
+        public String getClassName() {
+            return "CtorVarargsHostObject";
+        }
+
+        @JSConstructor
+        public static Scriptable jsConstructor(
+                final Context cx,
+                final Object[] args,
+                final Function ctorObj,
+                final boolean inNewExpr) {
+            CtorVarargsHostObject obj = new CtorVarargsHostObject();
+            obj.constructedFromNew = inNewExpr;
+            return obj;
+        }
+
+        @JSGetter
+        public boolean getConstructedFromNew() {
+            return constructedFromNew;
         }
     }
 }
