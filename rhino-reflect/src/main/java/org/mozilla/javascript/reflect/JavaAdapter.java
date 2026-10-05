@@ -46,7 +46,7 @@ import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.lc.type.TypeInfo;
 
 public final class JavaAdapter implements GraphComparable {
-    private static final String ADAPTER_CLASS = "org/mozilla/javascript/reflect/JavaAdapter";
+    private static final String ADAPTER_CLASS = JavaAdapter.class.getName().replace('.', '/');
 
     /**
      * Provides a key with which to distinguish previously generated adapter classes stored in a
