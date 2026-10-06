@@ -24,6 +24,11 @@ public class VarIncDec extends Instruction {
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
 
+        if ((frame.getVarAttribute(index) & ScriptableObject.STRICTLY_READONLY) != 0) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.modify.readonly",
+                    frame.fnOrScript.getDescriptor().getParamOrVarName(index));
+        }
         Object varValue = frame.getVar(index);
         double d = 0.0;
         BigInteger bi = null;

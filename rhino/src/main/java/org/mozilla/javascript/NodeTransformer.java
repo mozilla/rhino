@@ -10,13 +10,18 @@ import static org.mozilla.javascript.Context.reportError;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.Symbol;
 
 /**
  * This class transforms a tree to a lower-level representation for codegen.
@@ -33,6 +38,7 @@ public class NodeTransformer {
     }
 
     public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env) {
+        compilerEnv = env;
         boolean useStrictMode = inStrictMode;
         // Support strict mode inside a function only for "ES6" language level
         // and above. Otherwise, we will end up breaking backward compatibility for
@@ -443,6 +449,29 @@ public class NodeTransformer {
         }
     }
 
+    /**
+     * Collects the names a let wrapper scope declares as {@code const}. Only a {@code for (const
+     * ...; ...; ...)} head, which {@link IRFactory} splits into a scope of its own, still carries a
+     * symbol table by the time it gets here; the wrappers synthesized for ordinary blocks have
+     * already given their symbols away.
+     */
+    private static Set<String> constNames(Node scopeNode) {
+        if (!(scopeNode instanceof Scope)) {
+            return Collections.emptySet();
+        }
+        Map<String, Symbol> symbolTable = ((Scope) scopeNode).getSymbolTable();
+        if (symbolTable == null) {
+            return Collections.emptySet();
+        }
+        Set<String> names = new HashSet<>(4);
+        for (Symbol symbol : symbolTable.values()) {
+            if (symbol.getDeclType() == Symbol.Type.CONST) {
+                names.add(symbol.getName());
+            }
+        }
+        return names;
+    }
+
     protected void visitNew(Node node, ScriptNode tree) {}
 
     protected void visitCall(Node node, ScriptNode tree) {}
@@ -450,6 +479,7 @@ public class NodeTransformer {
     protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();
         Node body = vars.getNext();
+        Set<String> constNames = constNames(scopeNode);
         scopeNode.removeChild(vars);
         scopeNode.removeChild(body);
         boolean isExpression = scopeNode.getType() == Token.LETEXPR;
@@ -459,6 +489,7 @@ public class NodeTransformer {
             result = new Node(isExpression ? Token.SCOPEEXPR : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
+            ArrayList<Boolean> consts = new ArrayList<>();
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
                 if (current.getType() == Token.LETEXPR) {
@@ -478,6 +509,7 @@ public class NodeTransformer {
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
                         for (int i = 0; i < destructuringNames.size(); i++) {
+                            consts.add(Boolean.FALSE);
                             newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
@@ -487,6 +519,7 @@ public class NodeTransformer {
                     for (Node child = c.getFirstChild(); child != null; child = child.getNext()) {
                         if (child.getType() != Token.NAME) throw Kit.codeBug();
                         list.add(ScriptRuntime.getIndexObject(child.getString()));
+                        consts.add(Boolean.FALSE);
                         Node init = child.getFirstChild();
                         if (init == null) {
                             init = new Node(Token.VOID, Node.newNumber(0.0));
@@ -497,13 +530,26 @@ public class NodeTransformer {
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
+                boolean isConst = current.getIntProp(Node.IS_CONST_PROP, 0) != 0;
+                consts.add(isConst);
                 Node init = current.getFirstChild();
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (isConst) {
+                    // A const binding is only ever created here, never initialized:
+                    // the declaration in the body of the scope does that.
+                    throw Kit.codeBug();
                 }
                 newVars.addChildToBack(init);
             }
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
+            if (consts.contains(Boolean.TRUE)) {
+                boolean[] constFlags = new boolean[consts.size()];
+                for (int i = 0; i < constFlags.length; i++) {
+                    constFlags[i] = consts.get(i);
+                }
+                newVars.putProp(Node.CONST_IDS_PROP, constFlags);
+            }
             result.addChildToBack(newVars);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
             result.addChildToBack(new Node(Token.LEAVE_SCOPE));
@@ -602,4 +648,5 @@ public class NodeTransformer {
     private Deque<Node> loops;
     private Deque<Node> loopEnds;
     private boolean hasFinally;
+    private CompilerEnvirons compilerEnv;
 }

@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptableObject.CONST;
+import static org.mozilla.javascript.ScriptableObject.LEGACY_CONST;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 
 import java.io.Serial;
@@ -80,7 +81,12 @@ public final class NativeCall extends DeclarationScope {
                 String name = function.getParamOrVarName(i);
                 if (!super.has(name, this)) {
                     if (function.getParamOrVarConst(i)) {
-                        defineProperty(name, Undefined.instance, CONST);
+                        defineProperty(
+                                name,
+                                Undefined.instance,
+                                cx.getLanguageVersion() >= Context.VERSION_ES6
+                                        ? CONST
+                                        : LEGACY_CONST);
                     } else if (function.hasNoFunctionStatementNamed(name)) {
                         // Properties for FUNCTION_STATEMENTs are created in
                         // Interpreter.CallFrame.initializeArgs().

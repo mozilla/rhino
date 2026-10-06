@@ -13,11 +13,6 @@ public class LocalScope extends DeclarationScope {
     }
 
     @Override
-    public void putConst(String name, VarScope start, Object value) {
-        super.put(name, start, value);
-    }
-
-    @Override
     public LocalScope copyScope() {
         var res = new LocalScope(getParentScope());
         res.setMap(getMap().copyMap());
