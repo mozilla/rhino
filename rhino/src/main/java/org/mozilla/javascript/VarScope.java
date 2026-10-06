@@ -30,6 +30,6 @@ public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope
     }
 
     default VarScope copyScope() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(this.getClass().getName());
     }
 }

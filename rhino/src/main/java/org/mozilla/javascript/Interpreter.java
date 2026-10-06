@@ -3101,6 +3101,10 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
+            } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             return null;
         }
@@ -3140,6 +3144,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
+            if ((varAttributes[state.indexReg] & ScriptableObject.STRICTLY_READONLY) != 0) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.modify.readonly",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
             if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
@@ -3161,6 +3170,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
+            if ((varAttributes[state.indexReg] & ScriptableObject.STRICTLY_READONLY) != 0) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.modify.readonly",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
             if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];

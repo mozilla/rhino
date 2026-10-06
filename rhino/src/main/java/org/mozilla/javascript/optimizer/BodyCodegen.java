@@ -2090,6 +2090,7 @@ class BodyCodegen {
 
     private void visitEnterScope(Node node, Node child) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
 
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
@@ -2099,15 +2100,29 @@ class BodyCodegen {
         cfw.addAStore(variableObjectLocal);
         int i = 0;
         while (child != null) {
-            cfw.add(ByteCode.DUP);
-            cfw.add(ByteCode.DUP);
             String id = (String) properties[i];
-            generateExpression(child, node);
-            cfw.add(ByteCode.SWAP);
-            cfw.addALoad(contextLocal);
-            cfw.add(ByteCode.SWAP);
-            addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
-            cfw.add(ByteCode.POP);
+            if (consts != null && consts[i]) {
+                // The declaration in the body of the scope initializes this one,
+                // so there is no initializer to evaluate here.
+                cfw.add(ByteCode.DUP);
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.addPush(id);
+                addScriptRuntimeInvoke(
+                        "defineConst",
+                        "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/VarScope;"
+                                + "Ljava/lang/String;"
+                                + ")V");
+            } else {
+                cfw.add(ByteCode.DUP);
+                cfw.add(ByteCode.DUP);
+                generateExpression(child, node);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+                cfw.add(ByteCode.POP);
+            }
             child = child.getNext();
             i++;
         }
@@ -3906,6 +3921,25 @@ class BodyCodegen {
                 int reg = varRegisters[varIndex];
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
+                    if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                        cfw.addPush("msg.modify.readonly");
+                        cfw.addPush(1);
+                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                        cfw.add(ByteCode.DUP);
+                        cfw.addPush(0);
+                        cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                        cfw.add(ByteCode.AASTORE);
+                        addOptRuntimeInvoke(
+                                "throwTypeErrorById",
+                                "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+                        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                            cfw.addPush(1.0);
+                        } else {
+                            cfw.addPush(1.0);
+                            addDoubleWrap();
+                        }
+                        break;
+                    }
                     if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
                         int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
                         cfw.addDLoad(reg + offset);
@@ -3938,6 +3972,7 @@ class BodyCodegen {
                             addDoubleWrap();
                         }
                     }
+
                     break;
                 }
                 if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
@@ -4606,6 +4641,17 @@ class BodyCodegen {
         int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
         if (constDeclarations[varIndex]) {
+            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                cfw.addPush("msg.modify.readonly");
+                cfw.addPush(1);
+                cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(0);
+                cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+                cfw.add(ByteCode.AASTORE);
+                addOptRuntimeInvoke(
+                        "throwTypeErrorById", "(Ljava/lang/String;" + "[Ljava/lang/Object;" + ")V");
+            }
             if (!needValue) {
                 if (isNumber) cfw.add(ByteCode.POP2);
                 else cfw.add(ByteCode.POP);

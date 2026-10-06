@@ -26,6 +26,10 @@ public final class OptRuntime extends ScriptRuntime {
     public static final Integer oneObj = Integer.valueOf(1);
     public static final Integer minusOneObj = Integer.valueOf(-1);
 
+    public static void throwTypeErrorById(String id, Object... args) {
+        throw ScriptRuntime.typeErrorById(id, args);
+    }
+
     /** Implement ....() call shrinking optimizer code. */
     public static Object call0(Callable fun, Scriptable thisObj, Context cx, VarScope scope) {
         return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);

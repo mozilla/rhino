@@ -54,17 +54,17 @@ public class WithScope implements VarScope {
     public void put(Symbol arg0, VarScope arg1, Object arg2) {}
 
     @Override
-    public void defineConst(String name, VarScope start) {
+    public void defineConst(Context cx, String name, VarScope start) {
         Kit.codeBug("Attempt to define a const on a `with` scope.");
     }
 
     @Override
-    public boolean isConst(String name) {
+    public boolean isConst(Context cx, String name) {
         return false;
     }
 
     @Override
-    public void putConst(String name, VarScope start, Object value) {
+    public void putConst(Context cx, String name, VarScope start, Object value) {
         Kit.codeBug("Attempt to define a const on a `with` scope.");
     }
 
