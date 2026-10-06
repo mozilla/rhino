@@ -156,8 +156,13 @@ class Optimizer {
                     }
                     return NoType;
                 }
+            case Token.RESETVAR:
+                // Only names a var slot; there is nothing to rewrite.
+                return NoType;
+
             case Token.SETVAR:
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
