@@ -1179,11 +1179,45 @@ public final class IRFactory {
         //     goto breakLabel;
         // instead of:
         //     goto labelDefault;
+        //
+        // If the case block declares anything, then it has its own scope which
+        // the switch expression must not be evaluated in, so the expression is
+        // first stored in a temporary outside that scope:
+        //
+        // {
+        //     let $tmp = expr;
+        //     { switch ($tmp) { ... } ... }
+        // }
+
+        int lineno = node.getLineno(), column = node.getColumn();
+        Node switchExpr = transform(node.getExpression());
 
         Scope block = Scope.splitScope(node);
-        block.setLineColumnNumber(node.getLineno(), node.getColumn());
+        block.setLineColumnNumber(lineno, column);
         block.addChildToBack(node);
         node.setParentScope(block);
+
+        Scope outer = null;
+        if (block.getSymbolTable() != null) {
+            outer = parser.createScopeNode(Token.BLOCK, lineno, column);
+            parser.pushScope(outer);
+            try {
+                String tempName = parser.currentScriptOrFn.getNextTempName();
+                parser.defineSymbol(Token.LET, tempName, false);
+                outer.addChildToBack(
+                        new Node(
+                                Token.EXPR_VOID,
+                                createAssignment(
+                                        Token.ASSIGN, parser.createName(tempName), switchExpr),
+                                lineno,
+                                column));
+                switchExpr = parser.createName(tempName);
+            } finally {
+                parser.popScope();
+            }
+            block.setParentScope(outer);
+            outer.addChildToBack(block);
+        }
 
         // Can't use pushScope/popScope here since splitScope moves the symbol table
         // We set currentScope to 'node' (not 'block') so nested scopes can be pushed,
@@ -1193,7 +1227,6 @@ public final class IRFactory {
         Scope savedScope = parser.currentScope;
         parser.currentScope = node;
         try {
-            Node switchExpr = transform(node.getExpression());
             node.addChildToBack(switchExpr);
 
             for (SwitchCase sc : node.getCases()) {
@@ -1214,7 +1247,7 @@ public final class IRFactory {
                 addSwitchCase(block, caseExpr, body);
             }
             closeSwitch(block);
-            return block;
+            return outer != null ? outer : block;
         } finally {
             parser.currentScope = savedScope;
         }
