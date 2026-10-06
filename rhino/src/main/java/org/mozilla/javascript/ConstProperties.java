@@ -47,6 +47,7 @@ public interface ConstProperties<T extends PropHolder<T>> {
      * determine in which object the property is defined. Note that this method is not expected to
      * traverse the prototype chain, which is different from the ECMA [[Put]] operation.
      *
+     * @param context The context the operation is being done in
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
@@ -55,23 +56,25 @@ public interface ConstProperties<T extends PropHolder<T>> {
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
-    public void putConst(String name, T start, Object value);
+    public void putConst(Context cx, String name, T start, Object value);
 
     /**
      * Reserves a definition spot for a const. This will set up a definition of the const property,
      * but set its value to undefined. The semantics of the start parameter is the same as for
      * putConst.
      *
+     * @param context The context the operation is being done in
      * @param name The name of the property.
      * @param start The object whose property is being reserved.
      */
-    public void defineConst(String name, T start);
+    public void defineConst(Context cx, String name, T start);
 
     /**
      * Returns true if the named property is defined as a const on this object.
      *
+     * @param context The context the operation is being done in
      * @param name the name of the property
      * @return true if the named property is defined as a const, false otherwise.
      */
-    public boolean isConst(String name);
+    public boolean isConst(Context cx, String name);
 }

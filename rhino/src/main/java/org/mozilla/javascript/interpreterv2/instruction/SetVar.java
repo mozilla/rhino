@@ -2,6 +2,7 @@ package org.mozilla.javascript.interpreterv2.instruction;
 
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 import org.mozilla.javascript.interpreterv2.InstructionSimplification;
@@ -19,6 +20,11 @@ public class SetVar extends Instruction {
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
+        if ((frame.getVarAttribute(index) & ScriptableObject.STRICTLY_READONLY) != 0) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.modify.readonly",
+                    frame.fnOrScript.getDescriptor().getParamOrVarName(index));
+        }
         if ((frame.getVarAttribute(index) & ScriptableObject.READONLY) == 0) {
             if (value.isDouble(frame)) {
                 var doubleValue = value.retrieveDouble(frame);
