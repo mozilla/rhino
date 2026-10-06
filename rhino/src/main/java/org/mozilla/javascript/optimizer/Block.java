@@ -380,12 +380,17 @@ class Block {
                 break;
             case Token.SETVAR:
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 {
                     Node lhs = n.getFirstChild();
                     Node rhs = lhs.getNext();
                     lookForVariableAccess(fn, rhs);
                     itsNotDefSet.set(fn.getVarIndex(n));
                 }
+                break;
+            case Token.RESETVAR:
+                // Stores undefined; there is no rvalue to walk.
+                itsNotDefSet.set(fn.getVarIndex(n));
                 break;
             case Token.GETVAR:
                 {
@@ -552,6 +557,7 @@ class Block {
             case Token.COMMA:
             case Token.SETVAR:
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
             case Token.SETNAME:
             case Token.SETPROP:
             case Token.SETELEM:
@@ -589,6 +595,7 @@ class Block {
                 break;
             case Token.SETVAR:
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 {
                     Node rValue = first.getNext();
                     int theType = findExpressionType(fn, rValue, varTypes);
@@ -598,6 +605,10 @@ class Block {
                     }
                     break;
                 }
+            case Token.RESETVAR:
+                // Stores undefined, so the slot can never be kept in a double register.
+                result |= assignType(varTypes, fn.getVarIndex(n), Optimizer.AnyType);
+                break;
         }
         return result;
     }
