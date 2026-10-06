@@ -619,4 +619,20 @@ class ConstLetScopingTest {
                 """;
         Utils.assertWithAllModes_ES6("abcd", script);
     }
+
+    @Test
+    public void letCaseSwitchFor() {
+        String script =
+                """
+                var sum = 0;
+                for (let i = 0; i < 1; i++)
+                  switch (i) {
+                    case 0:
+                      let test = 7;
+                      sum += 4;
+                      break;
+                    }
+                sum""";
+        Utils.assertWithAllModes_ES6(4, script);
+    }
 }
