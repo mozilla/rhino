@@ -81,7 +81,10 @@ public final class OptFunctionNode {
             int type = n.getType();
             if (type == Token.GETVAR) {
                 node = n;
-            } else if (type == Token.SETVAR || type == Token.SETCONSTVAR) {
+            } else if (type == Token.SETVAR
+                    || type == Token.SETCONSTVAR
+                    || type == Token.INITCONSTVAR
+                    || type == Token.RESETVAR) {
                 node = n.getFirstChild();
             } else {
                 throw Kit.codeBug();

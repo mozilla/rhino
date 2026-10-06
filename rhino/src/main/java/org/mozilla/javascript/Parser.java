@@ -2810,6 +2810,9 @@ public class Parser {
         Symbol.Type symDeclType = symbol != null ? symbol.getDeclType() : null;
         if (!isValidES6Redeclaration(
                 declType, symDeclType, symbol, varSymbol, currentScope, definingScope)) {
+            System.err.printf(
+                    "(%s, %s, %s, %s, %s, %s)\n",
+                    declType, symDeclType, symbol, varSymbol, currentScope, definingScope);
             addError(
                     switch (symDeclType) {
                         case CONST -> "msg.const.redecl";
@@ -2940,7 +2943,10 @@ public class Parser {
     }
 
     private boolean isVarRedeclaration(Symbol.Type newDeclType, Symbol symbol) {
-        return (symbol.getDeclType() == Symbol.Type.VAR || symbol.getDeclType() == Symbol.Type.LP)
+        return switch (symbol.getDeclType()) {
+                    case VAR, FUNCTION_VAR, LP -> true;
+                    default -> false;
+                }
                 && newDeclType == Symbol.Type.VAR;
     }
 
