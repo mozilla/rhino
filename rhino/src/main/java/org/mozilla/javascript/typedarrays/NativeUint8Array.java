@@ -164,8 +164,16 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
     private static byte[] copyBytes(NativeTypedArrayView<?> self) {
         var length = self.validateAndGetLength();
         var bytes = new byte[(int) length];
-        System.arraycopy(self.arrayBuffer.buffer, self.offset, bytes, 0, bytes.length);
+        var src = self.arrayBuffer.buffer.duplicate();
+        src.position(self.offset);
+        src.get(bytes);
         return bytes;
+    }
+
+    private static void writeBytes(NativeTypedArrayView<?> target, byte[] bytes, int length) {
+        var dst = target.arrayBuffer.buffer.duplicate();
+        dst.position(target.offset);
+        dst.put(bytes, 0, length);
     }
 
     private static NativeTypedArrayView<?> constructFromDecodeResult(
@@ -176,14 +184,14 @@ public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 
         var resultLength = result.written;
         var ta = js_constructor(cx, f, nt, s, thisObj, new Object[] {resultLength});
-        System.arraycopy(result.bytes, 0, ta.arrayBuffer.buffer, ta.offset, resultLength);
+        writeBytes(ta, result.bytes, resultLength);
         return ta;
     }
 
     private static Object setFromDecodeResult(
             Context cx, VarScope s, NativeTypedArrayView<?> into, DecodeResult result) {
         var written = result.written;
-        System.arraycopy(result.bytes, 0, into.arrayBuffer.buffer, into.offset, written);
+        writeBytes(into, result.bytes, written);
 
         if (result.error != null) {
             throw result.error;
