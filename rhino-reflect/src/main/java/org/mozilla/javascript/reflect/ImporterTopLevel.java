@@ -1,0 +1,319 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// API class
+
+package org.mozilla.javascript.reflect;
+
+import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+import static org.mozilla.javascript.UniqueTag.NOT_FOUND;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import org.mozilla.javascript.ClassDescriptor;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.JSFunction;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
+
+/**
+ * Class ImporterTopLevel
+ *
+ * <p>This class defines a ScriptableObject that can be instantiated as a top-level ("global")
+ * object to provide functionality similar to Java's "import" statement.
+ *
+ * <p>This class can be used to create a top-level scope using the following code:
+ *
+ * <pre>
+ *  Scriptable scope = new ImporterTopLevel(cx);
+ * </pre>
+ *
+ * Then JavaScript code will have access to the following methods:
+ *
+ * <ul>
+ *   <li>importClass - will "import" a class by making its unqualified name available as a property
+ *       of the top-level scope
+ *   <li>importPackage - will "import" all the classes of the package by searching for unqualified
+ *       names as classes qualified by the given package.
+ * </ul>
+ *
+ * The following code from the shell illustrates this use:
+ *
+ * <pre>
+ * js&gt; importClass(java.io.File)
+ * js&gt; f = new File('help.txt')
+ * help.txt
+ * js&gt; importPackage(java.util)
+ * js&gt; v = new Vector()
+ * []
+ * </pre>
+ *
+ * @author Norris Boyd
+ */
+public class ImporterTopLevel extends TopLevel {
+    @Serial private static final long serialVersionUID = -9095380847465315412L;
+
+    private static final ClassDescriptor DESCRIPTOR;
+
+    static {
+        var builder =
+                new ClassDescriptor.Builder(
+                                "JavaImporter",
+                                0,
+                                ImporterTopLevel::js_construct,
+                                ImporterTopLevel::js_construct)
+                        .withMethod(PROTO, "importClass", 1, ImporterTopLevel::js_importClass)
+                        .withMethod(PROTO, "importPackage", 1, ImporterTopLevel::js_importPackage);
+
+        DESCRIPTOR = builder.build();
+    }
+
+    public static class ImporterGlobalThis extends TopLevel.GlobalThis {
+
+        private ImporterGlobalThis(boolean isTopScope) {
+            topScopeFlag = isTopScope;
+        }
+
+        @Override
+        public String getClassName() {
+            return topScopeFlag ? "global" : "JavaImporter";
+        }
+
+        @Override
+        public boolean has(String name, Scriptable start) {
+            return super.has(name, start) || getPackageProperty(name, start) != NOT_FOUND;
+        }
+
+        @Override
+        public Object get(String name, Scriptable start) {
+            Object result = super.get(name, start);
+            if (result != NOT_FOUND) return result;
+            result = getPackageProperty(name, start);
+            return result;
+        }
+
+        private Object getPackageProperty(String name, Scriptable start) {
+            Object result = NOT_FOUND;
+            Scriptable scope = start;
+            Object[] elements = getNativeJavaPackages(scope);
+            if (elements == null) {
+                return result;
+            }
+            for (Object element : elements) {
+                NativeJavaPackage p = (NativeJavaPackage) element;
+                Object v = p.getPkgProperty(name, start, false);
+                if (v != null && !(v instanceof NativeJavaPackage)) {
+                    if (result == NOT_FOUND) {
+                        result = v;
+                    } else {
+                        throw Context.reportRuntimeErrorById(
+                                "msg.ambig.import", result.toString(), v.toString());
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private final boolean topScopeFlag;
+    }
+
+    public ImporterTopLevel() {
+        this(true);
+    }
+
+    public ImporterTopLevel(boolean topLevel) {
+        super(new ImporterGlobalThis(topLevel));
+        topScopeFlag = topLevel;
+    }
+
+    public ImporterTopLevel(Context cx) {
+        this(cx, false);
+    }
+
+    public ImporterTopLevel(Context cx, boolean sealed) {
+        super(new ImporterGlobalThis(true));
+        topScopeFlag = true;
+        initStandardObjects(cx, sealed);
+    }
+
+    private ImporterTopLevel(ScriptableObject scope) {
+        super(scope);
+        topScopeFlag = true;
+    }
+
+    public static void init(Context cx, VarScope scope, boolean sealed) {
+        init(cx, scope, sealed, false);
+    }
+
+    public static void init(Context cx, VarScope scope, boolean sealed, boolean isTopScope) {
+        var ctor = DESCRIPTOR.buildConstructor(cx, scope, new NativeObject(), sealed);
+        var proto = (Scriptable) ctor.getPrototypeProperty();
+
+        if (isTopScope) {
+            scope.put("importClass", scope, proto.get("importClass", proto));
+            scope.put("importPackage", scope, proto.get("importPackage", proto));
+        }
+    }
+
+    public void initStandardObjects(Context cx, boolean sealed) {
+        // Assume that Context.initStandardObjects initialize JavaImporter
+        // property lazily so the above init call is not yet called
+        cx.initStandardObjects(this, sealed);
+        // If seal is true then exportAsJSClass(cx, seal) would seal
+        // this obj. Since this is scope as well, it would not allow
+        // to add variables.
+
+        init(cx, this, sealed, true);
+
+        // delete "constructor" defined by exportAsJSClass so "constructor"
+        // name would refer to Object.constructor
+        // and not to JavaImporter.prototype.constructor.
+        delete("constructor");
+    }
+
+    private static Object[] getNativeJavaPackages(Scriptable scope) {
+        // retrivee the native java packages stored in top scope.
+        synchronized (scope) {
+            if (scope instanceof ScriptableObject) {
+                ScriptableObject so = (ScriptableObject) scope;
+                @SuppressWarnings("unchecked")
+                ArrayList<Object> importedPackages =
+                        (ArrayList<Object>) so.getAssociatedValue(AKEY);
+                if (importedPackages != null) {
+                    return importedPackages.toArray();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @deprecated Kept only for compatibility.
+     */
+    @Deprecated
+    public void importPackage(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+        js_importPackage(cx, funObj, null, funObj.getDeclarationScope(), this, args);
+    }
+
+    // The result from the constructor needs to be an object rather
+    // than a scope, and then we need to work out to how make the
+    // import work on the correct thing.
+    private static Scriptable js_construct(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        ImporterGlobalThis result = new ImporterGlobalThis(false);
+        for (int i = 0; i != args.length; ++i) {
+            Object arg = args[i];
+            if (arg instanceof NativeJavaClass) {
+                ImporterTopLevel.importClass(result, (NativeJavaClass) arg);
+            } else if (arg instanceof NativeJavaPackage) {
+                ImporterTopLevel.importPackage(result, (NativeJavaPackage) arg);
+            } else {
+                throw Context.reportRuntimeErrorById(
+                        "msg.not.class.not.pkg", Context.toString(arg));
+            }
+        }
+        // set explicitly prototype and scope
+        // as otherwise in top scope mode BaseFunction.construct
+        // would keep them set to null. It also allows to use
+        // JavaImporter without new and still get properly
+        // initialized object.
+        result.setPrototype((Scriptable) f.getPrototypeProperty());
+        result.setParentScope(s);
+        return result;
+    }
+
+    private static Object js_importClass(
+            Context cx, Function f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (Undefined.isUndefined(thisObj)) {
+            thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
+        }
+        for (int i = 0; i != args.length; i++) {
+            Object arg = args[i];
+            if (!(arg instanceof NativeJavaClass)) {
+                throw Context.reportRuntimeErrorById("msg.not.class", Context.toString(arg));
+            }
+            importClass((ScriptableObject) thisObj, (NativeJavaClass) arg);
+        }
+        return Undefined.instance;
+    }
+
+    private static Object js_importPackage(
+            Context cx, Function f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (Undefined.isUndefined(thisObj)) {
+            thisObj = ScriptableObject.getTopLevelScope(s).getGlobalThis();
+        }
+        for (int i = 0; i != args.length; i++) {
+            Object arg = args[i];
+            if (!(arg instanceof NativeJavaPackage)) {
+                throw Context.reportRuntimeErrorById("msg.not.pkg", Context.toString(arg));
+            }
+
+            importPackage((ScriptableObject) thisObj, (NativeJavaPackage) arg);
+        }
+        return Undefined.instance;
+    }
+
+    private static void importPackage(ScriptableObject scope, NativeJavaPackage pkg) {
+        if (pkg == null) {
+            return;
+        }
+        synchronized (scope) {
+            @SuppressWarnings("unchecked")
+            ArrayList<Object> importedPackages = (ArrayList<Object>) scope.getAssociatedValue(AKEY);
+            if (importedPackages == null) {
+                importedPackages = new ArrayList<>();
+                scope.associateValue(AKEY, importedPackages);
+            }
+            for (int j = 0; j != importedPackages.size(); j++) {
+                if (pkg.equals(importedPackages.get(j))) {
+                    return;
+                }
+            }
+            importedPackages.add(pkg);
+        }
+    }
+
+    private static void importClass(Scriptable scope, NativeJavaClass cl) {
+        String s = cl.getClassObject().getName();
+        String n = s.substring(s.lastIndexOf('.') + 1);
+        Object val = scope.get(n, scope);
+        if (val != NOT_FOUND) {
+            if (val.equals(cl)) {
+                return; // do not redefine same class
+            }
+            throw Context.reportRuntimeErrorById("msg.prop.defined", n);
+        }
+        // defineProperty(n, cl, DONTENUM);
+        scope.put(n, scope, cl);
+    }
+
+    @Override
+    public ImporterGlobalThis getGlobalThis() {
+        return (ImporterGlobalThis) super.getGlobalThis();
+    }
+
+    public static TopLevel createIsolate(Context cx, TopLevel parent) {
+        var newGlobal = new ImporterGlobalThis(true);
+        newGlobal.setPrototype(parent.getGlobalThis());
+        newGlobal.setParentScope(null);
+        newGlobal.put("globalThis", newGlobal, newGlobal);
+        newGlobal.setAttributes("globalThis", ScriptableObject.DONTENUM);
+        var isolate = new ImporterTopLevel(newGlobal);
+        isolate.copyAssociatedValue(parent);
+        isolate.copyBuiltins(parent, false);
+        ImporterTopLevel.init(cx, isolate, false, true);
+        return isolate;
+    }
+
+    private static final String AKEY = "importedPackages";
+    private final boolean topScopeFlag;
+}

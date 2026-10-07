@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.optimizer.ClassCompiler;
+import org.mozilla.javascript.reflect.ClassCompiler;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 

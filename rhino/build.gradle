@@ -41,6 +41,10 @@ jar {
                 'org.mozilla.javascript.commonjs.module.provider',
                 'org.mozilla.javascript.config',
                 'org.mozilla.javascript.debug',
+                'org.mozilla.javascript.interpreterv2',
+                'org.mozilla.javascript.interpreterv2.instruction',
+                'org.mozilla.javascript.interpreterv2.operand',
+                'org.mozilla.javascript.lc',
                 'org.mozilla.javascript.lc.type',
                 'org.mozilla.javascript.optimizer',
                 'org.mozilla.javascript.serialize',
@@ -53,8 +57,10 @@ jar {
                 'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
                 'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)"',
                 'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.RegExpLoader',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.BuiltInLoader;resolution:=optional',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.LiveConnect;resolution:=optional',
                 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.NullabilityDetector;resolution:=optional',
+                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.RegExpLoader',
                 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.config.RhinoPropertiesLoader;resolution:=optional',
                 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.xml.XMLLoader;resolution:=optional',
             ].join(',')
@@ -160,9 +166,8 @@ decycle {
     ignoring(from: "org.mozilla.javascript.lc.**", to: "org.mozilla.javascript.lc.**")
 
     // LiveConnect classes in root package
-    // TODO: Move them to LiveConnect module
     ignoring(
-        from: "org.mozilla.javascript.(Native*|JavaMembers|FieldAndMethods|InterfaceAdapter|WrapFactory)",
+        from: "org.mozilla.javascript.**",
         to: "org.mozilla.javascript.lc.**"
     )
 

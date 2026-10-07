@@ -8,7 +8,10 @@ java_library(
     javacopts = LIBRARY_OPTS,
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
-    deps = ["//rhino"],
+    deps = [
+        "//rhino",
+        "//rhino-reflect"
+    ],
 )
 
 java_test_suite(
@@ -25,6 +28,7 @@ java_test_suite(
     deps = [
         ":rhino-engine",
         "//rhino",
+        "//rhino-reflect",
         "//testutils",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_params",
