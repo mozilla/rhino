@@ -53,7 +53,7 @@ public class NativeFloat32Array extends NativeTypedArrayView<Float> {
     }
 
     public NativeFloat32Array(int len) {
-        this(new NativeArrayBuffer((double) len * BYTES_PER_ELEMENT), 0, len);
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override

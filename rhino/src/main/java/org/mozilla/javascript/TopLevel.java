@@ -72,6 +72,7 @@ public class TopLevel extends ScopeObject {
         WeakSet,
         Proxy,
         ArrayBuffer,
+        SharedArrayBuffer,
         Int8Array,
         Uint8Array,
         Uint8ClampedArray,
