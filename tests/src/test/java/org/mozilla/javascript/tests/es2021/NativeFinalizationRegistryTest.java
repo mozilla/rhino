@@ -4,6 +4,9 @@
 
 package org.mozilla.javascript.tests.es2021;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -80,5 +83,49 @@ public class NativeFinalizationRegistryTest {
             System.gc();
         }
         // Context close via try-with-resources should complete without throwing or deadlocking.
+    }
+
+    @Test
+    public void testCleanupCallbackThisBinding() {
+        try (var cx = Context.enter()) {
+            cx.setFinalizationEnabled(true);
+            var global = new Global(cx);
+            var scope = TopLevel.createIsolate(global);
+
+            // Per spec, the cleanup callback is invoked as
+            // Call(cleanupCallback, undefined, «heldValue»), so a strict
+            // callback must observe `this` as undefined.
+            cx.evaluateString(
+                    scope,
+                    "globalThis._finalizerThis = 'not-called';\n"
+                            + "var reg = new FinalizationRegistry(function(hv) {\n"
+                            + "  'use strict';\n"
+                            + "  _finalizerThis =\n"
+                            + "      (this === undefined)\n"
+                            + "          ? 'undefined'\n"
+                            + "          : (this === null) ? 'null' : typeof this;\n"
+                            + "});\n"
+                            + "var target = {};\n"
+                            + "reg.register(target, 'held');\n"
+                            + "target = null;\n",
+                    "test",
+                    1,
+                    null);
+
+            Object recorded = "not-called";
+            for (int i = 0; i < 20; i++) {
+                // Encourage GC to enqueue the PhantomReference, then process
+                // the reference queue at the microtask checkpoint.
+                System.gc();
+                cx.processMicrotasks();
+                recorded = cx.evaluateString(scope, "globalThis._finalizerThis;", "test", 1, null);
+                if (!"not-called".equals(recorded)) {
+                    break;
+                }
+            }
+
+            assertNotEquals("not-called", recorded, "finalization callback did not fire");
+            assertEquals("undefined", recorded);
+        }
     }
 }
