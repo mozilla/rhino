@@ -932,6 +932,12 @@ public class NativeDateTest {
         timezoneOffset(-540, "JST");
     }
 
+    @Test
+    public void testDateParseIssue2504() {
+        ctorDateTimeString("1770834600000", "String(Date.parse('02/12/26'))");
+        ctorDateTimeString("-2493052200000", "String(Date.parse('01/01/49'))");
+    }
+
     private static void timezoneOffset(final int expected, final String tz) {
         final String js = "new Date(0).getTimezoneOffset()";
         Utils.runWithAllModes(

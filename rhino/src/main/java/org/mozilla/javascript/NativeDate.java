@@ -1407,7 +1407,7 @@ final class NativeDate extends ScriptableObject {
                     if (prevc == '+') /* plus means east of GMT */ n = -n;
                     if (tzoffset != 0 && tzoffset != -1) return ScriptRuntime.NaN;
                     tzoffset = n;
-                } else if (n >= 70 || (prevc == '/' && mon >= 0 && mday >= 0 && year < 0)) {
+                } else if (n >= 70 || (prevc == '/' && mon >= 0 && year < 0)) {
                     if (year >= 0) return ScriptRuntime.NaN;
                     else if (c <= ' ' || c == ',' || c == '/' || i >= limit)
                         year = n < 100 ? n + 1900 : n;
