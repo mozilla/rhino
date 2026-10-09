@@ -697,7 +697,8 @@ public class ClassFileWriter {
     }
 
     /**
-     * Generate the load constant bytecode for the given string.
+     * Generate the load constant bytecode for the given string. A string too long for a single
+     * string constant is loaded as a string concatenation dynamic constant.
      *
      * @param k the constant
      */
@@ -1153,41 +1154,7 @@ public class ClassFileWriter {
      * @param k the constant
      */
     public void addPush(String k) {
-        int length = k.length();
-        int limit = itsConstantPool.getUtfEncodingLimit(k, 0, length);
-        if (limit == length) {
-            addLoadConstant(k);
-            return;
-        }
-        // Split string into picies fitting the UTF limit and generate code for
-        // StringBuilder sb = new StringBuilder(length);
-        // sb.append(loadConstant(piece_1));
-        // ...
-        // sb.append(loadConstant(piece_N));
-        // sb.toString();
-        final String SB = "java/lang/StringBuilder";
-        add(ByteCode.NEW, SB);
-        add(ByteCode.DUP);
-        addPush(length);
-        addInvoke(ByteCode.INVOKESPECIAL, SB, "<init>", "(I)V");
-        int cursor = 0;
-        for (; ; ) {
-            add(ByteCode.DUP);
-            String s = k.substring(cursor, limit);
-            addLoadConstant(s);
-            addInvoke(
-                    ByteCode.INVOKEVIRTUAL,
-                    SB,
-                    "append",
-                    "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-            add(ByteCode.POP);
-            if (limit == length) {
-                break;
-            }
-            cursor = limit;
-            limit = itsConstantPool.getUtfEncodingLimit(k, limit, length);
-        }
-        addInvoke(ByteCode.INVOKEVIRTUAL, SB, "toString", "()Ljava/lang/String;");
+        addLoadConstant(k);
     }
 
     /**

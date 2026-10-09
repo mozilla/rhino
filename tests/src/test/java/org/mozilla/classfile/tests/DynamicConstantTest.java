@@ -7,6 +7,7 @@
 package org.mozilla.classfile.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -505,6 +506,118 @@ public class DynamicConstantTest {
                 () ->
                         ClassFileWriter.describeStringConcatenation(
                                 "a", LONG_DESCRIBER.describe(new LongConstant(1))));
+    }
+
+    @Test
+    public void largeStringIsLoadedAsAConcatenation() throws Exception {
+        // NUL and the euro sign take two and three bytes in modified UTF-8, so the pieces cannot
+        // simply be split by character count.
+        String large = "a\0€".repeat(50_000);
+        ClassFileWriter cfw = writer("TestLargeString");
+        assertFalse(cfw.isUnderStringSizeLimit(large));
+        cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadConstant(large);
+        cfw.add(ByteCode.POP);
+        cfw.addPush(large);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        assertEquals(large, invoke(bytecode, "TestLargeString", "get"));
+        assertEquals(1, ClassFileInfo.parse(bytecode).count(TAG_DYNAMIC));
+    }
+
+    @Test
+    public void veryLargeStringIsLoadedAsATreeOfConcatenations() throws Exception {
+        // Nine pieces are more than one concatenation can take, so a second level is needed.
+        String large = "x".repeat(8 * 65535 + 1);
+        ClassFileWriter cfw = writer("TestVeryLargeString");
+        cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadConstant(large);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        assertEquals(large, invoke(bytecode, "TestVeryLargeString", "get"));
+        assertEquals(2, ClassFileInfo.parse(bytecode).count(TAG_DYNAMIC));
+    }
+
+    @Test
+    public void largeEagerSourceCodeProvider() throws Exception {
+        // Fewer than 65535 characters, but more than 65535 bytes once encoded.
+        String source = "a[€];".repeat(12_000);
+        assertTrue(source.length() < 65535);
+        ClassFileWriter cfw = writer("TestLargeEagerSourceConstant");
+        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(new EagerSourceCodeProvider(source));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        Object resolved = invoke(bytecode, "TestLargeEagerSourceConstant", "get");
+        assertEquals(source, ((EagerSourceCodeProvider) resolved).getRawSource());
+        assertEquals(
+                2,
+                ClassFileInfo.parse(bytecode).count(TAG_DYNAMIC),
+                "the source should be passed as a concatenation");
+    }
+
+    @Test
+    public void largeTemplateLiteralCallSite() throws Exception {
+        String value = "a\0€".repeat(30_000);
+        String raw = "a\\0€".repeat(30_000);
+        ClassFileWriter cfw = writer("TestLargeTemplateLiteralCallSiteConstant");
+        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(
+                new TemplateLiteralCallSite(new Object[] {value}, new String[] {raw}));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        var resolved =
+                (TemplateLiteralCallSite)
+                        invoke(bytecode, "TestLargeTemplateLiteralCallSiteConstant", "get");
+        assertEquals(
+                3,
+                ClassFileInfo.parse(bytecode).count(TAG_DYNAMIC),
+                "the values and raw values should each be passed as a concatenation");
+        try (Context cx = Context.enter()) {
+            Scriptable site = resolved.getSiteObject(cx, cx.initStandardObjects());
+            Scriptable rawSite = (Scriptable) site.get("raw", site);
+            assertEquals(value, site.get(0, site));
+            assertEquals(raw, rawSite.get(0, rawSite));
+        }
+    }
+
+    @Test
+    public void largeRegExpConstant() throws Exception {
+        String source = "€[bc]".repeat(10_000);
+        ClassFileWriter cfw = writer("TestLargeRegExpConstant");
+        RegExpProxy proxy = new RegExpImpl();
+        Object prepared;
+        try (Context cx = Context.enter()) {
+            prepared = proxy.prepareRegExpConstant(cx, source, "g");
+            for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
+                cfw.registerDynamicConstantDescriber(describer);
+            }
+        }
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant((DynamicConstant) prepared);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        Object resolved = invoke(bytecode, "TestLargeRegExpConstant", "get");
+        assertEquals(
+                2,
+                ClassFileInfo.parse(bytecode).count(TAG_DYNAMIC),
+                "the source should be passed as a concatenation");
+        try (Context cx = Context.enter()) {
+            TopLevel scope = cx.initStandardObjects();
+            assertEquals("/" + source + "/g", proxy.wrapRegExp(cx, scope, resolved).toString());
+        }
     }
 
     // ---------------------------------------------------------------- helpers
