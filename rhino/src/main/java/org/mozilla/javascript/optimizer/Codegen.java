@@ -12,6 +12,8 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -504,6 +506,13 @@ public class Codegen implements Evaluator {
         cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
         cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
         cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
+
+        cfw.registerStringConcat(
+            ConstantDescs.ofConstantBootstrap(
+                    ClassDesc.of(StringConcatBootstraps.class.getName()),
+                    "concat",
+                    ConstantDescs.CD_String,
+                    ConstantDescs.CD_String.arrayType()));
     }
 
     private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
