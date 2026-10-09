@@ -9,7 +9,10 @@ import static java.util.Collections.unmodifiableList;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.TemplateLiteralCallSite;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.Undefined;
 
 /**
  * AST node for a Template literal.
@@ -32,6 +35,24 @@ public class TemplateLiteral extends AstNode {
 
     public TemplateLiteral(int pos, int len) {
         super(pos, len);
+    }
+
+    /** Return a template callsite object that represents this literal. */
+    public TemplateLiteralCallSite getLiteralObj() {
+        if (elements == null)
+            return new TemplateLiteralCallSite(new Object[0], new String[0]);
+        List<Object> values = new ArrayList<>();
+        List<String> rawValues = new ArrayList<>();
+
+        for (AstNode e : elements) {
+            if (e.getType() == Token.TEMPLATE_CHARS) {
+                Object val = ((TemplateCharacters) e).getValue();
+                values.add(val == null ? Undefined.instance : val);
+                rawValues.add(((TemplateCharacters) e).getRawValue());
+            }
+        }
+
+        return new TemplateLiteralCallSite(values.toArray(), rawValues.toArray(new String[0]));
     }
 
     /** Returns a list of all literal sections of this template literal */

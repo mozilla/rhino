@@ -256,16 +256,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         int N = scriptOrFn.getTemplateLiteralCount();
         if (N == 0) return;
 
-        Object[] array = new Object[N];
+        TemplateLiteralCallSite[] array = new TemplateLiteralCallSite[N];
         for (int i = 0; i != N; i++) {
-            List<TemplateCharacters> strings = scriptOrFn.getTemplateLiteralStrings(i);
-            int j = 0;
-            String[] values = new String[strings.size() * 2];
-            for (TemplateCharacters s : strings) {
-                values[j++] = s.getValue();
-                values[j++] = s.getRawValue();
-            }
-            array[i] = values;
+            array[i] = scriptOrFn.getTemplateLiteralObj(i);
         }
         itsData.itsTemplateLiterals = array;
     }

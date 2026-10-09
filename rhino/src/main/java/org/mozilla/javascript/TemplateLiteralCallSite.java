@@ -136,4 +136,9 @@ public class TemplateLiteralCallSite implements DynamicConstant {
 
         return siteObj;
     }
+
+    @Override
+    public String toString() {
+        return "TemplateLiteral('" + String.join("','", rawValues) + "')";
+    }
 }

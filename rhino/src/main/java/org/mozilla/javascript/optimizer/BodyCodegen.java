@@ -2023,21 +2023,15 @@ class BodyCodegen {
         // create the template literal call-site object for tagged template literals,
         // default template literals are already handled earlier in IRFactory
         int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        cfw.addLoadDynamicConstant(codegen.getTemplateLiteralConstant(scriptOrFn, index));
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        cfw.add(
-                ByteCode.GETSTATIC,
-                codegen.mainClassName,
-                codegen.getTemplateLiteralName(scriptOrFn),
-                "[Ljava/lang/Object;");
-        cfw.addPush(index);
         cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "getTemplateLiteralCallSite",
+                ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/TemplateLiteralCallSite",
+                "getSiteObject",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/VarScope;"
-                        + "[Ljava/lang/Object;I"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
