@@ -49,7 +49,6 @@ import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.TemplateCharacters;
 import org.mozilla.javascript.config.RhinoConfig;
 import org.mozilla.javascript.debug.DebuggableScript;
 
@@ -213,21 +212,11 @@ public class Codegen implements Evaluator {
             mainClass
                     .getField(DESCRIPTORS_FIELD_NAME)
                     .set(null, descs.toArray(new JSDescriptor[0]));
-            if (compiled.units.get(0).env.hasTemplateLiterals) {
-                mainClass.getMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME).invoke(null);
-            }
             return desc;
-        } catch (InvocationTargetException x) {
-            var cause = x.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            e = x;
         } catch (SecurityException
                 | IllegalArgumentException
                 | IllegalAccessException
-                | NoSuchFieldException
-                | NoSuchMethodException x) {
+                | NoSuchFieldException x) {
             e = x;
         }
         throw new RuntimeException(e);
@@ -591,6 +580,7 @@ public class Codegen implements Evaluator {
         ClassFileWriter mainCfw = cfws[0];
 
         prepareRegExpConstants(cfws, chunkEnvs);
+        prepareTemplateLiterals(cfws, chunkEnvs);
         mainCfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
         mainCfw.addField(
                 DESCRIPTORS_FIELD_NAME,
@@ -632,7 +622,6 @@ public class Codegen implements Evaluator {
             }
         }
 
-        emitTemplateLiteralInit(mainCfw);
         emitConstantDudeInitializers(mainCfw);
 
         byte[][] result = new byte[numChunks][];
@@ -844,89 +833,57 @@ public class Codegen implements Evaluator {
         }
     }
 
+    /**
+     * Compile the regexp literals ahead of time so that they can be written to the class file as
+     * dynamic constants, and register the describers that will write them.
+     *
+     * <p>Preparing them here is what lets the constants be resolved later without a context: the
+     * regexp implementation reports anything wrong with an expression now, while there is still a
+     * script being compiled to report it against.
+     */
+    private void prepareTemplateLiterals(ClassFileWriter[] cfws, MHJSCode.BuilderEnv[] chunkEnvs) {
+        boolean anyTemplateLiterals = false;
+        for (ScriptNode n : scriptOrFnNodes) {
+            if (n.getTemplateLiteralCount() > 0) {
+                anyTemplateLiterals = true;
+                break;
+            }
+        }
+        if (!anyTemplateLiterals) {
+            return;
+        }
+
+        DynamicConstant[][] constants = new DynamicConstant[scriptOrFnNodes.length][];
+        for (int i = 0; i != scriptOrFnNodes.length; ++i) {
+            ScriptNode n = scriptOrFnNodes[i];
+            int tlCount = n.getTemplateLiteralCount();
+            constants[i] = new DynamicConstant[tlCount];
+            for (int j = 0; j != tlCount; ++j) {
+                Object constant = n.getTemplateLiteralObj(j);
+                if (!(constant instanceof DynamicConstant)) {
+                    // This implementation has no constant form, so compile every literal of this
+                    // class at run time rather than mixing the two ways of doing it.
+                    throw new IllegalStateException("");
+                }
+                constants[i][j] = (DynamicConstant) constant;
+            }
+        }
+
+        templateLiteralConstants = constants;
+        // With the literals in the constant pool there is nothing left to initialize.
+        for (MHJSCode.BuilderEnv env : chunkEnvs) {
+            env.hasTemplateLiterals = false;
+        }
+    }
+
     /** The prepared constant for a regexp literal, or null if it is compiled at run time. */
     DynamicConstant getRegExpConstant(ScriptNode n, int regexpIndex) {
         return regExpConstants == null ? null : regExpConstants[getIndex(n)][regexpIndex];
     }
 
-    /**
-     * Overview:
-     *
-     * <pre>
-     * for each fn in functions(script) do
-     *   let field = []
-     *   for each templateLiteral in templateLiterals(fn) do
-     *     let values = concat([[cooked(s), raw(s)] | s <- strings(templateLiteral)])
-     *     field.push(values)
-     *   end
-     *   class[getTemplateLiteralName(fn)] = field
-     * end
-     * </pre>
-     */
-    private void emitTemplateLiteralInit(ClassFileWriter cfw) {
-        // emit all template literals
-
-        int totalTemplateLiteralCount = 0;
-        for (ScriptNode n : scriptOrFnNodes) {
-            totalTemplateLiteralCount += n.getTemplateLiteralCount();
-        }
-
-        cfw.startMethod(
-                TEMPLATE_LITERAL_INIT_METHOD_NAME,
-                TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
-                (short) (ACC_STATIC | ACC_PUBLIC));
-        cfw.addField("_qInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
-
-        cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
-        int doInit = cfw.acquireLabel();
-        cfw.add(ByteCode.IFEQ, doInit);
-        cfw.add(ByteCode.RETURN);
-        cfw.markLabel(doInit);
-
-        // We could apply double-checked locking here but concurrency
-        // shouldn't be a problem in practice
-        for (ScriptNode n : scriptOrFnNodes) {
-            int qCount = n.getTemplateLiteralCount();
-            if (qCount == 0) continue;
-            String qFieldName = getTemplateLiteralName(n);
-            String qFieldType = "[Ljava/lang/Object;";
-            // Public: a body method that ends up in a different (split) chunk class needs to
-            // read this field via a cross-class GETSTATIC.
-            cfw.addField(qFieldName, qFieldType, (short) (ACC_STATIC | ACC_PUBLIC));
-            cfw.addPush(qCount);
-            cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
-            for (int j = 0; j < qCount; ++j) {
-                List<TemplateCharacters> strings = n.getTemplateLiteralStrings(j);
-                cfw.add(ByteCode.DUP);
-                cfw.addPush(j);
-                cfw.addPush(strings.size() * 2);
-                cfw.add(ByteCode.ANEWARRAY, "java/lang/String");
-                int k = 0;
-                for (TemplateCharacters s : strings) {
-                    // cooked value
-                    cfw.add(ByteCode.DUP);
-                    cfw.addPush(k++);
-                    if (s.getValue() != null) {
-                        cfw.addPush(s.getValue());
-                    } else {
-                        cfw.add(ByteCode.ACONST_NULL);
-                    }
-                    cfw.add(ByteCode.AASTORE);
-                    // raw value
-                    cfw.add(ByteCode.DUP);
-                    cfw.addPush(k++);
-                    cfw.addPush(s.getRawValue());
-                    cfw.add(ByteCode.AASTORE);
-                }
-                cfw.add(ByteCode.AASTORE);
-            }
-            cfw.add(ByteCode.PUTSTATIC, mainClassName, qFieldName, qFieldType);
-        }
-
-        cfw.addPush(true);
-        cfw.add(ByteCode.PUTSTATIC, mainClassName, "_qInitDone", "Z");
-        cfw.add(ByteCode.RETURN);
-        cfw.stopMethod(0);
+    /** The prepared constant for a regexp literal, or null if it is compiled at run time. */
+    DynamicConstant getTemplateLiteralConstant(ScriptNode n, int regexpIndex) {
+        return templateLiteralConstants == null ? null : templateLiteralConstants[getIndex(n)][regexpIndex];
     }
 
     private void emitConstantDudeInitializers(ClassFileWriter cfw) {
@@ -1133,14 +1090,6 @@ public class Codegen implements Evaluator {
         return "_i" + getIndex(ofn.fnode);
     }
 
-    String getCompiledRegexpName(ScriptNode n, int regexpIndex) {
-        return "_re" + getIndex(n) + "_" + regexpIndex;
-    }
-
-    String getTemplateLiteralName(ScriptNode n) {
-        return "_q" + getIndex(n);
-    }
-
     static RuntimeException badTree() {
         throw new RuntimeException("Bad tree in codegen");
     }
@@ -1158,11 +1107,6 @@ public class Codegen implements Evaluator {
     static final String DESCRIPTOR_CLASS_SIGNATURE = "Lorg/mozilla/javascript/JSDescriptor;";
     static final String DESCRIPTORS_FIELD_NAME = "_descriptors";
     static final String DESCRIPTORS_FIELD_SIGNATURE = "[" + DESCRIPTOR_CLASS_SIGNATURE;
-
-    static final String REGEXP_INIT_METHOD_SIGNATURE = "(Lorg/mozilla/javascript/Context;)V";
-
-    static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";
-    static final String TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE = "()V";
 
     static final String CODE_INIT_SIGNATURE = "(Lorg/mozilla/javascript/Context;" + ")V";
 
@@ -1209,6 +1153,7 @@ public class Codegen implements Evaluator {
      * the index of the literal, or null when the literals are compiled at run time instead.
      */
     private DynamicConstant[][] regExpConstants;
+    private DynamicConstant[][] templateLiteralConstants;
 
     private double[] itsConstantList;
     private int itsConstantListSize;
