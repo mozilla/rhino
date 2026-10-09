@@ -33,14 +33,18 @@ import org.mozilla.classfile.DynamicConstantDescriber;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.DefiningClassLoader;
 import org.mozilla.javascript.EagerSourceCodeProvider;
+import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.RegExpProxy;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TemplateLiteralCallSite;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.optimizer.EagerSourceCodeProviderDescriber;
 import org.mozilla.javascript.optimizer.StringConcatBootstraps;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
+import org.mozilla.javascript.optimizer.TemplateLiteralCallSiteDescriber;
 import org.mozilla.javascript.optimizer.UndefinedDescriber;
 import org.mozilla.javascript.regexp.RegExpImpl;
 
@@ -377,6 +381,74 @@ public class DynamicConstantTest {
                 ((EagerSourceCodeProvider)
                                 invoke(bytecode, "TestSharedEagerSourceConstants", "get"))
                         .getRawSource());
+    }
+
+    @Test
+    public void templateLiteralCallSiteRoundTripsAwkwardComponents() throws Exception {
+        // Empty strings, undefined, and strings containing the separator and escape characters
+        // must all survive encoding without being confused with one another.
+        Object[] values = {"", Undefined.instance, "\0", "\1", "a\0\1b", "\1\0", ""};
+        String[] raw = {"", "\\u{g}", "\0", "\1", "a\0\1b", "\1\0", ""};
+        ClassFileWriter cfw = writer("TestTemplateLiteralCallSiteConstant");
+        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(new TemplateLiteralCallSite(values, raw));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        var resolved =
+                (TemplateLiteralCallSite) invoke(cfw, "TestTemplateLiteralCallSiteConstant", "get");
+        try (Context cx = Context.enter()) {
+            TopLevel scope = cx.initStandardObjects();
+            Scriptable site = resolved.getSiteObject(cx, scope);
+            Scriptable rawSite = (Scriptable) site.get("raw", site);
+            assertEquals(values.length, ((NativeArray) site).getLength());
+            assertEquals(raw.length, ((NativeArray) rawSite).getLength());
+            for (int i = 0; i < values.length; i++) {
+                assertSame(values[i].getClass(), site.get(i, site).getClass());
+                assertEquals(values[i], site.get(i, site));
+                assertEquals(raw[i], rawSite.get(i, rawSite));
+            }
+        }
+    }
+
+    @Test
+    public void singleEmptyTemplateLiteralCallSite() throws Exception {
+        ClassFileWriter cfw = writer("TestEmptyTemplateLiteralCallSiteConstant");
+        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(
+                new TemplateLiteralCallSite(new Object[] {Undefined.instance}, new String[] {""}));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        var resolved =
+                (TemplateLiteralCallSite)
+                        invoke(cfw, "TestEmptyTemplateLiteralCallSiteConstant", "get");
+        try (Context cx = Context.enter()) {
+            Scriptable site = resolved.getSiteObject(cx, cx.initStandardObjects());
+            Scriptable rawSite = (Scriptable) site.get("raw", site);
+            assertEquals(1L, ((NativeArray) site).getLength());
+            assertSame(Undefined.instance, site.get(0, site));
+            assertEquals("", rawSite.get(0, rawSite));
+        }
+    }
+
+    @Test
+    public void distinctTemplateLiteralCallSitesDoNotShareAConstant() throws Exception {
+        ClassFileWriter cfw = writer("TestDistinctTemplateLiteralCallSites");
+        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadDynamicConstant(
+                new TemplateLiteralCallSite(new Object[] {"a"}, new String[] {"a"}));
+        cfw.add(ByteCode.POP);
+        cfw.addLoadDynamicConstant(
+                new TemplateLiteralCallSite(new Object[] {"a"}, new String[] {"a"}));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        ClassFileInfo info = ClassFileInfo.parse(cfw.toByteArray());
+        assertEquals(2, info.count(TAG_DYNAMIC), "each call site needs its own site object");
     }
 
     @Test
