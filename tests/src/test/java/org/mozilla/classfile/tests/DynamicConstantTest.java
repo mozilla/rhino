@@ -39,6 +39,7 @@ import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.optimizer.EagerSourceCodeProviderDescriber;
+import org.mozilla.javascript.optimizer.StringConcatBootstraps;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
 import org.mozilla.javascript.optimizer.UndefinedDescriber;
 import org.mozilla.javascript.regexp.RegExpImpl;
@@ -445,7 +446,7 @@ public class DynamicConstantTest {
             String className = "TestStringConcatenation" + n;
             ClassFileWriter cfw = writer(className);
             cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
-            cfw.addLoadConstant(ClassFileWriter.describeStringConcatenation(parts));
+            cfw.addLoadConstant(cfw.describeStringConcatenation(parts));
             cfw.add(ByteCode.ARETURN);
             cfw.stopMethod((short) 0);
 
@@ -458,11 +459,11 @@ public class DynamicConstantTest {
         ClassFileWriter cfw = writer("TestNestedStringConcatenation");
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadConstant(
-                ClassFileWriter.describeStringConcatenation(
-                        ClassFileWriter.describeStringConcatenation("a", "b"),
+                cfw.describeStringConcatenation(
+                        cfw.describeStringConcatenation("a", "b"),
                         "",
-                        ClassFileWriter.describeStringConcatenation(
-                                "c", ClassFileWriter.describeStringConcatenation("d", "e"))));
+                        cfw.describeStringConcatenation(
+                                "c", cfw.describeStringConcatenation("d", "e"))));
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) 0);
 
@@ -475,9 +476,9 @@ public class DynamicConstantTest {
     public void equalStringConcatenationsShareAConstant() throws Exception {
         ClassFileWriter cfw = writer("TestSharedStringConcatenation");
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
-        cfw.addLoadConstant(ClassFileWriter.describeStringConcatenation("a", "b"));
+        cfw.addLoadConstant(cfw.describeStringConcatenation("a", "b"));
         cfw.add(ByteCode.POP);
-        cfw.addLoadConstant(ClassFileWriter.describeStringConcatenation("a", "b"));
+        cfw.addLoadConstant(cfw.describeStringConcatenation("a", "b"));
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) 0);
 
@@ -492,20 +493,32 @@ public class DynamicConstantTest {
     public void stringConcatenationRejectsBadParts() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> ClassFileWriter.describeStringConcatenation("a"));
+                () -> {
+                    ClassFileWriter cfw = writer("TestSharedStringConcatenation");
+                    cfw.startMethod(
+                            "get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+                    cfw.describeStringConcatenation("a");
+                    cfw.stopMethod((short) 0);
+                });
         assertThrows(
                 IllegalArgumentException.class,
-                () ->
-                        ClassFileWriter.describeStringConcatenation(
-                                "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+                () -> {
+                    ClassFileWriter cfw = writer("TestSharedStringConcatenation");
+                    cfw.startMethod(
+                            "get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+                    cfw.describeStringConcatenation("a", Integer.valueOf(1));
+                    cfw.stopMethod((short) 0);
+                });
         assertThrows(
                 IllegalArgumentException.class,
-                () -> ClassFileWriter.describeStringConcatenation("a", Integer.valueOf(1)));
-        assertThrows(
-                IllegalArgumentException.class,
-                () ->
-                        ClassFileWriter.describeStringConcatenation(
-                                "a", LONG_DESCRIBER.describe(new LongConstant(1))));
+                () -> {
+                    ClassFileWriter cfw = writer("TestSharedStringConcatenation");
+                    cfw.startMethod(
+                            "get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+                    cfw.describeStringConcatenation(
+                            "a", LONG_DESCRIBER.describe(new LongConstant(1)));
+                    cfw.stopMethod((short) 0);
+                });
     }
 
     @Test
@@ -529,8 +542,8 @@ public class DynamicConstantTest {
 
     @Test
     public void veryLargeStringIsLoadedAsATreeOfConcatenations() throws Exception {
-        // Nine pieces are more than one concatenation can take, so a second level is needed.
-        String large = "x".repeat(8 * 65535 + 1);
+        // Ensure more pieces than we set as our upper limit
+        String large = "x".repeat(ClassFileWriter.MAX_CONCAT_PARTS * 65535 + 1);
         ClassFileWriter cfw = writer("TestVeryLargeString");
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadConstant(large);
@@ -623,7 +636,14 @@ public class DynamicConstantTest {
     // ---------------------------------------------------------------- helpers
 
     private static ClassFileWriter writer(String className) {
-        return new ClassFileWriter(className, "java/lang/Object", "DynamicConstantTest.java");
+        var cfw = new ClassFileWriter(className, "java/lang/Object", "DynamicConstantTest.java");
+        cfw.registerStringConcat(
+            ConstantDescs.ofConstantBootstrap(
+                    ClassDesc.of(StringConcatBootstraps.class.getName()),
+                    "concat",
+                    ConstantDescs.CD_String,
+                ConstantDescs.CD_String.arrayType()));
+        return cfw;
     }
 
     private static Object invoke(ClassFileWriter cfw, String className, String methodName)

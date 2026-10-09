@@ -159,8 +159,8 @@ final class ConstantPool {
         return theIndex;
     }
 
-    private static ConstantDesc concatenation(List<ConstantDesc> parts) {
-        return ClassFileWriter.describeStringConcatenation(parts.toArray(new ConstantDesc[0]));
+    private ConstantDesc concatenation(List<ConstantDesc> parts) {
+        return cfw.describeStringConcatenation(parts.toArray(new ConstantDesc[0]));
     }
 
     int addConstant(Object value) {
