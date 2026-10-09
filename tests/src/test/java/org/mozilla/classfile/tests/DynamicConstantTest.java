@@ -434,6 +434,79 @@ public class DynamicConstantTest {
         assertEquals(2, info.bootstrapMethodCount);
     }
 
+    @Test
+    public void stringConcatenationOfEachArity() throws Exception {
+        for (int n = ClassFileWriter.MIN_CONCAT_PARTS; n <= ClassFileWriter.MAX_CONCAT_PARTS; n++) {
+            String[] parts = new String[n];
+            for (int i = 0; i < n; i++) {
+                parts[i] = "p" + i + ";";
+            }
+            String className = "TestStringConcatenation" + n;
+            ClassFileWriter cfw = writer(className);
+            cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+            cfw.addLoadConstant(ClassFileWriter.describeStringConcatenation(parts));
+            cfw.add(ByteCode.ARETURN);
+            cfw.stopMethod((short) 0);
+
+            assertEquals(String.join("", parts), invoke(cfw, className, "get"));
+        }
+    }
+
+    @Test
+    public void nestedStringConcatenation() throws Exception {
+        ClassFileWriter cfw = writer("TestNestedStringConcatenation");
+        cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadConstant(
+                ClassFileWriter.describeStringConcatenation(
+                        ClassFileWriter.describeStringConcatenation("a", "b"),
+                        "",
+                        ClassFileWriter.describeStringConcatenation(
+                                "c", ClassFileWriter.describeStringConcatenation("d", "e"))));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        assertEquals("abcde", invoke(bytecode, "TestNestedStringConcatenation", "get"));
+        assertEquals(4, ClassFileInfo.parse(bytecode).count(TAG_DYNAMIC));
+    }
+
+    @Test
+    public void equalStringConcatenationsShareAConstant() throws Exception {
+        ClassFileWriter cfw = writer("TestSharedStringConcatenation");
+        cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
+        cfw.addLoadConstant(ClassFileWriter.describeStringConcatenation("a", "b"));
+        cfw.add(ByteCode.POP);
+        cfw.addLoadConstant(ClassFileWriter.describeStringConcatenation("a", "b"));
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short) 0);
+
+        byte[] bytecode = cfw.toByteArray();
+        ClassFileInfo info = ClassFileInfo.parse(bytecode);
+        assertEquals(1, info.count(TAG_DYNAMIC));
+        assertEquals(1, info.bootstrapMethodCount);
+        assertEquals("ab", invoke(bytecode, "TestSharedStringConcatenation", "get"));
+    }
+
+    @Test
+    public void stringConcatenationRejectsBadParts() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ClassFileWriter.describeStringConcatenation("a"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        ClassFileWriter.describeStringConcatenation(
+                                "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ClassFileWriter.describeStringConcatenation("a", Integer.valueOf(1)));
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        ClassFileWriter.describeStringConcatenation(
+                                "a", LONG_DESCRIBER.describe(new LongConstant(1))));
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private static ClassFileWriter writer(String className) {
