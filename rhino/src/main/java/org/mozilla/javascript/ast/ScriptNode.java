@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.mozilla.javascript.Node;
+import org.mozilla.javascript.TemplateLiteralCallSite;
 import org.mozilla.javascript.Token;
 
 /**
@@ -204,6 +205,10 @@ public class ScriptNode extends Scope {
 
     public List<TemplateCharacters> getTemplateLiteralStrings(int index) {
         return templateLiterals.get(index).getTemplateStrings();
+    }
+
+    public TemplateLiteralCallSite getTemplateLiteralObj(int index) {
+        return templateLiterals.get(index).getLiteralObj();
     }
 
     /** Called by IRFactory to add a Template Literal to the templateLiterals table. */

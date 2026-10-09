@@ -209,13 +209,6 @@ public class ClassCompiler {
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
         buildDescriptor(cfw, builder, builder, classes, builders, mainClassName);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);
-        if (builderEnv.hasTemplateLiterals) {
-            cfw.addInvoke(
-                    ByteCode.INVOKESTATIC,
-                    mainClassName,
-                    Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
-                    Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
-        }
         cfw.addLoadConstant(builders.size());
         cfw.add(ByteCode.ANEWARRAY, "org/mozilla/javascript/JSDescriptor");
         for (var b : builders) {
