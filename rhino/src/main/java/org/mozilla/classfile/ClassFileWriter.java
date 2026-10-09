@@ -963,6 +963,10 @@ public class ClassFileWriter {
         itsConstantDescribers.put(describer.describedType(), describer);
     }
 
+    public void registerStringConcat(DirectMethodHandleDesc stringConcatBootStrap) {
+        this.stringConcatBootStrap = stringConcatBootStrap;
+    }
+
     /**
      * Generate the load constant bytecode for the given value, using the describer registered for
      * its type. Both the constant and its bootstrap method are added to the constant pool, and the
@@ -994,7 +998,7 @@ public class ClassFileWriter {
      * @param parts the strings to concatenate
      * @return the description of the concatenated constant
      */
-    public static DynamicConstantDesc<String> describeStringConcatenation(ConstantDesc... parts) {
+    public DynamicConstantDesc<String> describeStringConcatenation(ConstantDesc... parts) {
         if (parts.length < MIN_CONCAT_PARTS || parts.length > MAX_CONCAT_PARTS) {
             throw new IllegalArgumentException(
                     "string concatenation needs between "
@@ -1013,7 +1017,7 @@ public class ClassFileWriter {
             }
         }
         return DynamicConstantDesc.ofNamed(
-                STRING_CONCAT_BOOTSTRAP,
+                stringConcatBootStrap,
                 ConstantDescs.DEFAULT_NAME,
                 ConstantDescs.CD_String,
                 parts);
@@ -4730,14 +4734,7 @@ public class ClassFileWriter {
     private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
 
     public static final int MIN_CONCAT_PARTS = 2;
-    public static final int MAX_CONCAT_PARTS = 8;
-
-    private static final DirectMethodHandleDesc STRING_CONCAT_BOOTSTRAP =
-            ConstantDescs.ofConstantBootstrap(
-                    ClassDesc.of(StringConcatBootstraps.class.getName()),
-                    "concat",
-                    ConstantDescs.CD_String,
-                    ConstantDescs.CD_String.arrayType());
+    public static final int MAX_CONCAT_PARTS = 32;
 
     private int invokeDynamicCount = 0;
 
@@ -4785,6 +4782,8 @@ public class ClassFileWriter {
                     Class<? extends DynamicConstant>,
                     DynamicConstantDescriber<? extends DynamicConstant>>
             itsConstantDescribers = new HashMap<>();
+
+    private DirectMethodHandleDesc stringConcatBootStrap;
 
     private char[] tmpCharBuffer = new char[64];
 }

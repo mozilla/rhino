@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.classfile;
+package org.mozilla.javascript.optimizer;
 
 import java.lang.invoke.MethodHandles;
 
@@ -13,8 +13,6 @@ import java.lang.invoke.MethodHandles;
  * CONSTANT_String}. See {@link ClassFileWriter#describeStringConcatenation}.
  */
 public final class StringConcatBootstraps {
-    private StringConcatBootstraps() {}
-
     public static String concat(
             MethodHandles.Lookup lookup, String name, Class<?> type, String... parts) {
         return String.join("", parts);
