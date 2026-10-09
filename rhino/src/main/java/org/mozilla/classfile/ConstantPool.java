@@ -11,7 +11,9 @@ import java.lang.constant.ConstantDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodTypeDesc;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 final class ConstantPool {
     ConstantPool(ClassFileWriter cfw) {
@@ -110,6 +112,9 @@ final class ConstantPool {
     }
 
     int addConstant(String k) {
+        if (!isUnderUtfEncodingLimit(k)) {
+            return addLargeString(k);
+        }
         int utf8Index = addUtf8(k);
         int theIndex = itsStringConstHash.getOrDefault(utf8Index, -1);
         if (theIndex == -1) {
@@ -121,6 +126,41 @@ final class ConstantPool {
             itsPoolTypes.put(theIndex, CONSTANT_String);
         }
         return theIndex;
+    }
+
+    /**
+     * Add a string too long for a single {@code CONSTANT_String}. It is split into pieces that do
+     * fit, which are joined back together by a tree of string concatenation dynamic constants.
+     */
+    private int addLargeString(String k) {
+        int theIndex = itsLargeStringHash.getOrDefault(k, -1);
+        if (theIndex == -1) {
+            List<ConstantDesc> parts = new ArrayList<>();
+            int length = k.length();
+            for (int start = 0; start < length; ) {
+                int end = getUtfEncodingLimit(k, start, length);
+                parts.add(k.substring(start, end));
+                start = end;
+            }
+            while (parts.size() > ClassFileWriter.MAX_CONCAT_PARTS) {
+                List<ConstantDesc> grouped = new ArrayList<>();
+                for (int i = 0; i < parts.size(); i += ClassFileWriter.MAX_CONCAT_PARTS) {
+                    List<ConstantDesc> group =
+                            parts.subList(
+                                    i,
+                                    Math.min(i + ClassFileWriter.MAX_CONCAT_PARTS, parts.size()));
+                    grouped.add(group.size() == 1 ? group.get(0) : concatenation(group));
+                }
+                parts = grouped;
+            }
+            theIndex = addConstantDesc(concatenation(parts));
+            itsLargeStringHash.put(k, theIndex);
+        }
+        return theIndex;
+    }
+
+    private static ConstantDesc concatenation(List<ConstantDesc> parts) {
+        return ClassFileWriter.describeStringConcatenation(parts.toArray(new ConstantDesc[0]));
     }
 
     int addConstant(Object value) {
@@ -499,6 +539,7 @@ final class ConstantPool {
 
     private final HashMap<Integer, Integer> itsStringConstHash = new HashMap<>();
     private final HashMap<String, Integer> itsUtf8Hash = new HashMap<>();
+    private final HashMap<String, Integer> itsLargeStringHash = new HashMap<>();
     private final HashMap<FieldOrMethodRef, Integer> itsFieldRefHash = new HashMap<>();
     private final HashMap<FieldOrMethodRef, Integer> itsMethodRefHash = new HashMap<>();
     private final HashMap<FieldOrMethodRef, Integer> itsInterfaceMethodRefHash = new HashMap<>();
