@@ -99,7 +99,11 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
         int varCount = desc.getParamAndVarCount();
         for (int i = 0; i < varCount; i++) {
             if (desc.getParamOrVarConst(i)) {
-                this.stackAttributes[i] = (byte) ScriptableObject.CONST;
+                this.stackAttributes[i] =
+                        (byte)
+                                ((cx.getLanguageVersion() >= Context.VERSION_ES6)
+                                        ? ScriptableObject.CONST
+                                        : ScriptableObject.LEGACY_CONST);
             }
         }
         int definedArgs = desc.getParamCount();
@@ -299,6 +303,10 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
 
     public void setVarAttribute(int index, int attributes) {
         varSource.stackAttributes[index] &= (byte) ~attributes;
+    }
+
+    public void resetVarAttributes(int index, int attributes) {
+        varSource.stackAttributes[index] = (byte) attributes;
     }
 
     public Object getLocal(int index) {

@@ -250,7 +250,26 @@ public class Token {
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
-            LAST_TOKEN = OBJECT_REST + 1;
+            // Unconditional initialization of a block-scoped const slot. Unlike SETCONSTVAR it
+            // always stores, so a declaration reached more than once (a loop body) re-binds.
+            INITCONSTVAR = OBJECT_REST + 1,
+            // Restores a flattened block-scoped slot to its state on block entry: undefined,
+            // and uninitialized again if the slot holds a const.
+            RESETVAR = INITCONSTVAR + 1,
+            // Marks the point in a loop at which a new iteration, and so a new lexical
+            // environment for the loop's own bindings, begins. The environment carries the
+            // values the previous iteration left in it, as a "for (let i = ...; ...)" head
+            // does. NodeTransformer rewrites it according to whether that environment is
+            // reified, so it never reaches a back end.
+            ITERATION = RESETVAR + 1,
+            // Like ITERATION, but the new environment declares its bindings afresh rather than
+            // inheriting the previous iteration's, as a for-in/of head does. Carries the names
+            // to declare in OBJECT_IDS_PROP and their const flags in CONST_IDS_PROP.
+            ITERATION_SCOPE = ITERATION + 1,
+            // Replaces the current block scope with a fresh copy of itself, so that the bindings
+            // the next loop iteration sees are distinct from the ones it leaves behind.
+            SCOPE_REPLACE = ITERATION_SCOPE + 1,
+            LAST_TOKEN = SCOPE_REPLACE + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -625,6 +644,16 @@ public class Token {
                 return "SETCONST";
             case SETCONSTVAR:
                 return "SETCONSTVAR";
+            case INITCONSTVAR:
+                return "INITCONSTVAR";
+            case RESETVAR:
+                return "RESETVAR";
+            case ITERATION:
+                return "ITERATION";
+            case ITERATION_SCOPE:
+                return "ITERATION_SCOPE";
+            case SCOPE_REPLACE:
+                return "SCOPE_REPLACE";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:

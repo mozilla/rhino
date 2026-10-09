@@ -353,6 +353,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 }
                 break;
 
+            case Token.RESETVAR:
+                {
+                    if (builder.requiresActivationFrame) Kit.codeBug();
+                    addVarOp(Token.RESETVAR, scriptOrFn.getIndexForNameNode(child));
+                }
+                break;
+
             case Token.ENTERWITH:
                 visitExpression(child, 0);
                 addToken(Token.ENTERWITH);
@@ -365,6 +372,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
 
             case Token.LEAVE_SCOPE:
                 addToken(Token.LEAVE_SCOPE);
+                break;
+
+            case Token.SCOPE_REPLACE:
+                addIcode(Icode.SCOPE_REPLACE);
                 break;
 
             case Token.LOCAL_BLOCK:
@@ -592,14 +603,21 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         addToken(Token.ENTER_SCOPE);
         stackChange(1);
         Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
+        boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
         int i = 0;
         while (child != null) {
-            addIcode(Icode.DUP);
-            stackChange(1);
-            visitExpression(child, 0);
-            addStringOp(Token.SETNAME, (String) names[i]);
-            addIcode(Icode.POP);
-            stackChange(-2);
+            if (consts != null && consts[i]) {
+                // The declaration in the body of the scope initializes this one,
+                // so there is no initializer to evaluate here.
+                addStringOp(Icode.DEF_CONST, (String) names[i]);
+            } else {
+                addIcode(Icode.DUP);
+                stackChange(1);
+                visitExpression(child, 0);
+                addStringOp(Token.SETNAME, (String) names[i]);
+                addIcode(Icode.POP);
+                stackChange(-2);
+            }
             child = child.getNext();
             i++;
         }
@@ -1093,12 +1111,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 break;
 
             case Token.SETCONSTVAR:
+            case Token.INITCONSTVAR:
                 {
                     if (builder.requiresActivationFrame) Kit.codeBug();
                     int index = scriptOrFn.getIndexForNameNode(child);
                     child = child.getNext();
                     visitExpression(child, 0);
-                    addVarOp(Token.SETCONSTVAR, index);
+                    addVarOp(type, index);
                 }
                 break;
 
@@ -1913,6 +1932,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     return;
                 }
                 addIndexOp(Icode.SETCONSTVAR, varIndex);
+                return;
+            case Token.INITCONSTVAR:
+                addIndexOp(Icode.INITCONSTVAR, varIndex);
+                return;
+            case Token.RESETVAR:
+                addIndexOp(Icode.RESETVAR, varIndex);
                 return;
             case Token.GETVAR:
             case Token.SETVAR:

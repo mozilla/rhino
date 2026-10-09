@@ -17,6 +17,10 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
         super(capacity);
     }
 
+    protected ThreadSafeEmbeddedSlotMap(ThreadSafeEmbeddedSlotMap<T> other) {
+        super(other);
+    }
+
     @Override
     public int size() {
         long stamp = lock.tryOptimisticRead();
@@ -159,5 +163,15 @@ class ThreadSafeEmbeddedSlotMap<T extends PropHolder<T>> extends EmbeddedSlotMap
         var newMap = new ThreadSafeHashSlotMap<>(lock, this, newSlot);
         owner.setMap(newMap);
         current = newMap;
+    }
+
+    @Override
+    public SlotMap<T> copyMap() {
+        long stamp = lock.readLock();
+        try {
+            return new ThreadSafeEmbeddedSlotMap<>(this);
+        } finally {
+            lock.unlockRead(stamp);
+        }
     }
 }

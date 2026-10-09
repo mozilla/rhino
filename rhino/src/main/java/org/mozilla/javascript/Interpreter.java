@@ -740,6 +740,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Icode.NAME_INC_DEC] = new DoNameIncDec();
         instructionObjs[base + Icode.SETCONSTVAR1] = new DoSetConstVar1();
         instructionObjs[base + Icode.SETCONSTVAR] = new DoSetConstVar();
+        instructionObjs[base + Icode.INITCONSTVAR] = new DoInitConstVar();
+        instructionObjs[base + Icode.RESETVAR] = new DoResetVar();
         instructionObjs[base + Icode.SETVAR1] = new DoSetVar1();
         instructionObjs[base + Token.SETVAR] = new DoSetVar();
         instructionObjs[base + Icode.GETVAR1] = new DoGetVar1();
@@ -758,6 +760,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
         instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
         instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
+        instructionObjs[base + Icode.DEF_CONST] = new DoDefConst();
+        instructionObjs[base + Icode.SCOPE_REPLACE] = new DoScopeReplace();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
         instructionObjs[base + Token.ENUM_INIT_VALUES] = new DoEnumInit();
@@ -3101,6 +3105,10 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
+            } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             return null;
         }
@@ -3128,6 +3136,40 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
+            } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
+            return null;
+        }
+    }
+
+    private static class DoInitConstVar extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            var varAttributes = frame.varSource.stackAttributes;
+            var vars = frame.varSource.stack;
+            var varDbls = frame.varSource.doubleStack;
+            if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
+                throw Context.reportRuntimeErrorById(
+                        "msg.var.redecl",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
+            vars[state.indexReg] = frame.stack[frame.stackTop];
+            varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+            varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
+            return null;
+        }
+    }
+
+    private static class DoResetVar extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            var varAttributes = frame.varSource.stackAttributes;
+            frame.varSource.stack[state.indexReg] = Undefined.instance;
+            if (frame.fnOrScript.getDescriptor().getParamOrVarConst(state.indexReg)) {
+                varAttributes[state.indexReg] = ScriptableObject.CONST;
             }
             return null;
         }
@@ -3140,6 +3182,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
+            if ((varAttributes[state.indexReg] & ScriptableObject.STRICTLY_READONLY) != 0) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.modify.readonly",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
             if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
@@ -3161,6 +3208,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
+            if ((varAttributes[state.indexReg] & ScriptableObject.STRICTLY_READONLY) != 0) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.modify.readonly",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
             if ((varAttributes[state.indexReg] & ScriptableObject.READONLY) == 0) {
                 vars[state.indexReg] = frame.stack[frame.stackTop];
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
@@ -3207,6 +3259,11 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             var varAttributes = frame.varSource.stackAttributes;
             var vars = frame.varSource.stack;
             var varDbls = frame.varSource.doubleStack;
+            if ((varAttributes[state.indexReg] & ScriptableObject.STRICTLY_READONLY) != 0) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.modify.readonly",
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
             // indexReg : varindex
             ++frame.stackTop;
             int incrDecrMask = frame.compilerData.itsICode[frame.pc];
@@ -3396,6 +3453,22 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.scope = ScriptRuntime.leaveScope(frame.scope);
+            return null;
+        }
+    }
+
+    private static class DoDefConst extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            ScriptRuntime.defineConst(cx, frame.scope, state.stringReg);
+            return null;
+        }
+    }
+
+    private static class DoScopeReplace extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope = ScriptRuntime.replaceScope(frame.scope);
             return null;
         }
     }
