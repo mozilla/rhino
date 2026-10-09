@@ -505,6 +505,7 @@ public class Codegen implements Evaluator {
         cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
         cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
         cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
+        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
 
         cfw.registerStringConcat(
             ConstantDescs.ofConstantBootstrap(
