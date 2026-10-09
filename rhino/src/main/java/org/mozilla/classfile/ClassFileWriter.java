@@ -984,6 +984,53 @@ public class ClassFileWriter {
         addLoadConstant(describer.describe(constant));
     }
 
+    /**
+     * Describe a string constant that is the concatenation of between {@value #MIN_CONCAT_PARTS}
+     * and {@value #MAX_CONCAT_PARTS} parts. Each part is either a {@code String} or the description
+     * of another string constant, such as one returned by this method, so a string of any length
+     * can be described as a tree of these constants.
+     *
+     * @param parts the strings to concatenate
+     * @return the description of the concatenated constant
+     */
+    public static DynamicConstantDesc<String> describeStringConcatenation(ConstantDesc... parts) {
+        if (parts.length < MIN_CONCAT_PARTS || parts.length > MAX_CONCAT_PARTS) {
+            throw new IllegalArgumentException(
+                    "string concatenation needs between "
+                            + MIN_CONCAT_PARTS
+                            + " and "
+                            + MAX_CONCAT_PARTS
+                            + " parts, not "
+                            + parts.length);
+        }
+        for (ConstantDesc part : parts) {
+            if (!(part instanceof String
+                    || (part instanceof DynamicConstantDesc
+                            && ConstantDescs.CD_String.equals(
+                                    ((DynamicConstantDesc<?>) part).constantType())))) {
+                throw new IllegalArgumentException("not a string constant: " + part);
+            }
+        }
+        return DynamicConstantDesc.ofNamed(
+                STRING_CONCAT_BOOTSTRAP,
+                ConstantDescs.DEFAULT_NAME,
+                ConstantDescs.CD_String,
+                parts);
+    }
+
+    /**
+     * Generate the load constant bytecode for the given dynamic constant, such as one returned by
+     * {@link #describeStringConcatenation}.
+     *
+     * @param desc the constant
+     */
+    public void addLoadConstant(DynamicConstantDesc<?> desc) {
+        if (MajorVersion < 55) {
+            throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
+        }
+        addLoadConstant((ConstantDesc) desc);
+    }
+
     /** Generate the load constant bytecode for an already described constant. */
     void addLoadConstant(ConstantDesc desc) {
         int index = itsConstantPool.addConstantDesc(desc) & 0xffff;
@@ -4714,6 +4761,16 @@ public class ClassFileWriter {
     private static final boolean DEBUGCODEORIGINS =
             RhinoConfig.get("rhino.cfw.debugCallers", false);
     private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
+
+    public static final int MIN_CONCAT_PARTS = 2;
+    public static final int MAX_CONCAT_PARTS = 8;
+
+    private static final DirectMethodHandleDesc STRING_CONCAT_BOOTSTRAP =
+            ConstantDescs.ofConstantBootstrap(
+                    ClassDesc.of(StringConcatBootstraps.class.getName()),
+                    "concat",
+                    ConstantDescs.CD_String,
+                    ConstantDescs.CD_String.arrayType());
 
     private int invokeDynamicCount = 0;
 
