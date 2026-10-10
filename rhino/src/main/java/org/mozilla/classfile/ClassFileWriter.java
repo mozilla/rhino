@@ -1017,10 +1017,7 @@ public class ClassFileWriter {
             }
         }
         return DynamicConstantDesc.ofNamed(
-                stringConcatBootStrap,
-                ConstantDescs.DEFAULT_NAME,
-                ConstantDescs.CD_String,
-                parts);
+                stringConcatBootStrap, ConstantDescs.DEFAULT_NAME, ConstantDescs.CD_String, parts);
     }
 
     /**
