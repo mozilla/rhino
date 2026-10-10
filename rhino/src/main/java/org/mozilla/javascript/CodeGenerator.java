@@ -10,13 +10,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.mozilla.javascript.InstrumentEmitter.Type;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.TemplateCharacters;
 import org.mozilla.javascript.sourcemap.Position;
 import org.mozilla.javascript.sourcemap.SourceMapper;
 
@@ -256,16 +254,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         int N = scriptOrFn.getTemplateLiteralCount();
         if (N == 0) return;
 
-        Object[] array = new Object[N];
+        TemplateLiteralCallSite[] array = new TemplateLiteralCallSite[N];
         for (int i = 0; i != N; i++) {
-            List<TemplateCharacters> strings = scriptOrFn.getTemplateLiteralStrings(i);
-            int j = 0;
-            String[] values = new String[strings.size() * 2];
-            for (TemplateCharacters s : strings) {
-                values[j++] = s.getValue();
-                values[j++] = s.getRawValue();
-            }
-            array[i] = values;
+            array[i] = scriptOrFn.getTemplateLiteralObj(i);
         }
         itsData.itsTemplateLiterals = array;
     }

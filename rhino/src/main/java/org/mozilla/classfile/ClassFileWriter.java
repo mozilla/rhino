@@ -10,9 +10,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.StackWalker.Option;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DynamicConstantDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.config.RhinoConfig;
 
@@ -691,7 +697,8 @@ public class ClassFileWriter {
     }
 
     /**
-     * Generate the load constant bytecode for the given string.
+     * Generate the load constant bytecode for the given string. A string too long for a single
+     * string constant is loaded as a string concatenation dynamic constant.
      *
      * @param k the constant
      */
@@ -927,17 +934,7 @@ public class ClassFileWriter {
         int newStack = itsStackTop + stackDiff;
         if (newStack < 0 || Short.MAX_VALUE < newStack) badStack(newStack);
 
-        BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
-
-        if (itsBootstrapMethods == null) {
-            itsBootstrapMethods = new ArrayList<>();
-        }
-        int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
-        if (bootstrapIndex == -1) {
-            bootstrapIndex = itsBootstrapMethods.size();
-            itsBootstrapMethods.add(bsmEntry);
-            itsBootstrapMethodsLength += bsmEntry.code.length;
-        }
+        int bootstrapIndex = getBootstrapMethodIndex(bsm, bsmArgs);
 
         int invokedynamicIndex =
                 itsConstantPool.addInvokeDynamic(methodName, methodType, bootstrapIndex);
@@ -951,6 +948,141 @@ public class ClassFileWriter {
         if (DEBUGSTACK) {
             System.err.println("After invokedynamic stack = " + itsStackTop);
         }
+    }
+
+    /**
+     * Register a describer that this writer will use to turn values of {@link
+     * DynamicConstantDescriber#describedType} into dynamic constants.
+     *
+     * <p>A value is matched to a describer by walking up its superclasses, so a describer also
+     * covers the subclasses of its type. Describers must therefore be keyed on a class rather than
+     * on an interface.
+     */
+    public <T extends DynamicConstant> void registerDynamicConstantDescriber(
+            DynamicConstantDescriber<T> describer) {
+        itsConstantDescribers.put(describer.describedType(), describer);
+    }
+
+    public void registerStringConcat(DirectMethodHandleDesc stringConcatBootStrap) {
+        this.stringConcatBootStrap = stringConcatBootStrap;
+    }
+
+    /**
+     * Generate the load constant bytecode for the given value, using the describer registered for
+     * its type. Both the constant and its bootstrap method are added to the constant pool, and the
+     * bootstrap method is shared with any invokedynamic instruction using the same one.
+     *
+     * @param constant the constant
+     */
+    public <T extends DynamicConstant> void addLoadDynamicConstant(T constant) {
+        // Class file version 55 is required for CONSTANT_Dynamic
+        if (MajorVersion < 55) {
+            throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
+        }
+
+        @SuppressWarnings("unchecked")
+        var type = (Class<T>) constant.getClass();
+        var describer = (DynamicConstantDescriber<T>) findConstantDescriber(type);
+        if (describer == null) {
+            throw new IllegalArgumentException("no dynamic constant describer for " + type);
+        }
+        addLoadConstant(describer.describe(constant));
+    }
+
+    /**
+     * Describe a string constant that is the concatenation of between {@value #MIN_CONCAT_PARTS}
+     * and {@value #MAX_CONCAT_PARTS} parts. Each part is either a {@code String} or the description
+     * of another string constant, such as one returned by this method, so a string of any length
+     * can be described as a tree of these constants.
+     *
+     * @param parts the strings to concatenate
+     * @return the description of the concatenated constant
+     */
+    public DynamicConstantDesc<String> describeStringConcatenation(ConstantDesc... parts) {
+        if (parts.length < MIN_CONCAT_PARTS || parts.length > MAX_CONCAT_PARTS) {
+            throw new IllegalArgumentException(
+                    "string concatenation needs between "
+                            + MIN_CONCAT_PARTS
+                            + " and "
+                            + MAX_CONCAT_PARTS
+                            + " parts, not "
+                            + parts.length);
+        }
+        for (ConstantDesc part : parts) {
+            if (!(part instanceof String
+                    || (part instanceof DynamicConstantDesc
+                            && ConstantDescs.CD_String.equals(
+                                    ((DynamicConstantDesc<?>) part).constantType())))) {
+                throw new IllegalArgumentException("not a string constant: " + part);
+            }
+        }
+        return DynamicConstantDesc.ofNamed(
+                stringConcatBootStrap, ConstantDescs.DEFAULT_NAME, ConstantDescs.CD_String, parts);
+    }
+
+    /**
+     * Generate the load constant bytecode for the given dynamic constant, such as one returned by
+     * {@link #describeStringConcatenation}.
+     *
+     * @param desc the constant
+     */
+    public void addLoadConstant(DynamicConstantDesc<?> desc) {
+        if (MajorVersion < 55) {
+            throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
+        }
+        addLoadConstant((ConstantDesc) desc);
+    }
+
+    /** Generate the load constant bytecode for an already described constant. */
+    void addLoadConstant(ConstantDesc desc) {
+        int index = itsConstantPool.addConstantDesc(desc) & 0xffff;
+        add(isTwoWordConstant(desc) ? ByteCode.LDC2_W : ByteCode.LDC, index);
+    }
+
+    /**
+     * Whether an "ldc" of the given constant pushes two words, and so must use "ldc2_w". Only
+     * dynamic constants can vary here; every other kind of description we can write is either
+     * always one word or has its own dedicated addLoadConstant overload.
+     */
+    private static boolean isTwoWordConstant(ConstantDesc desc) {
+        if (desc instanceof DynamicConstantDesc) {
+            ClassDesc type = ((DynamicConstantDesc<?>) desc).constantType();
+            return ConstantDescs.CD_long.equals(type) || ConstantDescs.CD_double.equals(type);
+        }
+        return desc instanceof Long || desc instanceof Double;
+    }
+
+    /** Find the describer registered for a type. */
+    private <T extends DynamicConstant> DynamicConstantDescriber<T> findConstantDescriber(
+            Class<T> type) {
+        @SuppressWarnings("unchecked")
+        var res = (DynamicConstantDescriber<T>) itsConstantDescribers.get(type);
+        return res;
+    }
+
+    /**
+     * The index in the BootstrapMethods attribute of the given bootstrap method, adding it if it is
+     * not already present. The attribute is shared between invokedynamic instructions and dynamic
+     * constants.
+     */
+    int getBootstrapMethodIndex(MHandle bsm, Object... bsmArgs) {
+        BootstrapEntry bsmEntry = new BootstrapEntry(bsm, bsmArgs);
+
+        if (itsBootstrapMethods == null) {
+            itsBootstrapMethods = new ArrayList<>();
+        }
+        int bootstrapIndex = itsBootstrapMethods.indexOf(bsmEntry);
+        if (bootstrapIndex == -1) {
+            bootstrapIndex = itsBootstrapMethods.size();
+            itsBootstrapMethods.add(bsmEntry);
+            itsBootstrapMethodsLength += bsmEntry.code.length;
+        }
+        return bootstrapIndex;
+    }
+
+    int getBootstrapMethodIndex(DynamicConstantDesc<?> desc) {
+        DirectMethodHandleDesc bsm = desc.bootstrapMethod();
+        return getBootstrapMethodIndex(MHandle.of(bsm), (Object[]) desc.bootstrapArgs());
     }
 
     /**
@@ -1023,41 +1155,7 @@ public class ClassFileWriter {
      * @param k the constant
      */
     public void addPush(String k) {
-        int length = k.length();
-        int limit = itsConstantPool.getUtfEncodingLimit(k, 0, length);
-        if (limit == length) {
-            addLoadConstant(k);
-            return;
-        }
-        // Split string into picies fitting the UTF limit and generate code for
-        // StringBuilder sb = new StringBuilder(length);
-        // sb.append(loadConstant(piece_1));
-        // ...
-        // sb.append(loadConstant(piece_N));
-        // sb.toString();
-        final String SB = "java/lang/StringBuilder";
-        add(ByteCode.NEW, SB);
-        add(ByteCode.DUP);
-        addPush(length);
-        addInvoke(ByteCode.INVOKESPECIAL, SB, "<init>", "(I)V");
-        int cursor = 0;
-        for (; ; ) {
-            add(ByteCode.DUP);
-            String s = k.substring(cursor, limit);
-            addLoadConstant(s);
-            addInvoke(
-                    ByteCode.INVOKEVIRTUAL,
-                    SB,
-                    "append",
-                    "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-            add(ByteCode.POP);
-            if (limit == length) {
-                break;
-            }
-            cursor = limit;
-            limit = itsConstantPool.getUtfEncodingLimit(k, limit, length);
-        }
-        addInvoke(ByteCode.INVOKEVIRTUAL, SB, "toString", "()Ljava/lang/String;");
+        addLoadConstant(k);
     }
 
     /**
@@ -2222,6 +2320,14 @@ public class ClassFileWriter {
                         case ConstantPool.CONSTANT_Class:
                             push(TypeInfo.OBJECT("java/lang/Class", itsConstantPool));
                             break;
+                        case ConstantPool.CONSTANT_Dynamic:
+                            String constDescriptor =
+                                    (String) itsConstantPool.getConstantData(index);
+                            push(
+                                    TypeInfo.fromType(
+                                            descriptorToInternalName(constDescriptor),
+                                            itsConstantPool));
+                            break;
                         default:
                             throw new IllegalArgumentException("bad const type " + constType);
                     }
@@ -2703,7 +2809,7 @@ public class ClassFileWriter {
      *
      * <p>For example, descriptor Ljava/lang/Object; becomes java/lang/Object.
      */
-    private static String classDescriptorToInternalName(String descriptor) {
+    static String classDescriptorToInternalName(String descriptor) {
         return descriptor.substring(1, descriptor.length() - 1);
     }
 
@@ -4545,12 +4651,35 @@ public class ClassFileWriter {
         final String owner;
         final String name;
         final String desc;
+        final boolean isInterface;
 
         public MHandle(byte tag, String owner, String name, String desc) {
+            this(tag, owner, name, desc, false);
+        }
+
+        /**
+         * @param isInterface whether the owner is an interface. This must be set for the static and
+         *     special reference kinds, whose tags do not otherwise distinguish an interface owner,
+         *     so that the handle refers to a CONSTANT_InterfaceMethodref.
+         */
+        public MHandle(byte tag, String owner, String name, String desc, boolean isInterface) {
             this.tag = tag;
             this.owner = owner;
             this.name = name;
             this.desc = desc;
+            this.isInterface = isInterface;
+        }
+
+        /** Convert a {@code java.lang.constant} method handle description into a handle. */
+        static MHandle of(DirectMethodHandleDesc desc) {
+            // Kind.refKind is the JVMS reference kind, which is exactly what ByteCode.MH_*
+            // holds, so the tag needs no translation.
+            return new MHandle(
+                    (byte) desc.kind().refKind,
+                    classDescriptorToInternalName(desc.owner().descriptorString()),
+                    desc.methodName(),
+                    desc.lookupDescriptor(),
+                    desc.isOwnerInterface());
         }
 
         @Override
@@ -4563,6 +4692,7 @@ public class ClassFileWriter {
             }
             MHandle mh = (MHandle) obj;
             return tag == mh.tag
+                    && isInterface == mh.isInterface
                     && owner.equals(mh.owner)
                     && name.equals(mh.name)
                     && desc.equals(mh.desc);
@@ -4599,6 +4729,9 @@ public class ClassFileWriter {
     private static final boolean DEBUGCODEORIGINS =
             RhinoConfig.get("rhino.cfw.debugCallers", false);
     private static final boolean DEBUGMETHODS = RhinoConfig.get("rhino.cfw.debugMethods", false);
+
+    public static final int MIN_CONCAT_PARTS = 2;
+    public static final int MAX_CONCAT_PARTS = 32;
 
     private int invokeDynamicCount = 0;
 
@@ -4642,6 +4775,12 @@ public class ClassFileWriter {
     private ArrayList<int[]> itsVarDescriptors;
     private ArrayList<BootstrapEntry> itsBootstrapMethods;
     private int itsBootstrapMethodsLength = 0;
+    private final Map<
+                    Class<? extends DynamicConstant>,
+                    DynamicConstantDescriber<? extends DynamicConstant>>
+            itsConstantDescribers = new HashMap<>();
+
+    private DirectMethodHandleDesc stringConcatBootStrap;
 
     private char[] tmpCharBuffer = new char[64];
 }

@@ -6045,39 +6045,6 @@ public class ScriptRuntime {
         return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
     }
 
-    public static Scriptable getTemplateLiteralCallSite(
-            Context cx, VarScope scope, Object[] strings, int index) {
-        Object callsite = strings[index];
-
-        if (callsite instanceof Scriptable) return (Scriptable) callsite;
-
-        assert callsite instanceof String[];
-        String[] vals = (String[]) callsite;
-        assert (vals.length & 1) == 0;
-
-        ScriptableObject siteObj = (ScriptableObject) cx.newArray(scope, vals.length >>> 1);
-        ScriptableObject rawObj = (ScriptableObject) cx.newArray(scope, vals.length >>> 1);
-
-        siteObj.put("raw", siteObj, rawObj);
-        siteObj.setAttributes("raw", ScriptableObject.DONTENUM);
-
-        for (int i = 0, n = vals.length; i < n; i += 2) {
-            int idx = i >>> 1;
-            siteObj.put(idx, siteObj, (vals[i] == null ? Undefined.instance : vals[i]));
-
-            rawObj.put(idx, rawObj, vals[i + 1]);
-        }
-
-        AbstractEcmaObjectOperations.setIntegrityLevel(
-                cx, rawObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
-        AbstractEcmaObjectOperations.setIntegrityLevel(
-                cx, siteObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
-
-        strings[index] = siteObj;
-
-        return siteObj;
-    }
-
     private static XMLLib currentXMLLib(Context cx) {
         // Scripts should be running to access this
         if (cx.topCallScope == null) throw new IllegalStateException();

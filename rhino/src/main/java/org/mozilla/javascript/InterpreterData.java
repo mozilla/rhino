@@ -26,7 +26,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
             double[] itsDoubleTable,
             BigInteger[] itsBigIntTable,
             Object[] itsRegExpLiterals,
-            Object[] itsTemplateLiterals,
+            TemplateLiteralCallSite[] itsTemplateLiterals,
             byte[] itsICode,
             int[] exceptionTable,
             int maxVars,
@@ -54,7 +54,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
     final double[] itsDoubleTable;
     final BigInteger[] itsBigIntTable;
     final Object[] itsRegExpLiterals;
-    final Object[] itsTemplateLiterals;
+    final TemplateLiteralCallSite[] itsTemplateLiterals;
 
     final byte[] itsICode;
 
@@ -118,7 +118,7 @@ final class InterpreterData<T extends ScriptOrFn<T>> extends ACompilerData<T, In
         double[] itsDoubleTable;
         BigInteger[] itsBigIntTable;
         Object[] itsRegExpLiterals;
-        Object[] itsTemplateLiterals;
+        TemplateLiteralCallSite[] itsTemplateLiterals;
 
         byte[] itsICode;
 

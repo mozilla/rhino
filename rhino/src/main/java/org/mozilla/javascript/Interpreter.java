@@ -3625,10 +3625,9 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoTemplateLiteralCallSite extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            Object[] templateLiterals = frame.compilerData.itsTemplateLiterals;
-            frame.stack[++frame.stackTop] =
-                    ScriptRuntime.getTemplateLiteralCallSite(
-                            cx, frame.scope, templateLiterals, state.indexReg);
+            TemplateLiteralCallSite templateLiteral =
+                    frame.compilerData.itsTemplateLiterals[state.indexReg];
+            frame.stack[++frame.stackTop] = templateLiteral.getSiteObject(cx, frame.scope);
             return null;
         }
     }

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.classfile.DynamicConstant;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Kit;
@@ -1218,11 +1219,12 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     int i = node.getExistingIntProp(Node.REGEXP_PROP);
-                    cfw.add(
-                            ByteCode.GETSTATIC,
-                            codegen.mainClassName,
-                            codegen.getCompiledRegexpName(scriptOrFn, i),
-                            "Ljava/lang/Object;");
+                    DynamicConstant constant = codegen.getRegExpConstant(scriptOrFn, i);
+                    if (constant != null) {
+                        cfw.addLoadDynamicConstant(constant);
+                    } else {
+                        throw new IllegalStateException("null regexp constant.");
+                    }
                     cfw.addInvoke(
                             ByteCode.INVOKESTATIC,
                             "org/mozilla/javascript/ScriptRuntime",
@@ -2021,21 +2023,15 @@ class BodyCodegen {
         // create the template literal call-site object for tagged template literals,
         // default template literals are already handled earlier in IRFactory
         int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        cfw.addLoadDynamicConstant(codegen.getTemplateLiteralConstant(scriptOrFn, index));
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        cfw.add(
-                ByteCode.GETSTATIC,
-                codegen.mainClassName,
-                codegen.getTemplateLiteralName(scriptOrFn),
-                "[Ljava/lang/Object;");
-        cfw.addPush(index);
         cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "getTemplateLiteralCallSite",
+                ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/TemplateLiteralCallSite",
+                "getSiteObject",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/VarScope;"
-                        + "[Ljava/lang/Object;I"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 

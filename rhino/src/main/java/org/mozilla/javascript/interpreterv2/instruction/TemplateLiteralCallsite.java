@@ -2,26 +2,19 @@ package org.mozilla.javascript.interpreterv2.instruction;
 
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TemplateLiteralCallSite;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 
 public class TemplateLiteralCallsite extends Instruction {
-    private final Object[] strings;
-    private Scriptable cached;
+    private final TemplateLiteralCallSite callsite;
 
-    public TemplateLiteralCallsite(Object templateLiteral) {
-        this.strings = new Object[] {templateLiteral};
+    public TemplateLiteralCallsite(TemplateLiteralCallSite templateLiteral) {
+        this.callsite = templateLiteral;
     }
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        if (cached != null) {
-            frame.push(cached);
-        } else {
-            cached = ScriptRuntime.getTemplateLiteralCallSite(cx, frame.scope, strings, 0);
-            frame.push(cached);
-        }
+        callsite.getSiteObject(cx, frame.scope);
         frame.pc += 1;
     }
 
@@ -32,6 +25,6 @@ public class TemplateLiteralCallsite extends Instruction {
 
     @Override
     public String toDebugString() {
-        return InstructionFormatter.formatInstruction(this, "templateLiteral", strings[0]);
+        return InstructionFormatter.formatInstruction(this, "templateLiteral", callsite);
     }
 }
