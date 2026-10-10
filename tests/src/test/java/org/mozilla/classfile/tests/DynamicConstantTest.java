@@ -710,11 +710,11 @@ public class DynamicConstantTest {
     private static ClassFileWriter writer(String className) {
         var cfw = new ClassFileWriter(className, "java/lang/Object", "DynamicConstantTest.java");
         cfw.registerStringConcat(
-            ConstantDescs.ofConstantBootstrap(
-                    ClassDesc.of(StringConcatBootstraps.class.getName()),
-                    "concat",
-                    ConstantDescs.CD_String,
-                ConstantDescs.CD_String.arrayType()));
+                ConstantDescs.ofConstantBootstrap(
+                        ClassDesc.of(StringConcatBootstraps.class.getName()),
+                        "concat",
+                        ConstantDescs.CD_String,
+                        ConstantDescs.CD_String.arrayType()));
         return cfw;
     }
 

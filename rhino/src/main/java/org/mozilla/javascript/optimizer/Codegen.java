@@ -10,11 +10,9 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
-import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -498,11 +496,11 @@ public class Codegen implements Evaluator {
         cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
 
         cfw.registerStringConcat(
-            ConstantDescs.ofConstantBootstrap(
-                    ClassDesc.of(StringConcatBootstraps.class.getName()),
-                    "concat",
-                    ConstantDescs.CD_String,
-                    ConstantDescs.CD_String.arrayType()));
+                ConstantDescs.ofConstantBootstrap(
+                        ClassDesc.of(StringConcatBootstraps.class.getName()),
+                        "concat",
+                        ConstantDescs.CD_String,
+                        ConstantDescs.CD_String.arrayType()));
     }
 
     private static void generateOptJSCodeCtor(ClassFileWriter cfw, boolean isFunction) {
@@ -883,7 +881,9 @@ public class Codegen implements Evaluator {
 
     /** The prepared constant for a regexp literal, or null if it is compiled at run time. */
     DynamicConstant getTemplateLiteralConstant(ScriptNode n, int regexpIndex) {
-        return templateLiteralConstants == null ? null : templateLiteralConstants[getIndex(n)][regexpIndex];
+        return templateLiteralConstants == null
+                ? null
+                : templateLiteralConstants[getIndex(n)][regexpIndex];
     }
 
     private void emitConstantDudeInitializers(ClassFileWriter cfw) {
@@ -1153,6 +1153,7 @@ public class Codegen implements Evaluator {
      * the index of the literal, or null when the literals are compiled at run time instead.
      */
     private DynamicConstant[][] regExpConstants;
+
     private DynamicConstant[][] templateLiteralConstants;
 
     private double[] itsConstantList;
