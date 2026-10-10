@@ -133,6 +133,14 @@ public class NativeFunctionTest {
     }
 
     @Test
+    public void methodToStringIncludesPropertyName() {
+        final String code =
+                "var o = { m(a) { return a; }, get g() { return 1; } };\n"
+                        + "o.m.toString() + ' ' + Object.getOwnPropertyDescriptor(o, 'g').get";
+        Utils.assertWithAllModes_ES6("m(a) { return a; } get g() { return 1; }", code);
+    }
+
+    @Test
     public void functionNameJavaObject() throws Exception {
         Utils.runWithAllModes(
                 cx -> {
