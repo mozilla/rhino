@@ -27,5 +27,4 @@ public class ResetConstVar extends Instruction {
     public String toDebugString() {
         return InstructionFormatter.formatInstruction(this, "index", index);
     }
-
 }

@@ -686,10 +686,19 @@ public class NodeTransformer {
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
-                boolean isConst = current.getIntProp(Node.IS_CONST_PROP, 0) != 0;
+                boolean isConst =
+                        current.getIntProp(Node.IS_CONST_PROP, 0) != 0
+                                || constNames.contains(current.getString());
                 consts.add(isConst);
                 Node init = current.getFirstChild();
-                if (init == null) {
+                if (init != null && constNames.contains(current.getString())) {
+                    // The scope creates the binding uninitialized, and this initializes it.
+                    current.removeChild(init);
+                    Node bind = Node.newString(Token.BINDNAME, current.getString());
+                    Node setConst = new Node(Token.SETCONST, bind, init);
+                    body = new Node(Token.BLOCK, new Node(Token.EXPR_VOID, setConst), body);
+                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 } else if (isConst) {
                     // A const binding is only ever created here, never initialized:
