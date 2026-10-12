@@ -635,4 +635,17 @@ class ConstLetScopingTest {
                 sum""";
         Utils.assertWithAllModes_ES6(4, script);
     }
+
+    @Test
+    public void assignToForConstInTryIsError() {
+        String script =
+                """
+                function g() {
+                  try {
+                    for (const i = 0; ; ) { i = 5; return 'no-throw:' + i; }
+                  } catch (e) { return e.name; }
+                }
+                g()""";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
 }
