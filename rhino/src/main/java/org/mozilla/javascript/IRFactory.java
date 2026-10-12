@@ -1671,6 +1671,13 @@ public final class IRFactory {
             // outside the scope of the for.
             Scope let = Scope.splitScope(loop);
             let.setType(Token.LET);
+            if (initType == Token.CONST) {
+                List<Boolean> flags = new ArrayList<>();
+                for (Node decl = init.getFirstChild(); decl != null; decl = decl.getNext()) {
+                    flags.add(Boolean.TRUE);
+                }
+                NodeTransformer.putConstFlags(init, flags);
+            }
             let.addChildrenToBack(init);
             let.addChildToBack(
                     createLoop(loop, LOOP_FOR, body, test, new Node(Token.EMPTY), incr, true));
