@@ -1501,7 +1501,7 @@ public class Compiler<T extends ScriptOrFn<T>> {
                         new SpecialCall(
                                 lookupResultOrFunction,
                                 args.toArray(Operand.EMPTY_ARRAY),
-                                (short) (lineNumber & 0xFF),
+                                lineNumber,
                                 callType));
             }
         } else if (node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1) {
