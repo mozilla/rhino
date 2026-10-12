@@ -70,8 +70,7 @@ public class Node implements Iterable<Node> {
             SUPER_PROPERTY_ACCESS = 31,
             NUMBER_OF_SPREAD = 32,
             OBJECT_REST_PROP = 33, // marks a CALL node as object rest operation
-            IS_CONST_PROP = 34, // marks a hoisted declaration name as a const binding
-            CONST_IDS_PROP = 35, // boolean[] flagging which OBJECT_IDS_PROP names are consts
+            CONST_IDS_PROP = 34, // boolean[] flagging which declarations or names are consts
             LAST_PROP = CONST_IDS_PROP,
             FIRST_PROP = FUNCTION_PROP;
 
@@ -461,8 +460,6 @@ public class Node implements Iterable<Node> {
                 return "number_of_spread";
             case OBJECT_REST_PROP:
                 return "object_rest_prop";
-            case IS_CONST_PROP:
-                return "is_const";
             case CONST_IDS_PROP:
                 return "const_ids";
 

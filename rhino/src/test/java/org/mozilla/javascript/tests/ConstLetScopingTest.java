@@ -648,4 +648,63 @@ class ConstLetScopingTest {
                 g()""";
         Utils.assertWithAllModes_ES6("TypeError", script);
     }
+
+    @Test
+    public void assignToDestructuredForConstIsError() {
+        String script =
+                """
+                function g() {
+                  for (const [a, b] = [1, 2]; ; ) { a = 5; return 'no-throw:' + a; }
+                }
+                try { g() } catch (e) { e.name }""";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    public void assignToDestructuredForConstInTryIsError() {
+        String script =
+                """
+                function g() {
+                  try {
+                    for (const [a, b] = [1, 2]; ; ) { b = 5; return 'no-throw:' + b; }
+                  } catch (e) { return e.name; }
+                }
+                g()""";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    public void assignToDestructuredBlockConstInTryIsError() {
+        String script =
+                """
+                function g() {
+                  try {
+                    { const {a, b} = {a: 1, b: 2}; a = 5; return 'no-throw:' + a; }
+                  } catch (e) { return e.name; }
+                }
+                g()""";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    public void assignToDestructuredBlockConstIsError() {
+        String script =
+                """
+                function g() {
+                  { const {a, b} = {a: 1, b: 2}; a = 5; return 'no-throw:' + a; }
+                }
+                try { g() } catch (e) { e.name }""";
+        Utils.assertWithAllModes_ES6("TypeError", script);
+    }
+
+    @Test
+    public void destructuredForLetIsScopedToTheLoop() {
+        String script =
+                """
+                function g() {
+                  for (let [a, b] = [1, 2]; ; ) { a = 5; return a + b; }
+                }
+                g() + ':' + typeof a""";
+        Utils.assertWithAllModes_ES6("7:undefined", script);
+    }
 }

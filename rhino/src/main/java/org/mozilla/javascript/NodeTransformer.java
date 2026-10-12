@@ -10,12 +10,9 @@ import static org.mozilla.javascript.Context.reportError;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -112,6 +109,7 @@ public class NodeTransformer {
                     Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR : Token.LET);
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
+                    List<Boolean> constFlags = new ArrayList<>();
                     for (Symbol symbol : newScope.getSymbolTable().values()) {
                         Node name = Node.newString(Token.NAME, symbol.getName());
                         // Const bindings must be created uninitialized, so that the
@@ -120,11 +118,11 @@ public class NodeTransformer {
                         // declared afresh in each iteration's own scope, and all this
                         // one does is shadow an outer binding of the same name while
                         // the iterated expression is evaluated.
-                        if (symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK) {
-                            name.putIntProp(Node.IS_CONST_PROP, 1);
-                        }
+                        constFlags.add(
+                                symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK);
                         innerLet.addChildToBack(name);
                     }
+                    putConstFlags(innerLet, constFlags);
                     newScope.setSymbolTable(null); // so we don't transform again
                     Node oldNode = node;
                     node = replaceCurrent(parent, previous, node, let);
@@ -588,26 +586,18 @@ public class NodeTransformer {
     }
 
     /**
-     * Collects the names a let wrapper scope declares as {@code const}. Only a {@code for (const
-     * ...; ...; ...)} head, which {@link IRFactory} splits into a scope of its own, still carries a
-     * symbol table by the time it gets here; the wrappers synthesized for ordinary blocks have
-     * already given their symbols away.
+     * Records on a declaration list which of its children declare consts, for {@link #visitLet} to
+     * read. A destructuring child stands for all the names it declares.
      */
-    private static Set<String> constNames(Node scopeNode) {
-        if (!(scopeNode instanceof Scope)) {
-            return Collections.emptySet();
+    static void putConstFlags(Node declarations, List<Boolean> flags) {
+        if (!flags.contains(Boolean.TRUE)) {
+            return;
         }
-        Map<String, Symbol> symbolTable = ((Scope) scopeNode).getSymbolTable();
-        if (symbolTable == null) {
-            return Collections.emptySet();
+        boolean[] array = new boolean[flags.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = flags.get(i);
         }
-        Set<String> names = new HashSet<>(4);
-        for (Symbol symbol : symbolTable.values()) {
-            if (symbol.getDeclType() == Symbol.Type.CONST) {
-                names.add(symbol.getName());
-            }
-        }
-        return names;
+        declarations.putProp(Node.CONST_IDS_PROP, array);
     }
 
     /**
@@ -635,7 +625,9 @@ public class NodeTransformer {
     protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();
         Node body = vars.getNext();
-        Set<String> constNames = constNames(scopeNode);
+        boolean[] varConsts = (boolean[]) vars.getProp(Node.CONST_IDS_PROP);
+        // Destructuring wraps the body, but it is the original body that must be re-parented.
+        Node originalBody = body;
         scopeNode.removeChild(vars);
         scopeNode.removeChild(body);
         boolean isExpression = scopeNode.getType() == Token.LETEXPR;
@@ -646,8 +638,10 @@ public class NodeTransformer {
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
             ArrayList<Boolean> consts = new ArrayList<>();
+            int position = -1;
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
+                boolean declaredConst = varConsts != null && varConsts[++position];
                 if (current.getType() == Token.LETEXPR) {
                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
                     List<?> destructuringNames =
@@ -665,7 +659,7 @@ public class NodeTransformer {
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
                         for (int i = 0; i < destructuringNames.size(); i++) {
-                            consts.add(Boolean.FALSE);
+                            consts.add(declaredConst);
                             newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
@@ -686,35 +680,22 @@ public class NodeTransformer {
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
-                boolean isConst =
-                        current.getIntProp(Node.IS_CONST_PROP, 0) != 0
-                                || constNames.contains(current.getString());
-                consts.add(isConst);
+                consts.add(declaredConst);
                 Node init = current.getFirstChild();
-                if (init != null && constNames.contains(current.getString())) {
+                if (init == null) {
+                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (declaredConst) {
                     // The scope creates the binding uninitialized, and this initializes it.
                     current.removeChild(init);
                     Node bind = Node.newString(Token.BINDNAME, current.getString());
                     Node setConst = new Node(Token.SETCONST, bind, init);
                     body = new Node(Token.BLOCK, new Node(Token.EXPR_VOID, setConst), body);
                     init = new Node(Token.VOID, Node.newNumber(0.0));
-                } else if (init == null) {
-                    init = new Node(Token.VOID, Node.newNumber(0.0));
-                } else if (isConst) {
-                    // A const binding is only ever created here, never initialized:
-                    // the declaration in the body of the scope does that.
-                    throw Kit.codeBug();
                 }
                 newVars.addChildToBack(init);
             }
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
-            if (consts.contains(Boolean.TRUE)) {
-                boolean[] constFlags = new boolean[consts.size()];
-                for (int i = 0; i < constFlags.length; i++) {
-                    constFlags[i] = consts.get(i);
-                }
-                newVars.putProp(Node.CONST_IDS_PROP, constFlags);
-            }
+            putConstFlags(newVars, consts);
             result.addChildToBack(newVars);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
             result.addChildToBack(new Node(Token.LEAVE_SCOPE));
@@ -722,8 +703,10 @@ public class NodeTransformer {
             result = new Node(isExpression ? Token.COMMA : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
             newVars = new Node(Token.COMMA);
+            int position = -1;
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
+                boolean declaredConst = varConsts != null && varConsts[++position];
                 if (current.getType() == Token.LETEXPR) {
                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
                     Node c = current.getFirstChild();
@@ -760,10 +743,7 @@ public class NodeTransformer {
                 }
                 // A const slot rejects SETVAR, and the declaration may run again if an outer
                 // loop re-enters, so initialize it unconditionally.
-                int setOp =
-                        constNames.contains(current.getString())
-                                ? Token.INITCONSTVAR
-                                : Token.SETVAR;
+                int setOp = declaredConst ? Token.INITCONSTVAR : Token.SETVAR;
                 newVars.addChildToBack(new Node(setOp, stringNode, init));
             }
             if (isExpression) {
@@ -771,9 +751,9 @@ public class NodeTransformer {
                 scopeNode.setType(Token.COMMA);
                 result.addChildToBack(scopeNode);
                 scopeNode.addChildToBack(body);
-                if (body instanceof Scope) {
-                    Scope scopeParent = ((Scope) body).getParentScope();
-                    ((Scope) body).setParentScope((Scope) scopeNode);
+                if (originalBody instanceof Scope) {
+                    Scope scopeParent = ((Scope) originalBody).getParentScope();
+                    ((Scope) originalBody).setParentScope((Scope) scopeNode);
                     ((Scope) scopeNode).setParentScope(scopeParent);
                 }
             } else {
@@ -781,9 +761,9 @@ public class NodeTransformer {
                 scopeNode.addChildToFront(new Node(Token.EXPR_VOID, newVars));
                 result.addChildToBack(scopeNode);
                 scopeNode.addChildrenToBack(body);
-                if (body instanceof Scope) {
-                    Scope scopeParent = ((Scope) body).getParentScope();
-                    ((Scope) body).setParentScope((Scope) scopeNode);
+                if (originalBody instanceof Scope) {
+                    Scope scopeParent = ((Scope) originalBody).getParentScope();
+                    ((Scope) originalBody).setParentScope((Scope) scopeNode);
                     ((Scope) scopeNode).setParentScope(scopeParent);
                 }
             }
