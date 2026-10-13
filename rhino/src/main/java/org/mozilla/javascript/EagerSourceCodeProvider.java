@@ -8,10 +8,9 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
-import org.mozilla.classfile.DynamicConstant;
 
 /** Stores a reference to the original source code and returns it as necessary. */
-public class EagerSourceCodeProvider implements SourceCodeProvider, Serializable, DynamicConstant {
+public class EagerSourceCodeProvider implements SourceCodeProvider, Serializable {
     private static final long serialVersionUID = 1L;
     private final String rawSource;
 

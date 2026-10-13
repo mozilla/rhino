@@ -205,7 +205,7 @@ public class ClassCompiler {
         var mainName = mainClassName + "Main";
 
         var cfw = new ClassFileWriter(mainName, "java.lang.Object", "");
-        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        new EagerSourceCodeProviderDescriber(cfw.getDynamicDescriptorRegistry());
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
         buildDescriptor(cfw, builder, builder, classes, builders, mainClassName);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);

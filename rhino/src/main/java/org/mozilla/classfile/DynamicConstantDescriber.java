@@ -17,11 +17,22 @@ import java.lang.constant.DynamicConstantDesc;
  *
  * @param <T> the type of value described
  */
-public interface DynamicConstantDescriber<T extends DynamicConstant> {
+public abstract class DynamicConstantDescriber<T> {
+
+    private final DynamicDescriberRegistry registry;
+
+    protected DynamicConstantDescriber(DynamicDescriberRegistry registry) {
+        this.registry = registry;
+        registry.register(this);
+    }
+
+    protected DynamicDescriberRegistry getRegistry() {
+        return registry;
+    }
 
     /** The type of value this describer handles. Used as the registration key. */
-    Class<T> describedType();
+    public abstract Class<T> describedType();
 
     /** Describe the given value as a dynamic constant. */
-    DynamicConstantDesc<T> describe(T value);
+    public abstract DynamicConstantDesc<T> describe(T value);
 }

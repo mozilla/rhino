@@ -6,8 +6,7 @@
 
 package org.mozilla.javascript.regexp;
 
-import java.util.List;
-import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Kit;
@@ -45,8 +44,8 @@ public class RegExpImpl implements RegExpProxy {
     }
 
     @Override
-    public List<DynamicConstantDescriber<?>> getDynamicConstantDescribers() {
-        return List.of(new RECompiledDescriber());
+    public void registerDynamicConstantDescribers(DynamicDescriberRegistry registry) {
+        new RECompiledDescriber(registry);
     }
 
     @Override

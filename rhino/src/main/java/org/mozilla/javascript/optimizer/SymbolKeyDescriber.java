@@ -17,6 +17,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 import org.mozilla.javascript.SymbolKey;
 
 /**
@@ -33,13 +34,17 @@ import org.mozilla.javascript.SymbolKey;
  * that runtimes without bytecode generation support never have to resolve {@code
  * java.lang.constant}.
  */
-public class SymbolKeyDescriber implements DynamicConstantDescriber<SymbolKey> {
+public class SymbolKeyDescriber extends DynamicConstantDescriber<SymbolKey> {
 
     private static final ClassDesc CD_SYMBOL_KEY = ClassDesc.of(SymbolKey.class.getName());
 
     private static final DirectMethodHandleDesc SYMBOL_REGULAR =
             ConstantDescs.ofConstantBootstrap(
                     CD_SYMBOL_KEY, "symbolConstant", CD_SYMBOL_KEY, ConstantDescs.CD_int);
+
+    public SymbolKeyDescriber(DynamicDescriberRegistry registry) {
+        super(registry);
+    }
 
     @Override
     public Class<SymbolKey> describedType() {

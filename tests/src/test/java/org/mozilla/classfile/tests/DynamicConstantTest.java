@@ -28,8 +28,8 @@ import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
-import org.mozilla.classfile.DynamicConstant;
 import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.DefiningClassLoader;
 import org.mozilla.javascript.EagerSourceCodeProvider;
@@ -55,7 +55,7 @@ public class DynamicConstantTest {
     // ---------------------------------------------------------------- constants under test
 
     /** A constant resolved by {@link #stringBootstrap}, carrying its value in the constant name. */
-    public static class StringConstant implements DynamicConstant {
+    public static class StringConstant {
         final String value;
 
         StringConstant(String value) {
@@ -64,7 +64,7 @@ public class DynamicConstantTest {
     }
 
     /** A two word constant, so that the "ldc2_w" path is exercised. */
-    public static class LongConstant implements DynamicConstant {
+    public static class LongConstant {
         final long value;
 
         LongConstant(long value) {
@@ -73,10 +73,10 @@ public class DynamicConstantTest {
     }
 
     /** A constant whose describer takes a MethodType static argument. */
-    public static class MethodTypeConstant implements DynamicConstant {}
+    public static class MethodTypeConstant {}
 
     /** A constant that no describer can describe. */
-    public static class UndescribableConstant implements DynamicConstant {}
+    public static class UndescribableConstant {}
 
     // ---------------------------------------------------------------- bootstrap methods
 
@@ -99,90 +99,108 @@ public class DynamicConstantTest {
 
     // ---------------------------------------------------------------- describers
 
-    private static final DynamicConstantDescriber<StringConstant> STRING_DESCRIBER =
-            new DynamicConstantDescriber<>() {
-                @Override
-                public Class<StringConstant> describedType() {
-                    return StringConstant.class;
-                }
+    private static final DynamicDescriberRegistry DESCRIBER_REGISTRY =
+            writer("TestUndefinedConstant").getDynamicDescriptorRegistry();
 
-                @Override
-                public DynamicConstantDesc<StringConstant> describe(StringConstant value) {
-                    return DynamicConstantDesc.ofNamed(
-                            bootstrap(
-                                    "stringBootstrap",
-                                    MethodTypeDesc.of(
-                                            ConstantDescs.CD_String,
-                                            ConstantDescs.CD_MethodHandles_Lookup,
-                                            ConstantDescs.CD_String,
-                                            ConstantDescs.CD_Class)),
-                            value.value,
-                            ConstantDescs.CD_String);
-                }
-            };
+    private static class StringDescriber extends DynamicConstantDescriber<StringConstant> {
 
-    private static final DynamicConstantDescriber<LongConstant> LONG_DESCRIBER =
-            new DynamicConstantDescriber<>() {
-                @Override
-                public Class<LongConstant> describedType() {
-                    return LongConstant.class;
-                }
+        public StringDescriber(DynamicDescriberRegistry registry) {
+            super(registry);
+        }
 
-                @Override
-                public DynamicConstantDesc<LongConstant> describe(LongConstant value) {
-                    return DynamicConstantDesc.ofNamed(
-                            bootstrap(
-                                    "longBootstrap",
-                                    MethodTypeDesc.of(
-                                            ConstantDescs.CD_long,
-                                            ConstantDescs.CD_MethodHandles_Lookup,
-                                            ConstantDescs.CD_String,
-                                            ConstantDescs.CD_Class)),
-                            Long.toString(value.value),
-                            ConstantDescs.CD_long);
-                }
-            };
+        @Override
+        public Class<StringConstant> describedType() {
+            return StringConstant.class;
+        }
+
+        @Override
+        public DynamicConstantDesc<StringConstant> describe(StringConstant value) {
+            return DynamicConstantDesc.ofNamed(
+                    bootstrap(
+                            "stringBootstrap",
+                            MethodTypeDesc.of(
+                                    ConstantDescs.CD_String,
+                                    ConstantDescs.CD_MethodHandles_Lookup,
+                                    ConstantDescs.CD_String,
+                                    ConstantDescs.CD_Class)),
+                    value.value,
+                    ConstantDescs.CD_String);
+        }
+    }
+
+    private static class LongDescriber extends DynamicConstantDescriber<LongConstant> {
+
+        public LongDescriber(DynamicDescriberRegistry registry) {
+            super(registry);
+        }
+
+        @Override
+        public Class<LongConstant> describedType() {
+            return LongConstant.class;
+        }
+
+        @Override
+        public DynamicConstantDesc<LongConstant> describe(LongConstant value) {
+            return DynamicConstantDesc.ofNamed(
+                    bootstrap(
+                            "longBootstrap",
+                            MethodTypeDesc.of(
+                                    ConstantDescs.CD_long,
+                                    ConstantDescs.CD_MethodHandles_Lookup,
+                                    ConstantDescs.CD_String,
+                                    ConstantDescs.CD_Class)),
+                    Long.toString(value.value),
+                    ConstantDescs.CD_long);
+        }
+    }
 
     private static final MethodTypeDesc DESCRIBED_METHOD_TYPE =
             MethodTypeDesc.of(ConstantDescs.CD_int, ConstantDescs.CD_String, ConstantDescs.CD_long);
 
-    private static final DynamicConstantDescriber<MethodTypeConstant> METHOD_TYPE_DESCRIBER =
-            new DynamicConstantDescriber<>() {
-                @Override
-                public Class<MethodTypeConstant> describedType() {
-                    return MethodTypeConstant.class;
-                }
+    private static class MethodTypeDescriber extends DynamicConstantDescriber<MethodTypeConstant> {
 
-                @Override
-                public DynamicConstantDesc<MethodTypeConstant> describe(MethodTypeConstant value) {
-                    return DynamicConstantDesc.ofNamed(
-                            bootstrap(
-                                    "methodTypeBootstrap",
-                                    MethodTypeDesc.of(
-                                            ConstantDescs.CD_String,
-                                            ConstantDescs.CD_MethodHandles_Lookup,
-                                            ConstantDescs.CD_String,
-                                            ConstantDescs.CD_Class,
-                                            ConstantDescs.CD_MethodType)),
-                            "unused",
-                            ConstantDescs.CD_String,
-                            DESCRIBED_METHOD_TYPE);
-                }
-            };
+        public MethodTypeDescriber(DynamicDescriberRegistry registry) {
+            super(registry);
+        }
 
-    private static final DynamicConstantDescriber<UndescribableConstant> EMPTY_DESCRIBER =
-            new DynamicConstantDescriber<>() {
-                @Override
-                public Class<UndescribableConstant> describedType() {
-                    return UndescribableConstant.class;
-                }
+        @Override
+        public Class<MethodTypeConstant> describedType() {
+            return MethodTypeConstant.class;
+        }
 
-                @Override
-                public DynamicConstantDesc<UndescribableConstant> describe(
-                        UndescribableConstant value) {
-                    throw new IllegalStateException("");
-                }
-            };
+        @Override
+        public DynamicConstantDesc<MethodTypeConstant> describe(MethodTypeConstant value) {
+            return DynamicConstantDesc.ofNamed(
+                    bootstrap(
+                            "methodTypeBootstrap",
+                            MethodTypeDesc.of(
+                                    ConstantDescs.CD_String,
+                                    ConstantDescs.CD_MethodHandles_Lookup,
+                                    ConstantDescs.CD_String,
+                                    ConstantDescs.CD_Class,
+                                    ConstantDescs.CD_MethodType)),
+                    "unused",
+                    ConstantDescs.CD_String,
+                    DESCRIBED_METHOD_TYPE);
+        }
+    }
+
+    private static class EmptyDescriber extends DynamicConstantDescriber<UndescribableConstant> {
+
+        public EmptyDescriber(DynamicDescriberRegistry registry) {
+            super(registry);
+        }
+
+        @Override
+        public Class<UndescribableConstant> describedType() {
+            return UndescribableConstant.class;
+        }
+
+        @Override
+        public DynamicConstantDesc<UndescribableConstant> describe(UndescribableConstant value) {
+            throw new IllegalStateException("");
+        }
+    }
 
     // ---------------------------------------------------------------- tests
 
@@ -191,7 +209,7 @@ public class DynamicConstantTest {
         // SymbolKey compares by identity, so the constant has to be the very same object the
         // runtime uses, not merely an equal one.
         ClassFileWriter cfw = writer("TestSymbolConstant");
-        cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
+        new SymbolKeyDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(SymbolKey.ITERATOR);
         cfw.add(ByteCode.ARETURN);
@@ -205,7 +223,7 @@ public class DynamicConstantTest {
         // SymbolKey compares by identity, so the constant has to be the very same object the
         // runtime uses, not merely an equal one.
         ClassFileWriter cfw = writer("TestSymbolConstant");
-        cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
+        new SymbolKeyDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new SymbolKey("foo", REGULAR));
         cfw.add(ByteCode.ARETURN);
@@ -219,7 +237,7 @@ public class DynamicConstantTest {
         // The branch forces a stack map frame while the dynamic constant is still on the stack,
         // which only works if the writer can derive its type from the constant pool entry.
         ClassFileWriter cfw = writer("TestConstantStackMap");
-        cfw.registerDynamicConstantDescriber(STRING_DESCRIBER);
+        new StringDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new StringConstant("branched"));
         cfw.add(ByteCode.DUP);
@@ -237,7 +255,7 @@ public class DynamicConstantTest {
         // A long constant must be loaded with ldc2_w and must occupy two stack words in the
         // frame generated at the branch target.
         ClassFileWriter cfw = writer("TestLongConstant");
-        cfw.registerDynamicConstantDescriber(LONG_DESCRIBER);
+        new LongDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()J", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new LongConstant(1234567890123L));
         cfw.add(ByteCode.DUP2);
@@ -257,7 +275,7 @@ public class DynamicConstantTest {
     @Test
     public void methodTypeStaticArgument() throws Exception {
         ClassFileWriter cfw = writer("TestMethodTypeArg");
-        cfw.registerDynamicConstantDescriber(METHOD_TYPE_DESCRIBER);
+        new MethodTypeDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new MethodTypeConstant());
         cfw.add(ByteCode.ARETURN);
@@ -276,7 +294,7 @@ public class DynamicConstantTest {
     @Test
     public void repeatedConstantsAreShared() throws Exception {
         ClassFileWriter cfw = writer("TestSharedConstants");
-        cfw.registerDynamicConstantDescriber(STRING_DESCRIBER);
+        new StringDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new StringConstant("same"));
         cfw.add(ByteCode.POP);
@@ -303,13 +321,13 @@ public class DynamicConstantTest {
                 assertThrows(
                         IllegalArgumentException.class,
                         () -> cfw.addLoadDynamicConstant(new StringConstant("x")));
-        assertTrue(e.getMessage().contains("no dynamic constant describer"), e.getMessage());
+        assertTrue(e.getMessage().contains("No describer found for"), e.getMessage());
     }
 
     @Test
     public void undescribableValueIsRejected() {
         ClassFileWriter cfw = writer("TestUndescribable");
-        cfw.registerDynamicConstantDescriber(EMPTY_DESCRIBER);
+        new EmptyDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
 
         assertThrows(
@@ -319,7 +337,7 @@ public class DynamicConstantTest {
 
     @Test
     public void regularSymbolsAreDescribable() {
-        SymbolKeyDescriber describer = new SymbolKeyDescriber();
+        SymbolKeyDescriber describer = new SymbolKeyDescriber(DESCRIBER_REGISTRY);
 
         assertNotNull(describer.describe(SymbolKey.ITERATOR));
         assertNotNull(describer.describe(SymbolKey.TO_PRIMITIVE));
@@ -336,7 +354,7 @@ public class DynamicConstantTest {
         // Undefined compares by identity, so the constant has to be the very same object the
         // runtime uses, not merely an equal one.
         ClassFileWriter cfw = writer("TestUndefinedConstant");
-        cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
+        new UndefinedDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant((Undefined) Undefined.instance);
         cfw.add(ByteCode.ARETURN);
@@ -350,7 +368,7 @@ public class DynamicConstantTest {
         // The source contains the "[" and ";" characters that a constant name may not, which is
         // why the describer passes it as a bootstrap argument instead.
         ClassFileWriter cfw = writer("TestEagerSourceConstant");
-        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        new EagerSourceCodeProviderDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new EagerSourceCodeProvider("a[bc];"));
         cfw.add(ByteCode.ARETURN);
@@ -363,7 +381,7 @@ public class DynamicConstantTest {
     @Test
     public void equalSourceSharesAConstant() throws Exception {
         ClassFileWriter cfw = writer("TestSharedEagerSourceConstants");
-        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        new EagerSourceCodeProviderDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new EagerSourceCodeProvider("same"));
         cfw.add(ByteCode.POP);
@@ -390,7 +408,8 @@ public class DynamicConstantTest {
         Object[] values = {"", Undefined.instance, "\0", "\1", "a\0\1b", "\1\0", ""};
         String[] raw = {"", "\\u{g}", "\0", "\1", "a\0\1b", "\1\0", ""};
         ClassFileWriter cfw = writer("TestTemplateLiteralCallSiteConstant");
-        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        new TemplateLiteralCallSiteDescriber(cfw.getDynamicDescriptorRegistry());
+        new UndefinedDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new TemplateLiteralCallSite(values, raw));
         cfw.add(ByteCode.ARETURN);
@@ -415,7 +434,8 @@ public class DynamicConstantTest {
     @Test
     public void singleEmptyTemplateLiteralCallSite() throws Exception {
         ClassFileWriter cfw = writer("TestEmptyTemplateLiteralCallSiteConstant");
-        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        new TemplateLiteralCallSiteDescriber(cfw.getDynamicDescriptorRegistry());
+        new UndefinedDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(
                 new TemplateLiteralCallSite(new Object[] {Undefined.instance}, new String[] {""}));
@@ -437,7 +457,7 @@ public class DynamicConstantTest {
     @Test
     public void distinctTemplateLiteralCallSitesDoNotShareAConstant() throws Exception {
         ClassFileWriter cfw = writer("TestDistinctTemplateLiteralCallSites");
-        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        new TemplateLiteralCallSiteDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(
                 new TemplateLiteralCallSite(new Object[] {"a"}, new String[] {"a"}));
@@ -460,12 +480,10 @@ public class DynamicConstantTest {
         Object prepared;
         try (Context cx = Context.enter()) {
             prepared = proxy.prepareRegExpConstant(cx, "a[bc];", "gi");
-            for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
-                cfw.registerDynamicConstantDescriber(describer);
-            }
+            proxy.registerDynamicConstantDescribers(cfw.getDynamicDescriptorRegistry());
         }
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
-        cfw.addLoadDynamicConstant((DynamicConstant) prepared);
+        cfw.addLoadDynamicConstant(prepared);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) 0);
 
@@ -488,16 +506,14 @@ public class DynamicConstantTest {
             gi = proxy.prepareRegExpConstant(cx, "a", "gi");
             ig = proxy.prepareRegExpConstant(cx, "a", "ig");
             g = proxy.prepareRegExpConstant(cx, "a", "g");
-            for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
-                cfw.registerDynamicConstantDescriber(describer);
-            }
+            proxy.registerDynamicConstantDescribers(cfw.getDynamicDescriptorRegistry());
         }
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
-        cfw.addLoadDynamicConstant((DynamicConstant) gi);
+        cfw.addLoadDynamicConstant(gi);
         cfw.add(ByteCode.POP);
-        cfw.addLoadDynamicConstant((DynamicConstant) ig);
+        cfw.addLoadDynamicConstant(ig);
         cfw.add(ByteCode.POP);
-        cfw.addLoadDynamicConstant((DynamicConstant) g);
+        cfw.addLoadDynamicConstant(g);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) 0);
 
@@ -585,10 +601,10 @@ public class DynamicConstantTest {
                 IllegalArgumentException.class,
                 () -> {
                     ClassFileWriter cfw = writer("TestSharedStringConcatenation");
+                    var ld = new LongDescriber(cfw.getDynamicDescriptorRegistry());
                     cfw.startMethod(
                             "get", "()Ljava/lang/String;", (short) (ACC_PUBLIC | ACC_STATIC));
-                    cfw.describeStringConcatenation(
-                            "a", LONG_DESCRIBER.describe(new LongConstant(1)));
+                    cfw.describeStringConcatenation("a", ld.describe(new LongConstant(1)));
                     cfw.stopMethod((short) 0);
                 });
     }
@@ -633,7 +649,7 @@ public class DynamicConstantTest {
         String source = "a[€];".repeat(12_000);
         assertTrue(source.length() < 65535);
         ClassFileWriter cfw = writer("TestLargeEagerSourceConstant");
-        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
+        new EagerSourceCodeProviderDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(new EagerSourceCodeProvider(source));
         cfw.add(ByteCode.ARETURN);
@@ -653,7 +669,7 @@ public class DynamicConstantTest {
         String value = "a\0€".repeat(30_000);
         String raw = "a\\0€".repeat(30_000);
         ClassFileWriter cfw = writer("TestLargeTemplateLiteralCallSiteConstant");
-        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        new TemplateLiteralCallSiteDescriber(cfw.getDynamicDescriptorRegistry());
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
         cfw.addLoadDynamicConstant(
                 new TemplateLiteralCallSite(new Object[] {value}, new String[] {raw}));
@@ -684,12 +700,10 @@ public class DynamicConstantTest {
         Object prepared;
         try (Context cx = Context.enter()) {
             prepared = proxy.prepareRegExpConstant(cx, source, "g");
-            for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
-                cfw.registerDynamicConstantDescriber(describer);
-            }
+            proxy.registerDynamicConstantDescribers(cfw.getDynamicDescriptorRegistry());
         }
         cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
-        cfw.addLoadDynamicConstant((DynamicConstant) prepared);
+        cfw.addLoadDynamicConstant(prepared);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short) 0);
 

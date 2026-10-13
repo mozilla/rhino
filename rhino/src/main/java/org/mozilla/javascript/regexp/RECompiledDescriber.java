@@ -11,6 +11,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 
 /**
  * Describes compiled regular expressions as dynamic constants that are recompiled from their source
@@ -25,7 +26,7 @@ import org.mozilla.classfile.DynamicConstantDescriber;
  * not contain the "[" and ";" characters that appear in ordinary regular expressions. Both the
  * source and the flags are therefore bootstrap arguments, and the name is a fixed placeholder.
  */
-public class RECompiledDescriber implements DynamicConstantDescriber<RECompiled> {
+public class RECompiledDescriber extends DynamicConstantDescriber<RECompiled> {
 
     private static final ClassDesc CD_NATIVE_REG_EXP = ClassDesc.of(NativeRegExp.class.getName());
 
@@ -36,6 +37,10 @@ public class RECompiledDescriber implements DynamicConstantDescriber<RECompiled>
                     ConstantDescs.CD_Object,
                     ConstantDescs.CD_String,
                     ConstantDescs.CD_String);
+
+    public RECompiledDescriber(DynamicDescriberRegistry registry) {
+        super(registry);
+    }
 
     @Override
     public Class<RECompiled> describedType() {

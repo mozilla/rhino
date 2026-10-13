@@ -11,6 +11,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 import org.mozilla.javascript.EagerSourceCodeProvider;
 
 /**
@@ -22,7 +23,7 @@ import org.mozilla.javascript.EagerSourceCodeProvider;
  * therefore a bootstrap argument, and the name is a fixed placeholder.
  */
 public class EagerSourceCodeProviderDescriber
-        implements DynamicConstantDescriber<EagerSourceCodeProvider> {
+        extends DynamicConstantDescriber<EagerSourceCodeProvider> {
 
     private static final ClassDesc CD_EAGER_SOURCE_CODE_PROVIDER =
             ClassDesc.of(EagerSourceCodeProvider.class.getName());
@@ -33,6 +34,10 @@ public class EagerSourceCodeProviderDescriber
                     "sourceConstant",
                     CD_EAGER_SOURCE_CODE_PROVIDER,
                     ConstantDescs.CD_String);
+
+    public EagerSourceCodeProviderDescriber(DynamicDescriberRegistry registry) {
+        super(registry);
+    }
 
     @Override
     public Class<EagerSourceCodeProvider> describedType() {
