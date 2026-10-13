@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -706,5 +707,44 @@ class ConstLetScopingTest {
                 }
                 g() + ':' + typeof a""";
         Utils.assertWithAllModes_ES6("7:undefined", script);
+    }
+
+    @Test
+    public void multipleDependentConstsInLoop() {
+        String script =
+                """
+            function f() {
+              try {
+                for (const x = 1, y = x + 1; ; ) return y;
+              } catch (e) { return e.name; }
+            }
+            f() + '';""";
+        Utils.assertWithAllModes_ES6("2", script);
+    }
+
+    @Test
+    @Disabled
+    public void multipleDependentConstsInLoopNonReified() {
+        String script =
+                """
+            function g() {
+              for (const [x, y] = [1, 2], z = x + y; ; ) return z;
+            }
+            g() + '';""";
+        Utils.assertWithAllModes_ES6("3", script);
+    }
+
+    @Test
+    public void multipleDependentConstsInLoopSideEffects() {
+        String script =
+                """
+            function h() {
+              try {
+                var o = [];
+                for (const i = o.push(1), j = o.push(2), k = o.push(3); ; ) return o.join();
+              } catch (e) { return e.name; }
+            }
+            h();""";
+        Utils.assertWithAllModes_ES6("1,2,3", script);
     }
 }
