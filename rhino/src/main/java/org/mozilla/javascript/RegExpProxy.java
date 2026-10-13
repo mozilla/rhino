@@ -6,8 +6,7 @@
 
 package org.mozilla.javascript;
 
-import java.util.List;
-import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 
 /**
  * A proxy for the regexp package, so that the regexp package can be loaded optionally.
@@ -44,15 +43,13 @@ public interface RegExpProxy {
     }
 
     /**
-     * Describers for the values this proxy returns from {@link #prepareRegExpConstant}, to be
-     * registered with the class file writer that will write them.
+     * Register Describers for the values this proxy returns from {@link #prepareRegExpConstant}, to
+     * be registered with the class file writer that will write them.
      *
      * <p>An implementation that returns describers here must also implement {@code
      * prepareRegExpConstant}, and one that does not must return an empty list.
      */
-    default List<DynamicConstantDescriber<?>> getDynamicConstantDescribers() {
-        return List.of();
-    }
+    default void registerDynamicConstantDescribers(DynamicDescriberRegistry registry) {}
 
     public Scriptable wrapRegExp(Context cx, VarScope scope, Object compiled);
 

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
-import org.mozilla.classfile.DynamicConstant;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Kit;
@@ -1235,7 +1234,7 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     int i = node.getExistingIntProp(Node.REGEXP_PROP);
-                    DynamicConstant constant = codegen.getRegExpConstant(scriptOrFn, i);
+                    var constant = codegen.getRegExpConstant(scriptOrFn, i);
                     if (constant != null) {
                         cfw.addLoadDynamicConstant(constant);
                     } else {

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.IntPredicate;
-import org.mozilla.classfile.DynamicConstant;
 import org.mozilla.javascript.AbstractEcmaObjectOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations;
 import org.mozilla.javascript.AbstractEcmaStringOperations.ReplacementOperation;
@@ -5016,7 +5015,7 @@ public class NativeRegExp extends ScriptableObject {
     private int lastIndexAttr = DONTENUM | PERMANENT;
 } // class NativeRegExp
 
-class RECompiled implements Serializable, DynamicConstant {
+class RECompiled implements Serializable {
     @Serial private static final long serialVersionUID = -6144956577595844213L;
 
     final char[] source; /* locked source string, sans // */
