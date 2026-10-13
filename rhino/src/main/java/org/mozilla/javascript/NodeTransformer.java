@@ -624,13 +624,14 @@ public class NodeTransformer {
 
     protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();
-        Node body = vars.getNext();
+        Node realBody = vars.getNext();
         boolean[] varConsts = (boolean[]) vars.getProp(Node.CONST_IDS_PROP);
         // Destructuring wraps the body, but it is the original body that must be re-parented.
-        Node originalBody = body;
         scopeNode.removeChild(vars);
-        scopeNode.removeChild(body);
+        scopeNode.removeChild(realBody);
         boolean isExpression = scopeNode.getType() == Token.LETEXPR;
+        Node body = isExpression ? new Node(Token.COMMA) : new Node(Token.BLOCK);
+        Node originalBody = realBody;
         Node result;
         Node newVars = new Node(Token.ENTER_SCOPE);
         if (createScope) {
@@ -650,9 +651,9 @@ public class NodeTransformer {
                     if (c.getType() != Token.LET) throw Kit.codeBug();
                     // Add initialization code to front of body
                     if (isExpression) {
-                        body = new Node(Token.COMMA, c.getNext(), body);
+                        body.addChildToBack(c.getNext());
                     } else {
-                        body = new Node(Token.BLOCK, new Node(Token.EXPR_VOID, c.getNext()), body);
+                        body.addChildToBack(new Node(Token.EXPR_VOID, c.getNext()));
                     }
                     // Update "list" and "objectLiteral" for the variables
                     // defined in the destructuring assignment
@@ -689,7 +690,7 @@ public class NodeTransformer {
                     current.removeChild(init);
                     Node bind = Node.newString(Token.BINDNAME, current.getString());
                     Node setConst = new Node(Token.SETCONST, bind, init);
-                    body = new Node(Token.BLOCK, new Node(Token.EXPR_VOID, setConst), body);
+                    body.addChildToBack(new Node(Token.EXPR_VOID, setConst));
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 }
                 newVars.addChildToBack(init);
@@ -697,6 +698,7 @@ public class NodeTransformer {
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
             putConstFlags(newVars, consts);
             result.addChildToBack(newVars);
+            body.addChildToBack(realBody);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
             result.addChildToBack(new Node(Token.LEAVE_SCOPE));
         } else {
@@ -713,9 +715,9 @@ public class NodeTransformer {
                     if (c.getType() != Token.LET) throw Kit.codeBug();
                     // Add initialization code to front of body
                     if (isExpression) {
-                        body = new Node(Token.COMMA, c.getNext(), body);
+                        body.addChildToBack(c.getNext());
                     } else {
-                        body = new Node(Token.BLOCK, new Node(Token.EXPR_VOID, c.getNext()), body);
+                        body.addChildToBack(new Node(Token.EXPR_VOID, c.getNext()));
                     }
                     // We're removing the LETEXPR, so move the symbols
                     Scope.joinScopes((Scope) current, (Scope) scopeNode);
@@ -750,6 +752,7 @@ public class NodeTransformer {
                 result.addChildToBack(newVars);
                 scopeNode.setType(Token.COMMA);
                 result.addChildToBack(scopeNode);
+                body.addChildToBack(realBody);
                 scopeNode.addChildToBack(body);
                 if (originalBody instanceof Scope) {
                     Scope scopeParent = ((Scope) originalBody).getParentScope();
@@ -760,6 +763,7 @@ public class NodeTransformer {
                 scopeNode.setType(Token.BLOCK);
                 scopeNode.addChildToFront(new Node(Token.EXPR_VOID, newVars));
                 result.addChildToBack(scopeNode);
+                body.addChildToBack(realBody);
                 scopeNode.addChildrenToBack(body);
                 if (originalBody instanceof Scope) {
                     Scope scopeParent = ((Scope) originalBody).getParentScope();
