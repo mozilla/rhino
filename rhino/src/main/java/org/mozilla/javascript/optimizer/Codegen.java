@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
-import org.mozilla.classfile.DynamicConstant;
-import org.mozilla.classfile.DynamicConstantDescriber;
 import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilationResult;
 import org.mozilla.javascript.CompilerEnvirons;
@@ -489,10 +487,11 @@ public class Codegen implements Evaluator {
 
     /** Teach a writer about the runtime types that can be emitted as dynamic constants. */
     private static void installConstantDescribers(ClassFileWriter cfw) {
-        cfw.registerDynamicConstantDescriber(new SymbolKeyDescriber());
-        cfw.registerDynamicConstantDescriber(new EagerSourceCodeProviderDescriber());
-        cfw.registerDynamicConstantDescriber(new UndefinedDescriber());
-        cfw.registerDynamicConstantDescriber(new TemplateLiteralCallSiteDescriber());
+        var registry = cfw.getDynamicDescriptorRegistry();
+        new SymbolKeyDescriber(registry);
+        new EagerSourceCodeProviderDescriber(registry);
+        new UndefinedDescriber(registry);
+        new TemplateLiteralCallSiteDescriber(registry);
 
         cfw.registerStringConcat(
                 ConstantDescs.ofConstantBootstrap(
@@ -801,28 +800,22 @@ public class Codegen implements Evaluator {
                     "Compilation of regexps literals requires an enclosing context.");
         }
 
-        DynamicConstant[][] constants = new DynamicConstant[scriptOrFnNodes.length][];
+        Object[][] constants = new Object[scriptOrFnNodes.length][];
         for (int i = 0; i != scriptOrFnNodes.length; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
             int regCount = n.getRegexpCount();
-            constants[i] = new DynamicConstant[regCount];
+            constants[i] = new Object[regCount];
             for (int j = 0; j != regCount; ++j) {
                 Object constant =
                         proxy.prepareRegExpConstant(cx, n.getRegexpString(j), n.getRegexpFlags(j));
-                if (!(constant instanceof DynamicConstant)) {
-                    // This implementation has no constant form, so compile every literal of this
-                    // class at run time rather than mixing the two ways of doing it.
-                    return;
-                }
-                constants[i][j] = (DynamicConstant) constant;
+                constants[i][j] = constant;
             }
         }
 
-        for (DynamicConstantDescriber<?> describer : proxy.getDynamicConstantDescribers()) {
-            for (ClassFileWriter cfw : cfws) {
-                cfw.registerDynamicConstantDescriber(describer);
-            }
+        for (ClassFileWriter cfw : cfws) {
+            proxy.registerDynamicConstantDescribers(cfw.getDynamicDescriptorRegistry());
         }
+
         regExpConstants = constants;
         // With the literals in the constant pool there is nothing left to initialize.
         for (MHJSCode.BuilderEnv env : chunkEnvs) {
@@ -850,19 +843,14 @@ public class Codegen implements Evaluator {
             return;
         }
 
-        DynamicConstant[][] constants = new DynamicConstant[scriptOrFnNodes.length][];
+        Object[][] constants = new Object[scriptOrFnNodes.length][];
         for (int i = 0; i != scriptOrFnNodes.length; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
             int tlCount = n.getTemplateLiteralCount();
-            constants[i] = new DynamicConstant[tlCount];
+            constants[i] = new Object[tlCount];
             for (int j = 0; j != tlCount; ++j) {
                 Object constant = n.getTemplateLiteralObj(j);
-                if (!(constant instanceof DynamicConstant)) {
-                    // This implementation has no constant form, so compile every literal of this
-                    // class at run time rather than mixing the two ways of doing it.
-                    throw new IllegalStateException("");
-                }
-                constants[i][j] = (DynamicConstant) constant;
+                constants[i][j] = constant;
             }
         }
 
@@ -874,12 +862,12 @@ public class Codegen implements Evaluator {
     }
 
     /** The prepared constant for a regexp literal, or null if it is compiled at run time. */
-    DynamicConstant getRegExpConstant(ScriptNode n, int regexpIndex) {
+    Object getRegExpConstant(ScriptNode n, int regexpIndex) {
         return regExpConstants == null ? null : regExpConstants[getIndex(n)][regexpIndex];
     }
 
     /** The prepared constant for a regexp literal, or null if it is compiled at run time. */
-    DynamicConstant getTemplateLiteralConstant(ScriptNode n, int regexpIndex) {
+    Object getTemplateLiteralConstant(ScriptNode n, int regexpIndex) {
         return templateLiteralConstants == null
                 ? null
                 : templateLiteralConstants[getIndex(n)][regexpIndex];
@@ -1151,9 +1139,9 @@ public class Codegen implements Evaluator {
      * The prepared form of every regexp literal, indexed as {@link #scriptOrFnNodes} is and then by
      * the index of the literal, or null when the literals are compiled at run time instead.
      */
-    private DynamicConstant[][] regExpConstants;
+    private Object[][] regExpConstants;
 
-    private DynamicConstant[][] templateLiteralConstants;
+    private Object[][] templateLiteralConstants;
 
     private double[] itsConstantList;
     private int itsConstantListSize;

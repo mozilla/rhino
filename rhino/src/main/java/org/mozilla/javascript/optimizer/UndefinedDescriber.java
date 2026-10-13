@@ -11,18 +11,23 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.constant.DynamicConstantDesc;
 import org.mozilla.classfile.DynamicConstantDescriber;
+import org.mozilla.classfile.DynamicDescriberRegistry;
 import org.mozilla.javascript.Undefined;
 
 /**
  * Describes {@link Undefined} as a dynamic constant that resolves to the canonical {@link
  * Undefined#instance}.
  */
-public class UndefinedDescriber implements DynamicConstantDescriber<Undefined> {
+public class UndefinedDescriber extends DynamicConstantDescriber<Undefined> {
 
     private static final ClassDesc CD_UNDEFINED = ClassDesc.of(Undefined.class.getName());
 
     private static final DirectMethodHandleDesc UNDEFINED_CONSTANT =
             ConstantDescs.ofConstantBootstrap(CD_UNDEFINED, "undefinedConstant", CD_UNDEFINED);
+
+    public UndefinedDescriber(DynamicDescriberRegistry registry) {
+        super(registry);
+    }
 
     @Override
     public Class<Undefined> describedType() {

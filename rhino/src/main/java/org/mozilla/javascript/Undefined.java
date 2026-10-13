@@ -9,7 +9,6 @@ package org.mozilla.javascript;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
-import org.mozilla.classfile.DynamicConstant;
 
 /**
  * This class implements the Undefined value in JavaScript.
@@ -21,7 +20,7 @@ import org.mozilla.classfile.DynamicConstant;
  * <p>Java code that needs to test whether something is undefined <b>must</b> use the "isUndefined"
  * method because of the multiple internal representations.
  */
-public class Undefined implements Serializable, DynamicConstant {
+public class Undefined implements Serializable {
     @Serial private static final long serialVersionUID = 9195680630202616767L;
 
     /**

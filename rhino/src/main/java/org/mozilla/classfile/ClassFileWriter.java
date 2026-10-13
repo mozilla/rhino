@@ -18,7 +18,6 @@ import java.lang.constant.DynamicConstantDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.config.RhinoConfig;
 
@@ -950,17 +949,8 @@ public class ClassFileWriter {
         }
     }
 
-    /**
-     * Register a describer that this writer will use to turn values of {@link
-     * DynamicConstantDescriber#describedType} into dynamic constants.
-     *
-     * <p>A value is matched to a describer by walking up its superclasses, so a describer also
-     * covers the subclasses of its type. Describers must therefore be keyed on a class rather than
-     * on an interface.
-     */
-    public <T extends DynamicConstant> void registerDynamicConstantDescriber(
-            DynamicConstantDescriber<T> describer) {
-        itsConstantDescribers.put(describer.describedType(), describer);
+    public DynamicDescriberRegistry getDynamicDescriptorRegistry() {
+        return itsDescriberRegistry;
     }
 
     public void registerStringConcat(DirectMethodHandleDesc stringConcatBootStrap) {
@@ -974,19 +964,13 @@ public class ClassFileWriter {
      *
      * @param constant the constant
      */
-    public <T extends DynamicConstant> void addLoadDynamicConstant(T constant) {
+    public <T> void addLoadDynamicConstant(T constant) {
         // Class file version 55 is required for CONSTANT_Dynamic
         if (MajorVersion < 55) {
             throw new RuntimeException("Please build and run with JDK 11 for dynamic constants");
         }
 
-        @SuppressWarnings("unchecked")
-        var type = (Class<T>) constant.getClass();
-        var describer = (DynamicConstantDescriber<T>) findConstantDescriber(type);
-        if (describer == null) {
-            throw new IllegalArgumentException("no dynamic constant describer for " + type);
-        }
-        addLoadConstant(describer.describe(constant));
+        addLoadConstant(itsDescriberRegistry.describe(constant));
     }
 
     /**
@@ -1050,14 +1034,6 @@ public class ClassFileWriter {
             return ConstantDescs.CD_long.equals(type) || ConstantDescs.CD_double.equals(type);
         }
         return desc instanceof Long || desc instanceof Double;
-    }
-
-    /** Find the describer registered for a type. */
-    private <T extends DynamicConstant> DynamicConstantDescriber<T> findConstantDescriber(
-            Class<T> type) {
-        @SuppressWarnings("unchecked")
-        var res = (DynamicConstantDescriber<T>) itsConstantDescribers.get(type);
-        return res;
     }
 
     /**
@@ -4775,10 +4751,7 @@ public class ClassFileWriter {
     private ArrayList<int[]> itsVarDescriptors;
     private ArrayList<BootstrapEntry> itsBootstrapMethods;
     private int itsBootstrapMethodsLength = 0;
-    private final Map<
-                    Class<? extends DynamicConstant>,
-                    DynamicConstantDescriber<? extends DynamicConstant>>
-            itsConstantDescribers = new HashMap<>();
+    private final DynamicDescriberRegistry itsDescriberRegistry = new DynamicDescriberRegistry();
 
     private DirectMethodHandleDesc stringConcatBootStrap;
 
