@@ -58,7 +58,7 @@ class JavaMembers {
         try (Context cx = ContextFactory.getGlobal().enterContext()) {
             ClassShutter shutter = cx.getClassShutter();
             if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
-                throw Context.reportRuntimeErrorById("msg.access.prohibited", cl.getName());
+                throw ScriptRuntime.typeErrorById("msg.access.prohibited", cl.getName());
             }
             this.members = new HashMap<>();
             this.fieldAndMethods = new HashMap<>();
@@ -172,7 +172,7 @@ class JavaMembers {
             } catch (IllegalAccessException accessEx) {
                 throw Context.throwAsScriptRuntimeEx(accessEx);
             } catch (IllegalArgumentException argEx) {
-                throw Context.reportRuntimeErrorById(
+                throw ScriptRuntime.typeErrorById(
                         "msg.java.internal.field.type",
                         value.getClass().getName(),
                         field,
@@ -180,7 +180,7 @@ class JavaMembers {
             }
         } else {
             String str = (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
-            throw Context.reportRuntimeErrorById(str, name);
+            throw ScriptRuntime.typeErrorById(str, name);
         }
     }
 
@@ -868,8 +868,7 @@ class JavaMembers {
     }
 
     RuntimeException reportMemberNotFound(String memberName) {
-        return Context.reportRuntimeErrorById(
-                "msg.java.member.not.found", cl.getName(), memberName);
+        return ScriptRuntime.typeErrorById("msg.java.member.not.found", cl.getName(), memberName);
     }
 
     private final Class<?> cl;

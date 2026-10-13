@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Collection;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.testutils.Utils;
 
@@ -44,7 +44,7 @@ public class OverloadTest {
     @Test
     public void jsFunctionToInterface() {
         assertThrows(
-                EvaluatorException.class,
+                RhinoException.class,
                 "String(org.mozilla.javascript.tests.OverloadTest.x(function() {}));");
     }
 

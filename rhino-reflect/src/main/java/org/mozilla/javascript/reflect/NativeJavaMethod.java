@@ -154,7 +154,7 @@ public class NativeJavaMethod extends BaseFunction {
         if (index < 0) {
             Class<?> c = methods[0].asMethod().getDeclaringClass();
             String sig = c.getName() + '.' + getFunctionName() + '(' + scriptSignature(args) + ')';
-            throw Context.reportRuntimeErrorById("msg.java.no_such_method", sig);
+            throw ScriptRuntime.typeErrorById("msg.java.no_such_method", sig);
         }
 
         var meth = methods[index];
@@ -178,7 +178,7 @@ public class NativeJavaMethod extends BaseFunction {
             Class<?> c = meth.getDeclaringClass();
             for (; ; ) {
                 if (o == null) {
-                    throw Context.reportRuntimeErrorById(
+                    throw ScriptRuntime.typeErrorById(
                             "msg.nonjava.method",
                             getFunctionName(),
                             ScriptRuntime.toString(thisObj),
@@ -393,10 +393,10 @@ public class NativeJavaMethod extends BaseFunction {
         String memberClass = firstFitMember.getDeclaringClass().getName();
 
         if (methodsOrCtors[0].isConstructor()) {
-            throw Context.reportRuntimeErrorById(
+            throw ScriptRuntime.typeErrorById(
                     "msg.constructor.ambiguous", memberName, scriptSignature(args), buf.toString());
         }
-        throw Context.reportRuntimeErrorById(
+        throw ScriptRuntime.typeErrorById(
                 "msg.method.ambiguous",
                 memberClass,
                 memberName,

@@ -79,7 +79,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage
             }
         }
         if (loader == null) {
-            Context.reportRuntimeErrorById("msg.not.classloader");
+            ScriptRuntime.typeErrorById("msg.not.classloader");
             return null;
         }
         NativeJavaPackage pkg = new NativeJavaPackage(true, "", loader);
@@ -161,7 +161,7 @@ public class NativeJavaTopPackage extends NativeJavaPackage
                 offset = index + 1;
             }
         }
-        throw Context.reportRuntimeErrorById("msg.not.java.obj");
+        throw ScriptRuntime.typeErrorById("msg.not.java.obj");
     }
 
     static String[] getTopPackageNames() {

@@ -54,8 +54,8 @@ public class JavaBeaningTest {
     @Test
     public void testMaskingMethod() {
         // method should not be masked
-        Utils.assertEvaluatorExceptionES6(
-                "Java method \"elementAt\" cannot be assigned to",
+        Utils.assertEcmaErrorES6(
+                "TypeError: Java method \"elementAt\" cannot be assigned to",
                 SCRIPT_INIT + "obj.elementAt = 42");
     }
 

@@ -82,7 +82,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         if ("length".equals(id)) return Integer.valueOf(length);
         Object result = super.get(id, start);
         if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(), id)) {
-            throw Context.reportRuntimeErrorById(
+            throw ScriptRuntime.typeErrorById(
                     "msg.java.member.not.found", array.getClass().getName(), id);
         }
         return result;
@@ -110,7 +110,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     public void put(String id, Scriptable start, Object value) {
         // Ignore assignments to "length"--it's readonly.
         if (!"length".equals(id))
-            throw Context.reportRuntimeErrorById("msg.java.array.member.not.found", id);
+            throw ScriptRuntime.typeErrorById("msg.java.array.member.not.found", id);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
         if (0 <= index && index < length) {
             Array.set(array, index, Context.jsToJava(value, componentType));
         } else {
-            throw Context.reportRuntimeErrorById(
+            throw ScriptRuntime.typeErrorById(
                     "msg.java.array.index.out.of.bounds",
                     String.valueOf(index),
                     String.valueOf(length - 1));

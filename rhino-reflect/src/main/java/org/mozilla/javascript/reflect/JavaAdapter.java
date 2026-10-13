@@ -156,7 +156,7 @@ public final class JavaAdapter implements GraphComparable {
                 NativeJavaMethod ctors = classWrapper.members.ctors;
                 int index = ctors.findCachedFunction(cx, ctorArgs);
                 if (index < 0) {
-                    throw Context.reportRuntimeErrorById(
+                    throw ScriptRuntime.typeErrorById(
                             "msg.no.java.ctor",
                             adapterClass.getName(),
                             NativeJavaMethod.scriptSignature(args));
@@ -958,7 +958,7 @@ public final class JavaAdapter implements GraphComparable {
         if (parms.length > 64) {
             // If it will be an issue, then passing a static boolean array
             // can be an option, but for now using simple bitmask
-            throw Context.reportRuntimeErrorById(
+            throw ScriptRuntime.typeErrorById(
                     "JavaAdapter can not subclass methods with more then" + " 64 arguments.");
         }
         long conversionMask = 0;

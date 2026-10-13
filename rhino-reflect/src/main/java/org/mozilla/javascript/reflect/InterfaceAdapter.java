@@ -74,10 +74,10 @@ public class InterfaceAdapter {
                 // There is no abstract method or there are multiple methods.
                 if (!canConvert) {
                     if (functionalMethodNames.isEmpty() && defaultMethodNames.isEmpty()) {
-                        throw Context.reportRuntimeErrorById(
+                        throw ScriptRuntime.typeErrorById(
                                 "msg.no.empty.interface.conversion", cl.getName());
                     } else {
-                        throw Context.reportRuntimeErrorById(
+                        throw ScriptRuntime.typeErrorById(
                                 "msg.no.function.interface.conversion", cl.getName());
                     }
                 }
@@ -211,7 +211,7 @@ public class InterfaceAdapter {
                 return Context.jsToJava(null, resultType);
             }
             if (!(value instanceof Callable)) {
-                throw Context.reportRuntimeErrorById("msg.not.function.interface", methodName);
+                throw ScriptRuntime.typeErrorById("msg.not.function.interface", methodName);
             }
             function = (Callable) value;
         }

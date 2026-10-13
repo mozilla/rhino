@@ -205,7 +205,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /**
      * @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
-     *     WrapFactory#wrap(Context, VarScope, Object, Class)}
+     *     org.mozilla.javascript.WrapFactory#wrap(Context, VarScope, Object, Class)}
      */
     @Deprecated
     public static Object wrap(VarScope scope, Object obj, Class<?> staticType) {
@@ -244,7 +244,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             } else if (hint == ScriptRuntime.NumberClass) {
                 converterName = "doubleValue";
             } else {
-                throw Context.reportRuntimeErrorById("msg.default.value");
+                throw ScriptRuntime.typeErrorById("msg.default.value");
             }
             Object converterObject = get(converterName, this);
             if (converterObject instanceof Function) {
@@ -860,7 +860,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     static void reportConversionError(Object value, Class<?> type) {
         // It uses String.valueOf(value), not value.toString() since
         // value can be null, bug 282447.
-        throw Context.reportRuntimeErrorById(
+        throw ScriptRuntime.typeErrorById(
                 "msg.conversion.not.allowed",
                 String.valueOf(value),
                 JavaMembers.javaSignature(type));
@@ -870,7 +870,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     static void reportConversionError(Object value, TypeInfo type) {
         // It uses String.valueOf(value), not value.toString() since
         // value can be null, bug 282447.
-        throw Context.reportRuntimeErrorById(
+        throw ScriptRuntime.typeErrorById(
                 "msg.conversion.not.allowed", String.valueOf(value), type);
     }
 

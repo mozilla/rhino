@@ -18,6 +18,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
@@ -114,7 +115,7 @@ public class ImporterTopLevel extends TopLevel {
                     if (result == NOT_FOUND) {
                         result = v;
                     } else {
-                        throw Context.reportRuntimeErrorById(
+                        throw ScriptRuntime.typeErrorById(
                                 "msg.ambig.import", result.toString(), v.toString());
                     }
                 }
@@ -217,8 +218,7 @@ public class ImporterTopLevel extends TopLevel {
             } else if (arg instanceof NativeJavaPackage) {
                 ImporterTopLevel.importPackage(result, (NativeJavaPackage) arg);
             } else {
-                throw Context.reportRuntimeErrorById(
-                        "msg.not.class.not.pkg", Context.toString(arg));
+                throw ScriptRuntime.typeErrorById("msg.not.class.not.pkg", Context.toString(arg));
             }
         }
         // set explicitly prototype and scope
@@ -239,7 +239,7 @@ public class ImporterTopLevel extends TopLevel {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaClass)) {
-                throw Context.reportRuntimeErrorById("msg.not.class", Context.toString(arg));
+                throw ScriptRuntime.typeErrorById("msg.not.class", Context.toString(arg));
             }
             importClass((ScriptableObject) thisObj, (NativeJavaClass) arg);
         }
@@ -254,7 +254,7 @@ public class ImporterTopLevel extends TopLevel {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaPackage)) {
-                throw Context.reportRuntimeErrorById("msg.not.pkg", Context.toString(arg));
+                throw ScriptRuntime.typeErrorById("msg.not.pkg", Context.toString(arg));
             }
 
             importPackage((ScriptableObject) thisObj, (NativeJavaPackage) arg);
@@ -290,7 +290,7 @@ public class ImporterTopLevel extends TopLevel {
             if (val.equals(cl)) {
                 return; // do not redefine same class
             }
-            throw Context.reportRuntimeErrorById("msg.prop.defined", n);
+            throw ScriptRuntime.typeErrorById("msg.prop.defined", n);
         }
         // defineProperty(n, cl, DONTENUM);
         scope.put(n, scope, cl);

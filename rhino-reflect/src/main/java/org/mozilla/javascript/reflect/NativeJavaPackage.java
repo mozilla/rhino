@@ -83,7 +83,7 @@ public class NativeJavaPackage extends ScriptableObject implements GraphComparab
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        throw Context.reportRuntimeErrorById("msg.pkg.int");
+        throw ScriptRuntime.typeErrorById("msg.pkg.int");
     }
 
     @Override

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.testutils.Utils;
@@ -111,7 +111,7 @@ public class InterfaceAdapterTest {
         String js =
                 "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveEmptyInterface(a => a);\n"
                         + "list";
-        assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
+        assertThrows(RhinoException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
     public interface OneMethodInterface {
@@ -142,7 +142,7 @@ public class InterfaceAdapterTest {
         String js =
                 "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoMethodsInterface(a => a);\n"
                         + "list";
-        assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
+        assertThrows(RhinoException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
     public interface TwoMethodsWithExtendsInterface extends OneMethodInterface {
@@ -156,7 +156,7 @@ public class InterfaceAdapterTest {
         String js =
                 "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoMethodsWithExtendsInterface(a => a);\n"
                         + "list";
-        assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
+        assertThrows(RhinoException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
     public interface OneDefaultMethodInterface {
@@ -189,7 +189,7 @@ public class InterfaceAdapterTest {
         String js =
                 "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoDefaultMethodsInterface(a => a);\n"
                         + "list";
-        assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
+        assertThrows(RhinoException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
     public interface TwoSameNameDefaultMethodsInterface {
