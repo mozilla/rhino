@@ -854,8 +854,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    protected boolean defineOwnProperty(
-            Context cx, Object key, DescriptorInfo desc, boolean checkValid) {
+    public boolean defineOwnProperty(
+            Context cx, Object key, PropertyDescriptor desc, boolean checkValid) {
         if (key instanceof CharSequence) {
             String name = key.toString();
             int info = findInstanceIdInfo(name);
@@ -920,7 +920,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         var desc = super.getOwnPropertyDescriptor(cx, id);
         if (desc == null) {
             if (id instanceof String) {
@@ -956,9 +956,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot;
     }
 
-    private DescriptorInfo getBuiltInDataDescriptor(String name) {
+    private PropertyDescriptor getBuiltInDataDescriptor(String name) {
         var slot = getBuiltInSlot(name);
-        return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
+        return slot == null ? null : new PropertyDescriptor(slot.value, slot.getAttributes(), true);
     }
 
     private Slot<?> getBuiltInSlot(String name) {
@@ -984,9 +984,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return null;
     }
 
-    private DescriptorInfo getBuiltInDataDescriptor(Symbol key) {
+    private PropertyDescriptor getBuiltInDataDescriptor(Symbol key) {
         var slot = getBuiltInSlot(key);
-        return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
+        return slot == null ? null : new PropertyDescriptor(slot.value, slot.getAttributes(), true);
     }
 
     private StandardSlot getBuiltInSlot(Symbol key) {

@@ -529,11 +529,11 @@ public class NativeObject extends ScriptableObject implements Map {
     private static Object js_getOwnPropDesc(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
-        // TODO(norris): There's a deeper issue here if
-        // arg instanceof Scriptable. Should we create a new
-        // interface to admit the new ECMAScript 5 operations?
         Scriptable s2 = getCompatibleObject(cx, s, arg);
-        ScriptableObject obj = ensureScriptableObject(s2);
+        Scriptable obj = s2;
+        if (s2 instanceof Delegator) {
+            obj = ((Delegator) s2).getDelegee();
+        }
         Object nameArg = args.length < 2 ? Undefined.instance : args[1];
         var desc = obj.getOwnPropertyDescriptor(cx, nameArg);
         return desc == null ? Undefined.instance : desc.toObject(f.getDeclarationScope());
@@ -543,12 +543,20 @@ public class NativeObject extends ScriptableObject implements Map {
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         Scriptable s2 = getCompatibleObject(cx, s, arg);
-        ScriptableObject obj = ensureScriptableObject(s2);
+        Scriptable obj = s2;
+        if (s2 instanceof Delegator) {
+            obj = ((Delegator) s2).getDelegee();
+        }
 
         ScriptableObject descs = (ScriptableObject) cx.newObject(f.getDeclarationScope());
         Object[] ids;
-        try (var map = obj.startCompoundOp(false)) {
-            ids = obj.getIds(map, true, true);
+        if (obj instanceof ScriptableObject) {
+            ScriptableObject soObj = (ScriptableObject) obj;
+            try (var map = soObj.startCompoundOp(false)) {
+                ids = soObj.getIds(map, true, true);
+            }
+        } else {
+            ids = obj.getIds();
         }
         for (Object key : ids) {
             var desc = obj.getOwnPropertyDescriptor(cx, key);
@@ -568,13 +576,17 @@ public class NativeObject extends ScriptableObject implements Map {
     private static Object js_defineProperty(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
-        ScriptableObject obj = ensureScriptableObject(arg);
+        Scriptable s2 = ensureScriptable(arg);
+        Scriptable obj = s2;
+        if (s2 instanceof Delegator) {
+            obj = ((Delegator) s2).getDelegee();
+        }
         Object name = args.length < 2 ? Undefined.instance : args[1];
         Object descArg = args.length < 3 ? Undefined.instance : args[2];
-        var desc = new DescriptorInfo(ensureScriptableObject(descArg));
+        var desc = new PropertyDescriptor(ensureScriptableObject(descArg));
         ScriptableObject.checkPropertyDefinition(desc);
         obj.defineOwnProperty(cx, name, desc);
-        return obj;
+        return s2;
     }
 
     private static Object js_isExtensible(
@@ -605,10 +617,12 @@ public class NativeObject extends ScriptableObject implements Map {
     private static Object js_defineProperties(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
-        ScriptableObject obj = ensureScriptableObject(arg);
+        Scriptable obj = ensureScriptable(arg);
         Object propsObj = args.length < 2 ? Undefined.instance : args[1];
         Scriptable props = Context.toObject(propsObj, s);
-        obj.defineOwnProperties(cx, ensureScriptableObject(props));
+        if (obj instanceof ScriptableObject) {
+            ((ScriptableObject) obj).defineOwnProperties(cx, ensureScriptableObject(props));
+        }
         return obj;
     }
 

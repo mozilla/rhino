@@ -207,6 +207,64 @@ public interface Scriptable extends PropHolder<Scriptable> {
     default void put(Symbol key, Scriptable start, Object value) {}
 
     /**
+     * Get the property descriptor for a named property.
+     *
+     * <p>This method allows any Scriptable implementation to describe the attributes of one of its
+     * properties, following the ECMAScript [[GetOwnProperty]] operation.
+     *
+     * <p>The default implementation returns null, indicating that this object does not support
+     * property descriptors or the property was not found.
+     *
+     * @param cx the current Context
+     * @param key the property key (String, Integer, or Symbol)
+     * @return a PropertyDescriptor if the property exists, null otherwise
+     * @see ScriptableObject#getOwnPropertyDescriptor(Context, Object)
+     */
+    default PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object key) {
+        Object v;
+        if (key instanceof String) {
+            v = get((String) key, this);
+        } else if (key instanceof Number) {
+            v = get(((Number) key).intValue(), this);
+        } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
+            v = ((SymbolScriptable) this).get((Symbol) key, this);
+        } else {
+            v = NOT_FOUND;
+        }
+        return v == NOT_FOUND ? null : new PropertyDescriptor(v, 0, false);
+    }
+
+    /**
+     * Define or update a property descriptor on this object.
+     *
+     * <p>This method allows any Scriptable implementation to define properties with full descriptor
+     * support, following the ECMAScript [[DefineOwnProperty]] operation.
+     *
+     * <p>The default implementation returns false, indicating that property definition is not
+     * supported by this Scriptable implementation.
+     *
+     * @param cx the current Context
+     * @param key the property key (String, Integer, or Symbol)
+     * @param desc the property descriptor
+     * @return true if the property was successfully defined, false otherwise
+     * @see ScriptableObject#defineOwnProperty(Context, Object, PropertyDescriptor)
+     */
+    default boolean defineOwnProperty(Context cx, Object key, PropertyDescriptor desc) {
+        if (key instanceof String) {
+            put((String) key, this, desc.value);
+            return has((String) key, this);
+        } else if (key instanceof Number) {
+            var k = ((Number) key).intValue();
+            put(k, this, desc.value);
+            return has(k, this);
+        } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
+            ((SymbolScriptable) this).put((Symbol) key, this, desc.value);
+            return ((SymbolScriptable) this).has((Symbol) key, this);
+        }
+        return false;
+    }
+
+    /**
      * Removes a property from this object. This operation corresponds to the ECMA [[Delete]] except
      * that the no result is returned. The runtime will guarantee that this method is called only if
      * the property exists. After this method is called, the runtime will call Scriptable.has to see

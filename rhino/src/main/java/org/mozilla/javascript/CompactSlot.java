@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Objects;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 public abstract class CompactSlot<
                 T extends CompactSlot.Descriptor<T, U, O>,
@@ -45,7 +44,7 @@ public abstract class CompactSlot<
             slot.attributes = (short) value;
         }
 
-        DescriptorInfo getPropertyDescriptor(CompactSlot<T, U, O> slot, Context cx, U start) {
+        PropertyDescriptor getPropertyDescriptor(CompactSlot<T, U, O> slot, Context cx, U start) {
             return ScriptableObject.buildDataDescriptor(
                     getValue(slot, start), slot.getAttributes());
         }
@@ -102,7 +101,7 @@ public abstract class CompactSlot<
     }
 
     @Override
-    final DescriptorInfo getPropertyDescriptor(Context cx, U start) {
+    final PropertyDescriptor getPropertyDescriptor(Context cx, U start) {
         return descriptor.getPropertyDescriptor(this, cx, start);
     }
 
