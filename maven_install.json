@@ -18,15 +18,14 @@
     "org.jline:jline-terminal": 1693017023,
     "org.jline:jline-terminal-ffm": -1643003297,
     "org.jline:jline-terminal-jni": -1003476121,
-    "org.junit.jupiter:junit-jupiter": 893755136,
-    "org.junit.jupiter:junit-jupiter-api": 1691365907,
-    "org.junit.jupiter:junit-jupiter-engine": -1731602569,
-    "org.junit.jupiter:junit-jupiter-params": -645400653,
-    "org.junit.platform:junit-platform-console": 818621092,
-    "org.junit.platform:junit-platform-console-standalone": 1871770024,
-    "org.junit.platform:junit-platform-launcher": -2122124083,
-    "org.junit.platform:junit-platform-reporting": -1439949445,
-    "org.junit.platform:junit-platform-runner": -1625579427,
+    "org.junit.jupiter:junit-jupiter": 1465511359,
+    "org.junit.jupiter:junit-jupiter-api": -1418253236,
+    "org.junit.jupiter:junit-jupiter-engine": 549538408,
+    "org.junit.jupiter:junit-jupiter-params": 1138766508,
+    "org.junit.platform:junit-platform-console": -957450337,
+    "org.junit.platform:junit-platform-console-standalone": 1016184859,
+    "org.junit.platform:junit-platform-launcher": 1718633558,
+    "org.junit.platform:junit-platform-reporting": -2000138776,
     "org.openjdk.jmh:jmh-core": 983716932,
     "org.openjdk.jmh:jmh-generator-annprocess": -1162360421,
     "org.slf4j:slf4j-simple": -487947767,
@@ -62,21 +61,20 @@
     "org.jline:jline-terminal": -1773440911,
     "org.jline:jline-terminal-ffm": 670481195,
     "org.jline:jline-terminal-jni": 701398894,
-    "org.junit.jupiter:junit-jupiter": -1091544314,
-    "org.junit.jupiter:junit-jupiter-api": 1023364856,
-    "org.junit.jupiter:junit-jupiter-engine": -1961546222,
-    "org.junit.jupiter:junit-jupiter-params": 1099961190,
-    "org.junit.platform:junit-platform-commons": -520841327,
-    "org.junit.platform:junit-platform-console": 1093233813,
-    "org.junit.platform:junit-platform-console-standalone": -600519838,
-    "org.junit.platform:junit-platform-engine": -738978355,
-    "org.junit.platform:junit-platform-launcher": 1097249904,
-    "org.junit.platform:junit-platform-reporting": 726060416,
-    "org.junit.platform:junit-platform-runner": 1580955352,
-    "org.junit.platform:junit-platform-suite-api": 1254742642,
-    "org.junit.platform:junit-platform-suite-commons": 1867554596,
+    "org.jspecify:jspecify": 117231129,
+    "org.junit.jupiter:junit-jupiter": -427379008,
+    "org.junit.jupiter:junit-jupiter-api": -1170819288,
+    "org.junit.jupiter:junit-jupiter-engine": -362818027,
+    "org.junit.jupiter:junit-jupiter-params": -1666494068,
+    "org.junit.platform:junit-platform-commons": 585098661,
+    "org.junit.platform:junit-platform-console": 1350866550,
+    "org.junit.platform:junit-platform-console-standalone": 497755454,
+    "org.junit.platform:junit-platform-engine": 1716273321,
+    "org.junit.platform:junit-platform-launcher": -1197157553,
+    "org.junit.platform:junit-platform-reporting": -668997287,
     "org.openjdk.jmh:jmh-core": 262505124,
     "org.openjdk.jmh:jmh-generator-annprocess": 554503664,
+    "org.opentest4j.reporting:open-test-reporting-tooling-spi": -1725000643,
     "org.opentest4j:opentest4j": -1711174392,
     "org.slf4j:slf4j-api": -1521593912,
     "org.slf4j:slf4j-simple": -662389614,
@@ -254,83 +252,71 @@
       },
       "version": "3.30.6"
     },
+    "org.jspecify:jspecify": {
+      "shasums": {
+        "jar": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+      },
+      "version": "1.0.0"
+    },
     "org.junit.jupiter:junit-jupiter": {
       "shasums": {
-        "jar": "e6fc09f881eba8b8d8a7660a6c7f4d582fa7881f306136afe2d82964a2e7c22f"
+        "jar": "6b0a14075c74221de53047e363860b7d19fce802bebc152df2c35c4089c6c379"
       },
-      "version": "5.10.3"
+      "version": "6.1.3"
     },
     "org.junit.jupiter:junit-jupiter-api": {
       "shasums": {
-        "jar": "6efe6e01ca1ff79b7bf4c6f1eed0b29292e166c27eaf7b00ac981a14d4de61aa"
+        "jar": "555d6cf20fa1710884dd01b86cc5785397ba73e21ada2d4b784f5f1a14dcafc4"
       },
-      "version": "5.10.3"
+      "version": "6.1.3"
     },
     "org.junit.jupiter:junit-jupiter-engine": {
       "shasums": {
-        "jar": "bbd3ce8dc11e9925071ef9691d68af1ab6e712faa6851f7c5275bc8aafc88673"
+        "jar": "414559e78bbfa3bdb2eab009ac3ab1e22369ac31117c270a0bd666da115c5c6c"
       },
-      "version": "5.10.3"
+      "version": "6.1.3"
     },
     "org.junit.jupiter:junit-jupiter-params": {
       "shasums": {
-        "jar": "7c3ed8cefb12496b76c53c3da986ea8f0bf3f426781869475551ae3a506c1ad8"
+        "jar": "05c51cedba2c06a9770707391e006cee825876937dea580b94a265ce145d4939"
       },
-      "version": "5.10.3"
+      "version": "6.1.3"
     },
     "org.junit.platform:junit-platform-commons": {
       "shasums": {
-        "jar": "9787f04d49db59397cdd7555d421a5bd2d1445666997d327b94f85e38bed57f1"
+        "jar": "a4774ae923c109544034aeae7c762cf017fbcdd1342403ba90e0921984b608c3"
       },
-      "version": "1.10.3"
+      "version": "6.1.3"
     },
     "org.junit.platform:junit-platform-console": {
       "shasums": {
-        "jar": "77874ff0af661702874a1ced54ab2b0bf9f66057206112a0f6108fc8676f146a"
+        "jar": "913554ad65b9420936822889a7268a6793a942e5f77ad8b653b8ec05068fa3be"
       },
-      "version": "1.10.3"
+      "version": "6.1.3"
     },
     "org.junit.platform:junit-platform-console-standalone": {
       "shasums": {
-        "jar": "1455afad75d4eb4f44b493febc4a1bc32bc5f02eb25679361abd55e0f6421050"
+        "jar": "e62b96ac475dbcde8599ea905d088f65d90778f86e259b856a49fa5c4ea256ec"
       },
-      "version": "1.10.3"
+      "version": "6.1.3"
     },
     "org.junit.platform:junit-platform-engine": {
       "shasums": {
-        "jar": "df7c32bf75cf47c4c8ddd1942091027947a7d765d30b731fe00830115fafa133"
+        "jar": "21ad7ad3a35beda16387979317be1833a72a71d812f9a66ee4b9a7bafb56334c"
       },
-      "version": "1.10.3"
+      "version": "6.1.3"
     },
     "org.junit.platform:junit-platform-launcher": {
       "shasums": {
-        "jar": "deaeede2f011eaf94f5bc681e04eee2f4a0f6d69771e1a79aa950d898b405d8d"
+        "jar": "1dec64b1fc0b7c47a11302aa5b4d37d8160c041b396e27067709ce775601a7b6"
       },
-      "version": "1.10.3"
+      "version": "6.1.3"
     },
     "org.junit.platform:junit-platform-reporting": {
       "shasums": {
-        "jar": "04e12038995ed4a72579cdc3f25337c97e46e1a09d10b5114fabb602d917e8dd"
+        "jar": "d584a16cd87da5609af5e35428ed4f40b192681a2487dc59d02ecb62f6c417c2"
       },
-      "version": "1.10.3"
-    },
-    "org.junit.platform:junit-platform-runner": {
-      "shasums": {
-        "jar": "2fdddc65e39231ecf252e904d316ab66fdbc24fd670383abff82bb3028b14700"
-      },
-      "version": "1.10.3"
-    },
-    "org.junit.platform:junit-platform-suite-api": {
-      "shasums": {
-        "jar": "bdb1de13d1a86a17a8093f2612014cd3271a1625b46fedee01c9982a3b4287af"
-      },
-      "version": "1.10.3"
-    },
-    "org.junit.platform:junit-platform-suite-commons": {
-      "shasums": {
-        "jar": "da51c58786762602848f38bcf45d9d18387ed10d030308ebd8d4989cfae7fd59"
-      },
-      "version": "1.10.3"
+      "version": "6.1.3"
     },
     "org.openjdk.jmh:jmh-core": {
       "shasums": {
@@ -343,6 +329,12 @@
         "jar": "6a5604b5b804e0daca1145df1077609321687734a8b49387e49f10557c186c77"
       },
       "version": "1.37"
+    },
+    "org.opentest4j.reporting:open-test-reporting-tooling-spi": {
+      "shasums": {
+        "jar": "df237b68847637747f0bfdb88fa9cdd9c72cc85550fad0c41ddb33869a5ca516"
+      },
+      "version": "0.2.5"
     },
     "org.opentest4j:opentest4j": {
       "shasums": {
@@ -421,54 +413,46 @@
     ],
     "org.junit.jupiter:junit-jupiter-api": [
       "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.platform:junit-platform-commons",
       "org.opentest4j:opentest4j"
     ],
     "org.junit.jupiter:junit-jupiter-engine": [
       "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.jupiter:junit-jupiter-api",
       "org.junit.platform:junit-platform-engine"
     ],
     "org.junit.jupiter:junit-jupiter-params": [
       "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.jupiter:junit-jupiter-api"
     ],
     "org.junit.platform:junit-platform-commons": [
-      "org.apiguardian:apiguardian-api"
+      "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify"
     ],
     "org.junit.platform:junit-platform-console": [
       "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.platform:junit-platform-reporting"
     ],
     "org.junit.platform:junit-platform-engine": [
       "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.platform:junit-platform-commons",
       "org.opentest4j:opentest4j"
     ],
     "org.junit.platform:junit-platform-launcher": [
       "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.platform:junit-platform-engine"
     ],
     "org.junit.platform:junit-platform-reporting": [
       "org.apiguardian:apiguardian-api",
-      "org.junit.platform:junit-platform-launcher"
-    ],
-    "org.junit.platform:junit-platform-runner": [
-      "junit:junit",
-      "org.apiguardian:apiguardian-api",
+      "org.jspecify:jspecify",
       "org.junit.platform:junit-platform-launcher",
-      "org.junit.platform:junit-platform-suite-api",
-      "org.junit.platform:junit-platform-suite-commons"
-    ],
-    "org.junit.platform:junit-platform-suite-api": [
-      "org.apiguardian:apiguardian-api",
-      "org.junit.platform:junit-platform-commons"
-    ],
-    "org.junit.platform:junit-platform-suite-commons": [
-      "org.apiguardian:apiguardian-api",
-      "org.junit.platform:junit-platform-engine",
-      "org.junit.platform:junit-platform-launcher",
-      "org.junit.platform:junit-platform-suite-api"
+      "org.opentest4j.reporting:open-test-reporting-tooling-spi"
     ],
     "org.openjdk.jmh:jmh-core": [
       "net.sf.jopt-simple:jopt-simple",
@@ -476,6 +460,9 @@
     ],
     "org.openjdk.jmh:jmh-generator-annprocess": [
       "org.openjdk.jmh:jmh-core"
+    ],
+    "org.opentest4j.reporting:open-test-reporting-tooling-spi": [
+      "org.apiguardian:apiguardian-api"
     ],
     "org.slf4j:slf4j-simple": [
       "org.slf4j:slf4j-api"
@@ -848,6 +835,9 @@
       "org.jline.terminal.impl.jni.solaris",
       "org.jline.terminal.impl.jni.win"
     ],
+    "org.jspecify:jspecify": [
+      "org.jspecify.annotations"
+    ],
     "org.junit.jupiter:junit-jupiter-api": [
       "org.junit.jupiter.api",
       "org.junit.jupiter.api.condition",
@@ -855,7 +845,9 @@
       "org.junit.jupiter.api.extension.support",
       "org.junit.jupiter.api.function",
       "org.junit.jupiter.api.io",
-      "org.junit.jupiter.api.parallel"
+      "org.junit.jupiter.api.parallel",
+      "org.junit.jupiter.api.timeout",
+      "org.junit.jupiter.api.util"
     ],
     "org.junit.jupiter:junit-jupiter-engine": [
       "org.junit.jupiter.engine",
@@ -872,37 +864,28 @@
       "org.junit.jupiter.params.aggregator",
       "org.junit.jupiter.params.converter",
       "org.junit.jupiter.params.provider",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.annotations",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.helpers",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.beans",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.fields",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.input",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.input.concurrent",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.iterators",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor.core",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.record",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.routine",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.conversions",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.csv",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.fixed",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.tsv",
+      "org.junit.jupiter.params.shadow.de.siegmar.fastcsv.reader",
+      "org.junit.jupiter.params.shadow.de.siegmar.fastcsv.util",
+      "org.junit.jupiter.params.shadow.de.siegmar.fastcsv.writer",
       "org.junit.jupiter.params.support"
     ],
     "org.junit.platform:junit-platform-commons": [
       "org.junit.platform.commons",
       "org.junit.platform.commons.annotation",
       "org.junit.platform.commons.function",
+      "org.junit.platform.commons.io",
       "org.junit.platform.commons.logging",
       "org.junit.platform.commons.support",
+      "org.junit.platform.commons.support.conversion",
+      "org.junit.platform.commons.support.scanning",
       "org.junit.platform.commons.util"
     ],
     "org.junit.platform:junit-platform-console": [
       "org.junit.platform.console",
+      "org.junit.platform.console.command",
       "org.junit.platform.console.options",
-      "org.junit.platform.console.shadow.picocli",
-      "org.junit.platform.console.tasks"
+      "org.junit.platform.console.output",
+      "org.junit.platform.console.shadow.picocli"
     ],
     "org.junit.platform:junit-platform-console-standalone": [
       "junit.extensions",
@@ -939,6 +922,8 @@
       "org.junit.jupiter.api.function",
       "org.junit.jupiter.api.io",
       "org.junit.jupiter.api.parallel",
+      "org.junit.jupiter.api.timeout",
+      "org.junit.jupiter.api.util",
       "org.junit.jupiter.engine",
       "org.junit.jupiter.engine.config",
       "org.junit.jupiter.engine.descriptor",
@@ -951,45 +936,36 @@
       "org.junit.jupiter.params.aggregator",
       "org.junit.jupiter.params.converter",
       "org.junit.jupiter.params.provider",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.annotations",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.helpers",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.beans",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.fields",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.input",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.input.concurrent",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.iterators",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor.core",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.record",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.common.routine",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.conversions",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.csv",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.fixed",
-      "org.junit.jupiter.params.shadow.com.univocity.parsers.tsv",
+      "org.junit.jupiter.params.shadow.de.siegmar.fastcsv.reader",
+      "org.junit.jupiter.params.shadow.de.siegmar.fastcsv.util",
+      "org.junit.jupiter.params.shadow.de.siegmar.fastcsv.writer",
       "org.junit.jupiter.params.support",
       "org.junit.matchers",
       "org.junit.platform.commons",
       "org.junit.platform.commons.annotation",
       "org.junit.platform.commons.function",
+      "org.junit.platform.commons.io",
       "org.junit.platform.commons.logging",
       "org.junit.platform.commons.support",
+      "org.junit.platform.commons.support.conversion",
+      "org.junit.platform.commons.support.scanning",
       "org.junit.platform.commons.util",
       "org.junit.platform.console",
+      "org.junit.platform.console.command",
       "org.junit.platform.console.options",
+      "org.junit.platform.console.output",
       "org.junit.platform.console.shadow.picocli",
-      "org.junit.platform.console.tasks",
       "org.junit.platform.engine",
       "org.junit.platform.engine.discovery",
       "org.junit.platform.engine.reporting",
       "org.junit.platform.engine.support.config",
       "org.junit.platform.engine.support.descriptor",
       "org.junit.platform.engine.support.discovery",
-      "org.junit.platform.engine.support.filter",
       "org.junit.platform.engine.support.hierarchical",
       "org.junit.platform.engine.support.store",
       "org.junit.platform.launcher",
       "org.junit.platform.launcher.core",
+      "org.junit.platform.launcher.jfr",
       "org.junit.platform.launcher.listeners",
       "org.junit.platform.launcher.listeners.discovery",
       "org.junit.platform.launcher.listeners.session",
@@ -999,11 +975,11 @@
       "org.junit.platform.reporting.open.xml",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.api",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.core",
+      "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.git",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.java",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.root",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.schema",
       "org.junit.platform.suite.api",
-      "org.junit.platform.suite.commons",
       "org.junit.platform.suite.engine",
       "org.junit.rules",
       "org.junit.runner",
@@ -1018,7 +994,8 @@
       "org.junit.vintage.engine.discovery",
       "org.junit.vintage.engine.execution",
       "org.junit.vintage.engine.support",
-      "org.opentest4j"
+      "org.opentest4j",
+      "org.opentest4j.reporting.tooling.spi.htmlreport"
     ],
     "org.junit.platform:junit-platform-engine": [
       "org.junit.platform.engine",
@@ -1027,13 +1004,13 @@
       "org.junit.platform.engine.support.config",
       "org.junit.platform.engine.support.descriptor",
       "org.junit.platform.engine.support.discovery",
-      "org.junit.platform.engine.support.filter",
       "org.junit.platform.engine.support.hierarchical",
       "org.junit.platform.engine.support.store"
     ],
     "org.junit.platform:junit-platform-launcher": [
       "org.junit.platform.launcher",
       "org.junit.platform.launcher.core",
+      "org.junit.platform.launcher.jfr",
       "org.junit.platform.launcher.listeners",
       "org.junit.platform.launcher.listeners.discovery",
       "org.junit.platform.launcher.listeners.session",
@@ -1045,18 +1022,10 @@
       "org.junit.platform.reporting.open.xml",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.api",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.core",
+      "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.git",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.java",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.events.root",
       "org.junit.platform.reporting.shadow.org.opentest4j.reporting.schema"
-    ],
-    "org.junit.platform:junit-platform-runner": [
-      "org.junit.platform.runner"
-    ],
-    "org.junit.platform:junit-platform-suite-api": [
-      "org.junit.platform.suite.api"
-    ],
-    "org.junit.platform:junit-platform-suite-commons": [
-      "org.junit.platform.suite.commons"
     ],
     "org.openjdk.jmh:jmh-core": [
       "org.openjdk.jmh",
@@ -1076,6 +1045,9 @@
     "org.openjdk.jmh:jmh-generator-annprocess": [
       "org.openjdk.jmh.generators",
       "org.openjdk.jmh.generators.annotations"
+    ],
+    "org.opentest4j.reporting:open-test-reporting-tooling-spi": [
+      "org.opentest4j.reporting.tooling.spi.htmlreport"
     ],
     "org.opentest4j:opentest4j": [
       "org.opentest4j"
@@ -1144,6 +1116,7 @@
       "org.jline:jline-terminal",
       "org.jline:jline-terminal-ffm",
       "org.jline:jline-terminal-jni",
+      "org.jspecify:jspecify",
       "org.junit.jupiter:junit-jupiter",
       "org.junit.jupiter:junit-jupiter-api",
       "org.junit.jupiter:junit-jupiter-engine",
@@ -1154,11 +1127,9 @@
       "org.junit.platform:junit-platform-engine",
       "org.junit.platform:junit-platform-launcher",
       "org.junit.platform:junit-platform-reporting",
-      "org.junit.platform:junit-platform-runner",
-      "org.junit.platform:junit-platform-suite-api",
-      "org.junit.platform:junit-platform-suite-commons",
       "org.openjdk.jmh:jmh-core",
       "org.openjdk.jmh:jmh-generator-annprocess",
+      "org.opentest4j.reporting:open-test-reporting-tooling-spi",
       "org.opentest4j:opentest4j",
       "org.slf4j:slf4j-api",
       "org.slf4j:slf4j-simple",
@@ -1217,9 +1188,44 @@
         "org.junit.platform.suite.engine.SuiteTestEngine",
         "org.junit.vintage.engine.VintageTestEngine"
       ],
+      "org.junit.platform.engine.discovery.DiscoverySelectorIdentifierParser": [
+        "org.junit.platform.engine.discovery.ClassSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.ClasspathResourceSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.ClasspathRootSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.DirectorySelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.FileSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.IterationSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.MethodSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.ModuleSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.NestedClassSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.NestedMethodSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.PackageSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.UniqueIdSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.UriSelector$IdentifierParser"
+      ],
       "org.junit.platform.launcher.TestExecutionListener": [
         "org.junit.platform.launcher.listeners.UniqueIdTrackingListener",
         "org.junit.platform.reporting.open.xml.OpenTestReportGeneratingListener"
+      ],
+      "org.opentest4j.reporting.tooling.spi.htmlreport.Contributor": [
+        "org.junit.platform.reporting.open.xml.JUnitContributor"
+      ]
+    },
+    "org.junit.platform:junit-platform-engine": {
+      "org.junit.platform.engine.discovery.DiscoverySelectorIdentifierParser": [
+        "org.junit.platform.engine.discovery.ClassSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.ClasspathResourceSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.ClasspathRootSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.DirectorySelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.FileSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.IterationSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.MethodSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.ModuleSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.NestedClassSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.NestedMethodSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.PackageSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.UniqueIdSelector$IdentifierParser",
+        "org.junit.platform.engine.discovery.UriSelector$IdentifierParser"
       ]
     },
     "org.junit.platform:junit-platform-launcher": {
@@ -1230,6 +1236,9 @@
     "org.junit.platform:junit-platform-reporting": {
       "org.junit.platform.launcher.TestExecutionListener": [
         "org.junit.platform.reporting.open.xml.OpenTestReportGeneratingListener"
+      ],
+      "org.opentest4j.reporting.tooling.spi.htmlreport.Contributor": [
+        "org.junit.platform.reporting.open.xml.JUnitContributor"
       ]
     },
     "org.openjdk.jmh:jmh-generator-annprocess": {

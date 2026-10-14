@@ -5,9 +5,6 @@ plugins {
 
 dependencies {
     testImplementation project(':testutils')
-    // Emits JFR events for test discovery and execution. Run with
-    // "-PjfrTestRecording" to record them.
-    testRuntimeOnly 'org.junit.platform:junit-platform-jfr'
 }
 
 tasks.withType(Test).configureEach {
