@@ -54,7 +54,7 @@ public class NativeBigUint64Array extends NativeBigIntArrayView {
     }
 
     public NativeBigUint64Array(int len) {
-        this(new NativeArrayBuffer((double) len * BYTES_PER_ELEMENT), 0, len);
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override

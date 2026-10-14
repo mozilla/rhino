@@ -288,6 +288,8 @@ public class ScriptRuntime {
                         && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS))
                 || (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
             new LazilyLoadedCtor<>(scope, "ArrayBuffer", sealed, true, NativeArrayBuffer::init);
+            new LazilyLoadedCtor<>(
+                    scope, "SharedArrayBuffer", sealed, true, NativeArrayBuffer::initShared);
             new LazilyLoadedCtor<>(scope, "Int8Array", sealed, true, NativeInt8Array::init);
             new LazilyLoadedCtor<>(scope, "Uint8Array", sealed, true, NativeUint8Array::init);
             new LazilyLoadedCtor<>(
