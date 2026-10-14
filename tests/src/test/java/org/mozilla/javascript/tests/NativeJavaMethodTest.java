@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScopeObject;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.testutils.Utils;
@@ -118,12 +118,12 @@ public class NativeJavaMethodTest {
 
     @Test
     void argsTooShortForFixedArg() {
-        expectException(EvaluatorException.class, "Can't find method", "d.f2('x');");
+        expectException(RhinoException.class, "TypeError: Can't find method", "d.f2('x');");
     }
 
     @Test
     void argsTooShortForVarArg() {
-        expectException(EvaluatorException.class, "Can't find method", "d.fN('x');");
+        expectException(RhinoException.class, "TypeError: Can't find method", "d.fN('x');");
     }
 
     @Test

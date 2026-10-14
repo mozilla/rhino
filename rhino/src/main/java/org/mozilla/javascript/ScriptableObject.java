@@ -2119,7 +2119,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return desc.isDataDescriptor() && !desc.isAccessorDescriptor();
     }
 
-    protected static Scriptable ensureScriptable(Object arg) {
+    public static Scriptable ensureScriptable(Object arg) {
         if (!(arg instanceof Scriptable))
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
         return (Scriptable) arg;
@@ -2132,7 +2132,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return (SymbolScriptable) arg;
     }
 
-    protected static ScriptableObject ensureScriptableObject(Object arg) {
+    public static ScriptableObject ensureScriptableObject(Object arg) {
         if (arg instanceof ScriptableObject) {
             return (ScriptableObject) arg;
         }
