@@ -492,6 +492,7 @@ public class Codegen implements Evaluator {
         new EagerSourceCodeProviderDescriber(registry);
         new UndefinedDescriber(registry);
         new TemplateLiteralCallSiteDescriber(registry);
+        new BigIntDescriber(registry);
 
         cfw.registerStringConcat(
                 ConstantDescs.ofConstantBootstrap(
