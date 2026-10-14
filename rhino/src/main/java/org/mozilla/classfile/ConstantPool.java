@@ -6,7 +6,14 @@
 
 package org.mozilla.classfile;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DynamicConstantDesc;
+import java.lang.constant.MethodTypeDesc;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 final class ConstantPool {
     ConstantPool(ClassFileWriter cfw) {
@@ -30,6 +37,7 @@ final class ConstantPool {
             CONSTANT_Utf8 = 1,
             CONSTANT_MethodType = 16,
             CONSTANT_MethodHandle = 15,
+            CONSTANT_Dynamic = 17,
             CONSTANT_InvokeDynamic = 18;
 
     /**
@@ -104,6 +112,9 @@ final class ConstantPool {
     }
 
     int addConstant(String k) {
+        if (!isUnderUtfEncodingLimit(k)) {
+            return addLargeString(k);
+        }
         int utf8Index = addUtf8(k);
         int theIndex = itsStringConstHash.getOrDefault(utf8Index, -1);
         if (theIndex == -1) {
@@ -115,6 +126,41 @@ final class ConstantPool {
             itsPoolTypes.put(theIndex, CONSTANT_String);
         }
         return theIndex;
+    }
+
+    /**
+     * Add a string too long for a single {@code CONSTANT_String}. It is split into pieces that do
+     * fit, which are joined back together by a tree of string concatenation dynamic constants.
+     */
+    private int addLargeString(String k) {
+        int theIndex = itsLargeStringHash.getOrDefault(k, -1);
+        if (theIndex == -1) {
+            List<ConstantDesc> parts = new ArrayList<>();
+            int length = k.length();
+            for (int start = 0; start < length; ) {
+                int end = getUtfEncodingLimit(k, start, length);
+                parts.add(k.substring(start, end));
+                start = end;
+            }
+            while (parts.size() > ClassFileWriter.MAX_CONCAT_PARTS) {
+                List<ConstantDesc> grouped = new ArrayList<>();
+                for (int i = 0; i < parts.size(); i += ClassFileWriter.MAX_CONCAT_PARTS) {
+                    List<ConstantDesc> group =
+                            parts.subList(
+                                    i,
+                                    Math.min(i + ClassFileWriter.MAX_CONCAT_PARTS, parts.size()));
+                    grouped.add(group.size() == 1 ? group.get(0) : concatenation(group));
+                }
+                parts = grouped;
+            }
+            theIndex = addConstantDesc(concatenation(parts));
+            itsLargeStringHash.put(k, theIndex);
+        }
+        return theIndex;
+    }
+
+    private ConstantDesc concatenation(List<ConstantDesc> parts) {
+        return cfw.describeStringConcatenation(parts.toArray(new ConstantDesc[0]));
     }
 
     int addConstant(Object value) {
@@ -132,13 +178,57 @@ final class ConstantPool {
             return addConstant(((Double) value).doubleValue());
         } else if (value instanceof String) {
             return addConstant((String) value);
-            // } else if (value instanceof ClassFileWriter.MethodType) {
-            //    return addMethodType((ClassFileWriter.MethodType) value);
         } else if (value instanceof ClassFileWriter.MHandle) {
             return addMethodHandle((ClassFileWriter.MHandle) value);
+        } else if (value instanceof ConstantDesc) {
+            return addConstantDesc((ConstantDesc) value);
         } else {
             throw new IllegalArgumentException("value " + value);
         }
+    }
+
+    /**
+     * Add the constant described by the given {@code java.lang.constant} description, returning its
+     * constant pool index.
+     */
+    int addConstantDesc(ConstantDesc desc) {
+        if (desc instanceof DynamicConstantDesc) {
+            DynamicConstantDesc<?> dynamic = (DynamicConstantDesc<?>) desc;
+            return addDynamicConstant(
+                    dynamic.constantName(),
+                    dynamic.constantType().descriptorString(),
+                    cfw.getBootstrapMethodIndex(dynamic));
+        } else if (desc instanceof ClassDesc) {
+            return addClass(internalNameOf((ClassDesc) desc));
+        } else if (desc instanceof MethodTypeDesc) {
+            return addMethodType(((MethodTypeDesc) desc).descriptorString());
+        } else if (desc instanceof DirectMethodHandleDesc) {
+            return addMethodHandle(ClassFileWriter.MHandle.of((DirectMethodHandleDesc) desc));
+        } else if (desc instanceof String
+                || desc instanceof Integer
+                || desc instanceof Long
+                || desc instanceof Float
+                || desc instanceof Double) {
+            // Delegate to the overloads above. Guarded to the types they handle so that an
+            // unsupported description cannot bounce back here and recurse.
+            return addConstant((Object) desc);
+        }
+        throw new IllegalArgumentException("unsupported constant description " + desc);
+    }
+
+    /**
+     * The internal name to use for a {@code CONSTANT_Class} entry describing the given class. Array
+     * classes are named by their descriptor; primitives have no class constant form.
+     */
+    private static String internalNameOf(ClassDesc desc) {
+        String descriptor = desc.descriptorString();
+        if (desc.isPrimitive()) {
+            throw new IllegalArgumentException(
+                    "primitive type has no class constant: " + descriptor);
+        }
+        return desc.isArray()
+                ? descriptor
+                : ClassFileWriter.classDescriptorToInternalName(descriptor);
     }
 
     boolean isUnderUtfEncodingLimit(String s) {
@@ -351,6 +441,47 @@ final class ConstantPool {
         return theIndex;
     }
 
+    /**
+     * Add a {@code CONSTANT_Dynamic} entry. Note that, unlike long and double constants, a dynamic
+     * constant occupies a single pool index whatever its type.
+     */
+    int addDynamicConstant(String name, String descriptor, int bootstrapIndex) {
+        ConstantEntry entry = new ConstantEntry(CONSTANT_Dynamic, bootstrapIndex, name, descriptor);
+        int theIndex = itsConstantHash.getOrDefault(entry, -1);
+
+        if (theIndex == -1) {
+            int nameTypeIndex = addNameAndType(name, descriptor);
+            ensure(5);
+            itsPool[itsTop++] = CONSTANT_Dynamic;
+            itsTop = ClassFileWriter.putInt16(bootstrapIndex, itsPool, itsTop);
+            itsTop = ClassFileWriter.putInt16(nameTypeIndex, itsPool, itsTop);
+            theIndex = reserveIndex(1);
+            itsConstantHash.put(entry, theIndex);
+            // The descriptor is what the stack map generator uses to work out the type that
+            // an "ldc" of this entry pushes.
+            setConstantData(theIndex, descriptor);
+            itsPoolTypes.put(theIndex, CONSTANT_Dynamic);
+        }
+        return theIndex;
+    }
+
+    int addMethodType(String methodDescriptor) {
+        ConstantEntry entry = new ConstantEntry(CONSTANT_MethodType, 0, methodDescriptor, "");
+        int theIndex = itsConstantHash.getOrDefault(entry, -1);
+
+        if (theIndex == -1) {
+            int descriptorIndex = 0xFFFF & addUtf8(methodDescriptor);
+            ensure(3);
+            itsPool[itsTop++] = CONSTANT_MethodType;
+            itsTop = ClassFileWriter.putInt16(descriptorIndex, itsPool, itsTop);
+            theIndex = reserveIndex(1);
+            itsConstantHash.put(entry, theIndex);
+            setConstantData(theIndex, methodDescriptor);
+            itsPoolTypes.put(theIndex, CONSTANT_MethodType);
+        }
+        return theIndex;
+    }
+
     int addMethodHandle(ClassFileWriter.MHandle mh) {
         int theIndex = itsConstantHash.getOrDefault(mh, -1);
 
@@ -358,7 +489,7 @@ final class ConstantPool {
             int ref;
             if (mh.tag <= ByteCode.MH_PUTSTATIC) {
                 ref = addFieldRef(mh.owner, mh.name, mh.desc);
-            } else if (mh.tag == ByteCode.MH_INVOKEINTERFACE) {
+            } else if (mh.tag == ByteCode.MH_INVOKEINTERFACE || mh.isInterface) {
                 ref = addInterfaceMethodRef(mh.owner, mh.name, mh.desc);
             } else {
                 ref = addMethodRef(mh.owner, mh.name, mh.desc);
@@ -408,6 +539,7 @@ final class ConstantPool {
 
     private final HashMap<Integer, Integer> itsStringConstHash = new HashMap<>();
     private final HashMap<String, Integer> itsUtf8Hash = new HashMap<>();
+    private final HashMap<String, Integer> itsLargeStringHash = new HashMap<>();
     private final HashMap<FieldOrMethodRef, Integer> itsFieldRefHash = new HashMap<>();
     private final HashMap<FieldOrMethodRef, Integer> itsMethodRefHash = new HashMap<>();
     private final HashMap<FieldOrMethodRef, Integer> itsInterfaceMethodRefHash = new HashMap<>();

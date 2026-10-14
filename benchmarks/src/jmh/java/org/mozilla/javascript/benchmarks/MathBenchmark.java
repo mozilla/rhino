@@ -34,7 +34,7 @@ public class MathBenchmark {
         Function bitwiseRsh;
         Function bitwiseSignedRsh;
 
-        @Param({"Interpreter", "Compiler"})
+        @Param({"Interpreter", "InterpreterV2", "Compiler"})
         public EvaluationMethod evalMethod;
 
         @Setup(Level.Trial)

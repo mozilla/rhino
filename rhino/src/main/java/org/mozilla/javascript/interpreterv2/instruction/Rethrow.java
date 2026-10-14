@@ -2,20 +2,20 @@ package org.mozilla.javascript.interpreterv2.instruction;
 
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 
-public class ResetConstVar extends Instruction {
-    private final int index;
+public class Rethrow extends Instruction {
+    private final int localBlockRef;
 
-    public ResetConstVar(int index) {
-        this.index = index;
+    public Rethrow(int localBlockRef) {
+        this.localBlockRef = localBlockRef;
     }
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        frame.setVarAttribute(index, ScriptableObject.CONST);
         frame.pc += 1;
+
+        frame.throwable = frame.getLocal(localBlockRef);
     }
 
     @Override
@@ -25,6 +25,6 @@ public class ResetConstVar extends Instruction {
 
     @Override
     public String toDebugString() {
-        return InstructionFormatter.formatInstruction(this, "index", index);
+        return InstructionFormatter.formatInstruction(this, "localBlockRef", localBlockRef);
     }
 }
