@@ -1,0 +1,18 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.mozilla.javascript.rewrite.MigrateToRhino2
+displayName: Migrate to Rhino 2.0
+description: >
+  Migrates code that embeds Mozilla Rhino from 1.x to 2.0.
+  The primary change is that the `scope` parameter in `Callable.call()`,
+  `Constructable.construct()`, and `IdFunctionCall.execIdCall()` has
+  changed from `Scriptable` to the new `VarScope` interface.
+tags:
+  - rhino
+  - javascript
+  - migration
+recipeList:
+  - org.mozilla.javascript.rewrite.MigrateCallableToVarScope:
+      migrateScope: true
+      migrateThisObj: true
+      migrateScriptExec: true
