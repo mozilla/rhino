@@ -1133,21 +1133,7 @@ class BodyCodegen {
                 break;
 
             case Token.BIGINT:
-                {
-                    byte[] bytes = node.getBigInt().toByteArray();
-                    cfw.add(ByteCode.NEW, "java/math/BigInteger");
-                    cfw.add(ByteCode.DUP);
-                    cfw.addPush(bytes.length);
-                    cfw.add(ByteCode.NEWARRAY, ByteCode.T_BYTE);
-                    for (int i = 0; i < bytes.length; i++) {
-                        cfw.add(ByteCode.DUP);
-                        cfw.addPush(i);
-                        cfw.add(ByteCode.BIPUSH, bytes[i]);
-                        cfw.add(ByteCode.BASTORE);
-                    }
-                    cfw.addInvoke(
-                            ByteCode.INVOKESPECIAL, "java/math/BigInteger", "<init>", "([B)V");
-                }
+                cfw.addLoadDynamicConstant(node.getBigInt());
                 break;
 
             case Token.STRING:
@@ -1234,11 +1220,12 @@ class BodyCodegen {
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     int i = node.getExistingIntProp(Node.REGEXP_PROP);
-                    cfw.add(
-                            ByteCode.GETSTATIC,
-                            codegen.mainClassName,
-                            codegen.getCompiledRegexpName(scriptOrFn, i),
-                            "Ljava/lang/Object;");
+                    var constant = codegen.getRegExpConstant(scriptOrFn, i);
+                    if (constant != null) {
+                        cfw.addLoadDynamicConstant(constant);
+                    } else {
+                        throw new IllegalStateException("null regexp constant.");
+                    }
                     cfw.addInvoke(
                             ByteCode.INVOKESTATIC,
                             "org/mozilla/javascript/ScriptRuntime",
@@ -2038,21 +2025,15 @@ class BodyCodegen {
         // create the template literal call-site object for tagged template literals,
         // default template literals are already handled earlier in IRFactory
         int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        cfw.addLoadDynamicConstant(codegen.getTemplateLiteralConstant(scriptOrFn, index));
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        cfw.add(
-                ByteCode.GETSTATIC,
-                codegen.mainClassName,
-                codegen.getTemplateLiteralName(scriptOrFn),
-                "[Ljava/lang/Object;");
-        cfw.addPush(index);
         cfw.addInvoke(
-                ByteCode.INVOKESTATIC,
-                "org/mozilla/javascript/ScriptRuntime",
-                "getTemplateLiteralCallSite",
+                ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/TemplateLiteralCallSite",
+                "getSiteObject",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/VarScope;"
-                        + "[Ljava/lang/Object;I"
                         + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
