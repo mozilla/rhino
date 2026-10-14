@@ -21,7 +21,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2521,6 +2520,15 @@ public class Context implements Closeable {
         applicationClassLoader = loader;
     }
 
+    /** Capture any required state for running a microtask. */
+    Runnable captureTaskState(Runnable task) {
+        return task;
+    }
+
+    public MicroTaskQueue getTaskQueue() {
+        return taskQueue;
+    }
+
     /**
      * Add a task that will be executed at the end of the current operation. The various "evaluate"
      * functions will all call this before exiting to ensure that all microtasks run to completion.
@@ -2528,32 +2536,15 @@ public class Context implements Closeable {
      * used to implement Promises. The microtask queue is not thread-safe.
      */
     public void enqueueMicrotask(Runnable task) {
-        microtasks.add(task);
+        taskQueue.enqueueMicrotask(task);
     }
 
-    /**
-     * Run all the microtasks for the current context to completion. This is called by the various
-     * "evaluate" functions. Frameworks that call Function objects directly should call this
-     * function to ensure that everything completes if they want all Promises to eventually resolve.
-     * This function is idempotent, but the microtask queue is not thread-safe. If references are
-     * registered using a FinalizationRegistry, finalization callbacks will be called in this method
-     * as well.
-     *
-     * <p>Nothing will happen if suspendMicrotaskProcessing was called.
-     *
-     * @see #suspendMicrotaskProcessing()
-     */
+    /** Doesn't return work. Used by CodeGen. */
     public void processMicrotasks() {
-        if (microtaskSuspendCount > 0) {
-            return;
-        }
         // Clean up references in a microtask in case a finalization call
         // registers a microtask
-        microtasks.add(this::cleanUpReferences);
-        Runnable head;
-        while ((head = microtasks.poll()) != null) {
-            head.run();
-        }
+        getTaskQueue().enqueueMicrotask(this::cleanUpReferences);
+        taskQueue.processMicrotasksTracksWork();
     }
 
     /**
@@ -2582,7 +2573,7 @@ public class Context implements Closeable {
      * @see #resumeMicrotaskProcessing()
      */
     public void suspendMicrotaskProcessing() {
-        microtaskSuspendCount++;
+        getTaskQueue().suspendMicrotaskProcessing();
     }
 
     /**
@@ -2592,11 +2583,7 @@ public class Context implements Closeable {
      * @see #suspendMicrotaskProcessing()
      */
     public void resumeMicrotaskProcessing() {
-        assert microtaskSuspendCount > 0;
-        microtaskSuspendCount--;
-        if (microtaskSuspendCount == 0) {
-            processMicrotasks();
-        }
+        getTaskQueue().resumeMicrotaskProcessing();
     }
 
     ReferenceQueue<Object> getReferenceQueue() {
@@ -2611,7 +2598,7 @@ public class Context implements Closeable {
      * @param track if true, then track unhandled promise rejections
      */
     public void setTrackUnhandledPromiseRejections(boolean track) {
-        unhandledPromises.enable(track);
+        getTaskQueue().setTrackUnhandledPromiseRejections(track);
     }
 
     /**
@@ -2620,7 +2607,7 @@ public class Context implements Closeable {
      * @return the tracker object
      */
     public UnhandledRejectionTracker getUnhandledPromiseTracker() {
-        return unhandledPromises;
+        return getTaskQueue().getUnhandledPromiseTracker();
     }
 
     /**
@@ -3071,11 +3058,9 @@ public class Context implements Closeable {
     private Map<Object, Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
-    private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
     private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
-    private int microtaskSuspendCount;
-    private final UnhandledRejectionTracker unhandledPromises = new UnhandledRejectionTracker();
     private boolean finalizationEnabled = false;
+    private final MicroTaskQueue taskQueue = new MicroTaskQueue(this);
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;
