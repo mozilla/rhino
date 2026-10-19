@@ -486,7 +486,7 @@ public class Codegen implements Evaluator {
     }
 
     /** Teach a writer about the runtime types that can be emitted as dynamic constants. */
-    private static void installConstantDescribers(ClassFileWriter cfw) {
+    static void installConstantDescribers(ClassFileWriter cfw) {
         var registry = cfw.getDynamicDescriptorRegistry();
         new SymbolKeyDescriber(registry);
         new EagerSourceCodeProviderDescriber(registry);

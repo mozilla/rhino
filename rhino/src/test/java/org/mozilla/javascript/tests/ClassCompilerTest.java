@@ -81,6 +81,8 @@ public class ClassCompilerTest {
                 java.lang.System.out.println(f('hi')('mom!'));
                 """
                 });
+        String src = "// " + "a".repeat(70_000) + "\nvar x = 1;\n";
+        res.add( new Object[] { src });
         return res;
     }
 
