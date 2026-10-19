@@ -9,8 +9,6 @@ package org.mozilla.javascript.optimizer;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
-import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EagerSourceCodeProvider;
@@ -127,73 +124,88 @@ public class ClassCompiler {
     public Object[] compileToClassFiles(
             String source, String sourceLocation, int lineno, String mainClassName) {
         try (Context cx = Context.enter()) {
-            cx.setLanguageVersion(compilerEnv.getLanguageVersion());
-            var global = ScriptRuntime.initSafeStandardObjects(cx, null, false);
-            Parser p = new Parser(compilerEnv);
-            AstRoot ast = p.parse(source, sourceLocation, lineno);
-            IRFactory irf = new IRFactory(compilerEnv, source);
-            ScriptNode tree = irf.transformTree(ast);
+            var oldVersion = cx.getLanguageVersion();
+            try {
+                cx.setLanguageVersion(compilerEnv.getLanguageVersion());
+                var global = ScriptRuntime.initSafeStandardObjects(cx, null, false);
+                Parser p = new Parser(compilerEnv);
+                AstRoot ast = p.parse(source, sourceLocation, lineno);
+                IRFactory irf = new IRFactory(compilerEnv, source);
+                ScriptNode tree = irf.transformTree(ast);
 
-            if (compilerEnv.isGeneratingSource()) {
-                tree.setRawSource(source);
-                tree.setRawSourceBounds(0, source.length());
-                compilerEnv.setSourceCodeProvider(SourceCodeProvider.make(true, null, source));
-            }
-
-            // release reference to original parse tree & parser
-            irf = null;
-            ast = null;
-            p = null;
-
-            Class<?> superClass = getTargetExtends();
-            Class<?>[] interfaces = getTargetImplements();
-            String scriptClassName;
-            boolean isPrimary = (interfaces == null && superClass == null);
-            if (isPrimary) {
-                scriptClassName = mainClassName;
-            } else {
-                scriptClassName = makeAuxiliaryClassName(mainClassName, "1");
-            }
-
-            Codegen codegen = new Codegen();
-            codegen.setMainMethodClass(mainMethodClassName);
-            JSDescriptor.Builder<?> builder = new JSDescriptor.Builder<>();
-            MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
-            byte[] scriptClassBytes =
-                    codegen.compileToClassFile(
-                            compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
-            Object[] auxilaryClasses =
-                    buildDescriptorsAndMain(scriptClassName, builderEnv, builder);
-            if (isPrimary) {
-                var result = new Object[auxilaryClasses.length + 2];
-                System.arraycopy(auxilaryClasses, 0, result, 2, auxilaryClasses.length);
-                result[0] = scriptClassName;
-                result[1] = scriptClassBytes;
-                return result;
-            }
-            int functionCount = tree.getFunctionCount();
-            HashMap<String, Integer> functionNames = new HashMap<>();
-            for (int i = 0; i != functionCount; ++i) {
-                FunctionNode ofn = tree.getFunctionNode(i);
-                String name = ofn.getName();
-                if (name != null && name.length() != 0) {
-                    functionNames.put(name, ofn.getParamCount());
+                if (compilerEnv.isGeneratingSource()) {
+                    tree.setRawSource(source);
+                    tree.setRawSourceBounds(0, source.length());
+                    compilerEnv.setSourceCodeProvider(SourceCodeProvider.make(true, null, source));
                 }
-            }
-            if (superClass == null) {
-                superClass = ScriptRuntime.ObjectClass;
-            }
-            byte[] mainClassBytes =
-                    JavaAdapter.createAdapterCode(
-                            functionNames, mainClassName, superClass, interfaces, scriptClassName);
 
-            var result = new Object[auxilaryClasses.length + 4];
-            System.arraycopy(auxilaryClasses, 0, result, 4, auxilaryClasses.length);
-            result[0] = mainClassName;
-            result[1] = mainClassBytes;
-            result[2] = scriptClassName;
-            result[3] = scriptClassBytes;
-            return result;
+                // release reference to original parse tree & parser
+                irf = null;
+                ast = null;
+                p = null;
+
+                Class<?> superClass = getTargetExtends();
+                Class<?>[] interfaces = getTargetImplements();
+                String scriptClassName;
+                boolean isPrimary = (interfaces == null && superClass == null);
+                if (isPrimary) {
+                    scriptClassName = mainClassName;
+                } else {
+                    scriptClassName = makeAuxiliaryClassName(mainClassName, "1");
+                }
+
+                Codegen codegen = new Codegen();
+                codegen.setMainMethodClass(mainMethodClassName);
+                JSDescriptor.Builder<?> builder = new JSDescriptor.Builder<>();
+                MHJSCode.BuilderEnv builderEnv = new MHJSCode.BuilderEnv(scriptClassName);
+                byte[] scriptClassBytes =
+                        codegen.compileToClassFile(
+                                compilerEnv,
+                                builder,
+                                builderEnv,
+                                scriptClassName,
+                                tree,
+                                source,
+                                false);
+                Object[] auxilaryClasses =
+                        buildDescriptorsAndMain(scriptClassName, builderEnv, builder);
+                if (isPrimary) {
+                    var result = new Object[auxilaryClasses.length + 2];
+                    System.arraycopy(auxilaryClasses, 0, result, 2, auxilaryClasses.length);
+                    result[0] = scriptClassName;
+                    result[1] = scriptClassBytes;
+                    return result;
+                }
+                int functionCount = tree.getFunctionCount();
+                HashMap<String, Integer> functionNames = new HashMap<>();
+                for (int i = 0; i != functionCount; ++i) {
+                    FunctionNode ofn = tree.getFunctionNode(i);
+                    String name = ofn.getName();
+                    if (name != null && name.length() != 0) {
+                        functionNames.put(name, ofn.getParamCount());
+                    }
+                }
+                if (superClass == null) {
+                    superClass = ScriptRuntime.ObjectClass;
+                }
+                byte[] mainClassBytes =
+                        JavaAdapter.createAdapterCode(
+                                functionNames,
+                                mainClassName,
+                                superClass,
+                                interfaces,
+                                scriptClassName);
+
+                var result = new Object[auxilaryClasses.length + 4];
+                System.arraycopy(auxilaryClasses, 0, result, 4, auxilaryClasses.length);
+                result[0] = mainClassName;
+                result[1] = mainClassBytes;
+                result[2] = scriptClassName;
+                result[3] = scriptClassBytes;
+                return result;
+            } finally {
+                cx.setLanguageVersion(oldVersion);
+            }
         }
     }
 
