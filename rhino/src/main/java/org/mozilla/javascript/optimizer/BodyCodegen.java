@@ -20,7 +20,6 @@ import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Token;
-import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
