@@ -9,6 +9,8 @@ package org.mozilla.javascript.optimizer;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.javascript.CodeGenUtils;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EagerSourceCodeProvider;
@@ -205,7 +208,7 @@ public class ClassCompiler {
         var mainName = mainClassName + "Main";
 
         var cfw = new ClassFileWriter(mainName, "java.lang.Object", "");
-        new EagerSourceCodeProviderDescriber(cfw.getDynamicDescriptorRegistry());
+        Codegen.installConstantDescribers(cfw);
         var builders = new ArrayList<JSDescriptor.Builder<?>>();
         buildDescriptor(cfw, builder, builder, classes, builders, mainClassName);
         cfw.startMethod("<clinit>", "()V", ACC_STATIC);
