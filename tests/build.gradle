@@ -23,9 +23,6 @@ dependencies {
     implementation project(':rhino-xml')
 
     testImplementation project(':testutils')
-    // Emits JFR events for test discovery and execution. Run with
-    // "-PjfrTestRecording" to record them.
-    testRuntimeOnly 'org.junit.platform:junit-platform-jfr'
     testImplementation(libs.archunit.get()) {
         exclude group: 'junit'
     }
