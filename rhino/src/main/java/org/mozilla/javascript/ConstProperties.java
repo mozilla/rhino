@@ -47,7 +47,7 @@ public interface ConstProperties<T extends PropHolder<T>> {
      * determine in which object the property is defined. Note that this method is not expected to
      * traverse the prototype chain, which is different from the ECMA [[Put]] operation.
      *
-     * @param context The context the operation is being done in
+     * @param cx The context the operation is being done in
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
@@ -63,7 +63,7 @@ public interface ConstProperties<T extends PropHolder<T>> {
      * but set its value to undefined. The semantics of the start parameter is the same as for
      * putConst.
      *
-     * @param context The context the operation is being done in
+     * @param cx The context the operation is being done in
      * @param name The name of the property.
      * @param start The object whose property is being reserved.
      */
@@ -72,7 +72,7 @@ public interface ConstProperties<T extends PropHolder<T>> {
     /**
      * Returns true if the named property is defined as a const on this object.
      *
-     * @param context The context the operation is being done in
+     * @param cx The context the operation is being done in
      * @param name the name of the property
      * @return true if the named property is defined as a const, false otherwise.
      */

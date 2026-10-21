@@ -117,11 +117,6 @@ public class ClassDescriptor {
     private static class BuiltInPropDesc<T extends ScriptableObject> extends PropDesc {
         private final BuiltInSlot.Descriptor<T> desc;
 
-        BuiltInPropDesc(Object name, BuiltInSlot.Getter<T> getter, int attributes) {
-            super(name, attributes);
-            desc = new BuiltInSlot.Descriptor<>(name, getter);
-        }
-
         BuiltInPropDesc(
                 Object name,
                 BuiltInSlot.Getter<T> getter,
@@ -129,27 +124,6 @@ public class ClassDescriptor {
                 int attributes) {
             super(name, attributes);
             desc = new BuiltInSlot.Descriptor<>(name, getter, setter);
-        }
-
-        BuiltInPropDesc(
-                Object name,
-                BuiltInSlot.Getter<T> getter,
-                BuiltInSlot.Setter<T> setter,
-                BuiltInSlot.AttributeSetter<T> attrUpdater,
-                int attributes) {
-            super(name, attributes);
-            desc = new BuiltInSlot.Descriptor<>(name, getter, setter, attrUpdater);
-        }
-
-        BuiltInPropDesc(
-                Object name,
-                BuiltInSlot.Getter<T> getter,
-                BuiltInSlot.Setter<T> setter,
-                BuiltInSlot.AttributeSetter<T> attrUpdater,
-                BuiltInSlot.PropDescriptionSetter<T> propDescSetter,
-                int attributes) {
-            super(name, attributes);
-            desc = new BuiltInSlot.Descriptor<>(name, getter, setter, attrUpdater, propDescSetter);
         }
 
         @Override

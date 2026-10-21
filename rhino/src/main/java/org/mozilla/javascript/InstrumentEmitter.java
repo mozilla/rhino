@@ -49,6 +49,7 @@ public abstract class InstrumentEmitter {
             return null;
         }
 
+        @Override
         public void endEvent(Object event, Object... data) {
             // Do nothing here.
         }

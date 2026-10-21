@@ -29,7 +29,6 @@ import org.mozilla.javascript.Evaluator;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.InstrumentEmitter;
-import org.mozilla.javascript.InstrumentEmitter.Type;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
@@ -125,7 +124,7 @@ public class Codegen implements Evaluator {
             ScriptNode tree,
             String rawSource,
             boolean returnFunction) {
-        var event = InstrumentEmitter.emitter.startEvent(Type.COMPILE_CLASSFILE);
+        var event = InstrumentEmitter.emitter.startEvent(InstrumentEmitter.Type.COMPILE_CLASSFILE);
         try {
             return doCompileInt(compilerEnv, tree, rawSource, returnFunction);
         } finally {
@@ -339,6 +338,7 @@ public class Codegen implements Evaluator {
      * into {@code numChunks} contiguous groups (the first of which is always the main chunk, so
      * that the top-level script/function - always index 0 - keeps its original class name).
      */
+    @SuppressWarnings("unchecked")
     private void rebindBuildersToChunks(int numChunks, MHJSCode.BuilderEnv[] chunkEnvs) {
         int count = scriptOrFnNodes.length;
         int groupSize = (count + numChunks - 1) / numChunks;
@@ -347,7 +347,6 @@ public class Codegen implements Evaluator {
             int chunk = Math.min(i / groupSize, numChunks - 1);
             MHJSCode.BuilderEnv env = chunkEnvs[chunk];
 
-            @SuppressWarnings("unchecked")
             MHJSCode.Builder code =
                     (n instanceof FunctionNode)
                             ? new MHJSFunctionCode.Builder(env)

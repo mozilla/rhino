@@ -1,7 +1,5 @@
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.InstrumentEmitter.Type;
-
 /**
  * Represents a script object built upon a {@link JSDescriptor}. This class does not support the
  * {@link Callable} interface scripts do not support arguments or some other parts of a call
@@ -38,7 +36,7 @@ public class JSScript implements Script, ScriptOrFn<JSScript> {
             ret = ScriptRuntime.doTopCall(this, cx, scope, thisObj, descriptor.isStrict());
             cx.processMicrotasks();
         } else {
-            var event = InstrumentEmitter.emitter.startEvent(Type.SCRIPT_EXEC);
+            var event = InstrumentEmitter.emitter.startEvent(InstrumentEmitter.Type.SCRIPT_EXEC);
             try {
                 ret =
                         descriptor
