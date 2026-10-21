@@ -17,4 +17,3 @@ default_java_toolchain(
     ],
     visibility = ["//visibility:public"],
 )
-

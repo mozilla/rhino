@@ -1,9 +1,11 @@
 load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_plugin")
-load("//bazel:errorprone.bzl", "LIBRARY_OPTS")
+load("//bazel:errorprone.bzl", "NO_ERRORPRONE_OPTS")
 
 java_library(
     name = "benchmarks",
     srcs = glob(["src/jmh/**/*.java"]),
+    # The Gradle build compiles this module without ErrorProne.
+    javacopts = NO_ERRORPRONE_OPTS,
     plugins = [":jmh_plugin"],
     visibility = ["//visibility:public"],
     deps = [
@@ -35,7 +37,6 @@ java_binary(
         "-w",
         "5s",
     ],
-    javacopts = LIBRARY_OPTS,
     jvm_flags = ["-XX:-BackgroundCompilation"],
     main_class = "org.openjdk.jmh.Main",
     visibility = ["//visibility:public"],
