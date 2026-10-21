@@ -300,6 +300,7 @@ public class TopLevel extends ScopeObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
+    @SuppressWarnings("AmbiguousMethodReference")
     public static Scriptable getBuiltinPrototype(TopLevel scope, Builtins type) {
         // must be called with top level scope
         Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
@@ -332,6 +333,7 @@ public class TopLevel extends ScopeObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
+    @SuppressWarnings("AmbiguousMethodReference")
     static Scriptable getBuiltinPrototype(TopLevel scope, NativeErrors type) {
         // must be called with top level scope
         Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
@@ -377,6 +379,7 @@ public class TopLevel extends ScopeObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
+    @SuppressWarnings("AmbiguousMethodReference")
     public Scriptable getBuiltinPrototype(Builtins type) {
         BaseFunction func = getBuiltinCtor(type);
         Object proto = func != null ? func.getPrototypeProperty() : null;
@@ -390,6 +393,7 @@ public class TopLevel extends ScopeObject {
      * @param type the built-in type
      * @return the built-in prototype
      */
+    @SuppressWarnings("AmbiguousMethodReference")
     public Scriptable getBuiltinPrototype(NativeErrors type) {
         BaseFunction func = getNativeErrorCtor(type);
         Object proto = func != null ? func.getPrototypeProperty() : null;
