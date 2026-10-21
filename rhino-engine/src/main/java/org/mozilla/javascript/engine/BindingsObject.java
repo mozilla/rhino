@@ -8,6 +8,7 @@ import javax.script.Bindings;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * This class makes the Bindings object into a Scriptable. That way, we can query and modify the
@@ -15,12 +16,14 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class BindingsObject extends ScriptableObject {
     private final Bindings bindings;
+    private final Scriptable parentScope;
 
-    BindingsObject(Bindings bindings) {
+    BindingsObject(Scriptable parentScope, Bindings bindings) {
         if (bindings == null) {
             throw new IllegalArgumentException("Bindings must not be null");
         }
         this.bindings = bindings;
+        this.parentScope = parentScope;
     }
 
     @Override

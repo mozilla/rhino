@@ -1,5 +1,5 @@
 plugins {
-    id 'rhino.library-conventions'
+    id 'rhino.publishing-conventions'
     id 'biz.aQute.bnd.builder'
     id 'org.jetbrains.kotlin.jvm'
 }

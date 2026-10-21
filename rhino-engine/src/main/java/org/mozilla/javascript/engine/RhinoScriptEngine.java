@@ -94,12 +94,14 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             builtins.register(cx, topLevelScope, sc);
         }
 
-        Scriptable engineScope = new BindingsObject(sc.getBindings(ScriptContext.ENGINE_SCOPE));
+        Scriptable engineScope =
+                new BindingsObject(topLevelScope, sc.getBindings(ScriptContext.ENGINE_SCOPE));
         engineScope.setParentScope(null);
         engineScope.setPrototype(topLevelScope);
 
         if (sc.getBindings(ScriptContext.GLOBAL_SCOPE) != null) {
-            Scriptable globalScope = new BindingsObject(sc.getBindings(ScriptContext.GLOBAL_SCOPE));
+            Scriptable globalScope =
+                    new BindingsObject(topLevelScope, sc.getBindings(ScriptContext.GLOBAL_SCOPE));
             globalScope.setParentScope(null);
             globalScope.setPrototype(topLevelScope);
             engineScope.setPrototype(globalScope);
