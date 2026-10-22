@@ -447,14 +447,17 @@ public class NativeObject extends ScriptableObject implements Map {
                 s,
                 arg,
                 (key, value) -> {
-                    if (key instanceof Integer) {
-                        obj.put((Integer) key, obj, value);
-                    } else if (key instanceof Symbol && obj instanceof SymbolScriptable) {
+                    if (key instanceof Symbol && obj instanceof SymbolScriptable) {
                         // using instanceof is correct here
                         // (see org.mozilla.javascript.tests.es6.Symbol3Test.fromEntries)
                         ((SymbolScriptable) obj).put((Symbol) key, obj, value);
                     } else {
-                        obj.put(ScriptRuntime.toString(key), obj, value);
+                        StringIdOrIndex id = ScriptRuntime.toStringIdOrIndex(key);
+                        if (id.stringId == null) {
+                            obj.put(id.index, obj, value);
+                        } else {
+                            obj.put(id.stringId, obj, value);
+                        }
                     }
                 });
         return obj;
