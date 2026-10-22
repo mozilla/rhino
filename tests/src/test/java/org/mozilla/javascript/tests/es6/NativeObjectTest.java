@@ -348,11 +348,19 @@ public class NativeObjectTest {
     @Test
     public void fromEntriesOnArray() {
         Map<Object, Object> map = new HashMap<>();
-        map.put("0", "x");
-        map.put("1", "y");
-        map.put("2", "z");
+        map.put(0, "x");
+        map.put(1, "y");
+        map.put(2, "z");
         assertWithAllModes_StrictAndNonStrict_ES6(
                 "Object.fromEntries(Object.entries(['x','y','z']))", map);
+    }
+
+    @Test
+    public void fromEntriesIndexKeys() {
+        assertWithAllModes_StrictAndNonStrict_ES6(
+                "var o = Object.fromEntries([[6, 'a'], ['7', 'b']]);\n"
+                        + "o[6] + o['6'] + o[7] + o['7'] + o.hasOwnProperty(6) + o.hasOwnProperty('7')",
+                "aabbtruetrue");
     }
 
     @Test
