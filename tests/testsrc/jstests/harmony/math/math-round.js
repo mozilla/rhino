@@ -1,0 +1,35 @@
+load("testsrc/assert.js");
+
+assertEquals(Math.round(NaN), NaN);
+assertEquals(Math.round(0), 0);
+assertEquals(Math.round(-0), -0);
+assertEquals(Math.round(Infinity), Infinity);
+assertEquals(Math.round(-Infinity), -Infinity);
+assertEquals(Math.round(0.5), 1);
+assertEquals(Math.round(-0.5), -0);
+assertEquals(Math.round(1.5), 2);
+assertEquals(Math.round(-1.5), -1);
+assertEquals(Math.round(2.5), 3);
+assertEquals(Math.round(-2.5), -2);
+assertEquals(Math.round(0.4), 0);
+assertEquals(Math.round(-0.4), -0);
+assertEquals(Math.round(0.49999999999999994), 0);
+assertEquals(Math.round(-0.49999999999999994), -0);
+assertEquals(Math.round(4503599627370495.5), 4503599627370496);
+assertEquals(Math.round(-4503599627370495.5), -4503599627370495);
+assertEquals(Math.round(4503599627370496), 4503599627370496);
+assertEquals(Math.round(9007199254740992), 9007199254740992);
+assertEquals(Math.round(9007199254740991), 9007199254740991);
+assertEquals(Math.round(9223372036854776000), 9223372036854776000);
+assertEquals(Math.round(18446744073709552000), 18446744073709552000);
+assertEquals(Math.round(25000000000000000000), 25000000000000000000);
+assertEquals(Math.round(100000000000000000000), 100000000000000000000);
+assertEquals(Math.round(-100000000000000000000), -100000000000000000000);
+assertEquals(Math.round(1e+300), 1e+300);
+assertEquals(Math.round(-1e+300), -1e+300);
+assertEquals(Math.round(Number.MAX_VALUE), Number.MAX_VALUE);
+assertEquals(Math.round(-Number.MAX_VALUE), -Number.MAX_VALUE);
+assertEquals(Math.round(Number.MIN_VALUE), 0);
+assertEquals(Math.round(-Number.MIN_VALUE), -0);
+
+"success";

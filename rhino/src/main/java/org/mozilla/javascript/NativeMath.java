@@ -20,8 +20,26 @@ final class NativeMath extends ScriptableObject {
     @Serial private static final long serialVersionUID = -8838847185801131569L;
 
     private static final String MATH_TAG = "Math";
+
+    private static final double LN2 = 6.93147180559945286227e-01;
+    private static final double LN10 = 2.302585092994046;
     private static final double LOG2E = 1.4426950408889634;
-    private static final Double Double32 = Double.valueOf(32d);
+    private static final double LOG10E = 0.4342944819032518;
+    private static final double SQRT1_2 = 0.7071067811865476;
+    private static final double SQRT2 = 1.4142135623730951;
+    private static final Double Double32 = 32d;
+
+    // helper for log2
+    private static final double TWO54 = 1.80143985094819840000e+16;
+    private static final double IVLN2HI = 1.44269504072144627571e+00;
+    private static final double IVLN2LO = 1.67517131648865118353e-10;
+    private static final double LG1 = 6.666666666666735130e-01;
+    private static final double LG2 = 3.999999999940941908e-01;
+    private static final double LG3 = 2.857142874366239149e-01;
+    private static final double LG4 = 2.222219843214978396e-01;
+    private static final double LG5 = 1.818357216161805012e-01;
+    private static final double LG6 = 1.531383769920937332e-01;
+    private static final double LG7 = 1.479819860511658591e-01;
 
     private static final ClassDescriptor DESCRIPTOR;
 
@@ -67,12 +85,12 @@ final class NativeMath extends ScriptableObject {
                         .withMethod(CTOR, "trunc", 1, NativeMath::trunc)
                         .withProp(CTOR, "E", value(Math.E))
                         .withProp(CTOR, "PI", value(Math.PI))
-                        .withProp(CTOR, "LN10", value(2.302585092994046))
-                        .withProp(CTOR, "LN2", value(0.6931471805599453))
+                        .withProp(CTOR, "LN10", value(LN10))
+                        .withProp(CTOR, "LN2", value(LN2))
                         .withProp(CTOR, "LOG2E", value(LOG2E))
-                        .withProp(CTOR, "LOG10E", value(0.4342944819032518))
-                        .withProp(CTOR, "SQRT1_2", value(0.7071067811865476))
-                        .withProp(CTOR, "SQRT2", value(1.4142135623730951))
+                        .withProp(CTOR, "LOG10E", value(LOG10E))
+                        .withProp(CTOR, "SQRT1_2", value(SQRT1_2))
+                        .withProp(CTOR, "SQRT2", value(SQRT2))
                         .withProp(CTOR, SymbolKey.TO_STRING_TAG, value("Math", DONTENUM | READONLY))
                         .build();
     }
@@ -111,10 +129,26 @@ final class NativeMath extends ScriptableObject {
     private static Object acosh(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
-        if (!Double.isNaN(x)) {
-            return Double.valueOf(Math.log(x + Math.sqrt(x * x - 1.0)));
+        // Port of fdlibm e_acosh.c
+        if (Double.isNaN(x) || x < 1.0) {
+            return ScriptRuntime.NaNobj;
         }
-        return ScriptRuntime.NaNobj;
+        if (x >= 0x1p28) {
+            if (Double.isInfinite(x)) {
+                return x;
+            }
+            // sqrt(x^2 - 1) == x in double precision; avoids x*x overflow
+            return StrictMath.log(x) + LN2;
+        }
+        if (x == 1.0) {
+            return ScriptRuntime.zeroObj;
+        }
+        if (x > 2.0) {
+            return StrictMath.log(2.0 * x - 1.0 / (x + Math.sqrt(x * x - 1.0)));
+        }
+        // 1 < x <= 2: log1p form keeps the precision close to 1
+        double t = x - 1.0;
+        return StrictMath.log1p(t + Math.sqrt(2.0 * t + t * t));
     }
 
     private static Object asin(
@@ -131,19 +165,36 @@ final class NativeMath extends ScriptableObject {
     private static Object asinh(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
+        if (Double.isNaN(x)) {
+            return ScriptRuntime.NaNobj;
+        }
         if (Double.isInfinite(x)) {
-            return Double.valueOf(x);
+            return x;
         }
-        if (!Double.isNaN(x)) {
-            if (x == 0) {
-                if (1 / x > 0) {
-                    return ScriptRuntime.zeroObj;
-                }
-                return ScriptRuntime.negativeZeroObj;
+        if (x == 0) {
+            if (1 / x > 0) {
+                return ScriptRuntime.zeroObj;
             }
-            return Double.valueOf(Math.log(x + Math.sqrt(x * x + 1.0)));
+            return ScriptRuntime.negativeZeroObj;
         }
-        return ScriptRuntime.NaNobj;
+        // Port of fdlibm s_asinh.c; compute on |x| and restore the sign (asinh is odd)
+        double t = Math.abs(x);
+        double w;
+        if (t < 0x1p-28) {
+            // asinh(x) = x - x^3/6 + ..., so x is the correctly rounded result
+            return x;
+        }
+        if (t > 0x1p28) {
+            // sqrt(x^2 + 1) == |x| in double precision; avoids x*x overflow
+            w = StrictMath.log(t) + LN2;
+        } else if (t > 2.0) {
+            w = StrictMath.log(2.0 * t + 1.0 / (Math.sqrt(x * x + 1.0) + t));
+        } else {
+            // log1p form avoids losing small inputs against 1.0
+            double xx = x * x;
+            w = StrictMath.log1p(t + xx / (1.0 + Math.sqrt(1.0 + xx)));
+        }
+        return x > 0 ? w : -w;
     }
 
     private static Object atan(
@@ -156,16 +207,34 @@ final class NativeMath extends ScriptableObject {
     private static Object atanh(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
-        if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
-            if (x == 0) {
-                if (1 / x > 0) {
-                    return ScriptRuntime.zeroObj;
-                }
-                return ScriptRuntime.negativeZeroObj;
-            }
-            return Double.valueOf(0.5 * Math.log((1.0 + x) / (1.0 - x)));
+        if (Double.isNaN(x) || x < -1.0 || x > 1.0) {
+            return ScriptRuntime.NaNobj;
         }
-        return ScriptRuntime.NaNobj;
+        if (x == 0) {
+            if (1 / x > 0) {
+                return ScriptRuntime.zeroObj;
+            }
+            return ScriptRuntime.negativeZeroObj;
+        }
+        if (x == 1.0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (x == -1.0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        // Port of fdlibm e_atanh.c; compute on |x| and restore the sign (atanh is odd)
+        double t = Math.abs(x);
+        double w;
+        if (t < 0x1p-28) {
+            // atanh(x) = x + x^3/3 + ..., so x is the correctly rounded result
+            return x;
+        } else if (t < 0.5) {
+            double tt = t + t;
+            w = 0.5 * StrictMath.log1p(tt + tt * t / (1.0 - t));
+        } else {
+            w = 0.5 * StrictMath.log1p((t + t) / (1.0 - t));
+        }
+        return x > 0 ? w : -w;
     }
 
     private static Object atan2(
@@ -225,7 +294,7 @@ final class NativeMath extends ScriptableObject {
             place += 1;
         }
 
-        return Double.valueOf(32 - place);
+        return (double) (32 - place);
     }
 
     private static Object cos(
@@ -294,8 +363,8 @@ final class NativeMath extends ScriptableObject {
                     (sign != 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
         }
 
-        // Handle underflow and subnormal values
-        if (exponent < 0) {
+        // Handle underflow and subnormal values (a float16 exponent of 0 is subnormal too)
+        if (exponent <= 0) {
             return handleSubnormalF16(sign, exponent, mantissa);
         }
 
@@ -348,7 +417,7 @@ final class NativeMath extends ScriptableObject {
         }
 
         // Subnormal value = 2^-14 * (mantissa / 1024)
-        double value = Math.scalb((double) mantissa / 1024.0, -14);
+        double value = Math.scalb(mantissa / 1024.0, -14);
         return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
     }
 
@@ -360,17 +429,6 @@ final class NativeMath extends ScriptableObject {
         long roundBit = (fullMantissa >> 41) & 1;
         long stickyBits = fullMantissa & ((1L << 41) - 1);
         fullMantissa >>>= 42;
-
-        // Handle boundary between largest subnormal and smallest normal
-        if (exponent == 0) {
-            if (fullMantissa == 2046) {
-                // Exactly the largest subnormal
-                return reconstructSubnormalF16(sign, 1023);
-            } else if (fullMantissa == 2047 && roundBit == 0 && stickyBits == 0) {
-                // Midpoint: ties-to-even rounds to smallest normal
-                return reconstructNormalF16(sign, 1, 0);
-            }
-        }
 
         // Extract 10-bit mantissa (remove implicit 1)
         mantissa = fullMantissa & 0x3FF;
@@ -390,20 +448,7 @@ final class NativeMath extends ScriptableObject {
             }
         }
 
-        // Reconstruct the value
-        if (exponent == 0) {
-            return reconstructSubnormalF16(sign, mantissa);
-        } else {
-            return reconstructNormalF16(sign, exponent, mantissa);
-        }
-    }
-
-    private static Object reconstructSubnormalF16(int sign, long mantissa) {
-        if (mantissa == 0) {
-            return ScriptRuntime.wrapNumber((sign != 0) ? -0.0 : 0.0);
-        }
-        double value = Math.scalb((double) mantissa / 1024.0, -14);
-        return ScriptRuntime.wrapNumber((sign != 0) ? -value : value);
+        return reconstructNormalF16(sign, exponent, mantissa);
     }
 
     private static Object reconstructNormalF16(int sign, int exponent, long mantissa) {
@@ -420,37 +465,48 @@ final class NativeMath extends ScriptableObject {
         return ScriptRuntime.wrapNumber(fx);
     }
 
-    // Based on code from
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
+    // Same algorithm as V8: scale every value by the largest magnitude so the
+    // squares can neither overflow nor underflow, and sum them with Kahan summation.
     private static Object hypot(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        if (args == null) {
-            return 0.0;
+        if (args == null || args.length == 0) {
+            return ScriptRuntime.zeroObj;
         }
-        double y = 0.0;
 
-        // Spec and tests say that any "Infinity" result takes precedence.
+        // Every argument is converted first; any "Infinity" takes precedence over NaN.
+        double[] abs = new double[args.length];
+        double max = 0.0;
         boolean hasNaN = false;
-        boolean hasInfinity = false;
-
-        for (Object o : args) {
-            double d = ScriptRuntime.toNumber(o);
+        for (int i = 0; i < args.length; i++) {
+            double d = Math.abs(ScriptRuntime.toNumber(args[i]));
+            abs[i] = d;
             if (Double.isNaN(d)) {
                 hasNaN = true;
-            } else if (Double.isInfinite(d)) {
-                hasInfinity = true;
-            } else {
-                y += d * d;
+            } else if (d > max) {
+                max = d;
             }
         }
 
-        if (hasInfinity) {
+        if (max == Double.POSITIVE_INFINITY) {
             return Double.POSITIVE_INFINITY;
         }
         if (hasNaN) {
-            return Double.NaN;
+            return ScriptRuntime.NaNobj;
         }
-        return Math.sqrt(y);
+        if (max == 0.0) {
+            return ScriptRuntime.zeroObj;
+        }
+
+        double sum = 0.0;
+        double compensation = 0.0;
+        for (double d : abs) {
+            double n = d / max;
+            double summand = n * n - compensation;
+            double preliminary = sum + summand;
+            compensation = (preliminary - sum) - summand;
+            sum = preliminary;
+        }
+        return Math.sqrt(sum) * max;
     }
 
     private static Object imul(
@@ -490,9 +546,71 @@ final class NativeMath extends ScriptableObject {
     private static Object log2(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
-        // Java's log(<0) = -Infinity; we need NaN
-        x = (x < 0) ? Double.NaN : Math.log(x) * LOG2E;
-        return ScriptRuntime.wrapNumber(x);
+        return ScriptRuntime.wrapNumber(log2(x));
+    }
+
+    /**
+     * Port of FreeBSD msun e_log2.c (as used by V8). Unlike log(x) * LOG2E, it returns exact
+     * results for powers of two.
+     */
+    private static double log2(double x) {
+        long bits = Double.doubleToRawLongBits(x);
+        int hx = (int) (bits >> 32);
+        int lx = (int) bits;
+        int k = 0;
+        if (hx < 0x00100000) { // x < 2^-1022
+            if (((hx & 0x7fffffff) | lx) == 0) {
+                return Double.NEGATIVE_INFINITY; // log2(+-0) = -Infinity
+            }
+            if (hx < 0) {
+                return Double.NaN; // log2(negative) = NaN
+            }
+            k -= 54; // subnormal, scale up x
+            x *= TWO54;
+            hx = (int) (Double.doubleToRawLongBits(x) >> 32);
+        }
+        if (hx >= 0x7ff00000) {
+            return x + x; // Infinity or NaN
+        }
+        if (hx == 0x3ff00000 && lx == 0) {
+            return 0.0; // log2(1) = +0
+        }
+        k += (hx >> 20) - 1023;
+        hx &= 0x000fffff;
+        int i = (hx + 0x95f64) & 0x100000;
+        // normalize x or x/2
+        x =
+                Double.longBitsToDouble(
+                        ((long) (hx | (i ^ 0x3ff00000)) << 32)
+                                | (Double.doubleToRawLongBits(x) & 0xffffffffL));
+        k += (i >> 20);
+        double y = k;
+        double f = x - 1.0;
+        double hfsq = 0.5 * f * f;
+        double r = kLog1p(f);
+        double hi =
+                Double.longBitsToDouble(Double.doubleToRawLongBits(f - hfsq) & 0xffffffff00000000L);
+        double lo = (f - hi) - hfsq + r;
+        double valHi = hi * IVLN2HI;
+        double valLo = (lo + hi) * IVLN2LO + lo * IVLN2HI;
+        double w = y + valHi;
+        valLo += (y - w) + valHi;
+        valHi = w;
+        return valLo + valHi;
+    }
+
+    /**
+     * k_log1p from FreeBSD msun k_log.h: log(1 + f) - f + f * f / 2 for sqrt(2)/2 - 1 <= f <=
+     * sqrt(2) - 1.
+     */
+    private static double kLog1p(double f) {
+        double s = f / (2.0 + f);
+        double z = s * s;
+        double w = z * z;
+        double t1 = w * (LG2 + w * (LG4 + w * LG6));
+        double t2 = z * (LG1 + w * (LG3 + w * (LG5 + w * LG7)));
+        double hfsq = 0.5 * f * f;
+        return s * (hfsq + t2 + t1);
     }
 
     private static Object max(
@@ -583,18 +701,20 @@ final class NativeMath extends ScriptableObject {
     private static Object round(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         double x = ScriptRuntime.toNumber(args, 0);
-        if (!Double.isNaN(x) && !Double.isInfinite(x)) {
+        // Doubles with |x| >= 2^52 are integers already; Math.round would also
+        // saturate at Long.MAX_VALUE for |x| >= 2^63
+        if (!Double.isNaN(x) && !Double.isInfinite(x) && Math.abs(x) < 0x1p52) {
             // Round only finite x
             long l = Math.round(x);
-            if (l != 0) {
-                x = l;
-            } else {
+            if (l == 0) {
                 // We must propagate the sign of d into the result
                 if (x < 0.0) {
                     x = ScriptRuntime.negativeZero;
                 } else if (x != 0.0) {
                     x = 0.0;
                 }
+            } else {
+                x = l;
             }
         }
         return ScriptRuntime.wrapNumber(x);
@@ -610,7 +730,7 @@ final class NativeMath extends ScriptableObject {
                 }
                 return ScriptRuntime.negativeZeroObj;
             }
-            return Double.valueOf(Math.signum(x));
+            return Math.signum(x);
         }
         return ScriptRuntime.NaNobj;
     }
