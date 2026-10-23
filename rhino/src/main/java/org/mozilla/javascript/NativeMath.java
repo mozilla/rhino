@@ -21,7 +21,7 @@ final class NativeMath extends ScriptableObject {
 
     private static final String MATH_TAG = "Math";
 
-    private static final double LN2 = 6.93147180559945286227e-01;
+    private static final double LN2 = 6.931471805599453e-01;
     private static final double LN10 = 2.302585092994046;
     private static final double LOG2E = 1.4426950408889634;
     private static final double LOG10E = 0.4342944819032518;
@@ -31,15 +31,15 @@ final class NativeMath extends ScriptableObject {
 
     // helper for log2
     private static final double TWO54 = 1.80143985094819840000e+16;
-    private static final double IVLN2HI = 1.44269504072144627571e+00;
-    private static final double IVLN2LO = 1.67517131648865118353e-10;
-    private static final double LG1 = 6.666666666666735130e-01;
-    private static final double LG2 = 3.999999999940941908e-01;
-    private static final double LG3 = 2.857142874366239149e-01;
-    private static final double LG4 = 2.222219843214978396e-01;
-    private static final double LG5 = 1.818357216161805012e-01;
-    private static final double LG6 = 1.531383769920937332e-01;
-    private static final double LG7 = 1.479819860511658591e-01;
+    private static final double IVLN2HI = 1.4426950407214463e+00;
+    private static final double IVLN2LO = 1.6751713164886512e-10;
+    private static final double LG1 = 6.666666666666735e-01;
+    private static final double LG2 = 3.999999999940942e-01;
+    private static final double LG3 = 2.857142874366239e-01;
+    private static final double LG4 = 2.2222198432149784e-01;
+    private static final double LG5 = 1.818357216161805e-01;
+    private static final double LG6 = 1.5313837699209373e-01;
+    private static final double LG7 = 1.4798198605116586e-01;
 
     private static final ClassDescriptor DESCRIPTOR;
 
