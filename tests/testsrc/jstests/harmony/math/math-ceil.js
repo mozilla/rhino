@@ -1,0 +1,35 @@
+load("testsrc/assert.js");
+
+assertEquals(Math.ceil(NaN), NaN);
+assertEquals(Math.ceil(0), 0);
+assertEquals(Math.ceil(-0), -0);
+assertEquals(Math.ceil(Infinity), Infinity);
+assertEquals(Math.ceil(-Infinity), -Infinity);
+assertEquals(Math.ceil(0.5), 1);
+assertEquals(Math.ceil(-0.5), -0);
+assertEquals(Math.ceil(1.5), 2);
+assertEquals(Math.ceil(-1.5), -1);
+assertEquals(Math.ceil(2.5), 3);
+assertEquals(Math.ceil(-2.5), -2);
+assertEquals(Math.ceil(0.4), 1);
+assertEquals(Math.ceil(-0.4), -0);
+assertEquals(Math.ceil(0.49999999999999994), 1);
+assertEquals(Math.ceil(-0.49999999999999994), -0);
+assertEquals(Math.ceil(4503599627370495.5), 4503599627370496);
+assertEquals(Math.ceil(-4503599627370495.5), -4503599627370495);
+assertEquals(Math.ceil(4503599627370496), 4503599627370496);
+assertEquals(Math.ceil(9007199254740992), 9007199254740992);
+assertEquals(Math.ceil(9007199254740991), 9007199254740991);
+assertEquals(Math.ceil(9223372036854776000), 9223372036854776000);
+assertEquals(Math.ceil(18446744073709552000), 18446744073709552000);
+assertEquals(Math.ceil(25000000000000000000), 25000000000000000000);
+assertEquals(Math.ceil(100000000000000000000), 100000000000000000000);
+assertEquals(Math.ceil(-100000000000000000000), -100000000000000000000);
+assertEquals(Math.ceil(1e+300), 1e+300);
+assertEquals(Math.ceil(-1e+300), -1e+300);
+assertEquals(Math.ceil(Number.MAX_VALUE), Number.MAX_VALUE);
+assertEquals(Math.ceil(-Number.MAX_VALUE), -Number.MAX_VALUE);
+assertEquals(Math.ceil(Number.MIN_VALUE), 1);
+assertEquals(Math.ceil(-Number.MIN_VALUE), -0);
+
+"success";

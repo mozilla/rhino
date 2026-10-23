@@ -1,0 +1,35 @@
+load("testsrc/assert.js");
+
+assertEquals(Math.trunc(NaN), NaN);
+assertEquals(Math.trunc(0), 0);
+assertEquals(Math.trunc(-0), -0);
+assertEquals(Math.trunc(Infinity), Infinity);
+assertEquals(Math.trunc(-Infinity), -Infinity);
+assertEquals(Math.trunc(0.5), 0);
+assertEquals(Math.trunc(-0.5), -0);
+assertEquals(Math.trunc(1.5), 1);
+assertEquals(Math.trunc(-1.5), -1);
+assertEquals(Math.trunc(2.5), 2);
+assertEquals(Math.trunc(-2.5), -2);
+assertEquals(Math.trunc(0.4), 0);
+assertEquals(Math.trunc(-0.4), -0);
+assertEquals(Math.trunc(0.49999999999999994), 0);
+assertEquals(Math.trunc(-0.49999999999999994), -0);
+assertEquals(Math.trunc(4503599627370495.5), 4503599627370495);
+assertEquals(Math.trunc(-4503599627370495.5), -4503599627370495);
+assertEquals(Math.trunc(4503599627370496), 4503599627370496);
+assertEquals(Math.trunc(9007199254740992), 9007199254740992);
+assertEquals(Math.trunc(9007199254740991), 9007199254740991);
+assertEquals(Math.trunc(9223372036854776000), 9223372036854776000);
+assertEquals(Math.trunc(18446744073709552000), 18446744073709552000);
+assertEquals(Math.trunc(25000000000000000000), 25000000000000000000);
+assertEquals(Math.trunc(100000000000000000000), 100000000000000000000);
+assertEquals(Math.trunc(-100000000000000000000), -100000000000000000000);
+assertEquals(Math.trunc(1e+300), 1e+300);
+assertEquals(Math.trunc(-1e+300), -1e+300);
+assertEquals(Math.trunc(Number.MAX_VALUE), Number.MAX_VALUE);
+assertEquals(Math.trunc(-Number.MAX_VALUE), -Number.MAX_VALUE);
+assertEquals(Math.trunc(Number.MIN_VALUE), 0);
+assertEquals(Math.trunc(-Number.MIN_VALUE), -0);
+
+"success";
