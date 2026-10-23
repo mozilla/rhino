@@ -272,24 +272,13 @@ public class NativeArrayBuffer extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.arraybuf.detached");
         }
 
-        var arg2 = cx.newObject(scope);
-        if (preserveResizability && maxByteLength >= 0) {
-            arg2.put("maxByteLength", arg2, maxByteLength);
+        int newMaxByteLength = preserveResizability ? maxByteLength : -1;
+        if (newMaxByteLength >= 0 && newLength > newMaxByteLength) {
+            throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.mismatch");
         }
-
-        var constructor =
-                AbstractEcmaObjectOperations.speciesConstructor(
-                        cx,
-                        this,
-                        TopLevel.getBuiltinCtor(
-                                cx,
-                                ScriptableObject.getTopLevelScope(scope),
-                                TopLevel.Builtins.ArrayBuffer));
-        var newBuf = constructor.construct(cx, scope, new Object[] {newLength, arg2});
-        if (!(newBuf instanceof NativeArrayBuffer)) {
-            throw ScriptRuntime.typeErrorById("msg.species.invalid.ctor");
-        }
-        var newBuffer = (NativeArrayBuffer) newBuf;
+        var newBuffer = new NativeArrayBuffer(newLength);
+        newBuffer.maxByteLength = newMaxByteLength;
+        ScriptRuntime.setBuiltinProtoAndParent(newBuffer, scope, TopLevel.Builtins.ArrayBuffer);
         int copyLength = Math.min(newLength, getLength());
         if (copyLength > 0) {
             var tmp = buffer.duplicate();
