@@ -1371,20 +1371,21 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static Object js_with(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeTypedArrayView<?> self = realThis(thisObj);
-
-        long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
-        long actualIndex = relativeIndex >= 0 ? relativeIndex : self.length + relativeIndex;
-
-        Object argsValue = args.length > 1 ? ScriptRuntime.toNumeric(args[1]) : 0.0;
         int len = self.getLength();
 
-        if (actualIndex < 0 || actualIndex >= len) {
+        long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(args[0]) : 0;
+        long actualIndex = relativeIndex >= 0 ? relativeIndex : len + relativeIndex;
+
+        Object argsValue = args.length > 1 ? ScriptRuntime.toNumeric(args[1]) : 0.0;
+
+        int currentLen = self.getLength();
+        if (actualIndex < 0 || actualIndex >= currentLen) {
             String msg =
                     ScriptRuntime.getMessageById(
                             "msg.typed.array.index.out.of.bounds",
                             relativeIndex,
-                            len * -1,
-                            len - 1);
+                            currentLen * -1,
+                            currentLen - 1);
             throw ScriptRuntime.rangeError(msg);
         }
 
