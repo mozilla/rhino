@@ -258,4 +258,25 @@ public class ResizableArrayBufferTest {
                         + "}";
         Utils.assertWithAllModes(true, script);
     }
+
+    // TypedArray.prototype.with with a negative index on a length-tracking view
+    @Test
+    public void testTypedArrayWithNegativeIndexLengthTracking() {
+        String script =
+                "var ta = new Uint8Array(new ArrayBuffer(3, { maxByteLength: 8 }));"
+                        + "ta.with(-1, 9).join()";
+        Utils.assertWithAllModes("0,0,9", script);
+    }
+
+    // TypedArray.prototype.with keeps the length it had before the value was coerced
+    @Test
+    public void testTypedArrayWithShrinkDuringCoercion() {
+        String script =
+                "var buffer = new ArrayBuffer(3, { maxByteLength: 3 });"
+                        + "var ta = new Uint8Array(buffer);"
+                        + "ta[0] = 1; ta[1] = 2; ta[2] = 3;"
+                        + "var value = { valueOf: function() { buffer.resize(1); return 9; } };"
+                        + "ta.with(0, value).join() + ' ' + ta.length";
+        Utils.assertWithAllModes("9,0,0 1", script);
+    }
 }
