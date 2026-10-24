@@ -53,7 +53,7 @@ public class NativeInt32Array extends NativeTypedArrayView<Integer> {
     }
 
     public NativeInt32Array(int len) {
-        this(new NativeArrayBuffer((double) len * BYTES_PER_ELEMENT), 0, len);
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
