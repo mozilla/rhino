@@ -77,6 +77,10 @@ public abstract class MHJSCode<T extends ScriptOrFn<T>> extends JSCode<T> {
             }
         }
 
+        public int getIndex() {
+            return index;
+        }
+
         protected abstract MHJSCode<T> buildCode(MethodHandle exec, MethodHandle resume);
 
         public abstract void buildByteCode(ClassFileWriter cfw, String mainClass);

@@ -5,6 +5,8 @@ plugins {
 
 dependencies {
     implementation project(':rhino')
+    // The engine's tests exercise LiveConnect, but the engine itself does not require it
+    testImplementation project(':rhino-reflect')
     testImplementation project(':testutils')
 }
 

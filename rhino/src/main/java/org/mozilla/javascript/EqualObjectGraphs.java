@@ -142,9 +142,9 @@ final class EqualObjectGraphs {
         if (o1 instanceof Wrapper) {
             return o2 instanceof Wrapper
                     && equalGraphs(((Wrapper) o1).unwrap(), ((Wrapper) o2).unwrap());
-        } else if (o1 instanceof NativeJavaTopPackage) {
+        } else if (o1 instanceof GraphComparable gc) {
             // stateless objects, must check before Scriptable
-            return o2 instanceof NativeJavaTopPackage;
+            return gc.graphEquals(o2);
         } else if (o1 instanceof ScriptOrFn) {
             return o2 instanceof ScriptOrFn
                     && equalJSFunctions((ScriptOrFn<?>) o1, (ScriptOrFn<?>) o2);
@@ -167,8 +167,6 @@ final class EqualObjectGraphs {
             return o2 instanceof Set<?> && equalSets((Set<?>) o1, (Set<?>) o2);
         } else if (o1 instanceof NativeGlobal) {
             return o2 instanceof NativeGlobal; // stateless objects
-        } else if (o1 instanceof JavaAdapter) {
-            return o2 instanceof JavaAdapter; // stateless objects
         }
 
         // Fallback case for everything else.
@@ -217,8 +215,9 @@ final class EqualObjectGraphs {
             return s2 instanceof NativeContinuation
                     && NativeContinuation.equalImplementations(
                             (NativeContinuation) s1, (NativeContinuation) s2);
-        } else if (s1 instanceof NativeJavaPackage) {
-            return s1.equals(s2); // Overridden appropriately
+        } else if (s1 instanceof GraphComparable gc) {
+            // TODO It's possible we can't reuse the interface here
+            return gc.graphEquals(s2); // Overridden appropriately
         } else if (s1 instanceof IdFunctionObject) {
             return s2 instanceof IdFunctionObject
                     && IdFunctionObject.equalObjectGraphs(
