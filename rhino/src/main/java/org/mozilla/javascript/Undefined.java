@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
 
 /**
  * This class implements the Undefined value in JavaScript.
@@ -26,13 +27,19 @@ public class Undefined implements Serializable {
      * This is the standard value for "undefined" in Rhino. Java code that needs to represent
      * "undefined" should use this object (rather than a new instance of this class).
      */
-    public static final Object instance = new Undefined();
+    public static final Undefined instance = new Undefined();
 
     private static final int instanceHash = System.identityHashCode(instance);
 
     private Undefined() {}
 
     public Object readResolve() {
+        return instance;
+    }
+
+    /** Bootstrap method used by {@code UndefinedDescriber} to resolve a dynamic constant. */
+    public static Undefined undefinedConstant(
+            MethodHandles.Lookup lookup, String name, Class<?> type) {
         return instance;
     }
 

@@ -2843,6 +2843,10 @@ public class Context implements Closeable {
     private static final Class<? extends Evaluator> InterpreterClass =
             (Class<? extends Evaluator>) Kit.classOrNull("org.mozilla.javascript.Interpreter");
 
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Evaluator> InterpreterV2Class =
+            (Class<? extends Evaluator>) Kit.classOrNull("org.mozilla.javascript.InterpreterV2");
+
     private Evaluator createCompiler() {
         return evaluationMethod.createEvaluator();
     }
@@ -2990,6 +2994,8 @@ public class Context implements Closeable {
     public enum EvaluationMethod {
         /** Original bytecode-based interpreter. */
         Interpreter(-1, true, InterpreterClass),
+        /** New instruction & operand-based interpreter. */
+        InterpreterV2(-2, true, InterpreterV2Class),
         /** JVM bytecode compiler. */
         Compiler(9, false, CodegenClass);
 
