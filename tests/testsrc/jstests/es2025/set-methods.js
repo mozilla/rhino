@@ -317,3 +317,5 @@ load("testsrc/assert.js");
 })();
 
 print("Set methods integration tests completed successfully");
+
+"success";

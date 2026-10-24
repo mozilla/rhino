@@ -38,3 +38,5 @@ a = makeArray(10000);
 a.sort(compareIntBad);
 // Make sure that this does not throw.
 // However, at this point we should not assume that the array is properly sorted!
+
+"success";
