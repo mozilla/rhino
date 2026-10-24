@@ -70,10 +70,12 @@ public class NumberToStringTest {
         {"1.9400994884341945e+25", 1.9400994884341945E25},
         {"3.6131332396758635e+25", 3.6131332396758635E25},
         {"2.5138990223946153e+25", 2.5138990223946153E25},
-        // These are controversial -- Java gives a more rounded-
-        // off result but the original Schubfach code does not.
-        {"9.9e-324", 9.9E-324},
-        {"9.9e-323", 9.9E-323}
+        // The smallest subnormals, where one digit is enough
+        {"5e-324", Double.MIN_VALUE},
+        {"-5e-324", -Double.MIN_VALUE},
+        {"1e-323", 9.9E-324},
+        {"5e-323", 4.9E-323},
+        {"1e-322", 9.9E-323}
     };
 
     private static Object[][] getToStringParams() {

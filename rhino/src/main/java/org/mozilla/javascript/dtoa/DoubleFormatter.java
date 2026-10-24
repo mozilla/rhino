@@ -215,6 +215,21 @@ public class DoubleFormatter {
             if (upin != wpin) {
                 return new Decimal(upin ? sp10 : tp10, k, negative);
             }
+        } else {
+            /*
+            Only the smallest subnormals get here, with two digits. ECMAScript
+            wants as few digits as possible, so try one digit less as above,
+            picking the closest (or even) one when both are in Rv.
+             */
+            long sp10 = s - s % 10;
+            long tp10 = sp10 + 10;
+            boolean upin = vbl + out <= sp10 << 2;
+            boolean wpin = (tp10 << 2) + out <= vbr;
+            if (upin || wpin) {
+                long cmp = vb - ((sp10 + tp10) << 1);
+                boolean up = upin && (!wpin || cmp < 0 || (cmp == 0 && (sp10 / 10 & 0x1) == 0));
+                return new Decimal(up ? sp10 : tp10, k + dk, negative);
+            }
         }
 
         /*
