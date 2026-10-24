@@ -38,6 +38,7 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.PropertyDescriptor;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -253,8 +254,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     @Override
-    protected boolean defineOwnProperty(
-            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
+    public boolean defineOwnProperty(
+            Context cx, Object id, PropertyDescriptor desc, boolean checkValid) {
         if (id instanceof CharSequence) {
             // Definition of [[DefineOwnProperty]] for typed array from the spec
             Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(id.toString());
