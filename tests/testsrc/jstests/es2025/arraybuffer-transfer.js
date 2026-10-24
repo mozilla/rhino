@@ -18,9 +18,11 @@ load("testsrc/assert.js");
     assertTrue(buffer.detached);
     assertEquals(0, buffer.byteLength);
     
-    // Views should be detached too
-    assertThrows(function() { uint8[0]; }, TypeError);
-    assertThrows(function() { float32[0]; }, TypeError);
+    // Views are detached: element reads on a detached view return undefined
+    // (ES2025 IsValidIntegerIndex), and writes are silently ignored
+    assertEquals(undefined, uint8[0]);
+    assertEquals(undefined, float32[0]);
+    uint8[0] = 42;
     
     // New buffer should have the data
     var newUint8 = new Uint8Array(transferred);
@@ -103,17 +105,22 @@ load("testsrc/assert.js");
     
     var transferred = buffer.transfer();
     
-    // All views should be detached
-    assertThrows(function() { return uint8[0]; }, TypeError);
-    assertThrows(function() { return uint16[0]; }, TypeError);
-    assertThrows(function() { return float32[0]; }, TypeError);
+    // Typed array element reads on a detached view return undefined,
+    // while DataView methods still throw TypeError
+    assertEquals(undefined, uint8[0]);
+    assertEquals(undefined, uint16[0]);
+    assertEquals(undefined, float32[0]);
     assertThrows(function() { return dataView.getUint8(0); }, TypeError);
     
-    // Verify transferred data
+    // Verify transferred data. Values written through typed arrays are read
+    // back through the same typed array type, since typed array byte order
+    // follows the context's endianness (DataView reads need explicit flags)
     var newDataView = new DataView(transferred);
     assertEquals(0xFF, newDataView.getUint8(0));
-    assertEquals(0x1234, newDataView.getUint16(8, true));
-    assertEqualsDelta(Math.PI, newDataView.getFloat32(16, true), 0.0001);
+    var newUint16 = new Uint16Array(transferred, 8, 4);
+    assertEquals(0x1234, newUint16[0]);
+    var newFloat32 = new Float32Array(transferred, 16, 4);
+    assertEqualsDelta(Math.PI, newFloat32[0], 0.0001);
     assertEquals(0xDEADBEEF, newDataView.getUint32(24, true));
 })();
 
@@ -306,11 +313,11 @@ load("testsrc/assert.js");
     
     var transferred = buffer.transfer();
     
-    // Verify all views are detached
-    assertThrows(function() { return int8[0]; }, TypeError);
-    assertThrows(function() { return uint16[0]; }, TypeError);
-    assertThrows(function() { return int32[0]; }, TypeError);
-    assertThrows(function() { return float64[0]; }, TypeError);
+    // Element reads on detached views return undefined (ES2025)
+    assertEquals(undefined, int8[0]);
+    assertEquals(undefined, uint16[0]);
+    assertEquals(undefined, int32[0]);
+    assertEquals(undefined, float64[0]);
     
     // Create new views and verify data
     var newInt8 = new Int8Array(transferred, 0, 8);
@@ -394,3 +401,5 @@ load("testsrc/assert.js");
 })();
 
 print("ArrayBuffer transfer integration tests completed successfully");
+
+"success";
