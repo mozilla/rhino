@@ -22,6 +22,17 @@ public class TypedArrayJavaTest {
         allTypes(script, "1,2");
     }
 
+    @Test
+    public void subarrayWithInfiniteAndLargeIndexes() throws Exception {
+        String script =
+                "var ta = new §§type§§(3);\n"
+                        + "[ta.subarray(Infinity).length, ta.subarray(-Infinity).length,"
+                        + " ta.subarray(0, Infinity).length, ta.subarray(0, -Infinity).length,"
+                        + " ta.subarray(4294967296).length, ta.subarray(1, 4294967297).length].join()";
+
+        allTypes(script, "0,3,3,0,0,2");
+    }
+
     /**
      * @throws Exception if test failed
      */
