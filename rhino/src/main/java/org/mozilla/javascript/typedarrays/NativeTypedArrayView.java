@@ -1265,8 +1265,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             srcLength = self.getLength();
         }
 
-        int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
-        start = start < 0 ? Math.max(srcLength + start, 0) : Math.min(start, srcLength);
+        int start =
+                isArg(args, 0)
+                        ? (int)
+                                ArrayLikeAbstractOperations.toSliceIndex(
+                                        ScriptRuntime.toInteger(args[0]), srcLength)
+                        : 0;
         int beginOffset = self.getByteOffset() + (start * self.getBytesPerElement());
 
         Object[] constructorArgs;
@@ -1274,8 +1278,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         if (!hasEnd && self.isAutoLength) {
             constructorArgs = new Object[] {self.arrayBuffer, beginOffset};
         } else {
-            int end = hasEnd ? ScriptRuntime.toInt32(args[1]) : srcLength;
-            end = end < 0 ? Math.max(srcLength + end, 0) : Math.min(end, srcLength);
+            int end =
+                    hasEnd
+                            ? (int)
+                                    ArrayLikeAbstractOperations.toSliceIndex(
+                                            ScriptRuntime.toInteger(args[1]), srcLength)
+                            : srcLength;
             int newLen = Math.max(end - start, 0);
             constructorArgs = new Object[] {self.arrayBuffer, beginOffset, newLen};
         }
