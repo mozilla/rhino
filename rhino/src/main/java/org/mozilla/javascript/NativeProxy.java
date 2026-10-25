@@ -127,7 +127,7 @@ class NativeProxy extends ScriptableObject {
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name}));
             if (!booleanTrapResult) {
-                DescriptorInfo targetDesc =
+                PropertyDescriptor targetDesc =
                         target.getOwnPropertyDescriptor(Context.getContext(), name);
                 if (targetDesc != null) {
                     if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
@@ -180,7 +180,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, ScriptRuntime.toString(index)}));
             if (!booleanTrapResult) {
-                DescriptorInfo targetDesc =
+                PropertyDescriptor targetDesc =
                         target.getOwnPropertyDescriptor(Context.getContext(), index);
                 if (targetDesc != null) {
                     if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
@@ -213,7 +213,7 @@ class NativeProxy extends ScriptableObject {
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key}));
             if (!booleanTrapResult) {
-                DescriptorInfo targetDesc =
+                PropertyDescriptor targetDesc =
                         target.getOwnPropertyDescriptor(Context.getContext(), key);
                 if (targetDesc != null) {
                     if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
@@ -315,7 +315,7 @@ class NativeProxy extends ScriptableObject {
             ArrayList<Object> targetConfigurableKeys = new ArrayList<>();
             ArrayList<Object> targetNonconfigurableKeys = new ArrayList<>();
             for (Object targetKey : targetKeys) {
-                DescriptorInfo desc = target.getOwnPropertyDescriptor(cx, targetKey);
+                PropertyDescriptor desc = target.getOwnPropertyDescriptor(cx, targetKey);
                 if (desc != null && desc.isConfigurable(false)) {
                     targetNonconfigurableKeys.add(targetKey);
                 } else {
@@ -389,7 +389,8 @@ class NativeProxy extends ScriptableObject {
         if (trap != null) {
             Object trapResult = callTrap(trap, new Object[] {target, name, start});
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc != null && targetDesc.isConfigurable(false)) {
                 if (targetDesc.isDataDescriptor() && targetDesc.isWritable(false)) {
                     if (!Objects.equals(trapResult, targetDesc.value)) {
@@ -445,7 +446,7 @@ class NativeProxy extends ScriptableObject {
             Object trapResult =
                     callTrap(trap, new Object[] {target, ScriptRuntime.toString(index), start});
 
-            DescriptorInfo targetDesc =
+            PropertyDescriptor targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
@@ -503,7 +504,8 @@ class NativeProxy extends ScriptableObject {
         if (trap != null) {
             Object trapResult = callTrap(trap, new Object[] {target, key, start});
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
                     && targetDesc.isConfigurable(false)) {
@@ -567,7 +569,8 @@ class NativeProxy extends ScriptableObject {
                 return; // false
             }
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
                     && targetDesc.isConfigurable(false)) {
@@ -631,7 +634,7 @@ class NativeProxy extends ScriptableObject {
                 return; // false
             }
 
-            DescriptorInfo targetDesc =
+            PropertyDescriptor targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
@@ -692,7 +695,8 @@ class NativeProxy extends ScriptableObject {
                 return; // false
             }
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc != null
                     && !Undefined.isUndefined(targetDesc)
                     && targetDesc.isConfigurable(false)) {
@@ -751,7 +755,8 @@ class NativeProxy extends ScriptableObject {
                 return; // false
             }
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc == null) {
                 return; // true
             }
@@ -802,7 +807,7 @@ class NativeProxy extends ScriptableObject {
                 return; // false
             }
 
-            DescriptorInfo targetDesc =
+            PropertyDescriptor targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
             if (targetDesc == null) {
                 return; // true
@@ -853,7 +858,8 @@ class NativeProxy extends ScriptableObject {
                 return; // false
             }
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc == null) {
                 return; // true
             }
@@ -875,7 +881,7 @@ class NativeProxy extends ScriptableObject {
      * [[GetOwnProperty]] (P)</a>
      */
     @Override
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -966,7 +972,7 @@ class NativeProxy extends ScriptableObject {
      * [[DefineOwnProperty]] (P, Desc)</a>
      */
     @Override
-    public boolean defineOwnProperty(Context cx, Object id, DescriptorInfo desc) {
+    public boolean defineOwnProperty(Context cx, Object id, PropertyDescriptor desc) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -1009,7 +1015,8 @@ class NativeProxy extends ScriptableObject {
                 return false;
             }
 
-            DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), id);
+            PropertyDescriptor targetDesc =
+                    target.getOwnPropertyDescriptor(Context.getContext(), id);
             boolean extensibleTarget = target.isExtensible();
 
             boolean settingConfigFalse = desc.isConfigurable(false);

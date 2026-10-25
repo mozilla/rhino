@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 import org.mozilla.javascript.ScriptableObject.LambdaGetterFunction;
 import org.mozilla.javascript.ScriptableObject.LambdaSetterFunction;
 
@@ -134,7 +133,7 @@ public class ClassDescriptor {
     }
 
     public interface ValueCreator {
-        DescriptorInfo apply(Context cx, VarScope scope, ScriptableObject obj);
+        PropertyDescriptor apply(Context cx, VarScope scope, ScriptableObject obj);
     }
 
     private static class CreateValuePropDesc extends PropDesc {
@@ -684,7 +683,8 @@ public class ClassDescriptor {
          * attributes.
          */
         public static ValueCreator alias(String original, int attributes) {
-            return (cx, scope, obj) -> new DescriptorInfo(obj.get(original, obj), attributes, true);
+            return (cx, scope, obj) ->
+                    new PropertyDescriptor(obj.get(original, obj), attributes, true);
         }
 
         /** Convenience method to create an alias of the orignally named slot. */
@@ -698,7 +698,7 @@ public class ClassDescriptor {
          * constant between contexts.
          */
         public static ValueCreator value(Object value, int attributes) {
-            return (c, s, o) -> new DescriptorInfo(value, attributes, true);
+            return (c, s, o) -> new PropertyDescriptor(value, attributes, true);
         }
 
         /**
