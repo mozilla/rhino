@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.optimizer.ClassCompiler;
+import org.mozilla.javascript.reflect.ClassCompiler;
 import org.mozilla.javascript.testutils.Utils;
 
 /**

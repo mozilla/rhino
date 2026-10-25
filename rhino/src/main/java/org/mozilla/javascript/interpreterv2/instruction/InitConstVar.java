@@ -2,6 +2,7 @@ package org.mozilla.javascript.interpreterv2.instruction;
 
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 import org.mozilla.javascript.interpreterv2.operand.Operand;
@@ -18,7 +19,7 @@ public class InitConstVar extends Instruction {
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
         if ((frame.getVarAttribute(index) & ScriptableObject.READONLY) == 0) {
-            throw Context.reportRuntimeErrorById(
+            throw ScriptRuntime.typeErrorById(
                     "msg.var.redecl", frame.fnOrScript.getDescriptor().getParamOrVarName(index));
         }
         if (value.isDouble(frame)) {

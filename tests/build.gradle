@@ -20,6 +20,7 @@ dependencies {
     implementation project(':examples')
     implementation project(':rhino')
     implementation project(':rhino-tools')
+    implementation project(':rhino-reflect')
     implementation project(':rhino-xml')
 
     testImplementation project(':testutils')
