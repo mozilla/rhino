@@ -11,6 +11,7 @@ import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -869,6 +870,13 @@ public class NativeRegExp extends ScriptableObject {
         }
     }
 
+    /**
+     * Compile a regular expression.
+     *
+     * @param cx the current context, or null to compile without one. A null context skips the
+     *     language version check on the "u" flag and suppresses warnings, and is only appropriate
+     *     when the expression has already been compiled successfully with a real context.
+     */
     static RECompiled compileRE(Context cx, String str, String global, boolean flat) {
         RECompiled regexp = new RECompiled(str);
         int length = str.length();
@@ -900,7 +908,9 @@ public class NativeRegExp extends ScriptableObject {
         }
 
         // We support unicode mode in ES6 and later.
-        if ((flags & JSREG_UNICODE) != 0 && cx.getLanguageVersion() < Context.VERSION_ES6) {
+        if (cx != null
+                && (flags & JSREG_UNICODE) != 0
+                && cx.getLanguageVersion() < Context.VERSION_ES6) {
             reportError("msg.invalid.re.flag", "u");
         }
 
@@ -1014,6 +1024,20 @@ public class NativeRegExp extends ScriptableObject {
             }
         }
         return regexp;
+    }
+
+    /**
+     * Bootstrap method for a regexp literal written to a class file as a {@code CONSTANT_Dynamic}
+     * entry by {@link RECompiledDescriber}.
+     *
+     * <p>Resolution must not depend on the context that happens to be current, so this compiles
+     * without one. That is safe because {@link RegExpImpl#prepareRegExpConstant} has already
+     * compiled the same source and flags with a real context, and so has reported anything that
+     * could go wrong.
+     */
+    public static Object regExpConstant(
+            MethodHandles.Lookup lookup, String name, Class<?> type, String source, String flags) {
+        return compileRE(null, source, flags, false);
     }
 
     static boolean isDigit(char c) {
@@ -4277,7 +4301,7 @@ public class NativeRegExp extends ScriptableObject {
     }
 
     private static void reportWarning(Context cx, String messageId, String arg) {
-        if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
+        if (cx != null && cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
             String msg = ScriptRuntime.getMessageById(messageId, arg);
             Context.reportWarning(msg);
         }
