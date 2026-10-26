@@ -596,4 +596,33 @@ assertEquals("undefined", typeof desc.set);
 assertTrue(desc.configurable);
 assertFalse(desc.enumerable);
 
+// Rhino: growable and maxByteLength
+assertEquals(false, new SharedArrayBuffer(8).growable);
+assertEquals(8, new SharedArrayBuffer(8).maxByteLength);
+var growable = new SharedArrayBuffer(8, {maxByteLength: 16});
+assertEquals(true, growable.growable);
+assertEquals(16, growable.maxByteLength);
+assertEquals(true, new SharedArrayBuffer(8, {maxByteLength: 8}).growable);
+
+// Rhino: grow returns undefined and cannot shrink
+assertSame(undefined, growable.grow(16));
+assertEquals(16, growable.byteLength);
+assertSame(undefined, growable.grow(8));
+assertEquals(16, growable.byteLength);
+assertThrows(function() { growable.grow(17); }, RangeError);
+
+// Rhino: transfer, resize and transferToFixedLength are not part of the
+// SharedArrayBuffer interface
+assertEquals("undefined", typeof SharedArrayBuffer.prototype.transfer);
+assertEquals("undefined", typeof SharedArrayBuffer.prototype.resize);
+assertEquals("undefined", typeof SharedArrayBuffer.prototype.transferToFixedLength);
+assertFalse("transfer" in new SharedArrayBuffer(0));
+assertFalse("resize" in new SharedArrayBuffer(0));
+
+// Rhino: lengths above the implementation limit throw a RangeError
+assertThrows(function() { new SharedArrayBuffer(2147483648); }, RangeError);
+assertThrows(function() { new SharedArrayBuffer(2 ** 53 - 1); }, RangeError);
+assertThrows(function() { new SharedArrayBuffer(0, {maxByteLength: 2147483648}); }, RangeError);
+assertThrows(function() { new SharedArrayBuffer(0, {maxByteLength: 2 ** 53 - 1}); }, RangeError);
+
 'success';

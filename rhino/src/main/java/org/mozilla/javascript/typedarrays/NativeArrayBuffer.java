@@ -35,12 +35,13 @@ import org.mozilla.javascript.VarScope;
  * NativeArrayBuffer is the implementation class for both ArrayBuffer and SharedArrayBuffer. Both
  * classes have the same internal methods but different constructors and prototypes.
  *
- * <p><b>Design<b>
+ * <p><b>Design</b>
  *
  * <p>The data for an ArrayBuffer is stored in a ByteBuffer. A "heap" buffer is used for regular
- * ArrayBuffers and a direct buffer is used for shared buffers. This is necessary because the most
- * efficient way to atomically update individual fields of a typed buffer is using the VarHandle
- * classes, and those only support atomic access for direct buffers.
+ * ArrayBuffers and a direct buffer is used for shared buffers. A shared buffer may be accessed by
+ * Rhino scripts running in different threads once Atomics is supported, and direct buffers are a
+ * prerequisite for that (for example, VarHandle-based atomic access is only available for direct
+ * buffers). Until then, no cross-thread synchronization or visibility is provided.
  *
  * <p>The position is normally set to zero and the limit is set to the allocated length of the
  * buffer.
@@ -109,8 +110,6 @@ public class NativeArrayBuffer extends ScriptableObject {
                         .withMethod(CTOR, "isView", 1, NativeArrayBuffer::js_isView)
                         .withMethod(PROTO, "slice", 2, NativeArrayBuffer::js_sharedSlice)
                         .withMethod(PROTO, "grow", 1, NativeArrayBuffer::js_sharedGrow)
-                        .withMethod(PROTO, "transfer", 0, NativeArrayBuffer::js_throwNotBuffer)
-                        .withMethod(PROTO, "resize", 1, NativeArrayBuffer::js_throwNotBuffer)
                         .withProp(
                                 PROTO,
                                 "byteLength",
@@ -218,12 +217,11 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     /**
      * Return the actual bytes that back the buffer. This is a reference to the real buffer, so
-     * changes to bytes here will be reflected in the actual object and all its views. In the
-     * future, for a shared array buffer this will return null -- callers should use getByteBuffer()
-     * instead.
+     * changes to bytes here will be reflected in the actual object and all its views.
      *
-     * @deprecated This method will return null for shared buffers and possibly other buffers in the
-     *     future. Callers should use {@link #getByteBuffer} instead.
+     * @deprecated This method returns null for shared buffers, which use a direct buffer without a
+     *     backing array, and possibly for other buffers in the future. Callers should use {@link
+     *     #getByteBuffer} instead.
      */
     @Deprecated
     @SuppressWarnings("ByteBufferBackingArray")
@@ -269,7 +267,7 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     private static NativeArrayBuffer js_constructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        double length = isArg(args, 0) ? ScriptRuntime.toIndex(args[0]) : 0;
+        double length = isArg(args, 0) ? toIndexBounded(args[0]) : 0;
         int maxByteLength = getMaxByteLength(args, length);
         NativeArrayBuffer buffer = new NativeArrayBuffer(length, false);
         buffer.maxByteLength = maxByteLength;
@@ -279,13 +277,26 @@ public class NativeArrayBuffer extends ScriptableObject {
 
     private static NativeArrayBuffer js_sharedConstructor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        double length = isArg(args, 0) ? ScriptRuntime.toIndex(args[0]) : 0;
+        double length = isArg(args, 0) ? toIndexBounded(args[0]) : 0;
         int maxByteLength = getMaxByteLength(args, length);
         NativeArrayBuffer buffer = new NativeArrayBuffer(length, true);
         buffer.maxByteLength = maxByteLength;
         ScriptRuntime.setBuiltinProtoAndParent(
                 buffer, f, nt, s, TopLevel.Builtins.SharedArrayBuffer);
         return buffer;
+    }
+
+    /**
+     * Convert a byte length argument to an index, rejecting values that exceed the largest buffer
+     * this implementation can hold. Without the check, {@link ScriptRuntime#toIndex} would silently
+     * clamp such values to {@link Integer#MAX_VALUE}.
+     */
+    private static int toIndexBounded(Object val) {
+        double length = ScriptRuntime.toNumber(val);
+        if (length > (double) Integer.MAX_VALUE) {
+            throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.toobig");
+        }
+        return ScriptRuntime.toIndex(length);
     }
 
     private static int getMaxByteLength(Object[] args, double length) {
@@ -295,7 +306,7 @@ public class NativeArrayBuffer extends ScriptableObject {
             Object maxByteLengthValue = ScriptableObject.getProperty(options, "maxByteLength");
             if (maxByteLengthValue != Scriptable.NOT_FOUND
                     && !Undefined.isUndefined(maxByteLengthValue)) {
-                maxLen = ScriptRuntime.toIndex(maxByteLengthValue);
+                maxLen = toIndexBounded(maxByteLengthValue);
                 if (length > maxLen) {
                     throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.mismatch");
                 }
@@ -440,27 +451,16 @@ public class NativeArrayBuffer extends ScriptableObject {
         if (newLength > self.maxByteLength) {
             throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.exceedsmax", self.maxByteLength);
         }
-        int oldLength = self.getLength();
-        if (newLength == oldLength) {
+        if (newLength == self.getLength()) {
             // No resize needed
             return Undefined.instance;
         }
 
-        var newBuffer = self.allocateBuffer(newLength, false);
-        int copyLength = Math.min(newLength, oldLength);
-
-        if (copyLength > 0) {
-            var tmp = self.buffer.duplicate();
-            tmp.limit(copyLength);
-            newBuffer.put(tmp);
-            newBuffer.rewind();
-        }
-
-        // New bytes are automatically initialized to 0 in Java
-        self.buffer = newBuffer;
+        self.replaceBuffer(newLength);
         return Undefined.instance;
     }
 
+    // ES2024 SharedArrayBuffer.prototype.grow
     private static Object js_sharedGrow(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         NativeArrayBuffer self = getSharedSelf(thisObj);
@@ -472,25 +472,32 @@ public class NativeArrayBuffer extends ScriptableObject {
         if (newLength > self.maxByteLength) {
             throw ScriptRuntime.rangeErrorById("msg.arraybuf.range.exceedsmax", self.maxByteLength);
         }
-        int oldLength = self.getLength();
-        if (newLength <= oldLength) {
-            // No resize needed
+        if (newLength <= self.getLength()) {
+            // A shared buffer can only grow, never shrink
             return Undefined.instance;
         }
 
-        var newBuffer = self.allocateBuffer(newLength, true);
-        int copyLength = Math.min(newLength, oldLength);
+        self.replaceBuffer(newLength);
+        return Undefined.instance;
+    }
+
+    /**
+     * Replace the underlying buffer with a new one of the given length, preserving the existing
+     * contents. Views of this buffer keep referencing the {@link NativeArrayBuffer} object, so they
+     * transparently pick up the new buffer. New bytes are automatically initialized to 0 in Java.
+     */
+    private void replaceBuffer(int newLength) {
+        var newBuffer = allocateBuffer(newLength, shared);
+        int copyLength = Math.min(newLength, getLength());
 
         if (copyLength > 0) {
-            var tmp = self.buffer.duplicate();
+            var tmp = buffer.duplicate();
             tmp.limit(copyLength);
             newBuffer.put(tmp);
             newBuffer.rewind();
         }
 
-        // New bytes are automatically initialized to 0 in Java
-        self.buffer = newBuffer;
-        return Undefined.instance;
+        buffer = newBuffer;
     }
 
     public boolean isResizable() {
@@ -498,7 +505,7 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     public boolean isGrowable() {
-        return maxByteLength >= 0;
+        return isResizable();
     }
 
     // ES2024 ArrayBuffer.prototype.resizable getter
@@ -535,10 +542,5 @@ public class NativeArrayBuffer extends ScriptableObject {
         } else {
             return self.getLength();
         }
-    }
-
-    private static Object js_throwNotBuffer(
-            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        throw ScriptRuntime.typeErrorById("msg.arraybuf.notarraybuf");
     }
 }
