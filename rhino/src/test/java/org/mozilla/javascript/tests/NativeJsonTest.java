@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.testutils.Utils;
 
 /**
  * @author Ronald Brill
@@ -27,5 +28,27 @@ public class NativeJsonTest {
             assertEquals("{\"property1\":\"hello\",\"array1\":[{\"subobject\":1}]}", result);
             assertEquals("java.lang.String", result.getClass().getName());
         }
+    }
+
+    @Test
+    public void reviverReceivesStringKeys() {
+        Utils.assertWithAllModes_ES6(
+                "string:0 string:1 string:a string:",
+                "var keys = [];"
+                        + "JSON.parse('{\"a\":[1,2]}', function(k, v) {"
+                        + "  keys.push(typeof k + ':' + k); return v;"
+                        + "});"
+                        + "keys.join(' ')");
+    }
+
+    @Test
+    public void replacerReceivesStringKeys() {
+        Utils.assertWithAllModes_ES6(
+                "string: string:a string:0",
+                "var keys = [];"
+                        + "JSON.stringify({a: [1]}, function(k, v) {"
+                        + "  keys.push(typeof k + ':' + k); return v;"
+                        + "});"
+                        + "keys.join(' ')");
     }
 }
