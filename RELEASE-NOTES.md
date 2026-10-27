@@ -1,3 +1,28 @@
+# Rhino 1.9.2
+## October 27, 2026
+
+All objects in Rhino now prevent Java serialization, in line with other libraries.
+Projects that depend on serializing Rhino objects must explicitly enable it, 
+either by setting the "rhino.serialization.enabled" property in "RhinoConfig", 
+or by enabling the "FEATURE_JAVA_SERIALIZATION" flag in the "ContextFactory".
+
+Other changes include:
+
+* Add OSGi bundle metadata so that Rhino can be used as an OSGi bundle.
+* Fix inconsistencies in the "Math" object by backporting algorithms from V8, and fix a few
+  out-of-range constants.
+* Fix "Object.fromEntries()" storing array index keys as named properties.
+* Fix Java object conversion in "ScriptEngine" bindings so that native "JavaObject" values
+  are converted in the correct direction.
+* Fix a memory leak caused by the const optimization in compiled mode.
+* Fix "Generator.prototype.return()" to include the value when the generator is already
+  complete.
+* Fix a register count bug in the bytecode compiler.
+* The build now works with Java 25. (Rhino still targets Java 11, so users of
+  the published JARs do not need to change anything.)
+
+Thanks to all who contributed!
+
 # Rhino 1.9.1
 ## February 15, 2026
 

@@ -136,3 +136,22 @@ be updated.
 Now it's time to move to the next "SNAPSHOT" release. Update gradle.properties,
 create a PR, and push the new PR. Now development can proceeed anew!
 
+### Appendix: Rhino 1.9 Branches
+
+Maven Central has changed totally and automation has been borked for over
+a year. The following steps are necessary:
+
+* Get the PGP signing key and password
+* Set ORG_GRADLE_PROJECT_SIGNINGKEY to the PGP key
+* Set ORG_GRADLE_PROJECT_SIGNINGPASSWORD to the PGP passphrase
+* ./gradlew publishToMavenLocal
+* Result should be in ~/.m2/repository/org/mozilla directories
+* Verify that every package file there has JAR, POM, sources, Javadoc
+* Verify that every one of those has an "*asc" for the PGP signature
+* Remove all the XML files in those directories (just do it or it will break)
+* Run a script to generate SHA1, SHA256, and MD5 signatures for each file
+* Starting from ~/.m2/repository as a starting point, make a ZIP file
+* If you are lucky it will only contain the Rhino components you want to publish
+* Try to upload it to Maven Central
+* Fix what steps you missed above or whatever they changed since the last release
+* If it works, celebrate.
