@@ -391,7 +391,7 @@ public class Context implements Closeable {
      *
      * <p>The default value comes from {@code rhino.serialization.enabled} in RhinoConfig, which is
      * resolved once per process on first use; later configuration changes have no effect. It can be
-     * overridden per context through {@link ContextFactory#hasFeature(Context, int)}.
+     * overridden per {@link ContextFactory} by {@link ContextFactory#hasFeature(Context, int)}.
      *
      * <p>This feature does not make untrusted Java deserialization safe.
      */

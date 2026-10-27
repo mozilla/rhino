@@ -19,7 +19,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
  * function objects represented by {@link JSFunction}s become more lightweight in their creation.
  */
 public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable, DebuggableScript {
-    private static final long seria_ersio_ID = 5067677351589230234L;
+    private static final long serialVersionUID = 5067677351589230234L;
 
     private static final int IS_STRICT_FLAG = 1;
     private static final int IS_SCRIPT_FLAG = 1 << 1;

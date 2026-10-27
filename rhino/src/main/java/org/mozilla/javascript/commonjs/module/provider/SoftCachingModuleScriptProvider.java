@@ -113,6 +113,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Context.checkDeserializationEnabled();
         scriptRefQueue = new ReferenceQueue<>();
         scripts = new ConcurrentHashMap<>();
         final Map<String, CachedModuleScript> serScripts = (Map) in.readObject();
@@ -126,6 +127,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
+        Context.checkSerializationEnabled();
         final Map<String, CachedModuleScript> serScripts = new HashMap<>();
         for (Map.Entry<String, ScriptReference> entry : scripts.entrySet()) {
             final CachedModuleScript cachedModuleScript = entry.getValue().getCachedModuleScript();

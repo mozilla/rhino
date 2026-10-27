@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.jar.*;
@@ -29,7 +30,7 @@ public class SerializationCoverageTest {
 
     @Test
     public void serializationRootsHaveAllPolicyHooks() throws Exception {
-        Set<String> names = new TreeSet<>();
+        Map<String, byte[]> classes = new TreeMap<>();
         Set<String> remainingValues = new HashSet<>(VALUES);
         Set<URI> locations = new HashSet<>();
         locations.add(Context.class.getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -42,10 +43,11 @@ public class SerializationCoverageTest {
                         .getCodeSource()
                         .getLocation()
                         .toURI());
-        for (URI location : locations) collect(Paths.get(location), names);
+        for (URI location : locations) collect(Paths.get(location), classes);
         int roots = 0;
         boolean consStringFound = false;
-        for (String name : names) {
+        for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
+            String name = entry.getKey();
             if (!name.startsWith("org.mozilla.javascript.")
                     || name.startsWith("org.mozilla.javascript.tools.")) continue;
             Class<?> type = Class.forName(name, false, getClass().getClassLoader());
@@ -74,6 +76,11 @@ public class SerializationCoverageTest {
                 hook(type, "readObjectNoData");
                 continue;
             }
+            // The JVM invokes the hooks of every class in a serialized object's hierarchy, so a
+            // hook that does not consult the policy would bypass the guards of Serializable
+            // ancestors. ConsString is exempt: its readObject unconditionally throws, which is
+            // stricter than the policy.
+            requirePolicyReference(entry.getValue(), type);
             if (Serializable.class.isAssignableFrom(type.getSuperclass())) continue;
             roots++;
             hook(type, "readObject", ObjectInputStream.class);
@@ -92,29 +99,79 @@ public class SerializationCoverageTest {
         assertFalse(Modifier.isStatic(method.getModifiers()));
     }
 
-    private static void collect(Path root, Set<String> names) throws IOException {
+    private static void requirePolicyReference(byte[] data, Class<?> type) throws Exception {
+        for (Method method : type.getDeclaredMethods()) {
+            if (!Modifier.isPrivate(method.getModifiers())
+                    || Modifier.isStatic(method.getModifiers())) continue;
+            Class<?>[] parameters = method.getParameterTypes();
+            String check;
+            if (method.getName().equals("readObject")
+                    && parameters.length == 1
+                    && parameters[0] == ObjectInputStream.class) {
+                check = "checkDeserializationEnabled";
+            } else if (method.getName().equals("writeObject")
+                    && parameters.length == 1
+                    && parameters[0] == ObjectOutputStream.class) {
+                check = "checkSerializationEnabled";
+            } else {
+                continue;
+            }
+            // The check method reference is present in the class file's constant pool.
+            assertTrue(
+                    containsAscii(data, check),
+                    type.getName()
+                            + "."
+                            + method.getName()
+                            + " does not reference the Java serialization policy");
+        }
+    }
+
+    private static boolean containsAscii(byte[] data, String text) {
+        byte[] needle = text.getBytes(StandardCharsets.US_ASCII);
+        outer:
+        for (int i = 0; i + needle.length <= data.length; i++) {
+            for (int j = 0; j < needle.length; j++) {
+                if (data[i + j] != needle[j]) continue outer;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static void collect(Path root, Map<String, byte[]> classes) throws IOException {
         if (Files.isDirectory(root)) {
             try (Stream<Path> files = Files.walk(root)) {
                 files.filter(p -> p.toString().endsWith(".class"))
                         .forEach(
-                                p ->
+                                p -> {
+                                    try {
                                         add(
                                                 root.relativize(p)
                                                         .toString()
                                                         .replace(File.separatorChar, '/'),
-                                                names));
+                                                Files.readAllBytes(p),
+                                                classes);
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                });
             }
         } else {
             try (JarFile jar = new JarFile(root.toFile())) {
                 Enumeration<JarEntry> entries = jar.entries();
-                while (entries.hasMoreElements()) add(entries.nextElement().getName(), names);
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = entries.nextElement();
+                    try (InputStream in = jar.getInputStream(entry)) {
+                        add(entry.getName(), in.readAllBytes(), classes);
+                    }
+                }
             }
         }
     }
 
-    private static void add(String entry, Set<String> names) {
+    private static void add(String entry, byte[] data, Map<String, byte[]> classes) {
         if (entry.endsWith(".class") && !entry.startsWith("META-INF/")) {
-            names.add(entry.substring(0, entry.length() - 6).replace('/', '.'));
+            classes.put(entry.substring(0, entry.length() - 6).replace('/', '.'), data);
         }
     }
 }
