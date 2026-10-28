@@ -90,10 +90,19 @@ public class Undefined implements Serializable {
         public void put(int index, Scriptable start, Object value) {}
 
         @Override
-        public void delete(String name) {}
+        public boolean delete(String name) {
+            return false;
+        }
 
         @Override
-        public void delete(int index) {}
+        public boolean delete(int index) {
+            return false;
+        }
+
+        @Override
+        public boolean delete(Symbol name) {
+            return false;
+        }
 
         @Override
         public Scriptable getAncestor() {

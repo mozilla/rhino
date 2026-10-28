@@ -2263,18 +2263,14 @@ public class ScriptRuntime {
             if (target instanceof VarScope) {
                 Kit.codeBug();
             }
-            SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(target);
             Symbol s = (Symbol) elem;
-            so.delete(s);
-            return !so.has(s, (Scriptable) target);
+            return target.delete(s);
         }
         StringIdOrIndex s = toStringIdOrIndex(elem);
         if (s.stringId == null) {
-            target.delete(s.index);
-            return !target.has(s.index, target);
+            return target.delete(s.index);
         }
-        target.delete(s.stringId);
-        return !target.has(s.stringId, target);
+        return target.delete(s.stringId);
     }
 
     public static boolean hasObjectElem(Scriptable target, Object elem, Context cx) {
@@ -2364,6 +2360,7 @@ public class ScriptRuntime {
      * define a return value. Here we assume that the [[Delete]] method doesn't return a value.
      */
     public static Object delete(Object obj, Object id, Context cx, VarScope scope, boolean isName) {
+        new Error(String.format("delete %s[%s].\n", obj, id)).printStackTrace();
         boolean result;
         if (obj instanceof VarScope) {
             result = deleteObjectElem((VarScope) obj, id, cx);

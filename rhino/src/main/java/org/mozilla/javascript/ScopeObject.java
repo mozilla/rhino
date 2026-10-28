@@ -205,18 +205,18 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     }
 
     @Override
-    public void delete(String name) {
-        getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
+    public boolean delete(String name) {
+        return null == getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
     }
 
     @Override
-    public void delete(int index) {
-        getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
+    public boolean delete(int index) {
+        return null == getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
     }
 
     @Override
-    public void delete(Symbol key) {
-        getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
+    public boolean delete(Symbol key) {
+        return null == getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
     /**

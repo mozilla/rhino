@@ -156,8 +156,8 @@ public class NativeWrappedArrayTest {
         }
 
         @Override
-        public void delete(int ix) {
-            list.set(ix, null);
+        public boolean delete(int ix) {
+            return null != list.set(ix, null);
         }
 
         @Override

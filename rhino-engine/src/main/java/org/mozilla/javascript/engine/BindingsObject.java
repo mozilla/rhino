@@ -46,8 +46,8 @@ public class BindingsObject extends ScriptableObject {
     }
 
     @Override
-    public void delete(String name) {
-        bindings.remove(name);
+    public boolean delete(String name) {
+        return null != bindings.remove(name);
     }
 
     @Override

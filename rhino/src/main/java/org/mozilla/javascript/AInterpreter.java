@@ -195,13 +195,19 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         }
 
         @Override
-        public void delete(String name) {}
+        public boolean delete(String name) {
+            return false;
+        }
 
         @Override
-        public void delete(int index) {}
+        public boolean delete(int index) {
+            return false;
+        }
 
         @Override
-        public void delete(Symbol key) {}
+        public boolean delete(Symbol key) {
+            return false;
+        }
 
         @Override
         public Object get(String name, VarScope scope) {

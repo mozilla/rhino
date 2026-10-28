@@ -325,9 +325,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param name the name of the property
      */
     @Override
-    public void delete(String name) {
+    public boolean delete(String name) {
         checkNotSealed(name, 0);
-        getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
+        return null == getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
     }
 
     /**
@@ -338,16 +338,16 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param index the numeric index for the property
      */
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         checkNotSealed(null, index);
-        getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
+        return null == getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
     }
 
     /** Removes an object like the others, but using a Symbol as the key. */
     @Override
-    public void delete(Symbol key) {
+    public boolean delete(Symbol key) {
         checkNotSealed(key, 0);
-        getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
+        return null == getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
     protected static <T extends PropHolder<T>> Slot<T> checkSlotRemoval(
@@ -2664,8 +2664,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static boolean deleteProperty(Scriptable obj, String name) {
         Scriptable base = getBase(obj, name);
         if (base == null) return true;
-        base.delete(name);
-        return !base.has(name, obj);
+        return base.delete(name);
     }
 
     /**
@@ -2682,17 +2681,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static boolean deleteProperty(Scriptable obj, int index) {
         Scriptable base = getBase(obj, index);
         if (base == null) return true;
-        base.delete(index);
-        return !base.has(index, obj);
+        return base.delete(index);
     }
 
     /** A version of deleteProperty for properties with Symbol keys. */
     public static boolean deleteProperty(Scriptable obj, Symbol key) {
         Scriptable base = getBase(obj, key);
         if (base == null) return true;
-        SymbolScriptable scriptable = ensureSymbolScriptable(base);
-        scriptable.delete(key);
-        return !scriptable.has(key, obj);
+        return base.delete(key);
     }
 
     /**
