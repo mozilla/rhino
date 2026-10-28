@@ -34,11 +34,62 @@ public interface PropHolder<T extends PropHolder<T>> {
 
     public void put(int index, T start, Object value);
 
-    public void delete(Symbol name);
+    /**
+     * Removes a property from this object or scope. This operation corresponds to the ECMA
+     * [[Delete]] method on objects and the DeleteBinding method on environment records, and should
+     * return and should return a boolean indicating that the property is not present the operation
+     * (i.e. false indicates that the property both existed and could not be removed).
+     *
+     * <p>A property can be made permanent by ignoring calls to remove it.
+     *
+     * <p>The property is specified by a String name as defined for {@code get}.
+     *
+     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
+     *
+     * @param name the identifier for the property
+     * @return whether the property does not exist after the operation.
+     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
+     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
+     */
+    public boolean delete(Symbol name);
 
-    public void delete(String name);
+    /**
+     * Removes a property from this object or scope. This operation corresponds to the ECMA
+     * [[Delete]] method on objects and the DeleteBinding method on environment records, and should
+     * return and should return a boolean indicating that the property is not present the operation
+     * (i.e. false indicates that the property both existed and could not be removed).
+     *
+     * <p>A property can be made permanent by ignoring calls to remove it.
+     *
+     * <p>The property is specified by a String name as defined for {@code get}.
+     *
+     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
+     *
+     * @param name the identifier for the property
+     * @return whether the property does not exist after the operation.
+     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
+     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
+     */
+    public boolean delete(String name);
 
-    public void delete(int index);
+    /**
+     * Removes a property from this object or scope. This operation corresponds to the ECMA
+     * [[Delete]] method on objects and the DeleteBinding method on environment records, and should
+     * return and should return a boolean indicating that the property is not present the operation
+     * (i.e. false indicates that the property both existed and could not be removed).
+     *
+     * <p>A property can be made permanent by ignoring calls to remove it.
+     *
+     * <p>The property is specified by a String name as defined for {@code get}.
+     *
+     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
+     *
+     * @param index the identifier for the property
+     * @return whether the property does not exist after the operation.
+     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
+     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
+     */
+    public boolean delete(int index);
 
     /**
      * Get the parent scope of the object.

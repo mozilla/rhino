@@ -361,7 +361,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         var slot = denseOnly ? null : getMap().query(null, index);
         if (dense != null
                 && 0 <= index
@@ -369,8 +369,9 @@ public class NativeArray extends ScriptableObject implements List {
                 && !isSealed()
                 && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             dense[index] = NOT_FOUND;
+            return true;
         } else {
-            super.delete(index);
+            return super.delete(index);
         }
     }
 

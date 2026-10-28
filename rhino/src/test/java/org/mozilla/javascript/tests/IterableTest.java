@@ -252,12 +252,17 @@ public class IterableTest {
         }
 
         @Override
-        public void delete(String name) {
+        public boolean delete(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void delete(int index) {
+        public boolean delete(int index) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean delete(Symbol name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -313,7 +318,7 @@ public class IterableTest {
         }
 
         @Override
-        public void delete(Symbol key) {
+        public boolean delete(Symbol key) {
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.

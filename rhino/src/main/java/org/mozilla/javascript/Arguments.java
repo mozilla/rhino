@@ -198,11 +198,11 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         if (0 <= index && index < args.length) {
             removeArg(index);
         }
-        super.delete(index);
+        return super.delete(index);
     }
 
     @Override
@@ -339,27 +339,27 @@ class Arguments extends ScriptableObject {
         }
 
         @Override
-        public void delete(int index) {
+        public boolean delete(int index) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.delete(index);
+            return super.delete(index);
         }
 
         @Override
-        public void delete(String name) {
+        public boolean delete(String name) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.delete(name);
+            return super.delete(name);
         }
 
         @Override
-        public void delete(Symbol key) {
+        public boolean delete(Symbol key) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.delete(key);
+            return super.delete(key);
         }
     }
 }

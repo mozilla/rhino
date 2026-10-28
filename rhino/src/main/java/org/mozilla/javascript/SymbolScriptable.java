@@ -23,7 +23,4 @@ public interface SymbolScriptable {
 
     /** Add a new property to to the object. */
     void put(Symbol key, Scriptable start, Object value);
-
-    /** Delete a property with the specified key. */
-    void delete(Symbol key);
 }

@@ -207,46 +207,6 @@ public interface Scriptable extends PropHolder<Scriptable> {
     default void put(Symbol key, Scriptable start, Object value) {}
 
     /**
-     * Removes a property from this object. This operation corresponds to the ECMA [[Delete]] except
-     * that the no result is returned. The runtime will guarantee that this method is called only if
-     * the property exists. After this method is called, the runtime will call Scriptable.has to see
-     * if the property has been removed in order to determine the boolean result of the delete
-     * operator as defined by ECMA 11.4.1.
-     *
-     * <p>A property can be made permanent by ignoring calls to remove it.
-     *
-     * <p>The property is specified by a String name as defined for {@code get}.
-     *
-     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
-     *
-     * @param name the identifier for the property
-     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
-     */
-    @Override
-    public void delete(String name);
-
-    /**
-     * Removes a property from this object.
-     *
-     * <p>The property is specified by an integral index as defined for {@code get}.
-     *
-     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
-     *
-     * <p>Identical to {@code delete(String)} except that an integral index is used to select the
-     * property.
-     *
-     * @param index the numeric index for the property
-     * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
-     */
-    @Override
-    public void delete(int index);
-
-    @Override
-    default void delete(Symbol key) {}
-
-    /**
      * Get the prototype of the object.
      *
      * @return the prototype

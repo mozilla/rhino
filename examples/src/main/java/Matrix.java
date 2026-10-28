@@ -9,6 +9,7 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
 
@@ -166,7 +167,9 @@ public class Matrix implements Scriptable {
      * <p>This method shouldn't even be called since we define all properties as PERMANENT.
      */
     @Override
-    public void delete(String id) {}
+    public boolean delete(String id) {
+        return false;
+    }
 
     /**
      * Remove an indexed property.
@@ -174,7 +177,19 @@ public class Matrix implements Scriptable {
      * <p>This method shouldn't even be called since we define all properties as PERMANENT.
      */
     @Override
-    public void delete(int index) {}
+    public boolean delete(int index) {
+        return false;
+    }
+
+    /**
+     * Remove a named property.
+     *
+     * <p>This method shouldn't even be called since we define all properties as PERMANENT.
+     */
+    @Override
+    public boolean delete(Symbol id) {
+        return false;
+    }
 
     /** Get prototype. */
     @Override

@@ -116,11 +116,6 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Override
-    public void delete(Symbol key) {
-        // All symbols are read-only
-    }
-
-    @Override
     public Object getDefaultValue(Class<?> hint) {
         if (hint == null || hint == ScriptRuntime.StringClass) return array.toString();
         if (hint == ScriptRuntime.BooleanClass) return Boolean.TRUE;

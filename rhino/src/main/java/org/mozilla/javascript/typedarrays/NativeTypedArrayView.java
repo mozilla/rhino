@@ -219,15 +219,19 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     @Override
-    public void delete(int index) {}
+    public boolean delete(int index) {
+        return arrayBuffer.isDetached() || index < 0 || index >= getLength();
+    }
 
     @Override
-    public void delete(String name) {
+    public boolean delete(String name) {
         Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
         if (!num.isPresent()) {
             // No delete for indexed elements, so only delete if "name" is not a number
-            super.delete(name);
+            return super.delete(name);
         }
+        double index = num.get();
+        return arrayBuffer.isDetached() || index < 0 || index >= getLength();
     }
 
     @Override

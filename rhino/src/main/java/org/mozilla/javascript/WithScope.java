@@ -22,10 +22,14 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void delete(int index) {}
+    public boolean delete(int index) {
+        return false;
+    }
 
     @Override
-    public void delete(Symbol arg0) {}
+    public boolean delete(Symbol arg0) {
+        return false;
+    }
 
     @Override
     public Object get(int index, VarScope start) {
@@ -84,8 +88,8 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void delete(String name) {
-        ScriptableObject.deleteProperty(obj, name);
+    public boolean delete(String name) {
+        return ScriptableObject.deleteProperty(obj, name);
     }
 
     @Override
