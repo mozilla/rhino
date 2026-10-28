@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -357,12 +358,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             CompoundOperationMap<T> compoundOp,
             SlotMapOwner<T> owner) {
         if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
-            Context cx = Context.getContext();
-            if (cx.isStrictMode()) {
-                throw ScriptRuntime.typeErrorById(
-                        "msg.delete.property.with.configurable.false", key);
-            }
-            // This will cause removal to not happen
             return slot;
         }
         return null;
@@ -1468,7 +1463,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param cx the current Context
      * @param props a map of property ids to property descriptors
      */
-    public void defineOwnProperties(Context cx, ScriptableObject props) {
+    public boolean defineOwnProperties(Context cx, ScriptableObject props) {
         Object[] ids;
         try (var map = props.startCompoundOp(false)) {
             ids = props.getIds(map, false, true);
@@ -1481,8 +1476,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             descs[i] = desc;
         }
         for (int i = 0, len = ids.length; i < len; ++i) {
-            defineOwnProperty(cx, ids[i], descs[i]);
+            if (!defineOwnProperty(cx, ids[i], descs[i])) {
+                return false;
+            }
         }
+        return true;
     }
 
     /**
@@ -1698,6 +1696,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             int index) {
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
+        var booleanResult = new AtomicBoolean();
         compoundOp.compute(
                 owner,
                 compoundOp,
@@ -1729,13 +1728,15 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                                         info.configurable);
                     }
 
-                    slot = descValueSetter.execute(owner, info, key, existing, map, slot);
+                    slot =
+                            descValueSetter.execute(
+                                    owner, info, key, existing, map, slot, booleanResult);
 
                     // After all that, whatever we return now ends up in the map
                     slot.setAttributes(attributes);
                     return slot;
                 });
-        return true;
+        return booleanResult.get();
     }
 
     interface PropDescValueSetter {
@@ -1745,7 +1746,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 Object key,
                 Slot<Scriptable> existing,
                 CompoundOperationMap<Scriptable> map,
-                Slot<Scriptable> slot);
+                Slot<Scriptable> slot,
+                AtomicBoolean booleanResult);
     }
 
     static Slot<Scriptable> setSlotValue(
@@ -1754,7 +1756,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             Object key,
             Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
-            Slot<Scriptable> slot) {
+            Slot<Scriptable> slot,
+            AtomicBoolean booleanResult) {
         if (info.accessorDescriptor) {
             AccessorSlot fslot;
             if (slot instanceof AccessorSlot) {
@@ -1776,9 +1779,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
             }
             fslot.value = Undefined.instance;
+            booleanResult.set(true);
         } else if (slot instanceof BuiltInSlot bis) {
             if (info.value != NOT_FOUND) {
-                bis.setValueFromDescriptor(info.value, owner, owner, true);
+                booleanResult.set(bis.setValueFromDescriptor(info.value, owner, owner, true));
+            } else {
+                booleanResult.set(true);
             }
         } else {
             if (!slot.isValueSlot() && info.isDataDescriptor()) {
@@ -1792,8 +1798,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 // Ensure we don't get a zombie value if we have switched a lot
                 slot.value = Undefined.instance;
             }
+            booleanResult.set(true);
         }
-
         return slot;
     }
 

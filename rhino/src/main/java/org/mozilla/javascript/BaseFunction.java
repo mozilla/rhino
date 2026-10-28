@@ -286,11 +286,12 @@ public class BaseFunction extends ScriptableObject implements Function {
             int index) {
         try (var map = builtIn.startCompoundOp(true)) {
             return ScriptableObject.defineOrdinaryProperty(
-                    (o, i, k, e, m, s) -> {
+                    (o, i, k, e, m, s, br) -> {
                         if (i.value != NOT_FOUND) {
                             builtIn.prototypeProperty =
                                     i.value == null ? UniqueTag.NULL_VALUE : i.value;
                         }
+                        br.set(true);
                         return s;
                     },
                     builtIn,
