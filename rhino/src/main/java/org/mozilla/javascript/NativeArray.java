@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.mozilla.javascript.ArrayLikeAbstractOperations.IterativeOperation;
 import org.mozilla.javascript.ArrayLikeAbstractOperations.ReduceOperation;
 import org.mozilla.javascript.ClassDescriptor.BuiltInJSCodeExec;
@@ -379,7 +380,7 @@ public class NativeArray extends ScriptableObject implements List {
         compoundOp.compute(this, id, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    public void deleteInternal(CompoundOperationMap<Scriptable> compoundOp, int index) {
+    public boolean deleteInternal(CompoundOperationMap<Scriptable> compoundOp, int index) {
         var slot = denseOnly ? null : compoundOp.query(null, index);
         if (dense != null
                 && 0 <= index
@@ -387,8 +388,10 @@ public class NativeArray extends ScriptableObject implements List {
                 && !isSealed()
                 && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             dense[index] = NOT_FOUND;
+            return true;
         } else {
-            compoundOp.compute(this, null, index, ScriptableObject::checkSlotRemoval);
+            return null
+                    == compoundOp.compute(this, null, index, ScriptableObject::checkSlotRemoval);
         }
     }
 
@@ -491,13 +494,13 @@ public class NativeArray extends ScriptableObject implements List {
             }
         }
 
-        super.defineOwnProperty(cx, id, desc, checkValid);
+        boolean res = super.defineOwnProperty(cx, id, desc, checkValid);
 
         if ("length".equals(id)) {
             lengthAttr =
                     getAttributes("length"); // Update cached attributes value for length property
         }
-        return true;
+        return res;
     }
 
     /** See ECMA 15.4.1,2 */
@@ -556,8 +559,9 @@ public class NativeArray extends ScriptableObject implements List {
             Object key,
             Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
-            Slot<Scriptable> slot) {
-        ((NativeArray) owner).setLength(map, (Double) info.value);
+            Slot<Scriptable> slot,
+            AtomicBoolean booleanResult) {
+        booleanResult.set(((NativeArray) owner).setLength(map, (Double) info.value));
         return slot;
     }
 
@@ -576,7 +580,17 @@ public class NativeArray extends ScriptableObject implements List {
         if (value == NOT_FOUND) {
             try (var map = builtIn.startCompoundOp(true)) {
                 return ScriptableObject.defineOrdinaryProperty(
-                        (o, i, k, e, m, s) -> s, builtIn, map, id, info, checkValid, key, index);
+                        (o, i, k, e, m, s, br) -> {
+                            br.set(true);
+                            return s;
+                        },
+                        builtIn,
+                        map,
+                        id,
+                        info,
+                        checkValid,
+                        key,
+                        index);
             }
         }
 
@@ -758,13 +772,17 @@ public class NativeArray extends ScriptableObject implements List {
          */
         long longVal = ScriptRuntime.toUint32(d);
 
-        if ((lengthAttr & READONLY) != 0) {
-            return false;
-        }
-
         if (longVal != d) {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
+        }
+
+        if (longVal == length) {
+            return true;
+        }
+
+        if ((lengthAttr & READONLY) != 0) {
+            return false;
         }
 
         if (denseOnly) {
@@ -784,6 +802,7 @@ public class NativeArray extends ScriptableObject implements List {
                 denseOnly = false;
             }
         }
+        boolean res = true;
         if (longVal < length) {
             // remove all properties between longVal and length
             if (length - longVal > 0x1000) {
@@ -802,14 +821,18 @@ public class NativeArray extends ScriptableObject implements List {
                 }
             } else {
                 // assume a dense representation
-                for (long i = longVal; i < length; i++) {
-                    deleteElem(compoundOp, this, i);
+                for (long i = length - 1; i >= longVal; i--) {
+                    if (!deleteElem(compoundOp, this, i)) {
+                        longVal = i + 1;
+                        res = false;
+                        break;
+                    }
                 }
             }
         }
         length = longVal;
         modCount++;
-        return true;
+        return res;
     }
 
     private static long checkLength(Object val) {
@@ -872,26 +895,27 @@ public class NativeArray extends ScriptableObject implements List {
      * be necessary to use the general ScriptRuntime.get/setElem
      * functions... though this is probably premature optimization.
      */
-    private static void deleteElem(Scriptable target, long index) {
+    private static boolean deleteElem(Scriptable target, long index) {
         int i = (int) index;
         if (i == index) {
-            target.delete(i);
+            return target.delete(i);
         } else {
-            target.delete(Long.toString(index));
+            return target.delete(Long.toString(index));
         }
     }
 
     /* This version explicitly checks whether the target is  sealed. The other implementation which does not take a compound op does not do so explicitly, but it does rely on the underlying `delete` implementation doing that check. */
-    private static void deleteElem(
+    private static boolean deleteElem(
             CompoundOperationMap<Scriptable> compoundOp, NativeArray target, long index) {
         int i = (int) index;
         if (i == index) {
             checkNotSealed(target, null, i);
-            target.deleteInternal(compoundOp, i);
+            return target.deleteInternal(compoundOp, i);
         } else {
             var strIndex = Long.toString(index);
             checkNotSealed(target, strIndex, 0);
-            compoundOp.compute(target, strIndex, 0, ScriptableObject::checkSlotRemoval);
+            return null
+                    != compoundOp.compute(target, strIndex, 0, ScriptableObject::checkSlotRemoval);
         }
     }
 

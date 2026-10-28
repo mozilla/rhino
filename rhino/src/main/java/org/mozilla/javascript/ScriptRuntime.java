@@ -2380,6 +2380,9 @@ public class ScriptRuntime {
             }
             result = deleteObjectElem(sobj, id, cx);
         }
+        if (!result && cx.isStrictMode()) {
+            throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", id);
+        }
         return wrapBoolean(result);
     }
 

@@ -190,9 +190,9 @@ public class BuiltInSlot<T extends ScriptableObject>
     /* When setting a property descriptor we need to set the property
     _without_ the normal checks on readonly and similar. */
     @SuppressWarnings("unchecked")
-    public void setValueFromDescriptor(
+    public boolean setValueFromDescriptor(
             Object value, Scriptable owner, Scriptable start, boolean isThrow) {
-        descriptor.setter.apply(((T) this.value), value, owner, start, isThrow);
+        return descriptor.setter.apply(((T) this.value), value, owner, start, isThrow);
     }
 
     @SuppressWarnings("unchecked")
