@@ -82,7 +82,12 @@ final class NativeBigInt extends ScriptableObject {
 
     private static Object js_toLocaleString(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
+        if (!cx.hasFeature(Context.FEATURE_INTL_402)) {
+            return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
+        }
+
+        BigInteger value = toSelf(thisObj).bigIntValue;
+        return NativeNumber.getLocaleNumberFormat(cx, args).format(value);
     }
 
     private static Object js_toSource(

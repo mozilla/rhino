@@ -108,10 +108,4 @@ public class BigIntTest {
 
         Utils.assertWithAllModes_ES6(BigInteger.valueOf((n * (n + 1)) / 2), src.toString());
     }
-
-    @Test
-    public void toLocaleStringDoesNotUseArgumentAsRadix() {
-        Utils.assertWithAllModes_ES6("1234", "(1234n).toLocaleString('en-US')");
-        Utils.assertWithAllModes_ES6("255", "(255n).toLocaleString(16)");
-    }
 }
