@@ -147,11 +147,17 @@ public class NativeArrayTest {
                         + "  configurable: false\n"
                         + "});\n"
                         + "\n"
-                        + "Object.defineProperties(arr, {\n"
-                        + "  length: {\n"
-                        + "    value: 1\n"
-                        + "  }\n"
-                        + "});\n";
+                        + "var res = null;"
+                        + "try {\n"
+                        + "  Object.defineProperties(arr, {\n"
+                        + "    length: {\n"
+                        + "      value: 1\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "} catch (e) {\n"
+                        + "  res = typeof e;\n"
+                        + "}\n"
+                        + "res;\n";
 
         var contextFactory = Utils.contextFactoryWithFeatures(Context.FEATURE_THREAD_SAFE_OBJECTS);
         try (Context cx = contextFactory.enterContext()) {

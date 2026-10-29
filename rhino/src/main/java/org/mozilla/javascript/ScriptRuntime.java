@@ -2268,18 +2268,14 @@ public class ScriptRuntime {
             if (target instanceof VarScope) {
                 Kit.codeBug();
             }
-            SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(target);
             Symbol s = (Symbol) elem;
-            so.delete(s);
-            return !so.has(s, (Scriptable) target);
+            return target.delete(s);
         }
         StringIdOrIndex s = toStringIdOrIndex(elem);
         if (s.stringId == null) {
-            target.delete(s.index);
-            return !target.has(s.index, target);
+            return target.delete(s.index);
         }
-        target.delete(s.stringId);
-        return !target.has(s.stringId, target);
+        return target.delete(s.stringId);
     }
 
     public static boolean hasObjectElem(Scriptable target, Object elem, Context cx) {
@@ -2381,6 +2377,9 @@ public class ScriptRuntime {
                 throw undefDeleteError(obj, id);
             }
             result = deleteObjectElem(sobj, id, cx);
+        }
+        if (!result && cx.isStrictMode()) {
+            throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", id);
         }
         return wrapBoolean(result);
     }
@@ -2891,7 +2890,6 @@ public class ScriptRuntime {
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
-            new Error(String.format("%s", v)).printStackTrace();
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;

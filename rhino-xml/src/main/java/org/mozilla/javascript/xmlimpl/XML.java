@@ -190,10 +190,12 @@ class XML extends XMLObjectImpl {
 
     //    TODO    This is how I found it but I am not sure it makes sense
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         if (index == 0) {
             this.remove();
+            return true;
         }
+        return false;
     }
 
     //

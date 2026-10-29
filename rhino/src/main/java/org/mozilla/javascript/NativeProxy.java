@@ -744,7 +744,7 @@ class NativeProxy extends ScriptableObject {
      * [[Delete]] (P)</a>
      */
     @Override
-    public void delete(String name) {
+    public boolean delete(String name) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -770,22 +770,22 @@ class NativeProxy extends ScriptableObject {
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name}));
             if (!booleanTrapResult) {
-                return; // false
+                return false;
             }
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc == null) {
-                return; // true
+                return true;
             }
             if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                 throw ScriptRuntime.typeError(
                         "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
             }
 
-            return; // true
+            return true;
         }
 
-        target.delete(name);
+        return target.delete(name);
     }
 
     /**
@@ -794,7 +794,7 @@ class NativeProxy extends ScriptableObject {
      * [[Delete]] (P)</a>
      */
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -821,23 +821,23 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, ScriptRuntime.toString(index)}));
             if (!booleanTrapResult) {
-                return; // false
+                return false;
             }
 
             DescriptorInfo targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
             if (targetDesc == null) {
-                return; // true
+                return true;
             }
             if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                 throw ScriptRuntime.typeError(
                         "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
             }
 
-            return; // true
+            return true;
         }
 
-        target.delete(index);
+        return target.delete(index);
     }
 
     /**
@@ -846,7 +846,7 @@ class NativeProxy extends ScriptableObject {
      * [[Delete]] (P)</a>
      */
     @Override
-    public void delete(Symbol key) {
+    public boolean delete(Symbol key) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -872,23 +872,22 @@ class NativeProxy extends ScriptableObject {
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key}));
             if (!booleanTrapResult) {
-                return; // false
+                return false;
             }
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc == null) {
-                return; // true
+                return true;
             }
             if (targetDesc.isConfigurable(false) || !target.isExtensible()) {
                 throw ScriptRuntime.typeError(
                         "proxy can't delete an existing own property ' + name + ' on an not configurable or not extensible object");
             }
 
-            return; // true
+            return true;
         }
 
-        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
-        symbolScriptableTarget.delete(key);
+        return target.delete(key);
     }
 
     /**

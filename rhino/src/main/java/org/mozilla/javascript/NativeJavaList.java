@@ -81,10 +81,11 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         if (isWithValidIndex(index)) {
             list.set(index, null);
         }
+        return list.size() < index;
     }
 
     @Override

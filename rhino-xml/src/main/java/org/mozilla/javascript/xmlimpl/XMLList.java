@@ -360,14 +360,16 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         if (index >= 0 && index < length()) {
             XML xml = getXmlFromAnnotation(index);
 
             xml.remove();
 
             internalRemoveFromList(index);
+            return true;
         }
+        return false;
     }
 
     @Override

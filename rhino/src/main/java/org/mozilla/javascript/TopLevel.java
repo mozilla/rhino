@@ -430,8 +430,8 @@ public class TopLevel extends ScopeObject {
     }
 
     @Override
-    public void delete(String name) {
-        globalThis.delete(name);
+    public boolean delete(String name) {
+        return globalThis.delete(name);
     }
 
     @Override
