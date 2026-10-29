@@ -5681,8 +5681,7 @@ public class ScriptRuntime {
             if (getterSetter == 0) {
                 if (id instanceof Symbol) {
                     Symbol sym = (Symbol) id;
-                    SymbolScriptable so = (SymbolScriptable) object;
-                    so.put(sym, object, value);
+                    object.put(sym, object, value);
                 } else if (id instanceof Integer && ((Integer) id) >= 0) {
                     int index = (Integer) id;
                     object.put(index, object, value);

@@ -558,7 +558,7 @@ class NativeProxy extends ScriptableObject {
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -586,7 +586,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, name, value, start}));
             if (!booleanTrapResult) {
-                return; // false
+				return false;
             }
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
@@ -603,13 +603,13 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-            return; // true
+			return false;
         }
 
         if (start == this) {
             start = target;
         }
-        target.put(name, start, value);
+        return target.put(name, start, value);
     }
 
     /**
@@ -618,7 +618,7 @@ class NativeProxy extends ScriptableObject {
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -650,7 +650,7 @@ class NativeProxy extends ScriptableObject {
                                         target, ScriptRuntime.toString(index), value, start
                                     }));
             if (!booleanTrapResult) {
-                return; // false
+				return false;
             }
 
             DescriptorInfo targetDesc =
@@ -668,13 +668,13 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-            return; // true
+			return true;
         }
 
         if (start == this) {
             start = target;
         }
-        target.put(index, start, value);
+        return target.put(index, start, value);
     }
 
     /**
@@ -683,7 +683,7 @@ class NativeProxy extends ScriptableObject {
      * [[Set]] (P, V, Receiver)</a>
      */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public boolean put(Symbol key, Scriptable start, Object value) {
         /*
          * 1. Assert: IsPropertyKey(P) is true.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -711,7 +711,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, key, value, start}));
             if (!booleanTrapResult) {
-                return; // false
+				return false;
             }
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
@@ -728,14 +728,13 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-            return; // true
+			return true;
         }
 
         if (start == this) {
             start = target;
         }
-        SymbolScriptable symbolScriptableTarget = ensureSymbolScriptable(target);
-        symbolScriptableTarget.put(key, start, value);
+        return target.put(key, start, value);
     }
 
     /**

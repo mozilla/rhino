@@ -74,9 +74,13 @@ public class Environment extends ScriptableObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        if (this == thePrototypeInstance) super.put(name, start, value);
-        else System.getProperties().put(name, ScriptRuntime.toString(value));
+    public boolean put(String name, Scriptable start, Object value) {
+        if (this == thePrototypeInstance) {
+            return super.put(name, start, value);
+        } else {
+            System.getProperties().put(name, ScriptRuntime.toString(value));
+            return true;
+        }
     }
 
     private Object[] collectIds() {

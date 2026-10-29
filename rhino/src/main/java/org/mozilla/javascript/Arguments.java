@@ -105,7 +105,7 @@ class Arguments extends ScriptableObject {
         return activation.get(argName, activation);
     }
 
-    private void replaceArg(int index, Object value) {
+    private boolean replaceArg(int index, Object value) {
         if (sharedWithActivation(index)) {
             putIntoActivation(index, value);
         }
@@ -115,6 +115,7 @@ class Arguments extends ScriptableObject {
             }
             args[index] = value;
         }
+        return true;
     }
 
     private void removeArg(int index) {
@@ -179,22 +180,22 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (arg(index) == NOT_FOUND) {
-            super.put(index, start, value);
+            return super.put(index, start, value);
         } else {
-            replaceArg(index, value);
+            return replaceArg(index, value);
         }
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        super.put(name, start, value);
+    public boolean put(String name, Scriptable start, Object value) {
+        return super.put(name, start, value);
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
-        super.put(key, start, value);
+    public boolean put(Symbol key, Scriptable start, Object value) {
+        return super.put(key, start, value);
     }
 
     @Override
@@ -315,27 +316,27 @@ class Arguments extends ScriptableObject {
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public boolean put(int index, Scriptable start, Object value) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.put(index, start, value);
+            return super.put(index, start, value);
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public boolean put(String name, Scriptable start, Object value) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.put(name, start, value);
+            return super.put(name, start, value);
         }
 
         @Override
-        public void put(Symbol key, Scriptable start, Object value) {
+        public boolean put(Symbol key, Scriptable start, Object value) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.put(key, start, value);
+            return super.put(key, start, value);
         }
 
         @Override

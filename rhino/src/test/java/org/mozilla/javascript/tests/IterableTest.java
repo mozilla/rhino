@@ -242,12 +242,12 @@ public class IterableTest {
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public boolean put(String name, Scriptable start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public boolean put(int index, Scriptable start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -311,7 +311,7 @@ public class IterableTest {
         }
 
         @Override
-        public void put(Symbol key, Scriptable start, Object value) {
+        public boolean put(Symbol key, Scriptable start, Object value) {
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.

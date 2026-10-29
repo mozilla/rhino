@@ -294,8 +294,8 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
-        super.put(id, start, value);
+    public boolean put(String id, Scriptable start, Object value) {
+        var res = super.put(id, start, value);
         if (start == this) {
             // If the object is sealed, super will throw exception
             long index = toArrayIndex(id);
@@ -305,6 +305,7 @@ public class NativeArray extends ScriptableObject implements List {
                 denseOnly = false;
             }
         }
+        return res;
     }
 
     private boolean ensureCapacity(int capacity) {
@@ -323,7 +324,7 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         var slot = denseOnly ? null : getMap().query(null, index);
         if (start == this
                 && !isSealed()
@@ -331,26 +332,26 @@ public class NativeArray extends ScriptableObject implements List {
                 && 0 <= index
                 && (denseOnly || (slot == null || !slot.isSetterSlot()))) {
             if (!isExtensible() && this.length <= index) {
-                return;
+                return false;
             } else if (index < dense.length) {
                 dense[index] = value;
                 if (this.length <= index) {
                     this.length = (long) index + 1;
                     this.modCount++;
                 }
-                return;
+                return true;
             } else if (denseOnly
                     && index < dense.length * GROW_FACTOR
                     && ensureCapacity(index + 1)) {
                 dense[index] = value;
                 this.length = (long) index + 1;
                 this.modCount++;
-                return;
+                return true;
             } else {
                 denseOnly = false;
             }
         }
-        super.put(index, start, value);
+        var res = super.put(index, start, value);
         if (start == this && (lengthAttr & READONLY) == 0) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
@@ -359,6 +360,7 @@ public class NativeArray extends ScriptableObject implements List {
                 this.modCount++;
             }
         }
+        return res;
     }
 
     @Override

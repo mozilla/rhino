@@ -239,11 +239,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value value to set the property to
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(String name, Scriptable start, Object value) {
+        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(name, start, value);
+        return start.put(name, start, value);
     }
 
     /**
@@ -266,10 +266,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     @SuppressWarnings("resource")
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (externalData != null) {
             if (index < externalData.getArrayLength()) {
                 externalData.setArrayElement(index, value);
+                return true;
             } else {
                 throw new JavaScriptException(
                         ScriptRuntime.newNativeError(
@@ -280,13 +281,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                         null,
                         0);
             }
-            return;
         }
 
-        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return;
+        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(index, start, value);
+        return start.put(index, start, value);
     }
 
     /**
@@ -302,11 +302,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
-        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(Symbol key, Scriptable start, Object value) {
+        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        ensureSymbolScriptable(start).put(key, start, value);
+        return start.put(key, start, value);
     }
 
     /**
@@ -2581,14 +2581,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putProperty(Scriptable obj, String name, Object value) {
+    public static boolean putProperty(Scriptable obj, String name, Object value) {
         Scriptable base = getBase(obj, name);
         if (base == null) base = obj;
-        base.put(name, obj, value);
+        return base.put(name, obj, value);
     }
 
-    public static void putProperty(VarScope obj, String name, Object value) {
-        obj.put(name, obj, value);
+    public static boolean putProperty(VarScope obj, String name, Object value) {
+        return obj.put(name, obj, value);
     }
 
     /** Variant of putProperty to handle super.name = value */
@@ -2604,7 +2604,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static void putProperty(Scriptable obj, Symbol key, Object value) {
         Scriptable base = getBase(obj, key);
         if (base == null) base = obj;
-        ensureSymbolScriptable(base).put(key, obj, value);
+        base.put(key, obj, value);
     }
 
     /** Variant of putProperty to handle super[key] = value where key is a symbol */
@@ -2613,7 +2613,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         // in contrast to putProperty we start searching at superObj
         Scriptable base = getBase(superObj, key);
         if (base == null) base = superObj;
-        ensureSymbolScriptable(base).put(key, thisObj, value);
+        base.put(key, thisObj, value);
     }
 
     /**

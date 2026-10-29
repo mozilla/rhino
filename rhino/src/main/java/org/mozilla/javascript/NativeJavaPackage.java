@@ -63,12 +63,13 @@ public class NativeJavaPackage extends ScriptableObject {
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public boolean put(String id, Scriptable start, Object value) {
         // Can't add properties to Java packages.  Sorry.
+        return false;
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         throw Context.reportRuntimeErrorById("msg.pkg.int");
     }
 

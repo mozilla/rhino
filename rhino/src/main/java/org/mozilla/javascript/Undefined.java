@@ -91,10 +91,19 @@ public class Undefined implements Serializable {
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {}
+        public boolean put(String name, Scriptable start, Object value) {
+            return false;
+        }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {}
+        public boolean put(int index, Scriptable start, Object value) {
+            return false;
+        }
+
+        @Override
+        public boolean put(Symbol name, Scriptable start, Object value) {
+            return false;
+        }
 
         @Override
         public boolean delete(String name) {

@@ -41,8 +41,9 @@ public class BindingsObject extends ScriptableObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         bindings.put(name, value instanceof Wrapper ? ((Wrapper) value).unwrap() : value);
+        return true;
     }
 
     @Override

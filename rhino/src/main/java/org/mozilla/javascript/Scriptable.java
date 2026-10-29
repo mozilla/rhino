@@ -182,7 +182,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     @Override
-    public void put(String name, Scriptable start, Object value);
+    public boolean put(String name, Scriptable start, Object value);
 
     /**
      * Sets an indexed property in this object.
@@ -201,10 +201,12 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     @Override
-    public void put(int index, Scriptable start, Object value);
+    public boolean put(int index, Scriptable start, Object value);
 
     @Override
-    default void put(Symbol key, Scriptable start, Object value) {}
+    default boolean put(Symbol key, Scriptable start, Object value) {
+        return false;
+    }
 
     /**
      * Get the prototype of the object.

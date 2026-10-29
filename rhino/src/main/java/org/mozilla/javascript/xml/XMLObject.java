@@ -32,7 +32,7 @@ public abstract class XMLObject extends ScriptableObject {
     public abstract Object get(Context cx, Object id);
 
     /** Implementation of ECMAScript [[Put]]. */
-    public abstract void put(Context cx, Object id, Object value);
+    public abstract boolean put(Context cx, Object id, Object value);
 
     /** Implementation of ECMAScript [[Delete]]. */
     public abstract boolean delete(Context cx, Object id);

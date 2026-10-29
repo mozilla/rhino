@@ -365,25 +365,26 @@ abstract class XMLObjectImpl extends XMLObject {
 
     /** Implementation of ECMAScript [[Put]] */
     @Override
-    public final void put(Context cx, Object id, Object value) {
+    public final boolean put(Context cx, Object id, Object value) {
         if (cx == null) cx = Context.getCurrentContext();
         XMLName xmlName = lib.toXMLNameOrIndex(cx, id);
         if (xmlName == null) {
             long index = ScriptRuntime.lastUint32Result(cx);
             // XXX Fix this cast
-            put((int) index, this, value);
-            return;
+            return put((int) index, this, value);
         }
         putXMLProperty(xmlName, value);
+        return true;
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         if (prototypeFlag) {
-            super.put(name, start, value);
+            return super.put(name, start, value);
         } else {
             Context cx = Context.getCurrentContext();
             putXMLProperty(lib.toXMLNameFromString(cx, name), value);
+            return true;
         }
     }
 

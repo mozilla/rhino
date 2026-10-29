@@ -189,7 +189,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     Object name = valueArray[nameSlot];
                     if (name instanceof Symbol) {
                         if (start instanceof SymbolScriptable) {
-                            ((SymbolScriptable) start).put((Symbol) name, start, value);
+                            start.put((Symbol) name, start, value);
                         }
                     } else {
                         start.put((String) name, start, value);
@@ -438,7 +438,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             if (start == this && isSealed()) {
@@ -453,7 +453,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     start.put(name, start, value);
                 }
             }
-            return;
+            return false;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
@@ -462,14 +462,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     throw Context.reportRuntimeErrorById("msg.modify.sealed", name);
                 }
                 prototypeValues.set(id, start, value);
-                return;
+                return true;
             }
         }
-        super.put(name, start, value);
+        return super.put(name, start, value);
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public boolean put(Symbol key, Scriptable start, Object value) {
         int info = findInstanceIdInfo(key);
         if (info != 0) {
             if (start == this && isSealed()) {
@@ -479,12 +479,13 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if ((attr & READONLY) == 0) {
                 if (start == this) {
                     int id = (info & 0xFFFF);
-                    setInstanceIdValue(id, value);
+					setInstanceIdValue(id, value);
+					return true;
                 } else {
-                    ensureSymbolScriptable(start).put(key, start, value);
+                    return start.put(key, start, value);
                 }
             }
-            return;
+            return false;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(key);
@@ -493,10 +494,10 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     throw Context.reportRuntimeErrorById("msg.modify.sealed");
                 }
                 prototypeValues.set(id, start, value);
-                return;
+                return true;
             }
         }
-        super.put(key, start, value);
+        return super.put(key, start, value);
     }
 
     @Override

@@ -269,9 +269,9 @@ public class AbstractEcmaObjectOperations {
         if (base instanceof ScriptableObject) {
             if (((ScriptableObject) base).putOwnProperty(p, o, v, isThrow)) return;
 
-            ScriptableObject.ensureSymbolScriptable(o).put(p, o, v);
+            o.put(p, o, v);
         } else {
-            ScriptableObject.ensureSymbolScriptable(base).put(p, o, v);
+            base.put(p, o, v);
         }
     }
 

@@ -489,46 +489,46 @@ public abstract class SlotMapOwner<T extends PropHolder<T>> implements PropHolde
     }
 
     @Override
-    public void put(String name, T start, Object value) {
+    public boolean put(String name, T start, Object value) {
         Slot<T> slot;
         if (this != start) {
             slot = getMap().query(name, 0);
             if (slot == null) {
-                return;
+                return false;
             }
         } else {
 
             slot = getMap().modify(this, name, 0, 0);
         }
-        slot.setValue(value, getThis(), start, false);
+        return slot.setValue(value, getThis(), start, false);
     }
 
     @Override
-    public void put(int index, T start, Object value) {
+    public boolean put(int index, T start, Object value) {
         Slot<T> slot;
         if (this != start) {
             slot = getMap().query(null, index);
             if (slot == null) {
-                return;
+                return false;
             }
         } else {
             slot = getMap().modify(this, null, index, 0);
         }
-        slot.setValue(value, getThis(), start, false);
+        return slot.setValue(value, getThis(), start, false);
     }
 
     @Override
-    public void put(Symbol name, T start, Object value) {
+    public boolean put(Symbol name, T start, Object value) {
         Slot<T> slot;
         if (this != start) {
             slot = getMap().query(name, 0);
             if (slot == null) {
-                return;
+                return false;
             }
         } else {
             slot = getMap().modify(this, name, 0, 0);
         }
-        slot.setValue(value, getThis(), start, false);
+        return slot.setValue(value, getThis(), start, false);
     }
 
     @Override

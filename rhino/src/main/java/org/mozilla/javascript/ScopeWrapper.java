@@ -22,8 +22,8 @@ public class ScopeWrapper extends ScriptableObject {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        scope.put(name, scope, value);
+    public boolean put(String name, Scriptable start, Object value) {
+        return scope.put(name, scope, value);
     }
 
     @Override

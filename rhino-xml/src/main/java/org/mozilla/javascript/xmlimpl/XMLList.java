@@ -238,7 +238,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         Object parent = Undefined.instance;
         // Convert text into XML if needed.
         XMLObject xmlValue;
@@ -338,6 +338,7 @@ class XMLList extends XMLObjectImpl implements Function {
                 addToList(xmlValue);
             }
         }
+        return true;
     }
 
     private XML getXML(XmlNode.InternalList _annos, int index) {

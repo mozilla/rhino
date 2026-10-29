@@ -52,10 +52,14 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void put(int index, VarScope start, Object value) {}
+    public boolean put(int index, VarScope start, Object value) {
+        return false;
+    }
 
     @Override
-    public void put(Symbol arg0, VarScope arg1, Object arg2) {}
+    public boolean put(Symbol arg0, VarScope arg1, Object arg2) {
+        return false;
+    }
 
     @Override
     public void defineConst(Context cx, String name, VarScope start) {
@@ -78,8 +82,8 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void put(String name, VarScope start, Object value) {
-        ScriptableObject.putProperty(obj, name, value);
+    public boolean put(String name, VarScope start, Object value) {
+        return ScriptableObject.putProperty(obj, name, value);
     }
 
     @Override

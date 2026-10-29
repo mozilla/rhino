@@ -95,8 +95,9 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         members.put(this, parent, name, javaObject, value, true);
+        return true;
     }
 
     @Override

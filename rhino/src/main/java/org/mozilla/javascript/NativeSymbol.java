@@ -158,30 +158,33 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         if (!isSymbol()) {
-            super.put(name, start, value);
+            return super.put(name, start, value);
         } else if (isStrictMode()) {
             throw ScriptRuntime.typeErrorById("msg.no.assign.symbol.strict");
         }
+        return false;
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (!isSymbol()) {
-            super.put(index, start, value);
+            return super.put(index, start, value);
         } else if (isStrictMode()) {
             throw ScriptRuntime.typeErrorById("msg.no.assign.symbol.strict");
         }
+        return false;
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public boolean put(Symbol key, Scriptable start, Object value) {
         if (!isSymbol()) {
-            super.put(key, start, value);
+            return super.put(key, start, value);
         } else if (isStrictMode()) {
             throw ScriptRuntime.typeErrorById("msg.no.assign.symbol.strict");
         }
+        return false;
     }
 
     /**

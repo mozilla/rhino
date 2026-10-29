@@ -28,11 +28,11 @@ public interface PropHolder<T extends PropHolder<T>> {
 
     public boolean has(int index, T start);
 
-    public void put(Symbol name, T start, Object value);
+    public boolean put(Symbol name, T start, Object value);
 
-    public void put(String name, T start, Object value);
+    public boolean put(String name, T start, Object value);
 
-    public void put(int index, T start, Object value);
+    public boolean put(int index, T start, Object value);
 
     /**
      * Removes a property from this object or scope. This operation corresponds to the ECMA

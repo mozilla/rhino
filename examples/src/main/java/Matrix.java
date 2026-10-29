@@ -151,7 +151,9 @@ public class Matrix implements Scriptable {
      * <p>We do nothing here, so all properties are effectively read-only.
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {}
+    public boolean put(String name, Scriptable start, Object value) {
+        return false;
+    }
 
     /**
      * Set an indexed property.
@@ -159,7 +161,9 @@ public class Matrix implements Scriptable {
      * <p>We do nothing here, so all properties are effectively read-only.
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {}
+    public boolean put(int index, Scriptable start, Object value) {
+        return false;
+    }
 
     /**
      * Remove a named property.

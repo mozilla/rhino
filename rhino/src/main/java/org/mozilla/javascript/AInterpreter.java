@@ -274,21 +274,22 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         }
 
         @Override
-        public void put(String name, VarScope start, Object value) {
+        public boolean put(String name, VarScope start, Object value) {
             int offset = getOffsets().getOrDefault(name, -1);
             if (offset >= 0) {
                 frame.setInVars(offset, value);
             }
+            return true;
         }
 
         @Override
-        public void put(int index, VarScope start, Object value) {
-            // Do nothing.
+        public boolean put(int index, VarScope start, Object value) {
+            return false;
         }
 
         @Override
-        public void put(Symbol key, VarScope start, Object value) {
-            // Do nothing.
+        public boolean put(Symbol key, VarScope start, Object value) {
+            return false;
         }
 
         @Override

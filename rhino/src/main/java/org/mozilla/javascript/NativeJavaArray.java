@@ -97,16 +97,18 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public boolean put(String id, Scriptable start, Object value) {
         // Ignore assignments to "length"--it's readonly.
         if (!"length".equals(id))
             throw Context.reportRuntimeErrorById("msg.java.array.member.not.found", id);
+        return false;
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (0 <= index && index < length) {
             Array.set(array, index, Context.jsToJava(value, componentType));
+            return true;
         } else {
             throw Context.reportRuntimeErrorById(
                     "msg.java.array.index.out.of.bounds",

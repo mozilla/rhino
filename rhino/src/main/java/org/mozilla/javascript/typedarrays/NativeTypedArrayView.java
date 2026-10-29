@@ -201,20 +201,22 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     }
 
     @Override
-    public void put(int index, Scriptable start, Object val) {
+    public boolean put(int index, Scriptable start, Object val) {
         js_set(index, val);
+        return true;
     }
 
     @Override
-    public void put(String name, Scriptable start, Object val) {
+    public boolean put(String name, Scriptable start, Object val) {
         Optional<Double> num = ScriptRuntime.canonicalNumericIndexString(name);
         if (num.isPresent()) {
             int ix = toIndex(num.get());
             if (ix >= 0) {
                 js_set(ix, val);
             }
+            return true;
         } else {
-            super.put(name, start, val);
+            return super.put(name, start, val);
         }
     }
 

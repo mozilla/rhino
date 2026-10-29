@@ -136,27 +136,24 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        getDelegee().put(name, start, value);
+    public boolean put(String name, Scriptable start, Object value) {
+        return getDelegee().put(name, start, value);
     }
 
     /**
      * @see org.mozilla.javascript.SymbolScriptable#put(Symbol, Scriptable, Object)
      */
     @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
-        final Scriptable delegee = getDelegee();
-        if (delegee instanceof SymbolScriptable) {
-            ((SymbolScriptable) delegee).put(symbol, start, value);
-        }
+    public boolean put(Symbol symbol, Scriptable start, Object value) {
+        return getDelegee().put(symbol, start, value);
     }
 
     /**
      * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
      */
     @Override
-    public void put(int index, Scriptable start, Object value) {
-        getDelegee().put(index, start, value);
+    public boolean put(int index, Scriptable start, Object value) {
+        return getDelegee().put(index, start, value);
     }
 
     /**

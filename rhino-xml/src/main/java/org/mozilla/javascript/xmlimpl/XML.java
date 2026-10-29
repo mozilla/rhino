@@ -174,7 +174,7 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         //    TODO    Clarify the following comment and add a reference to the spec
         //    The comment: Spec says assignment to indexed XML object should return type error
         throw ScriptRuntime.typeError("Assignment to indexed XML is not allowed");

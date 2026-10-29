@@ -417,11 +417,11 @@ public class TopLevel extends ScopeObject {
     }
 
     @Override
-    public void put(String name, VarScope start, Object value) {
+    public boolean put(String name, VarScope start, Object value) {
         if (super.has(name, start)) {
-            super.put(name, start, value);
+            return super.put(name, start, value);
         } else {
-            ScriptableObject.putProperty(globalThis, name, value);
+            return ScriptableObject.putProperty(globalThis, name, value);
         }
     }
 

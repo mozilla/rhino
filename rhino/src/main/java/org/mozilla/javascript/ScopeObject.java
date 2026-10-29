@@ -44,11 +44,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      * @param value value to set the property to
      */
     @Override
-    public void put(String name, VarScope start, Object value) {
-        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(String name, VarScope start, Object value) {
+        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(name, start, value);
+        return start.put(name, start, value);
     }
 
     /**
@@ -71,11 +71,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      */
     @SuppressWarnings("resource")
     @Override
-    public void put(int index, VarScope start, Object value) {
-        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(int index, VarScope start, Object value) {
+        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(index, start, value);
+        return start.put(index, start, value);
     }
 
     /**
@@ -91,11 +91,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
 
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
-    public void put(Symbol key, VarScope start, Object value) {
-        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(Symbol key, VarScope start, Object value) {
+        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(key, start, value);
+        return start.put(key, start, value);
     }
 
     /**

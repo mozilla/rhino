@@ -20,7 +20,4 @@ public interface SymbolScriptable {
 
     /** Return true if the specified property exists. */
     boolean has(Symbol key, Scriptable start);
-
-    /** Add a new property to to the object. */
-    void put(Symbol key, Scriptable start, Object value);
 }
