@@ -46,15 +46,11 @@ jar {
                 'org.jline.terminal;resolution:=optional',
                 '*',
             ].join(','),
-            'Provide-Capability': [
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider;register:=org.mozilla.javascript.tools.shell.BasicConsoleProvider',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider;register:=org.mozilla.javascript.tools.shell.JLineConsoleProvider',
-            ].join(','),
+            '-metainf-services': 'auto',
             'Require-Capability': [
                 'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
-                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)"',
-                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider;cardinality:=multiple',
+                'osgi.extender;filter:="(&(osgi.extender=osgi.serviceloader.processor)(version>=1.0.0)(!(version>=2.0.0)))"',
+                'osgi.serviceloader;filter:="(osgi.serviceloader=org.mozilla.javascript.tools.ConsoleProvider)";cardinality:=multiple',
             ].join(',')
         )
     }

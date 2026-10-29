@@ -10,12 +10,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
+import org.osgi.framework.wiring.BundleWire;
+import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.resource.Namespace;
 
 /**
  * Tests that Rhino bundles work correctly in an OSGi environment by embedding an Apache Felix
@@ -125,9 +130,8 @@ public class OsgiModuleTest {
 
     /**
      * Verifies that rhino-xml's exported class is accessible from the bundle classloader, i.e. the
-     * OSGi wiring between rhino and rhino-xml is correct. Full cross-bundle ServiceLoader discovery
-     * (making {@code typeof XML === "function"}) requires an OSGi service loader mediator like SPI
-     * Fly, which is beyond the scope of this test.
+     * OSGi wiring between rhino and rhino-xml is correct. ServiceLoader discovery is covered by
+     * {@link #xmlLoaderIsDiscoveredAcrossBundles()}.
      */
     @Test
     void xmlBundleExportsAreAccessible() throws Exception {
@@ -147,6 +151,67 @@ public class OsgiModuleTest {
                             loaderInterface.isAssignableFrom(loaderImpl),
                             "XMLLoaderImpl should implement XMLLoader");
                 });
+    }
+
+    @Test
+    void xmlLoaderIsDiscoveredAcrossBundles() throws Exception {
+        withFramework(
+                ctx -> {
+                    Bundle rhino = installBundle(ctx, "rhino");
+                    Bundle xml = installBundle(ctx, "rhino-xml");
+                    rhino.start();
+                    xml.start();
+
+                    assertEquals("function", evaluateInBundle(rhino, "typeof XML"));
+                });
+    }
+
+    @Test
+    void serviceLoaderRequirementsWireToMatchingProviders() throws Exception {
+        withFramework(
+                ctx -> {
+                    Bundle rhino = installBundle(ctx, "rhino");
+                    Bundle engine = installBundle(ctx, "rhino-engine");
+                    Bundle tools = installBundle(ctx, "rhino-tools");
+                    Bundle xml = installBundle(ctx, "rhino-xml");
+                    for (Bundle b : List.of(rhino, engine, tools, xml)) {
+                        b.start();
+                    }
+
+                    Pattern service = Pattern.compile("\\(osgi\\.serviceloader=([^)]+)\\)");
+                    int wires = 0;
+                    for (Bundle b : List.of(rhino, engine, tools, xml)) {
+                        for (BundleWire wire :
+                                b.adapt(BundleWiring.class)
+                                        .getRequiredWires("osgi.serviceloader")) {
+                            Matcher m =
+                                    service.matcher(
+                                            wire.getRequirement()
+                                                    .getDirectives()
+                                                    .get(Namespace.REQUIREMENT_FILTER_DIRECTIVE));
+                            assertTrue(m.find(), "no filter on requirement of " + b);
+                            assertEquals(
+                                    m.group(1),
+                                    wire.getCapability().getAttributes().get("osgi.serviceloader"),
+                                    b + " wired to " + wire.getProvider());
+                            wires++;
+                        }
+                    }
+                    assertTrue(wires >= 3, "expected serviceloader wires, got " + wires);
+
+                    assertEquals(xml, wireProvider(rhino, "org.mozilla.javascript.xml.XMLLoader"));
+                    assertEquals(rhino, wireProvider(rhino, "org.mozilla.javascript.RegExpLoader"));
+                });
+    }
+
+    private static Bundle wireProvider(Bundle bundle, String service) {
+        for (BundleWire wire :
+                bundle.adapt(BundleWiring.class).getRequiredWires("osgi.serviceloader")) {
+            if (service.equals(wire.getCapability().getAttributes().get("osgi.serviceloader"))) {
+                return wire.getProvider().getBundle();
+            }
+        }
+        return null;
     }
 
     /**

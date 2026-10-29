@@ -15,10 +15,9 @@ jar {
             'Bundle-Vendor': 'Mozilla Foundation',
             'Bundle-License': 'https://www.mozilla.org/MPL/2.0/',
             '-exportcontents': 'org.mozilla.javascript.engine',
-            'Provide-Capability': 'osgi.serviceloader;osgi.serviceloader=javax.script.ScriptEngineFactory;register:=org.mozilla.javascript.engine.RhinoScriptEngineFactory',
+            '-metainf-services': 'auto',
             'Require-Capability': [
                 'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
-                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
             ].join(',')
         )
     }
