@@ -588,7 +588,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, name, value, start}));
             if (!booleanTrapResult) {
-				return false;
+                return false;
             }
 
             PropertyDescriptor targetDesc =
@@ -606,7 +606,7 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-			return false;
+            return false;
         }
 
         if (start == this) {
@@ -653,7 +653,7 @@ class NativeProxy extends ScriptableObject {
                                         target, ScriptRuntime.toString(index), value, start
                                     }));
             if (!booleanTrapResult) {
-				return false;
+                return false;
             }
 
             PropertyDescriptor targetDesc =
@@ -671,7 +671,7 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-			return true;
+            return true;
         }
 
         if (start == this) {
@@ -714,7 +714,7 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(trap, new Object[] {target, key, value, start}));
             if (!booleanTrapResult) {
-				return false;
+                return false;
             }
 
             PropertyDescriptor targetDesc =
@@ -732,7 +732,7 @@ class NativeProxy extends ScriptableObject {
                     throw ScriptRuntime.typeError("proxy set has to be available");
                 }
             }
-			return true;
+            return true;
         }
 
         if (start == this) {

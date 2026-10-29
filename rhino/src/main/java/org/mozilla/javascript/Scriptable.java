@@ -242,8 +242,9 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * <p>This method allows any Scriptable implementation to define properties with full descriptor
      * support, following the ECMAScript [[DefineOwnProperty]] operation.
      *
-     * <p>The default implementation returns false, indicating that property definition is not
-     * supported by this Scriptable implementation.
+     * <p>The default implementation returns false if the property has non-default attributes or is
+     * an accessor property or if the key is over an unknown typw, otherwise it calls put to try and
+     * create the property and returns the result of doing that.
      *
      * @param cx the current Context
      * @param key the property key (String, Integer, or Symbol)
@@ -252,6 +253,15 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see ScriptableObject#defineOwnProperty(Context, Object, PropertyDescriptor)
      */
     default boolean defineOwnProperty(Context cx, Object key, PropertyDescriptor desc) {
+        if (desc.isAccessorDescriptor()
+                || !desc.isWritable()
+                || !desc.isEnumerable()
+                || !desc.isConfigurable()) {
+            return false;
+        }
+        if (!desc.hasValue()) {
+            return true;
+        }
         if (key instanceof String) {
             return put((String) key, this, desc.value);
         } else if (key instanceof Number) {
@@ -260,6 +270,34 @@ public interface Scriptable extends PropHolder<Scriptable> {
         } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
             return put((Symbol) key, this, desc.value);
         }
+        return false;
+    }
+
+    /**
+     * Indicates whether this object is extensible, i.e. can new properties potentially be defined
+     * on it.
+     *
+     * <p>Equivalent to the [[IsExtensible]] object method in the ECMAScript specification.
+     *
+     * <p>This default implementation always returns true.
+     *
+     * @return true if the object is extensible.
+     */
+    default boolean isExtensible() {
+        return true;
+    }
+
+    /**
+     * Request that this object stop being extensible.
+     *
+     * <p>Equivalent to the [[PreventExtensions]] object method in the ECMAScript specification.
+     *
+     * <p>This default implementation returns false as we cannot prevent extensions in this
+     * interface.
+     *
+     * @return true if the object is now non-extensible.
+     */
+    default boolean preventExtensions() {
         return false;
     }
 

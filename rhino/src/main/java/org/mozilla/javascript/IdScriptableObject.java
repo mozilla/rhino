@@ -479,8 +479,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             if ((attr & READONLY) == 0) {
                 if (start == this) {
                     int id = (info & 0xFFFF);
-					setInstanceIdValue(id, value);
-					return true;
+                    setInstanceIdValue(id, value);
+                    return true;
                 } else {
                     return start.put(key, start, value);
                 }

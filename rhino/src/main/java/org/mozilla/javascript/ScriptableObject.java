@@ -2168,10 +2168,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
+    @Override
     public boolean isExtensible() {
         return isExtensible;
     }
 
+    @Override
     public boolean preventExtensions() {
         isExtensible = false;
         return true;

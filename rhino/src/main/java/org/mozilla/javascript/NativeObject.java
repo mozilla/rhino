@@ -626,7 +626,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Object propsObj = args.length < 2 ? Undefined.instance : args[1];
         Scriptable props = Context.toObject(propsObj, s);
         if (obj instanceof ScriptableObject) {
-            if (!((ScriptableObject)obj).defineOwnProperties(cx, ensureScriptableObject(props))) {
+            if (!((ScriptableObject) obj).defineOwnProperties(cx, ensureScriptableObject(props))) {
                 throw ScriptRuntime.typeErrorById("msg.props.redefinition.failed");
             }
         }
