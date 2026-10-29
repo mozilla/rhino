@@ -45,15 +45,14 @@ jar {
                 'org.mozilla.javascript.typedarrays',
                 'org.mozilla.javascript.xml',
             ].join(','),
-            'Provide-Capability': 'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.RegExpLoader;register:=org.mozilla.javascript.regexp.RegExpLoaderImpl',
+            '-metainf-services': 'auto',
             'Require-Capability': [
                 'osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"',
-                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)"',
-                'osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.RegExpLoader',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.NullabilityDetector;resolution:=optional',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.config.RhinoPropertiesLoader;resolution:=optional',
-                'osgi.serviceloader;osgi.serviceloader=org.mozilla.javascript.xml.XMLLoader;resolution:=optional',
+                'osgi.extender;filter:="(&(osgi.extender=osgi.serviceloader.processor)(version>=1.0.0)(!(version>=2.0.0)))"',
+                'osgi.serviceloader;filter:="(osgi.serviceloader=org.mozilla.javascript.RegExpLoader)"',
+                'osgi.serviceloader;filter:="(osgi.serviceloader=org.mozilla.javascript.NullabilityDetector)";resolution:=optional',
+                'osgi.serviceloader;filter:="(osgi.serviceloader=org.mozilla.javascript.config.RhinoPropertiesLoader)";resolution:=optional',
+                'osgi.serviceloader;filter:="(osgi.serviceloader=org.mozilla.javascript.xml.XMLLoader)";resolution:=optional',
             ].join(',')
         )
     }
