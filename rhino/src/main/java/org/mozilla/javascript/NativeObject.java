@@ -577,7 +577,7 @@ public class NativeObject extends ScriptableObject implements Map {
         var desc = new DescriptorInfo(ensureScriptableObject(descArg));
         ScriptableObject.checkPropertyDefinition(desc);
         if (!obj.defineOwnProperty(cx, name, desc)) {
-            throw ScriptRuntime.typeError("Cannot set property.");
+            throw ScriptRuntime.typeErrorById("msg.prop.redefinition.failed", name);
         }
         return obj;
     }
@@ -614,7 +614,7 @@ public class NativeObject extends ScriptableObject implements Map {
         Object propsObj = args.length < 2 ? Undefined.instance : args[1];
         Scriptable props = Context.toObject(propsObj, s);
         if (!obj.defineOwnProperties(cx, ensureScriptableObject(props))) {
-            throw ScriptRuntime.typeError("Cannot set property.");
+            throw ScriptRuntime.typeErrorById("msg.props.redefinition.failed");
         }
         return obj;
     }
