@@ -4,8 +4,47 @@ load("//bazel:errorprone.bzl", "TEST_OPTS")
 load("//bazel:sharded_test.bzl", "sharded_parameterized_test")
 
 filegroup(
+    name = "rhino-explicit-config",
+    srcs = ["testsrc/rhino-explicit.config"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "assert-js",
+    srcs = ["testsrc/assert.js"],
+    visibility = ["//visibility:public"],
+)
+
+# Fixtures used by unit tests (~350 files) - excludes the 3,638 legacy Mozilla tests in testsrc/tests/
+filegroup(
+    name = "unit_testsrc",
+    srcs = glob(
+        [
+            "testsrc/commonjs/**",
+            "testsrc/doctests/**",
+            "testsrc/jstests/**",
+            "testsrc/*.js",
+            "testsrc/*.config",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+# The legacy Mozilla test suite (3,638 files), only needed by MozillaSuiteTest
+filegroup(
+    name = "mozilla_suite_testsrc",
+    srcs = glob(["testsrc/tests/**"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
     name = "testsrc",
-    srcs = glob(["testsrc/**"]),
+    srcs = [
+        "testsrc/source-map-tests-excludelist.txt",
+        "testsrc/test262.properties",
+        ":mozilla_suite_testsrc",
+        ":unit_testsrc",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -52,7 +91,7 @@ java_test_suite(
             "src/test/java/org/mozilla/javascript/sourcemap/SourceMapSpecSuiteTest.java",
         ],
     ),
-    data = [":testsrc"],
+    data = [":unit_testsrc"],
     javacopts = TEST_OPTS,
     jvm_flags = [
         "-Xmx1g",
@@ -197,7 +236,7 @@ java_junit5_test(
         "src/test/java/org/mozilla/javascript/tests/Test262SuiteTest.java",
         "src/test/java/org/mozilla/javascript/tests/Test262UnexpectedlyPassingTest.java",
     ],
-    data = [":testsrc"] + glob(["test262/**"]),
+    data = ["testsrc/test262.properties"] + glob(["test262/**"]),
     jvm_flags = [
         "-Xmx1g",
     ],

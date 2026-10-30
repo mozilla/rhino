@@ -1,4 +1,4 @@
-load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_test_suite")
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test", "java_test_suite")
 load("@rules_java//java:defs.bzl", "java_library")
 load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
 
@@ -11,12 +11,14 @@ java_library(
 )
 
 java_test_suite(
-    name = "rhino-tests",
+    name = "rhino-tests-base",
     size = "small",
-    srcs = glob(["src/test/java/**/*.java"]),
+    srcs = glob(
+        ["src/test/java/**/*.java"],
+        exclude = ["src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest.java"],
+    ),
     data = [
         "//:rhino-test.config",
-        "//tests:testsrc",
     ],
     javacopts = TEST_OPTS,
     resources = glob(["src/test/resources/**"]),
@@ -28,4 +30,32 @@ java_test_suite(
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_params",
     ] + JUNIT5_DEPS,
+)
+
+java_junit5_test(
+    name = "src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest",
+    size = "small",
+    srcs = ["src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest.java"],
+    data = [
+        "//:rhino-test.config",
+        "//tests:rhino-explicit-config",
+    ],
+    javacopts = TEST_OPTS,
+    resources = glob(["src/test/resources/**"]),
+    test_class = "org.mozilla.javascript.tests.RhinoPropertiesTest",
+    deps = [
+        ":rhino",
+        ":rhino-tests-base-test-lib",
+        "//testutils",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_DEPS,
+)
+
+test_suite(
+    name = "rhino-tests",
+    tests = [
+        ":rhino-tests-base",
+        ":src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest",
+    ],
 )

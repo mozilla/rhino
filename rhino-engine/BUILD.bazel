@@ -18,7 +18,7 @@ java_test_suite(
         ["src/test/java/**/*.java"],
         exclude = ["**/module-info.java"],
     ),
-    data = ["//tests:testsrc"],
+    data = ["//tests:assert-js"],
     javacopts = TEST_OPTS,
     runner = "junit5",
     test_suffixes = ["Test.java"],
