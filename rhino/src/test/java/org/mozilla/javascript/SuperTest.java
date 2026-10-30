@@ -810,6 +810,23 @@ class SuperTest {
         }
 
         @Test
+        void modifyProtoOperatorByName() {
+            // Equivalent to `super.__proto__ = super.__proto__ || 1`
+            String script =
+                    ""
+                            + "var proto = { x: 'proto' };"
+                            + "var object = {\n"
+                            + "  x: 'obj',\n"
+                            + "  f() { super.__proto__ ||= 1; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "object.f();\n"
+                            + "(Object.getPrototypeOf(object) === proto) + '';";
+
+            Utils.assertWithAllModes_ES6("true", script);
+        }
+
+        @Test
         void modifyOperatorByKey() {
             // Equivalent to `super[x] = super[x] + 1`, so reads from super, writes in this
             String script =

@@ -979,7 +979,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     if (type == Token.SETPROP_OP) {
                         addIcode(Icode.DUP);
                         stackChange(1);
-                        addStringOp(Token.GETPROP, property);
+                        addStringOp(
+                                node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
+                                        ? Token.GETPROP_SUPER
+                                        : Token.GETPROP,
+                                property);
                         // Compensate for the following USE_STACK
                         stackChange(-1);
                     }
