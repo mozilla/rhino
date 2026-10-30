@@ -11,6 +11,10 @@ import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 import static org.mozilla.javascript.Symbol.Kind.REGULAR;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -577,6 +581,24 @@ public final class NativeES2025Iterator extends ScriptableObject {
         private IteratorRecord(Scriptable iterator, Object nextMethod) {
             this.iterator = iterator;
             this.nextMethod = nextMethod;
+        }
+
+        @Serial
+        private void readObject(ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            Context.checkDeserializationEnabled();
+            stream.defaultReadObject();
+        }
+
+        @Serial
+        private void writeObject(ObjectOutputStream stream) throws IOException {
+            Context.checkSerializationEnabled();
+            stream.defaultWriteObject();
+        }
+
+        @Serial
+        private void readObjectNoData() throws InvalidObjectException {
+            throw new InvalidObjectException("Missing serialized Rhino object data");
         }
 
         /** GetIteratorDirect */
