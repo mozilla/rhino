@@ -296,6 +296,10 @@ public class ScriptRuntime {
 
         if (scope instanceof TopLevel) {
             ((TopLevel) scope).cacheBuiltins(scope, sealed);
+        } else {
+            // Without the builtins cache, generator functions find their prototype by the
+            // hidden constructor name, so it has to be registered in the scope.
+            BaseFunction.initAsGeneratorFunction(scope, sealed);
         }
 
         return scope;
