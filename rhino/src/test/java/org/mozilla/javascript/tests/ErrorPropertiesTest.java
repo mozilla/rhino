@@ -75,6 +75,27 @@ public class ErrorPropertiesTest {
                 expectedStack);
     }
 
+    @Test
+    public void stackWithChangedPrototype() {
+        Utils.assertWithAllModes_ES6(
+                "string",
+                "function E() {}\n"
+                        + "E.prototype = Object.create(Error.prototype);\n"
+                        + "var e = new Error('m');\n"
+                        + "Object.setPrototypeOf(e, E.prototype);\n"
+                        + "typeof e.stack");
+        Utils.assertWithAllModes_ES6(
+                "string",
+                "var e = new Error('m');\n"
+                        + "Object.setPrototypeOf(e, null);\n"
+                        + "typeof e.stack");
+        Utils.assertWithAllModes_ES6(
+                "string",
+                "var e = new Error('m');\n"
+                        + "Object.setPrototypeOf(e, new Proxy({}, {}));\n"
+                        + "typeof e.stack");
+    }
+
     private void testIt(final String script, final Object expected) {
         Utils.runWithAllModes(
                 cx -> {
