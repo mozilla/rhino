@@ -18,7 +18,7 @@ java_junit5_test(
     name = "TestSourceTest",
     size = "small",
     srcs = glob(["**/TestSourceTest.java"]),
-    data = ["//tests:testsrc"],
+    data = ["//tests:assert-js"],
     javacopts = TEST_OPTS,
     tags = ["no-agent"],
     test_class = "org.mozilla.javascript.testutils.tests.TestSourceTest",
