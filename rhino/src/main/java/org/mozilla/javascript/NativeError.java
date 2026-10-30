@@ -252,8 +252,11 @@ final class NativeError extends IdScriptableObject {
         // Get the object where prototype stuff is stored.
         int limit = DEFAULT_STACK_LIMIT;
         Function prepare = null;
-        NativeError cons = (NativeError) getPrototype();
-        ProtoProps pp = (ProtoProps) cons.getAssociatedValue(ProtoProps.KEY);
+        Scriptable proto = getPrototype();
+        ProtoProps pp = null;
+        if (proto instanceof ScriptableObject) {
+            pp = (ProtoProps) ((ScriptableObject) proto).getAssociatedValue(ProtoProps.KEY);
+        }
 
         if (pp != null) {
             limit = pp.stackTraceLimit;
