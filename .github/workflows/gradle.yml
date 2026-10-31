@@ -2,9 +2,9 @@ name: Rhino CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, rhino_1_9_backports ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, rhino_1_9_backports ]
   workflow_dispatch:  
 
 permissions: read-all
