@@ -10,6 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class UndefinedTest {
@@ -20,7 +21,9 @@ public class UndefinedTest {
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
-        global = new Global(cx);
+        Global g = new Global(cx);
+        g.setFileLoadPrefix(TestSource.getPrefix());
+        global = g;
     }
 
     @After

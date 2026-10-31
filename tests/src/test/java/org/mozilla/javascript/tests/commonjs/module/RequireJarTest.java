@@ -15,6 +15,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.testutils.TestSource;
 
 /**
  * @author Attila Szegedi
@@ -124,7 +125,16 @@ public class RequireJarTest extends RequireTest {
     }
 
     private URI getDirectory() throws URISyntaxException {
-        final String jarFileLoc = getClass().getResource("modules.jar").toURI().toString();
+        String jarFileLoc = getClass().getResource("modules.jar").toURI().toString();
+        if (jarFileLoc.startsWith("jar:")) {
+            // When running under Bazel, the resources are inside a jar, so
+            // "modules.jar" would be a nested jar, which is not supported.
+            // Use the copy of the file in the runfiles tree instead.
+            jarFileLoc =
+                    "file:"
+                            + TestSource.resolve(
+                                    "src/test/resources/org/mozilla/javascript/tests/commonjs/module/modules.jar");
+        }
         String jarParent = "jar:" + jarFileLoc + "!/";
         return new URI(jarParent);
     }

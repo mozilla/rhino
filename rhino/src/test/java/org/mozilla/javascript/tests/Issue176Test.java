@@ -21,7 +21,7 @@ public class Issue176Test {
         cx = Context.enter();
         try {
             InputStreamReader in =
-                    new InputStreamReader(Bug482203Test.class.getResourceAsStream("Issue176.js"));
+                    new InputStreamReader(Issue176Test.class.getResourceAsStream("Issue176.js"));
             Script script = cx.compileReader(in, "Issue176.js", 1, null);
             scope = cx.initStandardObjects();
             scope.put("host", scope, this);

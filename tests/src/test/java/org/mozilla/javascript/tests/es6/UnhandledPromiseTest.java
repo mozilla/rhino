@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class UnhandledPromiseTest {
@@ -21,7 +22,9 @@ public class UnhandledPromiseTest {
         cx.setGeneratingDebug(true);
         cx.setLanguageVersion(Context.VERSION_ES6);
         cx.setTrackUnhandledPromiseRejections(true);
-        scope = new Global(cx);
+        Global g = new Global(cx);
+        g.setFileLoadPrefix(TestSource.getPrefix());
+        scope = g;
     }
 
     @After

@@ -6,10 +6,11 @@ import java.io.StringWriter;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class HashCollisionTest {
-    private static final String mediumInput = "testsrc/jstests/collisions.json";
+    private static final String mediumInput = TestSource.resolve("testsrc/jstests/collisions.json");
     private static String collisions;
 
     @BeforeClass
@@ -37,7 +38,8 @@ public class HashCollisionTest {
      */
     @Test
     public void mediumCollisions() throws IOException {
-        try (FileReader scriptIn = new FileReader("testsrc/jstests/hash-collisions.js")) {
+        try (FileReader scriptIn =
+                new FileReader(TestSource.resolve("testsrc/jstests/hash-collisions.js"))) {
             try (Context cx = Context.enter()) {
                 Global glob = new Global(cx);
                 glob.put("collisions", glob, collisions);

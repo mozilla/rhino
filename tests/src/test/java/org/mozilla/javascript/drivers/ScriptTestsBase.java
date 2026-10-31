@@ -25,6 +25,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -53,7 +54,8 @@ public abstract class ScriptTestsBase {
             if (!"".equals(anno.value())) {
                 script =
                         new InputStreamReader(
-                                new FileInputStream(anno.value()), StandardCharsets.UTF_8);
+                                new FileInputStream(TestSource.resolve(anno.value())),
+                                StandardCharsets.UTF_8);
                 suiteName = anno.value();
             } else if (!"".equals(anno.inline())) {
                 script =
@@ -69,6 +71,7 @@ public abstract class ScriptTestsBase {
             cx.setLanguageVersion(jsVersion);
 
             Global global = new Global(cx);
+            global.setFileLoadPrefix(TestSource.getPrefix());
             loadNatives(global);
 
             Scriptable scope = cx.newObject(global);

@@ -1,0 +1,65 @@
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_VINTAGE_DEPS", "java_junit5_test", "java_test_suite")
+load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:errorprone.bzl", "LIBRARY_OPTS", "TEST_OPTS")
+
+java_library(
+    name = "rhino",
+    srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = LIBRARY_OPTS,
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+)
+
+java_test_suite(
+    name = "rhino-tests-base",
+    size = "small",
+    srcs = glob(
+        ["src/test/java/**/*.java"],
+        exclude = ["src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest.java"],
+    ),
+    data = [
+        "//:rhino-test.config",
+    ],
+    javacopts = TEST_OPTS,
+    resources = glob(["src/test/resources/**"]),
+    runner = "junit5",
+    test_suffixes = ["Test.java"],
+    deps = [
+        ":rhino",
+        "//testutils",
+        "@maven//:junit_junit",
+        "@maven//:org_hamcrest_hamcrest",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_VINTAGE_DEPS,
+)
+
+java_junit5_test(
+    name = "src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest",
+    size = "small",
+    srcs = ["src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest.java"],
+    data = [
+        "//:rhino-test.config",
+        "//tests:rhino-explicit-config",
+    ],
+    javacopts = TEST_OPTS,
+    resources = glob(["src/test/resources/**"]),
+    test_class = "org.mozilla.javascript.tests.RhinoPropertiesTest",
+    deps = [
+        ":rhino",
+        ":rhino-tests-base-test-lib",
+        "//testutils",
+        "@maven//:junit_junit",
+        "@maven//:org_hamcrest_hamcrest",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+    ] + JUNIT5_VINTAGE_DEPS,
+)
+
+test_suite(
+    name = "rhino-tests",
+    tests = [
+        ":rhino-tests-base",
+        ":src/test/java/org/mozilla/javascript/tests/RhinoPropertiesTest",
+    ],
+)

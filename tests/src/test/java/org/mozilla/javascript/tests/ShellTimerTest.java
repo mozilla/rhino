@@ -13,6 +13,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Timers;
@@ -33,7 +34,9 @@ public class ShellTimerTest {
     public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
-        global = new Global(cx);
+        Global g = new Global(cx);
+        g.setFileLoadPrefix(TestSource.getPrefix());
+        global = g;
         timers.install(global);
         global.put("TestsComplete", global, false);
     }

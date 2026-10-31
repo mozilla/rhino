@@ -1,0 +1,19 @@
+exports_files([
+    "LICENSE.txt",
+    "rhino-test.config",
+])
+
+alias(
+    name = "shell",
+    actual = "//rhino-tools:shell",
+)
+
+alias(
+    name = "debugger",
+    actual = "//rhino-tools:debugger",
+)
+
+alias(
+    name = "jsc",
+    actual = "//rhino-tools:jsc",
+)
