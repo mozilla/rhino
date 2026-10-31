@@ -245,7 +245,8 @@ public class Token {
             DOTDOTDOT = TAGGED_TEMPLATE_LITERAL + 1, // spread/rest ...
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
-            LAST_TOKEN = QUESTION_DOT + 1;
+            OBJECT_REST = QUESTION_DOT + 1, // ES6 object rest operation
+            LAST_TOKEN = OBJECT_REST + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -596,6 +597,8 @@ public class Token {
                 return "TO_OBJECT";
             case TO_DOUBLE:
                 return "TO_DOUBLE";
+            case OBJECT_REST:
+                return "OBJECT_REST";
             case GET:
                 return "GET";
             case SET:
