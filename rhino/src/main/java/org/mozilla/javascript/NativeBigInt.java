@@ -31,8 +31,7 @@ final class NativeBigInt extends ScriptableObject {
                         .withMethod(CTOR, "asIntN", 2, NativeBigInt::js_asIntN)
                         .withMethod(CTOR, "asUintN", 2, NativeBigInt::js_asUintN)
                         .withMethod(PROTO, "toString", 0, NativeBigInt::js_toString)
-                        // Alias toLocaleString to toString
-                        .withMethod(PROTO, "toLocaleString", 0, NativeBigInt::js_toString)
+                        .withMethod(PROTO, "toLocaleString", 0, NativeBigInt::js_toLocaleString)
                         .withMethod(PROTO, "toSource", 0, NativeBigInt::js_toSource)
                         .withMethod(PROTO, "valueOf", 0, NativeBigInt::js_valueOf)
                         .withProp(
@@ -79,6 +78,16 @@ final class NativeBigInt extends ScriptableObject {
                         : ScriptRuntime.toInt32(args[0]);
         BigInteger value = toSelf(thisObj).bigIntValue;
         return ScriptRuntime.bigIntToString(value, base);
+    }
+
+    private static Object js_toLocaleString(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        if (!cx.hasFeature(Context.FEATURE_INTL_402)) {
+            return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
+        }
+
+        BigInteger value = toSelf(thisObj).bigIntValue;
+        return NativeNumber.getLocaleNumberFormat(cx, args).format(value);
     }
 
     private static Object js_toSource(

@@ -213,17 +213,25 @@ final class NativeNumber extends ScriptableObject {
             return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
         }
 
+        return getLocaleNumberFormat(cx, args).format(toSelf(thisObj).doubleValue);
+    }
+
+    /**
+     * Returns the NumberFormat used by toLocaleString() when ECMA-402 is enabled: for the locale
+     * string passed as first argument, or else for the locale of the context.
+     */
+    static NumberFormat getLocaleNumberFormat(Context cx, Object[] args) {
         if (args.length != 0 && args[0] instanceof String) {
             final String localeStr = (String) args[0];
             try {
                 final Locale locale = new Locale.Builder().setLanguageTag(localeStr).build();
-                return NumberFormat.getInstance(locale).format(toSelf(thisObj).doubleValue);
+                return NumberFormat.getInstance(locale);
             } catch (final IllformedLocaleException e) {
                 throw ScriptRuntime.rangeError("Invalid language tag: " + localeStr);
             }
         }
 
-        return NumberFormat.getInstance(cx.getLocale()).format(toSelf(thisObj).doubleValue);
+        return NumberFormat.getInstance(cx.getLocale());
     }
 
     private static Object js_toSource(
