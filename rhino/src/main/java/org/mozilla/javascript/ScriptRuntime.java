@@ -3942,6 +3942,9 @@ public class ScriptRuntime {
     public static Number multiply(Integer i1, Integer i2) {
         // Account for overflow
         long r = i1.longValue() * i2.longValue();
+        if (r == 0 && (i1 < 0 || i2 < 0)) {
+            return -0.0;
+        }
         if ((r >= Integer.MIN_VALUE) && (r <= Integer.MAX_VALUE)) {
             return (int) r;
         }
