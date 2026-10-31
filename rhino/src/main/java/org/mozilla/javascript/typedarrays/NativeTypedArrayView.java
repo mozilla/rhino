@@ -150,6 +150,15 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             if (num.isPresent()) {
                 int idx = num.get().intValue();
                 if (checkIndex(idx)) {
+                    if (checkValid) {
+                        throw ScriptRuntime.typeErrorById(
+                                "msg.typed.array.index.out.of.bounds", idx, 0, length);
+                    }
+
+                    // Out-of-bounds: coerce value then return false.
+                    if (desc.hasValue()) {
+                        toNumeric(desc.value);
+                    }
                     return false;
                 }
 

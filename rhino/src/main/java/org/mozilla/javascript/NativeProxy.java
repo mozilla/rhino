@@ -414,7 +414,7 @@ class NativeProxy extends ScriptableObject {
 
         Function trap = getTrap(TRAP_GET);
         if (trap != null) {
-            Object trapResult = callTrap(trap, new Object[] {target, name, this});
+            Object trapResult = callTrap(trap, new Object[] {target, name, start});
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), name);
             if (targetDesc != null && targetDesc.isConfigurable(false)) {
@@ -470,7 +470,7 @@ class NativeProxy extends ScriptableObject {
         Function trap = getTrap(TRAP_GET);
         if (trap != null) {
             Object trapResult =
-                    callTrap(trap, new Object[] {target, ScriptRuntime.toString(index), this});
+                    callTrap(trap, new Object[] {target, ScriptRuntime.toString(index), start});
 
             DescriptorInfo targetDesc =
                     target.getOwnPropertyDescriptor(Context.getContext(), index);
@@ -528,7 +528,7 @@ class NativeProxy extends ScriptableObject {
 
         Function trap = getTrap(TRAP_GET);
         if (trap != null) {
-            Object trapResult = callTrap(trap, new Object[] {target, key, this});
+            Object trapResult = callTrap(trap, new Object[] {target, key, start});
 
             DescriptorInfo targetDesc = target.getOwnPropertyDescriptor(Context.getContext(), key);
             if (targetDesc != null
@@ -588,7 +588,8 @@ class NativeProxy extends ScriptableObject {
         Function trap = getTrap(TRAP_SET);
         if (trap != null) {
             boolean booleanTrapResult =
-                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, name, value}));
+                    ScriptRuntime.toBoolean(
+                            callTrap(trap, new Object[] {target, name, value, start}));
             if (!booleanTrapResult) {
                 return; // false
             }
@@ -650,7 +651,9 @@ class NativeProxy extends ScriptableObject {
                     ScriptRuntime.toBoolean(
                             callTrap(
                                     trap,
-                                    new Object[] {target, ScriptRuntime.toString(index), value}));
+                                    new Object[] {
+                                        target, ScriptRuntime.toString(index), value, start
+                                    }));
             if (!booleanTrapResult) {
                 return; // false
             }
@@ -710,7 +713,8 @@ class NativeProxy extends ScriptableObject {
         Function trap = getTrap(TRAP_SET);
         if (trap != null) {
             boolean booleanTrapResult =
-                    ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, key, value}));
+                    ScriptRuntime.toBoolean(
+                            callTrap(trap, new Object[] {target, key, value, start}));
             if (!booleanTrapResult) {
                 return; // false
             }

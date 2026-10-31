@@ -716,6 +716,91 @@ public class NativeProxyTest {
     }
 
     @Test
+    public void getTrapReceivesCorrectReceiverWhenDifferentFromProxy() {
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    return 42;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.get(proxy, 'p', otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void getTrapReceivesProxyAsReceiverWhenNoExplicitReceiverGiven() {
+        String js =
+                "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    return receiver === proxy;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "'' + Reflect.get(proxy, 'p');";
+        Utils.assertWithAllModes_ES6("true", js);
+    }
+
+    @Test
+    public void getTrapReceiverIsProxyForDirectPropertyRead() {
+        String js =
+                "var log = [];\n"
+                        + "var target = {};\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    log.push(receiver === proxy ? 'proxy' : 'other');\n"
+                        + "    return 1;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var _ = proxy.p;\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("proxy", js);
+    }
+
+    @Test
+    public void getTrapReceivesCorrectReceiverWithIndexKey() {
+        String js =
+                "var log = [];\n"
+                        + "var target = [];\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    if (prop === '0') {\n"
+                        + "      log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    }\n"
+                        + "    return undefined;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.get(proxy, 0, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void getTrapReceivesCorrectReceiverWithSymbolKey() {
+        String js =
+                "var log = [];\n"
+                        + "var sym = Symbol('test');\n"
+                        + "var target = {};\n"
+                        + "var otherReceiver = { label: 'other' };\n"
+                        + "var proxy = new Proxy(target, {\n"
+                        + "  get: function(t, prop, receiver) {\n"
+                        + "    if (prop === sym) {\n"
+                        + "      log.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "    }\n"
+                        + "    return undefined;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "Reflect.get(proxy, sym, otherReceiver);\n"
+                        + "'' + log;";
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
     public void setTrap() {
         String js =
                 "var res = '';\n"
@@ -730,6 +815,96 @@ public class NativeProxyTest {
                         + "res";
 
         Utils.assertWithAllModes_ES6("1,2,3 true", js);
+    }
+
+    @Test
+    public void setTrapReceivesCorrectReceiverWhenDifferentFromProxy() {
+        String js =
+                "  var res = [];\n"
+                        + "  var target = {};\n"
+                        + "  var otherReceiver = { label: 'other' };\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      res.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, 'p', 1, otherReceiver);\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void setTrapReceivesProxyAsReceiverWhenNoExplicitReceiverGiven() {
+        String js =
+                "  var target = {};\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      return receiver === proxy;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, 'p', 1);\n";
+
+        Utils.assertWithAllModes_ES6(true, js);
+    }
+
+    @Test
+    public void setTrapReceiverIsProxyForDirectPropertyWrite() {
+        String js =
+                "  var res = [];\n"
+                        + "  var target = {};\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      res.push(receiver === proxy ? 'proxy' : 'other');\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  proxy.p = 1;\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("proxy", js);
+    }
+
+    @Test
+    public void setTrapReceivesCorrectReceiverWithIndexKey() {
+        String js =
+                "  var res = [];\n"
+                        + "  var target = [];\n"
+                        + "  var otherReceiver = { label: 'other' };\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      if (prop === '0') {\n"
+                        + "        res.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "      }\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, 0, 42, otherReceiver);\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("correct", js);
+    }
+
+    @Test
+    public void setTrapReceivesCorrectReceiverWithSymbolKey() {
+        String js =
+                "  var res = [];\n"
+                        + "  var sym = Symbol('test');\n"
+                        + "  var target = {};\n"
+                        + "  var otherReceiver = { label: 'other' };\n"
+                        + "  var proxy = new Proxy(target, {\n"
+                        + "    set: function(t, prop, value, receiver) {\n"
+                        + "      if (prop === sym) {\n"
+                        + "        res.push(receiver === otherReceiver ? 'correct' : 'wrong');\n"
+                        + "      }\n"
+                        + "      return true;\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  Reflect.set(proxy, sym, 42, otherReceiver);\n"
+                        + "  '' + res;\n";
+
+        Utils.assertWithAllModes_ES6("correct", js);
     }
 
     @Test
@@ -953,5 +1128,46 @@ public class NativeProxyTest {
                         + "}";
 
         Utils.assertWithAllModes_ES6(true, js);
+    }
+
+    @Test
+    public void setTrapWithProxyAsReceiverViaWith() {
+        // 'with (proxy)' uses the proxy as both the
+        // scope object and the receiver. Reflect.set(env, "p", 1, proxy) must
+        // call proxy.[[DefineOwnProperty]].
+        String js =
+                "var log = [];\n"
+                        + "var env = { p: 0 };\n"
+                        + "var proxy = new Proxy(env, {\n"
+                        + "  has(t, pk) {\n"
+                        + "    log.push('has:' + String(pk));\n"
+                        + "    return Reflect.has(t, pk);\n"
+                        + "  },\n"
+                        + "  get(t, pk, r) {\n"
+                        + "    log.push('get:' + String(pk));\n"
+                        + "    return Reflect.get(t, pk, r);\n"
+                        + "  },\n"
+                        + "  set(t, pk, v, r) {\n"
+                        + "    log.push('set:' + String(pk));\n"
+                        + "    return Reflect.set(t, pk, v, r);\n"
+                        + "  },\n"
+                        + "  getOwnPropertyDescriptor(t, pk) {\n"
+                        + "    log.push('getOwnPropertyDescriptor:' + String(pk));\n"
+                        + "    return Reflect.getOwnPropertyDescriptor(t, pk);\n"
+                        + "  },\n"
+                        + "  defineProperty(t, pk, d) {\n"
+                        + "    log.push('defineProperty:' + String(pk));\n"
+                        + "    return Reflect.defineProperty(t, pk, d);\n"
+                        + "  },\n"
+                        + "});\n"
+                        + "with (proxy) {\n"
+                        + "  p = 1;\n"
+                        + "}\n"
+                        + "'' + log";
+
+        // finally should be
+        // "has:p,get:Symbol(Symbol.unscopables),has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p"
+        Utils.assertWithAllModes_ES6(
+                "has:p,has:p,set:p,getOwnPropertyDescriptor:p,defineProperty:p", js);
     }
 }
