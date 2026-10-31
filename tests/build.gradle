@@ -95,6 +95,9 @@ test {
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
 
+    // InterpreterV2 can push one test over the 1MB stack in x86-64
+    jvmArgs += ['-Xss2m']
+
     // Required for JWT GUI tests
     jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
     // Required for some reflection tests
