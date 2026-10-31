@@ -317,8 +317,10 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * Set the prototype of the object.
      *
      * @param prototype the prototype to set
+     *
+     * @return whether the prototype could be set.
      */
-    public void setPrototype(Scriptable prototype);
+    public boolean setPrototype(Scriptable prototype);
 
     /**
      * Get the parent scope of the object.

@@ -218,11 +218,12 @@ public class NativeArray extends ScriptableObject implements List {
     }
 
     @Override
-    public void setPrototype(Scriptable p) {
-        super.setPrototype(p);
-        if (!(p instanceof NativeArray)) {
+    public boolean setPrototype(Scriptable p) {
+        var res = super.setPrototype(p);
+        if (res && !(p instanceof NativeArray)) {
             setDenseOnly(false);
         }
+        return res;
     }
 
     private static PropertyDescriptor makeUnscopables(

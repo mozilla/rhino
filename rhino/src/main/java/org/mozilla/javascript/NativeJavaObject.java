@@ -173,8 +173,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Sets the prototype of the object. */
     @Override
-    public void setPrototype(Scriptable m) {
+    public boolean setPrototype(Scriptable m) {
         prototype = m;
+        return true;
     }
 
     /** Returns the parent (enclosing) scope of the object. */

@@ -1200,8 +1200,8 @@ class NativeProxy extends ScriptableObject {
         return target.getPrototype();
     }
 
-    private void setPrototypeDirect(Scriptable prototype) {
-        super.setPrototype(prototype);
+    private boolean setPrototypeDirect(Scriptable prototype) {
+        return super.setPrototype(prototype);
     }
 
     /**
@@ -1210,7 +1210,7 @@ class NativeProxy extends ScriptableObject {
      * [[SetPrototypeOf]] (V)</a>
      */
     @Override
-    public void setPrototype(Scriptable prototype) {
+    public boolean setPrototype(Scriptable prototype) {
         /*
          * 1. Assert: Either Type(V) is Object or Type(V) is Null.
          * 2. Let handler be O.[[ProxyHandler]].
@@ -1235,16 +1235,16 @@ class NativeProxy extends ScriptableObject {
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, prototype}));
             if (!booleanTrapResult) {
-                return; // false
+				return false;
             }
             if (target.isExtensible()) {
-                return; // true
+				return true;
             }
 
-            return;
+            return false;
         }
 
-        target.setPrototype(prototype);
+        return target.setPrototype(prototype);
     }
 
     private static NativeProxy js_constructor(

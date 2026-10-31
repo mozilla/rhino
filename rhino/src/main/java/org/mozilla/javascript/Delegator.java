@@ -189,8 +189,8 @@ public class Delegator implements Function, SymbolScriptable {
      * @see org.mozilla.javascript.Scriptable#setPrototype
      */
     @Override
-    public void setPrototype(Scriptable prototype) {
-        getDelegee().setPrototype(prototype);
+    public boolean setPrototype(Scriptable prototype) {
+        return getDelegee().setPrototype(prototype);
     }
 
     /**

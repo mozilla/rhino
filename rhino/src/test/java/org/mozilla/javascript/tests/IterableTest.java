@@ -267,7 +267,7 @@ public class IterableTest {
         }
 
         @Override
-        public void setPrototype(Scriptable prototype) {
+        public boolean setPrototype(Scriptable prototype) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

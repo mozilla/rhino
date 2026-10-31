@@ -603,8 +603,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /** Sets the prototype of the object. */
     @Override
-    public void setPrototype(Scriptable m) {
+    public boolean setPrototype(Scriptable m) {
         prototypeObject = m;
+        return true;
     }
 
     /** Returns the parent (enclosing) scope of the object. */

@@ -203,8 +203,9 @@ public class Matrix implements Scriptable {
 
     /** Set prototype. */
     @Override
-    public void setPrototype(Scriptable prototype) {
+    public boolean setPrototype(Scriptable prototype) {
         this.prototype = prototype;
+        return true;
     }
 
     /** Get parent. */
