@@ -5,6 +5,7 @@
 build/
 lib/
 bazel-*
+.bazelrc.user
 
 # artifacts
 *.zip
