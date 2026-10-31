@@ -5,6 +5,8 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +22,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
 
 @RunWith(Parameterized.class)
@@ -34,9 +37,20 @@ public class ComplianceTest {
     @Parameterized.Parameters(name = "/{0}")
     public static Collection<Object[]> data() {
         List<Object[]> retval = new ArrayList<Object[]>(16);
-        final File[] files =
-                new File("src/test/resources/org/mozilla/javascript/tests/commonjs/module/1.0")
-                        .listFiles();
+        File moduleDir =
+                new File("src/test/resources/org/mozilla/javascript/tests/commonjs/module/1.0");
+        if (!moduleDir.exists()) {
+            // When running under Bazel, the current directory is the top-level
+            // directory of the runfiles tree, so use the copy of the test
+            // resources that is available there instead.
+            moduleDir =
+                    Path.of(
+                                    TestSource.resolveDirectory(
+                                            "src/test/resources/org/mozilla/javascript/tests/commonjs/module/1.0/absolute/test.js"))
+                            .getParent()
+                            .toFile();
+        }
+        final File[] files = moduleDir.listFiles();
         for (File file : files) {
             if (file.isDirectory()) {
                 retval.add(new Object[] {file.getName(), file});
@@ -47,18 +61,28 @@ public class ComplianceTest {
 
     private static Require createRequire(File dir, Context cx, Scriptable scope)
             throws URISyntaxException {
+        URI base;
+        URL classDir = ComplianceTest.class.getResource(".");
+        if (classDir == null) {
+            // When running under Bazel, the classes are inside a jar, so use
+            // the copy of the test resources that is available in the
+            // runfiles tree instead.
+            base =
+                    Path.of(
+                                    TestSource.resolve(
+                                            "src/test/resources/org/mozilla/javascript/tests/commonjs/module/assert.js"))
+                            .getParent()
+                            .toUri();
+        } else {
+            base = new URI(classDir.toExternalForm() + "/");
+        }
         return new Require(
                 cx,
                 scope,
                 new StrongCachingModuleScriptProvider(
                         new UrlModuleSourceProvider(
                                 Collections.singleton(dir.getAbsoluteFile().toURI()),
-                                Collections.singleton(
-                                        new URI(
-                                                ComplianceTest.class
-                                                                .getResource(".")
-                                                                .toExternalForm()
-                                                        + "/")))),
+                                Collections.singleton(base))),
                 null,
                 null,
                 false);

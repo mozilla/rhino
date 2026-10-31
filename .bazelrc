@@ -1,0 +1,19 @@
+# Ensure that we only support Java 11 features for all builds
+build --java_language_version=11
+# Ensure that tests run with a Java 11 runtime
+build --java_runtime_version=remotejdk_11
+# Select the custom Java toolchain, which compiles with a recent JDK (the
+# Bazel Java tools require one) but produces Java 11-compatible bytecode
+build --extra_toolchains=//bazel:custom_toolchain_jdk_11_definition
+build --extra_toolchains=@rules_java//java:all
+# Force Bazel to use Java 25 for its own internal tools/helpers
+build --tool_java_runtime_version=remotejdk_25
+
+# Set properties that will be required to ensure that
+# all legacy tests pass consistently
+test --jvmopt="-Duser.language=en"
+test --jvmopt="-Duser.country=US"
+test --jvmopt="-Duser.timezone=America/Los_Angeles"
+test --jvmopt="-Dfile.encoding=UTF-8"
+
+try-import %workspace%/.bazelrc.user

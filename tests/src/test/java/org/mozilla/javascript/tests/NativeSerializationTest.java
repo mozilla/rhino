@@ -15,6 +15,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class NativeSerializationTest {
@@ -24,7 +25,9 @@ public class NativeSerializationTest {
     @BeforeEach
     public void init() {
         cx = org.mozilla.javascript.testutils.SerializationTestContext.enter();
-        scope = new Global(cx);
+        Global g = new Global(cx);
+        g.setFileLoadPrefix(TestSource.getPrefix());
+        scope = g;
     }
 
     @AfterEach

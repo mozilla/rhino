@@ -21,6 +21,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.testutils.SerializationTestContext;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -33,7 +34,8 @@ import org.mozilla.javascript.tools.shell.Global;
  */
 @RunWith(Parameterized.class)
 public class DoctestsTest {
-    static final String baseDirectory = "testsrc" + File.separator + "doctests";
+    static final String baseDirectory =
+            TestSource.resolveDirectory("testsrc/doctests/arguments.doctest");
     static final String doctestsExtension = ".doctest";
     String name;
     String source;
@@ -93,6 +95,7 @@ public class DoctestsTest {
             cx.setLanguageVersion(Context.VERSION_DEFAULT);
             cx.setInterpretedMode(interpretedMode);
             Global global = new Global(cx);
+            global.setFileLoadPrefix(TestSource.getPrefix());
             // global.runDoctest throws an exception on any failure
             int testsPassed = global.runDoctest(cx, global, source, name, 1);
             assertTrue(testsPassed > 0);

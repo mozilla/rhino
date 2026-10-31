@@ -11,6 +11,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeInt16Array;
@@ -27,6 +28,7 @@ public class ExternalArrayTest {
         cx.setGeneratingDebug(true);
 
         Global global = new Global(cx);
+        global.setFileLoadPrefix(TestSource.getPrefix());
         root = cx.newObject(global);
     }
 
@@ -41,7 +43,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, true);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
     }
 
     @Test
@@ -55,7 +57,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
     }
 
     @Test
@@ -70,7 +72,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
 
         // Clear it and test again. When cleared, object should go back to behaving like a
         // regular JavaScript object.
@@ -82,7 +84,7 @@ public class ExternalArrayTest {
         }
         a.defineProperty("length", 10, ScriptableObject.DONTENUM);
         root.put("regularArray", root, true);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
     }
 
     @Test
@@ -94,7 +96,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
     }
 
     @Test
@@ -106,7 +108,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
     }
 
     @Test
@@ -118,7 +120,7 @@ public class ExternalArrayTest {
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", false);
+        runScript(TestSource.resolve("testsrc/jstests/extensions/external-array-test.js"), false);
     }
 
     private void runScript(String script, boolean interpretedMode) {

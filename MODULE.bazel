@@ -1,0 +1,43 @@
+module(
+    name = "rhino",
+    version = "1.9.3-SNAPSHOT",
+)
+
+bazel_dep(name = "rules_java", version = "9.7.0")
+bazel_dep(name = "rules_jvm_external", version = "7.1")
+bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
+bazel_dep(name = "rules_kotlin", version = "2.4.0")
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+
+# Whenever you change this you must run:
+#    REPIN=1 bazel run @maven//:pin
+maven.install(
+    artifacts = [
+        "org.junit.jupiter:junit-jupiter:5.10.3",
+        "org.junit.jupiter:junit-jupiter-api:5.10.3",
+        "org.junit.jupiter:junit-jupiter-engine:5.10.3",
+        "org.junit.jupiter:junit-jupiter-params:5.10.3",
+        "org.junit.platform:junit-platform-launcher:1.10.3",
+        "org.junit.platform:junit-platform-reporting:1.10.3",
+        "org.junit.vintage:junit-vintage-engine:5.10.3",
+        "junit:junit:4.13.2",
+        "org.hamcrest:hamcrest:3.0",
+        "com.tngtech.archunit:archunit-junit4:1.4.1",
+        "org.slf4j:slf4j-simple:2.0.17",
+        "org.yaml:snakeyaml:2.6",
+        "javax.xml.soap:javax.xml.soap-api:1.4.0",
+        "javax.activation:javax.activation-api:1.2.0",
+        "org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.0",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.0",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.0",
+        "org.openjdk.jmh:jmh-core:1.37",
+        "org.openjdk.jmh:jmh-generator-annprocess:1.37",
+    ],
+    known_contributing_modules = ["protobuf"],
+    lock_file = "//:maven_install.json",
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+)
+use_repo(maven, "maven")

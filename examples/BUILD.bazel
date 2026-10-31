@@ -1,0 +1,16 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load("//bazel:errorprone.bzl", "NO_ERRORPRONE_OPTS")
+
+java_library(
+    name = "examples",
+    srcs = glob(["src/main/java/**/*.java"]),
+    # The Gradle build compiles this module without ErrorProne.
+    javacopts = NO_ERRORPRONE_OPTS,
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rhino",
+        "//rhino-tools",
+        "//rhino-xml",
+    ],
+)
