@@ -2012,17 +2012,19 @@ public final class IRFactory {
                 // Add goto to the catch statement to jump out of catch
                 // but prefix it with LEAVEWITH since try..catch produces
                 // "with"code in order to limit the scope of the exception
-                // object.
-                catchStatement.addChildToBack(new Node(Token.LEAVE_SCOPE));
-                catchStatement.addChildToBack(makeJump(Token.GOTO, endCatch));
+                // object. These go after the catch statement rather than inside it, as
+                // the statement may later be wrapped in a block scope of its own.
+                Node catchBody = new Node(Token.BLOCK, catchStatement);
+                catchBody.addChildToBack(new Node(Token.LEAVE_SCOPE));
+                catchBody.addChildToBack(makeJump(Token.GOTO, endCatch));
 
                 // Create condition "if" when present
                 Node condStmt;
                 if (cond.getType() == Token.EMPTY) {
-                    condStmt = catchStatement;
+                    condStmt = catchBody;
                     hasDefault = true;
                 } else {
-                    condStmt = createIf(cond, catchStatement, null, catchLineno, catchColumn);
+                    condStmt = createIf(cond, catchBody, null, catchLineno, catchColumn);
                 }
 
                 // Generate code to create the scope object and store

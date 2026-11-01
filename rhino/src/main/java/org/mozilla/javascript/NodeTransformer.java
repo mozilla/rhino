@@ -161,6 +161,19 @@ public class NodeTransformer {
                         break;
                     }
 
+                case Token.CATCH_SCOPE:
+                    {
+                        // The catch scope is entered before, and left after, its
+                        // sibling handler statement.
+                        loops.push(node);
+                        Node leave = node.getNext().getNext();
+                        if (leave.getType() != Token.LEAVE_SCOPE) {
+                            Kit.codeBug();
+                        }
+                        loopEnds.push(leave);
+                        break;
+                    }
+
                 case Token.TRY:
                     {
                         Jump jump = (Jump) node;
@@ -208,7 +221,8 @@ public class NodeTransformer {
                             int elemtype = n.getType();
                             if (elemtype == Token.TRY
                                     || elemtype == Token.WITH
-                                    || elemtype == Token.SCOPE_BLOCK) {
+                                    || elemtype == Token.SCOPE_BLOCK
+                                    || elemtype == Token.CATCH_SCOPE) {
                                 Node unwind;
                                 if (elemtype == Token.TRY) {
                                     Jump jsrnode = new Jump(Token.JSR);
@@ -272,7 +286,8 @@ public class NodeTransformer {
                             int elemtype = n.getType();
                             if (elemtype == Token.WITH
                                     || elemtype == Token.SCOPEEXPR
-                                    || elemtype == Token.SCOPE_BLOCK) {
+                                    || elemtype == Token.SCOPE_BLOCK
+                                    || elemtype == Token.CATCH_SCOPE) {
                                 Node leave = new Node(Token.LEAVE_SCOPE);
                                 previous = addBeforeCurrent(parent, previous, node, leave);
                             } else if (elemtype == Token.TRY) {
