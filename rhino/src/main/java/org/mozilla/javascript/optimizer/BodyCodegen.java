@@ -3258,6 +3258,13 @@ class BodyCodegen {
             default: // including GETVAR
                 {
                     generateExpression(node, parent);
+                    if (type == Token.GETVAR) {
+                        int varIndex = fnCurrent.getVarIndex(node);
+                        if (!varIsDirectCallParameter(varIndex)
+                                && fnCurrent.isNumberVar(varIndex)) {
+                            addDoubleWrap();
+                        }
+                    }
                     cfw.addALoad(contextLocal);
                     String name =
                             isOptionalChainingCall ? "getValueAndThisOptional" : "getValueAndThis";
