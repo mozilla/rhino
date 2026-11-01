@@ -1502,6 +1502,9 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 throw badTree(node);
         }
 
+        // ToNumber the old value, so that a string is not concatenated with by ADD below
+        addToken(Token.POS); // stack: [p]
+
         // If it's a postfix expression, we copy the old value
         // If it's postfix, we only need the _new_ value on the stack
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
@@ -1537,6 +1540,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     Node index = object.getNext();
                     visitExpression(index, 0);
                     // stack: prefix [p, super, p+-1, elem], postfix: [super, p+-1, elem]
+                    addIcode(Icode.SWAP);
+                    // stack: prefix [p, super, elem, p+-1], postfix: [super, elem, p+-1]
                     addToken(Token.SETELEM_SUPER); // stack: prefix [p, p+-1], postfix: [p+-1]
                     stackChange(-2);
                     break;

@@ -4146,6 +4146,9 @@ class BodyCodegen {
         }
 
         // stack: [super, p]
+        // ToNumber the old value first: a postfix expression evaluates to the converted value
+        addObjectToDouble();
+        addDoubleWrap(); // [super, ToNumber(p)]
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
             // For postfix we want a copy of the old value on the stack
             cfw.add(ByteCode.SWAP); // [p, super]
