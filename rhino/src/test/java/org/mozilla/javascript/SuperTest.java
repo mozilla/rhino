@@ -954,6 +954,71 @@ class SuperTest {
 
             Utils.assertWithAllModes_ES6("0:0:1", script);
         }
+
+        @Test
+        void elementIncrementPrefixByKey() {
+            // The key differs from the new value, so the two cannot be confused
+            String script =
+                    ""
+                            + "var proto = { p: 1 };"
+                            + "var object = {\n"
+                            + "  p: 42,\n"
+                            + "  f(k) { return ++super[k]; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f('p');"
+                            + "f + ':' + object.p + ':' + proto.p + ':' + Object.keys(object)";
+
+            Utils.assertWithAllModes_ES6("2:2:1:p,f", script);
+        }
+
+        @Test
+        void elementDecrementPostfixByKey() {
+            String script =
+                    ""
+                            + "var proto = { p: 1 };"
+                            + "var object = {\n"
+                            + "  p: 42,\n"
+                            + "  f(k) { return super[k]--; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f('p');"
+                            + "f + ':' + object.p + ':' + proto.p + ':' + Object.keys(object)";
+
+            Utils.assertWithAllModes_ES6("1:0:1:p,f", script);
+        }
+
+        @Test
+        void elementIncrementKeyToPropertyKeyAfterGetSuperBase() {
+            // The key's toString must not change which object super[key] reads from
+            String script =
+                    ""
+                            + "var proto = { p: 1 };"
+                            + "var object = {\n"
+                            + "  f(k) { return super[k]++; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var key = { toString() { Object.setPrototypeOf(object, {}); return 'p'; } };\n"
+                            + "var f = object.f(key);"
+                            + "f + ':' + object.p + ':' + proto.p";
+
+            Utils.assertWithAllModes_ES6("1:2:1", script);
+        }
+
+        @Test
+        void memberIncrementStringValue() {
+            String script =
+                    ""
+                            + "var proto = { x: 'a' };"
+                            + "var object = {\n"
+                            + "  f() { return super.x++; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f();"
+                            + "f + ':' + object.x + ':' + proto.x";
+
+            Utils.assertWithAllModes_ES6("NaN:NaN:a", script);
+        }
     }
 
     @Nested
