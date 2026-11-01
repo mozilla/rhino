@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2697,6 +2698,8 @@ public class ScriptRuntime {
         Scriptable obj;
         Object[] ids;
         HashSet<Object> used;
+        // objects left behind whose non-enumerable ids are not in used yet
+        ArrayList<ScriptableObject> shadowing;
         Object currentId;
         int index;
         int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES,
@@ -2867,7 +2870,7 @@ public class ScriptRuntime {
                 return Boolean.FALSE;
             }
             if (x.index == x.ids.length) {
-                x.obj = x.obj.getPrototype();
+                enumToPrototype(x);
                 enumChangeObject(x);
                 continue;
             }
@@ -2963,7 +2966,7 @@ public class ScriptRuntime {
             if (ids.length != 0) {
                 break;
             }
-            x.obj = x.obj.getPrototype();
+            enumToPrototype(x);
         }
         if (x.obj != null && x.ids != null) {
             Object[] previous = x.ids;
@@ -2975,8 +2978,35 @@ public class ScriptRuntime {
                 x.used.add(previous[i]);
             }
         }
+        if (x.obj != null && x.shadowing != null) {
+            // Non-enumerable properties also shadow those of the prototypes. Enumerable ones
+            // added after the snapshot above must not.
+            if (x.used == null) {
+                x.used = new HashSet<>();
+            }
+            for (ScriptableObject so : x.shadowing) {
+                HashSet<Object> enumerable = new HashSet<>(Arrays.asList(so.getIds()));
+                for (Object id : so.getAllIds()) {
+                    if (!enumerable.contains(id)) {
+                        x.used.add(id);
+                    }
+                }
+            }
+            x.shadowing = null;
+        }
         x.ids = ids;
         x.index = 0;
+    }
+
+    private static void enumToPrototype(IdEnumeration x) {
+        // Asking a proxy for its ids again would call its ownKeys trap twice.
+        if (x.obj instanceof ScriptableObject && !(x.obj instanceof NativeProxy)) {
+            if (x.shadowing == null) {
+                x.shadowing = new ArrayList<>();
+            }
+            x.shadowing.add((ScriptableObject) x.obj);
+        }
+        x.obj = x.obj.getPrototype();
     }
 
     /**
