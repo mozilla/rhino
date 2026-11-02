@@ -12,6 +12,7 @@ import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.VarScope;
 
 /**
@@ -59,6 +60,12 @@ class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
 
     @SuppressWarnings("unused")
     private static Object getPrototype(Object o, Context cx, VarScope scope) {
-        return ((BaseFunction) o).getPrototypeProperty();
+        BaseFunction f = (BaseFunction) o;
+        if (f.hasPrototypeProperty()) {
+            return f.getPrototypeProperty();
+        }
+        // No own "prototype" (arrow functions, methods, bound functions): an inherited one
+        // must still be found, as the interpreter does.
+        return ScriptRuntime.getObjectProp(f, "prototype", cx, scope);
     }
 }

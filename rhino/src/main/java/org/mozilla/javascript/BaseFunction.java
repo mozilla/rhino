@@ -681,7 +681,7 @@ public class BaseFunction extends ScriptableObject implements Function {
                         });
     }
 
-    protected boolean hasPrototypeProperty() {
+    public boolean hasPrototypeProperty() {
         return prototypeProperty != null && prototypeProperty != UniqueTag.NOT_FOUND;
     }
 
