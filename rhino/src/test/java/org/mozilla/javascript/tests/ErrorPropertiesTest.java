@@ -86,7 +86,7 @@ public class ErrorPropertiesTest {
     }
 
     @Test
-    public void stackWithChangedPrototype() {
+    public void stackWithPlainObjectAsPrototype() {
         Utils.assertWithAllModes_ES6(
                 "string",
                 "function E() {}\n"
@@ -94,11 +94,19 @@ public class ErrorPropertiesTest {
                         + "var e = new Error('m');\n"
                         + "Object.setPrototypeOf(e, E.prototype);\n"
                         + "typeof e.stack");
+    }
+
+    @Test
+    public void stackWithNullPrototype() {
         Utils.assertWithAllModes_ES6(
                 "string",
                 "var e = new Error('m');\n"
                         + "Object.setPrototypeOf(e, null);\n"
                         + "typeof e.stack");
+    }
+
+    @Test
+    public void stackWithProxyAsPrototype() {
         Utils.assertWithAllModes_ES6(
                 "string",
                 "var e = new Error('m');\n"
