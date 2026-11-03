@@ -925,4 +925,71 @@ public class NativeReflectTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("foo - bar - 1 2 ", script);
     }
+
+    /**
+     * Reflect.construct reads the {@code prototype} of {@code newTarget} with [[Get]]
+     * (GetPrototypeFromConstructor), so a Proxy used as {@code newTarget} sees the read in its get
+     * trap and its result becomes the prototype of the new object.
+     */
+    @Test
+    public void reflectConstructReadsPrototypeOfProxyNewTarget() {
+        final String script =
+                "var res = '';\n"
+                        + "var proto = {};\n"
+                        + "var reads = [];\n"
+                        + "var newTarget = new Proxy(function () {}, {\n"
+                        + "  get: function (target, key) {\n"
+                        + "    reads.push(String(key));\n"
+                        + "    return key === 'prototype' ? proto : target[key];\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var obj = Reflect.construct(function () {}, [], newTarget);\n"
+                        + "res += reads.join() + ' / ' + (Object.getPrototypeOf(obj) === proto);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("prototype / true", script);
+    }
+
+    /**
+     * Reading the {@code prototype} of a revoked Proxy used as {@code newTarget} throws a
+     * TypeError, before the constructor body runs.
+     *
+     * @see <a href="https://github.com/mozilla/rhino/issues/2560">Rhino issue #2560</a>
+     */
+    @Test
+    public void reflectConstructWithRevokedProxyNewTargetThrows() {
+        final String script =
+                "var res = '';\n"
+                        + "var calls = 0;\n"
+                        + "var revocable = Proxy.revocable(function () {}, {});\n"
+                        + "revocable.revoke();\n"
+                        + "try {\n"
+                        + "  Reflect.construct(function () { calls++; }, [], revocable.proxy);\n"
+                        + "  res += 'no error';\n"
+                        + "} catch (error) {\n"
+                        + "  res += error.name;\n"
+                        + "}\n"
+                        + "res += ' / calls: ' + calls;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("TypeError / calls: 0", script);
+    }
+
+    /**
+     * If the {@code prototype} of {@code newTarget} is not an object (or missing, as for a bound
+     * function), the new object gets %Object.prototype%, not the prototype of the target.
+     */
+    @Test
+    public void reflectConstructNewTargetWithoutObjectPrototype() {
+        final String script =
+                "var res = '';\n"
+                        + "function F() {}\n"
+                        + "function G() {}\n"
+                        + "G.prototype = 5;\n"
+                        + "var obj = Reflect.construct(F, [], G);\n"
+                        + "res += (Object.getPrototypeOf(obj) === Object.prototype);\n"
+                        + "var bound = function () {}.bind(null);\n"
+                        + "obj = Reflect.construct(F, [], bound);\n"
+                        + "res += ' / ' + (Object.getPrototypeOf(obj) === Object.prototype);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("true / true", script);
+    }
 }
