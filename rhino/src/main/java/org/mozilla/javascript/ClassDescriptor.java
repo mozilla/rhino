@@ -761,6 +761,10 @@ public class ClassDescriptor {
         }
     }
 
+    static boolean isBuiltIn(JSCode<?> code) {
+        return code instanceof BuiltInJSCode;
+    }
+
     private static class BuiltInJSCode extends JSCode<JSFunction> implements Serializable {
 
         private static final long serialVersionUID = -346984669839537590L;

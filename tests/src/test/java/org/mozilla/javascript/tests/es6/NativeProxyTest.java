@@ -1468,11 +1468,11 @@ public class NativeProxyTest {
         Utils.assertWithAllModes_ES6(
                 "proxy over non-constructor: TypeError / non-constructor trap calls: 0", script);
     }
+
     /**
-     *
-     * A Proxy over a non-constructor has no [[Construct]] internal method, so {@code new} must
-     * fail with "not a constructor" before [[Construct]] is entered. This holds even after the
-     * Proxy is revoked; the revocation check of [[Construct]] must not be reached.
+     * A Proxy over a non-constructor has no [[Construct]] internal method, so {@code new} must fail
+     * with "not a constructor" before [[Construct]] is entered. This holds even after the Proxy is
+     * revoked; the revocation check of [[Construct]] must not be reached.
      *
      * @see <a href="https://github.com/mozilla/rhino/issues/2560">Rhino issue #2560</a>
      */

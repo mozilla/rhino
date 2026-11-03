@@ -992,4 +992,55 @@ public class NativeReflectTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("true / true", script);
     }
+
+    /**
+     * {@code new} on a Proxy over a function without a construct trap passes the Proxy as {@code
+     * newTarget} to the target, so the {@code prototype} of the new object is read through the get
+     * trap of the Proxy.
+     */
+    @Test
+    public void newOnProxyOverFunctionReadsPrototypeThroughProxy() {
+        final String script =
+                "var res = '';\n"
+                        + "var proto = {};\n"
+                        + "var reads = [];\n"
+                        + "function F() {}\n"
+                        + "var P = new Proxy(F, {\n"
+                        + "  get: function (target, key) {\n"
+                        + "    reads.push(String(key));\n"
+                        + "    return key === 'prototype' ? proto : target[key];\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var obj = new P();\n"
+                        + "res += reads.join() + ' / ' + (Object.getPrototypeOf(obj) === proto);\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("prototype / true", script);
+    }
+
+    /**
+     * Built-in constructors read the {@code prototype} of a Proxy {@code newTarget} exactly once.
+     */
+    @Test
+    public void reflectConstructBuiltInReadsPrototypeOfNewTargetOnce() {
+        final String script =
+                "var res = '';\n"
+                        + "[Array, Object, Error, Map, Date, Promise, Int8Array].forEach(function (C) {\n"
+                        + "  var proto = {};\n"
+                        + "  var reads = 0;\n"
+                        + "  var newTarget = new Proxy(function () {}, {\n"
+                        + "    get: function (target, key) {\n"
+                        + "      if (key === 'prototype') { reads++; return proto; }\n"
+                        + "      return target[key];\n"
+                        + "    }\n"
+                        + "  });\n"
+                        + "  var args = C === Promise ? [function () {}] : [];\n"
+                        + "  var obj = Reflect.construct(C, args, newTarget);\n"
+                        + "  res += C.name + ' ' + reads + ' ' + (Object.getPrototypeOf(obj) === proto) + ' ';\n"
+                        + "});\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6(
+                "Array 1 true Object 1 true Error 1 true Map 1 true Date 1 true Promise 1 true"
+                        + " Int8Array 1 true ",
+                script);
+    }
 }
