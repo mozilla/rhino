@@ -1338,11 +1338,12 @@ class NativeProxy extends ScriptableObject {
              * 10. If Type(newObj) is not Object, throw a TypeError exception.
              * 11. Return newObj.
              */
-            ScriptableObject target = getTargetThrowIfRevoked();
 
-            if (!AbstractEcmaObjectOperations.isConstructor(cx, target)) {
-                throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(target));
+            if (!isConstructor) {
+                throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(this));
             }
+
+            ScriptableObject target = getTargetThrowIfRevoked();
 
             Function trap = getTrap(TRAP_CONSTRUCT);
             if (trap != null) {

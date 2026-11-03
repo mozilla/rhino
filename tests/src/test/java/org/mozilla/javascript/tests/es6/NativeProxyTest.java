@@ -1468,4 +1468,37 @@ public class NativeProxyTest {
         Utils.assertWithAllModes_ES6(
                 "proxy over non-constructor: TypeError / non-constructor trap calls: 0", script);
     }
+    /**
+     *
+     * A Proxy over a non-constructor has no [[Construct]] internal method, so {@code new} must
+     * fail with "not a constructor" before [[Construct]] is entered. This holds even after the
+     * Proxy is revoked; the revocation check of [[Construct]] must not be reached.
+     *
+     * @see <a href="https://github.com/mozilla/rhino/issues/2560">Rhino issue #2560</a>
+     */
+    @Test
+    public void revokedProxyOverNonConstructorIsNotAConstructor() {
+        final String script =
+                "var res = '';\n"
+                        + "var trapCalls = 0;\n"
+                        + "var revocable = Proxy.revocable(Function.prototype.call, {\n"
+                        + "  construct: function () {\n"
+                        + "    trapCalls++;\n"
+                        + "    return {};\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "revocable.revoke();\n"
+                        + "try {\n"
+                        + "  new revocable.proxy();\n"
+                        + "  res += 'no error';\n"
+                        + "} catch (error) {\n"
+                        + "  res += error.name;\n"
+                        + "  res += ' / not a constructor: ' + (error.message.indexOf('not a constructor') !== -1);\n"
+                        + "  res += ' / revoked: ' + (error.message.indexOf('revoked') !== -1);\n"
+                        + "}\n"
+                        + "res += ' / trap calls: ' + trapCalls;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6(
+                "TypeError / not a constructor: true / revoked: false / trap calls: 0", script);
+    }
 }
