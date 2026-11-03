@@ -1502,8 +1502,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 throw badTree(node);
         }
 
-        // ToNumber the old value, so that a string is not concatenated with by ADD below
-        addToken(Token.POS); // stack: [p]
+        // ToNumeric the old value: a postfix expression evaluates to the converted value
+        addIcode(Icode.TO_NUMERIC); // stack: [p]
 
         // If it's a postfix expression, we copy the old value
         // If it's postfix, we only need the _new_ value on the stack
@@ -1518,14 +1518,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         addIcode(Icode.SWAP); // stack: postfix [p, super, p], prefix: [super, p]
 
         // Increment or decrement the new value
-        addIcode(Icode.ONE); // stack: prefix  [p, super, p, 1], postfix: [super, p, 1]
-        stackChange(+1);
-        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-            addToken(Token.ADD); // stack: prefix [p, super, p+1], postfix: [super, p+1]
-        } else {
-            addToken(Token.SUB); // stack: prefix [p, super, p-1], postfix: [super, p-1]
-        }
-        stackChange(-1);
+        addIcode(Icode.NUMERIC_INC_DEC); // stack: prefix [p, super, p+-1], postfix: [super, p+-1]
+        addUint8(incrDecrMask);
 
         // Assign the new value to the property
         switch (childType) {

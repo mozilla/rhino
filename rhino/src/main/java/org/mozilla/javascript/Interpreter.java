@@ -258,6 +258,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             case Icode.PROP_INC_DEC:
             case Icode.ELEM_INC_DEC:
             case Icode.REF_INC_DEC:
+            case Icode.NUMERIC_INC_DEC:
                 // type of ++/--
                 return 1 + 1;
 
@@ -747,6 +748,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Icode.GETVAR1] = new DoGetVar1();
         instructionObjs[base + Token.GETVAR] = new DoGetVar();
         instructionObjs[base + Icode.VAR_INC_DEC] = new DoVarIncDec();
+        instructionObjs[base + Icode.TO_NUMERIC] = new DoToNumeric();
+        instructionObjs[base + Icode.NUMERIC_INC_DEC] = new DoNumericIncDec();
         instructionObjs[base + Icode.ZERO] = new DoZero();
         instructionObjs[base + Icode.ONE] = new DoOne();
         instructionObjs[base + Token.NULL] = new DoNull();
@@ -3319,6 +3322,52 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         frame.stack[frame.stackTop] = post ? bi : result;
                     }
                 }
+            }
+            ++frame.pc;
+            return null;
+        }
+
+        @Override
+        void dumpICode(int op, String tname, ICodeDumpContext ctx) {
+            ctx.out.println(tname + " " + ctx.compilerData.itsICode[ctx.pc]);
+            ++ctx.pc;
+        }
+    }
+
+    private static class DoToNumeric extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            Object value = stack[frame.stackTop];
+            if (value != DOUBLE_MARK) {
+                Number number = ScriptRuntime.toNumeric(value);
+                if (number instanceof BigInteger) {
+                    stack[frame.stackTop] = number;
+                } else {
+                    stack[frame.stackTop] = DOUBLE_MARK;
+                    frame.doubleStack[frame.stackTop] = number.doubleValue();
+                }
+            }
+            return null;
+        }
+    }
+
+    private static class DoNumericIncDec extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            int incrDecrMask = frame.compilerData.itsICode[frame.pc];
+            Object value = stack[frame.stackTop];
+            if (value == DOUBLE_MARK) {
+                final double[] sDbl = frame.doubleStack;
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    sDbl[frame.stackTop] += 1.0;
+                } else {
+                    sDbl[frame.stackTop] -= 1.0;
+                }
+            } else {
+                stack[frame.stackTop] =
+                        ScriptRuntime.incrDecrNumber(ScriptRuntime.toNumeric(value), incrDecrMask);
             }
             ++frame.pc;
             return null;

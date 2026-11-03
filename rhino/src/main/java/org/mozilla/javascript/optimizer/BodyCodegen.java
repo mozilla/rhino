@@ -4153,9 +4153,9 @@ class BodyCodegen {
         }
 
         // stack: [super, p]
-        // ToNumber the old value first: a postfix expression evaluates to the converted value
-        addObjectToDouble();
-        addDoubleWrap(); // [super, ToNumber(p)]
+        // ToNumeric the old value first: a postfix expression evaluates to the converted value
+        addScriptRuntimeInvoke("toNumeric", "(Ljava/lang/Object;)Ljava/lang/Number;");
+        // [super, ToNumeric(p)]
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
             // For postfix we want a copy of the old value on the stack
             cfw.add(ByteCode.SWAP); // [p, super]
@@ -4163,15 +4163,9 @@ class BodyCodegen {
             cfw.add(ByteCode.POP); // [p, super, p]
         }
 
-        // Increment or decrement the value
-        addObjectToDouble(); // Unbox
-        cfw.addPush(1.0);
-        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-            cfw.add(ByteCode.DADD);
-        } else {
-            cfw.add(ByteCode.DSUB);
-        }
-        addDoubleWrap(); // Box back
+        // Increment or decrement the value, keeping a BigInt a BigInt
+        cfw.addPush(incrDecrMask);
+        addScriptRuntimeInvoke("incrDecrNumber", "(Ljava/lang/Number;I)Ljava/lang/Number;");
 
         // Assign the new value to the property
         // Now stack is for prefix: [super, p+-1] and for postfix: [p, super, p+-1]
