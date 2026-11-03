@@ -1019,6 +1019,43 @@ class SuperTest {
 
             Utils.assertWithAllModes_ES6("NaN:NaN:a", script);
         }
+
+        @Test
+        void incrementDecrementBigIntValue() {
+            String script =
+                    ""
+                            + "var proto = { x: 1n };\n"
+                            + "var object = {\n"
+                            + "  postDot()  { return super.x++; },\n"
+                            + "  preDot()   { return ++super.x; },\n"
+                            + "  postElem() { return super['x']--; },\n"
+                            + "  preElem()  { return --super['x']; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var r = [];\n"
+                            + "r.push(object.postDot() + ' ' + typeof object.x + ' ' + proto.x);\n"
+                            + "r.push(object.preDot() + ' ' + typeof object.x + ' ' + proto.x);\n"
+                            + "r.push(object.postElem() + ' ' + typeof object.x + ' ' + proto.x);\n"
+                            + "r.push(object.preElem() + ' ' + typeof object.x + ' ' + proto.x);\n"
+                            + "r.join('|')";
+
+            Utils.assertWithAllModes_ES6("1 bigint 1|2 bigint 1|1 bigint 1|0 bigint 1", script);
+        }
+
+        @Test
+        void memberIncrementBigIntStringValue() {
+            String script =
+                    ""
+                            + "var proto = { x: '1' };\n"
+                            + "var object = {\n"
+                            + "  f() { return super.x++; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f();\n"
+                            + "typeof f + ':' + f + ':' + typeof object.x + ':' + object.x";
+
+            Utils.assertWithAllModes_ES6("number:1:number:2", script);
+        }
     }
 
     @Nested

@@ -178,8 +178,14 @@ abstract class Icode {
             // replace the current block scope with a copy of itself
             SCOPE_REPLACE = RESETVAR - 1,
 
+            // ToNumeric of the top of the stack
+            TO_NUMERIC = SCOPE_REPLACE - 1,
+
+            // ++ or -- of the numeric value on top of the stack; operand is the ++/-- type
+            NUMERIC_INC_DEC = TO_NUMERIC - 1,
+
             // Last icode
-            MIN_ICODE = SCOPE_REPLACE;
+            MIN_ICODE = NUMERIC_INC_DEC;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -381,6 +387,10 @@ abstract class Icode {
                 return "OBJECT_REST";
             case DEF_CONST:
                 return "DEF_CONST";
+            case TO_NUMERIC:
+                return "TO_NUMERIC";
+            case NUMERIC_INC_DEC:
+                return "NUMERIC_INC_DEC";
         }
 
         // icode without name

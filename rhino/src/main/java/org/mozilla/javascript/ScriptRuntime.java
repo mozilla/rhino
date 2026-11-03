@@ -4150,6 +4150,29 @@ public class ScriptRuntime {
         return doScriptableIncrDecr(target, id, start, value, incrDecrMask);
     }
 
+    /**
+     * Adds or subtracts one from a numeric value, as the ++ and -- operators do: a BigInt stays a
+     * BigInt and an Integer stays an Integer.
+     */
+    public static Number incrDecrNumber(Number number, int incrDecrMask) {
+        if (number instanceof BigInteger) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                return ((BigInteger) number).add(BigInteger.ONE);
+            }
+            return ((BigInteger) number).subtract(BigInteger.ONE);
+        } else if (number instanceof Integer) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                return ((Integer) number).intValue() + 1;
+            }
+            return ((Integer) number).intValue() - 1;
+        } else {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                return number.doubleValue() + 1.0;
+            }
+            return number.doubleValue() - 1.0;
+        }
+    }
+
     private static Object doScriptableIncrDecr(
             Scriptable target,
             String id,
@@ -4165,26 +4188,7 @@ public class ScriptRuntime {
             number = toNumeric(value);
         }
 
-        Number result;
-        if (number instanceof BigInteger) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((BigInteger) number).add(BigInteger.ONE);
-            } else {
-                result = ((BigInteger) number).subtract(BigInteger.ONE);
-            }
-        } else if (number instanceof Integer) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((Integer) number).intValue() + 1;
-            } else {
-                result = ((Integer) number).intValue() - 1;
-            }
-        } else {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = number.doubleValue() + 1.0;
-            } else {
-                result = number.doubleValue() - 1.0;
-            }
-        }
+        Number result = incrDecrNumber(number, incrDecrMask);
 
         target.put(id, protoChainStart, result);
         if (post) {
@@ -4204,26 +4208,7 @@ public class ScriptRuntime {
             number = toNumeric(value);
         }
 
-        Number result;
-        if (number instanceof BigInteger) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((BigInteger) number).add(BigInteger.ONE);
-            } else {
-                result = ((BigInteger) number).subtract(BigInteger.ONE);
-            }
-        } else if (number instanceof Integer) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((Integer) number).intValue() + 1;
-            } else {
-                result = ((Integer) number).intValue() - 1;
-            }
-        } else {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = number.doubleValue() + 1.0;
-            } else {
-                result = number.doubleValue() - 1.0;
-            }
-        }
+        Number result = incrDecrNumber(number, incrDecrMask);
 
         target.put(id, target, result);
         if (post) {
@@ -4252,26 +4237,7 @@ public class ScriptRuntime {
             number = toNumeric(value);
         }
 
-        Number result;
-        if (number instanceof BigInteger) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((BigInteger) number).add(BigInteger.ONE);
-            } else {
-                result = ((BigInteger) number).subtract(BigInteger.ONE);
-            }
-        } else if (number instanceof Integer) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((Integer) number).intValue() + 1;
-            } else {
-                result = ((Integer) number).intValue() - 1;
-            }
-        } else {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = number.doubleValue() + 1.0;
-            } else {
-                result = number.doubleValue() - 1.0;
-            }
-        }
+        Number result = incrDecrNumber(number, incrDecrMask);
 
         setObjectElem(obj, index, result, cx, scope);
         if (post) {
@@ -4299,26 +4265,7 @@ public class ScriptRuntime {
             number = toNumeric(value);
         }
 
-        Number result;
-        if (number instanceof BigInteger) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((BigInteger) number).add(BigInteger.ONE);
-            } else {
-                result = ((BigInteger) number).subtract(BigInteger.ONE);
-            }
-        } else if (number instanceof Integer) {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = ((Integer) number).intValue() + 1;
-            } else {
-                result = ((Integer) number).intValue() - 1;
-            }
-        } else {
-            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-                result = number.doubleValue() + 1.0;
-            } else {
-                result = number.doubleValue() - 1.0;
-            }
-        }
+        Number result = incrDecrNumber(number, incrDecrMask);
 
         ref.set(cx, scope, result);
         if (post) {
