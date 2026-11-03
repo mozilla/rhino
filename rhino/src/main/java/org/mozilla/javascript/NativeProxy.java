@@ -56,6 +56,7 @@ class NativeProxy extends ScriptableObject {
     }
 
     private ScriptableObject targetObj;
+    // we set the handler back to null to mark as revoked
     private Scriptable handlerObj;
     private final String typeOf;
 
@@ -70,7 +71,6 @@ class NativeProxy extends ScriptableObject {
         public Object call(Context cx, VarScope scope, Object thisObj, Object[] args) {
             if (revocableProxy != null) {
                 revocableProxy.handlerObj = null;
-                revocableProxy.targetObj = null;
                 revocableProxy = null;
             }
             return Undefined.instance;
@@ -1303,9 +1303,13 @@ class NativeProxy extends ScriptableObject {
     }
 
     ScriptableObject getTargetThrowIfRevoked() {
-        if (targetObj == null) {
+        if (handlerObj == null) {
             throw ScriptRuntime.typeError("Illegal operation attempted on a revoked proxy");
         }
+        return targetObj;
+    }
+
+    ScriptableObject getTarget() {
         return targetObj;
     }
 
@@ -1337,6 +1341,10 @@ class NativeProxy extends ScriptableObject {
              * 11. Return newObj.
              */
             ScriptableObject target = getTargetThrowIfRevoked();
+
+            if (!AbstractEcmaObjectOperations.isConstructor(cx, target)) {
+                throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(target));
+            }
 
             Function trap = getTrap(TRAP_CONSTRUCT);
             if (trap != null) {
@@ -1394,7 +1402,7 @@ class NativeProxy extends ScriptableObject {
 
         @Override
         public boolean isConstructor() {
-            var f = getTargetThrowIfRevoked();
+            var f = getTarget();
             if (f instanceof Function) {
                 return ((Function) f).isConstructor();
             }
