@@ -27,7 +27,8 @@ public class CodeGenUtils {
             builder.declaredAsFunctionExpression = true;
             boolean isArrow = fn.getFunctionType() == FunctionNode.ARROW_FUNCTION;
             builder.hasLexicalThis = isArrow;
-            builder.hasPrototype = !isArrow;
+            // Arrow functions and methods have no prototype property, generator methods do
+            builder.hasPrototype = !isArrow && (!fn.isShorthand() || fn.isES6Generator());
             if (!isArrow) {
                 builder.constructor = builder.code;
             } else {

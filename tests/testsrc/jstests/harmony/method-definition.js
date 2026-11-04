@@ -16,6 +16,17 @@ assertEquals("a", obj.a.name);
 assertEquals(undefined, obj.a.prototype);
 assertEquals(undefined, Object.getOwnPropertyDescriptor(obj.a, 'prototype'));
 
+// Generator methods do have a prototype property, with %GeneratorPrototype% as its prototype
+var GeneratorPrototype = Object.getPrototypeOf(function* () {}).prototype;
+var genMethod = { *m() {} }.m;
+assertEquals("object", typeof genMethod.prototype);
+assertTrue(Object.getPrototypeOf(genMethod.prototype) === GeneratorPrototype);
+var genDesc = Object.getOwnPropertyDescriptor(genMethod, 'prototype');
+assertEquals(true, genDesc.writable);
+assertEquals(false, genDesc.enumerable);
+assertEquals(false, genDesc.configurable);
+assertEquals(true, genMethod().next().done);
+
 assertEquals("abcefg", {
   abc() {
     return "abc";
