@@ -27,7 +27,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         this.lexicalNewTarget = lexicalNewTarget;
         this.homeObject = homeObject;
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, descriptor.isES6Generator());
-        if (!descriptor.isShorthand()) {
+        if (!descriptor.isShorthand() && descriptor.hasPrototype()) {
             setupDefaultPrototype(scope);
         }
     }
