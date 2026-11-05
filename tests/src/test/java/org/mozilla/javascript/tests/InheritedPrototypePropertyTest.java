@@ -21,6 +21,23 @@ class InheritedPrototypePropertyTest {
     }
 
     @Test
+    void arrowFunctionInheritsFromFunctionPrototype() {
+        Utils.assertWithAllModes_ES6(
+                "inherited", "Function.prototype.prototype = 'inherited'; (() => 1).prototype");
+    }
+
+    @Test
+    void oneCallSiteSeesFunctionsWithAndWithoutOwnPrototype() {
+        Utils.assertWithAllModes_ES6(
+                "object,inherited,object,inherited",
+                "Function.prototype.prototype = 'inherited';"
+                        + "function f() {}"
+                        + "var m = ({ m() {} }).m;"
+                        + "function read(fn) { var p = fn.prototype; return typeof p === 'object' ? 'object' : p; }"
+                        + "[read(f), read(m), read(f), read(m)].join(',')");
+    }
+
+    @Test
     void boundFunctionInheritsFromFunctionPrototype() {
         Utils.assertWithAllModes_ES6(
                 "inherited",
