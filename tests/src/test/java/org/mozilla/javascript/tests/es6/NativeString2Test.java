@@ -63,6 +63,10 @@ public class NativeString2Test {
         Utils.assertWithAllModes(4, "'1234'.indexOf('', 4);");
         Utils.assertWithAllModes(4, "'1234'.indexOf('', 5);");
         Utils.assertWithAllModes(4, "'1234'.indexOf('', 42);");
+        Utils.assertWithAllModes(0, "'1234'.indexOf('', -1);");
+        Utils.assertWithAllModes(0, "'1234'.indexOf('', -42);");
+        Utils.assertWithAllModes(0, "'1234'.indexOf('', -Infinity);");
+        Utils.assertWithAllModes(0, "''.indexOf('', -1);");
     }
 
     @Test
