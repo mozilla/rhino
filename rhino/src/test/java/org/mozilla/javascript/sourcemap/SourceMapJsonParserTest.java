@@ -135,6 +135,16 @@ class SourceMapJsonParserTest {
     }
 
     @Test
+    void rejectsNonJsonNumbers() {
+        for (String s : new String[] {"03", "-01", "3.", "-", "-.5", "1e", "1e+"}) {
+            assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(s), s);
+        }
+        assertEquals(1.5, SourceMapJsonParser.parse("1.5"));
+        assertEquals(-1e5, SourceMapJsonParser.parse("-1E+5"));
+        assertEquals(0.25, SourceMapJsonParser.parse("0.25"));
+    }
+
+    @Test
     void rejectsSignedUnicodeEscape() {
         assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse("\"\\u-001\""));
         assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse("\"\\u+041\""));

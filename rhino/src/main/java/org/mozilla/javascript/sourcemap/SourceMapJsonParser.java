@@ -206,20 +206,23 @@ final class SourceMapJsonParser {
         int start = pos;
         boolean isFloat = false;
         if (peek() == '-') pos++;
-        while (pos < src.length() && Character.isDigit(src.charAt(pos))) pos++;
+        if (pos < src.length() && src.charAt(pos) == '0') {
+            pos++;
+        } else if (skipDigits() == 0) {
+            throw error("invalid number");
+        }
         if (pos < src.length() && src.charAt(pos) == '.') {
             isFloat = true;
             pos++;
-            while (pos < src.length() && Character.isDigit(src.charAt(pos))) pos++;
+            if (skipDigits() == 0) throw error("invalid number");
         }
         if (pos < src.length() && (src.charAt(pos) == 'e' || src.charAt(pos) == 'E')) {
             isFloat = true;
             pos++;
             if (pos < src.length() && (src.charAt(pos) == '+' || src.charAt(pos) == '-')) pos++;
-            while (pos < src.length() && Character.isDigit(src.charAt(pos))) pos++;
+            if (skipDigits() == 0) throw error("invalid number");
         }
         String text = src.substring(start, pos);
-        if (text.isEmpty() || text.equals("-")) throw error("invalid number");
         if (isFloat) {
             try {
                 return Double.parseDouble(text);
@@ -236,6 +239,12 @@ final class SourceMapJsonParser {
                 throw error("invalid number '" + text + "'");
             }
         }
+    }
+
+    private int skipDigits() {
+        int start = pos;
+        while (pos < src.length() && src.charAt(pos) >= '0' && src.charAt(pos) <= '9') pos++;
+        return pos - start;
     }
 
     private static int hexValue(char c) {
