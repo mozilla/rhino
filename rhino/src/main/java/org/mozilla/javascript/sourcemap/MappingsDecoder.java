@@ -169,10 +169,9 @@ final class MappingsDecoder {
             }
             continuation = (digit & VLQ_CONTINUATION_BIT) != 0;
             long chunk = digit & VLQ_BASE_MASK;
-            // A non-zero chunk at shift >= 64 would wrap (Java masks the long shift to shift & 63)
-            // and silently corrupt the result. Zero chunks at that shift are harmless padding,
-            // which the spec allows, so only reject when actual value bits would be lost.
-            if (chunk != 0 && shift >= 64) {
+            // ECMA-426, 6.1 VLQSignedValue, step 6:
+            //      6. If value is ≥ 2**31, throw an error.
+            if (chunk != 0 && shift >= 32) {
                 throw new SourceMapException(
                         "VLQ overflow (value exceeds 32 bits) at line " + line);
             }
@@ -185,6 +184,11 @@ final class MappingsDecoder {
             throw new SourceMapException("VLQ magnitude exceeds 32 bits at line " + line);
         }
         int magnitude = (int) result;
+        if (negative && magnitude == 0) {
+            // ECMA-426, 6.1 VLQSignedValue, step 5:
+            //      5. If value is 0 and sign is -1, return -2**31.
+            return Integer.MIN_VALUE;
+        }
         return negative ? -magnitude : magnitude;
     }
 }
