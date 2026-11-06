@@ -135,6 +135,13 @@ class SourceMapJsonParserTest {
     }
 
     @Test
+    void rejectsSignedUnicodeEscape() {
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse("\"\\u-001\""));
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse("\"\\u+041\""));
+        assertEquals("A\u00e9", SourceMapJsonParser.parse("\"\\u0041\\u00E9\""));
+    }
+
+    @Test
     void rejectsDeepNestingWithoutStackOverflow() {
         String deep = "[".repeat(50_000) + "]".repeat(50_000);
         assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(deep));

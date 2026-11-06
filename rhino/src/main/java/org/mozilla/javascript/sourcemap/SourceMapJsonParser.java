@@ -181,11 +181,11 @@ final class SourceMapJsonParser {
                         break;
                     case 'u':
                         if (pos + 4 > src.length()) throw error("truncated \\u escape");
-                        int code;
-                        try {
-                            code = Integer.parseInt(src.substring(pos, pos + 4), 16);
-                        } catch (NumberFormatException e) {
-                            throw error("invalid \\u escape");
+                        int code = 0;
+                        for (int k = 0; k < 4; k++) {
+                            int h = hexValue(src.charAt(pos + k));
+                            if (h < 0) throw error("invalid \\u escape");
+                            code = (code << 4) | h;
                         }
                         sb.append((char) code);
                         pos += 4;
@@ -236,6 +236,13 @@ final class SourceMapJsonParser {
                 throw error("invalid number '" + text + "'");
             }
         }
+    }
+
+    private static int hexValue(char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
     }
 
     private Boolean readBoolean() {
