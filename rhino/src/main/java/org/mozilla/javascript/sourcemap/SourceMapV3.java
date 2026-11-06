@@ -79,11 +79,10 @@ public final class SourceMapV3 implements SourceMapper {
         } else {
             ignoreList = new ArrayList<>(ignoreIndices.size());
             for (Long idx : ignoreIndices) {
-                int i = idx.intValue();
-                if (i < 0 || i >= sourcePaths.size()) {
-                    throw new SourceMapException("ignoreList index " + i + " out of range");
+                if (idx < 0 || idx >= sourcePaths.size()) {
+                    throw new SourceMapException("ignoreList index " + idx + " out of range");
                 }
-                ignoreList.add(sourcePaths.get(i));
+                ignoreList.add(sourcePaths.get(idx.intValue()));
             }
         }
 
