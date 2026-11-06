@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /**
  * Strict JSON parser tailored to the source-map shape. Returns generic Java values: {@link Map},
@@ -18,18 +19,28 @@ import java.util.Map;
  */
 final class SourceMapJsonParser {
 
-    private final String src;
-    private int pos;
+    /** Maximum nesting of objects and arrays, set via {@code rhino.sourcemap.maxJsonDepth}. */
+    private static final int MAX_DEPTH = RhinoConfig.get("rhino.sourcemap.maxJsonDepth", 512);
 
-    private SourceMapJsonParser(String src) {
+    private final String src;
+    private final int maxDepth;
+    private int pos;
+    private int depth;
+
+    private SourceMapJsonParser(String src, int maxDepth) {
         this.src = src;
+        this.maxDepth = maxDepth;
         this.pos = 0;
     }
 
     static Object parse(String json) {
+        return parse(json, MAX_DEPTH);
+    }
+
+    static Object parse(String json, int maxDepth) {
         if (json == null) throw new SourceMapException("invalid JSON: input is null");
         String stripped = stripXssiPrefix(json);
-        SourceMapJsonParser p = new SourceMapJsonParser(stripped);
+        SourceMapJsonParser p = new SourceMapJsonParser(stripped, maxDepth);
         p.skipWhitespace();
         if (p.pos >= p.src.length()) {
             throw new SourceMapException("invalid JSON: empty input");
@@ -57,9 +68,13 @@ final class SourceMapJsonParser {
         char c = src.charAt(pos);
         switch (c) {
             case '{':
-                return readObject();
             case '[':
-                return readArray();
+                {
+                    if (++depth > maxDepth) throw error("nesting too deep");
+                    Object value = c == '{' ? readObject() : readArray();
+                    depth--;
+                    return value;
+                }
             case '"':
                 return readString();
             case 't':

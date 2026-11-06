@@ -133,4 +133,19 @@ class SourceMapJsonParserTest {
         Object big = SourceMapJsonParser.parse("99999999999999999999");
         assertInstanceOf(Double.class, big);
     }
+
+    @Test
+    void rejectsDeepNestingWithoutStackOverflow() {
+        String deep = "[".repeat(50_000) + "]".repeat(50_000);
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(deep));
+        String ok = "[".repeat(100) + "]".repeat(100);
+        assertInstanceOf(List.class, SourceMapJsonParser.parse(ok));
+    }
+
+    @Test
+    void honoursCustomMaxDepth() {
+        String nested = "{\"a\":[[1]]}";
+        assertInstanceOf(Map.class, SourceMapJsonParser.parse(nested, 3));
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(nested, 2));
+    }
 }
