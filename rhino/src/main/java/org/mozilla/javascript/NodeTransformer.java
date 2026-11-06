@@ -343,7 +343,13 @@ public class NodeTransformer {
                             Node n = cursor;
                             cursor = cursor.getNext();
                             if (n.getType() == Token.NAME) {
-                                if (!n.hasChildren()) continue;
+                                if (!n.hasChildren()) {
+                                    if (!isUninitializedScriptLet(tree, scope, type, n)) {
+                                        continue;
+                                    }
+                                    // "let x;" initializes x with undefined
+                                    n.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
+                                }
                                 Node init = n.getFirstChild();
                                 n.removeChild(init);
                                 n.setType(Token.BINDNAME);
@@ -636,6 +642,18 @@ public class NodeTransformer {
     protected void visitNew(Node node, ScriptNode tree) {}
 
     protected void visitCall(Node node, ScriptNode tree) {}
+
+    /**
+     * A let declaration without initializer at the top level of a script or eval code (ES6 and
+     * later). Its binding is created uninitialized (see ScriptRuntime.initScript), so the
+     * declaration has to initialize it with undefined.
+     */
+    private boolean isUninitializedScriptLet(ScriptNode tree, Scope scope, int type, Node name) {
+        return type == Token.LET
+                && tree.getType() != Token.FUNCTION
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6
+                && scope.getDefiningScope(name.getString()) == tree;
+    }
 
     protected Node visitLet(boolean createScope, Node parent, Node previous, Node scopeNode) {
         Node vars = scopeNode.getFirstChild();

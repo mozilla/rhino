@@ -3722,9 +3722,16 @@ public class ScriptRuntime {
                 thisArg == Undefined.instance
                         ? Undefined.SCRIPTABLE_UNDEFINED
                         : (Scriptable) thisArg;
+        boolean strictEval =
+                isStrict
+                        || (script instanceof JSScript
+                                && ((JSScript) script).getDescriptor().isStrict());
         VarScope evalScope;
-        if (isStrict
-                || (script instanceof JSScript && ((JSScript) script).getDescriptor().isStrict())) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            // the let and const declarations of the eval code get a new scope; strict eval code
+            // declares its vars there too
+            evalScope = new EvalScope(scope, !strictEval);
+        } else if (strictEval) {
             evalScope = new ScopeObject(scope);
         } else {
             evalScope = scope;
@@ -5072,6 +5079,12 @@ public class ScriptRuntime {
 
         int varCount = desc.getParamAndVarCount();
         if (varCount != 0) {
+            if (!evalScript
+                    && scope instanceof TopLevel
+                    && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                initGlobalScript(cx, (TopLevel) scope, desc, varCount);
+                return;
+            }
 
             VarScope varScope = scope;
             // Never define any variables from var statements inside with
@@ -5080,12 +5093,27 @@ public class ScriptRuntime {
                 varScope = varScope.getParentScope();
             }
 
+            // Eval code runs in a new EvalScope (see evalSpecial). The let and const
+            // declarations of the eval code are bound there; for non-strict eval code all other
+            // names are checked against the scope of the caller.
+            boolean lexicalInEvalScope = evalScript && scope instanceof EvalScope;
+            VarScope lookupScope =
+                    lexicalInEvalScope && scope.isNestedScope() ? scope.getParentScope() : scope;
+
             for (int i = varCount; i-- != 0; ) {
                 String name = desc.getParamOrVarName(i);
                 boolean isConst = desc.getParamOrVarConst(i);
+                if (lexicalInEvalScope && desc.getParamOrVarLexical(i)) {
+                    if (isConst) {
+                        ScriptableObject.defineConstProperty(cx, scope, name);
+                    } else {
+                        ((EvalScope) scope).defineLexicalDeclaration(name);
+                    }
+                    continue;
+                }
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
-                if (!ScriptableObject.hasProperty(scope, name)) {
+                if (!ScriptableObject.hasProperty(lookupScope, name)) {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(cx, varScope, name);
                     } else if (!evalScript) {
@@ -5098,10 +5126,54 @@ public class ScriptRuntime {
                         varScope.put(name, varScope, Undefined.instance);
                     }
                 } else {
-                    ScriptableObject.redefineProperty(cx, scope, name, isConst);
+                    ScriptableObject.redefineProperty(cx, lookupScope, name, isConst);
                 }
             }
         }
+    }
+
+    /**
+     * GlobalDeclarationInstantiation (ES2015 15.1.8) for a script running on a {@link TopLevel}
+     * scope. The let and const declarations are bound in the global lexical environment (the {@link
+     * TopLevel} itself), var and function declarations are properties of the global object. All
+     * names are checked before anything is declared.
+     */
+    private static void initGlobalScript(
+            Context cx, TopLevel global, JSDescriptor<?> desc, int varCount) {
+        ScriptableObject globalObject = global.getGlobalThis();
+        for (int i = 0; i < varCount; i++) {
+            String name = desc.getParamOrVarName(i);
+            if (global.hasLexicalDeclaration(name)
+                    || (desc.getParamOrVarLexical(i)
+                            && isRestrictedGlobalProperty(globalObject, name))) {
+                throw syntaxErrorById("msg.let.redecl", name);
+            }
+        }
+
+        for (int i = varCount; i-- != 0; ) {
+            String name = desc.getParamOrVarName(i);
+            if (desc.getParamOrVarLexical(i)) {
+                if (desc.getParamOrVarConst(i)) {
+                    ScriptableObject.defineConstProperty(cx, global, name);
+                } else {
+                    global.defineLexicalDeclaration(name);
+                }
+            } else if (!ScriptableObject.hasProperty(global, name)
+                    && desc.hasNoFunctionStatementNamed(name)) {
+                // Global var definitions are supposed to be DONTDELETE
+                ScriptableObject.defineProperty(
+                        global, name, Undefined.instance, ScriptableObject.PERMANENT);
+            }
+        }
+    }
+
+    /**
+     * HasRestrictedGlobalProperty: an own property of the global object that is not configurable,
+     * e.g. created by a var or function declaration.
+     */
+    private static boolean isRestrictedGlobalProperty(ScriptableObject globalObject, String name) {
+        var slot = globalObject.getMap().query(name, 0);
+        return slot != null && (slot.getAttributes() & ScriptableObject.PERMANENT) != 0;
     }
 
     /**
@@ -5550,6 +5622,13 @@ public class ScriptRuntime {
                     ScriptableObject.defineProperty(
                             scope, name, function, ScriptableObject.PERMANENT);
                 } else {
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                        // eval code: functions belong to the variable scope, not to the
+                        // scope of the let and const declarations
+                        while (scope.isNestedScope()) {
+                            scope = scope.getParentScope();
+                        }
+                    }
                     scope.put(name, scope, function);
                 }
             }
