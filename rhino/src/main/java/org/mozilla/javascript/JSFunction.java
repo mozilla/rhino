@@ -89,11 +89,6 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
     }
 
     @Override
-    protected boolean hasPrototypeProperty() {
-        return true;
-    }
-
-    @Override
     protected boolean isGeneratorFunction() {
         return descriptor.isES6Generator();
     }
