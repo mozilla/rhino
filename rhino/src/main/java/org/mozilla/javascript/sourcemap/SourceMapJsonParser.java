@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.mozilla.javascript.config.RhinoConfig;
 
 /**
  * Strict JSON parser tailored to the source-map shape. Returns generic Java values: {@link Map},
@@ -18,18 +19,28 @@ import java.util.Map;
  */
 final class SourceMapJsonParser {
 
-    private final String src;
-    private int pos;
+    /** Maximum nesting of objects and arrays, set via {@code rhino.sourcemap.maxJsonDepth}. */
+    private static final int MAX_DEPTH = RhinoConfig.get("rhino.sourcemap.maxJsonDepth", 512);
 
-    private SourceMapJsonParser(String src) {
+    private final String src;
+    private final int maxDepth;
+    private int pos;
+    private int depth;
+
+    private SourceMapJsonParser(String src, int maxDepth) {
         this.src = src;
+        this.maxDepth = maxDepth;
         this.pos = 0;
     }
 
     static Object parse(String json) {
+        return parse(json, MAX_DEPTH);
+    }
+
+    static Object parse(String json, int maxDepth) {
         if (json == null) throw new SourceMapException("invalid JSON: input is null");
         String stripped = stripXssiPrefix(json);
-        SourceMapJsonParser p = new SourceMapJsonParser(stripped);
+        SourceMapJsonParser p = new SourceMapJsonParser(stripped, maxDepth);
         p.skipWhitespace();
         if (p.pos >= p.src.length()) {
             throw new SourceMapException("invalid JSON: empty input");
@@ -57,9 +68,13 @@ final class SourceMapJsonParser {
         char c = src.charAt(pos);
         switch (c) {
             case '{':
-                return readObject();
             case '[':
-                return readArray();
+                {
+                    if (++depth > maxDepth) throw error("nesting too deep");
+                    Object value = c == '{' ? readObject() : readArray();
+                    depth--;
+                    return value;
+                }
             case '"':
                 return readString();
             case 't':
@@ -166,11 +181,11 @@ final class SourceMapJsonParser {
                         break;
                     case 'u':
                         if (pos + 4 > src.length()) throw error("truncated \\u escape");
-                        int code;
-                        try {
-                            code = Integer.parseInt(src.substring(pos, pos + 4), 16);
-                        } catch (NumberFormatException e) {
-                            throw error("invalid \\u escape");
+                        int code = 0;
+                        for (int k = 0; k < 4; k++) {
+                            int h = hexValue(src.charAt(pos + k));
+                            if (h < 0) throw error("invalid \\u escape");
+                            code = (code << 4) | h;
                         }
                         sb.append((char) code);
                         pos += 4;
@@ -191,20 +206,23 @@ final class SourceMapJsonParser {
         int start = pos;
         boolean isFloat = false;
         if (peek() == '-') pos++;
-        while (pos < src.length() && Character.isDigit(src.charAt(pos))) pos++;
+        if (pos < src.length() && src.charAt(pos) == '0') {
+            pos++;
+        } else if (skipDigits() == 0) {
+            throw error("invalid number");
+        }
         if (pos < src.length() && src.charAt(pos) == '.') {
             isFloat = true;
             pos++;
-            while (pos < src.length() && Character.isDigit(src.charAt(pos))) pos++;
+            if (skipDigits() == 0) throw error("invalid number");
         }
         if (pos < src.length() && (src.charAt(pos) == 'e' || src.charAt(pos) == 'E')) {
             isFloat = true;
             pos++;
             if (pos < src.length() && (src.charAt(pos) == '+' || src.charAt(pos) == '-')) pos++;
-            while (pos < src.length() && Character.isDigit(src.charAt(pos))) pos++;
+            if (skipDigits() == 0) throw error("invalid number");
         }
         String text = src.substring(start, pos);
-        if (text.isEmpty() || text.equals("-")) throw error("invalid number");
         if (isFloat) {
             try {
                 return Double.parseDouble(text);
@@ -221,6 +239,19 @@ final class SourceMapJsonParser {
                 throw error("invalid number '" + text + "'");
             }
         }
+    }
+
+    private int skipDigits() {
+        int start = pos;
+        while (pos < src.length() && src.charAt(pos) >= '0' && src.charAt(pos) <= '9') pos++;
+        return pos - start;
+    }
+
+    private static int hexValue(char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
     }
 
     private Boolean readBoolean() {
