@@ -81,7 +81,7 @@ public class SerializationCoverageTest {
             hook(type, "writeObject", ObjectOutputStream.class);
             hook(type, "readObjectNoData");
         }
-        assertEquals(51, roots);
+        assertEquals(52, roots);
         assertTrue(remainingValues.isEmpty());
         assertTrue(consStringFound);
     }

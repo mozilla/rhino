@@ -267,6 +267,7 @@ public class ScriptRuntime {
 
         NativeScript.initLambda(cx, scope, sealed);
 
+        NativeES2025Iterator.init(cx, scope, sealed);
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
         NativeArrayIterator.init(cx, scope, sealed);
