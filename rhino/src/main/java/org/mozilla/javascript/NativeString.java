@@ -276,13 +276,13 @@ final class NativeString extends ScriptableObject {
         String searchStr = ScriptRuntime.toString(args, 0);
         double position = ScriptRuntime.toInteger(args, 1);
 
+        if (position < 0) position = 0;
         if (searchStr.isEmpty()) {
             return position > target.length() ? target.length() : (int) position;
         }
         if (position > target.length()) {
             return -1;
         }
-        if (position < 0) position = 0;
         return target.indexOf(searchStr, (int) position);
     }
 
