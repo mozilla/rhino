@@ -162,6 +162,30 @@ class MappingsDecoderTest {
     }
 
     @Test
+    void rejectsVlqWithValueBitsInThirteenthDigit() {
+        // ECMA-426 6.1 VLQSignedValue, step 6: "If value is >= 2**31, throw an error."
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("ggggggggggggQ", 0, 0));
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("kgggggggggggQ", 0, 0));
+    }
+
+    @Test
+    void acceptsLongZeroPadding() {
+        // ECMA-426 6, Note 1: "The sign bit is counted towards the limit, but the continuation
+        // bits are not."
+        List<List<Segment>> r = MappingsDecoder.decode("kggggggggggggggggggA", 0, 0);
+        assertEquals(2, r.get(0).get(0).getGenCol());
+    }
+
+    @Test
+    void negativeZeroDecodesToMinInt() {
+        // ECMA-426 6.1 VLQSignedValue, step 5: "If value is 0 and sign is -1, return -2**31."
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("B", 0, 0));
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("hA", 0, 0));
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("AABA", 1, 0));
+        assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("+/////D,B", 0, 0));
+    }
+
+    @Test
     void rejectsInvalidBase64Char() {
         assertThrows(SourceMapException.class, () -> MappingsDecoder.decode("@", 0, 0));
     }
