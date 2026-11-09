@@ -1405,4 +1405,100 @@ public class NativeProxyTest {
                         + "res;";
         Utils.assertWithAllModes_ES6("undefined", script);
     }
+
+    /**
+     * A revoked Proxy over a constructor is still a constructor and can be used as {@code
+     * newTarget} for {@code Reflect.construct}. ProxyCreate copies the target's [[Construct]] when
+     * the Proxy is created, and revoking it does not remove that internal method. The target's
+     * construct trap ignores {@code newTarget}, so it must run once and its result must be
+     * returned.
+     *
+     * @see <a href="https://github.com/mozilla/rhino/issues/2560">Rhino issue #2560</a>
+     */
+    @Test
+    public void reflectConstructAcceptsRevokedConstructorProxyAsNewTarget() {
+        final String script =
+                "var res = '';\n"
+                        + "var expected = {};\n"
+                        + "var targetCalls = 0;\n"
+                        + "var target = new Proxy(function () {}, {\n"
+                        + "  construct: function () {\n"
+                        + "    targetCalls++;\n"
+                        + "    return expected;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "var revoked = Proxy.revocable(function () {}, {});\n"
+                        + "revoked.revoke();\n"
+                        + "try {\n"
+                        + "  res += 'revoked newTarget: ' + (Reflect.construct(target, [], revoked.proxy) === expected);\n"
+                        + "} catch (error) {\n"
+                        + "  res += 'revoked newTarget: ' + error.name;\n"
+                        + "}\n"
+                        + "res += ' / target trap calls: ' + targetCalls;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6("revoked newTarget: true / target trap calls: 1", script);
+    }
+
+    /**
+     * A Proxy over a non-constructor ({@code Function.prototype.call}) has no [[Construct]]
+     * internal method, even if its handler defines a construct trap. {@code new} must throw a
+     * TypeError before the trap is called.
+     *
+     * @see <a href="https://github.com/mozilla/rhino/issues/2560">Rhino issue #2560</a>
+     */
+    @Test
+    public void proxyOverNonConstructorIsNotConstructableDespiteConstructTrap() {
+        final String script =
+                "var res = '';\n"
+                        + "var expected = {};\n"
+                        + "var nonConstructorCalls = 0;\n"
+                        + "var nonConstructor = new Proxy(Function.prototype.call, {\n"
+                        + "  construct: function () {\n"
+                        + "    nonConstructorCalls++;\n"
+                        + "    return expected;\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "try {\n"
+                        + "  res += 'proxy over non-constructor: ' + (new nonConstructor() === expected);\n"
+                        + "} catch (error) {\n"
+                        + "  res += 'proxy over non-constructor: ' + error.name;\n"
+                        + "}\n"
+                        + "res += ' / non-constructor trap calls: ' + nonConstructorCalls;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6(
+                "proxy over non-constructor: TypeError / non-constructor trap calls: 0", script);
+    }
+
+    /**
+     * A Proxy over a non-constructor has no [[Construct]] internal method, so {@code new} must fail
+     * with "not a constructor" before [[Construct]] is entered. This holds even after the Proxy is
+     * revoked; the revocation check of [[Construct]] must not be reached.
+     *
+     * @see <a href="https://github.com/mozilla/rhino/issues/2560">Rhino issue #2560</a>
+     */
+    @Test
+    public void revokedProxyOverNonConstructorIsNotAConstructor() {
+        final String script =
+                "var res = '';\n"
+                        + "var trapCalls = 0;\n"
+                        + "var revocable = Proxy.revocable(Function.prototype.call, {\n"
+                        + "  construct: function () {\n"
+                        + "    trapCalls++;\n"
+                        + "    return {};\n"
+                        + "  }\n"
+                        + "});\n"
+                        + "revocable.revoke();\n"
+                        + "try {\n"
+                        + "  new revocable.proxy();\n"
+                        + "  res += 'no error';\n"
+                        + "} catch (error) {\n"
+                        + "  res += error.name;\n"
+                        + "  res += ' / not a constructor: ' + (error.message.indexOf('not a constructor') !== -1);\n"
+                        + "  res += ' / revoked: ' + (error.message.indexOf('revoked') !== -1);\n"
+                        + "}\n"
+                        + "res += ' / trap calls: ' + trapCalls;\n"
+                        + "res;";
+        Utils.assertWithAllModes_ES6(
+                "TypeError / not a constructor: true / revoked: false / trap calls: 0", script);
+    }
 }
