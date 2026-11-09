@@ -15,8 +15,10 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.VarScope;
 
 /**
- * This linker optimizes accesses to the "prototype" property of any standard Rhino function so that
- * it calls the native function rather than going through' a property name match.
+ * This linker optimizes accesses to the "prototype" property of any standard Rhino function that
+ * has its own "prototype", so that it calls the native function rather than going through a
+ * property name match. Functions without one (arrow functions, methods, bound functions) are left
+ * to the default linker, so that an inherited "prototype" is still found.
  */
 @SuppressWarnings("AndroidJdkLibsChecker")
 class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
@@ -38,11 +40,17 @@ class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
 
         if (op.isNamespace(StandardNamespace.PROPERTY)) {
             if (op.isOperation(StandardOperation.GET, RhinoOperation.GETNOWARN)
-                    && "prototype".equals(op.getName())) {
+                    && "prototype".equals(op.getName())
+                    && hasOwnPrototype(req.getReceiver())) {
                 MethodHandles.Lookup lookup = MethodHandles.lookup();
                 MethodType mType = req.getCallSiteDescriptor().getMethodType();
                 mh = lookup.findStatic(BaseFunctionLinker.class, "getPrototype", mType);
-                guard = Guards.getInstanceOfGuard(BaseFunction.class);
+                guard =
+                        lookup.findStatic(
+                                BaseFunctionLinker.class,
+                                "hasOwnPrototype",
+                                MethodType.methodType(boolean.class, Object.class));
+                guard = Guards.asType(guard, mType);
             }
         }
 
@@ -55,6 +63,10 @@ class BaseFunctionLinker implements TypeBasedGuardingDynamicLinker {
         }
 
         return null;
+    }
+
+    private static boolean hasOwnPrototype(Object o) {
+        return o instanceof BaseFunction && ((BaseFunction) o).hasPrototypeProperty();
     }
 
     @SuppressWarnings("unused")
