@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ClassDescriptor.Builder.alias;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
 import static org.mozilla.javascript.ScriptRuntime.rangeError;
@@ -134,10 +135,10 @@ final class NativeString extends ScriptableObject {
                         .withMethod(
                                 PROTO, "toLocaleUpperCase", 0, NativeString::js_toLocaleUpperCase)
                         .withMethod(PROTO, "trim", 0, NativeString::js_trim)
-                        .withMethod(PROTO, "trimLeft", 0, NativeString::js_trimLeft)
                         .withMethod(PROTO, "trimStart", 0, NativeString::js_trimLeft)
-                        .withMethod(PROTO, "trimRight", 0, NativeString::js_trimRight)
+                        .withProp(PROTO, "trimLeft", alias("trimStart", DONTENUM))
                         .withMethod(PROTO, "trimEnd", 0, NativeString::js_trimRight)
+                        .withProp(PROTO, "trimRight", alias("trimEnd", DONTENUM))
                         .withMethod(PROTO, "includes", 1, NativeString::js_includes)
                         .withMethod(PROTO, "startsWith", 1, NativeString::js_startsWith)
                         .withMethod(PROTO, "endsWith", 1, NativeString::js_endsWith)

@@ -70,6 +70,14 @@ public class NativeString2Test {
     }
 
     @Test
+    public void trimLeftTrimRightAliases() {
+        Utils.assertWithAllModes(true, "String.prototype.trimLeft === String.prototype.trimStart");
+        Utils.assertWithAllModes(true, "String.prototype.trimRight === String.prototype.trimEnd");
+        Utils.assertWithAllModes("trimStart", "String.prototype.trimLeft.name");
+        Utils.assertWithAllModes("trimEnd", "String.prototype.trimRight.name");
+    }
+
+    @Test
     public void includesEmpty() {
         Utils.assertWithAllModes(true, "'1234'.includes('');");
         Utils.assertWithAllModes(true, "'1234'.includes('', 0);");
