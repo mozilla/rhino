@@ -4128,9 +4128,9 @@ class BodyCodegen {
 
         // Push the old value on the stack
         generateExpression(object, node); // [super]
-        cfw.add(ByteCode.DUP); // [super, super]
         switch (child.getType()) {
             case Token.GETPROP:
+                cfw.add(ByteCode.DUP); // [super, super]
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
                 cfw.addALoad(thisObjLocal);
@@ -4141,7 +4141,8 @@ class BodyCodegen {
                 break;
 
             case Token.GETELEM:
-                generateExpression(object.getNext(), node);
+                generateExpression(object.getNext(), node); // [super, elem]
+                cfw.add(ByteCode.DUP2); // [super, elem, super, elem]
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
                 cfw.addALoad(thisObjLocal);
@@ -4152,15 +4153,12 @@ class BodyCodegen {
                 Codegen.badTree();
         }
 
-        // stack: [super, p]
+        // stack: GETPROP [super, p], GETELEM [super, elem, p]
         // ToNumeric the old value first: a postfix expression evaluates to the converted value
         addScriptRuntimeInvoke("toNumeric", "(Ljava/lang/Object;)Ljava/lang/Number;");
-        // [super, ToNumeric(p)]
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
-            // For postfix we want a copy of the old value on the stack
-            cfw.add(ByteCode.SWAP); // [p, super]
-            cfw.add(ByteCode.DUP2); // [p, super, p, super]
-            cfw.add(ByteCode.POP); // [p, super, p]
+            // For postfix we want a copy of the old value below the target
+            cfw.add(child.getType() == Token.GETELEM ? ByteCode.DUP_X2 : ByteCode.DUP_X1);
         }
 
         // Increment or decrement the value, keeping a BigInt a BigInt
@@ -4168,7 +4166,7 @@ class BodyCodegen {
         addScriptRuntimeInvoke("incrDecrNumber", "(Ljava/lang/Number;I)Ljava/lang/Number;");
 
         // Assign the new value to the property
-        // Now stack is for prefix: [super, p+-1] and for postfix: [p, super, p+-1]
+        // Now stack is for prefix: [super, (elem,) p+-1] and for postfix: [p, super, (elem,) p+-1]
         switch (child.getType()) {
             case Token.GETPROP:
                 cfw.addALoad(contextLocal);
@@ -4180,8 +4178,6 @@ class BodyCodegen {
                 break;
 
             case Token.GETELEM:
-                generateExpression(object.getNext(), node); // [..., super, p+-1, elem]
-                cfw.add(ByteCode.SWAP); // [..., super, elem, p+-1]
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
                 cfw.addALoad(thisObjLocal);

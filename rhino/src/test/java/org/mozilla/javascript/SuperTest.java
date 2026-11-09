@@ -989,6 +989,36 @@ class SuperTest {
         }
 
         @Test
+        void elementIncrementPostfixEvaluatesKeyOnce() {
+            String script =
+                    ""
+                            + "var proto = { 1: 3, 2: 7, 3: 11 };"
+                            + "var object = {\n"
+                            + "  f(k) { return super[++k]++; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f(1);"
+                            + "f + ':' + object[1] + ':' + object[2] + ':' + object[3]";
+
+            Utils.assertWithAllModes_ES6("7:3:8:11", script);
+        }
+
+        @Test
+        void elementDecrementPrefixEvaluatesKeyOnce() {
+            String script =
+                    ""
+                            + "var proto = { 1: 3, 2: 7, 3: 11 };"
+                            + "var object = {\n"
+                            + "  f(k) { return --super[++k]; }\n"
+                            + "};\n"
+                            + "Object.setPrototypeOf(object, proto);\n"
+                            + "var f = object.f(1);"
+                            + "f + ':' + object[1] + ':' + object[2] + ':' + object[3]";
+
+            Utils.assertWithAllModes_ES6("6:3:6:11", script);
+        }
+
+        @Test
         void elementIncrementKeyToPropertyKeyAfterGetSuperBase() {
             // The key's toString must not change which object super[key] reads from
             String script =
