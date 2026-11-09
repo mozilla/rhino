@@ -47,7 +47,7 @@ import org.mozilla.javascript.interpreterv2.instruction.DelProp;
 import org.mozilla.javascript.interpreterv2.instruction.DelPropSuper;
 import org.mozilla.javascript.interpreterv2.instruction.DelRef;
 import org.mozilla.javascript.interpreterv2.instruction.Divide;
-import org.mozilla.javascript.interpreterv2.instruction.Dup;
+import org.mozilla.javascript.interpreterv2.instruction.DupX1;
 import org.mozilla.javascript.interpreterv2.instruction.ElemAndThis;
 import org.mozilla.javascript.interpreterv2.instruction.ElemAndThisOptional;
 import org.mozilla.javascript.interpreterv2.instruction.ElemIncDec;
@@ -111,6 +111,7 @@ import org.mozilla.javascript.interpreterv2.instruction.Nop;
 import org.mozilla.javascript.interpreterv2.instruction.Not;
 import org.mozilla.javascript.interpreterv2.instruction.NotEqual;
 import org.mozilla.javascript.interpreterv2.instruction.Num;
+import org.mozilla.javascript.interpreterv2.instruction.NumericIncDec;
 import org.mozilla.javascript.interpreterv2.instruction.ObjectLit;
 import org.mozilla.javascript.interpreterv2.instruction.ObjectRest;
 import org.mozilla.javascript.interpreterv2.instruction.Pop;
@@ -161,6 +162,7 @@ import org.mozilla.javascript.interpreterv2.instruction.ThawFrame;
 import org.mozilla.javascript.interpreterv2.instruction.This;
 import org.mozilla.javascript.interpreterv2.instruction.ThisFunction;
 import org.mozilla.javascript.interpreterv2.instruction.Throw;
+import org.mozilla.javascript.interpreterv2.instruction.ToNumeric;
 import org.mozilla.javascript.interpreterv2.instruction.ToPropertyKey;
 import org.mozilla.javascript.interpreterv2.instruction.Typeof;
 import org.mozilla.javascript.interpreterv2.instruction.TypeofName;
@@ -177,7 +179,6 @@ import org.mozilla.javascript.interpreterv2.operand.GetVarOperand;
 import org.mozilla.javascript.interpreterv2.operand.IntOperand;
 import org.mozilla.javascript.interpreterv2.operand.NewTargetOperand;
 import org.mozilla.javascript.interpreterv2.operand.NullOperand;
-import org.mozilla.javascript.interpreterv2.operand.OneOperand;
 import org.mozilla.javascript.interpreterv2.operand.Operand;
 import org.mozilla.javascript.interpreterv2.operand.PeekOperand;
 import org.mozilla.javascript.interpreterv2.operand.PopOperand;
@@ -1107,7 +1108,6 @@ public class Compiler<T extends ScriptOrFn<T>> {
                     node.getIntProp(Node.SUPER_PROPERTY_ACCESS, 0) == 1
                             ? new GetPropSuper(lhs, property, false)
                             : new GetProp(lhs, property, false));
-
         }
         var rhs = getOperand(child, 0);
         addInstruction(
@@ -2296,75 +2296,92 @@ public class Compiler<T extends ScriptOrFn<T>> {
         jumpTargets.addAll(jump.getTargets(fromPC));
     }
 
-    // Handles super.x++ and variants thereof. We don't want to create new icode in the interpreter
-    // for this edge case, so we will transform this into something like super.x = super.x + 1
+    // Handles super.x++, super[k]++ and variants thereof, evaluating k only once
     private void visitSuperIncDec(Node node, Node child, int childType, int incrDecrMask) {
+        if (childType == Token.GETELEM) {
+            visitSuperElemIncDec(node, child, childType, incrDecrMask);
+            return;
+        }
         Node object = child.getFirstChild();
+        var superObject = getSafeOperand(object, 0, false); // Super is a safe operator.
+        boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
+        String property = null;
 
-        var superObject = getOperand(object, 0);
-        switch (childType) {
-            case Token.GETPROP:
-                addInstruction(
-                        new GetPropSuper(
-                                superObject, object.getNext().getString(), false)); // stack: [p]
-                break;
-
-            case Token.GETELEM:
-                {
-                    Node index = object.getNext();
-                    var elem = getOperand(index, 0); // stack: [elem]
-                    addInstruction(new GetElemSuper(superObject, elem)); // stack: [p]
-                    break;
-                }
-
-            default:
-                throw badTree(node);
-        }
-
-        // If it's a postfix expression, we copy the old value
-        // If it's prefix, we only need the _new_ value on the stack
-        if ((incrDecrMask & Node.POST_FLAG) != 0) {
-            // We can keep this Dup since the previous instruction always pushes to the stack
-            addInstruction(Dup.instance); // stack: postfix [p, p], prefix: [p]
-        }
-
-        // Increment or decrement the new value
-
-        // stack: prefix [p, 1], postfix: [p, p, 1]
-        Operand one = OneOperand.instance;
-
-        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-            addInstruction(new Add(PopOperand.instance, one));
-            // stack: prefix [p+1], postfix: [p, p+1]
+        if (childType == Token.GETPROP) {
+            property = object.getNext().getString();
+            addInstruction(new GetPropSuper(superObject, property, false)); // stack [p].
         } else {
-            addInstruction(new Subtract(PopOperand.instance, one));
-            // stack: prefix [p-1], postfix: [p, p-1]
+            throw badTree(node);
         }
 
-        // Assign the new value to the property
-        switch (childType) {
-            case Token.GETPROP:
+        // A postfix expression evaluates to the old value converted with ToNumeric
+        addInstruction(new ToNumeric(PopOperand.instance)); // stack: [p]
+
+        if (post) {
+            addInstruction(new NumericIncDec(PeekOperand.instance, incrDecrMask)); // stack [p, p+-]
+            addInstruction(
+                    new SetPropSuper(superObject, property, PopOperand.instance)); // stack [p]
+            addInstruction(Pop.instance); // stack: [(k,) p]
+        } else {
+            addInstruction(new NumericIncDec(PopOperand.instance, incrDecrMask)); // stack [p+-]
+            addInstruction(
+                    new SetPropSuper(superObject, property, PopOperand.instance)); // stack [p+-]
+        }
+    }
+
+    // Handles super.x++, super[k]++ and variants thereof, evaluating k only once
+    private void visitSuperElemIncDec(Node node, Node child, int childType, int incrDecrMask) {
+        Node object = child.getFirstChild();
+        var superObject = getSafeOperand(object, 0, false); // Super is a safe operator.
+        boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
+        var index = object.getNext();
+        boolean keyOnStack = !isSafeOperand(index);
+
+        getOperand(index, 0); // stack k?
+        if (keyOnStack) {
+            addInstruction(new GetElemSuper(superObject, PeekOperand.instance)); // stack: [k, p]
+        } else {
+            addInstruction(new GetElemSuper(superObject, getOperand(index, 0))); // stack: [p]
+        }
+
+        // A postfix expression evaluates to the old value converted with ToNumeric
+        addInstruction(new ToNumeric(PopOperand.instance)); // stack: [k? , p]
+
+        if (post) {
+            if (keyOnStack) {
+                addInstruction(DupX1.instance); // stack [p, k, p]
                 addInstruction(
-                        new SetPropSuper(
-                                superObject, object.getNext().getString(), PopOperand.instance));
-                // stack: prefix [p+-1], postfix: [p, p+-1]
-                break;
-
-            case Token.GETELEM:
-                {
-                    Node index = object.getNext();
-                    var indexOperand = getOperand(index, 0);
-                    // stack: prefix [p+-1, elem], postfix: [p, p+-1, elem]
-                    addInstruction(
-                            new SetElemSuper(superObject, indexOperand, PopOperand.instance));
-                    // stack: prefix [p+-1], postfix: [p, p+-1]
-                    break;
-                }
-        }
-
-        // If it was a postfix, just drop the new value
-        if ((incrDecrMask & Node.POST_FLAG) != 0) {
-            addInstruction(Pop.instance); // stack: [p]
+                        new NumericIncDec(PopOperand.instance, incrDecrMask)); // stack [k, p+-]
+                addInstruction(
+                        new SetElemSuper(
+                                superObject,
+                                PopOperand.instance,
+                                PopOperand.instance)); // stack [p, p+-]
+            } else {
+                addInstruction(
+                        new NumericIncDec(PeekOperand.instance, incrDecrMask)); // stack [p, p+-]
+                addInstruction(
+                        new SetElemSuper(
+                                superObject,
+                                getOperand(index, 0),
+                                PopOperand.instance)); // stack [p, p+-]
+            }
+            addInstruction(Pop.instance); // stack: [(k,) p]
+        } else {
+            addInstruction(new NumericIncDec(PopOperand.instance, incrDecrMask)); // stack [k?, p+-]
+            if (keyOnStack) {
+                addInstruction(
+                        new SetElemSuper(
+                                superObject,
+                                PopOperand.instance,
+                                PopOperand.instance)); // stack [p+-]
+            } else {
+                addInstruction(
+                        new SetElemSuper(
+                                superObject,
+                                getOperand(index, 0),
+                                PopOperand.instance)); // stack [p+-]
+            }
         }
     }
 
