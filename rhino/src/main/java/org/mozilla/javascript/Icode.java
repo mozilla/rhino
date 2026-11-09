@@ -184,8 +184,12 @@ abstract class Icode {
             // ++ or -- of the numeric value on top of the stack; operand is the ++/-- type
             NUMERIC_INC_DEC = TO_NUMERIC - 1,
 
+            // Copy the top of the stack below the two values beneath it: [a, b, c] -> [c, a, b, c]
+            DUP_X1 = NUMERIC_INC_DEC - 1,
+            DUP_X2 = DUP_X1 - 1,
+
             // Last icode
-            MIN_ICODE = NUMERIC_INC_DEC;
+            MIN_ICODE = DUP_X2;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -207,6 +211,10 @@ abstract class Icode {
                 return "DUP";
             case DUP2:
                 return "DUP2";
+            case DUP_X1:
+                return "DUP_X1";
+            case DUP_X2:
+                return "DUP_X2";
             case SWAP:
                 return "SWAP";
             case POP:

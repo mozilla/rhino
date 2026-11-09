@@ -669,6 +669,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Icode.POP_RESULT] = new DoPopResult();
         instructionObjs[base + Icode.DUP] = new DoDup();
         instructionObjs[base + Icode.DUP2] = new DoDup2();
+        instructionObjs[base + Icode.DUP_X1] = new DoDupX1();
+        instructionObjs[base + Icode.DUP_X2] = new DoDupX2();
         instructionObjs[base + Icode.SWAP] = new DoSwap();
         instructionObjs[base + Token.RETURN] = new DoReturn();
         instructionObjs[base + Token.RETURN_RESULT] = new DoReturnResult();
@@ -1738,6 +1740,42 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             stack[frame.stackTop + 2] = stack[frame.stackTop];
             sDbl[frame.stackTop + 2] = sDbl[frame.stackTop];
             frame.stackTop += 2;
+            return null;
+        }
+    }
+
+    private static class DoDupX1 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.doubleStack;
+            final int top = frame.stackTop;
+            stack[top + 1] = stack[top];
+            sDbl[top + 1] = sDbl[top];
+            stack[top] = stack[top - 1];
+            sDbl[top] = sDbl[top - 1];
+            stack[top - 1] = stack[top + 1];
+            sDbl[top - 1] = sDbl[top + 1];
+            frame.stackTop = top + 1;
+            return null;
+        }
+    }
+
+    private static class DoDupX2 extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            final double[] sDbl = frame.doubleStack;
+            final int top = frame.stackTop;
+            stack[top + 1] = stack[top];
+            sDbl[top + 1] = sDbl[top];
+            stack[top] = stack[top - 1];
+            sDbl[top] = sDbl[top - 1];
+            stack[top - 1] = stack[top - 2];
+            sDbl[top - 1] = sDbl[top - 2];
+            stack[top - 2] = stack[top + 1];
+            sDbl[top - 2] = sDbl[top + 1];
+            frame.stackTop = top + 1;
             return null;
         }
     }

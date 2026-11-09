@@ -1482,67 +1482,68 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
     private void visitSuperIncDec(Node node, Node child, int childType, int incrDecrMask) {
         Node object = child.getFirstChild();
 
+        if (childType == Token.GETELEM) {
+            visitSuperElemIncDec(object, incrDecrMask);
+            return;
+        }
+        if (childType != Token.GETPROP) {
+            throw badTree(node);
+        }
+        String property = object.getNext().getString();
+
         // Push the old value on the stack
         visitExpression(object, 0); // stack: [super]
-        switch (childType) {
-            case Token.GETPROP:
-                addStringOp(Token.GETPROP_SUPER, object.getNext().getString()); // stack: [p]
-                break;
-
-            case Token.GETELEM:
-                {
-                    Node index = object.getNext();
-                    visitExpression(index, 0); // stack: [super, elem]
-                    addToken(Token.GETELEM_SUPER); // stack: [p]
-                    stackChange(-1);
-                    break;
-                }
-
-            default:
-                throw badTree(node);
-        }
+        addIcode(Icode.DUP); // stack: [super, super]
+        stackChange(+1);
+        addStringOp(Token.GETPROP_SUPER, property); // stack: [super, p]
 
         // ToNumeric the old value: a postfix expression evaluates to the converted value
-        addIcode(Icode.TO_NUMERIC); // stack: [p]
+        addIcode(Icode.TO_NUMERIC); // stack: [super, p]
 
         // If it's a postfix expression, we copy the old value
         // If it's postfix, we only need the _new_ value on the stack
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
-            addIcode(Icode.DUP); // stack: postfix [p, p], prefix: [p]
+            addIcode(Icode.DUP_X1); // stack: postfix [p, super, p], prefix: [super, p]
             stackChange(+1);
         }
-
-        // We need, in order, super and then the new value
-        addToken(Token.SUPER); // stack: postfix [p, p, super], prefix: [p, super]
-        stackChange(+1);
-        addIcode(Icode.SWAP); // stack: postfix [p, super, p], prefix: [super, p]
 
         // Increment or decrement the new value
         addIcode(Icode.NUMERIC_INC_DEC); // stack: prefix [p, super, p+-1], postfix: [super, p+-1]
         addUint8(incrDecrMask);
 
         // Assign the new value to the property
-        switch (childType) {
-            case Token.GETPROP:
-                addStringOp(Token.SETPROP_SUPER, object.getNext().getString());
-                // stack: prefix [p, p+-1], postfix: [p+-1]
-                stackChange(-1);
-                break;
-
-            case Token.GETELEM:
-                {
-                    Node index = object.getNext();
-                    visitExpression(index, 0);
-                    // stack: prefix [p, super, p+-1, elem], postfix: [super, p+-1, elem]
-                    addIcode(Icode.SWAP);
-                    // stack: prefix [p, super, elem, p+-1], postfix: [super, elem, p+-1]
-                    addToken(Token.SETELEM_SUPER); // stack: prefix [p, p+-1], postfix: [p+-1]
-                    stackChange(-2);
-                    break;
-                }
-        }
+        addStringOp(Token.SETPROP_SUPER, property); // stack: prefix [p, p+-1], postfix: [p+-1]
+        stackChange(-1);
 
         // If it was a postfix, just drop the new value
+        if ((incrDecrMask & Node.POST_FLAG) != 0) {
+            addIcode(Icode.POP); // stack: [p]
+            stackChange(-1);
+        }
+    }
+
+    // Handles super[k]++ and variants thereof, evaluating k only once
+    private void visitSuperElemIncDec(Node object, int incrDecrMask) {
+        visitExpression(object, 0); // stack: [super]
+        visitExpression(object.getNext(), 0); // stack: [super, k]
+        addIcode(Icode.DUP2); // stack: [super, k, super, k]
+        stackChange(+2);
+        addToken(Token.GETELEM_SUPER); // stack: [super, k, p]
+        stackChange(-1);
+
+        // ToNumeric the old value: a postfix expression evaluates to the converted value
+        addIcode(Icode.TO_NUMERIC);
+
+        if ((incrDecrMask & Node.POST_FLAG) != 0) {
+            addIcode(Icode.DUP_X2); // stack: [p, super, k, p]
+            stackChange(+1);
+        }
+
+        addIcode(Icode.NUMERIC_INC_DEC); // stack: [..., super, k, p+-1]
+        addUint8(incrDecrMask);
+        addToken(Token.SETELEM_SUPER); // stack: postfix [p, p+-1], prefix: [p+-1]
+        stackChange(-2);
+
         if ((incrDecrMask & Node.POST_FLAG) != 0) {
             addIcode(Icode.POP); // stack: [p]
             stackChange(-1);
