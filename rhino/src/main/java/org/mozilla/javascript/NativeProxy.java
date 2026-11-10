@@ -23,7 +23,7 @@ import java.util.Objects;
  *
  * @author Ronald Brill
  */
-class NativeProxy extends ScriptableObject {
+public class NativeProxy extends ScriptableObject {
     @Serial private static final long serialVersionUID = 6676871870513494844L;
 
     private static final String PROXY_TAG = "Proxy";
