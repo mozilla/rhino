@@ -29,12 +29,13 @@ class XML extends XMLObjectImpl {
     static final SymbolKey LIB_KEY = new SymbolKey("__xml_lib__", REGULAR);
 
     static {
-        DESCRIPTOR =
+        var builder =
                 XMLObjectImpl.populatePrototypeDescriptor(
-                                new ClassDescriptor.Builder(
-                                        "XML", 1, XML::js_constructorCall, XML::js_constructor))
-                        .withMethod(CTOR, SymbolKey.HAS_INSTANCE, 1, XML::js_hasInstance)
-                        .build();
+                        new ClassDescriptor.Builder(
+                                "XML", 1, XML::js_constructorCall, XML::js_constructor));
+        XMLObjectImpl.populateConstructorDescriptor(builder);
+        DESCRIPTOR =
+                builder.withMethod(CTOR, SymbolKey.HAS_INSTANCE, 1, XML::js_hasInstance).build();
     }
 
     public static void init(

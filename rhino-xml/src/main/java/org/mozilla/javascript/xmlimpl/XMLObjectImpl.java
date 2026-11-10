@@ -89,8 +89,12 @@ abstract class XMLObjectImpl extends XMLObject {
                 .withMethod(PROTO, "toString", 0, XMLObjectImpl::js_toString)
                 .withMethod(PROTO, "toSource", 1, XMLObjectImpl::js_toSource)
                 .withMethod(PROTO, "toXMLString", 1, XMLObjectImpl::js_toXMLString)
-                .withMethod(PROTO, "valueOf", 0, XMLObjectImpl::js_valueOf)
-                .withMethod(CTOR, "defaultSettings", 0, XMLObjectImpl::js_defaultSettings)
+                .withMethod(PROTO, "valueOf", 0, XMLObjectImpl::js_valueOf);
+    }
+
+    public static ClassDescriptor.Builder populateConstructorDescriptor(
+            ClassDescriptor.Builder builder) {
+        return builder.withMethod(CTOR, "defaultSettings", 0, XMLObjectImpl::js_defaultSettings)
                 .withMethod(CTOR, "settings", 0, XMLObjectImpl::js_settings)
                 .withMethod(CTOR, "setSettings", 0, XMLObjectImpl::js_setSettings)
                 .withProp(
