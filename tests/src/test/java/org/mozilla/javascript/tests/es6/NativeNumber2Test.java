@@ -225,4 +225,19 @@ public class NativeNumber2Test {
         //        "\u0644\u064a\u0633\u00a0\u0631\u0642\u0645", "NaN.toLocaleString('ar-SA')");
         Utils.assertWithAllModes402("\u221e", "Infinity.toLocaleString('ar-SA')");
     }
+
+    @Test
+    public void toStringRadixNegativeFraction() {
+        Utils.assertWithAllModes("-0.1", "(-0.5).toString(2)");
+        Utils.assertWithAllModes("-0.c", "(-0.75).toString(16)");
+        Utils.assertWithAllModes("-0.0001", "(-0.0625).toString(2)");
+    }
+
+    @Test
+    public void toStringRadixOtherValues() {
+        Utils.assertWithAllModes("0.1", "(0.5).toString(2)");
+        Utils.assertWithAllModes("-1.1", "(-1.5).toString(2)");
+        Utils.assertWithAllModes("-ff", "(-255).toString(16)");
+        Utils.assertWithAllModes("0", "(-0).toString(2)");
+    }
 }

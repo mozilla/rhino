@@ -209,7 +209,7 @@ class DToA {
         long lfloor = (long) dfloor;
         if (lfloor == dfloor) {
             // int part fits long
-            intDigits = Long.toString(negative ? -lfloor : lfloor, base);
+            intDigits = (negative ? "-" : "") + Long.toString(lfloor, base);
         } else {
             // BigInteger should be used
             long floorBits = Double.doubleToLongBits(dfloor);
