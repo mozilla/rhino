@@ -10,6 +10,8 @@ import static org.mozilla.javascript.ClassDescriptor.Builder.value;
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 
 import java.io.Serial;
+import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * This class implements the Math native object. See ECMA 15.8.
@@ -80,6 +82,7 @@ final class NativeMath extends ScriptableObject {
                         .withMethod(CTOR, "sin", 1, NativeMath::sin)
                         .withMethod(CTOR, "sinh", 1, NativeMath::sinh)
                         .withMethod(CTOR, "sqrt", 1, NativeMath::sqrt)
+                        .withMethod(CTOR, "sumPrecise", 1, NativeMath::sumPrecise)
                         .withMethod(CTOR, "tan", 1, NativeMath::tan)
                         .withMethod(CTOR, "tanh", 1, NativeMath::tanh)
                         .withMethod(CTOR, "trunc", 1, NativeMath::trunc)
@@ -754,6 +757,204 @@ final class NativeMath extends ScriptableObject {
         double x = ScriptRuntime.toNumber(args, 0);
         x = Math.sqrt(x);
         return ScriptRuntime.wrapNumber(x);
+    }
+
+    /** Math.sumPrecise throws a RangeError once this many values have been read. */
+    private static final long MAX_SUM_COUNT = 1L << 53;
+
+    /** The state machine of the Math.sumPrecise algorithm in the specification. */
+    private enum SumState {
+        MINUS_ZERO,
+        FINITE,
+        PLUS_INFINITY,
+        MINUS_INFINITY,
+        NOT_A_NUMBER
+    }
+
+    /**
+     * Math.sumPrecise (ES2026): sums the Numbers of an iterable as if with unlimited precision and
+     * rounds once at the end. Any value that is not a Number is a TypeError; nothing is coerced.
+     */
+    private static Object sumPrecise(
+            Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
+        Object items = args.length > 0 ? args[0] : Undefined.instance;
+        // RequireObjectCoercible and GetIterator: both failures throw a TypeError from here
+        Object iterator = ScriptRuntime.callIterator(items, cx, s);
+
+        SumState state = SumState.MINUS_ZERO;
+        PartialSums sum = new PartialSums();
+        long count = 0;
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, s, iterator)) {
+            for (Object value : it) {
+                if (++count >= MAX_SUM_COUNT) {
+                    throw ScriptRuntime.rangeErrorById("msg.sum.precise.too.many");
+                }
+                if (!(value instanceof Number) || value instanceof BigInteger) {
+                    Object v = value == Scriptable.NOT_FOUND ? Undefined.instance : value;
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.sum.precise.not.number", ScriptRuntime.typeof(v));
+                }
+                if (state == SumState.NOT_A_NUMBER) {
+                    // Only the type check above still matters
+                    continue;
+                }
+                double n = ((Number) value).doubleValue();
+                if (Double.isNaN(n)) {
+                    state = SumState.NOT_A_NUMBER;
+                } else if (n == Double.POSITIVE_INFINITY) {
+                    state =
+                            state == SumState.MINUS_INFINITY
+                                    ? SumState.NOT_A_NUMBER
+                                    : SumState.PLUS_INFINITY;
+                } else if (n == Double.NEGATIVE_INFINITY) {
+                    state =
+                            state == SumState.PLUS_INFINITY
+                                    ? SumState.NOT_A_NUMBER
+                                    : SumState.MINUS_INFINITY;
+                } else if ((state == SumState.MINUS_ZERO || state == SumState.FINITE)
+                        && !(n == 0 && 1 / n < 0)) {
+                    // -0 is skipped, so a list of only -0 (or an empty list) returns -0
+                    state = SumState.FINITE;
+                    sum.add(n);
+                }
+            }
+        }
+
+        if (state == SumState.NOT_A_NUMBER) {
+            return ScriptRuntime.NaNobj;
+        }
+        if (state == SumState.PLUS_INFINITY) {
+            return ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY);
+        }
+        if (state == SumState.MINUS_INFINITY) {
+            return ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY);
+        }
+        if (state == SumState.MINUS_ZERO) {
+            return ScriptRuntime.negativeZeroObj;
+        }
+        return ScriptRuntime.wrapNumber(sum.result());
+    }
+
+    /**
+     * Exact summation of finite doubles: Shewchuk's algorithm as used by Python's math.fsum, which
+     * keeps a list of non-overlapping partial sums, plus a counter of multiples of 2^1024 so that
+     * an intermediate overflow does not lose the exact sum. Adapted from the Math.sumPrecise
+     * reference polyfill (tc39/proposal-math-sum, polyfill/polyfill.mjs; Copyright (c) 2024 Kevin
+     * Gibbons, BSD 3-Clause License).
+     */
+    private static final class PartialSums {
+        private static final double TWO_POW_1023 = 0x1p1023;
+        // The ulp of Double.MAX_VALUE
+        private static final double MAX_ULP = 0x1p971;
+
+        private double[] partials = new double[16];
+        private int size;
+        // The exact sum is overflow * 2^1024 + the sum of the partials
+        private long overflow;
+
+        void add(double x) {
+            int used = 0;
+            for (int j = 0; j < size; j++) {
+                double y = partials[j];
+                if (Math.abs(x) < Math.abs(y)) {
+                    double t = x;
+                    x = y;
+                    y = t;
+                }
+                double hi = x + y;
+                double lo = y - (hi - x);
+                if (Double.isInfinite(hi)) {
+                    // x and y have the same sign and |x| >= 2^1023, so moving 2^1024 of x into
+                    // the counter is exact when done in two steps; then redo the two-sum
+                    double sign = hi > 0 ? 1.0 : -1.0;
+                    overflow += (long) sign;
+                    x = (x - sign * TWO_POW_1023) - sign * TWO_POW_1023;
+                    if (Math.abs(x) < Math.abs(y)) {
+                        double t = x;
+                        x = y;
+                        y = t;
+                    }
+                    hi = x + y;
+                    lo = y - (hi - x);
+                }
+                if (lo != 0.0) {
+                    partials[used++] = lo;
+                }
+                x = hi;
+            }
+            size = used;
+            if (x != 0.0) {
+                if (size == partials.length) {
+                    partials = Arrays.copyOf(partials, size * 2);
+                }
+                partials[size++] = x;
+            }
+        }
+
+        double result() {
+            int n = size - 1;
+            double hi = 0.0;
+            double lo = 0.0;
+            if (overflow != 0) {
+                double next = n >= 0 ? partials[n] : 0.0;
+                n--;
+                if (Math.abs(overflow) > 1
+                        || (overflow > 0 && next > 0)
+                        || (overflow < 0 && next < 0)) {
+                    return overflow > 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+                }
+                // |overflow| == 1 and the largest partial has the opposite sign: add the two at
+                // half scale so the intermediate value cannot overflow
+                double x = overflow * TWO_POW_1023;
+                double y = next / 2;
+                hi = x + y;
+                lo = (y - (hi - x)) * 2;
+                if (Double.isInfinite(2 * hi)) {
+                    // Double.MAX_VALUE has an odd last significand bit, so a sum exactly half an
+                    // ulp below 2^1024 rounds to infinity under ties-to-even, unless the next
+                    // partial pulls the exact sum below that midpoint
+                    if (hi > 0) {
+                        if (hi == TWO_POW_1023
+                                && lo == -(MAX_ULP / 2)
+                                && n >= 0
+                                && partials[n] < 0) {
+                            return Double.MAX_VALUE;
+                        }
+                        return Double.POSITIVE_INFINITY;
+                    }
+                    if (hi == -TWO_POW_1023 && lo == MAX_ULP / 2 && n >= 0 && partials[n] > 0) {
+                        return -Double.MAX_VALUE;
+                    }
+                    return Double.NEGATIVE_INFINITY;
+                }
+                if (lo != 0.0) {
+                    partials[++n] = lo;
+                    lo = 0.0;
+                }
+                hi *= 2;
+            }
+
+            // Add the partials from the largest down and stop at the first round-off error
+            while (n >= 0) {
+                double x = hi;
+                double y = partials[n--];
+                hi = x + y;
+                lo = y - (hi - x);
+                if (lo != 0.0) {
+                    break;
+                }
+            }
+
+            // When that error is exactly half an ulp of hi, the next partial decides the direction
+            if (n >= 0 && ((lo < 0.0 && partials[n] < 0.0) || (lo > 0.0 && partials[n] > 0.0))) {
+                double y = lo * 2.0;
+                double x = hi + y;
+                if (y == x - hi) {
+                    hi = x;
+                }
+            }
+            return hi;
+        }
     }
 
     private static Object tan(
