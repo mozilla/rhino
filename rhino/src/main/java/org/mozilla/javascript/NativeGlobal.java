@@ -643,8 +643,6 @@ public class NativeGlobal implements Serializable {
                     // Check for overlongs and other should-not-present codes
                     if (ucs4Char < minUcs4Char || (ucs4Char >= 0xD800 && ucs4Char <= 0xDFFF)) {
                         ucs4Char = INVALID_UTF8;
-                    } else if (ucs4Char == 0xFFFE || ucs4Char == 0xFFFF) {
-                        ucs4Char = 0xFFFD;
                     }
                     if (ucs4Char >= 0x10000) {
                         ucs4Char -= 0x10000;
