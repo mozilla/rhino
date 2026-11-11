@@ -143,6 +143,17 @@ class SourceMapV3Test {
     }
 
     @Test
+    void rejectsIgnoreListIndexBeyondIntRange() {
+        // 2**32 + 1 must not wrap around to index 1.
+        assertThrows(
+                SourceMapException.class,
+                () ->
+                        SourceMapV3.parse(
+                                "{\"version\":3,\"sources\":[\"a\",\"b\"],"
+                                        + "\"ignoreList\":[4294967297],\"mappings\":\"\"}"));
+    }
+
+    @Test
     void exposesFile() {
         SourceMapV3 m =
                 SourceMapV3.parse(
