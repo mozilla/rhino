@@ -133,4 +133,36 @@ class SourceMapJsonParserTest {
         Object big = SourceMapJsonParser.parse("99999999999999999999");
         assertInstanceOf(Double.class, big);
     }
+
+    @Test
+    void rejectsNonJsonNumbers() {
+        for (String s : new String[] {"03", "-01", "3.", "-", "-.5", "1e", "1e+"}) {
+            assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(s), s);
+        }
+        assertEquals(1.5, SourceMapJsonParser.parse("1.5"));
+        assertEquals(-1e5, SourceMapJsonParser.parse("-1E+5"));
+        assertEquals(0.25, SourceMapJsonParser.parse("0.25"));
+    }
+
+    @Test
+    void rejectsSignedUnicodeEscape() {
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse("\"\\u-001\""));
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse("\"\\u+041\""));
+        assertEquals("A\u00e9", SourceMapJsonParser.parse("\"\\u0041\\u00E9\""));
+    }
+
+    @Test
+    void rejectsDeepNestingWithoutStackOverflow() {
+        String deep = "[".repeat(50_000) + "]".repeat(50_000);
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(deep));
+        String ok = "[".repeat(100) + "]".repeat(100);
+        assertInstanceOf(List.class, SourceMapJsonParser.parse(ok));
+    }
+
+    @Test
+    void honoursCustomMaxDepth() {
+        String nested = "{\"a\":[[1]]}";
+        assertInstanceOf(Map.class, SourceMapJsonParser.parse(nested, 3));
+        assertThrows(SourceMapException.class, () -> SourceMapJsonParser.parse(nested, 2));
+    }
 }
