@@ -4557,7 +4557,7 @@ class BodyCodegen {
                     cfw.addDLoad(child_dcp_register + 1);
                     cfw.addPush(convertChild.getDouble());
                     cfw.add(ByteCode.DCMPL);
-                    if (type == Token.EQ) cfw.add(ByteCode.IFEQ, trueGOTO);
+                    if (type == Token.EQ || type == Token.SHEQ) cfw.add(ByteCode.IFEQ, trueGOTO);
                     else cfw.add(ByteCode.IFNE, trueGOTO);
                     cfw.add(ByteCode.GOTO, falseGOTO);
                     cfw.markLabel(notNumbersLabel);
