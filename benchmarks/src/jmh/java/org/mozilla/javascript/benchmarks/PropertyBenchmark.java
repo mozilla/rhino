@@ -25,7 +25,7 @@ public class PropertyBenchmark {
 
         Object object;
 
-        @Param({"Interpreter", "Compiler"})
+        @Param({"Interpreter", "InterpreterV2", "Compiler"})
         public EvaluationMethod evalMethod;
 
         @Setup(Level.Trial)

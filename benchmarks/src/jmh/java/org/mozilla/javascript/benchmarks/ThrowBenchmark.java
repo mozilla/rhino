@@ -22,7 +22,7 @@ public class ThrowBenchmark {
         Function mediumThrow;
         Function deepThrow;
 
-        @Param({"Interpreter", "Compiler"})
+        @Param({"Interpreter", "InterpreterV2", "Compiler"})
         public EvaluationMethod evalMethod;
 
         @Setup(Level.Trial)
