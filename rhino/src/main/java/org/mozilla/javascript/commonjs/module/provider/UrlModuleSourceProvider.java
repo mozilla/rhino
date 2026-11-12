@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 import org.mozilla.javascript.Context;
@@ -169,11 +170,8 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
         if (encoding != null) {
             return encoding;
         }
-        final String contentType = pct.getContentType();
-        if (contentType != null && contentType.startsWith("text/")) {
-            return "8859_1";
-        }
-        return "utf-8";
+
+        return Charset.defaultCharset().name();
     }
 
     private Object getSecurityDomain(URLConnection urlConnection) {
