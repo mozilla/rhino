@@ -112,7 +112,9 @@ class Optimizer {
                 {
                     Node child = n.getFirstChild();
                     int type = rewriteForNumberVariables(child, NumberType);
-                    if (type == NumberType) n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
+                    if (type == NumberType && !convertParameter(child)) {
+                        n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
+                    }
                     return NoType;
                 }
             case Token.NUMBER:
