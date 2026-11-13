@@ -15,6 +15,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.testutils.TestSource;
 import org.mozilla.javascript.testutils.Utils;
@@ -40,7 +41,16 @@ public class LambdaFunctionTest {
     }
 
     private void eval(String source) {
-        Utils.runWithAllModes(ignored -> cx.evaluateString(root, source, "test.js", 1, null));
+        // every mode runs the script in its own global lexical environment,
+        // otherwise the let declarations of the second run are redeclarations
+        Utils.runWithAllModes(
+                ignored ->
+                        cx.evaluateString(
+                                TopLevel.createIsolate((TopLevel) root),
+                                source,
+                                "test.js",
+                                1,
+                                null));
     }
 
     @Test
