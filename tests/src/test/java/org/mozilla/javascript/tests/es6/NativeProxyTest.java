@@ -1501,4 +1501,36 @@ public class NativeProxyTest {
         Utils.assertWithAllModes_ES6(
                 "TypeError / not a constructor: true / revoked: false / trap calls: 0", script);
     }
+
+    /** A property read must call only the "get" trap, in compiled mode as well. */
+    @Test
+    public void getDoesNotInvokeHasTrap() {
+        final String script =
+                "var log = [];\n"
+                        + "var p = new Proxy({}, {\n"
+                        + "  get(t, k, r) { log.push('get:' + String(k)); return Reflect.get(t, k, r); },\n"
+                        + "  has(t, k) { log.push('has:' + String(k)); return k in t; },\n"
+                        + "  getOwnPropertyDescriptor(t, k) { log.push('gopd:' + String(k));"
+                        + " return Reflect.getOwnPropertyDescriptor(t, k); }\n"
+                        + "});\n"
+                        + "p.x; p.length; p[1];\n"
+                        + "log.join(',');";
+        Utils.assertWithAllModes_ES6("get:x,get:length,get:1", script);
+    }
+
+    /**
+     * Reading a non-writable, non-configurable property through a Proxy must still use the trap.
+     */
+    @Test
+    public void getOfConstantLikePropertyStillCallsTrap() {
+        final String script =
+                "var target = {};\n"
+                        + "Object.defineProperty(target, 'c', { value: 1, writable: false, configurable: false });\n"
+                        + "var n = 0;\n"
+                        + "var p = new Proxy(target, { get(t, k, r) { n++; return Reflect.get(t, k, r); } });\n"
+                        + "function read() { return p.c; }\n"
+                        + "read(); read(); read();\n"
+                        + "n;";
+        Utils.assertWithAllModes_ES6(3, script);
+    }
 }

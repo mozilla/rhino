@@ -11,6 +11,7 @@ import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
+import org.mozilla.javascript.NativeProxy;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
@@ -26,7 +27,10 @@ import org.mozilla.javascript.Undefined;
 class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
     @Override
     public boolean canLinkType(Class<?> type) {
-        return ScriptableObject.class.isAssignableFrom(type);
+        // Probing a Proxy for a constant would run its "has" and other traps at link time,
+        // which is observable; it cannot hold a constant anyway.
+        return ScriptableObject.class.isAssignableFrom(type)
+                && !NativeProxy.class.isAssignableFrom(type);
     }
 
     @Override
