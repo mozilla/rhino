@@ -11,6 +11,7 @@ import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -60,13 +61,38 @@ public final class JavaAdapter {
     }
 
     public static void init(Context cx, VarScope scope, boolean sealed) {
-        var ctor = new LambdaConstructor(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
+        var ctor = new AdapterConstructor(scope);
 
         if (sealed) {
             ctor.sealObject();
         }
 
         ScriptableObject.defineProperty(scope, "JavaAdapter", ctor, DONTENUM);
+    }
+
+    /**
+     * The {@code JavaAdapter} constructor. Unlike a plain {@link LambdaConstructor}, it returns the
+     * adapter as is and doesn't replace its prototype with {@code JavaAdapter.prototype}: the
+     * prototype of the adapter wrapper is the JavaScript implementation object (see {@link
+     * #createAdapterWrapper}), which is how {@code this} inside an implemented method sees the
+     * other properties of that object.
+     */
+    private static final class AdapterConstructor extends LambdaConstructor {
+        @Serial private static final long serialVersionUID = -4365936542460964282L;
+
+        AdapterConstructor(VarScope scope) {
+            super(scope, "JavaAdapter", 1, JavaAdapter::js_createAdapter);
+        }
+
+        @Override
+        public Object call(Context cx, Object nt, VarScope scope, Object thisObj, Object[] args) {
+            return js_createAdapter(cx, nt, getDeclarationScope(), args);
+        }
+
+        @Override
+        public Scriptable construct(Context cx, Object nt, VarScope scope, Object[] args) {
+            return js_createAdapter(cx, nt, getDeclarationScope(), args);
+        }
     }
 
     public static Object convertResult(Object result, Class<?> c) {
