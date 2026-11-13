@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
@@ -11,7 +12,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.DefiningClassLoader;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.optimizer.ClassCompiler;
 
 public class ClassCompilerTest {
@@ -96,5 +99,58 @@ public class ClassCompilerTest {
         }
         assertTrue(main != null, "Expected a main method");
         main.invoke(null, (Object) new String[0]);
+    }
+
+    /** Runs the compiled script and keeps its result, so tests can check it. */
+    public static class ResultRunner {
+        static Object result;
+
+        public static void main(Script script, String[] args) {
+            try (Context cx = Context.enter()) {
+                var scope = cx.initStandardObjects();
+                result = Context.toString(script.exec(cx, scope, scope));
+            }
+        }
+    }
+
+    private static Object runMain(String source) throws Exception {
+        var compilerEnv = new CompilerEnvirons();
+        ClassCompiler compiler = new ClassCompiler(compilerEnv);
+        compiler.setMainMethodClass(ResultRunner.class.getName());
+        var result = compiler.compileToClassFiles(source, "test", 0, "test");
+        var loader = new DefiningClassLoader(ClassCompilerTest.class.getClassLoader());
+
+        var classes = new ArrayList<Class<?>>();
+        for (int i = 0; i < result.length; i += 2) {
+            classes.add(loader.defineClass((String) result[i], (byte[]) result[i + 1]));
+        }
+        for (var cl : classes) {
+            loader.linkClass(cl);
+        }
+
+        ResultRunner.result = null;
+        Method main = loader.loadClass("testMain").getMethod("main", String[].class);
+        main.invoke(null, (Object) new String[0]);
+        return ResultRunner.result;
+    }
+
+    @Test
+    public void regExpLiteralsWork() throws Exception {
+        assertEquals(
+                "a+b+c|true|x",
+                runMain(
+                        "function f(s) { return /y/.test(s); }\n"
+                                + "'a-b-c'.replace(/-/g, '+') + '|' + f('xyz') + '|'"
+                                + " + 'x1'.replace(/\\d/, '')"));
+    }
+
+    @Test
+    public void taggedTemplateLiteralsWork() throws Exception {
+        assertEquals(
+                "a\\n|b",
+                runMain(
+                        "function tag(s) { return s.raw[0]; }\n"
+                                + "function g() { return tag`b`; }\n"
+                                + "tag`a\\n` + '|' + g()"));
     }
 }

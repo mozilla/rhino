@@ -1230,6 +1230,14 @@ class BodyCodegen {
 
             case Token.REGEXP:
                 {
+                    // Make sure the regexp literals are compiled. Codegen.defineClass does
+                    // this eagerly, but classes from ClassCompiler are loaded without it.
+                    cfw.addALoad(contextLocal);
+                    cfw.addInvoke(
+                            ByteCode.INVOKESTATIC,
+                            codegen.mainClassName,
+                            Codegen.REGEXP_INIT_METHOD_NAME,
+                            Codegen.REGEXP_INIT_METHOD_SIGNATURE);
                     // Create a new wrapper around precompiled regexp
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
@@ -2038,6 +2046,12 @@ class BodyCodegen {
         // create the template literal call-site object for tagged template literals,
         // default template literals are already handled earlier in IRFactory
         int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        // Same as for regexp literals: classes from ClassCompiler never ran the init method.
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                codegen.mainClassName,
+                Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.add(
