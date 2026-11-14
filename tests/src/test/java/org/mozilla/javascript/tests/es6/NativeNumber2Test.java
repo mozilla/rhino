@@ -240,4 +240,23 @@ public class NativeNumber2Test {
         Utils.assertWithAllModes("-ff", "(-255).toString(16)");
         Utils.assertWithAllModes("0", "(-0).toString(2)");
     }
+
+    @Test
+    public void toPrecisionPadsSmallFractions() {
+        Utils.assertWithAllModes("0.06250", "(0.0625).toPrecision(4)");
+        Utils.assertWithAllModes("0.06250000000", "(0.0625).toPrecision(10)");
+        Utils.assertWithAllModes("0.00195312500", "(0.001953125).toPrecision(9)");
+        Utils.assertWithAllModes("-0.0312500000000000000000", "(-0.03125).toPrecision(21)");
+    }
+
+    @Test
+    public void toPrecisionOtherFractions() {
+        Utils.assertWithAllModes("0.5000", "(0.5).toPrecision(4)");
+        Utils.assertWithAllModes("0.1000", "(0.1).toPrecision(4)");
+        Utils.assertWithAllModes("0.06", "(0.0625).toPrecision(1)");
+        Utils.assertWithAllModes("0.0625", "(0.0625).toPrecision(3)");
+        Utils.assertWithAllModes("0.000555000000000000", "(0.000555).toPrecision(15)");
+        Utils.assertWithAllModes("0.000001000", "(0.000000999999999999999).toPrecision(4)");
+        Utils.assertWithAllModes("6.250e-7", "(0.000000625).toPrecision(4)");
+    }
 }

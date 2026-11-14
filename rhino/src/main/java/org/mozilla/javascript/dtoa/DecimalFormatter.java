@@ -77,8 +77,8 @@ public class DecimalFormatter {
         int fractionDigits;
         if (scale >= 0) {
             if (scale >= numDigits) {
-                // 0.digits000
-                fractionDigits = precision;
+                // 0.000digits000: the zeros after the decimal point are not significant
+                fractionDigits = precision + scale - numDigits;
             } else {
                 // dig.its
                 fractionDigits = precision - (numDigits - scale);
