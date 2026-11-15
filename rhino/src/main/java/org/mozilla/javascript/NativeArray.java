@@ -1920,6 +1920,9 @@ public class NativeArray extends ScriptableObject implements List {
                 long arrLength = getLengthProperty(cx, arr);
                 for (long k = 0; k < arrLength; k++) {
                     Object temp = getRawElem(arr, k);
+                    if (temp == Scriptable.NOT_FOUND) {
+                        continue;
+                    }
                     defineElemOrThrow(cx, result, j++, temp);
                 }
             } else {
