@@ -1,6 +1,5 @@
 package org.mozilla.javascript.lc.member;
 
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -165,11 +164,7 @@ public final class ExecutableBox {
                 // Unlike MemberBox, ExecutableBox will NOT try to search an accessible method after
                 // failure. Instead, JavaMembers should be responsible for ensuring methods visible
                 // to JS are accessible.
-                if (!tryToMakeAccessible(method)) {
-                    throw Context.throwAsScriptRuntimeEx(ex);
-                }
-                // Retry after recovery
-                return method.invoke(target, args);
+                throw Context.throwAsScriptRuntimeEx(ex);
             }
         } catch (InvocationTargetException ite) {
             // Must allow ContinuationPending exceptions to propagate unhindered
@@ -190,10 +185,7 @@ public final class ExecutableBox {
             try {
                 return ctor.newInstance(args);
             } catch (IllegalAccessException ex) {
-                if (!tryToMakeAccessible(ctor)) {
-                    throw Context.throwAsScriptRuntimeEx(ex);
-                }
-                return ctor.newInstance(args);
+                throw Context.throwAsScriptRuntimeEx(ex);
             }
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
@@ -270,13 +262,5 @@ public final class ExecutableBox {
         wrappedArgs[argTypesLen - 1] = varArgs;
 
         return wrappedArgs;
-    }
-
-    @SuppressWarnings("deprecation")
-    private static boolean tryToMakeAccessible(AccessibleObject accessible) {
-        if (!accessible.isAccessible()) {
-            accessible.setAccessible(true);
-        }
-        return true;
     }
 }
