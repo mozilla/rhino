@@ -16,6 +16,9 @@ import java.util.Map;
 public class MethodBasedBean implements Serializable {
     @Serial private static final long serialVersionUID = 1L;
 
+    private char primitiveChar = 0;
+    private Character complexChar = null;
+
     private List<Integer> integers = new ArrayList<>();
     private List<Double> doubles = new ArrayList<>();
     private List<Number> numbers = new ArrayList<>();
@@ -29,6 +32,22 @@ public class MethodBasedBean implements Serializable {
     // beans with typeInfo in the dynamic type
     private GenericBean<Integer> intBean2 = new IntegerGenericBean();
     private GenericBean<Double> dblBean2 = new DoubleGenericBean();
+
+    public char getPrimitiveChar() {
+        return primitiveChar;
+    }
+
+    public void setPrimitiveChar(char primitiveChar) {
+        this.primitiveChar = primitiveChar;
+    }
+
+    public Character getComplexChar() {
+        return complexChar;
+    }
+
+    public void setComplexChar(Character complexChar) {
+        this.complexChar = complexChar;
+    }
 
     public List<Double> getDoubles() {
         return doubles;
