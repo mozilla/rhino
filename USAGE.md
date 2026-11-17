@@ -106,14 +106,14 @@ please share them in our community discussion: **[Report Rhino Usage Examples](h
 ## Educational & Mathematical Tools
 
 - **[GeoGebra](https://www.geogebra.org/)** - Interactive mathematics software for learning and teaching geometry, algebra, statistics, and calculus
-  [Source](https://github.com/geogebra/geogebra/blob/main/doc/Libraries.md)
+  [Source](https://github.com/geogebra/geogebra/blob/main/gradle/libs.versions.toml)
 
 - **[BPjs](https://github.com/bThink-BGU/BPjs)** -- Java library creating and working with formal models of system behavior, based on the [Behavioral Programming](https://cacm.acm.org/research/behavioral-programming/) paradigm.
 
 ## Database
 
 - **[Memento Database 3.4.0](https://mementodatabase.com/)** - Customizable database application for tracking and organizing data
-  [Source](https://wiki.mementodatabase.com/index.php/JavaScript_field)
+  [Source](https://wiki.mementodatabase.com/fields/JavaScript_field.html)
 
 ## Security & Smart Card Development
 
