@@ -78,7 +78,10 @@ public class DecimalFormatter {
         if (scale >= 0) {
             if (scale >= numDigits) {
                 // 0.digits000
-                fractionDigits = precision;
+                // The zeros between the decimal point and the first significant digit are
+                // not significant, so only the padding zeros at the end can make up for the
+                // significant digits that the rounded value is still missing.
+                fractionDigits = precision + scale - numDigits;
             } else {
                 // dig.its
                 fractionDigits = precision - (numDigits - scale);
