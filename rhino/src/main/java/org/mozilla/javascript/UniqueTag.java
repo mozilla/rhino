@@ -26,9 +26,10 @@ public enum UniqueTag {
     /**
      * Tag to indicate that a object represents "double" with the real value stored somewhere else.
      */
-    DOUBLE_MARK;
+    DOUBLE_MARK,
 
-    @Serial private static final long serialVersionUID = -4320556826714577259L;
+    /** Tag to represent an initiailized binding in a variable scope. */
+    UNINITIALIZED;
 
     // Overridden for better debug printouts
     @Override

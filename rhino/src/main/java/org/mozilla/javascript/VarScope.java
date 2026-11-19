@@ -32,4 +32,11 @@ public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope
     default VarScope copyScope() {
         throw new UnsupportedOperationException(this.getClass().getName());
     }
+
+    /** Create a mutable binding which must return {@link
+        UniqueTag.UNINITIALIZED} until an initial value has been
+        set. */
+    public boolean createMutableBinding(String name, boolean deletable);
+    public boolean createImmutableBinding(String name, boolean strict);
+    public boolean initializeBinding(String name, Object value);
 }
