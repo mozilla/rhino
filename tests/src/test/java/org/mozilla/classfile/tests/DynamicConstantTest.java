@@ -8,6 +8,7 @@ package org.mozilla.classfile.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,11 +42,14 @@ import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TemplateLiteralCallSite;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.UniqueTag;
 import org.mozilla.javascript.optimizer.EagerSourceCodeProviderDescriber;
+import org.mozilla.javascript.optimizer.ObjectLiteralDescriptorDescribers;
 import org.mozilla.javascript.optimizer.StringConcatBootstraps;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
 import org.mozilla.javascript.optimizer.TemplateLiteralCallSiteDescriber;
 import org.mozilla.javascript.optimizer.UndefinedDescriber;
+import org.mozilla.javascript.optimizer.UniqueTagDescriber;
 import org.mozilla.javascript.regexp.RegExpImpl;
 
 public class DynamicConstantTest {
@@ -361,6 +365,28 @@ public class DynamicConstantTest {
         cfw.stopMethod((short) 0);
 
         assertSame(Undefined.instance, invoke(cfw, "TestUndefinedConstant", "get"));
+    }
+
+    @Test
+    public void uniqueTagsResolveToTheCanonicalInstances() throws Exception {
+        UniqueTag[] tags = {
+            UniqueTag.NOT_FOUND,
+            UniqueTag.NULL_VALUE,
+            UniqueTag.DOUBLE_MARK,
+            UniqueTag.COMPUTED_KEY,
+            UniqueTag.COMPUTED_METHOD
+        };
+        for (int i = 0; i < tags.length; i++) {
+            String className = "TestUniqueTagConstant" + i;
+            ClassFileWriter cfw = writer(className);
+            new UniqueTagDescriber(cfw.getDynamicDescriptorRegistry());
+            cfw.startMethod("get", "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
+            cfw.addLoadDynamicConstant(tags[i]);
+            cfw.add(ByteCode.ARETURN);
+            cfw.stopMethod((short) 0);
+
+            assertSame(tags[i], invoke(cfw, className, "get"));
+        }
     }
 
     @Test
