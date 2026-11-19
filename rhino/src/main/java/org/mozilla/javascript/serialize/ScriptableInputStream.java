@@ -15,7 +15,6 @@ import java.io.ObjectStreamClass;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
-import org.mozilla.javascript.UniqueTag;
 import org.mozilla.javascript.VarScope;
 
 /**
@@ -65,8 +64,6 @@ public class ScriptableInputStream extends ObjectInputStream {
             if (obj == Scriptable.NOT_FOUND) {
                 throw new IOException("Object " + name + " not found upon " + "deserialization.");
             }
-        } else if (obj instanceof UniqueTag) {
-            obj = ((UniqueTag) obj).readResolve();
         } else if (obj instanceof Undefined) {
             obj = ((Undefined) obj).readResolve();
         }
