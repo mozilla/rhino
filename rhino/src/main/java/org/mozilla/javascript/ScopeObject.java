@@ -1,5 +1,6 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.EMPTY;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
@@ -350,10 +351,9 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
             }
         } else {
             // either const hoisted declaration or initialization
-            var flags =
-                    cx.getLanguageVersion() >= Context.VERSION_ES6
-                            ? ScriptableObject.CONST
-                            : ScriptableObject.LEGACY_CONST;
+            var flags = cx.getLanguageVersion() >= Context.VERSION_ES6
+                    ? ScriptableObject.CONST
+                    : ScriptableObject.LEGACY_CONST;
             slot = getMap().modify(this, name, index, flags);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
@@ -367,6 +367,54 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
             return true;
         }
         return slot.setValue(value, this, start);
+    }
+
+    @Override
+    public boolean createMutableBinding(String name, boolean deletable) {
+        var flags = deletable ? EMPTY : PERMANENT;
+        var slot =
+            getMap().compute(
+                this,
+                name,
+                0,
+                (n, i, e, c, o) -> {
+                    if (e == null) {
+                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                            newSlot.value = VarScope.UNINITIALIZED;
+                        return newSlot;
+                    }
+                    return e;
+                });
+        return slot.value == VarScope.UNINITIALIZED;
+    }
+
+    @Override
+    public boolean createImmutableBinding(String name, boolean strict) {
+        var flags = strict ? ScriptableObject.CONST : ScriptableObject.LEGACY_CONST;
+        var slot =
+            getMap().compute(
+                this,
+                name,
+                0,
+                (n, i, e, c, o) -> {
+                    if (e == null) {
+                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                            newSlot.value = VarScope.UNINITIALIZED;
+                        return newSlot;
+                    }
+                    return e;
+                });
+        return slot.value == VarScope.UNINITIALIZED;
+    }
+
+    public boolean initializeBinding(String name, Object value) {
+        var slot = getMap().query(name, 0);
+        if ((slot.getAttributes() & READONLY) != 0 && slot.value != VarScope.UNINITIALIZED) {
+            return false;
+        } else {
+            slot.value = value;
+        }
+        return true;
     }
 
     @Serial

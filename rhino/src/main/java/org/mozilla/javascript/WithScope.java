@@ -115,4 +115,21 @@ public class WithScope implements VarScope {
     public boolean isNestedScope() {
         return true;
     }
+
+    @Override
+    public boolean createMutableBinding(String name, boolean deletable) {
+        Kit.codeBug();
+        return false;
+    }
+
+    @Override
+    public boolean createImmutableBinding(String name, boolean strict) {
+        Kit.codeBug();
+        return false;
+    }
+
+    public boolean initializeBinding(String name, Object value) {
+        Kit.codeBug();
+        return true;
+    }
 }

@@ -317,6 +317,22 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
             // TODO Auto-generated method stub
 
         }
+
+        @Override
+        public boolean createMutableBinding(String name, boolean deletable) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean createImmutableBinding(String name, boolean strict) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        public boolean initializeBinding(String name, Object value) {
+            return true;
+        }
     }
 
     @Override
