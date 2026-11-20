@@ -35,6 +35,7 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityController;
@@ -499,7 +500,10 @@ public class Main {
                                 && !(result instanceof Function
                                         && finalSource.trim().startsWith("function"))) {
                             try {
-                                console.println(Context.toString(result));
+                                console.println(
+                                        ScriptRuntime.isSymbol(result)
+                                                ? result.toString()
+                                                : Context.toString(result));
                             } catch (RhinoException rex) {
                                 ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
                             }
