@@ -91,4 +91,19 @@ public class ForTest {
                         + "delete Object.prototype.z;\n"
                         + "keys.join() + ' ' + calls");
     }
+
+    @Test
+    public void forInShadowingBeforeProxyCallsOwnKeysOnce() {
+        Utils.assertWithAllModes_ES6(
+                "b 1",
+                "var proto = { a: 1, b: 2 };\n"
+                        + "var calls = 0;\n"
+                        + "var p = new Proxy(Object.create(proto), {\n"
+                        + "  ownKeys: function(t) { calls++; return Reflect.ownKeys(t); }\n"
+                        + "});\n"
+                        + "var o = Object.create(p, { a: { value: 3, enumerable: false } });\n"
+                        + "var keys = [];\n"
+                        + "for (var k in o) keys.push(k);\n"
+                        + "keys.join() + ' ' + calls");
+    }
 }

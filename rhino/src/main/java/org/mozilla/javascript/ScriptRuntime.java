@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -2698,8 +2697,10 @@ public class ScriptRuntime {
         Scriptable obj;
         Object[] ids;
         HashSet<Object> used;
-        // objects left behind whose non-enumerable ids are not in used yet
-        ArrayList<ScriptableObject> shadowing;
+        // The first object left behind whose non-enumerable ids are not in used yet. The
+        // objects from here up to obj are walked again with getPrototype(), so no proxy is
+        // among them.
+        Scriptable shadowFrom;
         Object currentId;
         int index;
         int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES,
@@ -2962,6 +2963,10 @@ public class ScriptRuntime {
     private static void enumChangeObject(IdEnumeration x) {
         Object[] ids = null;
         while (x.obj != null) {
+            if (x.shadowFrom != null && !isShadowingCandidate(x.obj)) {
+                // A proxy's ownKeys trap could change the prototypes walked below.
+                enumAddShadowing(x);
+            }
             ids = x.obj.getIds();
             if (ids.length != 0) {
                 break;
@@ -2978,35 +2983,62 @@ public class ScriptRuntime {
                 x.used.add(previous[i]);
             }
         }
-        if (x.obj != null && x.shadowing != null) {
-            // Non-enumerable properties also shadow those of the prototypes. Enumerable ones
-            // added after the snapshot above must not.
-            if (x.used == null) {
-                x.used = new HashSet<>();
-            }
-            for (ScriptableObject so : x.shadowing) {
-                HashSet<Object> enumerable = new HashSet<>(Arrays.asList(so.getIds()));
-                for (Object id : so.getAllIds()) {
-                    if (!enumerable.contains(id)) {
-                        x.used.add(id);
-                    }
-                }
-            }
-            x.shadowing = null;
+        if (x.obj != null) {
+            enumAddShadowing(x);
+        } else {
+            x.shadowFrom = null;
         }
         x.ids = ids;
         x.index = 0;
     }
 
     private static void enumToPrototype(IdEnumeration x) {
-        // Asking a proxy for its ids again would call its ownKeys trap twice.
-        if (x.obj instanceof ScriptableObject && !(x.obj instanceof NativeProxy)) {
-            if (x.shadowing == null) {
-                x.shadowing = new ArrayList<>();
-            }
-            x.shadowing.add((ScriptableObject) x.obj);
+        if (x.shadowFrom == null && isShadowingCandidate(x.obj)) {
+            x.shadowFrom = x.obj;
         }
         x.obj = x.obj.getPrototype();
+    }
+
+    private static boolean isShadowingCandidate(Scriptable obj) {
+        // Asking a proxy for its ids or prototype again would call its traps twice.
+        return obj instanceof ScriptableObject && !(obj instanceof NativeProxy);
+    }
+
+    /**
+     * Adds the non-enumerable ids of the objects left behind before {@code x.obj} to {@code
+     * x.used}: they hide the properties of the same name on the prototypes. Enumerable ids added
+     * after the snapshot in {@link #enumChangeObject} must not, so only non-enumerable ones are
+     * added.
+     */
+    private static void enumAddShadowing(IdEnumeration x) {
+        for (Scriptable o = x.shadowFrom;
+                o != null && o != x.obj && isShadowingCandidate(o);
+                o = o.getPrototype()) {
+            ScriptableObject so = (ScriptableObject) o;
+            if (so.getClass() == NativeObject.class) {
+                // All its properties are slots, so one pass over them is enough.
+                if (x.used == null) {
+                    x.used = new HashSet<>();
+                }
+                so.addNonEnumerableIds(x.used);
+                continue;
+            }
+            Object[] all = so.getAllIds();
+            Object[] enumerable = so.getIds();
+            if (all.length <= enumerable.length) {
+                continue; // no non-enumerable ids
+            }
+            HashSet<Object> enumerableSet = new HashSet<>(Arrays.asList(enumerable));
+            if (x.used == null) {
+                x.used = new HashSet<>();
+            }
+            for (Object id : all) {
+                if (!enumerableSet.contains(id)) {
+                    x.used.add(id);
+                }
+            }
+        }
+        x.shadowFrom = null;
     }
 
     /**
