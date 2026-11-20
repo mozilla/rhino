@@ -1,0 +1,376 @@
+name: PR Lifecycle and Triage
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - converted_to_draft
+      - closed
+  pull_request_review:
+    types:
+      - submitted
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  manage-labels:
+    runs-on: ubuntu-latest
+    name: Manage PR Labels
+    steps:
+      - name: Process PR Event or Comment Command
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // --- Configuration ---
+            // Set DRY_RUN to true to simulate and log actions without modifying labels
+            const DRY_RUN = false;
+
+            // Set your preferred label for author action: 'waiting-on-author' or 'changes-requested'
+            const WAITING_LABEL = 'waiting-on-author';
+
+            const STATUS_LABELS = {
+              TRIAGE: 'needs-triage',
+              REVIEW: 'needs-review',
+              WAITING: WAITING_LABEL,
+              READY: 'ready-to-merge'
+            };
+
+            // All status labels that should be mutually exclusive
+            const ALL_STATUS_LABELS = [
+              'needs-triage',
+              'needs-review',
+              'waiting-on-author',
+              'changes-requested',
+              'ready-to-merge'
+            ];
+
+            const LABEL_DEFINITIONS = {
+              'needs-triage': { color: 'fbca04', description: 'PR requires initial triage by maintainers' },
+              'needs-review': { color: '0e8a16', description: 'PR is ready for code review' },
+              'waiting-on-author': { color: 'd93f0b', description: 'Awaiting changes or clarification from PR author' },
+              'changes-requested': { color: 'd93f0b', description: 'Reviewer requested changes before merge' },
+              'ready-to-merge': { color: '006b75', description: 'Approved and ready to be merged' }
+            };
+
+            // Ensure a label exists in the repo with defined color/description
+            async function ensureLabelExists(labelName) {
+              const def = LABEL_DEFINITIONS[labelName];
+              if (!def) return;
+              if (DRY_RUN) {
+                core.info(`[DRY RUN] Would check/create label "${labelName}"`);
+                return;
+              }
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: labelName });
+              } catch (err) {
+                if (err.status === 404) {
+                  try {
+                    await github.rest.issues.createLabel({
+                      owner,
+                      repo,
+                      name: labelName,
+                      color: def.color,
+                      description: def.description
+                    });
+                  } catch (createErr) {
+                    // Safe to ignore race condition where label was created concurrently
+                  }
+                }
+              }
+            }
+
+            // Sets a mutual-exclusive status label (removes conflicting status labels)
+            // If targetLabel is null, all status labels are removed.
+            async function setStatusLabel(prNumber, targetLabel) {
+              const { data: issue } = await github.rest.issues.get({
+                owner,
+                repo,
+                issue_number: prNumber
+              });
+              const currentLabels = issue.labels.map(l => typeof l === 'string' ? l : l.name);
+              const toRemove = currentLabels.filter(name => ALL_STATUS_LABELS.includes(name) && name !== targetLabel);
+
+              if (DRY_RUN) {
+                core.info(`[DRY RUN] PR #${prNumber}: Current status labels: [${currentLabels.filter(l => ALL_STATUS_LABELS.includes(l)).join(', ')}]`);
+                core.info(`[DRY RUN] PR #${prNumber}: Would remove labels: [${toRemove.join(', ')}]`);
+                core.info(`[DRY RUN] PR #${prNumber}: Would set status label: "${targetLabel || 'none'}"`);
+                return;
+              }
+
+              // 1. Remove obsolete status labels
+              for (const name of toRemove) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                    name: name
+                  });
+                } catch (err) {
+                  if (err.status !== 404) throw err;
+                }
+              }
+
+              // 2. Add target status label if requested and not already present
+              if (targetLabel && !currentLabels.includes(targetLabel)) {
+                await ensureLabelExists(targetLabel);
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  labels: [targetLabel]
+                });
+              }
+            }
+
+            // Check if user has maintainer / triage permissions
+            async function checkIsMaintainer(username, association) {
+              if (['OWNER', 'MEMBER', 'COLLABORATOR'].includes(association)) {
+                return true;
+              }
+              try {
+                const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner,
+                  repo,
+                  username: username
+                });
+                return data.permission === 'admin' || data.permission === 'write' || data.permission === 'maintain';
+              } catch (err) {
+                return false;
+              }
+            }
+
+            // ==========================================
+            // Event 1: pull_request_target
+            // ==========================================
+            if (context.eventName === 'pull_request_target') {
+              const pr = context.payload.pull_request;
+              const action = context.payload.action;
+              const prNumber = pr.number;
+
+              if (action === 'closed' || action === 'converted_to_draft') {
+                await setStatusLabel(prNumber, null);
+                return;
+              }
+
+              if (pr.draft) {
+                return; // Draft PRs do not get active triage/review labels
+              }
+
+              if (action === 'opened' || action === 'reopened') {
+                const isMaintainer = await checkIsMaintainer(pr.user.login, pr.author_association);
+                // Maintainer PRs skip triage and go straight to review; external PRs need triage
+                const initialStatus = isMaintainer ? STATUS_LABELS.REVIEW : STATUS_LABELS.TRIAGE;
+                await setStatusLabel(prNumber, initialStatus);
+                return;
+              }
+
+              if (action === 'ready_for_review') {
+                await setStatusLabel(prNumber, STATUS_LABELS.REVIEW);
+                return;
+              }
+
+              if (action === 'synchronize') {
+                // PR code updated by author: if changes were requested / waiting on author, switch back to review
+                const { data: issue } = await github.rest.issues.get({
+                  owner,
+                  repo,
+                  issue_number: prNumber
+                });
+                const currentLabels = issue.labels.map(l => typeof l === 'string' ? l : l.name);
+                if (currentLabels.includes('waiting-on-author') || currentLabels.includes('changes-requested')) {
+                  await setStatusLabel(prNumber, STATUS_LABELS.REVIEW);
+                }
+                return;
+              }
+            }
+
+            // ==========================================
+            // Event 2: pull_request_review
+            // ==========================================
+            if (context.eventName === 'pull_request_review') {
+              const pr = context.payload.pull_request;
+              const review = context.payload.review;
+              const action = context.payload.action;
+              const prNumber = pr.number;
+
+              if (action !== 'submitted' || pr.draft) return;
+
+              const reviewState = (review.state || '').toLowerCase();
+
+              if (reviewState === 'changes_requested') {
+                await setStatusLabel(prNumber, STATUS_LABELS.WAITING);
+                return;
+              }
+
+              if (reviewState === 'approved') {
+                // Check all submitted reviews to see if any reviewer still has CHANGES_REQUESTED
+                const { data: reviews } = await github.rest.pulls.listReviews({
+                  owner,
+                  repo,
+                  pull_number: prNumber,
+                  per_page: 100
+                });
+
+                // Compute latest status per reviewer
+                const latestReviews = new Map();
+                for (const r of reviews) {
+                  const state = (r.state || '').toUpperCase();
+                  if (state === 'APPROVED' || state === 'CHANGES_REQUESTED') {
+                    latestReviews.set(r.user.login, state);
+                  } else if (state === 'DISMISSED') {
+                    latestReviews.delete(r.user.login);
+                  }
+                }
+
+                const hasChangesRequested = Array.from(latestReviews.values()).includes('CHANGES_REQUESTED');
+                if (!hasChangesRequested) {
+                  await setStatusLabel(prNumber, STATUS_LABELS.READY);
+                }
+                return;
+              }
+            }
+
+            // ==========================================
+            // Event 3: issue_comment (Slash Commands)
+            // ==========================================
+            if (context.eventName === 'issue_comment') {
+              const comment = context.payload.comment;
+              const issue = context.payload.issue;
+              const action = context.payload.action;
+
+              // Only handle comments created on Pull Requests by non-bot users
+              if (action !== 'created' || !issue.pull_request || comment.user.type === 'Bot') {
+                return;
+              }
+
+              const commenter = comment.user.login;
+              const commentBody = comment.body || '';
+              const prNumber = issue.number;
+              const isPrAuthor = (issue.user.login === commenter);
+              const isMaintainer = await checkIsMaintainer(commenter, comment.author_association);
+
+              const lines = commentBody.split('\n').map(l => l.trim());
+              let commandExecuted = false;
+
+              for (const line of lines) {
+                if (!line.startsWith('/')) continue;
+
+                const parts = line.split(/\s+/);
+                const cmd = parts[0].toLowerCase();
+                const arg = parts.slice(1).join(' ').trim();
+
+                // Status commands
+                if (['/ready-to-merge', '/lgtm', '/approve'].includes(cmd)) {
+                  if (!isMaintainer) continue;
+                  await setStatusLabel(prNumber, STATUS_LABELS.READY);
+                  commandExecuted = true;
+                } else if (['/needs-review', '/ready-for-review', '/review'].includes(cmd)) {
+                  // Both maintainers and PR authors can request review
+                  if (!isMaintainer && !isPrAuthor) continue;
+                  await setStatusLabel(prNumber, STATUS_LABELS.REVIEW);
+                  commandExecuted = true;
+                } else if (['/waiting-on-author', '/changes-requested'].includes(cmd)) {
+                  if (!isMaintainer) continue;
+                  await setStatusLabel(prNumber, STATUS_LABELS.WAITING);
+                  commandExecuted = true;
+                } else if (['/needs-triage', '/triage'].includes(cmd)) {
+                  if (!isMaintainer) continue;
+                  await setStatusLabel(prNumber, STATUS_LABELS.TRIAGE);
+                  commandExecuted = true;
+                }
+
+                // Generic label commands: /label <name> and /unlabel <name>
+                else if (cmd === '/label' && arg) {
+                  if (!isMaintainer) continue;
+                  if (DRY_RUN) {
+                    core.info(`[DRY RUN] PR #${prNumber}: Would add label "${arg}"`);
+                  } else {
+                    await github.rest.issues.addLabels({
+                      owner,
+                      repo,
+                      issue_number: prNumber,
+                      labels: [arg]
+                    });
+                  }
+                  commandExecuted = true;
+                } else if (['/unlabel', '/remove-label'].includes(cmd) && arg) {
+                  if (!isMaintainer) continue;
+                  if (DRY_RUN) {
+                    core.info(`[DRY RUN] PR #${prNumber}: Would remove label "${arg}"`);
+                  } else {
+                    try {
+                      await github.rest.issues.removeLabel({
+                        owner,
+                        repo,
+                        issue_number: prNumber,
+                        name: arg
+                      });
+                    } catch (err) {
+                      if (err.status !== 404) throw err;
+                    }
+                  }
+                  commandExecuted = true;
+                }
+
+                // Help command: /help or /commands
+                else if (['/help', '/commands'].includes(cmd)) {
+                  const helpBody = [
+                    '### 🤖 PR Workflow Commands',
+                    '',
+                    '| Command | Allowed Users | Description |',
+                    '| --- | --- | --- |',
+                    '| `/ready-to-merge`, `/lgtm`, `/approve` | Maintainers | Set status to `ready-to-merge` |',
+                    '| `/needs-review`, `/ready-for-review`, `/review` | Maintainers & PR Author | Set status to `needs-review` |',
+                    '| `/waiting-on-author`, `/changes-requested` | Maintainers | Set status to `waiting-on-author` |',
+                    '| `/needs-triage`, `/triage` | Maintainers | Set status to `needs-triage` |',
+                    '| `/label <name>` | Maintainers | Add an arbitrary label |',
+                    '| `/unlabel <name>` | Maintainers | Remove a label |',
+                    '| `/help` | Everyone | Display this command reference |',
+                    '',
+                    '_Status labels are mutually exclusive and update automatically on reviews and commits._'
+                  ].join('\n');
+
+                  if (DRY_RUN) {
+                    core.info(`[DRY RUN] PR #${prNumber}: Would post help comment`);
+                  } else {
+                    await github.rest.issues.createComment({
+                      owner,
+                      repo,
+                      issue_number: prNumber,
+                      body: helpBody
+                    });
+                  }
+                  commandExecuted = true;
+                }
+              }
+
+              // Add a reaction (thumbs-up) to acknowledge executed commands
+              if (commandExecuted) {
+                if (DRY_RUN) {
+                  core.info(`[DRY RUN] Would react with '+1' to comment ${comment.id}`);
+                } else {
+                  try {
+                    await github.rest.reactions.createForIssueComment({
+                      owner,
+                      repo,
+                      comment_id: comment.id,
+                      content: '+1'
+                    });
+                  } catch (reactionErr) {
+                    // Non-fatal if reaction fails
+                  }
+                }
+              }
+            }
