@@ -98,6 +98,10 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
     @Override
     public void put(String id, Scriptable start, Object value) {
+        if (isUnreachableProtoProperty(id)) {
+            NativeObject.js_protoSetter(this, value);
+            return;
+        }
         // Ignore assignments to "length"--it's readonly.
         if (!"length".equals(id))
             throw Context.reportRuntimeErrorById("msg.java.array.member.not.found", id);
@@ -143,10 +147,16 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
     @Override
     public Scriptable getPrototype() {
-        if (prototype == null) {
+        if (prototype == null && !prototypeSet) {
             prototype = ScriptableObject.getArrayPrototype(this.getParentScope());
         }
         return prototype;
+    }
+
+    @Override
+    public void setPrototype(Scriptable m) {
+        prototypeSet = true;
+        super.setPrototype(m);
     }
 
     @Override
@@ -163,4 +173,5 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
     Object array;
     int length;
     TypeInfo componentType;
+    private boolean prototypeSet;
 }

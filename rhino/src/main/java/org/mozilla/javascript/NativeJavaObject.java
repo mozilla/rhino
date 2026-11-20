@@ -91,7 +91,25 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         if (fieldAndMethod != null) {
             return fieldAndMethod;
         }
-        return members.get(this, parent, name, javaObject, false);
+        Object result = members.get(this, parent, name, javaObject, false);
+        if (result == NOT_FOUND && isUnreachableProtoProperty(name)) {
+            return null;
+        }
+        return result;
+    }
+
+    /**
+     * With no prototype chain the {@code __proto__} accessor on {@code Object.prototype} can't be
+     * found, so it has to be handled directly.
+     */
+    boolean isUnreachableProtoProperty(String name) {
+        if (!NativeObject.PROTO_PROPERTY.equals(name)
+                || getPrototype() != null
+                || members.has(name, false)) {
+            return false;
+        }
+        Context cx = Context.getCurrentContext();
+        return cx != null && cx.getLanguageVersion() >= Context.VERSION_ES6;
     }
 
     @Override
@@ -113,7 +131,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
-        if (prototype == null || members.has(name, false))
+        if (isUnreachableProtoProperty(name)) {
+            NativeObject.js_protoSetter(this, value);
+        } else if (prototype == null || members.has(name, false))
             members.put(this, parent, name, javaObject, value, false);
         else prototype.put(name, prototype, value);
     }
