@@ -294,16 +294,46 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public void put(String id, Scriptable start, Object value) {
+        if (start == this) {
+            long index = toArrayIndex(id);
+            if (index >= length && checkIndexBeyondLength(index, false)) {
+                return;
+            }
+        }
         super.put(id, start, value);
         if (start == this) {
             // If the object is sealed, super will throw exception
             long index = toArrayIndex(id);
-            if (index >= length) {
+            if (index >= length && isLengthWritable()) {
                 length = index + 1;
                 modCount++;
                 denseOnly = false;
             }
         }
+    }
+
+    /**
+     * Implements the {@code [[DefineOwnProperty]]} behaviour of array exotic objects for an index
+     * that is not less than the current {@code length}: the operation fails when the object is not
+     * extensible or when {@code length} is not writable. Per {@code [[Set]]} such an assignment is
+     * silently ignored in sloppy mode and throws a {@code TypeError} in strict mode, while a caller
+     * that performs validity checks ({@code Object.defineProperty}) always expects a failure to be
+     * reported by throwing. Returns true when the caller must not proceed with the assignment.
+     */
+    private boolean checkIndexBeyondLength(long index, boolean throwOnFailure) {
+        if (index < length) {
+            return false;
+        }
+        if (isLengthWritable() && isExtensible()) {
+            return false;
+        }
+        if (throwOnFailure || Context.isCurrentContextStrict()) {
+            if (!isExtensible()) {
+                throw ScriptRuntime.typeErrorById("msg.not.extensible");
+            }
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+        }
+        return true;
     }
 
     private boolean ensureCapacity(int capacity) {
@@ -323,6 +353,12 @@ public class NativeArray extends ScriptableObject implements List {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
+        if (start == this
+                && 0 <= index
+                && this.length <= index
+                && checkIndexBeyondLength(index, false)) {
+            return;
+        }
         var slot = denseOnly ? null : getMap().query(null, index);
         if (start == this
                 && !isSealed()
@@ -468,9 +504,8 @@ public class NativeArray extends ScriptableObject implements List {
     protected boolean defineOwnProperty(
             Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
         long index = toArrayIndex(id);
-        if (index >= length) {
-            length = index + 1;
-            modCount++;
+        if (index >= length && checkIndexBeyondLength(index, checkValid)) {
+            return false;
         }
 
         if (index != -1 && dense != null) {
@@ -490,13 +525,20 @@ public class NativeArray extends ScriptableObject implements List {
             }
         }
 
-        super.defineOwnProperty(cx, id, desc, checkValid);
+        boolean defined = super.defineOwnProperty(cx, id, desc, checkValid);
+
+        if (defined && index >= length) {
+            // The array exotic [[DefineOwnProperty]] only raises "length" after the new
+            // element has been defined successfully.
+            length = index + 1;
+            modCount++;
+        }
 
         if ("length".equals(id)) {
             lengthAttr =
                     getAttributes("length"); // Update cached attributes value for length property
         }
-        return true;
+        return defined;
     }
 
     /** See ECMA 15.4.1,2 */
@@ -746,6 +788,11 @@ public class NativeArray extends ScriptableObject implements List {
 
     boolean getDenseOnly() {
         return denseOnly;
+    }
+
+    /** Returns true if the "length" property of this array is currently writable. */
+    private boolean isLengthWritable() {
+        return (lengthAttr & READONLY) == 0;
     }
 
     private boolean setLength(CompoundOperationMap<Scriptable> compoundOp, double d) {
@@ -1173,6 +1220,12 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
+            if (!na.isLengthWritable()) {
+                // Array.prototype.push defines the new element at an index that is not less
+                // than "length" and ends with Set(O, "length", ..., true); both fail for a
+                // non-writable "length", so the call throws and the array is left unchanged.
+                throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+            }
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
                 for (Object arg : args) {
                     na.dense[(int) na.length++] = arg;
@@ -1197,7 +1250,7 @@ public class NativeArray extends ScriptableObject implements List {
         Object result;
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.length > 0) {
+            if (na.denseOnly && na.isLengthWritable() && na.length > 0) {
                 na.length--;
                 na.modCount++;
                 result = na.dense[(int) na.length];
@@ -1220,6 +1273,11 @@ public class NativeArray extends ScriptableObject implements List {
         }
         // necessary to match js even when length < 0; js pop will give a
         // length property to any target it is called on.
+        if (o instanceof NativeArray && !((NativeArray) o).isLengthWritable()) {
+            // Array.prototype.pop ends with Set(O, "length", ..., true), which throws when
+            // "length" is not writable. The removed element stays removed.
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+        }
         setLengthProperty(cx, o, length);
 
         return result;
@@ -1231,7 +1289,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.length > 0) {
+            if (na.denseOnly && na.isLengthWritable() && na.length > 0) {
                 na.length--;
                 na.modCount++;
                 Object result = na.dense[0];
@@ -1265,6 +1323,11 @@ public class NativeArray extends ScriptableObject implements List {
         } else {
             result = Undefined.instance;
         }
+        if (o instanceof NativeArray && !((NativeArray) o).isLengthWritable()) {
+            // Array.prototype.shift ends with Set(O, "length", ..., true), which throws when
+            // "length" is not writable. The removed element stays removed.
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+        }
         setLengthProperty(cx, o, length);
         return result;
     }
@@ -1275,6 +1338,13 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
+            if (!na.isLengthWritable()) {
+                // Array.prototype.unshift creates the new elements at indices that are not
+                // less than "length" (which fails first) and ends with Set(O, "length", ...,
+                // true); both throw for a non-writable "length", so the call throws and the
+                // array is left unchanged.
+                throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+            }
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
                 System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
                 System.arraycopy(args, 0, na.dense, 0, args.length);
@@ -1389,8 +1459,16 @@ public class NativeArray extends ScriptableObject implements List {
             }
         }
 
+        boolean lengthWritable = na == null || na.isLengthWritable();
+        if (!lengthWritable && delta > 0) {
+            // An expanding splice creates the new elements at indices that are not less than
+            // "length", which throws for a non-writable "length" before anything is modified.
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+        }
+
         /* Find the direction (up or down) to copy and make way for argv. */
         if (denseFrom
+                && lengthWritable
                 && length + delta < Integer.MAX_VALUE
                 && na.ensureCapacity((int) (length + delta))) {
             System.arraycopy(
@@ -1429,6 +1507,13 @@ public class NativeArray extends ScriptableObject implements List {
         int argoffset = args.length - argc;
         for (int i = 0; i < argc; i++) {
             setElem(cx, o, begin + i, args[i + argoffset]);
+        }
+
+        if (!lengthWritable) {
+            // Array.prototype.splice ends with Set(O, "length", ..., true), which throws when
+            // "length" is not writable. The removal and insertion of the elements above stay
+            // applied.
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
         }
 
         /* Update length in case we deleted elements from the end. */
