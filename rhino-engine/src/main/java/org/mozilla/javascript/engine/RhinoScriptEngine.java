@@ -80,6 +80,13 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
     private final Builtins builtins;
     private TopLevel topLevelScope = null;
 
+    // The scope of the last evaluation and the bindings it was created for. Scripts evaluated
+    // with the same bindings share this scope and therefore the global lexical declarations
+    // (top level let and const), like several scripts of one page.
+    private TopLevel scope = null;
+    private Bindings scopeEngineBindings = null;
+    private Bindings scopeGlobalBindings = null;
+
     RhinoScriptEngine(RhinoScriptEngineFactory factory) {
         this.factory = factory;
         this.builtins = new Builtins();
@@ -96,20 +103,29 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             builtins.register(cx, topLevelScope, sc);
         }
 
-        if (sc.getBindings(ScriptContext.GLOBAL_SCOPE) != null) {
+        Bindings engineBindings = sc.getBindings(ScriptContext.ENGINE_SCOPE);
+        Bindings globalBindings = sc.getBindings(ScriptContext.GLOBAL_SCOPE);
+        if (scope != null
+                && engineBindings == scopeEngineBindings
+                && globalBindings == scopeGlobalBindings) {
+            return scope;
+        }
+
+        if (globalBindings != null) {
             var globalScope =
                     TopLevel.createIsolate(
-                            topLevelScope,
-                            new BindingsObject(
-                                    topLevelScope, sc.getBindings(ScriptContext.GLOBAL_SCOPE)));
-            return TopLevel.createIsolate(
-                    globalScope,
-                    new BindingsObject(globalScope, sc.getBindings(ScriptContext.ENGINE_SCOPE)));
+                            topLevelScope, new BindingsObject(topLevelScope, globalBindings));
+            scope =
+                    TopLevel.createIsolate(
+                            globalScope, new BindingsObject(globalScope, engineBindings));
         } else {
-            return TopLevel.createIsolate(
-                    topLevelScope,
-                    new BindingsObject(topLevelScope, sc.getBindings(ScriptContext.ENGINE_SCOPE)));
+            scope =
+                    TopLevel.createIsolate(
+                            topLevelScope, new BindingsObject(topLevelScope, engineBindings));
         }
+        scopeEngineBindings = engineBindings;
+        scopeGlobalBindings = globalBindings;
+        return scope;
     }
 
     @Override
@@ -193,13 +209,17 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
             TopLevel scope = initScope(cx, context);
 
             Scriptable localThis;
+            Object f;
             if (thiz == null) {
+                // a global function: resolved like a name in global code, so let and const
+                // declarations are found as well as properties of the global object
                 localThis = scope.getGlobalThis();
+                f = scope.get(name, scope);
             } else {
                 localThis = Context.toObject(thiz, scope);
+                f = ScriptableObject.getProperty(localThis, name);
             }
 
-            Object f = ScriptableObject.getProperty(localThis, name);
             if (f == Scriptable.NOT_FOUND) {
                 throw new NoSuchMethodException(name);
             }
@@ -234,7 +254,7 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
         }
         try (Context cx = ctxFactory.enterContext()) {
             TopLevel scope = initScope(cx, context);
-            if (methodsMissing(scope.getGlobalThis(), clasz)) {
+            if (methodsMissing(scope, clasz)) {
                 return null;
             }
         } catch (ScriptException se) {
@@ -334,6 +354,19 @@ public class RhinoScriptEngine extends AbstractScriptEngine implements Compilabl
                 continue;
             }
             Object methodObj = ScriptableObject.getProperty(scope, m.getName());
+            if (!(methodObj instanceof Callable)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean methodsMissing(TopLevel scope, Class<?> clasz) {
+        for (Method m : clasz.getMethods()) {
+            if (m.getDeclaringClass() == Object.class) {
+                continue;
+            }
+            Object methodObj = scope.get(m.getName(), scope);
             if (!(methodObj instanceof Callable)) {
                 return true;
             }

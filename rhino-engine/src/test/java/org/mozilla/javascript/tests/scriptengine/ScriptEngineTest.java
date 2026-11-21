@@ -75,6 +75,23 @@ public class ScriptEngineTest {
     }
 
     @Test
+    public void lexicalDeclarationIsSharedBetweenEvaluations() throws ScriptException {
+        engine.eval("let a = 1; const b = 2;");
+        assertEquals(3L, engine.eval("a + b"));
+        // like var declarations of different scripts of one page
+        assertThrows(ScriptException.class, () -> engine.eval("let a = 3;"));
+    }
+
+    @Test
+    public void lexicalDeclarationIsNotSharedWithOtherBindings() throws ScriptException {
+        engine.eval("let a = 1;");
+        engine.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
+        assertEquals("undefined", engine.eval("typeof a"));
+        engine.eval("let a = 2;");
+        assertEquals(2L, engine.eval("a"));
+    }
+
+    @Test
     public void testThrows() {
         assertThrows(ScriptException.class, () -> engine.eval("throw 'This is an error'"));
     }

@@ -158,6 +158,38 @@ public class InvocableTest {
                 });
     }
 
+    @Test
+    public void invokeLexicalFunctionTest() throws ScriptException, NoSuchMethodException {
+        engine.eval(
+                "const add = (a, b) => a + b;\n" + "let sub = function(a, b) { return a - b; };");
+        assertEquals(5L, iEngine.invokeFunction("add", 2, 3));
+        assertEquals(-1L, iEngine.invokeFunction("sub", 2, 3));
+        // like in browsers the lexical declarations are not properties of the global object
+        assertNull(engine.get("add"));
+    }
+
+    @Test
+    public void invokeLexicalShadowsGlobalPropertyTest()
+            throws ScriptException, NoSuchMethodException {
+        engine.eval("foo = function() { return 'property'; };");
+        engine.eval("let foo = function() { return 'lexical'; };");
+        assertEquals("lexical", iEngine.invokeFunction("foo"));
+    }
+
+    @Test
+    public void getInterfaceLexicalTest() throws ScriptException {
+        engine.eval(
+                "let foo = 'initialized';\n"
+                        + "const getFoo = () => foo;\n"
+                        + "const setFoo = (v) => { foo = v; };\n"
+                        + "const addItUp = (a, b) => a + b;");
+        I tester = iEngine.getInterface(I.class);
+        assertEquals("initialized", tester.getFoo());
+        tester.setFoo("tested");
+        assertEquals("tested", tester.getFoo());
+        assertEquals(5, tester.addItUp(2, 3));
+    }
+
     interface I {
 
         void setFoo(String v);

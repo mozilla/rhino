@@ -180,6 +180,24 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     }
 
     /**
+     * Like {@link #get(String, VarScope)}, but throws a ReferenceError if the binding is a let or
+     * const declaration that has not been initialized yet (temporal dead zone).
+     */
+    Object getInitializedBinding(String name, VarScope start) {
+        var slot = getMap().query(name, 0);
+        if (slot == null) {
+            return Scriptable.NOT_FOUND;
+        }
+        Object value = slot.getValue(start);
+        if (value == UniqueTag.UNINITIALIZED_BINDING
+                || (slot.getAttributes() & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+            throw ScriptRuntime.referenceError(
+                    ScriptRuntime.getMessageById("msg.uninitialized.binding", name));
+        }
+        return value;
+    }
+
+    /**
      * Returns the value of the indexed property or NOT_FOUND.
      *
      * @param index the numeric index for the property
