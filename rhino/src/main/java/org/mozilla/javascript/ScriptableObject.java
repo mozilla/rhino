@@ -2816,6 +2816,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         Scriptable obj = start;
         do {
             if (obj.has(index, start)) break;
+            if (ScriptRuntime.isTypedArray(obj)) {
+                // integer-indexed exotic objects do not look up indexes on the prototype chain
+                return null;
+            }
             obj = obj.getPrototype();
         } while (obj != null);
         return obj;
