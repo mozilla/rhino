@@ -304,7 +304,7 @@ public class NativeArray extends ScriptableObject implements List {
         if (start == this) {
             // If the object is sealed, super will throw exception
             long index = toArrayIndex(id);
-            if (index >= length && (lengthAttr & READONLY) == 0) {
+            if (index >= length && isLengthWritable()) {
                 length = index + 1;
                 modCount++;
                 denseOnly = false;
@@ -324,7 +324,7 @@ public class NativeArray extends ScriptableObject implements List {
         if (index < length) {
             return false;
         }
-        if ((lengthAttr & READONLY) == 0 && isExtensible()) {
+        if (isLengthWritable() && isExtensible()) {
             return false;
         }
         if (throwOnFailure || Context.isCurrentContextStrict()) {
