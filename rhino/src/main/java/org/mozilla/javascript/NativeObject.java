@@ -256,9 +256,7 @@ public class NativeObject extends ScriptableObject implements Map {
         */
 
         Object o =
-                (ScriptableObject)
-                        ScriptRuntimeES6.requireObjectCoercible(
-                                null, thisObj, CLASS_NAME, PROTO_PROPERTY);
+                ScriptRuntimeES6.requireObjectCoercible(null, thisObj, CLASS_NAME, PROTO_PROPERTY);
         if (!(proto instanceof Scriptable) && proto != null) {
             return /* undefined */;
         }
@@ -374,14 +372,21 @@ public class NativeObject extends ScriptableObject implements Map {
     }
 
     private static Object setPrototypeOf(Object thisObj, Scriptable proto) {
-        if (!(thisObj instanceof ScriptableObject)) {
+        if (!(thisObj instanceof Scriptable)) {
             return thisObj;
         }
-        ScriptableObject thisScriptable = (ScriptableObject) thisObj;
+        Scriptable thisScriptable = (Scriptable) thisObj;
         if (thisScriptable.getPrototype() == proto) {
             return thisObj;
         }
-        if (!thisScriptable.isExtensible()) {
+        // `isExtensible` is not part of the `Scriptable` interface, so a host object
+        // that implements it directly is assumed to accept the new prototype.
+        Object underlying =
+                thisScriptable instanceof Delegator
+                        ? ((Delegator) thisScriptable).getDelegee()
+                        : thisScriptable;
+        if (underlying instanceof ScriptableObject
+                && !((ScriptableObject) underlying).isExtensible()) {
             throw ScriptRuntime.typeErrorById("msg.not.extensible");
         }
 
