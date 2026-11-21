@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -636,6 +637,21 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public Object[] getAllIds() {
         try (var map = startCompoundOp(false)) {
             return getIds(map, true, false);
+        }
+    }
+
+    /**
+     * Adds the ids of the non-Symbol properties with the DONTENUM attribute to {@code ids}. For
+     * for-in, where they hide properties of the same name on the prototypes; only exact for classes
+     * that keep all their properties in slots and do not override {@link #getIds}.
+     */
+    void addNonEnumerableIds(Set<Object> ids) {
+        try (var map = startCompoundOp(false)) {
+            for (var slot : map) {
+                if ((slot.getAttributes() & DONTENUM) != 0 && !(slot.getName() instanceof Symbol)) {
+                    ids.add(slot.getKey());
+                }
+            }
         }
     }
 
