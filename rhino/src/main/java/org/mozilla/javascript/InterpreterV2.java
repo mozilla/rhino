@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
+import org.mozilla.javascript.interpreterv2.Compiler;
 import org.mozilla.javascript.interpreterv2.CompilerData;
 import org.mozilla.javascript.interpreterv2.GeneratorState;
 import org.mozilla.javascript.interpreterv2.instruction.JumpInstruction;
@@ -44,8 +45,6 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             if (throwable instanceof GeneratorState) {
                 generatorState = (GeneratorState) throwable;
 
-                // reestablish this call frame
-                enterFrame(cx, frame, ScriptRuntime.emptyArgs, true);
                 frame.generatorState = generatorState;
                 throwable = null;
             } else if (!(throwable instanceof ContinuationJump)) {
@@ -127,7 +126,6 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             }
         }
 
-        exitFrame(cx, frame, frame.throwable);
         if (frame.parentFrame != null) {
             throw new IllegalStateException(
                     "Interpreter V2 only supports a single frame per interpreter call at this time.");
@@ -187,7 +185,6 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             // to parent and try to look there
 
             frame.throwable = null;
-            exitFrame(cx, frame, throwable);
 
             if (frame.parentFrame != null) {
                 throw new IllegalStateException(
@@ -433,8 +430,15 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
             Object savedDomain = cx.interpreterSecurityDomain;
             cx.interpreterSecurityDomain = securityDomain;
             try {
-                return securityController.callWithDomain(
-                        securityDomain, cx, (Callable) fun, scope, thisObj, args);
+                if (fun instanceof JSScript) {
+                    return securityController.callWithDomain(
+                            securityDomain, cx, (JSScript) fun, scope, thisObj, args);
+                } else if (fun instanceof JSFunction) {
+                    return securityController.callWithDomain(
+                            securityDomain, cx, (JSFunction) fun, scope, thisObj, args);
+                } else {
+                    Kit.codeBug("Unknown compiled code type.");
+                }
             } finally {
                 cx.interpreterSecurityDomain = savedDomain;
             }
@@ -455,12 +459,11 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
                         null,
                         cx.lastInterpreterFrame);
 
-        boolean parentStrictness = ScriptRuntime.enterFunctionStrictness(cx, desc.isStrict());
+        enterFrame(cx, frame, args, false);
         try {
-            enterFrame(cx, frame, args, false);
             return InterpreterV2.interpret(cx, frame, null);
         } finally {
-            ScriptRuntime.exitFunctionStrictness(cx, parentStrictness);
+            exitFrame(cx, frame, frame.throwable);
         }
     }
 
@@ -558,13 +561,17 @@ public class InterpreterV2 extends AInterpreter<CallFrameV2, CompilerData<?>> {
     @Override
     public CompilationResult<JSScript> compileScript(
             CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
-        throw new UnsupportedOperationException();
+        var compiler = new Compiler<JSScript>();
+        var res = compiler.compile(compilerEnv, tree, rawSource, false);
+        return new V2CompilationResult<>(res, compilerEnv.homeObject());
     }
 
     @Override
     public CompilationResult<JSFunction> compileFunction(
             CompilerEnvirons compilerEnv, ScriptNode tree, String rawSource) {
-        throw new UnsupportedOperationException();
+        var compiler = new Compiler<JSFunction>();
+        var res = compiler.compile(compilerEnv, tree, rawSource, true);
+        return new V2CompilationResult<>(res, compilerEnv.homeObject());
     }
 
     @Override
