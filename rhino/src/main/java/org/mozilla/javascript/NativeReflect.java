@@ -202,7 +202,11 @@ final class NativeReflect extends ScriptableObject {
             if (ScriptRuntime.isSymbol(args[1])) {
                 return ScriptableObject.deleteProperty(target, (Symbol) args[1]);
             }
-            return ScriptableObject.deleteProperty(target, ScriptRuntime.toString(args[1]));
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
+            if (soi.stringId == null) {
+                return ScriptableObject.deleteProperty(target, soi.index);
+            }
+            return ScriptableObject.deleteProperty(target, soi.stringId);
         }
 
         return false;
@@ -233,14 +237,13 @@ final class NativeReflect extends ScriptableObject {
         Object prop;
         if (ScriptRuntime.isSymbol(args[1])) {
             prop = ScriptableObject.getSuperProperty(target, receiver, (Symbol) args[1]);
-        } else if (args[1] instanceof Number) {
-            prop =
-                    ScriptableObject.getSuperProperty(
-                            target, receiver, ScriptRuntime.toIndex(args[1]));
         } else {
-            prop =
-                    ScriptableObject.getSuperProperty(
-                            target, receiver, ScriptRuntime.toString(args[1]));
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
+            if (soi.stringId == null) {
+                prop = ScriptableObject.getSuperProperty(target, receiver, soi.index);
+            } else {
+                prop = ScriptableObject.getSuperProperty(target, receiver, soi.stringId);
+            }
         }
         return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
     }
@@ -305,7 +308,11 @@ final class NativeReflect extends ScriptableObject {
                 return ScriptableObject.hasProperty(target, (Symbol) args[1]);
             }
 
-            return ScriptableObject.hasProperty(target, ScriptRuntime.toString(args[1]));
+            StringIdOrIndex soi = ScriptRuntime.toStringIdOrIndex(args[1]);
+            if (soi.stringId == null) {
+                return ScriptableObject.hasProperty(target, soi.index);
+            }
+            return ScriptableObject.hasProperty(target, soi.stringId);
         }
         return false;
     }

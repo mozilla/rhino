@@ -38,6 +38,7 @@ import org.mozilla.javascript.annotations.JSGetter;
 import org.mozilla.javascript.annotations.JSSetter;
 import org.mozilla.javascript.annotations.JSStaticFunction;
 import org.mozilla.javascript.debug.DebuggableObject;
+import org.mozilla.javascript.typedarrays.NativeTypedArrayView;
 
 /**
  * This is the default implementation of the Scriptable interface. This class provides convenient
@@ -2816,6 +2817,10 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         Scriptable obj = start;
         do {
             if (obj.has(index, start)) break;
+            if (obj instanceof NativeTypedArrayView) {
+                // integer-indexed exotic objects do not look up indexes on the prototype chain
+                return null;
+            }
             obj = obj.getPrototype();
         } while (obj != null);
         return obj;
