@@ -179,7 +179,7 @@ public class ArrayLikeAbstractOperations {
     }
 
     static Scriptable arraySpeciesCreate(Context cx, VarScope scope, Object o, int length) {
-        if (o instanceof NativeArray) {
+        if (NativeArray.js_isArray(o)) {
             Object c = ScriptableObject.getProperty((Scriptable) o, "constructor");
             if (c instanceof Function f && f.isConstructor()) {
                 VarScope ctorScope = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
