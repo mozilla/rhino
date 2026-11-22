@@ -2116,14 +2116,13 @@ class BodyCodegen {
                 // The declaration in the body of the scope initializes this one,
                 // so there is no initializer to evaluate here.
                 cfw.add(ByteCode.DUP);
-                cfw.addALoad(contextLocal);
-                cfw.add(ByteCode.SWAP);
                 cfw.addPush(id);
-                addScriptRuntimeInvoke(
-                        "defineConst",
-                        "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/VarScope;"
-                                + "Ljava/lang/String;"
-                                + ")V");
+                cfw.addPush(compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
+                cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                        "org/mozilla/javascript/VarScope",
+                            "createImmutableBinding",
+                            "(Ljava/lang/String;Z)Z");
+                cfw.add(ByteCode.POP);
             } else {
                 cfw.add(ByteCode.DUP);
                 cfw.add(ByteCode.DUP);

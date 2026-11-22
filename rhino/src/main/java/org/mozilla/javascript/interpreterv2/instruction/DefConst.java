@@ -14,7 +14,7 @@ public class DefConst extends Instruction {
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        ScriptRuntime.defineConst(cx, frame.scope, varName);
+        frame.scope.createImmutableBinding(varName, cx.getLanguageVersion() >= Context.VERSION_ES6);
         frame.pc += 1;
     }
 
