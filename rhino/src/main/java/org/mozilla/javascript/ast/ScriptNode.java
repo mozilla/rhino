@@ -263,6 +263,15 @@ public class ScriptNode extends Scope {
         return isLets;
     }
 
+    /**
+     * Records that the {@code let} binding at the index can never be accessed before it is
+     * initialized, so it need not start out uninitialized.
+     */
+    public void clearParamOrVarLet(int index) {
+        if (variableNames == null) codeBug();
+        isLets[index] = false;
+    }
+
     public boolean hasRestParameter() {
         return false;
     }

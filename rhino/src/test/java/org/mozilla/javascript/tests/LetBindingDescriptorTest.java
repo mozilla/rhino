@@ -12,7 +12,7 @@ import org.mozilla.javascript.testutils.Utils;
 
 class LetBindingDescriptorTest {
 
-    private static final String FLATTENED =
+    private static final String WITH_TEMPORARIES =
             """
             function f() {
                 let a;
@@ -47,16 +47,34 @@ class LetBindingDescriptorTest {
             """;
 
     @Test
-    void onlyUserLetBindingsAreMarkedInFlattenedFunction() {
+    void onlyUserLetBindingsAreMarked() {
         assertLetFlags(
                 Context.VERSION_ES6,
-                FLATTENED,
+                WITH_TEMPORARIES,
                 Map.of("a", true, "b", false, "c", false, "d", true, "g", false));
     }
 
     @Test
     void onlyUserLetBindingsAreMarkedInReifiedFunction() {
         assertLetFlags(Context.VERSION_ES6, REIFIED, Map.of("a", true, "b", false, "c", false));
+    }
+
+    @Test
+    void letBindingsThatCannotBeSeenUninitializedAreNotMarkedInLocalSlots() {
+        // f needs no activation, so its bindings are held in local variable slots, and only b is
+        // ever accessed before its declaration
+        assertLetFlags(
+                Context.VERSION_ES6,
+                """
+                function f(c) {
+                    let a = 1;
+                    if (c) b;
+                    let b = a;
+                    return b;
+                }
+                f;
+                """,
+                Map.of("a", false, "b", true));
     }
 
     @Test

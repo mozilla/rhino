@@ -10,9 +10,12 @@ import static org.mozilla.javascript.Context.reportError;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -53,6 +56,12 @@ public class NodeTransformer {
     private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode) {
         loops = new ArrayDeque<>();
         loopEnds = new ArrayDeque<>();
+        ancestors = new ArrayDeque<>();
+        firstJumpTo = new IdentityHashMap<>();
+        initializedAt = new IdentityHashMap<>();
+        checkedBindings = Collections.newSetFromMap(new IdentityHashMap<>());
+        resets = new ArrayList<>();
+        walkOrder = 0;
 
         // to save against upchecks if no finally blocks are used.
         hasFinally = false;
@@ -63,9 +72,128 @@ public class NodeTransformer {
         tree.flattenSymbolTable(
                 !createScopeObjects, compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
 
+        // Bindings held in local variable slots have their temporal dead zone checked inline, and
+        // the walk works out which accesses need no check.
+        trackDeadZones =
+                !createScopeObjects && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+
         // uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode, false);
+
+        if (trackDeadZones) {
+            dropUnneededDeadZones(tree);
+        }
+    }
+
+    /**
+     * A binding none of whose accesses needs a check can never be seen uninitialized, so a let need
+     * not start out uninitialized, and re-entering its scope need not reset it.
+     */
+    private void dropUnneededDeadZones(ScriptNode tree) {
+        for (Reset reset : resets) {
+            if (hasDeadZone(reset.symbol()) && !checkedBindings.contains(reset.symbol())) {
+                reset.scope().removeChild(reset.node());
+            }
+        }
+        for (Symbol symbol : tree.getSymbols()) {
+            if (symbol.getDeclType() == Symbol.Type.LET && !checkedBindings.contains(symbol)) {
+                tree.clearParamOrVarLet(symbol.getIndex());
+            }
+        }
+    }
+
+    /**
+     * Notes the jumps and jump targets the walk passes, in source order. A forward jump seen before
+     * a binding was initialized may land past that initialization, so on reaching its target the
+     * binding is no longer known to be initialized.
+     */
+    private void beforeChildren(Node node) {
+        if (node instanceof Jump) {
+            Jump jump = (Jump) node;
+            noteJumpTo(jump.target);
+            switch (node.getType()) {
+                case Token.SWITCH -> noteJumpTo(jump.getDefault());
+                case Token.TRY -> noteJumpTo(jump.getFinally());
+                case Token.LOOP -> noteJumpTo(jump.getContinue());
+                default -> {}
+            }
+        } else if (node.getType() == Token.TARGET) {
+            Integer first = firstJumpTo.get(node);
+            if (first != null) {
+                initializedAt.values().removeIf(order -> order > first);
+            }
+        }
+    }
+
+    private void noteJumpTo(Node target) {
+        if (target != null) {
+            firstJumpTo.putIfAbsent(target, ++walkOrder);
+        }
+    }
+
+    /**
+     * Once a store into a binding has run, the binding is initialized, for as long as nothing can
+     * jump past the store. Jumps are dealt with by {@link #beforeChildren}; what is left is a store
+     * that an expression may skip.
+     */
+    private void afterChildren(Node node) {
+        int type = node.getType();
+        if (type != Token.SETVAR && type != Token.SETCONSTVAR && type != Token.INITCONSTVAR) {
+            return;
+        }
+        Node name = node.getFirstChild();
+        Scope defining = name.getScope();
+        if (defining == null) {
+            return;
+        }
+        Symbol symbol = defining.getSymbol(name.getString());
+        if (hasDeadZone(symbol)
+                && !initializedAt.containsKey(symbol)
+                && alwaysRunsInScope(defining)) {
+            initializedAt.put(symbol, ++walkOrder);
+        }
+    }
+
+    /**
+     * Returns true if the node being visited runs whenever the code around it in the scope that
+     * defines a binding does.
+     */
+    private boolean alwaysRunsInScope(Scope defining) {
+        for (Node ancestor : ancestors) {
+            if (ancestor == defining) {
+                return true;
+            }
+            switch (ancestor.getType()) {
+                case Token.HOOK, Token.AND, Token.OR, Token.NULLISH_COALESCING -> {
+                    return false;
+                }
+                default -> {
+                    if (ancestor.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                        return false;
+                    }
+                }
+            }
+        }
+        // The walk does not count the function or script itself among the ancestors.
+        return defining instanceof ScriptNode;
+    }
+
+    /**
+     * Returns true if an access to the symbol may find it in its temporal dead zone. Records the
+     * symbol as needing checks if so.
+     */
+    private boolean needsDeadZoneCheck(Symbol symbol) {
+        if (!hasDeadZone(symbol)) {
+            return false;
+        }
+        if (trackDeadZones) {
+            if (initializedAt.containsKey(symbol)) {
+                return false;
+            }
+            checkedBindings.add(symbol);
+        }
+        return true;
     }
 
     private void transformCompilationUnit_r(
@@ -431,7 +559,7 @@ public class NodeTransformer {
                         Scope defining = scope.getDefiningScope(node.getString());
                         if (defining != null) {
                             node.setScope(defining);
-                            if (hasDeadZone(defining.getSymbol(node.getString()))) {
+                            if (needsDeadZoneCheck(defining.getSymbol(node.getString()))) {
                                 node.putIntProp(Node.TDZ_CHECK_PROP, 1);
                             }
                         }
@@ -510,7 +638,10 @@ public class NodeTransformer {
                             // The declaration's own store initializes the binding, but any other
                             // access may find it still in its temporal dead zone.
                             boolean deadZone =
-                                    type != Token.INIT_LET && hasDeadZone(defining.getSymbol(name));
+                                    type != Token.INIT_LET
+                                            && type != Token.SETCONST
+                                            && type != Token.DELPROP
+                                            && needsDeadZoneCheck(defining.getSymbol(name));
                             if (type == Token.NAME) {
                                 node.setType(Token.GETVAR);
                                 if (deadZone) {
@@ -564,6 +695,10 @@ public class NodeTransformer {
                     }
             }
 
+            if (trackDeadZones) {
+                beforeChildren(node);
+            }
+            ancestors.push(node);
             transformCompilationUnit_r(
                     tree,
                     node,
@@ -571,6 +706,10 @@ public class NodeTransformer {
                     createScopeObjects,
                     inStrictMode,
                     inLoop || node.getType() == Token.LOOP);
+            ancestors.pop();
+            if (trackDeadZones) {
+                afterChildren(node);
+            }
         }
     }
 
@@ -586,7 +725,7 @@ public class NodeTransformer {
      * switch, or the head of a for-in/for-of loop — or that other code may run before is not, as
      * that code must find the binding in its temporal dead zone.
      */
-    private static void addScopeReinit(Scope scope) {
+    private void addScopeReinit(Scope scope) {
         Map<String, Symbol> symbolTable = scope.getSymbolTable();
         if (symbolTable == null || symbolTable.isEmpty()) {
             return;
@@ -601,6 +740,7 @@ public class NodeTransformer {
             name.setScope(scope);
             Node reset = new Node(Token.RESETVAR, name);
             reset.setLineColumnNumber(scope.getLineno(), scope.getColumn());
+            resets.add(new Reset(scope, reset, symbol));
             if (previous == null) {
                 scope.addChildToFront(reset);
             } else {
@@ -929,6 +1069,19 @@ public class NodeTransformer {
 
     private Deque<Node> loops;
     private Deque<Node> loopEnds;
+
+    private record Reset(Scope scope, Node node, Symbol symbol) {}
+
+    private boolean trackDeadZones;
+    // The nodes enclosing the one being visited, innermost first
+    private Deque<Node> ancestors;
+    // For each jump target, when the walk first passed a jump to it
+    private Map<Node, Integer> firstJumpTo;
+    // For each binding known to be initialized, when the walk passed the store that did so
+    private Map<Symbol, Integer> initializedAt;
+    private Set<Symbol> checkedBindings;
+    private List<Reset> resets;
+    private int walkOrder;
     private boolean hasFinally;
     private CompilerEnvirons compilerEnv;
 }
