@@ -52,8 +52,9 @@ class SwitchScopeTest {
 
     @Test
     void caseExpressionSeesCaseLet() {
-        Utils.assertWithAllModes_ES6(
-                "inner",
+        // The case scope's x shadows the outer one, and is in its temporal dead zone
+        Utils.assertEcmaErrorES6(
+                "ReferenceError: Cannot access \"x\" before initialization",
                 "let x = 1;\n"
                         + "var r;\n"
                         + "switch (undefined) { case x: r = 'inner'; break;"

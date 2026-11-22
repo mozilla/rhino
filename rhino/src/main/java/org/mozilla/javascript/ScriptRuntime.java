@@ -2469,6 +2469,7 @@ public class ScriptRuntime {
             }
         }
 
+        checkInitialized(result, name);
         if (asFunctionCall) {
             if (!(result instanceof Callable)) {
                 if (isOptionalChainingCall
@@ -2546,6 +2547,7 @@ public class ScriptRuntime {
             }
         }
 
+        checkInitialized(result, name);
         if (!(result instanceof Callable)) {
             if (isOptionalChainingCall
                     && (result == Scriptable.NOT_FOUND
@@ -2561,7 +2563,25 @@ public class ScriptRuntime {
         if (cx.useDynamicScope) {
             scope = checkDynamicScope(cx.topCallScope, scope);
         }
-        return ScriptableObject.getProperty(scope, name);
+        return checkInitialized(ScriptableObject.getProperty(scope, name), name);
+    }
+
+    /**
+     * Throws a ReferenceError if a name lookup found a binding that has not been initialized yet.
+     */
+    private static Object checkInitialized(Object value, String name) {
+        if (value == VarScope.UNINITIALIZED) {
+            throw constructError(
+                    "ReferenceError", getMessageById("msg.uninitialized.binding", name));
+        }
+        return value;
+    }
+
+    private static void checkInitializedBinding(VarScope bound, String name) {
+        if (bound.isUninitializedBinding(name)) {
+            throw constructError(
+                    "ReferenceError", getMessageById("msg.uninitialized.binding", name));
+        }
     }
 
     /**
@@ -2634,6 +2654,7 @@ public class ScriptRuntime {
     public static Object setName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
+            checkInitializedBinding(bound, id);
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and it's better to optimize  the common case
             ScriptableObject.putProperty(bound, id, value);
@@ -2666,6 +2687,7 @@ public class ScriptRuntime {
             // false. In these cases a TypeError exception is thrown (11.13.1).
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and we should optimize  the common case
+            checkInitializedBinding(bound, id);
             ScriptableObject.putProperty(bound, id, value);
             return value;
         }
@@ -3817,7 +3839,7 @@ public class ScriptRuntime {
     public static String typeofName(Context cx, VarScope scope, String id) {
         VarScope val = bind(cx, scope, id);
         if (val == null) return "undefined";
-        return typeof(getObjectProp(val, id, cx));
+        return typeof(checkInitialized(getObjectProp(val, id, cx), id));
     }
 
     public static boolean isObject(Object value) {
@@ -4187,6 +4209,7 @@ public class ScriptRuntime {
             } while (scopeChain != null);
             throw notFoundError(null, id);
         }
+        checkInitialized(value, id);
         return doScopeIncrDecr(target, id, value, incrDecrMask);
     }
 

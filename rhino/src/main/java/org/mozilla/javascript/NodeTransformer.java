@@ -114,15 +114,15 @@ public class NodeTransformer {
                     List<Boolean> letFlags = new ArrayList<>();
                     for (Symbol symbol : newScope.getSymbolTable().values()) {
                         Node name = Node.newString(Token.NAME, symbol.getName());
-                        // Const bindings must be created uninitialized, so that the
-                        // declaration itself can initialize them. A loop scope is
-                        // excluded: it belongs to a for-in/of head, whose bindings are
-                        // declared afresh in each iteration's own scope, and all this
-                        // one does is shadow an outer binding of the same name while
-                        // the iterated expression is evaluated.
-                        constFlags.add(
-                                symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK);
-                        letFlags.add(isUninitializedLet(symbol) && type == Token.BLOCK);
+                        // Lexical bindings must be created uninitialized, so that the
+                        // declaration itself can initialize them. A loop scope belongs to
+                        // a for-in/of head, whose bindings are declared afresh in each
+                        // iteration's own scope; this one's are never initialized, and
+                        // only put the head's names in their temporal dead zone while the
+                        // iterated expression is evaluated.
+                        boolean lexicalScope = type == Token.BLOCK || type == Token.LOOP;
+                        constFlags.add(symbol.getDeclType() == Symbol.Type.CONST && lexicalScope);
+                        letFlags.add(isUninitializedLet(symbol) && lexicalScope);
                         innerLet.addChildToBack(name);
                     }
                     putConstFlags(innerLet, constFlags);

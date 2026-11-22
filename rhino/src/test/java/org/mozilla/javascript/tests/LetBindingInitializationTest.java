@@ -11,7 +11,8 @@ class LetBindingInitializationTest {
     @Test
     void topLevelLetIsNotAPropertyOfTheGlobalObject() {
         Utils.assertWithAllModes_ES6(
-                "1,undefined,false", "let x = 1; [x, String(globalThis.x), 'x' in globalThis].join();");
+                "1,undefined,false",
+                "let x = 1; [x, String(globalThis.x), 'x' in globalThis].join();");
     }
 
     @Test

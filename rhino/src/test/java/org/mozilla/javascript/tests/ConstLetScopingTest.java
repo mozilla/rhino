@@ -565,17 +565,18 @@ class ConstLetScopingTest {
     @Test
     void forOfHeadBindingIsVisibleToTheIteratedExpression() {
         // The loop's own scope shadows the outer binding of the same name while the iterated
-        // expression is evaluated. A spec-compliant engine throws a ReferenceError here, since
-        // the binding is in its temporal dead zone; Rhino has no TDZ and reads undefined
-        Utils.assertWithAllModes_ES6(
-                "undefined,outside",
+        // expression is evaluated, and that binding is in its temporal dead zone
+        Utils.assertEcmaErrorES6(
+                "ReferenceError: Cannot access \"x\" before initialization",
                 """
                 let x = 'outside';
-                var seen;
-                for (const x of [x]) {
-                    seen = String(x);
-                }
-                [seen, x].join();
+                for (const x of [x]) {}
+                """);
+        Utils.assertEcmaErrorES6(
+                "ReferenceError: Cannot access \"x\" before initialization",
+                """
+                let x = 'outside';
+                for (let x of [x]) {}
                 """);
     }
 

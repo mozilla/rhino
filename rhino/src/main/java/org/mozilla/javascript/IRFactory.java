@@ -1894,7 +1894,13 @@ public final class IRFactory {
 
             loop = createLoop((Jump) loop, LOOP_WHILE, newBody, cond, null, null, false);
             loop.addChildToFront(init);
-            if (type == Token.VAR || type == Token.LET) loop.addChildToFront(lhs);
+            // An ES6 let is declared by each iteration's scope, so declaring it here as well
+            // would initialize it before the iterated expression is evaluated.
+            if (type == Token.VAR
+                    || (type == Token.LET
+                            && parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
+                loop.addChildToFront(lhs);
+            }
             localBlock.addChildToBack(loop);
 
             return localBlock;
