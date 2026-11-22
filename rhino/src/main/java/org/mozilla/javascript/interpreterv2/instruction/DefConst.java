@@ -2,7 +2,6 @@ package org.mozilla.javascript.interpreterv2.instruction;
 
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 
 public class DefConst extends Instruction {

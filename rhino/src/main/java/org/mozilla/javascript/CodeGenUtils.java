@@ -108,6 +108,7 @@ public class CodeGenUtils {
                 disambiguateNames(scriptOrFn.getParamAndVarNames(), scriptOrFn.getParamCount());
         builder.paramCount = scriptOrFn.getParamCount();
         builder.paramIsConst = scriptOrFn.getParamAndVarConst();
+        builder.paramIsLet = scriptOrFn.getParamAndVarLet();
         builder.paramAndVarCount = scriptOrFn.getParamAndVarCount();
         builder.hasRestArg = scriptOrFn.hasRestParameter();
         builder.hasDefaultParameters = scriptOrFn.getDefaultParams() != null;

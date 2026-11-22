@@ -44,6 +44,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
     public List<JSDescriptor<JSFunction>> nestedFunctions;
     private final String[] paramAndVarNames;
     private final boolean[] paramIsConst;
+    private final boolean[] paramIsLet;
     private final int flags;
     private final String sourceFile;
     private volatile SourceCodeProvider sourceCodeProvider;
@@ -64,6 +65,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
             JSDescriptor<?> parent,
             String[] paramAndVarNames,
             boolean[] paramIsConst,
+            boolean[] paramIsLet,
             boolean isStrict,
             boolean isScript,
             boolean isTopLevel,
@@ -95,6 +97,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         this.parent = parent;
         this.paramAndVarNames = paramAndVarNames;
         this.paramIsConst = paramIsConst;
+        this.paramIsLet = paramIsLet;
 
         int flags = 0;
         flags = flags | (isStrict ? IS_STRICT_FLAG : 0);
@@ -228,6 +231,11 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         return paramIsConst[index];
     }
 
+    /** Returns whether the param or var is a {@code let} binding that starts out uninitialized. */
+    public boolean getParamOrVarLet(int index) {
+        return paramIsLet[index];
+    }
+
     @Override
     public String getParamOrVarName(int index) {
         return paramAndVarNames[index];
@@ -314,6 +322,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
         public final ArrayList<Builder<JSFunction>> nestedFunctions = new ArrayList<>();
         public String[] paramAndVarNames;
         public boolean[] paramIsConst;
+        public boolean[] paramIsLet;
         public boolean isStrict;
         public boolean isScript;
         public boolean isTopLevel;
@@ -384,6 +393,7 @@ public final class JSDescriptor<T extends ScriptOrFn<T>> implements Serializable
                             parent,
                             paramAndVarNames,
                             paramIsConst,
+                            paramIsLet,
                             isStrict,
                             isScript,
                             isTopLevel,

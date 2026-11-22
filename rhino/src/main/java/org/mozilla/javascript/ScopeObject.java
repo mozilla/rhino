@@ -381,18 +381,18 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     public boolean createMutableBinding(String name, boolean deletable) {
         var flags = deletable ? EMPTY : PERMANENT;
         var slot =
-            getMap().compute(
-                this,
-                name,
-                0,
-                (n, i, e, c, o) -> {
-                    if (e == null) {
-                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
-                                            newSlot.value = VarScope.UNINITIALIZED;
-                        return newSlot;
-                    }
-                    return e;
-                });
+                getMap().compute(
+                                this,
+                                name,
+                                0,
+                                (n, i, e, c, o) -> {
+                                    if (e == null) {
+                                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                        newSlot.value = VarScope.UNINITIALIZED;
+                                        return newSlot;
+                                    }
+                                    return e;
+                                });
         return slot.value == VarScope.UNINITIALIZED;
     }
 
@@ -400,18 +400,18 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     public boolean createImmutableBinding(String name, boolean strict) {
         var flags = strict ? ScriptableObject.CONST : ScriptableObject.LEGACY_CONST;
         var slot =
-            getMap().compute(
-                this,
-                name,
-                0,
-                (n, i, e, c, o) -> {
-                    if (e == null) {
-                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
-                                            newSlot.value = VarScope.UNINITIALIZED;
-                        return newSlot;
-                    }
-                    return e;
-                });
+                getMap().compute(
+                                this,
+                                name,
+                                0,
+                                (n, i, e, c, o) -> {
+                                    if (e == null) {
+                                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                        newSlot.value = VarScope.UNINITIALIZED;
+                                        return newSlot;
+                                    }
+                                    return e;
+                                });
         return slot.value == VarScope.UNINITIALIZED;
     }
 

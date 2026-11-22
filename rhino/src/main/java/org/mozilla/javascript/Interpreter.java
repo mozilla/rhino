@@ -3554,7 +3554,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.scope.createImmutableBinding(
-                state.stringReg, cx.getLanguageVersion() >= Context.VERSION_ES6);
+                    state.stringReg, cx.getLanguageVersion() >= Context.VERSION_ES6);
             return null;
         }
     }

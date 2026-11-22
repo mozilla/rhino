@@ -742,6 +742,7 @@ public class ClassDescriptor {
             Arrays.fill(paramNames, "");
             builder.paramAndVarNames = paramNames;
             builder.paramIsConst = new boolean[length];
+            builder.paramIsLet = new boolean[length];
             builder.paramAndVarCount = length;
             builder.sourceCodeProvider = BuiltInSourceCodeProvider.INSTANCE;
             builder.sourceStart = 0;

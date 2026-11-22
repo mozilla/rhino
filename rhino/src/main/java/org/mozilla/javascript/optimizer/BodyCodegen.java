@@ -2118,10 +2118,11 @@ class BodyCodegen {
                 cfw.add(ByteCode.DUP);
                 cfw.addPush(id);
                 cfw.addPush(compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
-                cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                cfw.addInvoke(
+                        ByteCode.INVOKEINTERFACE,
                         "org/mozilla/javascript/VarScope",
-                            "createImmutableBinding",
-                            "(Ljava/lang/String;Z)Z");
+                        "createImmutableBinding",
+                        "(Ljava/lang/String;Z)Z");
                 cfw.add(ByteCode.POP);
             } else {
                 cfw.add(ByteCode.DUP);

@@ -60,7 +60,8 @@ public class NodeTransformer {
         // Flatten all only if we are not using scope objects for block scope
         boolean createScopeObjects =
                 tree.getType() != Token.FUNCTION || ((FunctionNode) tree).requiresActivation();
-        tree.flattenSymbolTable(!createScopeObjects);
+        tree.flattenSymbolTable(
+                !createScopeObjects, compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
 
         // uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));

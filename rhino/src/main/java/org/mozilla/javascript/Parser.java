@@ -1136,7 +1136,7 @@ public class Parser {
                 // Block-scoped function in strict mode: define as let-like binding
                 if (inUseStrictDirective || currentScope != currentScriptOrFn) {
                     defineSymbol(
-                            isGenerator ? Symbol.Type.LET : Symbol.Type.FUNCTION_LET,
+                            isGenerator ? Symbol.Type.GENERATOR_LET : Symbol.Type.FUNCTION_LET,
                             name.getIdentifier());
                     return;
                 }
@@ -2755,11 +2755,11 @@ public class Parser {
         if (symbol != null
                 && (symDeclType == Symbol.Type.CONST
                         || declType == Symbol.Type.CONST
-                        || (definingScope == currentScope && symDeclType == Symbol.Type.LET))) {
+                        || (definingScope == currentScope && Symbol.isDeclTypeLet(symDeclType)))) {
             addError(
                     switch (symDeclType) {
                         case CONST -> "msg.const.redecl";
-                        case LET -> "msg.let.redecl";
+                        case LET, GENERATOR_LET, TEMP -> "msg.let.redecl";
                         case VAR -> "msg.var.redecl";
                         case FUNCTION_VAR, FUNCTION_LET -> "msg.fn.redecl";
                         case LP -> "msg.parm.redecl";
@@ -2770,6 +2770,8 @@ public class Parser {
         switch (declType) {
             case LET:
             case FUNCTION_LET:
+            case GENERATOR_LET:
+            case TEMP:
                 if (!ignoreNotInBlock
                         && ((currentScope.getType() == Token.IF) || currentScope instanceof Loop)) {
                     addError("msg.let.decl.not.in.block");
@@ -2823,7 +2825,7 @@ public class Parser {
             addError(
                     switch (symDeclType) {
                         case CONST -> "msg.const.redecl";
-                        case LET -> "msg.let.redecl";
+                        case LET, GENERATOR_LET, TEMP -> "msg.let.redecl";
                         case VAR -> "msg.var.redecl";
                         case FUNCTION_VAR, FUNCTION_LET -> "msg.fn.redecl";
                         case LP -> "msg.parm.redecl";
@@ -2834,6 +2836,8 @@ public class Parser {
         switch (declType) {
             case LET:
             case FUNCTION_LET:
+            case GENERATOR_LET:
+            case TEMP:
                 if (!ignoreNotInBlock
                         && (inSingleStatementContext || currentScope instanceof Loop)) {
                     addError("msg.let.decl.not.in.block");
@@ -5069,7 +5073,7 @@ public class Parser {
         result.addChildToFront(letNode);
         try {
             pushScope(result);
-            defineSymbol(Token.LET, tempName, true);
+            defineSymbol(Symbol.Type.TEMP, tempName, true);
         } finally {
             popScope();
         }
@@ -5128,7 +5132,7 @@ public class Parser {
         if (isFunctionParameter && iteratorName != null && lastResultName != null) {
             // Allocate temp for return method
             String returnMethodName = currentScriptOrFn.getNextTempName();
-            defineSymbol(Token.LET, returnMethodName, true);
+            defineSymbol(Symbol.Type.TEMP, returnMethodName, true);
 
             // Check if iterator is done: !lastResult.done
             Node getDone =
@@ -5219,8 +5223,8 @@ public class Parser {
                 iteratorName = currentScriptOrFn.getNextTempName();
                 lastResultName = currentScriptOrFn.getNextTempName();
                 // Define the iterator temp variables for strict mode
-                defineSymbol(Token.LET, iteratorName, true);
-                defineSymbol(Token.LET, lastResultName, true);
+                defineSymbol(Symbol.Type.TEMP, iteratorName, true);
+                defineSymbol(Symbol.Type.TEMP, lastResultName, true);
 
                 // Generate: iterator = tempName[Symbol.iterator]()
                 // Pure AST: CALL(GETELEM(tempName, GETPROP(NAME("Symbol"), "iterator")))
@@ -5255,7 +5259,7 @@ public class Parser {
                 // Extract .value from the result
                 String elemTempName = currentScriptOrFn.getNextTempName();
                 // Define the element temp variable for strict mode
-                defineSymbol(Token.LET, elemTempName, true);
+                defineSymbol(Symbol.Type.TEMP, elemTempName, true);
                 Node getValue =
                         new Node(
                                 Token.GETPROP, createName(lastResultName), Node.newString("value"));
@@ -5610,7 +5614,7 @@ public class Parser {
                 // define the computed property temp
                 pushScope(letExprScope);
                 try {
-                    defineSymbol(Token.LET, keyTempName, true);
+                    defineSymbol(Symbol.Type.TEMP, keyTempName, true);
                 } finally {
                     popScope();
                 }

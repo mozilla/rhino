@@ -1203,7 +1203,7 @@ public final class IRFactory {
             parser.pushScope(outer);
             try {
                 String tempName = parser.currentScriptOrFn.getNextTempName();
-                parser.defineSymbol(Token.LET, tempName, false);
+                parser.defineSymbol(Symbol.Type.TEMP, tempName, false);
                 outer.addChildToBack(
                         new Node(
                                 Token.EXPR_VOID,
