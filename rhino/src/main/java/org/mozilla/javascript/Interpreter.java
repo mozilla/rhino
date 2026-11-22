@@ -767,6 +767,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
         instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
         instructionObjs[base + Icode.DEF_CONST] = new DoDefConst();
+        instructionObjs[base + Icode.DEF_LET] = new DoDefLet();
+        instructionObjs[base + Icode.INIT_LET] = new DoInitLet();
         instructionObjs[base + Icode.SCOPE_REPLACE] = new DoScopeReplace();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
@@ -3555,6 +3557,28 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.scope.createImmutableBinding(
                     state.stringReg, cx.getLanguageVersion() >= Context.VERSION_ES6);
+            return null;
+        }
+    }
+
+    private static class DoDefLet extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.scope.createMutableBinding(state.stringReg, false);
+            return null;
+        }
+    }
+
+    private static class DoInitLet extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            final Object[] stack = frame.stack;
+            Object rhs = stack[frame.stackTop];
+            if (rhs == DOUBLE_MARK)
+                rhs = ScriptRuntime.wrapNumber(frame.doubleStack[frame.stackTop]);
+            VarScope lhs = (VarScope) stack[frame.stackTop - 1];
+            stack[frame.stackTop - 1] = ScriptRuntime.initLet(lhs, rhs, cx, state.stringReg);
+            --frame.stackTop;
             return null;
         }
     }

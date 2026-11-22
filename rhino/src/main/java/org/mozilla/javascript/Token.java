@@ -271,7 +271,9 @@ public class Token {
             SCOPE_REPLACE = ITERATION_SCOPE + 1,
             // The marker value held by a const binding that has not been initialized yet.
             UNINITIALIZED = SCOPE_REPLACE + 1,
-            LAST_TOKEN = UNINITIALIZED + 1;
+            // Initializes a let binding created uninitialized; its children are as for SETNAME.
+            INIT_LET = UNINITIALIZED + 1,
+            LAST_TOKEN = INIT_LET + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -658,6 +660,8 @@ public class Token {
                 return "SCOPE_REPLACE";
             case UNINITIALIZED:
                 return "UNINITIALIZED";
+            case INIT_LET:
+                return "INIT_LET";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:

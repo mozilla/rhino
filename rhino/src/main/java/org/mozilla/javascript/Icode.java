@@ -191,8 +191,12 @@ abstract class Icode {
             // Push the marker held by an uninitialized const binding
             UNINITIALIZED = DUP_X2 - 1,
 
+            // Create an uninitialized let binding in the current scope, and initialize one
+            DEF_LET = UNINITIALIZED - 1,
+            INIT_LET = DEF_LET - 1,
+
             // Last icode
-            MIN_ICODE = UNINITIALIZED;
+            MIN_ICODE = INIT_LET;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -220,6 +224,10 @@ abstract class Icode {
                 return "DUP_X2";
             case UNINITIALIZED:
                 return "UNINITIALIZED";
+            case DEF_LET:
+                return "DEF_LET";
+            case INIT_LET:
+                return "INIT_LET";
             case SWAP:
                 return "SWAP";
             case POP:

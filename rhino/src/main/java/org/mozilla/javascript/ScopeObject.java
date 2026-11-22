@@ -415,8 +415,13 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
         return slot.value == VarScope.UNINITIALIZED;
     }
 
+    @Override
     public boolean initializeBinding(String name, Object value) {
         var slot = getMap().query(name, 0);
+        if (slot == null) {
+            // Not created by createMutableBinding, as for a let declared in eval code.
+            return put(name, this, value);
+        }
         if ((slot.getAttributes() & READONLY) != 0 && slot.value != VarScope.UNINITIALIZED) {
             return false;
         } else {

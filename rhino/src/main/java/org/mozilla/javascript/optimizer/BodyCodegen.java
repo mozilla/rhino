@@ -1568,6 +1568,10 @@ class BodyCodegen {
                 visitSetConst(node, child);
                 break;
 
+            case Token.INIT_LET:
+                visitInitLet(node, child);
+                break;
+
             case Token.SETCONSTVAR:
             case Token.INITCONSTVAR:
                 visitSetConstVar(node, child, true);
@@ -2102,6 +2106,7 @@ class BodyCodegen {
     private void visitEnterScope(Node node, Node child) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
+        boolean[] lets = (boolean[]) node.getProp(Node.LET_IDS_PROP);
 
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
@@ -2122,6 +2127,16 @@ class BodyCodegen {
                         ByteCode.INVOKEINTERFACE,
                         "org/mozilla/javascript/VarScope",
                         "createImmutableBinding",
+                        "(Ljava/lang/String;Z)Z");
+                cfw.add(ByteCode.POP);
+            } else if (lets != null && lets[i]) {
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(id);
+                cfw.addPush(false);
+                cfw.addInvoke(
+                        ByteCode.INVOKEINTERFACE,
+                        "org/mozilla/javascript/VarScope",
+                        "createMutableBinding",
                         "(Ljava/lang/String;Z)Z");
                 cfw.add(ByteCode.POP);
             } else {
@@ -4611,6 +4626,23 @@ class BodyCodegen {
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         addDynamicInvoke("NAME:SETSTRICT:" + name, Signatures.NAME_SET_STRICT);
+    }
+
+    private void visitInitLet(Node node, Node child) {
+        String name = node.getFirstChild().getString();
+        while (child != null) {
+            generateExpression(child, node);
+            child = child.getNext();
+        }
+        cfw.addALoad(contextLocal);
+        cfw.addPush(name);
+        addScriptRuntimeInvoke(
+                "initLet",
+                "(Lorg/mozilla/javascript/VarScope;"
+                        + "Ljava/lang/Object;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Ljava/lang/String;"
+                        + ")Ljava/lang/Object;");
     }
 
     private void visitSetConst(Node node, Node child) {

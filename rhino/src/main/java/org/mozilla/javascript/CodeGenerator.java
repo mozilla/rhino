@@ -595,12 +595,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         stackChange(1);
         Object[] names = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
+        boolean[] lets = (boolean[]) node.getProp(Node.LET_IDS_PROP);
         int i = 0;
         while (child != null) {
             if (consts != null && consts[i]) {
                 // The declaration in the body of the scope initializes this one,
                 // so there is no initializer to evaluate here.
                 addStringOp(Icode.DEF_CONST, (String) names[i]);
+            } else if (lets != null && lets[i]) {
+                addStringOp(Icode.DEF_LET, (String) names[i]);
             } else {
                 addIcode(Icode.DUP);
                 stackChange(1);
@@ -1039,12 +1042,13 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 break;
 
             case Token.SETCONST:
+            case Token.INIT_LET:
                 {
                     String name = child.getString();
                     visitExpression(child, 0);
                     child = child.getNext();
                     visitExpression(child, 0);
-                    addStringOp(Icode.SETCONST, name);
+                    addStringOp(type == Token.SETCONST ? Icode.SETCONST : Icode.INIT_LET, name);
                     stackChange(-1);
                 }
                 break;

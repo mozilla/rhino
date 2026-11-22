@@ -1775,12 +1775,14 @@ public final class IRFactory {
         }
         List<Object> names = new ArrayList<>(symbolTable.size());
         List<Boolean> consts = new ArrayList<>(symbolTable.size());
+        List<Boolean> lets = new ArrayList<>(symbolTable.size());
         for (Symbol symbol : symbolTable.values()) {
             if (!symbol.isDeclTypeLexical()) {
                 continue;
             }
             names.add(symbol.getName());
             consts.add(symbol.getDeclType() == Symbol.Type.CONST);
+            lets.add(symbol.getDeclType() == Symbol.Type.LET);
         }
         if (names.isEmpty()) {
             return null;
@@ -1792,6 +1794,7 @@ public final class IRFactory {
         Node node = new Node(Token.ITERATION_SCOPE, loop.getLineno(), loop.getColumn());
         node.putProp(Node.OBJECT_IDS_PROP, names.toArray());
         node.putProp(Node.CONST_IDS_PROP, constFlags);
+        NodeTransformer.putFlags(node, Node.LET_IDS_PROP, lets);
         return node;
     }
 
@@ -1873,6 +1876,10 @@ public final class IRFactory {
                 // assigning to it; a plain assignment would be refused as a write to a const.
                 lvalue.setType(Token.BINDNAME);
                 assign = new Node(Token.SETCONST, lvalue, id);
+            } else if (declType == Token.LET
+                    && parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                lvalue.setType(Token.BINDNAME);
+                assign = new Node(Token.INIT_LET, lvalue, id);
             } else {
                 assign = parser.simpleAssignment(lvalue, id);
             }

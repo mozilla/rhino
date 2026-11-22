@@ -111,6 +111,7 @@ public class NodeTransformer {
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
                     List<Boolean> constFlags = new ArrayList<>();
+                    List<Boolean> letFlags = new ArrayList<>();
                     for (Symbol symbol : newScope.getSymbolTable().values()) {
                         Node name = Node.newString(Token.NAME, symbol.getName());
                         // Const bindings must be created uninitialized, so that the
@@ -121,9 +122,11 @@ public class NodeTransformer {
                         // the iterated expression is evaluated.
                         constFlags.add(
                                 symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK);
+                        letFlags.add(isUninitializedLet(symbol) && type == Token.BLOCK);
                         innerLet.addChildToBack(name);
                     }
                     putConstFlags(innerLet, constFlags);
+                    putFlags(innerLet, Node.LET_IDS_PROP, letFlags);
                     newScope.setSymbolTable(null); // so we don't transform again
                     Node oldNode = node;
                     node = replaceCurrent(parent, previous, node, let);
@@ -338,23 +341,36 @@ public class NodeTransformer {
                 case Token.VAR:
                     {
                         Node result = new Node(Token.BLOCK);
+                        // An ES6 let is created uninitialized, so its declaration initializes it
+                        // even without an initializer.
+                        boolean initializesLet =
+                                type == Token.LET
+                                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
                         for (Node cursor = node.getFirstChild(); cursor != null; ) {
                             // Move cursor to next before createAssignment gets chance
                             // to change n.next
                             Node n = cursor;
                             cursor = cursor.getNext();
                             if (n.getType() == Token.NAME) {
-                                if (!n.hasChildren()) continue;
-                                Node init = n.getFirstChild();
-                                n.removeChild(init);
+                                Node init;
+                                if (n.hasChildren()) {
+                                    init = n.getFirstChild();
+                                    n.removeChild(init);
+                                } else if (initializesLet) {
+                                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                                } else {
+                                    continue;
+                                }
                                 n.setType(Token.BINDNAME);
-                                n =
-                                        new Node(
-                                                type == Token.CONST
-                                                        ? Token.SETCONST
-                                                        : Token.SETNAME,
-                                                n,
-                                                init);
+                                int setOp;
+                                if (type == Token.CONST) {
+                                    setOp = Token.SETCONST;
+                                } else if (initializesLet) {
+                                    setOp = Token.INIT_LET;
+                                } else {
+                                    setOp = Token.SETNAME;
+                                }
+                                n = new Node(setOp, n, init);
                             } else {
                                 // May be a destructuring assignment already transformed
                                 // to a LETEXPR
@@ -462,6 +478,7 @@ public class NodeTransformer {
                 /* fall through */
                 case Token.NAME:
                 case Token.SETCONST:
+                case Token.INIT_LET:
                 case Token.DELPROP:
                     {
                         // Turn name to var for faster access if possible
@@ -489,7 +506,9 @@ public class NodeTransformer {
                             nameSource.setScope(defining);
                             if (type == Token.NAME) {
                                 node.setType(Token.GETVAR);
-                            } else if (type == Token.SETNAME || type == Token.STRICT_SETNAME) {
+                            } else if (type == Token.SETNAME
+                                    || type == Token.STRICT_SETNAME
+                                    || type == Token.INIT_LET) {
                                 node.setType(Token.SETVAR);
                                 nameSource.setType(Token.STRING);
                             } else if (type == Token.SETCONST) {
@@ -606,6 +625,10 @@ public class NodeTransformer {
      * read. A destructuring child stands for all the names it declares.
      */
     static void putConstFlags(Node declarations, List<Boolean> flags) {
+        putFlags(declarations, Node.CONST_IDS_PROP, flags);
+    }
+
+    static void putFlags(Node declarations, int prop, List<Boolean> flags) {
         if (!flags.contains(Boolean.TRUE)) {
             return;
         }
@@ -613,14 +636,26 @@ public class NodeTransformer {
         for (int i = 0; i < array.length; i++) {
             array[i] = flags.get(i);
         }
-        declarations.putProp(Node.CONST_IDS_PROP, array);
+        declarations.putProp(prop, array);
+    }
+
+    /** Returns true if the symbol is a let binding that starts out uninitialized. */
+    private boolean isUninitializedLet(Symbol symbol) {
+        return symbol != null
+                && symbol.getDeclType() == Symbol.Type.LET
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+    }
+
+    private boolean isUninitializedLet(Node scopeNode, String name) {
+        return scopeNode instanceof Scope
+                && isUninitializedLet(((Scope) scopeNode).getSymbol(name));
     }
 
     /**
      * Builds the {@code ENTER_SCOPE} that creates a for-in/of head's bindings in a new iteration
-     * environment. A const is created uninitialized, for its declaration to initialize; anything
-     * else starts out undefined. Both back ends walk the names and the children in step, and
-     * evaluate no child for a name they create as a const.
+     * environment. A const or let is created uninitialized, for its declaration to initialize;
+     * anything else starts out undefined. Both back ends walk the names and the children in step,
+     * and evaluate no child for a name they create as a const.
      */
     private static Node enterIterationScope(Node iterationScope) {
         Object[] names = (Object[]) iterationScope.getProp(Node.OBJECT_IDS_PROP);
@@ -628,6 +663,7 @@ public class NodeTransformer {
         Node enter = new Node(Token.ENTER_SCOPE);
         enter.putProp(Node.OBJECT_IDS_PROP, names);
         enter.putProp(Node.CONST_IDS_PROP, consts);
+        enter.putProp(Node.LET_IDS_PROP, iterationScope.getProp(Node.LET_IDS_PROP));
         for (int i = 0; i < names.length; i++) {
             enter.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
         }
@@ -642,6 +678,8 @@ public class NodeTransformer {
         Node vars = scopeNode.getFirstChild();
         Node realBody = vars.getNext();
         boolean[] varConsts = (boolean[]) vars.getProp(Node.CONST_IDS_PROP);
+        // Set when the declarations are in the body of the scope rather than here
+        boolean[] varLets = (boolean[]) vars.getProp(Node.LET_IDS_PROP);
         // Destructuring wraps the body, but it is the original body that must be re-parented.
         scopeNode.removeChild(vars);
         scopeNode.removeChild(realBody);
@@ -655,10 +693,12 @@ public class NodeTransformer {
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
             ArrayList<Boolean> consts = new ArrayList<>();
+            ArrayList<Boolean> lets = new ArrayList<>();
             int position = -1;
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
-                boolean declaredConst = varConsts != null && varConsts[++position];
+                position++;
+                boolean declaredConst = varConsts != null && varConsts[position];
                 if (current.getType() == Token.LETEXPR) {
                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
                     List<?> destructuringNames =
@@ -675,8 +715,10 @@ public class NodeTransformer {
                     // defined in the destructuring assignment
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
-                        for (int i = 0; i < destructuringNames.size(); i++) {
+                        for (Object name : destructuringNames) {
                             consts.add(declaredConst);
+                            lets.add(
+                                    !declaredConst && isUninitializedLet(scopeNode, (String) name));
                             newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
@@ -687,6 +729,7 @@ public class NodeTransformer {
                         if (child.getType() != Token.NAME) throw Kit.codeBug();
                         list.add(ScriptRuntime.getIndexObject(child.getString()));
                         consts.add(Boolean.FALSE);
+                        lets.add(Boolean.FALSE);
                         Node init = child.getFirstChild();
                         if (init == null) {
                             init = new Node(Token.VOID, Node.newNumber(0.0));
@@ -698,8 +741,28 @@ public class NodeTransformer {
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
                 consts.add(declaredConst);
+                boolean declaredLet =
+                        varLets != null
+                                ? varLets[position]
+                                : !declaredConst
+                                        && isUninitializedLet(scopeNode, current.getString());
+                lets.add(declaredLet);
                 Node init = current.getFirstChild();
-                if (init == null) {
+                if (declaredLet) {
+                    if (varLets == null) {
+                        // The scope creates the binding uninitialized, and this initializes it.
+                        if (init == null) {
+                            init = new Node(Token.VOID, Node.newNumber(0.0));
+                        } else {
+                            current.removeChild(init);
+                        }
+                        Node bind = Node.newString(Token.BINDNAME, current.getString());
+                        Node initLet = new Node(Token.INIT_LET, bind, init);
+                        body.addChildToBack(
+                                isExpression ? initLet : new Node(Token.EXPR_VOID, initLet));
+                    }
+                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 } else if (declaredConst) {
                     // The scope creates the binding uninitialized, and this initializes it.
@@ -713,6 +776,7 @@ public class NodeTransformer {
             }
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
             putConstFlags(newVars, consts);
+            putFlags(newVars, Node.LET_IDS_PROP, lets);
             result.addChildToBack(newVars);
             body.addChildToBack(realBody);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));

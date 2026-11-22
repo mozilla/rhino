@@ -5194,7 +5194,7 @@ public class Parser {
             Transformer transformer,
             boolean isFunctionParameter) {
         boolean empty = true;
-        int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
+        int setOp = destructuringSetOp(variableType);
         int index = 0;
         boolean defaultValuesSetup = false;
         boolean iteratorSetup = false;
@@ -5357,6 +5357,16 @@ public class Parser {
         return new DestructuringArrayResult(empty, iteratorName, lastResultName);
     }
 
+    private int destructuringSetOp(int variableType) {
+        if (variableType == Token.CONST) {
+            return Token.SETCONST;
+        }
+        if (variableType == Token.LET && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+            return Token.INIT_LET;
+        }
+        return Token.SETNAME;
+    }
+
     private void processDestructuringDefaults(
             int variableType,
             Node parent,
@@ -5388,16 +5398,21 @@ public class Parser {
                             right,
                             rightElem);
 
-            Node unassigned =
-                    variableType == Token.CONST
-                            ? new Node(Token.UNINITIALIZED)
-                            : new KeywordLiteral().setType(Token.UNDEFINED);
-            Node cond =
-                    new Node(
-                            Token.HOOK,
-                            new Node(Token.SHEQ, unassigned, createName(name)),
-                            cond_inner,
-                            left);
+            Node cond;
+            if (setOp == Token.SETCONST || setOp == Token.INIT_LET) {
+                // A lexical declaration always binds afresh, so there is no earlier value to keep.
+                cond = cond_inner;
+            } else {
+                cond =
+                        new Node(
+                                Token.HOOK,
+                                new Node(
+                                        Token.SHEQ,
+                                        new KeywordLiteral().setType(Token.UNDEFINED),
+                                        createName(name)),
+                                cond_inner,
+                                left);
+            }
 
             // store it to be transformed later
             if (transformer == null) {
@@ -5506,7 +5521,7 @@ public class Parser {
             Node letNode,
             Scope letExprScope) {
         boolean empty = true;
-        int setOp = variableType == Token.CONST ? Token.SETCONST : Token.SETNAME;
+        int setOp = destructuringSetOp(variableType);
         boolean defaultValuesSetup = false;
         List<Object> extractedKeys = new ArrayList<>(); // store strings or nodes for computed keys
 

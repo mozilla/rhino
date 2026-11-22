@@ -2679,6 +2679,12 @@ public class ScriptRuntime {
         return value;
     }
 
+    /** Initializes the let binding {@code id}, which its scope created uninitialized. */
+    public static Object initLet(VarScope bound, Object value, Context cx, String id) {
+        bound.initializeBinding(id, value);
+        return value;
+    }
+
     /**
      * This is the enumeration needed by the for..in statement.
      *
@@ -5095,7 +5101,10 @@ public class ScriptRuntime {
                 boolean isConst = desc.getParamOrVarConst(i);
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
-                if (!ScriptableObject.hasProperty(scope, name)) {
+                if (desc.getParamOrVarLet(i) && !evalScript) {
+                    // Lexical declarations bind on the top level scope, not the global object.
+                    varScope.createMutableBinding(name, false);
+                } else if (!ScriptableObject.hasProperty(scope, name)) {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(cx, varScope, name);
                     } else if (!evalScript) {
