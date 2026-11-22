@@ -5384,13 +5384,14 @@ public class Parser {
                             right,
                             rightElem);
 
+            Node unassigned =
+                    variableType == Token.CONST
+                            ? new Node(Token.UNINITIALIZED)
+                            : new KeywordLiteral().setType(Token.UNDEFINED);
             Node cond =
                     new Node(
                             Token.HOOK,
-                            new Node(
-                                    Token.SHEQ,
-                                    new KeywordLiteral().setType(Token.UNDEFINED),
-                                    createName(name)),
+                            new Node(Token.SHEQ, unassigned, createName(name)),
                             cond_inner,
                             left);
 

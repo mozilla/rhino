@@ -188,8 +188,11 @@ abstract class Icode {
             DUP_X1 = NUMERIC_INC_DEC - 1,
             DUP_X2 = DUP_X1 - 1,
 
+            // Push the marker held by an uninitialized const binding
+            UNINITIALIZED = DUP_X2 - 1,
+
             // Last icode
-            MIN_ICODE = DUP_X2;
+            MIN_ICODE = UNINITIALIZED;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -215,6 +218,8 @@ abstract class Icode {
                 return "DUP_X1";
             case DUP_X2:
                 return "DUP_X2";
+            case UNINITIALIZED:
+                return "UNINITIALIZED";
             case SWAP:
                 return "SWAP";
             case POP:

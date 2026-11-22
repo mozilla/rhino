@@ -13,6 +13,9 @@ package org.mozilla.javascript;
  * Scriptable} scopes do not have prototypes.
  */
 public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope> {
+
+    public static final Object UNINITIALIZED = UniqueTag.UNINITIALIZED;
+
     /**
      * Get the parent scope of this scope.
      *
@@ -33,10 +36,13 @@ public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope
         throw new UnsupportedOperationException(this.getClass().getName());
     }
 
-    /** Create a mutable binding which must return {@link
-        UniqueTag.UNINITIALIZED} until an initial value has been
-        set. */
+    /**
+     * Create a mutable binding which must return {@link UniqueTag.UNINITIALIZED} until an initial
+     * value has been set.
+     */
     public boolean createMutableBinding(String name, boolean deletable);
+
     public boolean createImmutableBinding(String name, boolean strict);
+
     public boolean initializeBinding(String name, Object value);
 }

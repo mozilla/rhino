@@ -526,6 +526,7 @@ class Block {
 
             case Token.NULL:
             case Token.UNDEFINED:
+            case Token.UNINITIALIZED:
             case Token.REGEXP:
             case Token.ARRAYCOMP:
             case Token.ARRAYLIT:

@@ -998,6 +998,7 @@ public class Context implements Closeable {
     }
 
     public static EvaluatorException reportRuntimeErrorById(String messageId, Object... args) {
+        new Error().printStackTrace();
         String msg = ScriptRuntime.getMessageById(messageId, args);
         return reportRuntimeError(msg);
     }

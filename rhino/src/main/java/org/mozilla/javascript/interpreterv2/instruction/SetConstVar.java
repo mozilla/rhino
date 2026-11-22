@@ -4,6 +4,7 @@ import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 import org.mozilla.javascript.interpreterv2.operand.Operand;
 
@@ -25,7 +26,7 @@ public class SetConstVar extends Instruction {
                             frame.fnOrScript.getDescriptor().getParamOrVarName(index));
             throw Context.reportRuntimeError(msg);
         }
-        if ((frame.getVarAttribute(index) & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+        if (frame.getVar(index) == VarScope.UNINITIALIZED) {
             if (value.isDouble(frame)) {
                 var doubleValue = value.retrieveDouble(frame);
                 frame.setVar(index, doubleValue);
@@ -35,7 +36,6 @@ public class SetConstVar extends Instruction {
                 frame.setVar(index, value);
                 frame.push(value);
             }
-            frame.setVarAttribute(index, ScriptableObject.UNINITIALIZED_CONST);
         }
         frame.pc += 1;
     }

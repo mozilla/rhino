@@ -6,9 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * Class instances represent serializable tags to mark special Object values.
  *

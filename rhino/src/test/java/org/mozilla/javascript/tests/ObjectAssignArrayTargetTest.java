@@ -290,6 +290,40 @@ public class ObjectAssignArrayTargetTest {
     }
 
     @Test
+    public void arrayDestructuring_withDefaultsInFunction() {
+        Utils.assertWithAllModes_ES6(
+                "b|def|x",
+                "function f() { const [, b, , d = 'def', e = 'e'] = ['a','b','c',undefined,'x'];"
+                        + " return b + '|' + d + '|' + e; } f();");
+    }
+
+    @Test
+    public void arrayDestructuring_withNumericDefaultInFunction() {
+        Utils.assertWithAllModes_ES6(
+                3.0, "function f() { const [a = 1, b = 2] = []; return a + b; } f();");
+    }
+
+    @Test
+    public void objectDestructuring_withDefaults() {
+        Utils.assertWithAllModes_ES6("1|2", "const {a = 1, b = 3} = {b: 2};" + "a + '|' + b;");
+    }
+
+    @Test
+    public void objectDestructuring_withDefaultsInFunction() {
+        Utils.assertWithAllModes_ES6(
+                "1|2", "function f() { const {a = 1, b = 3} = {b: 2}; return a + '|' + b; } f();");
+    }
+
+    @Test
+    public void arrayDestructuring_withDefaultsInLoopBody() {
+        Utils.assertWithAllModes_ES6(
+                "1,7,1",
+                "function f() { var r = [];"
+                        + " for (var v of [[], [7], []]) { const [x = 1] = v; r.push(x); }"
+                        + " return r.join(); } f();");
+    }
+
+    @Test
     public void objectDestructuring_basicNoRest() {
         Utils.assertWithAllModes_ES6("1|2", "const {a, b} = {a:1, b:2, c:3};" + "a + '|' + b;");
     }

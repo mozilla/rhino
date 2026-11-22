@@ -100,17 +100,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public static final int PERMANENT = 0x04;
 
-    /**
-     * Property attribute indicating that this is a const property that has not been assigned yet.
-     * The first 'const' assignment to the property will clear this bit.
-     */
-    public static final int UNINITIALIZED_CONST = 0x08;
-
     public static final int STRICTLY_READONLY = 0x10;
 
-    public static final int LEGACY_CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+    public static final int LEGACY_CONST = PERMANENT | READONLY;
 
-    public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST | STRICTLY_READONLY;
+    public static final int CONST = PERMANENT | READONLY | STRICTLY_READONLY;
 
     /** The prototype of this object. */
     private Scriptable prototypeObject;
@@ -146,7 +140,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static void checkValidAttributes(int attributes) {
-        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST | STRICTLY_READONLY;
+        final int mask = READONLY | DONTENUM | PERMANENT | STRICTLY_READONLY;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -399,7 +393,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             Kit.codeBug("Should set constants on ES6 objects.");
         }
 
-        if (putConstImpl(cx, name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
+        if (putConstImpl(cx, name, 0, start, VarScope.UNINITIALIZED, 0)) return;
 
         if (start == this) throw Kit.codeBug();
         if (start instanceof ConstProperties) {
@@ -2781,7 +2775,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     private boolean putConstImpl(
             Context cx, String name, int index, Scriptable start, Object value, int constFlag) {
-        assert (constFlag != EMPTY);
         if (!isExtensible) {
             if (cx.isStrictMode()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
@@ -2801,16 +2794,29 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            slot = getMap().modify(this, name, index, LEGACY_CONST);
-            int attr = slot.getAttributes();
-            if ((attr & READONLY) == 0)
-                throw Context.reportRuntimeErrorById("msg.var.redecl", name);
-            if ((attr & UNINITIALIZED_CONST) != 0) {
-                slot.value = value;
-                // clear the bit on const initialization
-                if (constFlag != UNINITIALIZED_CONST)
-                    slot.setAttributes(attr & ~UNINITIALIZED_CONST);
-            }
+            slot =
+                    getMap().compute(
+                                    this,
+                                    name,
+                                    index,
+                                    (n, i, e, c, o) -> {
+                                        if (e == null) {
+                                            var newSlot =
+                                                    new StandardSlot<Scriptable>(
+                                                            n, i, LEGACY_CONST);
+                                            newSlot.value = value;
+                                            return newSlot;
+                                        } else {
+                                            int attr = e.getAttributes();
+                                            if ((attr & READONLY) == 0)
+                                                throw Context.reportRuntimeErrorById(
+                                                        "msg.var.redecl", name);
+                                            if (e.value == VarScope.UNINITIALIZED) {
+                                                e.value = value;
+                                            }
+                                            return e;
+                                        }
+                                    });
             return true;
         }
         return slot.setValue(value, this, start);

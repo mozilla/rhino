@@ -269,7 +269,9 @@ public class Token {
             // Replaces the current block scope with a fresh copy of itself, so that the bindings
             // the next loop iteration sees are distinct from the ones it leaves behind.
             SCOPE_REPLACE = ITERATION_SCOPE + 1,
-            LAST_TOKEN = SCOPE_REPLACE + 1;
+            // The marker value held by a const binding that has not been initialized yet.
+            UNINITIALIZED = SCOPE_REPLACE + 1,
+            LAST_TOKEN = UNINITIALIZED + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -654,6 +656,8 @@ public class Token {
                 return "ITERATION_SCOPE";
             case SCOPE_REPLACE:
                 return "SCOPE_REPLACE";
+            case UNINITIALIZED:
+                return "UNINITIALIZED";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:

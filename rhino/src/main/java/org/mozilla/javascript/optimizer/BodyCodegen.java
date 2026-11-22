@@ -20,6 +20,7 @@ import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -365,6 +366,7 @@ class BodyCodegen {
             // REMIND - only need to initialize the vars that don't get a value
             // before the next call and are used in the function
             int firstUndefVar = -1;
+            int firstUninitVar = -1;
             for (int i = 0; i != varCount; ++i) {
                 int reg = -1;
                 if (i < paramCount) {
@@ -376,11 +378,26 @@ class BodyCodegen {
                         cfw.addAStore(reg);
                     }
                 } else if (fnCurrent.isNumberVar(i)) {
+                    // A double register cannot hold the uninitialized marker, so a numeric const
+                    // gets an extra int register recording whether it has been assigned.
                     reg = getNewWordPairLocal(constDeclarations[i]);
                     cfw.addPush(0.0);
                     cfw.addDStore(reg);
+                    if (constDeclarations[i]) {
+                        cfw.addPush(0);
+                        cfw.addIStore(reg + 2);
+                    }
+                } else if (constDeclarations[i]) {
+                    reg = getNewWordLocal();
+                    if (firstUninitVar == -1) {
+                        cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+                        firstUninitVar = reg;
+                    } else {
+                        cfw.addALoad(firstUninitVar);
+                    }
+                    cfw.addAStore(reg);
                 } else {
-                    reg = getNewWordLocal(constDeclarations[i]);
+                    reg = getNewWordLocal();
                     if (firstUndefVar == -1) {
                         Codegen.pushUndefined(cfw);
                         firstUndefVar = reg;
@@ -390,10 +407,6 @@ class BodyCodegen {
                     cfw.addAStore(reg);
                 }
                 if (reg >= 0) {
-                    if (constDeclarations[i]) {
-                        cfw.addPush(0);
-                        cfw.addIStore(reg + (fnCurrent.isNumberVar(i) ? 2 : 1));
-                    }
                     varRegisters[i] = reg;
                 }
 
@@ -1200,6 +1213,10 @@ class BodyCodegen {
 
             case Token.UNDEFINED:
                 Codegen.pushUndefined(cfw);
+                break;
+
+            case Token.UNINITIALIZED:
+                cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
                 break;
 
             case Token.TRUE:
@@ -4697,19 +4714,24 @@ class BodyCodegen {
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         int reg = varRegisters[varIndex];
         // A block scoped declaration reached more than once must re-bind, so INITCONSTVAR
-        // stores without consulting the "already initialized" flag register.
+        // stores without checking whether the slot is still uninitialized.
         boolean force = node.getType() == Token.INITCONSTVAR;
-        int flagReg = reg + (isNumber ? 2 : 1);
         int beyond = cfw.acquireLabel();
         int noAssign = force ? -1 : cfw.acquireLabel();
         if (!force) {
-            cfw.addILoad(flagReg);
-            cfw.add(ByteCode.IFNE, noAssign);
+            if (isNumber) {
+                cfw.addILoad(reg + 2);
+                cfw.add(ByteCode.IFNE, noAssign);
+            } else {
+                cfw.addALoad(reg);
+                cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+                cfw.add(ByteCode.IF_ACMPNE, noAssign);
+            }
         }
         int stack = cfw.getStackTop();
-        cfw.addPush(1);
-        cfw.addIStore(flagReg);
         if (isNumber) {
+            cfw.addPush(1);
+            cfw.addIStore(reg + 2);
             cfw.addDStore(reg);
         } else {
             cfw.addAStore(reg);
@@ -4733,7 +4755,7 @@ class BodyCodegen {
 
     /**
      * Restores a block scoped slot held in a register to the state it has on entry to its block:
-     * undefined, and uninitialized again if the slot holds a const. Emitted at the top of a
+     * undefined, or the uninitialized marker if the slot holds a const. Emitted at the top of a
      * flattened block scope that a loop can re-enter.
      */
     private void visitResetVar(Node node) {
@@ -4744,12 +4766,12 @@ class BodyCodegen {
             throw Kit.codeBug();
         }
         int reg = varRegisters[varIndex];
-        Codegen.pushUndefined(cfw);
-        cfw.addAStore(reg);
         if (fnCurrent.fnode.getParamAndVarConst()[varIndex]) {
-            cfw.addPush(0);
-            cfw.addIStore(reg + 1);
+            cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+        } else {
+            Codegen.pushUndefined(cfw);
         }
+        cfw.addAStore(reg);
     }
 
     private void visitGetProp(Node node, Node child) {
@@ -4997,18 +5019,8 @@ class BodyCodegen {
         addOptRuntimeInvoke("wrapDouble", "(D)Ljava/lang/Double;");
     }
 
-    /**
-     * Const locals use an extra slot to hold the has-been-assigned-once flag at runtime.
-     *
-     * @param isConst true iff the variable is const
-     * @return the register for the word pair (double/long)
-     */
     private short getNewWordPairLocal(boolean isConst) {
         return getNewWordIntern(isConst ? 3 : 2);
-    }
-
-    private short getNewWordLocal(boolean isConst) {
-        return getNewWordIntern(isConst ? 2 : 1);
     }
 
     private short getNewWordLocal() {

@@ -1235,10 +1235,10 @@ class NativeProxy extends ScriptableObject {
             boolean booleanTrapResult =
                     ScriptRuntime.toBoolean(callTrap(trap, new Object[] {target, prototype}));
             if (!booleanTrapResult) {
-				return false;
+                return false;
             }
             if (target.isExtensible()) {
-				return true;
+                return true;
             }
 
             return false;

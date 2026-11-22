@@ -30,8 +30,6 @@ public class InitConstVar extends Instruction {
             frame.setVar(index, value);
             frame.push(value);
         }
-        int newAttrs = frame.getVarAttribute(index) & ~ScriptableObject.UNINITIALIZED_CONST;
-        frame.resetVarAttributes(index, newAttrs);
         frame.pc += 1;
     }
 

@@ -762,6 +762,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Token.FALSE] = new DoFalse();
         instructionObjs[base + Token.TRUE] = new DoTrue();
         instructionObjs[base + Icode.UNDEF] = new DoUndef();
+        instructionObjs[base + Icode.UNINITIALIZED] = new DoUninitialized();
         instructionObjs[base + Token.ENTERWITH] = new DoEnterWith();
         instructionObjs[base + Token.ENTER_SCOPE] = new DoEnterScope();
         instructionObjs[base + Token.LEAVE_SCOPE] = new DoLeaveScope();
@@ -3142,9 +3143,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         "msg.var.redecl",
                         frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
-            if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+            if (vars[state.indexReg] == VarScope.UNINITIALIZED) {
                 vars[state.indexReg] = frame.stack[frame.stackTop];
-                varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
             } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                 throw Context.reportRuntimeErrorById(
@@ -3173,9 +3173,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         "msg.var.redecl",
                         frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
-            if ((varAttributes[state.indexReg] & ScriptableObject.UNINITIALIZED_CONST) != 0) {
+            if (vars[state.indexReg] == VarScope.UNINITIALIZED) {
                 vars[state.indexReg] = frame.stack[frame.stackTop];
-                varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
                 varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
             } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                 throw Context.reportRuntimeErrorById(
@@ -3198,7 +3197,6 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                         frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
             }
             vars[state.indexReg] = frame.stack[frame.stackTop];
-            varAttributes[state.indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
             varDbls[state.indexReg] = frame.doubleStack[frame.stackTop];
             return null;
         }
@@ -3207,10 +3205,10 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoResetVar extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            var varAttributes = frame.varSource.stackAttributes;
-            frame.varSource.stack[state.indexReg] = Undefined.instance;
             if (frame.fnOrScript.getDescriptor().getParamOrVarConst(state.indexReg)) {
-                varAttributes[state.indexReg] = ScriptableObject.CONST;
+                frame.varSource.stack[state.indexReg] = VarScope.UNINITIALIZED;
+            } else {
+                frame.varSource.stack[state.indexReg] = Undefined.instance;
             }
             return null;
         }
@@ -3511,6 +3509,14 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             frame.stack[++frame.stackTop] = undefined;
+            return null;
+        }
+    }
+
+    private static class DoUninitialized extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            frame.stack[++frame.stackTop] = VarScope.UNINITIALIZED;
             return null;
         }
     }

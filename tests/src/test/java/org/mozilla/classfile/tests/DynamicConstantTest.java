@@ -8,7 +8,6 @@ package org.mozilla.classfile.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,7 +43,6 @@ import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.UniqueTag;
 import org.mozilla.javascript.optimizer.EagerSourceCodeProviderDescriber;
-import org.mozilla.javascript.optimizer.ObjectLiteralDescriptorDescribers;
 import org.mozilla.javascript.optimizer.StringConcatBootstraps;
 import org.mozilla.javascript.optimizer.SymbolKeyDescriber;
 import org.mozilla.javascript.optimizer.TemplateLiteralCallSiteDescriber;
@@ -369,13 +367,7 @@ public class DynamicConstantTest {
 
     @Test
     public void uniqueTagsResolveToTheCanonicalInstances() throws Exception {
-        UniqueTag[] tags = {
-            UniqueTag.NOT_FOUND,
-            UniqueTag.NULL_VALUE,
-            UniqueTag.DOUBLE_MARK,
-            UniqueTag.COMPUTED_KEY,
-            UniqueTag.COMPUTED_METHOD
-        };
+        UniqueTag[] tags = UniqueTag.values();
         for (int i = 0; i < tags.length; i++) {
             String className = "TestUniqueTagConstant" + i;
             ClassFileWriter cfw = writer(className);

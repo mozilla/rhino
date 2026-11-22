@@ -83,7 +83,7 @@ public final class NativeCall extends DeclarationScope {
                     if (function.getParamOrVarConst(i)) {
                         defineProperty(
                                 name,
-                                Undefined.instance,
+                                VarScope.UNINITIALIZED,
                                 cx.getLanguageVersion() >= Context.VERSION_ES6
                                         ? CONST
                                         : LEGACY_CONST);

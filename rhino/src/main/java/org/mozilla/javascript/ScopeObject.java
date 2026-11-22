@@ -4,7 +4,6 @@ import static org.mozilla.javascript.ScriptableObject.EMPTY;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
-import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 
 import java.io.IOException;
 import java.io.InvalidObjectException;
@@ -303,9 +302,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
 
     @Override
     public void defineConst(Context cx, String name, VarScope start) {
-        if (putConstImpl(
-                cx, name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
-            return;
+        if (putConstImpl(cx, name, 0, start, VarScope.UNINITIALIZED, 0)) return;
 
         if (start == this) throw Kit.codeBug();
         start.defineConst(cx, name, start);
@@ -342,7 +339,6 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      */
     private boolean putConstImpl(
             Context cx, String name, int index, VarScope start, Object value, int constFlag) {
-        assert (constFlag != ScriptableObject.EMPTY);
         Slot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(name, index);
@@ -351,19 +347,31 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
             }
         } else {
             // either const hoisted declaration or initialization
-            var flags = cx.getLanguageVersion() >= Context.VERSION_ES6
-                    ? ScriptableObject.CONST
-                    : ScriptableObject.LEGACY_CONST;
-            slot = getMap().modify(this, name, index, flags);
-            int attr = slot.getAttributes();
-            if ((attr & READONLY) == 0)
-                throw Context.reportRuntimeErrorById("msg.var.redecl", name);
-            if ((attr & UNINITIALIZED_CONST) != 0) {
-                slot.value = value;
-                // clear the bit on const initialization
-                if (constFlag != UNINITIALIZED_CONST)
-                    slot.setAttributes(attr & ~UNINITIALIZED_CONST);
-            }
+            var flags =
+                    cx.getLanguageVersion() >= Context.VERSION_ES6
+                            ? ScriptableObject.CONST
+                            : ScriptableObject.LEGACY_CONST;
+            slot =
+                    getMap().compute(
+                                    this,
+                                    name,
+                                    index,
+                                    (n, i, e, c, o) -> {
+                                        if (e == null) {
+                                            var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                            newSlot.value = value;
+                                            return newSlot;
+                                        } else {
+                                            int attr = e.getAttributes();
+                                            if ((attr & READONLY) == 0)
+                                                throw Context.reportRuntimeErrorById(
+                                                        "msg.var.redecl", name);
+                                            if (e.value == VarScope.UNINITIALIZED) {
+                                                e.value = value;
+                                            }
+                                        }
+                                        return e;
+                                    });
             return true;
         }
         return slot.setValue(value, this, start);

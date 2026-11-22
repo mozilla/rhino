@@ -1132,6 +1132,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 stackChange(1);
                 break;
 
+            case Token.UNINITIALIZED:
+                addIcode(Icode.UNINITIALIZED);
+                stackChange(1);
+                break;
+
             case Token.ENUM_NEXT:
             case Token.ENUM_ID:
                 addIndexOp(type, getLocalBlockRef(node));
