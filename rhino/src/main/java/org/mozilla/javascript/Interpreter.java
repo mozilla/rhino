@@ -769,6 +769,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
         instructionObjs[base + Icode.DEF_CONST] = new DoDefConst();
         instructionObjs[base + Icode.DEF_LET] = new DoDefLet();
         instructionObjs[base + Icode.INIT_LET] = new DoInitLet();
+        instructionObjs[base + Icode.TDZ_CHECK] = new DoTdzCheck();
         instructionObjs[base + Icode.SCOPE_REPLACE] = new DoScopeReplace();
         instructionObjs[base + Token.CATCH_SCOPE] = new DoCatchScope();
         instructionObjs[base + Token.ENUM_INIT_KEYS] = new DoEnumInit();
@@ -3207,7 +3208,8 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
     private static class DoResetVar extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            if (frame.fnOrScript.getDescriptor().getParamOrVarConst(state.indexReg)) {
+            var desc = frame.fnOrScript.getDescriptor();
+            if (desc.getParamOrVarConst(state.indexReg) || desc.getParamOrVarLet(state.indexReg)) {
                 frame.varSource.stack[state.indexReg] = VarScope.UNINITIALIZED;
             } else {
                 frame.varSource.stack[state.indexReg] = Undefined.instance;
@@ -3579,6 +3581,17 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             VarScope lhs = (VarScope) stack[frame.stackTop - 1];
             stack[frame.stackTop - 1] = ScriptRuntime.initLet(lhs, rhs, cx, state.stringReg);
             --frame.stackTop;
+            return null;
+        }
+    }
+
+    private static class DoTdzCheck extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            if (frame.varSource.stack[state.indexReg] == VarScope.UNINITIALIZED) {
+                throw ScriptRuntime.uninitializedBindingError(
+                        frame.fnOrScript.getDescriptor().getParamOrVarName(state.indexReg));
+            }
             return null;
         }
     }

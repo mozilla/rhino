@@ -431,6 +431,9 @@ public class NodeTransformer {
                         Scope defining = scope.getDefiningScope(node.getString());
                         if (defining != null) {
                             node.setScope(defining);
+                            if (hasDeadZone(defining.getSymbol(node.getString()))) {
+                                node.putIntProp(Node.TDZ_CHECK_PROP, 1);
+                            }
                         }
                     }
                     break;
@@ -504,13 +507,23 @@ public class NodeTransformer {
                         Scope defining = scope.getDefiningScope(name);
                         if (defining != null) {
                             nameSource.setScope(defining);
+                            // The declaration's own store initializes the binding, but any other
+                            // access may find it still in its temporal dead zone.
+                            boolean deadZone =
+                                    type != Token.INIT_LET && hasDeadZone(defining.getSymbol(name));
                             if (type == Token.NAME) {
                                 node.setType(Token.GETVAR);
+                                if (deadZone) {
+                                    node.putIntProp(Node.TDZ_CHECK_PROP, 1);
+                                }
                             } else if (type == Token.SETNAME
                                     || type == Token.STRICT_SETNAME
                                     || type == Token.INIT_LET) {
                                 node.setType(Token.SETVAR);
                                 nameSource.setType(Token.STRING);
+                                if (deadZone) {
+                                    node.putIntProp(Node.TDZ_CHECK_PROP, 1);
+                                }
                             } else if (type == Token.SETCONST) {
                                 // A loop can run a block scoped declaration more than once, and
                                 // each run re-binds. Pre-ES6 const is hoisted to the function
@@ -568,9 +581,10 @@ public class NodeTransformer {
      * still marked uninitialized, and a {@code let} without an initializer stores nothing at all.
      *
      * <p>Only bindings that the scope does not itself initialize on entry need this. A declaration
-     * among the scope's leading statements always runs before anything can read the binding, so it
-     * is left to do the initializing; one that a jump can bypass — a {@code case} clause of a
-     * switch, or the head of a for-in/for-of loop — is not.
+     * among the scope's leading declarations always runs before anything can read the binding, so
+     * it is left to do the initializing; one that a jump can bypass — a {@code case} clause of a
+     * switch, or the head of a for-in/for-of loop — or that other code may run before is not, as
+     * that code must find the binding in its temporal dead zone.
      */
     private static void addScopeReinit(Scope scope) {
         Map<String, Symbol> symbolTable = scope.getSymbolTable();
@@ -597,27 +611,52 @@ public class NodeTransformer {
     }
 
     /**
-     * Collects the names that the leading statements of a scope declare with an initializer. The
-     * walk stops at the first {@link Token#TARGET}, since from there on a jump can land past a
-     * declaration and leave the binding holding whatever an earlier iteration left in its slot.
+     * Collects the names that the leading declarations of a scope initialize. The walk stops at the
+     * first statement that is not a declaration, since from there on a jump can land past a
+     * declaration, or other code can read a binding before it is declared. It also stops at an
+     * initializer that may read one of the scope's bindings not initialized yet, as on a later
+     * iteration that read would otherwise find whatever an earlier one left in its slot.
      */
     private static List<String> namesInitializedOnEntry(Scope scope) {
         List<String> names = new ArrayList<>(4);
+        Map<String, Symbol> symbolTable = scope.getSymbolTable();
         for (Node child = scope.getFirstChild(); child != null; child = child.getNext()) {
             int type = child.getType();
-            if (type == Token.TARGET) {
+            if (type != Token.LET && type != Token.CONST && type != Token.VAR) {
                 break;
             }
-            if (type != Token.LET && type != Token.CONST && type != Token.VAR) {
-                continue;
-            }
             for (Node decl = child.getFirstChild(); decl != null; decl = decl.getNext()) {
-                if (decl.getType() == Token.NAME && decl.hasChildren()) {
+                if (decl.getType() != Token.NAME) {
+                    // A destructuring declaration
+                    return names;
+                }
+                if (decl.hasChildren()) {
+                    if (readsUninitialized(decl.getFirstChild(), symbolTable, names)) {
+                        return names;
+                    }
+                    names.add(decl.getString());
+                } else if (type == Token.LET) {
                     names.add(decl.getString());
                 }
             }
         }
         return names;
+    }
+
+    private static boolean readsUninitialized(
+            Node node, Map<String, Symbol> symbolTable, List<String> initialized) {
+        int type = node.getType();
+        if ((type == Token.NAME || type == Token.BINDNAME || type == Token.TYPEOFNAME)
+                && symbolTable.containsKey(node.getString())
+                && !initialized.contains(node.getString())) {
+            return true;
+        }
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            if (readsUninitialized(child, symbolTable, initialized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -637,6 +676,14 @@ public class NodeTransformer {
             array[i] = flags.get(i);
         }
         declarations.putProp(prop, array);
+    }
+
+    /** Returns true if the symbol is a binding that cannot be accessed before it is initialized. */
+    private boolean hasDeadZone(Symbol symbol) {
+        return symbol != null
+                && (symbol.getDeclType() == Symbol.Type.LET
+                        || symbol.getDeclType() == Symbol.Type.CONST)
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
     }
 
     /** Returns true if the symbol is a let binding that starts out uninitialized. */

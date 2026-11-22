@@ -2469,7 +2469,7 @@ public class ScriptRuntime {
             }
         }
 
-        checkInitialized(result, name);
+        result = checkInitialized(cx, result, name);
         if (asFunctionCall) {
             if (!(result instanceof Callable)) {
                 if (isOptionalChainingCall
@@ -2547,7 +2547,7 @@ public class ScriptRuntime {
             }
         }
 
-        checkInitialized(result, name);
+        result = checkInitialized(cx, result, name);
         if (!(result instanceof Callable)) {
             if (isOptionalChainingCall
                     && (result == Scriptable.NOT_FOUND
@@ -2563,25 +2563,45 @@ public class ScriptRuntime {
         if (cx.useDynamicScope) {
             scope = checkDynamicScope(cx.topCallScope, scope);
         }
-        return checkInitialized(ScriptableObject.getProperty(scope, name), name);
+        return checkInitialized(cx, ScriptableObject.getProperty(scope, name), name);
     }
 
     /**
      * Throws a ReferenceError if a name lookup found a binding that has not been initialized yet.
+     * Before ES6 there is no temporal dead zone, and an uninitialized const reads as undefined.
      */
-    private static Object checkInitialized(Object value, String name) {
+    private static Object checkInitialized(Context cx, Object value, String name) {
         if (value == VarScope.UNINITIALIZED) {
-            throw constructError(
-                    "ReferenceError", getMessageById("msg.uninitialized.binding", name));
+            if (cx.getLanguageVersion() < Context.VERSION_ES6) {
+                return Undefined.instance;
+            }
+            throw uninitializedBindingError(name);
         }
         return value;
     }
 
-    private static void checkInitializedBinding(VarScope bound, String name) {
-        if (bound.isUninitializedBinding(name)) {
-            throw constructError(
-                    "ReferenceError", getMessageById("msg.uninitialized.binding", name));
+    private static void checkInitializedBinding(Context cx, VarScope bound, String name) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && bound.isUninitializedBinding(name)) {
+            throw uninitializedBindingError(name);
         }
+    }
+
+    /** Checks a local variable slot that holds the uninitialized marker until it is initialized. */
+    public static void checkVarInitialized(Object value, String name) {
+        if (value == VarScope.UNINITIALIZED) {
+            throw uninitializedBindingError(name);
+        }
+    }
+
+    /** Checks a local variable whose slot is paired with an "has been initialized" flag. */
+    public static void checkVarInitialized(int initialized, String name) {
+        if (initialized == 0) {
+            throw uninitializedBindingError(name);
+        }
+    }
+
+    public static RuntimeException uninitializedBindingError(String name) {
+        return constructError("ReferenceError", getMessageById("msg.uninitialized.binding", name));
     }
 
     /**
@@ -2654,7 +2674,7 @@ public class ScriptRuntime {
     public static Object setName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
-            checkInitializedBinding(bound, id);
+            checkInitializedBinding(cx, bound, id);
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and it's better to optimize  the common case
             ScriptableObject.putProperty(bound, id, value);
@@ -2687,7 +2707,7 @@ public class ScriptRuntime {
             // false. In these cases a TypeError exception is thrown (11.13.1).
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and we should optimize  the common case
-            checkInitializedBinding(bound, id);
+            checkInitializedBinding(cx, bound, id);
             ScriptableObject.putProperty(bound, id, value);
             return value;
         }
@@ -3839,7 +3859,7 @@ public class ScriptRuntime {
     public static String typeofName(Context cx, VarScope scope, String id) {
         VarScope val = bind(cx, scope, id);
         if (val == null) return "undefined";
-        return typeof(checkInitialized(getObjectProp(val, id, cx), id));
+        return typeof(checkInitialized(cx, getObjectProp(val, id, cx), id));
     }
 
     public static boolean isObject(Object value) {
@@ -4209,7 +4229,7 @@ public class ScriptRuntime {
             } while (scopeChain != null);
             throw notFoundError(null, id);
         }
-        checkInitialized(value, id);
+        value = checkInitialized(cx, value, id);
         return doScopeIncrDecr(target, id, value, incrDecrMask);
     }
 

@@ -195,8 +195,11 @@ abstract class Icode {
             DEF_LET = UNINITIALIZED - 1,
             INIT_LET = DEF_LET - 1,
 
+            // Throw if the local variable slot still holds the uninitialized marker
+            TDZ_CHECK = INIT_LET - 1,
+
             // Last icode
-            MIN_ICODE = INIT_LET;
+            MIN_ICODE = TDZ_CHECK;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -228,6 +231,8 @@ abstract class Icode {
                 return "DEF_LET";
             case INIT_LET:
                 return "INIT_LET";
+            case TDZ_CHECK:
+                return "TDZ_CHECK";
             case SWAP:
                 return "SWAP";
             case POP:

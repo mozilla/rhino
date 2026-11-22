@@ -1064,6 +1064,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                         addStringOp(Icode.TYPEOFNAME, node.getString());
                         stackChange(1);
                     } else {
+                        addTdzCheck(node, index);
                         addVarOp(Token.GETVAR, index);
                         stackChange(1);
                         addToken(Token.TYPEOF);
@@ -1094,6 +1095,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 {
                     if (builder.requiresActivationFrame) Kit.codeBug();
                     int index = scriptOrFn.getIndexForNameNode(node);
+                    addTdzCheck(node, index);
                     addVarOp(Token.GETVAR, index);
                     stackChange(1);
                 }
@@ -1105,6 +1107,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                     int index = scriptOrFn.getIndexForNameNode(child);
                     child = child.getNext();
                     visitExpression(child, 0);
+                    addTdzCheck(node, index);
                     addVarOp(Token.SETVAR, index);
                 }
                 break;
@@ -1429,6 +1432,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 {
                     if (builder.requiresActivationFrame) Kit.codeBug();
                     int i = scriptOrFn.getIndexForNameNode(child);
+                    addTdzCheck(child, i);
                     addVarOp(Icode.VAR_INC_DEC, i);
                     addUint8(incrDecrMask);
                     stackChange(1);
@@ -1925,6 +1929,12 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
         array[top] = (byte) gotoOp;
         // Offset would written later
         iCodeTop = top + 1 + 2;
+    }
+
+    private void addTdzCheck(Node node, int varIndex) {
+        if (node.getIntProp(Node.TDZ_CHECK_PROP, 0) != 0) {
+            addIndexOp(Icode.TDZ_CHECK, varIndex);
+        }
     }
 
     private void addVarOp(int op, int varIndex) {

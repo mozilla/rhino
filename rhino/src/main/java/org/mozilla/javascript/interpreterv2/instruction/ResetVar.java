@@ -15,7 +15,8 @@ public class ResetVar extends Instruction {
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        if (frame.fnOrScript.getDescriptor().getParamOrVarConst(index)) {
+        var desc = frame.fnOrScript.getDescriptor();
+        if (desc.getParamOrVarConst(index) || desc.getParamOrVarLet(index)) {
             frame.setVar(index, VarScope.UNINITIALIZED);
         } else {
             frame.setVar(index, Undefined.instance);

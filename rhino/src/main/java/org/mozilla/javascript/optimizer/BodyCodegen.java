@@ -362,6 +362,7 @@ class BodyCodegen {
             int paramCount = fnCurrent.fnode.getParamCount();
             int varCount = fnCurrent.fnode.getParamAndVarCount();
             boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
+            boolean[] letDeclarations = fnCurrent.fnode.getParamAndVarLet();
 
             // REMIND - only need to initialize the vars that don't get a value
             // before the next call and are used in the function
@@ -387,7 +388,7 @@ class BodyCodegen {
                         cfw.addPush(0);
                         cfw.addIStore(reg + 2);
                     }
-                } else if (constDeclarations[i]) {
+                } else if (constDeclarations[i] || letDeclarations[i]) {
                     reg = getNewWordLocal();
                     if (firstUninitVar == -1) {
                         cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
@@ -3870,6 +3871,7 @@ class BodyCodegen {
         if (hasVarsInRegs) {
             int varIndex = fnCurrent.fnode.getIndexForNameNode(node);
             if (varIndex >= 0) {
+                addTdzCheck(node, varIndex);
                 if (fnCurrent.isNumberVar(varIndex)) {
                     cfw.addPush("number");
                 } else if (varIsDirectCallParameter(varIndex)) {
@@ -3952,6 +3954,7 @@ class BodyCodegen {
                 boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
                 int varIndex = fnCurrent.getVarIndex(child);
                 int reg = varRegisters[varIndex];
+                addTdzCheck(child, varIndex);
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
                     if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
@@ -4659,6 +4662,7 @@ class BodyCodegen {
         if (!hasVarsInRegs) Kit.codeBug();
         int varIndex = fnCurrent.getVarIndex(node);
         int reg = varRegisters[varIndex];
+        addTdzCheck(node, varIndex);
         if (varIsDirectCallParameter(varIndex)) {
             // Remember that here the isNumber flag means that we
             // want to use the incoming parameter in a Number
@@ -4676,10 +4680,34 @@ class BodyCodegen {
         }
     }
 
+    /**
+     * Throws if a local variable access marked as possibly in a temporal dead zone finds the slot
+     * still uninitialized. Leaves the operand stack as it was.
+     */
+    private void addTdzCheck(Node node, int varIndex) {
+        if (node.getIntProp(Node.TDZ_CHECK_PROP, 0) == 0) {
+            return;
+        }
+        int reg = varRegisters[varIndex];
+        if (fnCurrent.isNumberVar(varIndex)) {
+            // Only a const can be a number var here, and it records initialization in a flag.
+            if (!fnCurrent.fnode.getParamAndVarConst()[varIndex]) throw Kit.codeBug();
+            cfw.addILoad(reg + 2);
+            cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+            addScriptRuntimeInvoke("checkVarInitialized", "(ILjava/lang/String;)V");
+        } else {
+            cfw.addALoad(reg);
+            cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+            addScriptRuntimeInvoke(
+                    "checkVarInitialized", "(Ljava/lang/Object;Ljava/lang/String;)V");
+        }
+    }
+
     private void visitSetVar(Node node, Node child, boolean needValue) {
         if (!hasVarsInRegs) Kit.codeBug();
         int varIndex = fnCurrent.getVarIndex(node);
         generateExpression(child.getNext(), node);
+        addTdzCheck(node, varIndex);
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
@@ -4798,7 +4826,8 @@ class BodyCodegen {
             throw Kit.codeBug();
         }
         int reg = varRegisters[varIndex];
-        if (fnCurrent.fnode.getParamAndVarConst()[varIndex]) {
+        if (fnCurrent.fnode.getParamAndVarConst()[varIndex]
+                || fnCurrent.fnode.getParamAndVarLet()[varIndex]) {
             cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
         } else {
             Codegen.pushUndefined(cfw);

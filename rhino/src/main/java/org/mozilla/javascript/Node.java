@@ -72,7 +72,8 @@ public class Node implements Iterable<Node> {
             OBJECT_REST_PROP = 33, // marks a CALL node as object rest operation
             CONST_IDS_PROP = 34, // boolean[] flagging which declarations or names are consts
             LET_IDS_PROP = 35, // boolean[] flagging which names are lets created uninitialized
-            LAST_PROP = LET_IDS_PROP,
+            TDZ_CHECK_PROP = 36, // set on a local variable access that may be in a dead zone
+            LAST_PROP = TDZ_CHECK_PROP,
             FIRST_PROP = FUNCTION_PROP;
 
     // values of ISNUMBER_PROP to specify
@@ -465,6 +466,8 @@ public class Node implements Iterable<Node> {
                 return "const_ids";
             case LET_IDS_PROP:
                 return "let_ids";
+            case TDZ_CHECK_PROP:
+                return "tdz_check";
 
             default:
                 Kit.codeBug();

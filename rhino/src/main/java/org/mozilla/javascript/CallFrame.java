@@ -156,6 +156,8 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
                                         ? ScriptableObject.CONST
                                         : ScriptableObject.LEGACY_CONST);
                 stack[i] = VarScope.UNINITIALIZED;
+            } else if (desc.getParamOrVarLet(i)) {
+                stack[i] = VarScope.UNINITIALIZED;
             }
         }
         int blen = 0;

@@ -115,6 +115,8 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
                                         ? ScriptableObject.CONST
                                         : ScriptableObject.LEGACY_CONST);
                 this.stack[i] = VarScope.UNINITIALIZED;
+            } else if (desc.getParamOrVarLet(i)) {
+                this.stack[i] = VarScope.UNINITIALIZED;
             }
         }
 
