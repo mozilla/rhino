@@ -3803,8 +3803,8 @@ public class ScriptRuntime {
         // mode.
         Consumer<CompilerEnvirons> compilerEnvironsProcessor =
                 compilerEnvs -> {
-                    // `eval` propagates strict mode
-                    compilerEnvs.setStrictMode(cx.isStrictMode());
+                    // Direct `eval` propagates strict mode, indirect eval is never strict.
+                    compilerEnvs.setStrictMode(isStrict);
 
                     // If we are inside a method, we need to allow super. Methods have the home
                     // object set and propagated via the activation (i.e. the NativeCall),
@@ -3834,6 +3834,10 @@ public class ScriptRuntime {
         if (isStrict
                 || (script instanceof JSScript && ((JSScript) script).getDescriptor().isStrict())) {
             evalScope = new ScopeObject(scope);
+        } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            // Lexical declarations get their own scope, while var declarations go to the
+            // caller's variable scope.
+            evalScope = new LocalScope(scope);
         } else {
             evalScope = scope;
         }
@@ -5139,15 +5143,32 @@ public class ScriptRuntime {
                 varScope = varScope.getParentScope();
             }
 
+            boolean es6Eval = evalScript && cx.getLanguageVersion() >= Context.VERSION_ES6;
+            if (es6Eval && varScope != scope) {
+                checkEvalVarConflicts(desc, scope, varScope);
+                if (varScope instanceof TopLevel) {
+                    checkGlobalEvalDeclarations(cx, desc, ((TopLevel) varScope).getGlobalThis());
+                }
+            }
+            // ES6 eval code has its own lexical scope, so existing vars are found in the
+            // variable scope.
+            VarScope existingScope = es6Eval ? varScope : scope;
+
             for (int i = varCount; i-- != 0; ) {
                 String name = desc.getParamOrVarName(i);
                 boolean isConst = desc.getParamOrVarConst(i);
+                boolean isLet = desc.getParamOrVarLet(i);
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
-                if (desc.getParamOrVarLet(i) && !evalScript) {
+                if (es6Eval && isLet) {
+                    // Lexical declarations in eval code bind in the eval's own scope.
+                    scope.createMutableBinding(name, false);
+                } else if (es6Eval && isConst) {
+                    scope.createImmutableBinding(name, true);
+                } else if (isLet && !evalScript) {
                     // Lexical declarations bind on the top level scope, not the global object.
                     varScope.createMutableBinding(name, false);
-                } else if (!ScriptableObject.hasProperty(scope, name)) {
+                } else if (!ScriptableObject.hasProperty(existingScope, name)) {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(cx, varScope, name);
                     } else if (!evalScript) {
@@ -5160,10 +5181,91 @@ public class ScriptRuntime {
                         varScope.put(name, varScope, Undefined.instance);
                     }
                 } else {
-                    ScriptableObject.redefineProperty(cx, scope, name, isConst);
+                    ScriptableObject.redefineProperty(cx, existingScope, name, isConst);
                 }
             }
         }
+    }
+
+    /**
+     * Throws a SyntaxError if a var or function declared by non-strict eval code would conflict
+     * with a lexical declaration between the eval and its variable scope, or in that variable scope
+     * itself.
+     *
+     * <p>See ECMA 19.2.1.3 EvalDeclarationInstantiation, step 3.
+     */
+    private static void checkEvalVarConflicts(
+            JSDescriptor<?> desc, VarScope evalScope, VarScope varScope) {
+        for (int i = 0; i < desc.getParamAndVarCount(); i++) {
+            if (desc.getParamOrVarLet(i) || desc.getParamOrVarConst(i)) {
+                continue;
+            }
+            String name = desc.getParamOrVarName(i);
+            for (VarScope s = evalScope.getParentScope(); s != varScope; s = s.getParentScope()) {
+                // Catch parameters may be redeclared by var (Annex B.3.4), and with
+                // scopes are object environments.
+                if (s instanceof LocalScope && s.has(name, s)) {
+                    throw evalRedeclarationError(name);
+                }
+            }
+            if (isLexicalDeclarationOf(varScope, name)) {
+                throw evalRedeclarationError(name);
+            }
+        }
+    }
+
+    /**
+     * Throws a TypeError if a var or function declared by non-strict eval code cannot be created on
+     * the global object.
+     *
+     * <p>See ECMA 19.2.1.3 EvalDeclarationInstantiation, steps 8 and 10, and 9.1.1.4.15-16
+     * CanDeclareGlobalVar and CanDeclareGlobalFunction.
+     */
+    private static void checkGlobalEvalDeclarations(
+            Context cx, JSDescriptor<?> desc, ScriptableObject global) {
+        for (int i = 0; i < desc.getParamAndVarCount(); i++) {
+            if (desc.getParamOrVarLet(i) || desc.getParamOrVarConst(i)) {
+                continue;
+            }
+            String name = desc.getParamOrVarName(i);
+            boolean isFunction = !desc.hasNoFunctionStatementNamed(name);
+            var existing = global.getOwnPropertyDescriptor(cx, name);
+            boolean definable;
+            if (existing == null) {
+                definable = global.isExtensible();
+            } else if (!isFunction) {
+                definable = true;
+            } else {
+                definable =
+                        existing.isConfigurable()
+                                || (existing.isDataDescriptor()
+                                        && existing.isWritable()
+                                        && existing.isEnumerable());
+            }
+            if (!definable) {
+                throw typeErrorById("msg.global.not.definable", name);
+            }
+        }
+    }
+
+    private static boolean isLexicalDeclarationOf(VarScope varScope, String name) {
+        if (varScope instanceof TopLevel) {
+            return ((TopLevel) varScope).getMap().query(name, 0) != null;
+        }
+        if (varScope instanceof NativeCall) {
+            var fdesc = ((NativeCall) varScope).function.getDescriptor();
+            for (int i = 0; i < fdesc.getParamAndVarCount(); i++) {
+                if ((fdesc.getParamOrVarLet(i) || fdesc.getParamOrVarConst(i))
+                        && fdesc.getParamOrVarName(i).equals(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static EcmaError evalRedeclarationError(String name) {
+        return constructError("SyntaxError", getMessageById("msg.var.redecl", name));
     }
 
     /**
@@ -5601,6 +5703,23 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * Creates the global binding for a function declared by eval code.
+     *
+     * <p>See ECMA 9.1.1.4.18 CreateGlobalFunctionBinding.
+     */
+    private static void defineGlobalEvalFunction(
+            Context cx, TopLevel top, String name, JSFunction function) {
+        ScriptableObject global = top.getGlobalThis();
+        var existing = global.getOwnPropertyDescriptor(cx, name);
+        if (existing == null || existing.isConfigurable()) {
+            global.defineOwnProperty(
+                    cx, name, new PropertyDescriptor(function, ScriptableObject.EMPTY, true));
+        } else {
+            top.put(name, top, function);
+        }
+    }
+
     public static void initFunction(
             Context cx, VarScope scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
@@ -5612,6 +5731,16 @@ public class ScriptRuntime {
                     ScriptableObject.defineProperty(
                             scope, name, function, ScriptableObject.PERMANENT);
                 } else {
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                        // Function declarations in eval code bind in the variable scope.
+                        while (scope.isNestedScope()) {
+                            scope = scope.getParentScope();
+                        }
+                        if (scope instanceof TopLevel) {
+                            defineGlobalEvalFunction(cx, (TopLevel) scope, name, function);
+                            return;
+                        }
+                    }
                     scope.put(name, scope, function);
                 }
             }

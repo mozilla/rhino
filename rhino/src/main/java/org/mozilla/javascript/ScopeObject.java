@@ -425,7 +425,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     public boolean initializeBinding(String name, Object value) {
         var slot = getMap().query(name, 0);
         if (slot == null) {
-            // Not created by createMutableBinding, as for a let declared in eval code.
+            // Not created by createMutableBinding, as for a let in pre-ES6 eval code.
             return put(name, this, value);
         }
         if ((slot.getAttributes() & READONLY) != 0 && slot.value != VarScope.UNINITIALIZED) {
