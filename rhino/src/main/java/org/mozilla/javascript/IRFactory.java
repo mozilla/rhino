@@ -1843,13 +1843,18 @@ public final class IRFactory {
                 }
             }
 
+            boolean legacyKeyValue =
+                    destructuring != -1
+                            && !isForEach
+                            && !isForOf
+                            && parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6;
             Node localBlock = new Node(Token.LOCAL_BLOCK);
             int initType =
                     isForEach
                             ? Token.ENUM_INIT_VALUES
                             : isForOf
                                     ? Token.ENUM_INIT_VALUES_IN_ORDER
-                                    : (destructuring != -1
+                                    : (legacyKeyValue
                                             ? Token.ENUM_INIT_ARRAY
                                             : Token.ENUM_INIT_KEYS);
             Node init = new Node(initType, obj);
@@ -1864,9 +1869,7 @@ public final class IRFactory {
             if (destructuring != -1) {
                 assign =
                         parser.createDestructuringAssignment(declType, lvalue, id, this::transform);
-                if (!isForEach
-                        && !isForOf
-                        && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
+                if (legacyKeyValue && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
                     // destructuring assignment is only allowed in for..each or
                     // with an array type of length 2 (to hold key and value)
                     parser.reportError("msg.bad.for.in.destruct");
