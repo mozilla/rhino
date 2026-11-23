@@ -5172,6 +5172,32 @@ public class Parser {
         return result;
     }
 
+    /**
+     * Destructures a nested pattern, recording the names it binds in the enclosing pattern's list
+     * so that a scope declaring the whole pattern sees all of them.
+     */
+    private Node nestedDestructuringAssignment(
+            int variableType,
+            Node left,
+            Node right,
+            Transformer transformer,
+            boolean isFunctionParameter,
+            List<String> destructuringNames) {
+        Node result =
+                destructuringAssignmentHelper(
+                        variableType,
+                        left,
+                        right,
+                        currentScriptOrFn.getNextTempName(),
+                        null,
+                        transformer,
+                        isFunctionParameter);
+        @SuppressWarnings("unchecked")
+        List<String> nestedNames = (List<String>) result.getProp(Node.DESTRUCTURING_NAMES);
+        destructuringNames.addAll(nestedNames);
+        return result;
+    }
+
     private static class DestructuringArrayResult {
         boolean empty;
         String iteratorName;
@@ -5330,25 +5356,23 @@ public class Parser {
                 } else {
                     // [...[x, y]] or [...{length}]
                     parent.addChildToBack(
-                            destructuringAssignmentHelper(
+                            nestedDestructuringAssignment(
                                     variableType,
                                     restTarget,
                                     sliceCall,
-                                    currentScriptOrFn.getNextTempName(),
-                                    null,
                                     transformer,
-                                    isFunctionParameter));
+                                    isFunctionParameter,
+                                    destructuringNames));
                 }
             } else {
                 parent.addChildToBack(
-                        destructuringAssignmentHelper(
+                        nestedDestructuringAssignment(
                                 variableType,
                                 n,
                                 rightElem,
-                                currentScriptOrFn.getNextTempName(),
-                                null,
                                 transformer,
-                                isFunctionParameter));
+                                isFunctionParameter,
+                                destructuringNames));
             }
             index++;
             empty = false;
@@ -5424,14 +5448,13 @@ public class Parser {
                 }
 
                 parent.addChildToBack(
-                        destructuringAssignmentHelper(
+                        nestedDestructuringAssignment(
                                 variableType,
                                 left,
                                 cond_default,
-                                currentScriptOrFn.getNextTempName(),
-                                null,
                                 transformer,
-                                isFunctionParameter));
+                                isFunctionParameter,
+                                destructuringNames));
             } else {
                 reportError("msg.bad.assign.left");
             }
@@ -5550,14 +5573,13 @@ public class Parser {
                     // Pattern: ...{x, y} or ...[length]
                     // Collect rest object into temporary, then destructure
                     parent.addChildToBack(
-                            destructuringAssignmentHelper(
+                            nestedDestructuringAssignment(
                                     variableType,
                                     restTarget,
                                     restOp,
-                                    currentScriptOrFn.getNextTempName(),
-                                    null,
                                     transformer,
-                                    isFunctionParameter));
+                                    isFunctionParameter,
+                                    destructuringNames));
                 }
                 break; // rest must be the last argument
             }
@@ -5648,14 +5670,13 @@ public class Parser {
                         isFunctionParameter);
             } else {
                 parent.addChildToBack(
-                        destructuringAssignmentHelper(
+                        nestedDestructuringAssignment(
                                 variableType,
                                 value,
                                 rightElem,
-                                currentScriptOrFn.getNextTempName(),
-                                null,
                                 transformer,
-                                isFunctionParameter));
+                                isFunctionParameter,
+                                destructuringNames));
             }
             empty = false;
             elementIndex++;

@@ -113,6 +113,25 @@ class LetBindingInitializationTest {
     }
 
     @Test
+    void forLetHeadWithNestedDestructuring() {
+        Utils.assertWithAllModes_ES6(
+                "true,ReferenceError|1,2,3,4,5",
+                """
+                var r = [];
+                for (let { w: { x } = { x: 4 } } = { w: { x: undefined } }; r.length < 1; ) {
+                  r.push(x === undefined);
+                  try { (function() { w; })(); } catch (e) { r.push(e.name); }
+                }
+                var fs = [];
+                for (let [[a], { b: [c] }, ...[d, { e }]] = [[1], { b: [2] }, 3, { e: 5 }];
+                     fs.length < 1; ) {
+                  fs.push(() => [a, c, d, d + 1, e].join());
+                }
+                [r.join(), fs[0]()].join('|');
+                """);
+    }
+
+    @Test
     void letInEvalCode() {
         Utils.assertWithAllModes_ES6(
                 "5,7",
