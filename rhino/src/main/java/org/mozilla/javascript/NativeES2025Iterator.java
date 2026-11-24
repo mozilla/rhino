@@ -458,7 +458,12 @@ public final class NativeES2025Iterator extends ScriptableObject {
     private static Callable requireCallable(Context cx, Scriptable s, Scriptable o, Object[] args) {
         Object fn = args.length > 0 ? args[0] : Undefined.instance;
         if (!(fn instanceof Callable)) {
-            throw closeOnError(cx, s, o, ScriptRuntime.notFunctionError(fn));
+            throw closeOnError(
+                    cx,
+                    s,
+                    o,
+                    ScriptRuntime.typeErrorById(
+                            "msg.isnt.function", String.valueOf(fn), ScriptRuntime.typeof(fn)));
         }
         return (Callable) fn;
     }
@@ -524,8 +529,8 @@ public final class NativeES2025Iterator extends ScriptableObject {
     }
 
     /** IteratorClose with a throw completion: errors from "return" are ignored. */
-    private static RuntimeException closeOnError(
-            Context cx, Scriptable s, Scriptable iterator, RuntimeException error) {
+    private static RhinoException closeOnError(
+            Context cx, Scriptable s, Scriptable iterator, RhinoException error) {
         try {
             Callable returnMethod = getReturnMethod(cx, s, iterator);
             if (returnMethod != null) {
