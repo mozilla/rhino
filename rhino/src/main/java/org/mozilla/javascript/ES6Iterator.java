@@ -20,16 +20,14 @@ public abstract class ES6Iterator extends ScriptableObject {
             ScriptableObject scope, boolean sealed, ScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
-            prototype.setPrototype(getObjectPrototype(scope));
+            Scriptable iteratorPrototype = NativeES2025Iterator.getIteratorPrototype(scope);
+            prototype.setPrototype(
+                    iteratorPrototype != null ? iteratorPrototype : getObjectPrototype(scope));
         }
 
         // Define prototype methods using LambdaFunction
         LambdaFunction next = new LambdaFunction(scope, NEXT_METHOD, 0, ES6Iterator::js_next);
         ScriptableObject.defineProperty(prototype, NEXT_METHOD, next, DONTENUM);
-
-        LambdaFunction iterator =
-                new LambdaFunction(scope, "[Symbol.iterator]", 1, ES6Iterator::js_iterator);
-        prototype.defineProperty(SymbolKey.ITERATOR, iterator, DONTENUM);
 
         prototype.defineProperty(
                 SymbolKey.TO_STRING_TAG, prototype.getClassName(), DONTENUM | READONLY);
@@ -70,11 +68,6 @@ public abstract class ES6Iterator extends ScriptableObject {
     private static Object js_next(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         ES6Iterator iterator = realThis(thisObj);
         return iterator.next(cx, scope);
-    }
-
-    private static Object js_iterator(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return thisObj;
     }
 
     protected abstract boolean isDone(Context cx, Scriptable scope);

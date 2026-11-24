@@ -240,6 +240,7 @@ public class ScriptRuntime {
         NativeCall.init(scope, sealed);
         NativeScript.init(cx, scope, sealed);
 
+        NativeES2025Iterator.init(cx, scope, sealed);
         NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
         NativeArrayIterator.init(scope, sealed);

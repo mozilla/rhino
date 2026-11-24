@@ -23,7 +23,9 @@ public final class ES6Generator extends ScriptableObject {
         ES6Generator prototype = new ES6Generator();
         if (scope != null) {
             prototype.setParentScope(scope);
-            prototype.setPrototype(getObjectPrototype(scope));
+            Scriptable iteratorPrototype = NativeES2025Iterator.getIteratorPrototype(scope);
+            prototype.setPrototype(
+                    iteratorPrototype != null ? iteratorPrototype : getObjectPrototype(scope));
         }
 
         // Define prototype methods using LambdaFunction

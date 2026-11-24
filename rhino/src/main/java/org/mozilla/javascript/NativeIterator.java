@@ -22,26 +22,8 @@ public final class NativeIterator extends ScriptableObject {
     private Object objectIterator;
 
     static void init(Context cx, ScriptableObject scope, boolean sealed) {
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        CLASS_NAME,
-                        2,
-                        NativeIterator::jsConstructorCall,
-                        NativeIterator::jsConstructor);
-        constructor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
-
-        NativeIterator proto = new NativeIterator();
-        constructor.setPrototypeScriptable(proto);
-
-        constructor.definePrototypeMethod(scope, "next", 0, NativeIterator::js_next);
-        constructor.definePrototypeMethod(
-                scope, ITERATOR_PROPERTY_NAME, 1, NativeIterator::js_iteratorMethod);
-
-        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, ScriptableObject.DONTENUM);
-        if (sealed) {
-            constructor.sealObject();
-            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
+        if (cx.getLanguageVersion() < Context.VERSION_ECMASCRIPT) {
+            initLegacyConstructor(scope, sealed);
         }
 
         // Generator
@@ -63,6 +45,30 @@ public final class NativeIterator extends ScriptableObject {
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
         scope.associateValue(ITERATOR_TAG, obj);
+    }
+
+    private static void initLegacyConstructor(ScriptableObject scope, boolean sealed) {
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        CLASS_NAME,
+                        2,
+                        NativeIterator::jsConstructorCall,
+                        NativeIterator::jsConstructor);
+        constructor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
+
+        NativeIterator proto = new NativeIterator();
+        constructor.setPrototypeScriptable(proto);
+
+        constructor.definePrototypeMethod(scope, "next", 0, NativeIterator::js_next);
+        constructor.definePrototypeMethod(
+                scope, ITERATOR_PROPERTY_NAME, 1, NativeIterator::js_iteratorMethod);
+
+        ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, ScriptableObject.DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+            ((ScriptableObject) constructor.getPrototypeProperty()).sealObject();
+        }
     }
 
     /** Only for constructing the prototype object. */
