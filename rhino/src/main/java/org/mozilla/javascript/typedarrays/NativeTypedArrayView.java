@@ -12,6 +12,7 @@ import static org.mozilla.javascript.Symbol.Kind.REGULAR;
 
 import java.io.Serial;
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -361,6 +362,23 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return !(o2 instanceof NativeBigIntArrayView);
     }
 
+    /**
+     * Copies {@code count} elements as raw bytes, which keeps the bit pattern of every value (NaN
+     * payloads included). Both views must have the same element type. Overlapping ranges are
+     * handled.
+     */
+    private static void copyElementBytes(
+            NativeTypedArrayView<?> src,
+            int srcIndex,
+            NativeTypedArrayView<?> dst,
+            int dstIndex,
+            int count) {
+        int bytesPerElement = src.getBytesPerElement();
+        byte[] tmp = new byte[count * bytesPerElement];
+        src.arrayBuffer.buffer.get(src.offset + srcIndex * bytesPerElement, tmp);
+        dst.arrayBuffer.buffer.put(dst.offset + dstIndex * bytesPerElement, tmp);
+    }
+
     /** Returns {@code true}, if the index is wrong. */
     protected boolean checkIndex(int index) {
         return isTypedArrayOutOfBounds() || ((index < 0) || (index >= getLength()));
@@ -458,8 +476,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 throw ScriptRuntime.typeErrorById("msg.typed.array.content.mismatch");
             }
 
-            for (int i = 0; i < srcLen; i++) {
-                v.js_set(i, src.js_get(i));
+            if (src.getClass() == v.getClass()) {
+                copyElementBytes(src, 0, v, 0, srcLen);
+            } else {
+                for (int i = 0; i < srcLen; i++) {
+                    v.js_set(i, src.js_get(i));
+                }
             }
             return v;
         }
@@ -611,7 +633,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
 
         int targetOffset = (int) dbloff;
-        if (source.arrayBuffer == arrayBuffer) {
+        if (source.getClass() == getClass()) {
+            copyElementBytes(source, 0, this, targetOffset, srcLength);
+        } else if (source.arrayBuffer == arrayBuffer) {
             // Copy to temporary space first, as per spec, to avoid messing up overlapping copies
             Object[] tmp = new Object[srcLength];
             for (int i = 0; i < srcLength; i++) {
@@ -1022,11 +1046,25 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
             end = Math.min(end, self.getLength());
 
-            int n = 0;
-            for (int i = (int) begin; i < end; i++) {
-                Object val = self.js_get(i);
-                a.js_set(n, val);
-                n++;
+            if (a.getClass() == self.getClass()) {
+                int bytesPerElement = self.getBytesPerElement();
+                ByteBuffer src = self.arrayBuffer.buffer;
+                ByteBuffer dst = a.arrayBuffer.buffer;
+                int srcByte = self.offset + (int) begin * bytesPerElement;
+                int dstByte = a.offset;
+                int limit = dstByte + (int) Math.max(end - begin, 0) * bytesPerElement;
+                // Copy byte by byte in order, as the spec does, since the species may
+                // return a view on the same buffer that overlaps the source.
+                while (dstByte < limit) {
+                    dst.put(dstByte++, src.get(srcByte++));
+                }
+            } else {
+                int n = 0;
+                for (int i = (int) begin; i < end; i++) {
+                    Object val = self.js_get(i);
+                    a.js_set(n, val);
+                    n++;
+                }
             }
         }
 
@@ -1215,18 +1253,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             len = self.getLength();
             count = Math.min(Math.min(count, len - from), len - to);
 
-            int direction = 1;
-            if (from < to && to < from + count) {
-                direction = -1;
-                from = from + count - 1;
-                to = to + count - 1;
-            }
-
-            for (; count > 0; count--) {
-                final Object temp = self.js_get((int) from);
-                self.js_set((int) to, temp);
-                from += direction;
-                to += direction;
+            if (count > 0) {
+                copyElementBytes(self, (int) from, self, (int) to, (int) count);
             }
         }
 
