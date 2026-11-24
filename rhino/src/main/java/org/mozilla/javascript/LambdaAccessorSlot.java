@@ -1,5 +1,7 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.ensureScriptable;
+
 /**
  * A specialized property accessor using lambda functions, similar to {@link LambdaSlot}, but allows
  * defining properties with getter and setter lambdas that require access to the owner object
@@ -135,7 +137,7 @@ public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
                             scope,
                             "get " + super.getName(),
                             0,
-                            (cx1, scope1, thisObj, args) -> getter.apply((Scriptable) thisObj),
+                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj),
                             false);
         }
     }
@@ -150,7 +152,7 @@ public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
                             1,
                             (cx1, scope1, thisObj, args) -> {
                                 setter.accept(
-                                        (Scriptable) thisObj,
+                                        thisObj,
                                         args.length > 0 ? args[0] : Undefined.instance);
                                 return Undefined.instance;
                             },

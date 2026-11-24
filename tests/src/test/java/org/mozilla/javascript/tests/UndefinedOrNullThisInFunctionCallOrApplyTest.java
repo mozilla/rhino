@@ -124,8 +124,8 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                         assertNotEquals(arr.get(0), arr.get(1));
                         assertNotEquals(arr.get(0), arr.get(2));
                         assertNotEquals(arr.get(0), arr.get(3));
-                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(1));
-                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
+                        assertSame(Undefined.instance, arr.get(1));
+                        assertSame(Undefined.instance, arr.get(2));
                         assertNull(arr.get(3));
 
                         return null;
@@ -182,8 +182,8 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                         assertNotEquals(arr.get(0), arr.get(1));
                         assertNotEquals(arr.get(0), arr.get(2));
                         assertNotEquals(arr.get(0), arr.get(3));
-                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(1));
-                        assertSame(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
+                        assertSame(Undefined.instance, arr.get(1));
+                        assertSame(Undefined.instance, arr.get(2));
                         assertNull(arr.get(3));
 
                         return null;

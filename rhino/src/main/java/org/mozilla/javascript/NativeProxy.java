@@ -1177,15 +1177,14 @@ class NativeProxy extends ScriptableObject {
         if (trap != null) {
             Object handlerProto = callTrap(trap, new Object[] {target});
 
-            Scriptable handlerProtoScriptable = Undefined.SCRIPTABLE_UNDEFINED;
-            if (handlerProtoScriptable == null
+            if (handlerProto == null
                     || Undefined.isUndefined(handlerProto)
                     || ScriptRuntime.isSymbol(handlerProto)) {
                 throw ScriptRuntime.typeErrorById(
                         "msg.arg.not.object", ScriptRuntime.typeof(handlerProto));
             }
 
-            handlerProtoScriptable = ensureScriptable(handlerProto);
+            Scriptable handlerProtoScriptable = ensureScriptable(handlerProto);
 
             if (target.isExtensible()) {
                 return handlerProtoScriptable;

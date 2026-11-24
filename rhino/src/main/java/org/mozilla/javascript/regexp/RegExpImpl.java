@@ -398,7 +398,7 @@ public class RegExpImpl implements RegExpProxy {
             re2.input = reImpl.input;
             ScriptRuntime.setRegExpProxy(cx, re2);
             try {
-                Object result = rdata.lambda.call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                Object result = rdata.lambda.call(cx, scope, Undefined.instance, args);
                 lambdaStr = ScriptRuntime.toString(result);
             } finally {
                 ScriptRuntime.setRegExpProxy(cx, reImpl);

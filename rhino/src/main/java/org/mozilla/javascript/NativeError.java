@@ -66,12 +66,12 @@ final class NativeError extends ScriptableObject {
 
     private static Object js_toString(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return js_toString((Scriptable) thisObj);
+        return js_toString(ensureScriptable(thisObj));
     }
 
     private static Object js_toSource(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return js_toSource(cx, s, (Scriptable) thisObj);
+        return js_toSource(cx, s, ensureScriptable(thisObj));
     }
 
     private static Object js_captureStackTrace(

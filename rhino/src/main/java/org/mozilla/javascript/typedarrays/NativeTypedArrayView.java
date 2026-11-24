@@ -694,18 +694,18 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return LambdaConstructor.convertThisObject(thisObj, NativeTypedArrayView.class);
     }
 
-    private static Object js_buffer(Scriptable thisObj) {
+    private static Object js_buffer(Object thisObj) {
         return realThis(thisObj).arrayBuffer;
     }
 
-    private static Object js_toStringTag(Scriptable thisObj) {
-        if (NativeTypedArrayView.class.isInstance(thisObj)) {
-            return thisObj.getClassName();
+    private static Object js_toStringTag(Object thisObj) {
+        if (thisObj instanceof NativeTypedArrayView) {
+            return ((NativeTypedArrayView<?>)thisObj).getClassName();
         }
         return Undefined.instance;
     }
 
-    private static Object js_byteLength(Scriptable thisObj) {
+    private static Object js_byteLength(Object thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
@@ -716,7 +716,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return o.getLength() * o.getBytesPerElement();
     }
 
-    private static Object js_byteOffset(Scriptable thisObj) {
+    private static Object js_byteOffset(Object thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
@@ -728,7 +728,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return offset;
     }
 
-    private static Object js_length(Scriptable thisObj) {
+    private static Object js_length(Object thisObj) {
         NativeTypedArrayView<?> o = realThis(thisObj);
         if (o.isTypedArrayOutOfBounds()) {
             return 0;
@@ -1440,7 +1440,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
         Function mapFn = null;
         Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
-        Scriptable mapFnThisArg = Undefined.SCRIPTABLE_UNDEFINED;
+        Object mapFnThisArg = Undefined.instance;
         if (!Undefined.isUndefined(mapArg)) {
             if (!(mapArg instanceof Function)) {
                 throw ScriptRuntime.typeErrorById("msg.map.function.not");

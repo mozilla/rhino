@@ -1353,7 +1353,7 @@ public class Context implements Closeable {
         // intervening frames
         isContinuationsTopCall = true;
         return ScriptRuntime.doTopCall(
-                script, this, scope, Undefined.SCRIPTABLE_UNDEFINED, isStrict);
+                script, this, scope, Undefined.instance, isStrict);
     }
 
     public Object callFunctionWithContinuations(Callable callable, VarScope scope, Object[] args)
@@ -1374,7 +1374,7 @@ public class Context implements Closeable {
         // intervening frames
         isContinuationsTopCall = true;
         return ScriptRuntime.doTopCall(
-                (JSFunction) callable, this, scope, Undefined.SCRIPTABLE_UNDEFINED, args, isStrict);
+                (JSFunction) callable, this, scope, Undefined.instance, args, isStrict);
     }
 
     /**
@@ -3139,7 +3139,7 @@ public class Context implements Closeable {
     long scratchUint32;
 
     // It can be used to return the second Scriptable result from function
-    Scriptable scratchScriptable;
+    Object scratchScriptable;
 
     // Generate an observer count on compiled code
     boolean generateObserverCount = false;

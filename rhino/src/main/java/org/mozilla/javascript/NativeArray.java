@@ -677,7 +677,7 @@ public class NativeArray extends ScriptableObject implements List {
             }
             mapFn = (Function) mapArg;
 
-            Object callThisArg = args.length >= 3 ? args[2] : Undefined.SCRIPTABLE_UNDEFINED;
+            Object callThisArg = args.length >= 3 ? args[2] : Undefined.instance;
             thisArg = ScriptRuntime.getThisForScope(mapFn.getDeclarationScope(), callThisArg);
         }
 
@@ -1788,7 +1788,7 @@ public class NativeArray extends ScriptableObject implements List {
             setRawElem(cx, o, i, value);
         }
 
-        return thisObj;
+        return o;
     }
 
     private static Object js_copyWithin(
@@ -1860,7 +1860,7 @@ public class NativeArray extends ScriptableObject implements List {
             to += direction;
         }
 
-        return thisObj;
+        return o;
     }
 
     private static Object js_at(
@@ -1925,9 +1925,9 @@ public class NativeArray extends ScriptableObject implements List {
 
         Function cbf = ArrayLikeAbstractOperations.getCallbackArg(cx, callbackArg);
         VarScope parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
-        Scriptable thisArg;
+        Object thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = Undefined.SCRIPTABLE_UNDEFINED;
+            thisArg = Undefined.instance;
         } else {
             thisArg = ScriptRuntime.toObject(cx, s, args[1]);
         }

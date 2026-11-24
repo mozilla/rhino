@@ -184,7 +184,7 @@ public class NativeSet extends ScriptableObject {
                         cx,
                         f.getDeclarationScope(),
                         NativeMap.key(args),
-                        args.length > 1 ? args[1] : Undefined.SCRIPTABLE_UNDEFINED);
+                        args.length > 1 ? args[1] : Undefined.instance);
     }
 
     private Object js_forEach(Context cx, VarScope scope, Object arg1, Object arg2) {

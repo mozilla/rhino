@@ -236,7 +236,7 @@ public class NativeConsole extends ScriptableObject {
         }
 
         if (Undefined.isUndefined(arg)) {
-            return Undefined.SCRIPTABLE_UNDEFINED.toString();
+            return Undefined.instance.toString();
         }
 
         if (arg instanceof NativeError) {

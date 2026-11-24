@@ -1715,7 +1715,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * "defineProperty" method.
      */
     public interface LambdaGetterFunction extends Serializable {
-        Object apply(Scriptable scope);
+        Object apply(Object scope);
     }
 
     /**
@@ -1723,7 +1723,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * "defineProperty" method.
      */
     public interface LambdaSetterFunction extends Serializable {
-        void accept(Scriptable owner, Object value);
+        void accept(Object owner, Object value);
     }
 
     /**
@@ -2011,6 +2011,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     protected static Scriptable ensureScriptable(Object arg) {
+        if (!(arg instanceof Scriptable))
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
+        return (Scriptable) arg;
+    }
+
+    protected static Scriptable ensureScriptableOrNull(Object arg) {
+        if (arg == null)
+            return null;
         if (!(arg instanceof Scriptable))
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
         return (Scriptable) arg;

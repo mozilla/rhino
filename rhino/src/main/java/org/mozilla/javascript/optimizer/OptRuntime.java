@@ -71,7 +71,7 @@ public final class OptRuntime extends ScriptRuntime {
     @SuppressWarnings("removal")
     public static Object callName(Object[] args, String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, args);
     }
 
@@ -80,7 +80,7 @@ public final class OptRuntime extends ScriptRuntime {
     @SuppressWarnings("removal")
     public static Object callName0(String name, Context cx, VarScope scope) {
         Callable f = getNameFunctionAndThis(name, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
@@ -91,7 +91,7 @@ public final class OptRuntime extends ScriptRuntime {
         if (f == null) {
             return Undefined.instance;
         }
-        Scriptable thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
@@ -100,7 +100,7 @@ public final class OptRuntime extends ScriptRuntime {
     @SuppressWarnings("removal")
     public static Object callProp0(Object value, String property, Context cx, VarScope scope) {
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
@@ -112,7 +112,7 @@ public final class OptRuntime extends ScriptRuntime {
         if (f == null) {
             return Undefined.instance;
         }
-        Scriptable thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 

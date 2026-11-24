@@ -89,9 +89,9 @@ public class ArrayLikeAbstractOperations {
 
         Function f = getCallbackArg(cx, callbackArg);
         TopLevel parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
-        Scriptable thisArg;
+        Object thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = Undefined.SCRIPTABLE_UNDEFINED;
+            thisArg = Undefined.instance;
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
@@ -309,7 +309,7 @@ public class ArrayLikeAbstractOperations {
                 value = elem;
             } else {
                 Object[] innerArgs = {value, elem, index, o};
-                value = f.call(cx, parent, Undefined.SCRIPTABLE_UNDEFINED, innerArgs);
+                value = f.call(cx, parent, Undefined.instance, innerArgs);
             }
         }
         if (value == NOT_FOUND) {
@@ -332,7 +332,7 @@ public class ArrayLikeAbstractOperations {
             Context cx, VarScope scope, Object[] args) {
         var compareFunc = ScriptRuntime.getValueAndThis(args[0], cx);
         Callable compare = compareFunc.getCallable();
-        Scriptable compareThis = compareFunc.getThis();
+        Object compareThis = compareFunc.getThis();
         final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
         return new ElementComparator(
                 (x, y) -> {

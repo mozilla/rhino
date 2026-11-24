@@ -85,6 +85,12 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
         ctor.defineProperty(name, key, DONTENUM | READONLY | PERMANENT);
     }
 
+    private static SymbolKey getSymbol(Object thisObj) {
+        return thisObj instanceof SymbolKey
+            ? (SymbolKey) thisObj
+            : (LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class)).key;
+    }
+
     private static NativeSymbol getSelf(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class);
     }
@@ -101,15 +107,15 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
     }
 
     private static String js_toString(Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return getSelf(thisObj).toString();
+        return getSymbol(thisObj).toString();
     }
 
     private static Object js_valueOf(Context cx, VarScope scope, Object thisObj, Object[] args) {
-        return getSelf(thisObj).key;
+        return getSymbol(thisObj);
     }
 
-    private static Object js_description(Scriptable thisObj) {
-        return getSelf(thisObj).getKey().getDescription();
+    private static Object js_description(Object thisObj) {
+        return getSymbol(thisObj).getDescription();
     }
 
     private static Object js_for(Context cx, VarScope scope, Object thisObj, Object[] args) {

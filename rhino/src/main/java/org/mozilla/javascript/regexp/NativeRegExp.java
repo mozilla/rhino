@@ -202,7 +202,7 @@ public class NativeRegExp extends ScriptableObject {
                                         throw ScriptRuntime.typeErrorById(
                                                 "msg.arg.not.object", ScriptRuntime.typeof(c));
                                     }
-                                    appendFlags(c, buf);
+                                    appendFlags(ensureScriptable(c), buf);
                                     return buf.toString();
                                 },
                                 null,
@@ -4515,7 +4515,7 @@ public class NativeRegExp extends ScriptableObject {
                     && ((JSFunction) exec).getDescriptor() == EXEC_DESCRIPTOR)
                 return regexp.js_SymbolReplaceFast(cx, scope, (NativeRegExp) thisObj, args);
         }
-        return js_SymbolReplaceSlow(cx, scope, (Scriptable) thisObj, args);
+        return js_SymbolReplaceSlow(cx, scope, ensureScriptable(thisObj), args);
     }
 
     private Object js_SymbolReplaceFast(
@@ -4775,7 +4775,7 @@ public class NativeRegExp extends ScriptableObject {
             replacerArgs[i++] = namedCaptures;
         }
 
-        Scriptable callThis = ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, replaceFunction);
+        Object callThis = ScriptRuntime.getApplyOrCallThis(cx, scope, null, 0, replaceFunction);
         Object replacementValue = replaceFunction.call(cx, scope, callThis, replacerArgs);
         return ScriptRuntime.toString(replacementValue);
     }

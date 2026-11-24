@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ClassDescriptor.Destination.CTOR;
 import static org.mozilla.javascript.ClassDescriptor.Destination.PROTO;
+import static org.mozilla.javascript.Context.toObject;
 
 import java.io.Serial;
 import java.util.AbstractCollection;
@@ -144,7 +145,12 @@ public class NativeObject extends ScriptableObject implements Map {
 
     private static Object js_toString(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return ScriptRuntime.defaultObjectToString((Scriptable) thisObj);
+        if (thisObj == null) {
+            return "[object Null]";
+        } else if (Undefined.isUndefined(thisObj)) {
+            return "[object Undefined]";
+        }
+        return ScriptRuntime.defaultObjectToString(toObject(thisObj, f.getDeclarationScope()));
     }
 
     private static Object js_valueOf(
@@ -154,7 +160,7 @@ public class NativeObject extends ScriptableObject implements Map {
             throw ScriptRuntime.typeErrorById(
                     "msg." + (thisObj == null ? "null" : "undef") + ".to.object");
         }
-        return thisObj;
+        return toObject(thisObj, f.getDeclarationScope());
     }
 
     private static Object js_hasOwnProperty(
@@ -237,15 +243,15 @@ public class NativeObject extends ScriptableObject implements Map {
         return ScriptRuntime.wrapBoolean(result);
     }
 
-    private static Object js_protoGetter(Scriptable thisObj) {
+    private static Object js_protoGetter(Object thisObj) {
         /*
         Let O be ? ToObject(this value).
         2. Return ? O.[[GetPrototypeOf]]().
         */
-        return thisObj.getPrototype();
+        return ensureScriptable(thisObj).getPrototype();
     }
 
-    public static void js_protoSetter(Scriptable thisObj, Object proto) {
+    public static void js_protoSetter(Object thisObj, Object proto) {
         /*
         Let O be ? RequireObjectCoercible(this value).
         2. If proto is not an Object and proto is not null, return undefined.
@@ -256,9 +262,8 @@ public class NativeObject extends ScriptableObject implements Map {
         */
 
         Object o =
-                (ScriptableObject)
-                        ScriptRuntimeES6.requireObjectCoercible(
-                                null, thisObj, CLASS_NAME, PROTO_PROPERTY);
+            ScriptRuntimeES6.requireObjectCoercible(
+                null, thisObj, CLASS_NAME, PROTO_PROPERTY);
         if (!(proto instanceof Scriptable) && proto != null) {
             return /* undefined */;
         }

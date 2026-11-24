@@ -2809,7 +2809,7 @@ class BodyCodegen {
                 "callSpecial",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Callable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Lorg/mozilla/javascript/VarScope;"
                         + "Ljava/lang/Object;"
@@ -2853,7 +2853,7 @@ class BodyCodegen {
                 "callSpecial",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Callable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Lorg/mozilla/javascript/VarScope;"
                         + "Ljava/lang/Object;"
@@ -3303,7 +3303,7 @@ class BodyCodegen {
                 ByteCode.INVOKEVIRTUAL,
                 "org.mozilla.javascript.ScriptRuntime$LookupResult",
                 "getThis",
-                "()Lorg/mozilla/javascript/Scriptable;");
+                "()Ljava/lang/Object;");
     }
 
     private void updateLineNumber(Node node) {

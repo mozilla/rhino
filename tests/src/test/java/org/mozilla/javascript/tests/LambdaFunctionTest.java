@@ -337,13 +337,13 @@ public class LambdaFunctionTest {
             constructor.definePrototypeProperty(
                     cx,
                     "value",
-                    (Scriptable s) -> {
+                    (Object s) -> {
                         SpecialConstructorClass thisObj =
                                 LambdaConstructor.convertThisObject(
                                         s, SpecialConstructorClass.class);
                         return thisObj.value;
                     },
-                    (Scriptable s, Object newVal) -> {
+                    (Object s, Object newVal) -> {
                         SpecialConstructorClass thisObj =
                                 LambdaConstructor.convertThisObject(
                                         s, SpecialConstructorClass.class);

@@ -18,7 +18,7 @@ public class BoundFunction extends BaseFunction {
     @Serial private static final long serialVersionUID = 2118137342826470729L;
 
     private final Callable targetFunction;
-    private final Scriptable boundThis;
+    private final Object boundThis;
     private final Object[] boundArgs;
     private final int length;
 
@@ -26,7 +26,7 @@ public class BoundFunction extends BaseFunction {
             Context cx,
             VarScope scope,
             Callable targetFunction,
-            Scriptable boundThis,
+            Object boundThis,
             Object[] boundArgs) {
         super(scope);
         this.targetFunction = targetFunction;
@@ -113,7 +113,7 @@ public class BoundFunction extends BaseFunction {
         return boundArgs;
     }
 
-    Scriptable getCallThis() {
+    Object getCallThis() {
         return boundThis;
     }
 

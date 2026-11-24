@@ -34,10 +34,7 @@ public class UndefinedTest {
     @Test
     public void undefinedInstances() {
         // Ensure that our two internal representations of "undefined" are equivalent
-        assertEquals(Undefined.instance, Undefined.SCRIPTABLE_UNDEFINED);
-        assertEquals(Undefined.instance.hashCode(), Undefined.SCRIPTABLE_UNDEFINED.hashCode());
         assertTrue(Undefined.isUndefined(Undefined.instance));
-        assertTrue(Undefined.isUndefined(Undefined.SCRIPTABLE_UNDEFINED));
         assertFalse(Undefined.isUndefined(cx.newObject(global)));
     }
 
@@ -53,9 +50,9 @@ public class UndefinedTest {
                         + "testFunc;";
         Callable testFunc =
                 (Callable) cx.evaluateString(global, testFuncSource, "test.js", 1, null);
-        // Ensure that using SCRIPTABLE_UNDEFINED means that "this" is really undefined
+        // Ensure that using Undefined.instance means that "this" is really undefined
         // for strict mode functions.
-        testFunc.call(cx, global, Undefined.SCRIPTABLE_UNDEFINED, ScriptRuntime.emptyArgs);
+        testFunc.call(cx, global, Undefined.instance, ScriptRuntime.emptyArgs);
     }
 
     @Test

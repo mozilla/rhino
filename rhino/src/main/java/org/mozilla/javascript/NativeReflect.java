@@ -225,7 +225,7 @@ final class NativeReflect extends ScriptableObject {
         ScriptableObject target = checkTarget(args);
 
         if (args.length < 2) {
-            return Undefined.SCRIPTABLE_UNDEFINED;
+            return Undefined.instance;
         }
 
         Scriptable receiver =
@@ -243,7 +243,7 @@ final class NativeReflect extends ScriptableObject {
                     ScriptableObject.getSuperProperty(
                             target, receiver, ScriptRuntime.toString(args[1]));
         }
-        return prop == Scriptable.NOT_FOUND ? Undefined.SCRIPTABLE_UNDEFINED : prop;
+        return prop == Scriptable.NOT_FOUND ? Undefined.instance : prop;
     }
 
     /**
@@ -251,7 +251,7 @@ final class NativeReflect extends ScriptableObject {
      * href="https://262.ecma-international.org/12.0/#sec-reflect.getownpropertydescriptor">28.1.6
      * Reflect.getOwnPropertyDescriptor ( target, propertyKey )</a>
      */
-    private static Scriptable getOwnPropertyDescriptor(
+    private static Object getOwnPropertyDescriptor(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         /*
          * 1. If Type(target) is not Object, throw a TypeError exception.
@@ -264,13 +264,13 @@ final class NativeReflect extends ScriptableObject {
         if (args.length > 1) {
             if (ScriptRuntime.isSymbol(args[1])) {
                 var desc = target.getOwnPropertyDescriptor(cx, args[1]);
-                return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(s);
+                return desc == null ? Undefined.instance : desc.toObject(s);
             }
 
             var desc = target.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(args[1]));
-            return desc == null ? Undefined.SCRIPTABLE_UNDEFINED : desc.toObject(s);
+            return desc == null ? Undefined.instance : desc.toObject(s);
         }
-        return Undefined.SCRIPTABLE_UNDEFINED;
+        return Undefined.instance;
     }
 
     /**

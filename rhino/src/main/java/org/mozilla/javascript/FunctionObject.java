@@ -359,7 +359,7 @@ public class FunctionObject extends BaseFunction {
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;
-        Scriptable thisObj = ScriptRuntime.getThisForScope(getDeclarationScope(), thisArg);
+        Object thisObj = ScriptRuntime.getThisForScope(getDeclarationScope(), thisArg);
         if (thisObj == null || Undefined.isUndefined(thisObj)) {
             thisObj = ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
         }

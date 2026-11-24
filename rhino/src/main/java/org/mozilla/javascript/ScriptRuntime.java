@@ -2408,8 +2408,8 @@ public class ScriptRuntime {
             boolean asFunctionCall,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj =
-                Undefined.SCRIPTABLE_UNDEFINED; // It is used only if asFunctionCall==true.
+        Object thisObj =
+                Undefined.instance; // It is used only if asFunctionCall==true.
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2494,7 +2494,7 @@ public class ScriptRuntime {
             String name,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+        Object thisObj = Undefined.instance;
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -3172,7 +3172,7 @@ public class ScriptRuntime {
             // Top scope is not a with scope or an activation frame,
             // the called function will resolve `globalThis` in its
             // realm.
-            storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
+            storeScriptable(cx, Undefined.instance);
             return (Callable) result;
         }
 
@@ -3218,7 +3218,7 @@ public class ScriptRuntime {
                     result,
                     scope instanceof WithScope
                             ? ((WithScope) scope).getObject()
-                            : Undefined.SCRIPTABLE_UNDEFINED,
+                            : Undefined.instance,
                     name);
         }
 
@@ -3526,7 +3526,7 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
+        storeScriptable(cx, Undefined.instance);
         return f;
     }
 
@@ -3555,7 +3555,7 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        return new LookupResult(f, Undefined.SCRIPTABLE_UNDEFINED, value);
+        return new LookupResult(f, Undefined.instance, value);
     }
 
     /**
@@ -3566,7 +3566,7 @@ public class ScriptRuntime {
     public static Object callIterator(Object obj, Context cx, VarScope scope) {
         final Callable getIterator =
                 ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
-        final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
+        final Object iterable = ScriptRuntime.lastStoredScriptable(cx);
         return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
     }
 
@@ -3617,7 +3617,7 @@ public class ScriptRuntime {
     public static Object callSpecial(
             Context cx,
             Callable fun,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             VarScope scope,
             Object callerThis,
@@ -3630,7 +3630,10 @@ public class ScriptRuntime {
         }
 
         if (callType == Node.SPECIALCALL_EVAL) {
-            if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
+            if (NativeGlobal.isEvalFunction(fun)
+                && (Undefined.isUndefined(thisObj)
+                    || !(thisObj instanceof Scriptable)
+                    || ((Scriptable)thisObj).getParentScope() == null)) {
                 return evalSpecial(
                         cx, scope, callerThis, args, filename, lineNumber, cx.isStrictMode());
             }
@@ -3664,7 +3667,7 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis =
+        Object callThis =
                 getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, (Function) function);
 
         Object[] callArgs;
@@ -3684,9 +3687,9 @@ public class ScriptRuntime {
         return function.call(cx, scope, callThis, callArgs);
     }
 
-    public static Scriptable getApplyOrCallThis(
+    public static Object getApplyOrCallThis(
             Context cx, VarScope scope, Object arg0, int l, Function target) {
-        Scriptable callThis;
+        Object callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             // Legacy behavior
             if (l != 0) {
@@ -3702,12 +3705,9 @@ public class ScriptRuntime {
         } else {
             // Spec-compliant behavior
             if (l != 0) {
-                callThis =
-                        arg0 == Undefined.instance
-                                ? Undefined.SCRIPTABLE_UNDEFINED
-                                : toObjectOrNull(cx, arg0, scope);
+                callThis = arg0;
             } else {
-                callThis = Undefined.SCRIPTABLE_UNDEFINED;
+                callThis = Undefined.instance;
             }
         }
 
@@ -3826,9 +3826,9 @@ public class ScriptRuntime {
                         1,
                         null,
                         compilerEnvironsProcessor);
-        Scriptable thisObject =
+        Object thisObject =
                 thisArg == Undefined.instance
-                        ? Undefined.SCRIPTABLE_UNDEFINED
+                        ? Undefined.instance
                         : (Scriptable) thisArg;
         VarScope evalScope;
         if (isStrict
@@ -6348,15 +6348,15 @@ public class ScriptRuntime {
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
-    private static void storeScriptable(Context cx, Scriptable value) {
+    private static void storeScriptable(Context cx, Object value) {
         // The previously stored scratchScriptable should be consumed
         if (cx.scratchScriptable != null) throw new IllegalStateException();
         cx.scratchScriptable = value;
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
-    public static Scriptable lastStoredScriptable(Context cx) {
-        Scriptable result = cx.scratchScriptable;
+    public static Object lastStoredScriptable(Context cx) {
+        Object result = cx.scratchScriptable;
         cx.scratchScriptable = null;
         return result;
     }
@@ -6488,9 +6488,9 @@ public class ScriptRuntime {
         }
     }
 
-    public static Scriptable getThisForScope(VarScope scope, Object callThisArg) {
+    public static Object getThisForScope(VarScope scope, Object callThisArg) {
         if (Undefined.isUndefined(callThisArg)) {
-            return Undefined.SCRIPTABLE_UNDEFINED;
+            return Undefined.instance;
         }
         if (callThisArg == null) {
             return null;
@@ -6507,10 +6507,10 @@ public class ScriptRuntime {
         private static final long serialVersionUID = 8491017987326545970L;
 
         private final Object result;
-        private final Scriptable thisObj;
+        private final Object thisObj;
         private final Object name;
 
-        LookupResult(Object result, Scriptable thisObj, Object name) {
+        LookupResult(Object result, Object thisObj, Object name) {
             this.result = result;
             this.thisObj = thisObj;
             this.name = name;
@@ -6520,7 +6520,7 @@ public class ScriptRuntime {
             return result;
         }
 
-        public Scriptable getThis() {
+        public Object getThis() {
             return thisObj;
         }
 

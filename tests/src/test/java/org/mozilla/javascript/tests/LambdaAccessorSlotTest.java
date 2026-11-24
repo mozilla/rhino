@@ -564,7 +564,7 @@ public class LambdaAccessorSlotTest {
             return constructor;
         }
 
-        static StatusHolder self(Scriptable thisObj) {
+        static StatusHolder self(Object thisObj) {
             return LambdaConstructor.convertThisObject(thisObj, StatusHolder.class);
         }
 

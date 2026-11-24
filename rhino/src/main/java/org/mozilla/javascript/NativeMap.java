@@ -221,13 +221,13 @@ public class NativeMap extends ScriptableObject {
         boolean isStrict = cx.isStrictMode();
         for (Hashtable.Entry entry : entries) {
             // Per spec must convert every time so that primitives are always regenerated...
-            Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
+            Object thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
             if (thisObj == null && !isStrict) {
                 thisObj = ScriptableObject.getTopLevelScope(scope).getGlobalThis();
             }
             if (thisObj == null) {
-                thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+                thisObj = Undefined.instance;
             }
 
             final Hashtable.Entry e = entry;

@@ -323,7 +323,7 @@ public class AbstractEcmaObjectOperations {
 
                 Object[] args = {o, i};
                 Object key =
-                        ((Callable) callback).call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                        ((Callable) callback).call(cx, scope, Undefined.instance, args);
                 if (keyCoercion == KEY_COERCION.PROPERTY) {
                     if (!ScriptRuntime.isSymbol(key)) {
                         key = ScriptRuntime.toString(key);
@@ -403,8 +403,8 @@ public class AbstractEcmaObjectOperations {
             Context cx, boolean extensible, PropertyDescriptor desc, PropertyDescriptor current) {
         return validateAndApplyPropertyDescriptor(
                 cx,
-                Undefined.SCRIPTABLE_UNDEFINED,
-                Undefined.SCRIPTABLE_UNDEFINED,
+                Undefined.instance,
+                Undefined.instance,
                 extensible,
                 desc,
                 current);
@@ -419,8 +419,8 @@ public class AbstractEcmaObjectOperations {
      */
     static boolean validateAndApplyPropertyDescriptor(
             Context cx,
-            Scriptable o,
-            Scriptable p,
+            Object o,
+            Object p,
             boolean extensible,
             PropertyDescriptor desc,
             PropertyDescriptor current) {
