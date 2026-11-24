@@ -977,17 +977,13 @@ public class ScriptRuntime {
         }
 
         if (sourceObj instanceof ScriptableObject) {
-            ScriptableObject so = (ScriptableObject) sourceObj;
-            try (var map = so.startCompoundOp(false)) {
-                // Get all enumerable properties (regular + symbols) in one call
-                Object[] allIds = so.getIds(map, false, true);
-
-                for (Object id : allIds) {
-                    // Check exclusion and copy property
-                    if (!shouldExcludeProperty(
-                            id, excludeStrings, excludeIntegers, excludeSymbols)) {
-                        copyProperty(sourceObj, result, id, cx, scope);
-                    }
+            // All own keys (regular + symbols); enumerability is checked when each key is
+            // reached, as in CopyDataProperties.
+            Object[] allIds = NativeObject.ownKeysForEnumeration(sourceObj, true);
+            for (Object id : allIds) {
+                if (!shouldExcludeProperty(id, excludeStrings, excludeIntegers, excludeSymbols)
+                        && NativeObject.isOwnEnumerable(cx, sourceObj, id)) {
+                    copyProperty(sourceObj, result, id, cx, scope);
                 }
             }
         } else {

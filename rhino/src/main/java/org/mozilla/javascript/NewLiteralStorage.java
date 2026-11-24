@@ -124,27 +124,28 @@ public abstract class NewLiteralStorage {
         // See ECMAScript 13.2.5.5 (Object Spread)
         if (source != null && !Undefined.isUndefined(source)) {
             Scriptable src = ScriptRuntime.toObject(cx, scope, source);
-            Object[] ids;
-            if (src instanceof ScriptableObject) {
-                var scriptable = (ScriptableObject) src;
-                try (var map = scriptable.startCompoundOp(false)) {
-                    ids = scriptable.getIds(map, false, true);
+            Object[] ids = NativeObject.ownKeysForEnumeration(src, true);
+
+            // getIds() can only return a string, int or a symbol.
+            // Enumerability is checked when each key is reached (CopyDataProperties).
+            List<Object> copiedIds = new ArrayList<>(ids.length);
+            List<Object> copiedValues = new ArrayList<>(ids.length);
+            for (Object id : ids) {
+                if (NativeObject.isOwnEnumerable(cx, src, id)) {
+                    copiedIds.add(id);
+                    copiedValues.add(getPropertyById(src, id));
                 }
-            } else {
-                ids = src.getIds();
             }
 
             // Resize all the arrays
-            int newLen = values.length + ids.length;
+            int newLen = values.length + copiedIds.size();
             keys = Arrays.copyOf(keys, newLen);
             getterSetters = Arrays.copyOf(getterSetters, newLen);
             values = Arrays.copyOf(values, newLen);
 
-            // getIds() can only return a string, int or a symbol
-            for (Object id : ids) {
-                Object value = getPropertyById(src, id);
-                pushKey(id);
-                pushValue(value);
+            for (int i = 0; i < copiedIds.size(); i++) {
+                pushKey(copiedIds.get(i));
+                pushValue(copiedValues.get(i));
             }
         }
     }
