@@ -84,7 +84,8 @@ public class TopLevel extends ScopeObject {
         Float16Array,
         Float32Array,
         Float64Array,
-        DataView
+        DataView,
+        Iterator
     }
 
     /** An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6] */

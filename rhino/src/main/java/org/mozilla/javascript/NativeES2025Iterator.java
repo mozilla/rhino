@@ -177,12 +177,7 @@ public final class NativeES2025Iterator extends ScriptableObject {
             throw ScriptRuntime.typeErrorById("msg.iterator.abstract");
         }
         NativeObject result = new NativeObject();
-        Object proto = ((Scriptable) nt).get("prototype", (Scriptable) nt);
-        result.setPrototype(
-                proto instanceof Scriptable && ScriptRuntime.isObject(proto)
-                        ? (Scriptable) proto
-                        : getIteratorPrototype(s));
-        result.setParentScope(s);
+        ScriptRuntime.setBuiltinProtoAndParent(result, f, nt, s, TopLevel.Builtins.Iterator);
         return result;
     }
 
@@ -476,7 +471,12 @@ public final class NativeES2025Iterator extends ScriptableObject {
     private static Callable requireCallable(Context cx, VarScope s, Scriptable o, Object[] args) {
         Object fn = args.length > 0 ? args[0] : Undefined.instance;
         if (!(fn instanceof Callable)) {
-            throw closeOnError(cx, s, o, ScriptRuntime.notFunctionError(fn));
+            throw closeOnError(
+                    cx,
+                    s,
+                    o,
+                    ScriptRuntime.typeErrorById(
+                            "msg.isnt.function", String.valueOf(fn), ScriptRuntime.typeof(fn)));
         }
         return (Callable) fn;
     }
@@ -542,8 +542,8 @@ public final class NativeES2025Iterator extends ScriptableObject {
     }
 
     /** IteratorClose with a throw completion: errors from "return" are ignored. */
-    private static RuntimeException closeOnError(
-            Context cx, VarScope s, Scriptable iterator, RuntimeException error) {
+    private static RhinoException closeOnError(
+            Context cx, VarScope s, Scriptable iterator, RhinoException error) {
         try {
             Callable returnMethod = getReturnMethod(cx, s, iterator);
             if (returnMethod != null) {

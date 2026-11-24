@@ -40,6 +40,22 @@ public class IteratorHelpersTest {
     }
 
     @Test
+    public void constructorPrototypeFromNewTarget() {
+        assertES(
+                "true,true,true",
+                "function F() {}\n"
+                        + "F.prototype = 1;\n"
+                        + "function Sub() {}\n"
+                        + "Sub.prototype = Object.create(Iterator.prototype);\n"
+                        + "var Bound = Sub.bind(null);\n"
+                        + "[Object.getPrototypeOf(Reflect.construct(Iterator, [], F))"
+                        + " === Iterator.prototype,\n"
+                        + " Object.getPrototypeOf(Reflect.construct(Iterator, [], Bound))"
+                        + " === Iterator.prototype,\n"
+                        + " Reflect.construct(Iterator, [], Sub) instanceof Iterator].join()");
+    }
+
+    @Test
     public void lazyHelpers() {
         assertES(
                 "2,4,6|1,3|3,4|1,1,2,2|1,2",
