@@ -253,6 +253,12 @@ public final class NativeJSON extends ScriptableObject {
 
     private static Object callToJSON(
             StringifyState state, Scriptable obj, Object value, String keyString, int keyInt) {
+        // Host objects such as Java wrappers and XML do not report a missing property
+        // through a plain Get, so they keep the existence check.
+        if ((obj instanceof XMLObject || !(obj instanceof ScriptableObject))
+                && !hasProperty(obj, "toJSON")) {
+            return value;
+        }
         Object toJSON = getProperty(obj, "toJSON");
         if (!(toJSON instanceof Callable)) {
             return value;
