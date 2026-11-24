@@ -1328,20 +1328,23 @@ public class NativeArray extends ScriptableObject implements List {
             denseRes = nar.denseOnly;
         }
 
-        /* create an empty Array to return. */
-        s = getTopLevelScope(s);
         int argc = args.length;
-        if (argc == 0) return cx.newArray(s, 0);
         long length = getLengthProperty(cx, o);
 
         /* Convert the first argument into a starting index. */
-        long begin =
-                ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(args[0]), length);
-        argc--;
+        long begin = 0;
+        if (argc > 0) {
+            begin =
+                    ArrayLikeAbstractOperations.toSliceIndex(
+                            ScriptRuntime.toInteger(args[0]), length);
+            argc--;
+        }
 
         /* Convert the second argument into count */
         long actualDeleteCount;
-        if (args.length == 1) {
+        if (args.length == 0) {
+            actualDeleteCount = 0;
+        } else if (args.length == 1) {
             actualDeleteCount = length - begin;
         } else {
             double dcount = ScriptRuntime.toInteger(args[1]);
