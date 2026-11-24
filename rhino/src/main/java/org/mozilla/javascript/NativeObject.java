@@ -537,7 +537,7 @@ public class NativeObject extends ScriptableObject implements Map {
         // interface to admit the new ECMAScript 5 operations?
         Scriptable s2 = getCompatibleObject(cx, s, arg);
         ScriptableObject obj = ensureScriptableObject(s2);
-        Object nameArg = args.length < 2 ? Undefined.instance : args[1];
+        Object nameArg = toPropertyKey(args.length < 2 ? Undefined.instance : args[1]);
         var desc = obj.getOwnPropertyDescriptor(cx, nameArg);
         return desc == null ? Undefined.instance : desc.toObject(f.getDeclarationScope());
     }
@@ -572,12 +572,20 @@ public class NativeObject extends ScriptableObject implements Map {
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         ScriptableObject obj = ensureScriptableObject(arg);
-        Object name = args.length < 2 ? Undefined.instance : args[1];
+        Object name = toPropertyKey(args.length < 2 ? Undefined.instance : args[1]);
         Object descArg = args.length < 3 ? Undefined.instance : args[2];
         var desc = new DescriptorInfo(ensureScriptableObject(descArg));
         ScriptableObject.checkPropertyDefinition(desc);
         obj.defineOwnProperty(cx, name, desc);
         return obj;
+    }
+
+    private static Object toPropertyKey(Object key) {
+        Object prim = ScriptRuntime.toPrimitive(key, ScriptRuntime.StringClass);
+        if (ScriptRuntime.isSymbol(prim)) {
+            return prim;
+        }
+        return ScriptRuntime.toString(prim);
     }
 
     private static Object js_isExtensible(
