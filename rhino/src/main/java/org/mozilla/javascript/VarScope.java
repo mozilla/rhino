@@ -56,12 +56,4 @@ public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope
         }
         return put(name, this, value);
     }
-
-    /**
-     * Returns true if this scope holds a binding for the name which has not been initialized yet.
-     * This must not invoke any getter.
-     */
-    default boolean isUninitializedBinding(String name) {
-        return false;
-    }
 }

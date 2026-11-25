@@ -2579,12 +2579,6 @@ public class ScriptRuntime {
         return value;
     }
 
-    private static void checkInitializedBinding(Context cx, VarScope bound, String name) {
-        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && bound.isUninitializedBinding(name)) {
-            throw uninitializedBindingError(name);
-        }
-    }
-
     /** Checks a local variable slot that holds the uninitialized marker until it is initialized. */
     public static void checkVarInitialized(Object value, String name) {
         if (value == VarScope.UNINITIALIZED) {
