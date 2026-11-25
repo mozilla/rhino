@@ -121,6 +121,33 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     private boolean isExtensible = true;
 
+    /**
+     * Records that this object has at least one own indexed property. The array element mutators
+     * use it to decide whether an array that has this object in its prototype chain may still take
+     * a dense fast path for an index that it does not own: an own indexed property there can be an
+     * accessor (which would have to run) or a non-writable data property (which would veto the
+     * write).
+     *
+     * <p>The flag is monotonic. Deleting the last indexed property leaves it set, which can only
+     * keep a dense fast path from being used, never make one incorrect.
+     */
+    private transient boolean hasIndexedOwnProperties;
+
+    /**
+     * Returns true if this object has, or has ever had, an own indexed property, so that an index
+     * lookup through it cannot be assumed to miss. Subclasses whose indexed properties are virtual
+     * (String, Arguments, typed arrays, Java package, Proxy, external array data) override this to
+     * answer true unconditionally.
+     */
+    protected boolean mayHaveIndexedProperties() {
+        return hasIndexedOwnProperties || externalData != null;
+    }
+
+    /** Marks this object as one that can provide own indexed properties. */
+    final void markIndexedProperty() {
+        hasIndexedOwnProperties = true;
+    }
+
     private static final Method GET_ARRAY_LENGTH;
 
     static {
@@ -295,6 +322,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param isThrow if true, throw an exception as if in strict mode
      */
     protected boolean putOwnProperty(int index, Scriptable start, Object value, boolean isThrow) {
+        if (start == this) {
+            markIndexedProperty();
+        }
         return putImpl(null, index, start, value, isThrow);
     }
 
@@ -1531,6 +1561,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
 
         var aSlot = getMap().query(key, index);
+
+        if (key == null) {
+            // An indexed property descriptor, index 0 included, can shadow an index that a lookup
+            // through this object would otherwise miss.
+            markIndexedProperty();
+        }
 
         if (aSlot instanceof BuiltInSlot) {
             // 10.4.2.4 ArrayLengthSet requires we check that any new

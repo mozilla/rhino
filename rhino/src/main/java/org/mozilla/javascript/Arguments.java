@@ -83,6 +83,12 @@ class Arguments extends ScriptableObject {
         }
     }
 
+    /** Arguments provides an own indexed property for every argument it holds. */
+    @Override
+    protected boolean mayHaveIndexedProperties() {
+        return true;
+    }
+
     @Override
     public String getClassName() {
         return CLASS_NAME;

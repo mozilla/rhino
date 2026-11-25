@@ -110,6 +110,12 @@ class NativeProxy extends ScriptableObject {
         }
     }
 
+    /** A Proxy may report any index through its traps. */
+    @Override
+    protected boolean mayHaveIndexedProperties() {
+        return true;
+    }
+
     @Override
     public String getClassName() {
         ScriptableObject target = getTargetThrowIfRevoked();

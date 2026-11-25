@@ -795,6 +795,94 @@ public class NativeArray extends ScriptableObject implements List {
         return (lengthAttr & READONLY) == 0;
     }
 
+    /**
+     * Returns true if the dense storage holds an own element at {@code index}. Such an element is
+     * an ordinary, writable data property and shadows the prototype chain for both [[Get]] and
+     * [[Set]], so touching it directly cannot run any user code.
+     */
+    private boolean hasOwnDenseElement(long index) {
+        return index >= 0
+                && index < length
+                && index < dense.length
+                && dense[(int) index] != NOT_FOUND;
+    }
+
+    /**
+     * Returns true if some object in this array's prototype chain might have an own property at
+     * {@code index}. This is the HasProperty step of the ordinary [[Get]]/[[Set]] for an index that
+     * is not an own element. Prototypes that are not {@link ScriptableObject}s (a Java object, a
+     * Delegator) are always consulted, since there is no cheap way to rule them out.
+     */
+    private boolean prototypeHasIndex(long index) {
+        if (index < 0 || index > Integer.MAX_VALUE) {
+            return true;
+        }
+        int i = (int) index;
+        for (Scriptable proto = getPrototype(); proto != null; proto = proto.getPrototype()) {
+            if (proto instanceof ScriptableObject) {
+                // Cheap and monotonic: skip the slot map lookup for objects that never had an
+                // indexed property, which is the common case for e.g. the real Array.prototype.
+                ScriptableObject so = (ScriptableObject) proto;
+                if (!so.mayHaveIndexedProperties()) {
+                    continue;
+                }
+            }
+            if (proto.has(i, this)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if reading or writing any index in {@code [from, to]} directly in the dense
+     * storage could differ from the ordinary [[Get]]/[[Set]].
+     *
+     * <p>An own element behaves identically, so an all-own range never consults the prototype chain
+     * and costs one array read per index. For a hole those operations continue on the prototype
+     * chain, where a getter or setter would run (and may, for instance, make "length" non-writable
+     * or freeze the array) and where a non-writable data property would veto the write. A dense
+     * fast path that skipped such a property would not just miss the accessor: it would also go on
+     * to modify an array whose "length" the spec says is not writable by then.
+     */
+    private boolean prototypeMayIntercept(long index) {
+        return !hasOwnDenseElement(index)
+                && !prototypeChainCannotShadowIndex()
+                && prototypeHasIndex(index);
+    }
+
+    /**
+     * Returns true if {@code [from, to]} contains a hole that the prototype chain defines. The
+     * range is first scanned for a hole, which is a plain array read, and only then is the
+     * prototype chain consulted; an all-own range therefore never touches it.
+     */
+    private boolean holeInPrototypeShadowRange(long from, long to) {
+        if (from > to || prototypeChainCannotShadowIndex()) {
+            return false;
+        }
+        for (long i = Math.max(from, 0); i <= to; i++) {
+            if (!hasOwnDenseElement(i) && prototypeHasIndex(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True when no object in the prototype chain can provide an indexed property, so no hole in any
+     * range can be intercepted by it. This is the ordinary case for a real array and costs a walk
+     * of the prototype chain that is a couple of array loads deep.
+     */
+    private boolean prototypeChainCannotShadowIndex() {
+        for (Scriptable proto = getPrototype(); proto != null; proto = proto.getPrototype()) {
+            if (!(proto instanceof ScriptableObject)
+                    || ((ScriptableObject) proto).mayHaveIndexedProperties()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean setLength(CompoundOperationMap<Scriptable> compoundOp, double d) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
@@ -1226,7 +1314,13 @@ public class NativeArray extends ScriptableObject implements List {
                 // non-writable "length", so the call throws and the array is left unchanged.
                 throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
             }
-            if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
+            // Indices [length, length + args.length) are all holes, so the ordinary [[Set]] would
+            // consult the prototype chain for each of them; a setter there may run. If one does,
+            // the
+            // generic path below must be used instead of writing into "dense" behind its back.
+            if (na.denseOnly
+                    && !na.holeInPrototypeShadowRange(na.length, (long) na.length + args.length - 1)
+                    && na.ensureCapacity((int) na.length + args.length)) {
                 for (Object arg : args) {
                     na.dense[(int) na.length++] = arg;
                     na.modCount++;
@@ -1240,6 +1334,11 @@ public class NativeArray extends ScriptableObject implements List {
         }
 
         length += args.length;
+        if (o instanceof NativeArray && !((NativeArray) o).isLengthWritable()) {
+            // The setters that just ran may have made "length" non-writable; Set(O, "length", ...,
+            // true) then fails. The elements that were defined stay defined.
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+        }
         return setLengthProperty(cx, o, length);
     }
 
@@ -1250,12 +1349,15 @@ public class NativeArray extends ScriptableObject implements List {
         Object result;
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.isLengthWritable() && na.length > 0) {
+            if (na.denseOnly
+                    && na.isLengthWritable()
+                    && na.length > 0
+                    && !na.prototypeMayIntercept(na.length - 1)) {
                 na.length--;
                 na.modCount++;
                 result = na.dense[(int) na.length];
                 na.dense[(int) na.length] = NOT_FOUND;
-                return result;
+                return result == NOT_FOUND ? Undefined.instance : result;
             }
         }
         long length = getLengthProperty(cx, o);
@@ -1289,7 +1391,13 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.isLengthWritable() && na.length > 0) {
+            // Shift reads every index in [0, length - 1] and writes [0, length - 2]; an accessor
+            // for a hole anywhere in the read range may run and change the array underneath the
+            // dense copy, so any such hole must be handled by the generic path.
+            if (na.denseOnly
+                    && na.isLengthWritable()
+                    && na.length > 0
+                    && !na.holeInPrototypeShadowRange(0, na.length - 1)) {
                 na.length--;
                 na.modCount++;
                 Object result = na.dense[0];
@@ -1345,7 +1453,12 @@ public class NativeArray extends ScriptableObject implements List {
                 // array is left unchanged.
                 throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
             }
-            if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
+            // Unshift reads and writes every index in [0, length + argc), so an accessor anywhere
+            // in
+            // that range can run and must be observed before the dense storage is rearranged.
+            if (na.denseOnly
+                    && !na.holeInPrototypeShadowRange(0, (long) na.length + args.length - 1)
+                    && na.ensureCapacity((int) na.length + args.length)) {
                 System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
                 System.arraycopy(args, 0, na.dense, 0, args.length);
                 na.length += args.length;
@@ -1376,6 +1489,11 @@ public class NativeArray extends ScriptableObject implements List {
         }
         /* Follow Perl by returning the new array length. */
         length += argc;
+        if (o instanceof NativeArray && !((NativeArray) o).isLengthWritable()) {
+            // The getters and setters that just ran may have made "length" non-writable; the final
+            // Set(O, "length", ..., true) then fails.
+            throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
+        }
         return setLengthProperty(cx, o, length);
     }
 
@@ -1470,6 +1588,12 @@ public class NativeArray extends ScriptableObject implements List {
         if (denseFrom
                 && lengthWritable
                 && length + delta < Integer.MAX_VALUE
+                // Every index in [min(begin, end), max(length, begin + argc) - 1] is read, written
+                // or deleted below; a hole there would make the ordinary operation consult the
+                // prototype chain, whose accessor may run, so the generic path must be used instead
+                // of rearranging the dense storage behind its back.
+                && !na.holeInPrototypeShadowRange(
+                        Math.min(begin, end), Math.max(length, (long) begin + argc) - 1)
                 && na.ensureCapacity((int) (length + delta))) {
             System.arraycopy(
                     na.dense, (int) end, na.dense, (int) (begin + argc), (int) (length - end));
@@ -1509,10 +1633,11 @@ public class NativeArray extends ScriptableObject implements List {
             setElem(cx, o, begin + i, args[i + argoffset]);
         }
 
-        if (!lengthWritable) {
+        if (!lengthWritable || (na != null && !na.isLengthWritable())) {
             // Array.prototype.splice ends with Set(O, "length", ..., true), which throws when
-            // "length" is not writable. The removal and insertion of the elements above stay
-            // applied.
+            // "length" is not writable. This can also have become true while the elements above
+            // were copied through accessors in the prototype chain. The removal and insertion of
+            // those elements stay applied.
             throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", "length");
         }
 
