@@ -1390,6 +1390,8 @@ public class NativeArray extends ScriptableObject implements List {
                 // Need to set length for sparse result array
                 setLengthProperty(cx, (ScriptableObject) result, end - begin);
             }
+        } else {
+            setLengthProperty(cx, (ScriptableObject) result, 0);
         }
 
         /* Find the direction (up or down) to copy and make way for argv. */
