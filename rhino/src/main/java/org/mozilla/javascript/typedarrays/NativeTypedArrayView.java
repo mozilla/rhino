@@ -375,8 +375,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             int count) {
         int bytesPerElement = src.getBytesPerElement();
         byte[] tmp = new byte[count * bytesPerElement];
-        src.arrayBuffer.buffer.get(src.offset + srcIndex * bytesPerElement, tmp);
-        dst.arrayBuffer.buffer.put(dst.offset + dstIndex * bytesPerElement, tmp);
+        var from = src.arrayBuffer.buffer.duplicate();
+        from.position(src.offset + srcIndex * bytesPerElement);
+        from.get(tmp);
+        var to = dst.arrayBuffer.buffer.duplicate();
+        to.position(dst.offset + dstIndex * bytesPerElement);
+        to.put(tmp);
     }
 
     /** Returns {@code true}, if the index is wrong. */
