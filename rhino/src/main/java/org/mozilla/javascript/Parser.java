@@ -5736,6 +5736,12 @@ public class Parser {
     // specific object containing the property ("binding" the property
     // to the object) so that it's always the same object, regardless of
     // side effects in the RHS.
+    void checkStrictAssignmentTarget(String name) {
+        if (inUseStrictDirective && ("eval".equals(name) || "arguments".equals(name))) {
+            reportError("msg.bad.id.strict", name);
+        }
+    }
+
     protected Node simpleAssignment(Node left, Node right) {
         return simpleAssignment(left, right, null);
     }
@@ -5748,10 +5754,7 @@ public class Parser {
                 return new Node(Token.SETNAME, left, right);
 
             case Token.NAME:
-                String name = ((Name) left).getIdentifier();
-                if (inUseStrictDirective && ("eval".equals(name) || "arguments".equals(name))) {
-                    reportError("msg.bad.id.strict", name);
-                }
+                checkStrictAssignmentTarget(((Name) left).getIdentifier());
                 left.setType(Token.BINDNAME);
                 return new Node(Token.SETNAME, left, right);
 

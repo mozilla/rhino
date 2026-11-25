@@ -2553,6 +2553,7 @@ public final class IRFactory {
         switch (nodeType) {
             case Token.NAME:
                 {
+                    parser.checkStrictAssignmentTarget(left.getString());
                     Node op = new Node(assignOp, left, right);
                     Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
                     return propagateSuperFromLhs(new Node(Token.SETNAME, lvalueLeft, op), left);
