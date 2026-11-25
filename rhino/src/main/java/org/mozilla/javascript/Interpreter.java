@@ -3023,8 +3023,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
             Object[] stack = frame.stack;
             double[] sDbl = frame.doubleStack;
             Object lhs = stack[frame.stackTop];
-            if (lhs == DOUBLE_MARK)
-                lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
+            if (lhs == DOUBLE_MARK) lhs = ScriptRuntime.wrapNumber(sDbl[frame.stackTop]);
             stack[frame.stackTop] = ScriptRuntime.typeof(lhs);
             return null;
         }

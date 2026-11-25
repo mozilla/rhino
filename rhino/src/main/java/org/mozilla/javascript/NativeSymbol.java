@@ -87,8 +87,8 @@ public class NativeSymbol extends ScriptableObject implements Symbol {
 
     private static SymbolKey getSymbol(Object thisObj) {
         return thisObj instanceof SymbolKey
-            ? (SymbolKey) thisObj
-            : (LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class)).key;
+                ? (SymbolKey) thisObj
+                : (LambdaConstructor.convertThisObject(thisObj, NativeSymbol.class)).key;
     }
 
     private static NativeSymbol getSelf(Object thisObj) {

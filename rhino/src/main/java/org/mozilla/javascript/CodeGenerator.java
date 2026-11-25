@@ -608,7 +608,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> {
                 addIcode(Icode.DUP);
                 stackChange(1);
                 visitExpression(child, 0);
-                addStringOp(Token.SETNAME, (String) names[i]);
+                addStringOp(Icode.INIT_LET, (String) names[i]);
                 addIcode(Icode.POP);
                 stackChange(-2);
             }

@@ -432,8 +432,8 @@ final class NativeString extends ScriptableObject {
 
     private static CharSequence realCharSeq(Object thisObj) {
         return thisObj instanceof CharSequence
-            ? (CharSequence) thisObj
-            : (LambdaConstructor.convertThisObject(thisObj, NativeString.class)).string;
+                ? (CharSequence) thisObj
+                : (LambdaConstructor.convertThisObject(thisObj, NativeString.class)).string;
     }
 
     private static Object js_iterator(

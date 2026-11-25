@@ -2408,8 +2408,7 @@ public class ScriptRuntime {
             boolean asFunctionCall,
             boolean isOptionalChainingCall) {
         Object result;
-        Object thisObj =
-                Undefined.instance; // It is used only if asFunctionCall==true.
+        Object thisObj = Undefined.instance; // It is used only if asFunctionCall==true.
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2674,10 +2673,7 @@ public class ScriptRuntime {
     public static Object setName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
-            checkInitializedBinding(cx, bound, id);
-            // TODO: we used to special-case XMLObject here, but putProperty
-            // seems to work for E4X and it's better to optimize  the common case
-            ScriptableObject.putProperty(bound, id, value);
+            bound.setMutableBinding(id, value, cx.isStrictMode());
         } else {
             // "newname = 7;", where 'newname' has not yet
             // been defined, creates a new property in the
@@ -2699,16 +2695,7 @@ public class ScriptRuntime {
     public static Object strictSetName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
-            // TODO: The LeftHandSide also may not be a reference to a
-            // data property with the attribute value {[[Writable]]:false},
-            // to an accessor property with the attribute value
-            // {[[Put]]:undefined}, nor to a non-existent property of an
-            // object whose [[Extensible]] internal property has the value
-            // false. In these cases a TypeError exception is thrown (11.13.1).
-            // TODO: we used to special-case XMLObject here, but putProperty
-            // seems to work for E4X and we should optimize  the common case
-            checkInitializedBinding(cx, bound, id);
-            ScriptableObject.putProperty(bound, id, value);
+            bound.setMutableBinding(id, value, true);
             return value;
         }
         // See ES5 8.7.2
@@ -3631,9 +3618,9 @@ public class ScriptRuntime {
 
         if (callType == Node.SPECIALCALL_EVAL) {
             if (NativeGlobal.isEvalFunction(fun)
-                && (Undefined.isUndefined(thisObj)
-                    || !(thisObj instanceof Scriptable)
-                    || ((Scriptable)thisObj).getParentScope() == null)) {
+                    && (Undefined.isUndefined(thisObj)
+                            || !(thisObj instanceof Scriptable)
+                            || ((Scriptable) thisObj).getParentScope() == null)) {
                 return evalSpecial(
                         cx, scope, callerThis, args, filename, lineNumber, cx.isStrictMode());
             }
@@ -3827,9 +3814,7 @@ public class ScriptRuntime {
                         null,
                         compilerEnvironsProcessor);
         Object thisObject =
-                thisArg == Undefined.instance
-                        ? Undefined.instance
-                        : (Scriptable) thisArg;
+                thisArg == Undefined.instance ? Undefined.instance : (Scriptable) thisArg;
         VarScope evalScope;
         if (isStrict
                 || (script instanceof JSScript && ((JSScript) script).getDescriptor().isStrict())) {

@@ -455,7 +455,7 @@ class InterpreterBytecodeDumpTest {
                         " [5] REG_STR_C0 \"obj\"",
                         " [6] NAME",
                         " [7] REG_STR_C1 \"$0\"",
-                        " [8] SETNAME",
+                        " [8] INIT_LET",
                         " [9] POP",
                         " [10] POP",
                         " [11] REG_STR_C2 \"a\"",

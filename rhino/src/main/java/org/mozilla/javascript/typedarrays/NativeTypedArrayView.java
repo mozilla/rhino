@@ -700,7 +700,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
 
     private static Object js_toStringTag(Object thisObj) {
         if (thisObj instanceof NativeTypedArrayView) {
-            return ((NativeTypedArrayView<?>)thisObj).getClassName();
+            return ((NativeTypedArrayView<?>) thisObj).getClassName();
         }
         return Undefined.instance;
     }

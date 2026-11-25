@@ -1928,10 +1928,25 @@ class BodyCodegen {
             final String nn = "__nested__yield__" + unnestedYieldCount;
             unnestedYieldCount++;
             cfw.addALoad(variableObjectLocal);
+            cfw.addPush(nn);
+            cfw.addPush(false);
+            cfw.addInvoke(
+                    ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/VarScope",
+                    "createMutableBinding",
+                    "(Ljava/lang/String;Z)Z");
+            cfw.add(ByteCode.POP);
+            cfw.addALoad(variableObjectLocal);
             cfw.add(ByteCode.SWAP);
             cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addDynamicInvoke("NAME:SET:" + nn, Signatures.NAME_SET);
+            cfw.addPush(nn);
+            addScriptRuntimeInvoke(
+                    "initLet",
+                    "(Lorg/mozilla/javascript/VarScope;"
+                            + "Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Ljava/lang/String;"
+                            + ")Ljava/lang/Object;");
             cfw.add(ByteCode.POP);
 
             unnestedYields.put(nestedYield, nn);
@@ -2142,12 +2157,16 @@ class BodyCodegen {
                 cfw.add(ByteCode.POP);
             } else {
                 cfw.add(ByteCode.DUP);
-                cfw.add(ByteCode.DUP);
                 generateExpression(child, node);
-                cfw.add(ByteCode.SWAP);
                 cfw.addALoad(contextLocal);
-                cfw.add(ByteCode.SWAP);
-                addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+                cfw.addPush(id);
+                addScriptRuntimeInvoke(
+                        "initLet",
+                        "(Lorg/mozilla/javascript/VarScope;"
+                                + "Ljava/lang/Object;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Ljava/lang/String;"
+                                + ")Ljava/lang/Object;");
                 cfw.add(ByteCode.POP);
             }
             child = child.getNext();

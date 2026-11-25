@@ -316,7 +316,7 @@ public class Test262SuiteTest {
         }
 
         public static Object getGlobal(Object scriptable) {
-            return ((TopLevel) ((Scriptable)scriptable).getParentScope()).getGlobalThis();
+            return ((TopLevel) ((Scriptable) scriptable).getParentScope()).getGlobalThis();
         }
 
         public static $262 createRealm(Context cx, VarScope scope, Object thisObj, Object[] args) {

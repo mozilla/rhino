@@ -8,6 +8,8 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.Scriptable.NOT_FOUND;
+
 /**
  * Interface that represents an the bindings of an ECMAScript environment record. Unlike {@link
  * Scriptable} scopes do not have prototypes.
@@ -45,6 +47,15 @@ public interface VarScope extends PropHolder<VarScope>, ConstProperties<VarScope
     public boolean createImmutableBinding(String name, boolean strict);
 
     public boolean initializeBinding(String name, Object value);
+
+    default boolean setMutableBinding(String name, Object value, boolean strict) {
+        var current = get(name, this);
+        if ((strict && current == NOT_FOUND) || (current == UNINITIALIZED)) {
+            String msg = ScriptRuntime.getMessageById("msg.is.not.defined", name);
+            throw ScriptRuntime.referenceError(msg);
+        }
+        return put(name, this, value);
+    }
 
     /**
      * Returns true if this scope holds a binding for the name which has not been initialized yet.

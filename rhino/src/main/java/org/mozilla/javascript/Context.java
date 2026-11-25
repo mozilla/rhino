@@ -1352,8 +1352,7 @@ public class Context implements Closeable {
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall(
-                script, this, scope, Undefined.instance, isStrict);
+        return ScriptRuntime.doTopCall(script, this, scope, Undefined.instance, isStrict);
     }
 
     public Object callFunctionWithContinuations(Callable callable, VarScope scope, Object[] args)

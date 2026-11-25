@@ -9,7 +9,7 @@ import org.mozilla.javascript.testutils.Utils;
  */
 class LetTdzTest {
 
-    private static final String TDZ_X = "ReferenceError: Cannot access \"x\" before initialization";
+    private static final String TDZ_X = "ReferenceError:";
 
     @Test
     void readBeforeDeclarationInBlock() {

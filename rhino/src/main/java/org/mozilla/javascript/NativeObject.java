@@ -262,8 +262,7 @@ public class NativeObject extends ScriptableObject implements Map {
         */
 
         Object o =
-            ScriptRuntimeES6.requireObjectCoercible(
-                null, thisObj, CLASS_NAME, PROTO_PROPERTY);
+                ScriptRuntimeES6.requireObjectCoercible(null, thisObj, CLASS_NAME, PROTO_PROPERTY);
         if (!(proto instanceof Scriptable) && proto != null) {
             return /* undefined */;
         }

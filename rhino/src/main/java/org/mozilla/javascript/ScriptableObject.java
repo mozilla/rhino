@@ -2017,8 +2017,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     protected static Scriptable ensureScriptableOrNull(Object arg) {
-        if (arg == null)
-            return null;
+        if (arg == null) return null;
         if (!(arg instanceof Scriptable))
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
         return (Scriptable) arg;

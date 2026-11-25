@@ -62,8 +62,8 @@ final class NativeBigInt extends ScriptableObject {
 
     private static BigInteger toBigInt(Object thisObj) {
         return thisObj instanceof BigInteger
-            ? (BigInteger) thisObj
-            : (LambdaConstructor.convertThisObject(thisObj, NativeBigInt.class)).bigIntValue;
+                ? (BigInteger) thisObj
+                : (LambdaConstructor.convertThisObject(thisObj, NativeBigInt.class)).bigIntValue;
     }
 
     private static Object js_constructorFunc(
