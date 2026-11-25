@@ -748,6 +748,10 @@ public class NativeArray extends ScriptableObject implements List {
         return denseOnly;
     }
 
+    private boolean isLengthWritable() {
+        return (lengthAttr & READONLY) == 0;
+    }
+
     private boolean setLength(CompoundOperationMap<Scriptable> compoundOp, double d) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
@@ -862,7 +866,14 @@ public class NativeArray extends ScriptableObject implements List {
 
     private static Object setLengthProperty(Context cx, Scriptable target, long length) {
         Object len = ScriptRuntime.wrapNumber((double) length);
-        ScriptableObject.putProperty(target, "length", len);
+        // Set(O, "length", len, true): a failed write throws in non-strict code too
+        boolean previousStrictness = cx.isStrictMode();
+        cx.setIsStrictMode(true);
+        try {
+            ScriptableObject.putProperty(target, "length", len);
+        } finally {
+            cx.setIsStrictMode(previousStrictness);
+        }
         return len;
     }
 
@@ -1173,7 +1184,9 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
+            if (na.denseOnly
+                    && na.isLengthWritable()
+                    && na.ensureCapacity((int) na.length + args.length)) {
                 for (Object arg : args) {
                     na.dense[(int) na.length++] = arg;
                     na.modCount++;
@@ -1197,7 +1210,7 @@ public class NativeArray extends ScriptableObject implements List {
         Object result;
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.length > 0) {
+            if (na.denseOnly && na.isLengthWritable() && na.length > 0) {
                 na.length--;
                 na.modCount++;
                 result = na.dense[(int) na.length];
@@ -1231,7 +1244,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.length > 0) {
+            if (na.denseOnly && na.isLengthWritable() && na.length > 0) {
                 na.length--;
                 na.modCount++;
                 Object result = na.dense[0];
@@ -1275,7 +1288,9 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             NativeArray na = (NativeArray) o;
-            if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
+            if (na.denseOnly
+                    && na.isLengthWritable()
+                    && na.ensureCapacity((int) na.length + args.length)) {
                 System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
                 System.arraycopy(args, 0, na.dense, 0, args.length);
                 na.length += args.length;
@@ -1321,7 +1336,7 @@ public class NativeArray extends ScriptableObject implements List {
 
         if (o instanceof NativeArray) {
             na = (NativeArray) o;
-            denseFrom = na.denseOnly;
+            denseFrom = na.denseOnly && na.isLengthWritable();
         }
         if (result instanceof NativeArray) {
             nar = (NativeArray) result;

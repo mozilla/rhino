@@ -1859,7 +1859,6 @@ js1_5/extensions/regress-96284-002.js
 js1_5/extensions/scope-001.js
 js1_6/Array/filter.js
 js1_6/Array/regress-290592.js
-js1_6/Array/regress-304828.js
 js1_6/Array/regress-305002.js
 js1_6/Array/regress-310425-01.js
 js1_6/Array/regress-310425-02.js
