@@ -204,7 +204,6 @@ public class NodeTransformer {
             boolean inStrictMode,
             boolean inLoop) {
         Node node = null;
-        siblingLoop:
         for (; ; ) {
             Node previous = null;
             if (node == null) {
@@ -217,6 +216,61 @@ public class NodeTransformer {
                 break;
             }
 
+            try {
+                node =
+                        transform_singleNode(
+                                tree,
+                                parent,
+                                scope,
+                                createScopeObjects,
+                                inStrictMode,
+                                inLoop,
+                                node,
+                                previous);
+
+                ancestors.push(node);
+                transformCompilationUnit_r(
+                        tree,
+                        node,
+                        node instanceof Scope ? (Scope) node : scope,
+                        createScopeObjects,
+                        inStrictMode,
+                        inLoop || node.getType() == Token.LOOP);
+                ancestors.pop();
+                if (trackDeadZones) {
+                    afterChildren(node);
+                }
+            } catch (ContinueLoop c) {
+                node = c.newNode;
+            }
+        }
+    }
+
+    private final class ContinueLoop extends Throwable {
+        private final Node newNode;
+
+        ContinueLoop(Node newNode) {
+            this.newNode = newNode;
+        }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            // Do nothing, we're just doing control flow here.
+            return this;
+        }
+    }
+
+    private Node transform_singleNode(
+            final ScriptNode tree,
+            final Node parent,
+            Scope scope,
+            boolean createScopeObjects,
+            boolean inStrictMode,
+            boolean inLoop,
+            Node node,
+            Node previous)
+            throws ContinueLoop {
+        { // Prevent indenting changes
             int type = node.getType();
             if ((type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
                     && (node instanceof Scope)
@@ -391,7 +445,7 @@ public class NodeTransformer {
                                         inLoop);
                             }
                             // skip transformCompilationUnit_r to avoid infinite loop
-                            continue siblingLoop;
+                            throw new ContinueLoop(node);
                         }
                         break;
                     }
@@ -698,18 +752,7 @@ public class NodeTransformer {
             if (trackDeadZones) {
                 beforeChildren(node);
             }
-            ancestors.push(node);
-            transformCompilationUnit_r(
-                    tree,
-                    node,
-                    node instanceof Scope ? (Scope) node : scope,
-                    createScopeObjects,
-                    inStrictMode,
-                    inLoop || node.getType() == Token.LOOP);
-            ancestors.pop();
-            if (trackDeadZones) {
-                afterChildren(node);
-            }
+            return node;
         }
     }
 
