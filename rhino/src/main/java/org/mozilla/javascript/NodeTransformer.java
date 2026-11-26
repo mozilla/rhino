@@ -92,8 +92,8 @@ public class NodeTransformer {
      */
     private void dropUnneededDeadZones(ScriptNode tree) {
         for (Reset reset : resets) {
-            if (hasDeadZone(reset.symbol()) && !checkedBindings.contains(reset.symbol())) {
-                reset.scope().removeChild(reset.node());
+            if (hasDeadZone(reset.symbol) && !checkedBindings.contains(reset.symbol)) {
+                reset.scope.removeChild(reset.node);
             }
         }
         for (Symbol symbol : tree.getSymbols()) {
@@ -1070,7 +1070,45 @@ public class NodeTransformer {
     private Deque<Node> loops;
     private Deque<Node> loopEnds;
 
-    private record Reset(Scope scope, Node node, Symbol symbol) {}
+    private static final class Reset {
+        private final Scope scope;
+        private final Node node;
+        private final Symbol symbol;
+
+        public Reset(Scope scope, Node node, Symbol symbol) {
+            this.scope = scope;
+            this.node = node;
+            this.symbol = symbol;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((scope == null) ? 0 : scope.hashCode());
+            result = prime * result + ((node == null) ? 0 : node.hashCode());
+            result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+            Reset other = (Reset) obj;
+            if (scope == null) {
+                if (other.scope != null) return false;
+            } else if (!scope.equals(other.scope)) return false;
+            if (node == null) {
+                if (other.node != null) return false;
+            } else if (!node.equals(other.node)) return false;
+            if (symbol == null) {
+                if (other.symbol != null) return false;
+            } else if (!symbol.equals(other.symbol)) return false;
+            return true;
+        }
+    }
 
     private boolean trackDeadZones;
     // The nodes enclosing the one being visited, innermost first
