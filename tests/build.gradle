@@ -1,7 +1,35 @@
 plugins {
     id 'rhino.java-conventions'
-    id 'jacoco'
-    id 'jacoco-report-aggregation'
+}
+
+// JaCoCo coverage is opt-in: pass -Pcoverage on the command line. The agent
+// measurably degrades this suite: under the 20-way parallel execution its
+// probe counters in the per-character regexp hot loop (and other shared hot
+// classes) become a cache-line contention point, and the extra probe branches
+// destabilize C2 branch speculation into a deoptimization storm. Measured on
+// the test262 property-escape tests: full agent = 11m22s suite total with a
+// ~7-minute stall window; agent off = ~1 minute. Nothing in CI consumes the
+// coverage report.
+if (project.hasProperty('coverage')) {
+    apply plugin: 'jacoco'
+    apply plugin: 'jacoco-report-aggregation'
+
+    // Aggregate the published engine modules into a single coverage report,
+    // including the coverage this project's suites (test262, legacy Mozilla
+    // tests, ...) contribute to them. Generate it with:
+    //   ./gradlew :tests:testCodeCoverageReport -Pcoverage
+    dependencies {
+        jacocoAggregation project(':rhino')
+        jacocoAggregation project(':rhino-engine')
+        jacocoAggregation project(':rhino-tools')
+        jacocoAggregation project(':rhino-xml')
+        jacocoAggregation project(':rhino-kotlin')
+    }
+
+    tasks.named('testCodeCoverageReport', JacocoReport) {
+        dependsOn ':rhino:test', ':rhino-engine:test', ':rhino-tools:test',
+                ':rhino-xml:test', ':rhino-kotlin:test'
+    }
 }
 
 sourceSets {
@@ -127,16 +155,23 @@ test {
     }
 
 
-    jacoco {
-        // These particular tests produce Jacoco exceptions because of their size
-        excludes = ['**perlstress**', '**start_unicode**', '**ojsc**']
+    if (project.hasProperty('coverage')) {
+        jacoco {
+            // These particular tests produce Jacoco exceptions because of their size
+            excludes = ['**perlstress**', '**start_unicode**', '**ojsc**', '**/regexp/**']
+            // '**/regexp/**': the regexp package contributes little coverage signal and
+            // costs minutes of contention time; it is still exercised by thousands of
+            // regex tests.
+        }
     }
 }
 
-jacocoTestReport {
-    reports {
-        xml.required = false
-        csv.required = false
-        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
+if (project.hasProperty('coverage')) {
+    jacocoTestReport {
+        reports {
+            xml.required = false
+            csv.required = false
+            html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
+        }
     }
 }
