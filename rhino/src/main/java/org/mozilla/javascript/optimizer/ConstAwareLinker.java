@@ -11,9 +11,12 @@ import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This linker optimizes accesses to constants, either as object properties or in the current scope.
@@ -66,15 +69,40 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
                 guard = Guards.asType(guard, mType);
 
                 // Replace the actual method invocation with one that looks up the weak
-                // reference, or falls back to standard lookup if it has been collected.
-                MethodHandle getConst =
-                        MethodHandles.lookup()
-                                .findStatic(
-                                        ConstAwareLinker.class,
-                                        "getConst",
-                                        MethodType.methodType(Object.class, WeakReference.class));
-                MethodHandle mh = MethodHandles.insertArguments(getConst, 0, valueRef);
-                mh = MethodHandles.dropArguments(mh, 0, mType.parameterList());
+                // reference, or falls back to the standard lookup if it has been collected.
+                // The guard above only proves that the value was still reachable when the guard
+                // ran; the garbage collector may clear the reference between the guard and this
+                // call, so the fallback is essential. Without it a read of a constant property
+                // could return "null" instead of the constant's value.
+                MethodHandles.Lookup lk = MethodHandles.lookup();
+                MethodHandle getConst;
+                if (op.isNamespace(StandardNamespace.PROPERTY)) {
+                    getConst =
+                            lk.findStatic(
+                                    ConstAwareLinker.class,
+                                    "getConstProp",
+                                    MethodType.methodType(
+                                            Object.class,
+                                            WeakReference.class,
+                                            String.class,
+                                            Object.class,
+                                            Context.class,
+                                            VarScope.class));
+                } else {
+                    getConst =
+                            lk.findStatic(
+                                    ConstAwareLinker.class,
+                                    "getConstName",
+                                    MethodType.methodType(
+                                            Object.class,
+                                            WeakReference.class,
+                                            String.class,
+                                            VarScope.class,
+                                            Context.class));
+                }
+                MethodHandle mh =
+                        MethodHandles.insertArguments(getConst, 0, valueRef, op.getName());
+                mh = mh.asType(mType);
                 if (DefaultLinker.DEBUG) {
                     System.out.println(op + ": constant");
                 }
@@ -92,8 +120,29 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     @SuppressWarnings("unused")
-    private static Object getConst(WeakReference<Object> ref) {
-        return ref.get();
+    private static Object getConstProp(
+            WeakReference<Object> valueRef,
+            String name,
+            Object receiver,
+            Context cx,
+            VarScope scope) {
+        Object value = valueRef.get();
+        if (value != null) {
+            return value;
+        }
+        // The garbage collector cleared the reference after the guard was checked, so the value
+        // has to be looked up again instead of returning null for a property that exists.
+        return ScriptRuntime.getObjectProp(receiver, name, cx, scope);
+    }
+
+    @SuppressWarnings("unused")
+    private static Object getConstName(
+            WeakReference<Object> valueRef, String name, VarScope scope, Context cx) {
+        Object value = valueRef.get();
+        if (value != null) {
+            return value;
+        }
+        return ScriptRuntime.name(cx, scope, name);
     }
 
     /**
