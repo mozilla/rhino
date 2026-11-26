@@ -225,19 +225,29 @@ installations from [Adoptium](https://adoptium.net) seem to work on most platfor
 
 ### Code Coverage
 
-The "Jacoco" coverage is enabled by default for the main published modules as well as the special 
-"tests" module. Coverage is generated for each of the main projects separately and available by
-running
+Coverage (JaCoCo) is **disabled by default**. The agent measurably degrades the
+test suite: under the 20-way parallel execution, its probe counters in the
+per-character regexp hot loop become a cache-line contention point, and the
+extra probe branches trigger C2 deoptimization storms in the same loop.
+Measured on the test262 suite: ~11 minutes with the agent, ~1 minute without.
 
-    ./gradlew jacocoTestReport
+To run the tests with coverage and generate the per-module HTML reports (in
+`<module>/build/reports/jacoco`), pass `-Pcoverage`:
 
-To see an aggregated coverage report for everything, which is probably what you want, run
+    ./gradlew test jacocoTestReport -Pcoverage
 
-    ./gradlew testCodeCoverageReport
+To see a combined coverage report for all of the main modules — including the
+coverage the "tests" module's suites (test262, legacy Mozilla tests, ...)
+contribute to them — run
 
-The result is in:
+    ./gradlew testCodeCoverageReport -Pcoverage
+
+The combined result is in:
 
     ./tests/build/reports/jacoco/testCodeCoverageReport/html
+
+Expect a full coverage run to take about 11 minutes, dominated by the test262
+suite with the agent attached.
 
 ## Releasing and publishing new version
 

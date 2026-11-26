@@ -11,6 +11,27 @@ plugins {
     id 'de.obqo.decycle'
 }
 
+// JaCoCo coverage is opt-in: the agent is attached to test tasks only when
+// -Pcoverage is passed on the command line. The agent measurably slows down
+// parallel test execution (see tests/build.gradle), and nothing in CI consumes
+// the coverage reports. The plugin itself stays in the plugins block because
+// precompiled script plugins cannot apply plugins dynamically.
+def coverageEnabled = project.hasProperty('coverage')
+tasks.withType(Test).configureEach {
+    jacoco {
+        enabled = coverageEnabled
+    }
+}
+
+jacocoTestReport {
+    onlyIf { coverageEnabled }
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
+    }
+}
+
 version = project.version
 
 tasks.named('compileJava') {
@@ -31,14 +52,6 @@ tasks.withType(Jar).configureEach {
 tasks.withType(Javadoc) {
       failOnError = false
       options.addStringOption('Xdoclint:all,-missing', '-quiet')
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = false
-        csv.required = false
-        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
-    }
 }
 
 task javadocJar(type: Jar) {
