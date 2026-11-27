@@ -395,7 +395,7 @@ public class FunctionObject extends BaseFunction {
                     boolean compatible = false;
                     var top1 = ScriptableObject.getTopLevelScope(scope);
                     var top2 = ScriptableObject.getTopLevelScope(getDeclarationScope());
-                    if (top1 != top2 && thisArg != thisObj) {
+                    if (top1 != top2 && (thisArg == null || Undefined.isUndefined(thisArg))) {
                         thisObj = top1.getGlobalThis();
                         if (clazz.isInstance(thisObj)) {
                             compatible = true;

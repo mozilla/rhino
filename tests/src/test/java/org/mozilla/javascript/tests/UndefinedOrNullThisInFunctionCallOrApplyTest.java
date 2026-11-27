@@ -106,6 +106,23 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                         return null;
                     });
         }
+
+        @Test
+        void unqualifiedCallBuiltIn() {
+            // Legacy mode replaces missing this with global object for built-ins too
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_7);
+
+                        Object res =
+                                Evaluator.eval(
+                                        cx,
+                                        "var s = Object.prototype.valueOf; (function() { return s(); })() === this;");
+                        assertSame(Boolean.TRUE, res);
+
+                        return null;
+                    });
+        }
     }
 
     @Nested
@@ -220,6 +237,23 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                         assertThrows(
                                 EcmaError.class,
                                 () -> Evaluator.eval("Array.prototype.at.call(undefined);"));
+
+                        return null;
+                    });
+        }
+
+        @Test
+        void unqualifiedCallBuiltIn() {
+            // Preserves undefined this, and thus throws an error
+            Utils.runWithAllModes(
+                    cx -> {
+                        cx.setLanguageVersion(Context.VERSION_1_8);
+
+                        assertThrows(
+                                EcmaError.class,
+                                () ->
+                                        Evaluator.eval(
+                                                "var s = Object.prototype.valueOf; (function() { return s(); })();"));
 
                         return null;
                     });

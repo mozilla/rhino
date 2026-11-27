@@ -2667,7 +2667,11 @@ public class ScriptRuntime {
     public static Object setName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
-            bound.setMutableBinding(id, value, cx.isStrictMode());
+            if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                bound.setMutableBinding(id, value, cx.isStrictMode());
+            } else {
+                ScriptableObject.putProperty(bound, id, value);
+            }
         } else {
             // "newname = 7;", where 'newname' has not yet
             // been defined, creates a new property in the

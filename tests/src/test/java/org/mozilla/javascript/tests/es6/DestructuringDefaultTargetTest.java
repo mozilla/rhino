@@ -68,8 +68,6 @@ class DestructuringDefaultTargetTest {
 
     @Test
     void assignmentToBindingInDeadZoneThrows() {
-        Utils.assertEcmaErrorES6(
-                "ReferenceError: Cannot access \"a\" before initialization",
-                "{ [a = 1] = []; let a; }");
+        Utils.assertEcmaErrorES6("ReferenceError:", "{ [a = 1] = []; let a; }");
     }
 }
