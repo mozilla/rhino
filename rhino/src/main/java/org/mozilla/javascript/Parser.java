@@ -5384,15 +5384,22 @@ public class Parser {
                             right,
                             rightElem);
 
-            Node cond =
-                    new Node(
-                            Token.HOOK,
-                            new Node(
-                                    Token.SHEQ,
-                                    new KeywordLiteral().setType(Token.UNDEFINED),
-                                    createName(name)),
-                            cond_inner,
-                            left);
+            Node cond;
+            if (variableType == Token.LET || variableType == Token.CONST) {
+                // a let or const binding has no value yet, it must not be read
+                // (the binding may be uninitialized, see ScriptRuntime.initScript)
+                cond = cond_inner;
+            } else {
+                cond =
+                        new Node(
+                                Token.HOOK,
+                                new Node(
+                                        Token.SHEQ,
+                                        new KeywordLiteral().setType(Token.UNDEFINED),
+                                        createName(name)),
+                                cond_inner,
+                                left);
+            }
 
             // store it to be transformed later
             if (transformer == null) {

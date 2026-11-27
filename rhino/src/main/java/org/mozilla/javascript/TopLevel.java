@@ -409,7 +409,7 @@ public class TopLevel extends ScopeObject {
 
     @Override
     public Object get(String name, VarScope start) {
-        var res = super.get(name, start);
+        var res = getInitializedBinding(name, start);
         if (res != NOT_FOUND) {
             return res;
         }
@@ -501,6 +501,31 @@ public class TopLevel extends ScopeObject {
         } else {
             globalThis.defineConst(cx, name, globalThis);
         }
+    }
+
+    /**
+     * Returns true if the global lexical environment has a binding for the given name, created by a
+     * {@code let} or {@code const} declaration (ES6 and later). Properties of the global object are
+     * not taken into account.
+     *
+     * @param name the name of the binding
+     * @return true if a lexical binding exists
+     */
+    public boolean hasLexicalDeclaration(String name) {
+        return super.has(name, this);
+    }
+
+    /**
+     * Creates a binding for a {@code let} declaration in the global lexical environment. The
+     * binding is not a property of the global object and is not initialized; reading it before the
+     * declaration is evaluated throws a ReferenceError.
+     *
+     * @param name the name of the binding
+     */
+    public void defineLexicalDeclaration(String name) {
+        // not defineProperty(), put() and setAttributes() would end up on the global object
+        putOwnProperty(name, this, UniqueTag.UNINITIALIZED_BINDING, false);
+        super.setAttributes(name, ScriptableObject.PERMANENT);
     }
 
     public void defineFunctionProperties(

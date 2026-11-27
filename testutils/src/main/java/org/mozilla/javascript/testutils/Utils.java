@@ -333,6 +333,79 @@ public class Utils {
     }
 
     /**
+     * Execute the provided scripts one after another in the same scope and assert the result of the
+     * last one. Every script is evaluated as a script of its own, so the scripts share the global
+     * object and the global lexical declarations. Before the execution the language version is set
+     * to {@link Context#VERSION_ES6}.
+     *
+     * @param expected the expected result of the last script
+     * @param scripts the javascript scripts to execute
+     */
+    public static void assertWithAllModesScripts_ES6(
+            final Object expected, final String... scripts) {
+        runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    Object res = null;
+                    for (int i = 0; i < scripts.length; i++) {
+                        res = cx.evaluateString(scope, scripts[i], "test" + i + ".js", 1, null);
+                    }
+
+                    assertEquals(expected, res);
+                    return null;
+                });
+    }
+
+    /**
+     * Execute the provided scripts one after another in the same scope and assert an {@link
+     * EcmaError} for the last one. Every script is evaluated as a script of its own, so the scripts
+     * share the global object and the global lexical declarations. The error message of the {@link
+     * EcmaError} has to start with the provided expectedMessage. Before the execution the language
+     * version is set to {@link Context#VERSION_ES6}.
+     *
+     * @param expectedMessage the expected exception message
+     * @param scripts the javascript scripts to execute
+     */
+    public static void assertEcmaErrorScriptsES6(
+            final String expectedMessage, final String... scripts) {
+        // to avoid false positives because we use startsWith()
+        assertTrue(
+                expectedMessage != null && !expectedMessage.isEmpty(),
+                "expectedMessage can't be empty");
+
+        runWithAllModes(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    TopLevel scope = cx.initStandardObjects();
+                    final int last = scripts.length - 1;
+                    for (int i = 0; i < last; i++) {
+                        cx.evaluateString(scope, scripts[i], "test" + i + ".js", 1, null);
+                    }
+
+                    EcmaError e =
+                            assertThrows(
+                                    EcmaError.class,
+                                    () ->
+                                            cx.evaluateString(
+                                                    scope,
+                                                    scripts[last],
+                                                    "test" + last + ".js",
+                                                    1,
+                                                    null));
+
+                    assertTrue(
+                            e.getMessage().startsWith(expectedMessage),
+                            "'"
+                                    + e.getMessage()
+                                    + "' does not start with '"
+                                    + expectedMessage
+                                    + "'");
+                    return null;
+                });
+    }
+
+    /**
      * Execute the provided script and assert an {@link EvaluatorException}. The error message of
      * the {@link EvaluatorException} has to start with the provided expectedMessage. Before the
      * execution the language version is set to {@link Context#VERSION_1_8}.
