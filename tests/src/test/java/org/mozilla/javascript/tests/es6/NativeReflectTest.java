@@ -1043,4 +1043,38 @@ public class NativeReflectTest {
                         + " Int8Array 1 true ",
                 script);
     }
+
+    @Test
+    public void hasWithIndexKey() {
+        Utils.assertWithAllModes_ES6(
+                "true true true false",
+                "[Reflect.has([7, 8], 0), Reflect.has([7, 8], '1'),"
+                        + " Reflect.has({0: 1}, '0'), Reflect.has([7, 8], '2')].join(' ')");
+    }
+
+    @Test
+    public void getWithIndexKey() {
+        Utils.assertWithAllModes_ES6(
+                "7 8 5 5",
+                "[Reflect.get([7, 8], '0'), Reflect.get([7, 8], 1),"
+                        + " Reflect.get({0: 5}, '0'), Reflect.get({0: 5}, 0)].join(' ')");
+    }
+
+    @Test
+    public void deletePropertyWithIndexKey() {
+        Utils.assertWithAllModes_ES6(
+                "true false true false",
+                "var a = [7, 8]; var r1 = Reflect.deleteProperty(a, 0);\n"
+                        + "var o = {0: 1}; var r2 = Reflect.deleteProperty(o, '0');\n"
+                        + "[r1, 0 in a, r2, 0 in o].join(' ')");
+    }
+
+    @Test
+    public void hasIndexOnTypedArrayIgnoresPrototype() {
+        Utils.assertWithAllModes_ES6(
+                "false false false true",
+                "Object.getPrototypeOf(Int8Array.prototype)[1] = 'x';\n"
+                        + "var s = new Int8Array(1);\n"
+                        + "[Reflect.has(s, 1), Reflect.has(s, '1'), 1 in s, 0 in s].join(' ')");
+    }
 }

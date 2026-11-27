@@ -48,6 +48,7 @@ import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeInt16Array;
 import org.mozilla.javascript.typedarrays.NativeInt32Array;
 import org.mozilla.javascript.typedarrays.NativeInt8Array;
+import org.mozilla.javascript.typedarrays.NativeTypedArrayView;
 import org.mozilla.javascript.typedarrays.NativeUint16Array;
 import org.mozilla.javascript.typedarrays.NativeUint32Array;
 import org.mozilla.javascript.typedarrays.NativeUint8Array;
@@ -3671,6 +3672,11 @@ public class ScriptRuntime {
     /**
      * @return true if the passed in Scriptable looks like an array
      */
+    /** Returns true for integer-indexed exotic objects (typed arrays). */
+    static boolean isTypedArray(Scriptable obj) {
+        return obj instanceof NativeTypedArrayView;
+    }
+
     static boolean isArrayLike(Scriptable obj) {
         return obj != null
                 && (obj instanceof NativeArray

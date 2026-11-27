@@ -1854,47 +1854,26 @@ public class NativeArray extends ScriptableObject implements List {
     private static Object js_flat(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
-        double depth;
-        if (args.length < 1 || Undefined.isUndefined(args[0])) {
-            depth = 1;
-        } else {
+        long sourceLen = getLengthProperty(cx, o);
+        double depth = 1;
+        if (args.length > 0 && !Undefined.isUndefined(args[0])) {
             depth = ScriptRuntime.toInteger(args[0]);
-        }
-
-        return flat(cx, s, o, depth);
-    }
-
-    private static Scriptable flat(Context cx, VarScope scope, Scriptable source, double depth) {
-        long length = getLengthProperty(cx, source);
-
-        Scriptable result;
-        result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, scope, source, 0);
-        long j = 0;
-        for (long i = 0; i < length; i++) {
-            Object elem = getRawElem(source, i);
-            if (elem == Scriptable.NOT_FOUND) {
-                continue;
-            }
-            if (depth >= 1 && js_isArray(elem)) {
-                Scriptable arr = flat(cx, scope, (Scriptable) elem, depth - 1);
-                long arrLength = getLengthProperty(cx, arr);
-                for (long k = 0; k < arrLength; k++) {
-                    Object temp = getRawElem(arr, k);
-                    defineElemOrThrow(cx, result, j++, temp);
-                }
-            } else {
-                defineElemOrThrow(cx, result, j++, elem);
+            if (depth < 0) {
+                depth = 0;
             }
         }
-        setLengthProperty(cx, result, j);
+
+        Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, s, o, 0);
+        flattenIntoArray(cx, result, o, sourceLen, 0, depth, null, null, null);
         return result;
     }
 
     private static Object js_flatMap(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, s, thisObj);
-        Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
+        long sourceLen = getLengthProperty(cx, o);
 
+        Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         Function cbf = ArrayLikeAbstractOperations.getCallbackArg(cx, callbackArg);
         VarScope parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
         Scriptable thisArg;
@@ -1904,33 +1883,59 @@ public class NativeArray extends ScriptableObject implements List {
             thisArg = ScriptRuntime.toObject(cx, s, args[1]);
         }
 
-        long length = getLengthProperty(cx, o);
-
         Scriptable result = ArrayLikeAbstractOperations.arraySpeciesCreate(cx, s, o, 0);
-        long j = 0;
-        for (long i = 0; i < length; i++) {
-            Object elem = getRawElem(o, i);
-            if (elem == Scriptable.NOT_FOUND) {
+        flattenIntoArray(cx, result, o, sourceLen, 0, 1, cbf, parent, thisArg);
+        return result;
+    }
+
+    /** FlattenIntoArray from the spec: returns the next target index. */
+    private static long flattenIntoArray(
+            Context cx,
+            Scriptable target,
+            Scriptable source,
+            long sourceLen,
+            long start,
+            double depth,
+            Function mapper,
+            VarScope mapperScope,
+            Scriptable thisArg) {
+        long targetIndex = start;
+        for (long sourceIndex = 0; sourceIndex < sourceLen; sourceIndex++) {
+            boolean exists =
+                    sourceIndex > Integer.MAX_VALUE
+                            ? ScriptableObject.hasProperty(source, Long.toString(sourceIndex))
+                            : ScriptableObject.hasProperty(source, (int) sourceIndex);
+            if (!exists) {
                 continue;
             }
-            Object[] innerArgs = new Object[] {elem, Long.valueOf(i), o};
-            Object mapCall = cbf.call(cx, parent, thisArg, innerArgs);
-            if (js_isArray(mapCall)) {
-                Scriptable arr = (Scriptable) mapCall;
-                long arrLength = getLengthProperty(cx, arr);
-                for (long k = 0; k < arrLength; k++) {
-                    Object temp = getRawElem(arr, k);
-                    if (temp == Scriptable.NOT_FOUND) {
-                        continue;
-                    }
-                    defineElemOrThrow(cx, result, j++, temp);
-                }
+            Object element = getElem(cx, source, sourceIndex);
+            if (mapper != null) {
+                element =
+                        mapper.call(
+                                cx,
+                                mapperScope,
+                                thisArg,
+                                new Object[] {element, Long.valueOf(sourceIndex), source});
+            }
+            if (depth > 0 && js_isArray(element)) {
+                Scriptable elementArr = (Scriptable) element;
+                long elementLen = getLengthProperty(cx, elementArr);
+                targetIndex =
+                        flattenIntoArray(
+                                cx,
+                                target,
+                                elementArr,
+                                elementLen,
+                                targetIndex,
+                                depth - 1,
+                                null,
+                                null,
+                                null);
             } else {
-                defineElemOrThrow(cx, result, j++, mapCall);
+                defineElemOrThrow(cx, target, targetIndex++, element);
             }
         }
-        setLengthProperty(cx, result, j);
-        return result;
+        return targetIndex;
     }
 
     private static Object js_every(
@@ -2088,7 +2093,7 @@ public class NativeArray extends ScriptableObject implements List {
         return Boolean.valueOf(args.length > 0 && js_isArray(args[0]));
     }
 
-    private static boolean js_isArray(Object o) {
+    static boolean js_isArray(Object o) {
         if (!(o instanceof Scriptable)) {
             return false;
         }
