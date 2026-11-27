@@ -33,9 +33,9 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
 
-                        assertSame(arr.get(0), arr.get(1));
-                        assertSame(arr.get(0), arr.get(2));
-                        assertSame(arr.get(0), arr.get(3));
+                        assertSame(arr.get(0, arr), arr.get(1, arr));
+                        assertSame(arr.get(0, arr), arr.get(2, arr));
+                        assertSame(arr.get(0, arr), arr.get(3, arr));
 
                         arr =
                                 (NativeArray)
@@ -43,9 +43,9 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {'use strict'; return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
 
-                        assertSame(arr.get(0), arr.get(1));
-                        assertSame(arr.get(0), arr.get(2));
-                        assertSame(arr.get(0), arr.get(3));
+                        assertSame(arr.get(0, arr), arr.get(1, arr));
+                        assertSame(arr.get(0, arr), arr.get(2, arr));
+                        assertSame(arr.get(0, arr), arr.get(3, arr));
 
                         return null;
                     });
@@ -76,9 +76,9 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
 
-                        assertSame(arr.get(0), arr.get(1));
-                        assertSame(arr.get(0), arr.get(2));
-                        assertSame(arr.get(0), arr.get(3));
+                        assertSame(arr.get(0, arr), arr.get(1, arr));
+                        assertSame(arr.get(0, arr), arr.get(2, arr));
+                        assertSame(arr.get(0, arr), arr.get(3, arr));
 
                         arr =
                                 (NativeArray)
@@ -86,9 +86,9 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {'use strict'; return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
 
-                        assertSame(arr.get(0), arr.get(1));
-                        assertSame(arr.get(0), arr.get(2));
-                        assertSame(arr.get(0), arr.get(3));
+                        assertSame(arr.get(0, arr), arr.get(1, arr));
+                        assertSame(arr.get(0, arr), arr.get(2, arr));
+                        assertSame(arr.get(0, arr), arr.get(3, arr));
 
                         return null;
                     });
@@ -121,12 +121,12 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                         Evaluator.eval(
                                                 cx,
                                                 "function F2() {'use strict'; return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
-                        assertNotEquals(arr.get(0), arr.get(1));
-                        assertNotEquals(arr.get(0), arr.get(2));
-                        assertNotEquals(arr.get(0), arr.get(3));
-                        assertSame(Undefined.instance, arr.get(1));
-                        assertSame(Undefined.instance, arr.get(2));
-                        assertNull(arr.get(3));
+                        assertNotEquals(arr.get(0, arr), arr.get(1, arr));
+                        assertNotEquals(arr.get(0, arr), arr.get(2, arr));
+                        assertNotEquals(arr.get(0, arr), arr.get(3, arr));
+                        assertSame(Undefined.instance, arr.get(1, arr));
+                        assertSame(Undefined.instance, arr.get(2, arr));
+                        assertNull(arr.get(3, arr));
 
                         return null;
                     });
@@ -144,9 +144,9 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {return this;};[this, F2.apply(), F2.apply(undefined), F2.apply(null)];");
 
-                        assertSame(arr.get(0), arr.get(1));
-                        assertSame(arr.get(0), arr.get(2));
-                        assertSame(arr.get(0), arr.get(3));
+                        assertSame(arr.get(0, arr), arr.get(1, arr));
+                        assertSame(arr.get(0, arr), arr.get(2, arr));
+                        assertSame(arr.get(0, arr), arr.get(3, arr));
 
                         return null;
                     });
@@ -179,11 +179,11 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {'use strict'; return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
 
-                        assertNotEquals(arr.get(0), arr.get(1));
-                        assertNotEquals(arr.get(0), arr.get(2));
-                        assertNotEquals(arr.get(0), arr.get(3));
-                        assertSame(Undefined.instance, arr.get(1));
-                        assertSame(Undefined.instance, arr.get(2));
+                        assertNotEquals(arr.get(0, arr), arr.get(1, arr));
+                        assertNotEquals(arr.get(0, arr), arr.get(2, arr));
+                        assertNotEquals(arr.get(0, arr), arr.get(3, arr));
+                        assertSame(Undefined.instance, arr.get(1, arr));
+                        assertSame(Undefined.instance, arr.get(2, arr));
                         assertNull(arr.get(3));
 
                         return null;
@@ -202,9 +202,9 @@ class UndefinedOrNullThisInFunctionCallOrApplyTest {
                                                 cx,
                                                 "function F2() {return this;};[this, F2.call(), F2.call(undefined), F2.call(null)];");
 
-                        assertSame(arr.get(0), arr.get(1));
-                        assertSame(arr.get(0), arr.get(2));
-                        assertSame(arr.get(0), arr.get(3));
+                        assertSame(arr.get(0, arr), arr.get(1, arr));
+                        assertSame(arr.get(0, arr), arr.get(2, arr));
+                        assertSame(arr.get(0, arr), arr.get(3, arr));
 
                         return null;
                     });
