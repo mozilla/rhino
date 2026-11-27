@@ -3034,12 +3034,13 @@ class BodyCodegen {
                         + codegen.cleanName(target.fnode));
         if (type != Token.NEW) {
             cfw.add(ByteCode.DUP);
+            cfw.addALoad(contextLocal);
             cfw.addALoad(thisObjLocal);
             cfw.addInvoke(
                     ByteCode.INVOKEVIRTUAL,
                     "org/mozilla/javascript/JSFunction",
                     "getThisObj",
-                    "(Ljava/lang/Object;)Ljava/lang/Object;");
+                    "(Lorg/mozilla/javascript/Context;Ljava/lang/Object;)Ljava/lang/Object;");
         } else {
             cfw.add(ByteCode.DUP);
             cfw.addALoad(contextLocal);

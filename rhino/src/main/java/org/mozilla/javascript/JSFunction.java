@@ -146,11 +146,15 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
-        var realThis = getThisObj(thisObj);
+        var realThis = getThisObj(cx, thisObj);
         return descriptor.getCode().execute(cx, this, lexicalNewTarget, scope, realThis, args);
     }
 
-    public final Object getThisObj(Object thisObj) {
+    private static boolean useOldUndefNullThis(Context cx) {
+        return cx != null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS);
+    }
+
+    public final Object getThisObj(Context cx, Object thisObj) {
         if (descriptor.hasLexicalThis()) {
             return lexicalThis;
         } else if (!descriptor.isStrict()) {
@@ -159,6 +163,10 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
             } else {
                 return ScriptRuntime.toObject(getDeclarationScope(), thisObj);
             }
+        } else if ((thisObj == null || Undefined.isUndefined(thisObj))
+                && ClassDescriptor.isBuiltIn(descriptor.getCode())
+                && useOldUndefNullThis(cx)) {
+            return ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
         } else {
             return thisObj;
         }
