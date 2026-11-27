@@ -67,7 +67,8 @@ public class Bootstrapper {
                                 new StringLinker(),
                                 new ConsStringLinker(),
                                 new NativeArrayLinker(),
-                                new BaseFunctionLinker()));
+                                new BaseFunctionLinker(),
+                                new SlotMapLinker()));
         // Add the default linker, which can link anything no matter what.
         factory.setPrioritizedLinkers(typeLinker, new DefaultLinker());
         linker = factory.createLinker();
