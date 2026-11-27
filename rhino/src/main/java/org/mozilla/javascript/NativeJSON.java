@@ -251,6 +251,22 @@ public final class NativeJSON extends ScriptableObject {
         return str("", wrapper, state);
     }
 
+    private static Object callToJSON(
+            StringifyState state, Scriptable obj, Object value, String keyString, int keyInt) {
+        // Host objects such as Java wrappers and XML do not report a missing property
+        // through a plain Get, so they keep the existence check.
+        if ((obj instanceof XMLObject || !(obj instanceof ScriptableObject))
+                && !hasProperty(obj, "toJSON")) {
+            return value;
+        }
+        Object toJSON = getProperty(obj, "toJSON");
+        if (!(toJSON instanceof Callable)) {
+            return value;
+        }
+        Object[] args = {keyString == null ? Integer.toString(keyInt) : keyString};
+        return ((Callable) toJSON).call(state.cx, state.scope, obj, args);
+    }
+
     private static Object str(Object key, Scriptable holder, StringifyState state) {
         Object value = null;
         Object unwrappedJavaValue = null;
@@ -265,33 +281,11 @@ public final class NativeJSON extends ScriptableObject {
             value = getProperty(holder, keyInt);
         }
 
-        if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
-            Object toJSON = getProperty((Scriptable) value, "toJSON");
-            if (toJSON instanceof Callable) {
-                value =
-                        callMethod(
-                                state.cx,
-                                (Scriptable) value,
-                                "toJSON",
-                                new Object[] {
-                                    keyString == null ? Integer.toString(keyInt) : keyString
-                                });
-            }
+        if (value instanceof Scriptable) {
+            value = callToJSON(state, (Scriptable) value, value, keyString, keyInt);
         } else if (value instanceof BigInteger) {
             Scriptable bigInt = ScriptRuntime.toObject(state.cx, state.scope, value);
-            if (hasProperty(bigInt, "toJSON")) {
-                Object toJSON = getProperty(bigInt, "toJSON");
-                if (toJSON instanceof Callable) {
-                    value =
-                            callMethod(
-                                    state.cx,
-                                    bigInt,
-                                    "toJSON",
-                                    new Object[] {
-                                        keyString == null ? Integer.toString(keyInt) : keyString
-                                    });
-                }
-            }
+            value = callToJSON(state, bigInt, value, keyString, keyInt);
         }
 
         if (state.replacer != null) {
