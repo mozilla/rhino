@@ -3035,12 +3035,16 @@ class BodyCodegen {
         if (type != Token.NEW) {
             cfw.add(ByteCode.DUP);
             cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
             cfw.addInvoke(
                     ByteCode.INVOKEVIRTUAL,
                     "org/mozilla/javascript/JSFunction",
                     "getThisObj",
-                    "(Lorg/mozilla/javascript/Context;Ljava/lang/Object;)Ljava/lang/Object;");
+                    "(Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/VarScope;"
+                            + "Ljava/lang/Object;"
+                            + ")Ljava/lang/Object;");
         } else {
             cfw.add(ByteCode.DUP);
             cfw.addALoad(contextLocal);

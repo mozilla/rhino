@@ -2871,7 +2871,7 @@ public final class Interpreter extends AInterpreter<CallFrame, InterpreterData<?
                             initFrame(
                                     cx,
                                     ifun.getDeclarationScope(),
-                                    ifun.getThisObj(cx, funThisObj),
+                                    ifun.getThisObj(cx, frame.scope, funThisObj),
                                     funHomeObj,
                                     stack,
                                     sDbl,

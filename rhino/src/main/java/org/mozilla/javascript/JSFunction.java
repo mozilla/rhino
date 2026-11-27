@@ -146,7 +146,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, isStrict());
         }
-        var realThis = getThisObj(cx, thisObj);
+        var realThis = getThisObj(cx, scope, thisObj);
         return descriptor.getCode().execute(cx, this, lexicalNewTarget, scope, realThis, args);
     }
 
@@ -154,7 +154,7 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         return cx != null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS);
     }
 
-    public final Object getThisObj(Context cx, Object thisObj) {
+    public final Object getThisObj(Context cx, VarScope scope, Object thisObj) {
         if (descriptor.hasLexicalThis()) {
             return lexicalThis;
         } else if (!descriptor.isStrict()) {
@@ -166,7 +166,8 @@ public class JSFunction extends BaseFunction implements ScriptOrFn<JSFunction> {
         } else if ((thisObj == null || Undefined.isUndefined(thisObj))
                 && ClassDescriptor.isBuiltIn(descriptor.getCode())
                 && useOldUndefNullThis(cx)) {
-            return ScriptableObject.getTopLevelScope(getDeclarationScope()).getGlobalThis();
+            // Our legacy built in resolution is weird.
+            return ScriptableObject.getTopLevelScope(scope).getGlobalThis();
         } else {
             return thisObj;
         }
