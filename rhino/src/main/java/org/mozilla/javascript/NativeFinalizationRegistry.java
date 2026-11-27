@@ -180,10 +180,7 @@ public class NativeFinalizationRegistry extends ScriptableObject {
         if (activeRegistrations.remove(ref)) {
             try {
                 cleanupCallback.call(
-                        cx,
-                        parentScope,
-                        Undefined.SCRIPTABLE_UNDEFINED,
-                        new Object[] {ref.heldValue});
+                        cx, parentScope, Undefined.instance, new Object[] {ref.heldValue});
             } catch (RhinoException e) {
                 // Per spec, errors in cleanup callbacks don't propagate
                 Context.reportWarning(

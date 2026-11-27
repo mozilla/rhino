@@ -11,7 +11,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /** Contains implementation of shared methods useful for arrays and typed arrays. */
 public class ArrayLikeAbstractOperations {
@@ -90,9 +89,9 @@ public class ArrayLikeAbstractOperations {
 
         Function f = getCallbackArg(cx, callbackArg);
         TopLevel parent = ScriptableObject.getTopLevelScope(f.getDeclarationScope());
-        Scriptable thisArg;
+        Object thisArg;
         if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
-            thisArg = Undefined.SCRIPTABLE_UNDEFINED;
+            thisArg = Undefined.instance;
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
@@ -236,7 +235,7 @@ public class ArrayLikeAbstractOperations {
         if (!(target instanceof NativeArray && ((NativeArray) target).getDenseOnly())
                 && target instanceof ScriptableObject) {
             var so = (ScriptableObject) target;
-            var desc = new DescriptorInfo(true, true, true, value);
+            var desc = new PropertyDescriptor(true, true, true, value);
             so.defineOwnProperty(cx, index, desc);
             return;
         }
@@ -310,7 +309,7 @@ public class ArrayLikeAbstractOperations {
                 value = elem;
             } else {
                 Object[] innerArgs = {value, elem, index, o};
-                value = f.call(cx, parent, Undefined.SCRIPTABLE_UNDEFINED, innerArgs);
+                value = f.call(cx, parent, Undefined.instance, innerArgs);
             }
         }
         if (value == NOT_FOUND) {
@@ -333,7 +332,7 @@ public class ArrayLikeAbstractOperations {
             Context cx, VarScope scope, Object[] args) {
         var compareFunc = ScriptRuntime.getValueAndThis(args[0], cx);
         Callable compare = compareFunc.getCallable();
-        Scriptable compareThis = compareFunc.getThis();
+        Object compareThis = compareFunc.getThis();
         final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
         return new ElementComparator(
                 (x, y) -> {

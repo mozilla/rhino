@@ -39,6 +39,7 @@ public class ScriptNode extends Scope {
     private int paramCount = 0;
     private String[] variableNames;
     private boolean[] isConsts;
+    private boolean[] isLets;
 
     private Object compilerData;
     private int tempNumber = 0;
@@ -253,6 +254,24 @@ public class ScriptNode extends Scope {
         return isConsts;
     }
 
+    /**
+     * Returns, for each param or var, whether it is a {@code let} binding that starts out
+     * uninitialized and so has a temporal dead zone.
+     */
+    public boolean[] getParamAndVarLet() {
+        if (variableNames == null) codeBug();
+        return isLets;
+    }
+
+    /**
+     * Records that the {@code let} binding at the index can never be accessed before it is
+     * initialized, so it need not start out uninitialized.
+     */
+    public void clearParamOrVarLet(int index) {
+        if (variableNames == null) codeBug();
+        isLets[index] = false;
+    }
+
     public boolean hasRestParameter() {
         return false;
     }
@@ -342,7 +361,7 @@ public class ScriptNode extends Scope {
             if (existing != null && existing != sym) {
                 Symbol.Type dt = existing.getDeclType();
                 switch (dt) {
-                    case FUNCTION_LET, LET, CONST, LP -> {
+                    case FUNCTION_LET, LET, CONST, GENERATOR_LET, TEMP, LP -> {
                         return true;
                     }
                     default -> {}
@@ -354,6 +373,15 @@ public class ScriptNode extends Scope {
     }
 
     public void flattenSymbolTable(boolean flattenAllTables) {
+        flattenSymbolTable(flattenAllTables, false);
+    }
+
+    /**
+     * @param flattenAllTables as for {@link #flattenSymbolTable(boolean)}
+     * @param uninitializedLets if true, {@code let} bindings start out uninitialized, and are
+     *     recorded as such in {@link #getParamAndVarLet()}
+     */
+    public void flattenSymbolTable(boolean flattenAllTables, boolean uninitializedLets) {
         if (!flattenAllTables) {
             List<Symbol> newSymbols = new ArrayList<>();
             if (this.symbolTable != null) {
@@ -370,10 +398,12 @@ public class ScriptNode extends Scope {
         }
         variableNames = new String[symbols.size()];
         isConsts = new boolean[symbols.size()];
+        isLets = new boolean[symbols.size()];
         for (int i = 0; i < symbols.size(); i++) {
             Symbol symbol = symbols.get(i);
             variableNames[i] = symbol.getName();
             isConsts[i] = symbol.getDeclType() == Symbol.Type.CONST;
+            isLets[i] = uninitializedLets && symbol.getDeclType() == Symbol.Type.LET;
             symbol.setIndex(i);
         }
     }

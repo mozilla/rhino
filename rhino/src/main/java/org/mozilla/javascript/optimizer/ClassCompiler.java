@@ -312,19 +312,8 @@ public class ClassCompiler {
                 cfw.add(ByteCode.IINC, 2, 1);
             }
         }
-        cfw.addLoadConstant(builder.paramIsConst.length);
-        cfw.add(ByteCode.NEWARRAY, ByteCode.T_BOOLEAN);
-        if (builder.paramIsConst.length > 0) {
-            cfw.addLoadConstant(0);
-            cfw.addIStore(2);
-            for (int p = 0; p < builder.paramAndVarNames.length; p++) {
-                cfw.add(ByteCode.DUP);
-                cfw.addILoad(2);
-                cfw.add(builder.paramIsConst[p] ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
-                cfw.add(ByteCode.BASTORE);
-                cfw.add(ByteCode.IINC, 2, 1);
-            }
-        }
+        pushBooleanArray(cfw, builder.paramIsConst);
+        pushBooleanArray(cfw, builder.paramIsLet);
         cfw.add(builder.isStrict ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.add(builder.isScript ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.add(builder.isTopLevel ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
@@ -406,6 +395,22 @@ public class ClassCompiler {
         for (var child : builder.nestedFunctions) {
             buildDescriptor(
                     cfw, (JSDescriptor.Builder<?>) child, root, classes, builders, mainClassName);
+        }
+    }
+
+    private static void pushBooleanArray(ClassFileWriter cfw, boolean[] values) {
+        cfw.addLoadConstant(values.length);
+        cfw.add(ByteCode.NEWARRAY, ByteCode.T_BOOLEAN);
+        if (values.length > 0) {
+            cfw.addLoadConstant(0);
+            cfw.addIStore(2);
+            for (boolean value : values) {
+                cfw.add(ByteCode.DUP);
+                cfw.addILoad(2);
+                cfw.add(value ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
+                cfw.add(ByteCode.BASTORE);
+                cfw.add(ByteCode.IINC, 2, 1);
+            }
         }
     }
 

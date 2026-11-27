@@ -377,15 +377,15 @@ public class NativeArrayBuffer extends ScriptableObject {
         return buf;
     }
 
-    private static Object js_byteLength(Scriptable thisObj) {
+    private static Object js_byteLength(Object thisObj) {
         return getSelf(thisObj).getLength();
     }
 
-    private static Object js_sharedByteLength(Scriptable thisObj) {
+    private static Object js_sharedByteLength(Object thisObj) {
         return getSharedSelf(thisObj).getLength();
     }
 
-    private static Object js_detached(Scriptable thisObj) {
+    private static Object js_detached(Object thisObj) {
         return getSelf(thisObj).isDetached();
     }
 
@@ -509,20 +509,20 @@ public class NativeArrayBuffer extends ScriptableObject {
     }
 
     // ES2024 ArrayBuffer.prototype.resizable getter
-    private static Object js_resizable(Scriptable thisObj) {
+    private static Object js_resizable(Object thisObj) {
         NativeArrayBuffer self = getSelf(thisObj);
         // A buffer is resizable if maxByteLength was specified in constructor
         return self.isResizable();
     }
 
-    private static Object js_sharedGrowable(Scriptable thisObj) {
+    private static Object js_sharedGrowable(Object thisObj) {
         NativeArrayBuffer self = getSharedSelf(thisObj);
         // A buffer is resizable if maxByteLength was specified in constructor
         return self.isGrowable();
     }
 
     // ES2024 ArrayBuffer.prototype.maxByteLength getter
-    private static Object js_maxByteLength(Scriptable thisObj) {
+    private static Object js_maxByteLength(Object thisObj) {
         NativeArrayBuffer self = getSelf(thisObj);
         // For fixed-length buffers, maxByteLength = byteLength
         // For resizable buffers, return the maxByteLength
@@ -533,7 +533,7 @@ public class NativeArrayBuffer extends ScriptableObject {
         }
     }
 
-    private static Object js_sharedMaxByteLength(Scriptable thisObj) {
+    private static Object js_sharedMaxByteLength(Object thisObj) {
         NativeArrayBuffer self = getSharedSelf(thisObj);
         // For fixed-length buffers, maxByteLength = byteLength
         // For resizable buffers, return the maxByteLength

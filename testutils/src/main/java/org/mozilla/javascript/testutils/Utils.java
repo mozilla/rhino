@@ -307,7 +307,12 @@ public class Utils {
                         return null;
                     }
 
-                    assertEquals(expected, res, message);
+                    assertEquals(
+                            expected,
+                            res,
+                            (message == null ? "" : message)
+                                    + " in "
+                                    + cx.getEvaluationMethod().toString());
                     return null;
                 });
     }

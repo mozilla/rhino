@@ -188,8 +188,18 @@ abstract class Icode {
             DUP_X1 = NUMERIC_INC_DEC - 1,
             DUP_X2 = DUP_X1 - 1,
 
+            // Push the marker held by an uninitialized const binding
+            UNINITIALIZED = DUP_X2 - 1,
+
+            // Create an uninitialized let binding in the current scope, and initialize one
+            DEF_LET = UNINITIALIZED - 1,
+            INIT_LET = DEF_LET - 1,
+
+            // Throw if the local variable slot still holds the uninitialized marker
+            TDZ_CHECK = INIT_LET - 1,
+
             // Last icode
-            MIN_ICODE = DUP_X2;
+            MIN_ICODE = TDZ_CHECK;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -215,6 +225,14 @@ abstract class Icode {
                 return "DUP_X1";
             case DUP_X2:
                 return "DUP_X2";
+            case UNINITIALIZED:
+                return "UNINITIALIZED";
+            case DEF_LET:
+                return "DEF_LET";
+            case INIT_LET:
+                return "INIT_LET";
+            case TDZ_CHECK:
+                return "TDZ_CHECK";
             case SWAP:
                 return "SWAP";
             case POP:

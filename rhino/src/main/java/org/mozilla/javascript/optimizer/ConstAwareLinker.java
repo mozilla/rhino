@@ -14,6 +14,7 @@ import jdk.dynalink.linker.support.Guards;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.VarScope;
 
 /**
  * This linker optimizes accesses to constants, either as object properties or in the current scope.
@@ -111,13 +112,13 @@ class ConstAwareLinker implements TypeBasedGuardingDynamicLinker {
                 int attributes = target.getAttributes(name);
                 if ((attributes & ScriptableObject.READONLY) != 0
                         && (attributes & ScriptableObject.PERMANENT) != 0
-                        && (attributes & ScriptableObject.UNINITIALIZED_CONST) == 0
                         // An accessor property with a getter can return a different value
                         // on each invocation.
                         && target.getGetterOrSetter(name, 0, target, false) == Undefined.instance) {
                     // If we get here then this object's value will not change for the
                     // lifetime of the target object.
-                    return target.get(name, target);
+                    var res = target.get(name, target);
+                    return res == VarScope.UNINITIALIZED ? null : res;
                 }
             }
         } catch (RhinoException re) {

@@ -430,6 +430,12 @@ final class NativeString extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeString.class);
     }
 
+    private static CharSequence realCharSeq(Object thisObj) {
+        return thisObj instanceof CharSequence
+                ? (CharSequence) thisObj
+                : (LambdaConstructor.convertThisObject(thisObj, NativeString.class)).string;
+    }
+
     private static Object js_iterator(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return new NativeStringIterator(
@@ -440,7 +446,7 @@ final class NativeString extends ScriptableObject {
     private static Object js_toString(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         // ECMA 15.5.4.2: the toString function is not generic.
-        CharSequence cs = realThis(thisObj).string;
+        CharSequence cs = realCharSeq(thisObj);
         return cs instanceof String ? cs : cs.toString();
     }
 
@@ -496,11 +502,11 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (0 <= index && index < string.length()) {
-            return;
+            return false;
         }
-        super.put(index, start, value);
+        return super.put(index, start, value);
     }
 
     @Override
@@ -542,7 +548,7 @@ final class NativeString extends ScriptableObject {
     }
 
     @Override
-    protected ScriptableObject.DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         if (!(id instanceof Symbol)
                 && (cx != null)
                 && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -555,8 +561,8 @@ final class NativeString extends ScriptableObject {
         return super.getOwnPropertyDescriptor(cx, id);
     }
 
-    private ScriptableObject.DescriptorInfo defaultIndexPropertyDescriptor(Object value) {
-        return new ScriptableObject.DescriptorInfo(true, false, false, NOT_FOUND, NOT_FOUND, value);
+    private PropertyDescriptor defaultIndexPropertyDescriptor(Object value) {
+        return new PropertyDescriptor(true, false, false, NOT_FOUND, NOT_FOUND, value);
     }
 
     /*
@@ -905,7 +911,7 @@ final class NativeString extends ScriptableObject {
 
         String replacement;
         if (functionalReplace) {
-            Scriptable callThis =
+            Object callThis =
                     ScriptRuntime.getApplyOrCallThis(cx, s, null, 0, (Function) replaceValue);
 
             Object replacementObj =
@@ -928,7 +934,7 @@ final class NativeString extends ScriptableObject {
                             string,
                             position,
                             captures,
-                            Undefined.SCRIPTABLE_UNDEFINED,
+                            Undefined.instance,
                             replaceOps);
         }
         return preceding + replacement + following;
@@ -1001,7 +1007,7 @@ final class NativeString extends ScriptableObject {
             String preserved = string.substring(endOfLastMatch, p);
             String replacement;
             if (functionalReplace) {
-                Scriptable callThis =
+                Object callThis =
                         ScriptRuntime.getApplyOrCallThis(cx, s, null, 0, (Function) replaceValue);
 
                 Object replacementObj =
@@ -1024,7 +1030,7 @@ final class NativeString extends ScriptableObject {
                                 string,
                                 p,
                                 captures,
-                                Undefined.SCRIPTABLE_UNDEFINED,
+                                Undefined.instance,
                                 replaceOps);
             }
             result.append(preserved);

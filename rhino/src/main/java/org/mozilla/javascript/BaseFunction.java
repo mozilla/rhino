@@ -280,17 +280,18 @@ public class BaseFunction extends ScriptableObject implements Function {
             BaseFunction builtIn,
             BuiltInSlot<BaseFunction> current,
             Object id,
-            ScriptableObject.DescriptorInfo info,
+            PropertyDescriptor info,
             boolean checkValid,
             Object key,
             int index) {
         try (var map = builtIn.startCompoundOp(true)) {
             return ScriptableObject.defineOrdinaryProperty(
-                    (o, i, k, e, m, s) -> {
+                    (o, i, k, e, m, s, br) -> {
                         if (i.value != NOT_FOUND) {
                             builtIn.prototypeProperty =
                                     i.value == null ? UniqueTag.NULL_VALUE : i.value;
                         }
+                        br.set(true);
                         return s;
                     },
                     builtIn,
@@ -303,9 +304,9 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
     }
 
-    static DescriptorInfo createThrowingProp(Context cx, VarScope scope, ScriptableObject obj) {
+    static PropertyDescriptor createThrowingProp(Context cx, VarScope scope, ScriptableObject obj) {
         var thrower = ScriptRuntime.typeErrorThrower(scope);
-        return new DescriptorInfo(false, NOT_FOUND, true, thrower, thrower, null);
+        return new PropertyDescriptor(false, NOT_FOUND, true, thrower, thrower, null);
     }
 
     protected final boolean defaultHas(String name) {
@@ -445,14 +446,14 @@ public class BaseFunction extends ScriptableObject implements Function {
         }
         Callable targetFunction = (Callable) thisObj;
         int argc = args.length;
-        final Scriptable boundThis;
+        final Object boundThis;
         final Object[] boundArgs;
         if (argc > 0) {
-            boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], s);
+            boundThis = args[0];
             boundArgs = new Object[argc - 1];
             System.arraycopy(args, 1, boundArgs, 0, argc - 1);
         } else {
-            boundThis = null;
+            boundThis = Undefined.instance;
             boundArgs = ScriptRuntime.emptyArgs;
         }
         return new BoundFunction(cx, s, targetFunction, boundThis, boundArgs);
@@ -465,8 +466,7 @@ public class BaseFunction extends ScriptableObject implements Function {
 
     private static Object js_call(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        var thisArg = ScriptRuntime.toObject(f.getDeclarationScope(), thisObj);
-        return ScriptRuntime.applyOrCall(false, cx, f.getDeclarationScope(), thisArg, args);
+        return ScriptRuntime.applyOrCall(false, cx, f.getDeclarationScope(), thisObj, args);
     }
 
     private static Object js_toSource(
@@ -647,11 +647,11 @@ public class BaseFunction extends ScriptableObject implements Function {
         return 0;
     }
 
-    private static Object js_protoArgumentsGetter(Scriptable thisObj) {
+    private static Object js_protoArgumentsGetter(Object thisObj) {
         return LambdaConstructor.convertThisObject(thisObj, BaseFunction.class).getArguments();
     }
 
-    private static void js_protoArgumentsSetter(Scriptable thisObj, Object value) {
+    private static void js_protoArgumentsSetter(Object thisObj, Object value) {
         LambdaConstructor.convertThisObject(thisObj, BaseFunction.class).setArguments(value);
     }
 

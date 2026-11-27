@@ -10,9 +10,12 @@ import static org.mozilla.javascript.Context.reportError;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -53,6 +56,12 @@ public class NodeTransformer {
     private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode) {
         loops = new ArrayDeque<>();
         loopEnds = new ArrayDeque<>();
+        ancestors = new ArrayDeque<>();
+        firstJumpTo = new IdentityHashMap<>();
+        initializedAt = new IdentityHashMap<>();
+        checkedBindings = Collections.newSetFromMap(new IdentityHashMap<>());
+        resets = new ArrayList<>();
+        walkOrder = 0;
 
         // to save against upchecks if no finally blocks are used.
         hasFinally = false;
@@ -60,11 +69,131 @@ public class NodeTransformer {
         // Flatten all only if we are not using scope objects for block scope
         boolean createScopeObjects =
                 tree.getType() != Token.FUNCTION || ((FunctionNode) tree).requiresActivation();
-        tree.flattenSymbolTable(!createScopeObjects);
+        tree.flattenSymbolTable(
+                !createScopeObjects, compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
+
+        // Bindings held in local variable slots have their temporal dead zone checked inline, and
+        // the walk works out which accesses need no check.
+        trackDeadZones =
+                !createScopeObjects && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
 
         // uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode, false);
+
+        if (trackDeadZones) {
+            dropUnneededDeadZones(tree);
+        }
+    }
+
+    /**
+     * A binding none of whose accesses needs a check can never be seen uninitialized, so a let need
+     * not start out uninitialized, and re-entering its scope need not reset it.
+     */
+    private void dropUnneededDeadZones(ScriptNode tree) {
+        for (Reset reset : resets) {
+            if (hasDeadZone(reset.symbol) && !checkedBindings.contains(reset.symbol)) {
+                reset.scope.removeChild(reset.node);
+            }
+        }
+        for (Symbol symbol : tree.getSymbols()) {
+            if (symbol.getDeclType() == Symbol.Type.LET && !checkedBindings.contains(symbol)) {
+                tree.clearParamOrVarLet(symbol.getIndex());
+            }
+        }
+    }
+
+    /**
+     * Notes the jumps and jump targets the walk passes, in source order. A forward jump seen before
+     * a binding was initialized may land past that initialization, so on reaching its target the
+     * binding is no longer known to be initialized.
+     */
+    private void beforeChildren(Node node) {
+        if (node instanceof Jump) {
+            Jump jump = (Jump) node;
+            noteJumpTo(jump.target);
+            switch (node.getType()) {
+                case Token.SWITCH -> noteJumpTo(jump.getDefault());
+                case Token.TRY -> noteJumpTo(jump.getFinally());
+                case Token.LOOP -> noteJumpTo(jump.getContinue());
+                default -> {}
+            }
+        } else if (node.getType() == Token.TARGET) {
+            Integer first = firstJumpTo.get(node);
+            if (first != null) {
+                initializedAt.values().removeIf(order -> order > first);
+            }
+        }
+    }
+
+    private void noteJumpTo(Node target) {
+        if (target != null) {
+            firstJumpTo.putIfAbsent(target, ++walkOrder);
+        }
+    }
+
+    /**
+     * Once a store into a binding has run, the binding is initialized, for as long as nothing can
+     * jump past the store. Jumps are dealt with by {@link #beforeChildren}; what is left is a store
+     * that an expression may skip.
+     */
+    private void afterChildren(Node node) {
+        int type = node.getType();
+        if (type != Token.SETVAR && type != Token.SETCONSTVAR && type != Token.INITCONSTVAR) {
+            return;
+        }
+        Node name = node.getFirstChild();
+        Scope defining = name.getScope();
+        if (defining == null) {
+            return;
+        }
+        Symbol symbol = defining.getSymbol(name.getString());
+        if (hasDeadZone(symbol)
+                && !initializedAt.containsKey(symbol)
+                && alwaysRunsInScope(defining)) {
+            initializedAt.put(symbol, ++walkOrder);
+        }
+    }
+
+    /**
+     * Returns true if the node being visited runs whenever the code around it in the scope that
+     * defines a binding does.
+     */
+    private boolean alwaysRunsInScope(Scope defining) {
+        for (Node ancestor : ancestors) {
+            if (ancestor == defining) {
+                return true;
+            }
+            switch (ancestor.getType()) {
+                case Token.HOOK, Token.AND, Token.OR, Token.NULLISH_COALESCING -> {
+                    return false;
+                }
+                default -> {
+                    if (ancestor.getIntProp(Node.OPTIONAL_CHAINING, 0) == 1) {
+                        return false;
+                    }
+                }
+            }
+        }
+        // The walk does not count the function or script itself among the ancestors.
+        return defining instanceof ScriptNode;
+    }
+
+    /**
+     * Returns true if an access to the symbol may find it in its temporal dead zone. Records the
+     * symbol as needing checks if so.
+     */
+    private boolean needsDeadZoneCheck(Symbol symbol) {
+        if (!hasDeadZone(symbol)) {
+            return false;
+        }
+        if (trackDeadZones) {
+            if (initializedAt.containsKey(symbol)) {
+                return false;
+            }
+            checkedBindings.add(symbol);
+        }
+        return true;
     }
 
     private void transformCompilationUnit_r(
@@ -75,7 +204,6 @@ public class NodeTransformer {
             boolean inStrictMode,
             boolean inLoop) {
         Node node = null;
-        siblingLoop:
         for (; ; ) {
             Node previous = null;
             if (node == null) {
@@ -88,6 +216,61 @@ public class NodeTransformer {
                 break;
             }
 
+            try {
+                node =
+                        transform_singleNode(
+                                tree,
+                                parent,
+                                scope,
+                                createScopeObjects,
+                                inStrictMode,
+                                inLoop,
+                                node,
+                                previous);
+
+                ancestors.push(node);
+                transformCompilationUnit_r(
+                        tree,
+                        node,
+                        node instanceof Scope ? (Scope) node : scope,
+                        createScopeObjects,
+                        inStrictMode,
+                        inLoop || node.getType() == Token.LOOP);
+                ancestors.pop();
+                if (trackDeadZones) {
+                    afterChildren(node);
+                }
+            } catch (ContinueLoop c) {
+                node = c.newNode;
+            }
+        }
+    }
+
+    private final class ContinueLoop extends Throwable {
+        private final Node newNode;
+
+        ContinueLoop(Node newNode) {
+            this.newNode = newNode;
+        }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            // Do nothing, we're just doing control flow here.
+            return this;
+        }
+    }
+
+    private Node transform_singleNode(
+            final ScriptNode tree,
+            final Node parent,
+            Scope scope,
+            boolean createScopeObjects,
+            boolean inStrictMode,
+            boolean inLoop,
+            Node node,
+            Node previous)
+            throws ContinueLoop {
+        { // Prevent indenting changes
             int type = node.getType();
             if ((type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP)
                     && (node instanceof Scope)
@@ -110,19 +293,22 @@ public class NodeTransformer {
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
                     List<Boolean> constFlags = new ArrayList<>();
+                    List<Boolean> letFlags = new ArrayList<>();
                     for (Symbol symbol : newScope.getSymbolTable().values()) {
                         Node name = Node.newString(Token.NAME, symbol.getName());
-                        // Const bindings must be created uninitialized, so that the
-                        // declaration itself can initialize them. A loop scope is
-                        // excluded: it belongs to a for-in/of head, whose bindings are
-                        // declared afresh in each iteration's own scope, and all this
-                        // one does is shadow an outer binding of the same name while
-                        // the iterated expression is evaluated.
-                        constFlags.add(
-                                symbol.getDeclType() == Symbol.Type.CONST && type == Token.BLOCK);
+                        // Lexical bindings must be created uninitialized, so that the
+                        // declaration itself can initialize them. A loop scope belongs to
+                        // a for-in/of head, whose bindings are declared afresh in each
+                        // iteration's own scope; this one's are never initialized, and
+                        // only put the head's names in their temporal dead zone while the
+                        // iterated expression is evaluated.
+                        boolean lexicalScope = type == Token.BLOCK || type == Token.LOOP;
+                        constFlags.add(symbol.getDeclType() == Symbol.Type.CONST && lexicalScope);
+                        letFlags.add(isUninitializedLet(symbol) && lexicalScope);
                         innerLet.addChildToBack(name);
                     }
                     putConstFlags(innerLet, constFlags);
+                    putFlags(innerLet, Node.LET_IDS_PROP, letFlags);
                     newScope.setSymbolTable(null); // so we don't transform again
                     Node oldNode = node;
                     node = replaceCurrent(parent, previous, node, let);
@@ -259,7 +445,7 @@ public class NodeTransformer {
                                         inLoop);
                             }
                             // skip transformCompilationUnit_r to avoid infinite loop
-                            continue siblingLoop;
+                            throw new ContinueLoop(node);
                         }
                         break;
                     }
@@ -337,23 +523,36 @@ public class NodeTransformer {
                 case Token.VAR:
                     {
                         Node result = new Node(Token.BLOCK);
+                        // An ES6 let is created uninitialized, so its declaration initializes it
+                        // even without an initializer.
+                        boolean initializesLet =
+                                type == Token.LET
+                                        && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
                         for (Node cursor = node.getFirstChild(); cursor != null; ) {
                             // Move cursor to next before createAssignment gets chance
                             // to change n.next
                             Node n = cursor;
                             cursor = cursor.getNext();
                             if (n.getType() == Token.NAME) {
-                                if (!n.hasChildren()) continue;
-                                Node init = n.getFirstChild();
-                                n.removeChild(init);
+                                Node init;
+                                if (n.hasChildren()) {
+                                    init = n.getFirstChild();
+                                    n.removeChild(init);
+                                } else if (initializesLet) {
+                                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                                } else {
+                                    continue;
+                                }
                                 n.setType(Token.BINDNAME);
-                                n =
-                                        new Node(
-                                                type == Token.CONST
-                                                        ? Token.SETCONST
-                                                        : Token.SETNAME,
-                                                n,
-                                                init);
+                                int setOp;
+                                if (type == Token.CONST) {
+                                    setOp = Token.SETCONST;
+                                } else if (initializesLet) {
+                                    setOp = Token.INIT_LET;
+                                } else {
+                                    setOp = Token.SETNAME;
+                                }
+                                n = new Node(setOp, n, init);
                             } else {
                                 // May be a destructuring assignment already transformed
                                 // to a LETEXPR
@@ -414,6 +613,9 @@ public class NodeTransformer {
                         Scope defining = scope.getDefiningScope(node.getString());
                         if (defining != null) {
                             node.setScope(defining);
+                            if (needsDeadZoneCheck(defining.getSymbol(node.getString()))) {
+                                node.putIntProp(Node.TDZ_CHECK_PROP, 1);
+                            }
                         }
                     }
                     break;
@@ -461,6 +663,7 @@ public class NodeTransformer {
                 /* fall through */
                 case Token.NAME:
                 case Token.SETCONST:
+                case Token.INIT_LET:
                 case Token.DELPROP:
                     {
                         // Turn name to var for faster access if possible
@@ -486,11 +689,26 @@ public class NodeTransformer {
                         Scope defining = scope.getDefiningScope(name);
                         if (defining != null) {
                             nameSource.setScope(defining);
+                            // The declaration's own store initializes the binding, but any other
+                            // access may find it still in its temporal dead zone.
+                            boolean deadZone =
+                                    type != Token.INIT_LET
+                                            && type != Token.SETCONST
+                                            && type != Token.DELPROP
+                                            && needsDeadZoneCheck(defining.getSymbol(name));
                             if (type == Token.NAME) {
                                 node.setType(Token.GETVAR);
-                            } else if (type == Token.SETNAME || type == Token.STRICT_SETNAME) {
+                                if (deadZone) {
+                                    node.putIntProp(Node.TDZ_CHECK_PROP, 1);
+                                }
+                            } else if (type == Token.SETNAME
+                                    || type == Token.STRICT_SETNAME
+                                    || type == Token.INIT_LET) {
                                 node.setType(Token.SETVAR);
                                 nameSource.setType(Token.STRING);
+                                if (deadZone) {
+                                    node.putIntProp(Node.TDZ_CHECK_PROP, 1);
+                                }
                             } else if (type == Token.SETCONST) {
                                 // A loop can run a block scoped declaration more than once, and
                                 // each run re-binds. Pre-ES6 const is hoisted to the function
@@ -531,13 +749,10 @@ public class NodeTransformer {
                     }
             }
 
-            transformCompilationUnit_r(
-                    tree,
-                    node,
-                    node instanceof Scope ? (Scope) node : scope,
-                    createScopeObjects,
-                    inStrictMode,
-                    inLoop || node.getType() == Token.LOOP);
+            if (trackDeadZones) {
+                beforeChildren(node);
+            }
+            return node;
         }
     }
 
@@ -548,11 +763,12 @@ public class NodeTransformer {
      * still marked uninitialized, and a {@code let} without an initializer stores nothing at all.
      *
      * <p>Only bindings that the scope does not itself initialize on entry need this. A declaration
-     * among the scope's leading statements always runs before anything can read the binding, so it
-     * is left to do the initializing; one that a jump can bypass — a {@code case} clause of a
-     * switch, or the head of a for-in/for-of loop — is not.
+     * among the scope's leading declarations always runs before anything can read the binding, so
+     * it is left to do the initializing; one that a jump can bypass — a {@code case} clause of a
+     * switch, or the head of a for-in/for-of loop — or that other code may run before is not, as
+     * that code must find the binding in its temporal dead zone.
      */
-    private static void addScopeReinit(Scope scope) {
+    private void addScopeReinit(Scope scope) {
         Map<String, Symbol> symbolTable = scope.getSymbolTable();
         if (symbolTable == null || symbolTable.isEmpty()) {
             return;
@@ -567,6 +783,7 @@ public class NodeTransformer {
             name.setScope(scope);
             Node reset = new Node(Token.RESETVAR, name);
             reset.setLineColumnNumber(scope.getLineno(), scope.getColumn());
+            resets.add(new Reset(scope, reset, symbol));
             if (previous == null) {
                 scope.addChildToFront(reset);
             } else {
@@ -577,22 +794,31 @@ public class NodeTransformer {
     }
 
     /**
-     * Collects the names that the leading statements of a scope declare with an initializer. The
-     * walk stops at the first {@link Token#TARGET}, since from there on a jump can land past a
-     * declaration and leave the binding holding whatever an earlier iteration left in its slot.
+     * Collects the names that the leading declarations of a scope initialize. The walk stops at the
+     * first statement that is not a declaration, since from there on a jump can land past a
+     * declaration, or other code can read a binding before it is declared. It also stops at an
+     * initializer that may read one of the scope's bindings not initialized yet, as on a later
+     * iteration that read would otherwise find whatever an earlier one left in its slot.
      */
     private static List<String> namesInitializedOnEntry(Scope scope) {
         List<String> names = new ArrayList<>(4);
+        Map<String, Symbol> symbolTable = scope.getSymbolTable();
         for (Node child = scope.getFirstChild(); child != null; child = child.getNext()) {
             int type = child.getType();
-            if (type == Token.TARGET) {
+            if (type != Token.LET && type != Token.CONST && type != Token.VAR) {
                 break;
             }
-            if (type != Token.LET && type != Token.CONST && type != Token.VAR) {
-                continue;
-            }
             for (Node decl = child.getFirstChild(); decl != null; decl = decl.getNext()) {
-                if (decl.getType() == Token.NAME && decl.hasChildren()) {
+                if (decl.getType() != Token.NAME) {
+                    // A destructuring declaration
+                    return names;
+                }
+                if (decl.hasChildren()) {
+                    if (readsUninitialized(decl.getFirstChild(), symbolTable, names)) {
+                        return names;
+                    }
+                    names.add(decl.getString());
+                } else if (type == Token.LET) {
                     names.add(decl.getString());
                 }
             }
@@ -600,11 +826,31 @@ public class NodeTransformer {
         return names;
     }
 
+    private static boolean readsUninitialized(
+            Node node, Map<String, Symbol> symbolTable, List<String> initialized) {
+        int type = node.getType();
+        if ((type == Token.NAME || type == Token.BINDNAME || type == Token.TYPEOFNAME)
+                && symbolTable.containsKey(node.getString())
+                && !initialized.contains(node.getString())) {
+            return true;
+        }
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            if (readsUninitialized(child, symbolTable, initialized)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Records on a declaration list which of its children declare consts, for {@link #visitLet} to
      * read. A destructuring child stands for all the names it declares.
      */
     static void putConstFlags(Node declarations, List<Boolean> flags) {
+        putFlags(declarations, Node.CONST_IDS_PROP, flags);
+    }
+
+    static void putFlags(Node declarations, int prop, List<Boolean> flags) {
         if (!flags.contains(Boolean.TRUE)) {
             return;
         }
@@ -612,14 +858,34 @@ public class NodeTransformer {
         for (int i = 0; i < array.length; i++) {
             array[i] = flags.get(i);
         }
-        declarations.putProp(Node.CONST_IDS_PROP, array);
+        declarations.putProp(prop, array);
+    }
+
+    /** Returns true if the symbol is a binding that cannot be accessed before it is initialized. */
+    private boolean hasDeadZone(Symbol symbol) {
+        return symbol != null
+                && (symbol.getDeclType() == Symbol.Type.LET
+                        || symbol.getDeclType() == Symbol.Type.CONST)
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+    }
+
+    /** Returns true if the symbol is a let binding that starts out uninitialized. */
+    private boolean isUninitializedLet(Symbol symbol) {
+        return symbol != null
+                && symbol.getDeclType() == Symbol.Type.LET
+                && compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
+    }
+
+    private boolean isUninitializedLet(Node scopeNode, String name) {
+        return scopeNode instanceof Scope
+                && isUninitializedLet(((Scope) scopeNode).getSymbol(name));
     }
 
     /**
      * Builds the {@code ENTER_SCOPE} that creates a for-in/of head's bindings in a new iteration
-     * environment. A const is created uninitialized, for its declaration to initialize; anything
-     * else starts out undefined. Both back ends walk the names and the children in step, and
-     * evaluate no child for a name they create as a const.
+     * environment. A const or let is created uninitialized, for its declaration to initialize;
+     * anything else starts out undefined. Both back ends walk the names and the children in step,
+     * and evaluate no child for a name they create as a const.
      */
     private static Node enterIterationScope(Node iterationScope) {
         Object[] names = (Object[]) iterationScope.getProp(Node.OBJECT_IDS_PROP);
@@ -627,6 +893,7 @@ public class NodeTransformer {
         Node enter = new Node(Token.ENTER_SCOPE);
         enter.putProp(Node.OBJECT_IDS_PROP, names);
         enter.putProp(Node.CONST_IDS_PROP, consts);
+        enter.putProp(Node.LET_IDS_PROP, iterationScope.getProp(Node.LET_IDS_PROP));
         for (int i = 0; i < names.length; i++) {
             enter.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
         }
@@ -641,6 +908,8 @@ public class NodeTransformer {
         Node vars = scopeNode.getFirstChild();
         Node realBody = vars.getNext();
         boolean[] varConsts = (boolean[]) vars.getProp(Node.CONST_IDS_PROP);
+        // Set when the declarations are in the body of the scope rather than here
+        boolean[] varLets = (boolean[]) vars.getProp(Node.LET_IDS_PROP);
         // Destructuring wraps the body, but it is the original body that must be re-parented.
         scopeNode.removeChild(vars);
         scopeNode.removeChild(realBody);
@@ -654,10 +923,12 @@ public class NodeTransformer {
             result = replaceCurrent(parent, previous, scopeNode, result);
             ArrayList<Object> list = new ArrayList<>();
             ArrayList<Boolean> consts = new ArrayList<>();
+            ArrayList<Boolean> lets = new ArrayList<>();
             int position = -1;
             for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
                 Node current = v;
-                boolean declaredConst = varConsts != null && varConsts[++position];
+                position++;
+                boolean declaredConst = varConsts != null && varConsts[position];
                 if (current.getType() == Token.LETEXPR) {
                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
                     List<?> destructuringNames =
@@ -674,8 +945,10 @@ public class NodeTransformer {
                     // defined in the destructuring assignment
                     if (destructuringNames != null) {
                         list.addAll(destructuringNames);
-                        for (int i = 0; i < destructuringNames.size(); i++) {
+                        for (Object name : destructuringNames) {
                             consts.add(declaredConst);
+                            lets.add(
+                                    !declaredConst && isUninitializedLet(scopeNode, (String) name));
                             newVars.addChildToBack(new Node(Token.VOID, Node.newNumber(0.0)));
                         }
                     }
@@ -686,6 +959,7 @@ public class NodeTransformer {
                         if (child.getType() != Token.NAME) throw Kit.codeBug();
                         list.add(ScriptRuntime.getIndexObject(child.getString()));
                         consts.add(Boolean.FALSE);
+                        lets.add(Boolean.FALSE);
                         Node init = child.getFirstChild();
                         if (init == null) {
                             init = new Node(Token.VOID, Node.newNumber(0.0));
@@ -697,8 +971,28 @@ public class NodeTransformer {
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 list.add(ScriptRuntime.getIndexObject(current.getString()));
                 consts.add(declaredConst);
+                boolean declaredLet =
+                        varLets != null
+                                ? varLets[position]
+                                : !declaredConst
+                                        && isUninitializedLet(scopeNode, current.getString());
+                lets.add(declaredLet);
                 Node init = current.getFirstChild();
-                if (init == null) {
+                if (declaredLet) {
+                    if (varLets == null) {
+                        // The scope creates the binding uninitialized, and this initializes it.
+                        if (init == null) {
+                            init = new Node(Token.VOID, Node.newNumber(0.0));
+                        } else {
+                            current.removeChild(init);
+                        }
+                        Node bind = Node.newString(Token.BINDNAME, current.getString());
+                        Node initLet = new Node(Token.INIT_LET, bind, init);
+                        body.addChildToBack(
+                                isExpression ? initLet : new Node(Token.EXPR_VOID, initLet));
+                    }
+                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                } else if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 } else if (declaredConst) {
                     // The scope creates the binding uninitialized, and this initializes it.
@@ -712,6 +1006,7 @@ public class NodeTransformer {
             }
             newVars.putProp(Node.OBJECT_IDS_PROP, list.toArray());
             putConstFlags(newVars, consts);
+            putFlags(newVars, Node.LET_IDS_PROP, lets);
             result.addChildToBack(newVars);
             body.addChildToBack(realBody);
             result.addChildToBack(new Node(Token.SCOPE_BLOCK, body));
@@ -817,6 +1112,57 @@ public class NodeTransformer {
 
     private Deque<Node> loops;
     private Deque<Node> loopEnds;
+
+    private static final class Reset {
+        private final Scope scope;
+        private final Node node;
+        private final Symbol symbol;
+
+        public Reset(Scope scope, Node node, Symbol symbol) {
+            this.scope = scope;
+            this.node = node;
+            this.symbol = symbol;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((scope == null) ? 0 : scope.hashCode());
+            result = prime * result + ((node == null) ? 0 : node.hashCode());
+            result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null) return false;
+            if (getClass() != obj.getClass()) return false;
+            Reset other = (Reset) obj;
+            if (scope == null) {
+                if (other.scope != null) return false;
+            } else if (!scope.equals(other.scope)) return false;
+            if (node == null) {
+                if (other.node != null) return false;
+            } else if (!node.equals(other.node)) return false;
+            if (symbol == null) {
+                if (other.symbol != null) return false;
+            } else if (!symbol.equals(other.symbol)) return false;
+            return true;
+        }
+    }
+
+    private boolean trackDeadZones;
+    // The nodes enclosing the one being visited, innermost first
+    private Deque<Node> ancestors;
+    // For each jump target, when the walk first passed a jump to it
+    private Map<Node, Integer> firstJumpTo;
+    // For each binding known to be initialized, when the walk passed the store that did so
+    private Map<Symbol, Integer> initializedAt;
+    private Set<Symbol> checkedBindings;
+    private List<Reset> resets;
+    private int walkOrder;
     private boolean hasFinally;
     private CompilerEnvirons compilerEnv;
 }

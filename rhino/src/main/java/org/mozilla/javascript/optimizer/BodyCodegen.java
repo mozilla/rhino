@@ -20,6 +20,7 @@ import org.mozilla.javascript.NativeGenerator;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.VarScope;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -361,10 +362,12 @@ class BodyCodegen {
             int paramCount = fnCurrent.fnode.getParamCount();
             int varCount = fnCurrent.fnode.getParamAndVarCount();
             boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
+            boolean[] letDeclarations = fnCurrent.fnode.getParamAndVarLet();
 
             // REMIND - only need to initialize the vars that don't get a value
             // before the next call and are used in the function
             int firstUndefVar = -1;
+            int firstUninitVar = -1;
             for (int i = 0; i != varCount; ++i) {
                 int reg = -1;
                 if (i < paramCount) {
@@ -376,11 +379,26 @@ class BodyCodegen {
                         cfw.addAStore(reg);
                     }
                 } else if (fnCurrent.isNumberVar(i)) {
+                    // A double register cannot hold the uninitialized marker, so a numeric const
+                    // gets an extra int register recording whether it has been assigned.
                     reg = getNewWordPairLocal(constDeclarations[i]);
                     cfw.addPush(0.0);
                     cfw.addDStore(reg);
+                    if (constDeclarations[i]) {
+                        cfw.addPush(0);
+                        cfw.addIStore(reg + 2);
+                    }
+                } else if (constDeclarations[i] || letDeclarations[i]) {
+                    reg = getNewWordLocal();
+                    if (firstUninitVar == -1) {
+                        cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+                        firstUninitVar = reg;
+                    } else {
+                        cfw.addALoad(firstUninitVar);
+                    }
+                    cfw.addAStore(reg);
                 } else {
-                    reg = getNewWordLocal(constDeclarations[i]);
+                    reg = getNewWordLocal();
                     if (firstUndefVar == -1) {
                         Codegen.pushUndefined(cfw);
                         firstUndefVar = reg;
@@ -390,10 +408,6 @@ class BodyCodegen {
                     cfw.addAStore(reg);
                 }
                 if (reg >= 0) {
-                    if (constDeclarations[i]) {
-                        cfw.addPush(0);
-                        cfw.addIStore(reg + (fnCurrent.isNumberVar(i) ? 2 : 1));
-                    }
                     varRegisters[i] = reg;
                 }
 
@@ -1202,6 +1216,10 @@ class BodyCodegen {
                 Codegen.pushUndefined(cfw);
                 break;
 
+            case Token.UNINITIALIZED:
+                cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+                break;
+
             case Token.TRUE:
                 cfw.add(ByteCode.GETSTATIC, "java/lang/Boolean", "TRUE", "Ljava/lang/Boolean;");
                 break;
@@ -1549,6 +1567,10 @@ class BodyCodegen {
 
             case Token.SETCONST:
                 visitSetConst(node, child);
+                break;
+
+            case Token.INIT_LET:
+                visitInitLet(node, child);
                 break;
 
             case Token.SETCONSTVAR:
@@ -1906,10 +1928,25 @@ class BodyCodegen {
             final String nn = "__nested__yield__" + unnestedYieldCount;
             unnestedYieldCount++;
             cfw.addALoad(variableObjectLocal);
+            cfw.addPush(nn);
+            cfw.addPush(false);
+            cfw.addInvoke(
+                    ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/VarScope",
+                    "createMutableBinding",
+                    "(Ljava/lang/String;Z)Z");
+            cfw.add(ByteCode.POP);
+            cfw.addALoad(variableObjectLocal);
             cfw.add(ByteCode.SWAP);
             cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addDynamicInvoke("NAME:SET:" + nn, Signatures.NAME_SET);
+            cfw.addPush(nn);
+            addScriptRuntimeInvoke(
+                    "initLet",
+                    "(Lorg/mozilla/javascript/VarScope;"
+                            + "Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Ljava/lang/String;"
+                            + ")Ljava/lang/Object;");
             cfw.add(ByteCode.POP);
 
             unnestedYields.put(nestedYield, nn);
@@ -2085,6 +2122,7 @@ class BodyCodegen {
     private void visitEnterScope(Node node, Node child) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
         boolean[] consts = (boolean[]) node.getProp(Node.CONST_IDS_PROP);
+        boolean[] lets = (boolean[]) node.getProp(Node.LET_IDS_PROP);
 
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
@@ -2099,22 +2137,36 @@ class BodyCodegen {
                 // The declaration in the body of the scope initializes this one,
                 // so there is no initializer to evaluate here.
                 cfw.add(ByteCode.DUP);
-                cfw.addALoad(contextLocal);
-                cfw.add(ByteCode.SWAP);
                 cfw.addPush(id);
-                addScriptRuntimeInvoke(
-                        "defineConst",
-                        "(Lorg/mozilla/javascript/Context;Lorg/mozilla/javascript/VarScope;"
-                                + "Ljava/lang/String;"
-                                + ")V");
+                cfw.addPush(compilerEnv.getLanguageVersion() >= Context.VERSION_ES6);
+                cfw.addInvoke(
+                        ByteCode.INVOKEINTERFACE,
+                        "org/mozilla/javascript/VarScope",
+                        "createImmutableBinding",
+                        "(Ljava/lang/String;Z)Z");
+                cfw.add(ByteCode.POP);
+            } else if (lets != null && lets[i]) {
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(id);
+                cfw.addPush(false);
+                cfw.addInvoke(
+                        ByteCode.INVOKEINTERFACE,
+                        "org/mozilla/javascript/VarScope",
+                        "createMutableBinding",
+                        "(Ljava/lang/String;Z)Z");
+                cfw.add(ByteCode.POP);
             } else {
                 cfw.add(ByteCode.DUP);
-                cfw.add(ByteCode.DUP);
                 generateExpression(child, node);
-                cfw.add(ByteCode.SWAP);
                 cfw.addALoad(contextLocal);
-                cfw.add(ByteCode.SWAP);
-                addDynamicInvoke("NAME:SET:" + id, Signatures.NAME_SET);
+                cfw.addPush(id);
+                addScriptRuntimeInvoke(
+                        "initLet",
+                        "(Lorg/mozilla/javascript/VarScope;"
+                                + "Ljava/lang/Object;"
+                                + "Lorg/mozilla/javascript/Context;"
+                                + "Ljava/lang/String;"
+                                + ")Ljava/lang/Object;");
                 cfw.add(ByteCode.POP);
             }
             child = child.getNext();
@@ -2776,7 +2828,7 @@ class BodyCodegen {
                 "callSpecial",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Callable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Lorg/mozilla/javascript/VarScope;"
                         + "Ljava/lang/Object;"
@@ -2820,7 +2872,7 @@ class BodyCodegen {
                 "callSpecial",
                 "(Lorg/mozilla/javascript/Context;"
                         + "Lorg/mozilla/javascript/Callable;"
-                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
                         + "[Ljava/lang/Object;"
                         + "Lorg/mozilla/javascript/VarScope;"
                         + "Ljava/lang/Object;"
@@ -2982,12 +3034,17 @@ class BodyCodegen {
                         + codegen.cleanName(target.fnode));
         if (type != Token.NEW) {
             cfw.add(ByteCode.DUP);
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
             cfw.addInvoke(
                     ByteCode.INVOKEVIRTUAL,
                     "org/mozilla/javascript/JSFunction",
                     "getThisObj",
-                    "(Ljava/lang/Object;)Ljava/lang/Object;");
+                    "(Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/VarScope;"
+                            + "Ljava/lang/Object;"
+                            + ")Ljava/lang/Object;");
         } else {
             cfw.add(ByteCode.DUP);
             cfw.addALoad(contextLocal);
@@ -3270,7 +3327,7 @@ class BodyCodegen {
                 ByteCode.INVOKEVIRTUAL,
                 "org.mozilla.javascript.ScriptRuntime$LookupResult",
                 "getThis",
-                "()Lorg/mozilla/javascript/Scriptable;");
+                "()Ljava/lang/Object;");
     }
 
     private void updateLineNumber(Node node) {
@@ -3838,6 +3895,7 @@ class BodyCodegen {
         if (hasVarsInRegs) {
             int varIndex = fnCurrent.fnode.getIndexForNameNode(node);
             if (varIndex >= 0) {
+                addTdzCheck(node, varIndex);
                 if (fnCurrent.isNumberVar(varIndex)) {
                     cfw.addPush("number");
                 } else if (varIsDirectCallParameter(varIndex)) {
@@ -3920,6 +3978,7 @@ class BodyCodegen {
                 boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
                 int varIndex = fnCurrent.getVarIndex(child);
                 int reg = varRegisters[varIndex];
+                addTdzCheck(child, varIndex);
                 boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
                 if (constDeclarations[varIndex]) {
                     if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
@@ -4596,6 +4655,23 @@ class BodyCodegen {
         addDynamicInvoke("NAME:SETSTRICT:" + name, Signatures.NAME_SET_STRICT);
     }
 
+    private void visitInitLet(Node node, Node child) {
+        String name = node.getFirstChild().getString();
+        while (child != null) {
+            generateExpression(child, node);
+            child = child.getNext();
+        }
+        cfw.addALoad(contextLocal);
+        cfw.addPush(name);
+        addScriptRuntimeInvoke(
+                "initLet",
+                "(Lorg/mozilla/javascript/VarScope;"
+                        + "Ljava/lang/Object;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Ljava/lang/String;"
+                        + ")Ljava/lang/Object;");
+    }
+
     private void visitSetConst(Node node, Node child) {
         String name = node.getFirstChild().getString();
         while (child != null) {
@@ -4610,6 +4686,7 @@ class BodyCodegen {
         if (!hasVarsInRegs) Kit.codeBug();
         int varIndex = fnCurrent.getVarIndex(node);
         int reg = varRegisters[varIndex];
+        addTdzCheck(node, varIndex);
         if (varIsDirectCallParameter(varIndex)) {
             // Remember that here the isNumber flag means that we
             // want to use the incoming parameter in a Number
@@ -4627,10 +4704,34 @@ class BodyCodegen {
         }
     }
 
+    /**
+     * Throws if a local variable access marked as possibly in a temporal dead zone finds the slot
+     * still uninitialized. Leaves the operand stack as it was.
+     */
+    private void addTdzCheck(Node node, int varIndex) {
+        if (node.getIntProp(Node.TDZ_CHECK_PROP, 0) == 0) {
+            return;
+        }
+        int reg = varRegisters[varIndex];
+        if (fnCurrent.isNumberVar(varIndex)) {
+            // Only a const can be a number var here, and it records initialization in a flag.
+            if (!fnCurrent.fnode.getParamAndVarConst()[varIndex]) throw Kit.codeBug();
+            cfw.addILoad(reg + 2);
+            cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+            addScriptRuntimeInvoke("checkVarInitialized", "(ILjava/lang/String;)V");
+        } else {
+            cfw.addALoad(reg);
+            cfw.addPush(fnCurrent.fnode.getParamOrVarName(varIndex));
+            addScriptRuntimeInvoke(
+                    "checkVarInitialized", "(Ljava/lang/Object;Ljava/lang/String;)V");
+        }
+    }
+
     private void visitSetVar(Node node, Node child, boolean needValue) {
         if (!hasVarsInRegs) Kit.codeBug();
         int varIndex = fnCurrent.getVarIndex(node);
         generateExpression(child.getNext(), node);
+        addTdzCheck(node, varIndex);
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         int reg = varRegisters[varIndex];
         boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
@@ -4697,19 +4798,24 @@ class BodyCodegen {
         boolean isNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
         int reg = varRegisters[varIndex];
         // A block scoped declaration reached more than once must re-bind, so INITCONSTVAR
-        // stores without consulting the "already initialized" flag register.
+        // stores without checking whether the slot is still uninitialized.
         boolean force = node.getType() == Token.INITCONSTVAR;
-        int flagReg = reg + (isNumber ? 2 : 1);
         int beyond = cfw.acquireLabel();
         int noAssign = force ? -1 : cfw.acquireLabel();
         if (!force) {
-            cfw.addILoad(flagReg);
-            cfw.add(ByteCode.IFNE, noAssign);
+            if (isNumber) {
+                cfw.addILoad(reg + 2);
+                cfw.add(ByteCode.IFNE, noAssign);
+            } else {
+                cfw.addALoad(reg);
+                cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+                cfw.add(ByteCode.IF_ACMPNE, noAssign);
+            }
         }
         int stack = cfw.getStackTop();
-        cfw.addPush(1);
-        cfw.addIStore(flagReg);
         if (isNumber) {
+            cfw.addPush(1);
+            cfw.addIStore(reg + 2);
             cfw.addDStore(reg);
         } else {
             cfw.addAStore(reg);
@@ -4733,7 +4839,7 @@ class BodyCodegen {
 
     /**
      * Restores a block scoped slot held in a register to the state it has on entry to its block:
-     * undefined, and uninitialized again if the slot holds a const. Emitted at the top of a
+     * undefined, or the uninitialized marker if the slot holds a const. Emitted at the top of a
      * flattened block scope that a loop can re-enter.
      */
     private void visitResetVar(Node node) {
@@ -4744,12 +4850,13 @@ class BodyCodegen {
             throw Kit.codeBug();
         }
         int reg = varRegisters[varIndex];
-        Codegen.pushUndefined(cfw);
-        cfw.addAStore(reg);
-        if (fnCurrent.fnode.getParamAndVarConst()[varIndex]) {
-            cfw.addPush(0);
-            cfw.addIStore(reg + 1);
+        if (fnCurrent.fnode.getParamAndVarConst()[varIndex]
+                || fnCurrent.fnode.getParamAndVarLet()[varIndex]) {
+            cfw.addLoadDynamicConstant(VarScope.UNINITIALIZED);
+        } else {
+            Codegen.pushUndefined(cfw);
         }
+        cfw.addAStore(reg);
     }
 
     private void visitGetProp(Node node, Node child) {
@@ -4997,18 +5104,8 @@ class BodyCodegen {
         addOptRuntimeInvoke("wrapDouble", "(D)Ljava/lang/Double;");
     }
 
-    /**
-     * Const locals use an extra slot to hold the has-been-assigned-once flag at runtime.
-     *
-     * @param isConst true iff the variable is const
-     * @return the register for the word pair (double/long)
-     */
     private short getNewWordPairLocal(boolean isConst) {
         return getNewWordIntern(isConst ? 3 : 2);
-    }
-
-    private short getNewWordLocal(boolean isConst) {
-        return getNewWordIntern(isConst ? 2 : 1);
     }
 
     private short getNewWordLocal() {

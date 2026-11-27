@@ -24,7 +24,7 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
     private final VarScope scope;
     private final Callable next;
     private final Callable returnFunc;
-    private final Scriptable iterator;
+    private final Object iterator;
     private boolean closed;
 
     public IteratorLikeIterable(Context cx, VarScope scope, Object target) {

@@ -182,7 +182,7 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     @Override
-    public void put(String name, Scriptable start, Object value);
+    public boolean put(String name, Scriptable start, Object value);
 
     /**
      * Sets an indexed property in this object.
@@ -201,50 +201,105 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * @see org.mozilla.javascript.Context#toObject(Object, VarScope)
      */
     @Override
-    public void put(int index, Scriptable start, Object value);
+    public boolean put(int index, Scriptable start, Object value);
 
     @Override
-    default void put(Symbol key, Scriptable start, Object value) {}
-
-    /**
-     * Removes a property from this object. This operation corresponds to the ECMA [[Delete]] except
-     * that the no result is returned. The runtime will guarantee that this method is called only if
-     * the property exists. After this method is called, the runtime will call Scriptable.has to see
-     * if the property has been removed in order to determine the boolean result of the delete
-     * operator as defined by ECMA 11.4.1.
-     *
-     * <p>A property can be made permanent by ignoring calls to remove it.
-     *
-     * <p>The property is specified by a String name as defined for {@code get}.
-     *
-     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
-     *
-     * @param name the identifier for the property
-     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
-     */
-    @Override
-    public void delete(String name);
+    default boolean put(Symbol key, Scriptable start, Object value) {
+        return false;
+    }
 
     /**
-     * Removes a property from this object.
+     * Get the property descriptor for a named property.
      *
-     * <p>The property is specified by an integral index as defined for {@code get}.
+     * <p>This method allows any Scriptable implementation to describe the attributes of one of its
+     * properties, following the ECMAScript [[GetOwnProperty]] operation.
      *
-     * <p>To delete properties defined in a prototype chain, see deleteProperty in ScriptableObject.
+     * <p>The default implementation returns null, indicating that this object does not support
+     * property descriptors or the property was not found.
      *
-     * <p>Identical to {@code delete(String)} except that an integral index is used to select the
-     * property.
-     *
-     * @param index the numeric index for the property
-     * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
-     * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
+     * @param cx the current Context
+     * @param key the property key (String, Integer, or Symbol)
+     * @return a PropertyDescriptor if the property exists, null otherwise
+     * @see ScriptableObject#getOwnPropertyDescriptor(Context, Object)
      */
-    @Override
-    public void delete(int index);
+    default PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object key) {
+        Object v;
+        if (key instanceof String) {
+            v = get((String) key, this);
+        } else if (key instanceof Number) {
+            v = get(((Number) key).intValue(), this);
+        } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
+            v = ((SymbolScriptable) this).get((Symbol) key, this);
+        } else {
+            v = NOT_FOUND;
+        }
+        return v == NOT_FOUND ? null : new PropertyDescriptor(v, 0, false);
+    }
 
-    @Override
-    default void delete(Symbol key) {}
+    /**
+     * Define or update a property descriptor on this object.
+     *
+     * <p>This method allows any Scriptable implementation to define properties with full descriptor
+     * support, following the ECMAScript [[DefineOwnProperty]] operation.
+     *
+     * <p>The default implementation returns false if the property has non-default attributes or is
+     * an accessor property or if the key is over an unknown typw, otherwise it calls put to try and
+     * create the property and returns the result of doing that.
+     *
+     * @param cx the current Context
+     * @param key the property key (String, Integer, or Symbol)
+     * @param desc the property descriptor
+     * @return true if the property was successfully defined, false otherwise
+     * @see ScriptableObject#defineOwnProperty(Context, Object, PropertyDescriptor)
+     */
+    default boolean defineOwnProperty(Context cx, Object key, PropertyDescriptor desc) {
+        if (desc.isAccessorDescriptor()
+                || !desc.isWritable()
+                || !desc.isEnumerable()
+                || !desc.isConfigurable()) {
+            return false;
+        }
+        if (!desc.hasValue()) {
+            return true;
+        }
+        if (key instanceof String) {
+            return put((String) key, this, desc.value);
+        } else if (key instanceof Number) {
+            var k = ((Number) key).intValue();
+            return put(k, this, desc.value);
+        } else if (key instanceof Symbol && this instanceof SymbolScriptable) {
+            return put((Symbol) key, this, desc.value);
+        }
+        return false;
+    }
+
+    /**
+     * Indicates whether this object is extensible, i.e. can new properties potentially be defined
+     * on it.
+     *
+     * <p>Equivalent to the [[IsExtensible]] object method in the ECMAScript specification.
+     *
+     * <p>This default implementation always returns true.
+     *
+     * @return true if the object is extensible.
+     */
+    default boolean isExtensible() {
+        return true;
+    }
+
+    /**
+     * Request that this object stop being extensible.
+     *
+     * <p>Equivalent to the [[PreventExtensions]] object method in the ECMAScript specification.
+     *
+     * <p>This default implementation returns false as we cannot prevent extensions in this
+     * interface.
+     *
+     * @return true if the object is now non-extensible.
+     */
+    default boolean preventExtensions() {
+        return false;
+    }
 
     /**
      * Get the prototype of the object.
@@ -262,8 +317,9 @@ public interface Scriptable extends PropHolder<Scriptable> {
      * Set the prototype of the object.
      *
      * @param prototype the prototype to set
+     * @return whether the prototype could be set.
      */
-    public void setPrototype(Scriptable prototype);
+    public boolean setPrototype(Scriptable prototype);
 
     /**
      * Get the parent scope of the object.

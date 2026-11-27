@@ -70,9 +70,11 @@ class Block {
             varTypes[i] = Optimizer.AnyType;
         }
         // If the variable is from a "var" statement, its typeEvent will be set
-        // when we see the setVar node.
+        // when we see the setVar node. A let holds the uninitialized marker until its
+        // declaration runs, so it cannot be kept in a double register.
+        boolean[] lets = fn.fnode.getParamAndVarLet();
         for (int i = paramCount; i != varCount; ++i) {
-            varTypes[i] = Optimizer.NoType;
+            varTypes[i] = lets[i] ? Optimizer.AnyType : Optimizer.NoType;
         }
 
         Block[] theBlocks = buildBlocks(statementNodes);
@@ -526,6 +528,7 @@ class Block {
 
             case Token.NULL:
             case Token.UNDEFINED:
+            case Token.UNINITIALIZED:
             case Token.REGEXP:
             case Token.ARRAYCOMP:
             case Token.ARRAYLIT:

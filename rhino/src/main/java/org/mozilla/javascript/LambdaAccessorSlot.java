@@ -1,7 +1,5 @@
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
-
 /**
  * A specialized property accessor using lambda functions, similar to {@link LambdaSlot}, but allows
  * defining properties with getter and setter lambdas that require access to the owner object
@@ -62,7 +60,7 @@ public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
     }
 
     @Override
-    DescriptorInfo getPropertyDescriptor(Context cx, Scriptable scope) {
+    PropertyDescriptor getPropertyDescriptor(Context cx, Scriptable scope) {
         return buildPropertyDescriptor(cx);
     }
 
@@ -72,18 +70,18 @@ public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
      * it can be problematic when called from inside ThreadSafeSlotMapContainer::compute lambda
      * which can lead to deadlocks.
      */
-    public DescriptorInfo buildPropertyDescriptor(Context cx) {
+    public PropertyDescriptor buildPropertyDescriptor(Context cx) {
         int attr = getAttributes();
-        DescriptorInfo desc;
+        PropertyDescriptor desc;
         boolean es6 = cx.getLanguageVersion() >= Context.VERSION_ES6;
         if (es6) {
-            desc = new DescriptorInfo(ScriptableObject.NOT_FOUND, attr, false);
+            desc = new PropertyDescriptor(ScriptableObject.NOT_FOUND, attr, false);
             if (getterFunction == null && setterFunction == null) {
                 desc.writable = (attr & ScriptableObject.READONLY) == 0;
             }
         } else {
             desc =
-                    new DescriptorInfo(
+                    new PropertyDescriptor(
                             ScriptableObject.NOT_FOUND,
                             attr,
                             getterFunction == null && setterFunction == null);
@@ -137,7 +135,7 @@ public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
                             scope,
                             "get " + super.getName(),
                             0,
-                            (cx1, scope1, thisObj, args) -> getter.apply((Scriptable) thisObj),
+                            (cx1, scope1, thisObj, args) -> getter.apply(thisObj),
                             false);
         }
     }
@@ -152,8 +150,7 @@ public class LambdaAccessorSlot extends StandardSlot<Scriptable> {
                             1,
                             (cx1, scope1, thisObj, args) -> {
                                 setter.accept(
-                                        (Scriptable) thisObj,
-                                        args.length > 0 ? args[0] : Undefined.instance);
+                                        thisObj, args.length > 0 ? args[0] : Undefined.instance);
                                 return Undefined.instance;
                             },
                             false);

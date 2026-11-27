@@ -189,7 +189,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     Object name = valueArray[nameSlot];
                     if (name instanceof Symbol) {
                         if (start instanceof SymbolScriptable) {
-                            ((SymbolScriptable) start).put((Symbol) name, start, value);
+                            start.put((Symbol) name, start, value);
                         }
                     } else {
                         start.put((String) name, start, value);
@@ -198,7 +198,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             }
         }
 
-        final void delete(int id) {
+        final boolean delete(int id) {
             ensureId(id);
             int attr = attributeArray[id - 1];
             // non-configurable
@@ -216,12 +216,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     throw ScriptRuntime.typeErrorById(
                             "msg.delete.property.with.configurable.false", name);
                 }
+                return false;
             } else {
                 int valueSlot = (id - 1) * SLOT_SPAN;
                 synchronized (this) {
                     valueArray[valueSlot] = NOT_FOUND;
                     attributeArray[id - 1] = EMPTY;
                 }
+                return true;
             }
         }
 
@@ -436,7 +438,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             if (start == this && isSealed()) {
@@ -451,7 +453,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     start.put(name, start, value);
                 }
             }
-            return;
+            return false;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
@@ -460,14 +462,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     throw Context.reportRuntimeErrorById("msg.modify.sealed", name);
                 }
                 prototypeValues.set(id, start, value);
-                return;
+                return true;
             }
         }
-        super.put(name, start, value);
+        return super.put(name, start, value);
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
+    public boolean put(Symbol key, Scriptable start, Object value) {
         int info = findInstanceIdInfo(key);
         if (info != 0) {
             if (start == this && isSealed()) {
@@ -478,11 +480,12 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 if (start == this) {
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, value);
+                    return true;
                 } else {
-                    ensureSymbolScriptable(start).put(key, start, value);
+                    return start.put(key, start, value);
                 }
             }
-            return;
+            return false;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(key);
@@ -491,14 +494,14 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     throw Context.reportRuntimeErrorById("msg.modify.sealed");
                 }
                 prototypeValues.set(id, start, value);
-                return;
+                return true;
             }
         }
-        super.put(key, start, value);
+        return super.put(key, start, value);
     }
 
     @Override
-    public void delete(String name) {
+    public boolean delete(String name) {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             // Let the super class to throw exceptions for sealed objects
@@ -511,27 +514,27 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         throw ScriptRuntime.typeErrorById(
                                 "msg.delete.property.with.configurable.false", name);
                     }
+                    return false;
                 } else {
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, NOT_FOUND);
+                    return true;
                 }
-                return;
             }
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
             if (id != 0) {
                 if (!isSealed()) {
-                    prototypeValues.delete(id);
+                    return prototypeValues.delete(id);
                 }
-                return;
             }
         }
-        super.delete(name);
+        return super.delete(name);
     }
 
     @Override
-    public void delete(Symbol key) {
+    public boolean delete(Symbol key) {
         int info = findInstanceIdInfo(key);
         if (info != 0) {
             // Let the super class to throw exceptions for sealed objects
@@ -544,23 +547,23 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         throw ScriptRuntime.typeErrorById(
                                 "msg.delete.property.with.configurable.false");
                     }
+                    return false;
                 } else {
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, NOT_FOUND);
+                    return true;
                 }
-                return;
             }
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(key);
             if (id != 0) {
                 if (!isSealed()) {
-                    prototypeValues.delete(id);
+                    return prototypeValues.delete(id);
                 }
-                return;
             }
         }
-        super.delete(key);
+        return super.delete(key);
     }
 
     @Override
@@ -873,8 +876,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    protected boolean defineOwnProperty(
-            Context cx, Object key, DescriptorInfo desc, boolean checkValid) {
+    public boolean defineOwnProperty(
+            Context cx, Object key, PropertyDescriptor desc, boolean checkValid) {
         if (key instanceof CharSequence) {
             String name = key.toString();
             int info = findInstanceIdInfo(name);
@@ -927,7 +930,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         // replaced
                         // with an accessor descriptor.
                         if (super.has(name, this)) {
-                            super.delete(name);
+                            return super.delete(name);
                         }
 
                         return true;
@@ -939,7 +942,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         var desc = super.getOwnPropertyDescriptor(cx, id);
         if (desc == null) {
             if (id instanceof String) {
@@ -975,9 +978,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return slot;
     }
 
-    private DescriptorInfo getBuiltInDataDescriptor(String name) {
+    private PropertyDescriptor getBuiltInDataDescriptor(String name) {
         var slot = getBuiltInSlot(name);
-        return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
+        return slot == null ? null : new PropertyDescriptor(slot.value, slot.getAttributes(), true);
     }
 
     private Slot<?> getBuiltInSlot(String name) {
@@ -1003,9 +1006,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
         return null;
     }
 
-    private DescriptorInfo getBuiltInDataDescriptor(Symbol key) {
+    private PropertyDescriptor getBuiltInDataDescriptor(Symbol key) {
         var slot = getBuiltInSlot(key);
-        return slot == null ? null : new DescriptorInfo(slot.value, slot.getAttributes(), true);
+        return slot == null ? null : new PropertyDescriptor(slot.value, slot.getAttributes(), true);
     }
 
     private StandardSlot getBuiltInSlot(Symbol key) {

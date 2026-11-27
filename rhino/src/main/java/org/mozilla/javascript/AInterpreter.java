@@ -218,13 +218,19 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         }
 
         @Override
-        public void delete(String name) {}
+        public boolean delete(String name) {
+            return false;
+        }
 
         @Override
-        public void delete(int index) {}
+        public boolean delete(int index) {
+            return false;
+        }
 
         @Override
-        public void delete(Symbol key) {}
+        public boolean delete(Symbol key) {
+            return false;
+        }
 
         @Override
         public Object get(String name, VarScope scope) {
@@ -268,21 +274,22 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         }
 
         @Override
-        public void put(String name, VarScope start, Object value) {
+        public boolean put(String name, VarScope start, Object value) {
             int offset = getOffsets().getOrDefault(name, -1);
             if (offset >= 0) {
                 frame.setInVars(offset, value);
             }
+            return true;
         }
 
         @Override
-        public void put(int index, VarScope start, Object value) {
-            // Do nothing.
+        public boolean put(int index, VarScope start, Object value) {
+            return false;
         }
 
         @Override
-        public void put(Symbol key, VarScope start, Object value) {
-            // Do nothing.
+        public boolean put(Symbol key, VarScope start, Object value) {
+            return false;
         }
 
         @Override
@@ -309,6 +316,22 @@ public abstract class AInterpreter<T extends ACallFrame<T, U>, U extends ACompil
         public void putConst(Context cx, String name, VarScope start, Object value) {
             // TODO Auto-generated method stub
 
+        }
+
+        @Override
+        public boolean createMutableBinding(String name, boolean deletable) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        @Override
+        public boolean createImmutableBinding(String name, boolean strict) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+
+        public boolean initializeBinding(String name, Object value) {
+            return true;
         }
     }
 

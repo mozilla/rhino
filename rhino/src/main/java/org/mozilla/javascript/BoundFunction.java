@@ -18,7 +18,7 @@ public class BoundFunction extends BaseFunction {
     @Serial private static final long serialVersionUID = 2118137342826470729L;
 
     private final Callable targetFunction;
-    private final Scriptable boundThis;
+    private final Object boundThis;
     private final Object[] boundArgs;
     private final int length;
 
@@ -26,7 +26,7 @@ public class BoundFunction extends BaseFunction {
             Context cx,
             VarScope scope,
             Callable targetFunction,
-            Scriptable boundThis,
+            Object boundThis,
             Object[] boundArgs) {
         super(scope);
         this.targetFunction = targetFunction;
@@ -41,7 +41,7 @@ public class BoundFunction extends BaseFunction {
         ScriptRuntime.setFunctionProtoAndParent(this, cx, scope, false);
 
         Function thrower = ScriptRuntime.typeErrorThrower(cx);
-        var throwing = new DescriptorInfo(false, NOT_FOUND, false, thrower, thrower, NOT_FOUND);
+        var throwing = new PropertyDescriptor(false, NOT_FOUND, false, thrower, thrower, NOT_FOUND);
 
         defineOwnProperty(cx, "caller", throwing, false);
         if (cx.getLanguageVersion() < Context.VERSION_ES6) {
@@ -113,7 +113,7 @@ public class BoundFunction extends BaseFunction {
         return boundArgs;
     }
 
-    Scriptable getCallThis() {
+    Object getCallThis() {
         return boundThis;
     }
 

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
@@ -99,17 +100,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public static final int PERMANENT = 0x04;
 
-    /**
-     * Property attribute indicating that this is a const property that has not been assigned yet.
-     * The first 'const' assignment to the property will clear this bit.
-     */
-    public static final int UNINITIALIZED_CONST = 0x08;
-
     public static final int STRICTLY_READONLY = 0x10;
 
-    public static final int LEGACY_CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
+    public static final int LEGACY_CONST = PERMANENT | READONLY;
 
-    public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST | STRICTLY_READONLY;
+    public static final int CONST = PERMANENT | READONLY | STRICTLY_READONLY;
 
     /** The prototype of this object. */
     private Scriptable prototypeObject;
@@ -132,8 +127,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    protected static DescriptorInfo buildDataDescriptor(Object value, int attributes) {
-        return new DescriptorInfo(value, attributes, true);
+    protected static PropertyDescriptor buildDataDescriptor(Object value, int attributes) {
+        return new PropertyDescriptor(value, attributes, true);
     }
 
     protected void setCommonDescriptorProperties(int attributes, boolean defineWritable) {
@@ -145,7 +140,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     }
 
     static void checkValidAttributes(int attributes) {
-        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST | STRICTLY_READONLY;
+        final int mask = READONLY | DONTENUM | PERMANENT | STRICTLY_READONLY;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -238,11 +233,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value value to set the property to
      */
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(String name, Scriptable start, Object value) {
+        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(name, start, value);
+        return start.put(name, start, value);
     }
 
     /**
@@ -265,10 +260,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     @SuppressWarnings("resource")
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (externalData != null) {
             if (index < externalData.getArrayLength()) {
                 externalData.setArrayElement(index, value);
+                return true;
             } else {
                 throw new JavaScriptException(
                         ScriptRuntime.newNativeError(
@@ -279,13 +275,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                         null,
                         0);
             }
-            return;
         }
 
-        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return;
+        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(index, start, value);
+        return start.put(index, start, value);
     }
 
     /**
@@ -301,11 +296,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
-        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(Symbol key, Scriptable start, Object value) {
+        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        ensureSymbolScriptable(start).put(key, start, value);
+        return start.put(key, start, value);
     }
 
     /**
@@ -327,9 +322,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param name the name of the property
      */
     @Override
-    public void delete(String name) {
+    public boolean delete(String name) {
         checkNotSealed(name, 0);
-        getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
+        return null == getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
     }
 
     /**
@@ -340,16 +335,16 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param index the numeric index for the property
      */
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         checkNotSealed(null, index);
-        getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
+        return null == getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
     }
 
     /** Removes an object like the others, but using a Symbol as the key. */
     @Override
-    public void delete(Symbol key) {
+    public boolean delete(Symbol key) {
         checkNotSealed(key, 0);
-        getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
+        return null == getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
     protected static <T extends PropHolder<T>> Slot<T> checkSlotRemoval(
@@ -359,12 +354,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             CompoundOperationMap<T> compoundOp,
             SlotMapOwner<T> owner) {
         if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
-            Context cx = Context.getContext();
-            if (cx.isStrictMode()) {
-                throw ScriptRuntime.typeErrorById(
-                        "msg.delete.property.with.configurable.false", key);
-            }
-            // This will cause removal to not happen
             return slot;
         }
         return null;
@@ -404,7 +393,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
             Kit.codeBug("Should set constants on ES6 objects.");
         }
 
-        if (putConstImpl(cx, name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) return;
+        if (putConstImpl(cx, name, 0, start, VarScope.UNINITIALIZED, 0)) return;
 
         if (start == this) throw Kit.codeBug();
         if (start instanceof ConstProperties) {
@@ -608,8 +597,9 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     /** Sets the prototype of the object. */
     @Override
-    public void setPrototype(Scriptable m) {
+    public boolean setPrototype(Scriptable m) {
         prototypeObject = m;
+        return true;
     }
 
     /** Returns the parent (enclosing) scope of the object. */
@@ -1485,21 +1475,24 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param cx the current Context
      * @param props a map of property ids to property descriptors
      */
-    public void defineOwnProperties(Context cx, ScriptableObject props) {
+    public boolean defineOwnProperties(Context cx, ScriptableObject props) {
         Object[] ids;
         try (var map = props.startCompoundOp(false)) {
             ids = props.getIds(map, false, true);
         }
-        DescriptorInfo[] descs = new DescriptorInfo[ids.length];
+        PropertyDescriptor[] descs = new PropertyDescriptor[ids.length];
         for (int i = 0, len = ids.length; i < len; ++i) {
             Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
-            var desc = new DescriptorInfo(ensureScriptableObject(descObj));
+            var desc = new PropertyDescriptor(ensureScriptableObject(descObj));
             checkPropertyDefinition(desc);
             descs[i] = desc;
         }
         for (int i = 0, len = ids.length; i < len; ++i) {
-            defineOwnProperty(cx, ids[i], descs[i]);
+            if (!defineOwnProperty(cx, ids[i], descs[i])) {
+                return false;
+            }
         }
+        return true;
     }
 
     /**
@@ -1511,10 +1504,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     public boolean defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
         checkPropertyDefinition(desc);
-        return defineOwnProperty(cx, id, new DescriptorInfo(desc), true);
+        return defineOwnProperty(cx, id, new PropertyDescriptor(desc), true);
     }
 
-    public boolean defineOwnProperty(Context cx, Object id, DescriptorInfo desc) {
+    @Override
+    public boolean defineOwnProperty(Context cx, Object id, PropertyDescriptor desc) {
         return defineOwnProperty(cx, id, desc, true);
     }
 
@@ -1531,7 +1525,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @return always true at the moment
      */
     protected boolean defineOwnProperty(
-            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
+            Context cx, Object id, PropertyDescriptor desc, boolean checkValid) {
 
         Object key = null;
         int index = 0;
@@ -1576,145 +1570,18 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    public static final class DescriptorInfo {
-        public Object enumerable = NOT_FOUND;
-        public Object writable = NOT_FOUND;
-        public Object configurable = NOT_FOUND;
-        public Object getter = NOT_FOUND;
-        public Object setter = NOT_FOUND;
-        public Object value = NOT_FOUND;
-        boolean accessorDescriptor;
-
-        public DescriptorInfo(ScriptableObject desc) {
-            enumerable = getProperty(desc, "enumerable");
-            writable = getProperty(desc, "writable");
-            configurable = getProperty(desc, "configurable");
-            getter = getProperty(desc, "get");
-            setter = getProperty(desc, "set");
-            value = getProperty(desc, "value");
-            accessorDescriptor = getter != NOT_FOUND || setter != NOT_FOUND;
-        }
-
-        public DescriptorInfo(
-                boolean enumerable, boolean writable, boolean configurable, Object value) {
-            this.enumerable = enumerable;
-            this.writable = writable;
-            this.configurable = configurable;
-            this.getter = NOT_FOUND;
-            this.setter = NOT_FOUND;
-            this.value = value;
-            accessorDescriptor = false;
-        }
-
-        public DescriptorInfo(
-                Object enumerable,
-                Object writable,
-                Object configurable,
-                Object getter,
-                Object setter,
-                Object value) {
-            this.enumerable = enumerable;
-            this.writable = writable;
-            this.configurable = configurable;
-            this.getter = getter;
-            this.setter = setter;
-            this.value = value;
-            accessorDescriptor = getter != NOT_FOUND || setter != NOT_FOUND;
-        }
-
-        DescriptorInfo(Object value, int attributes, boolean defineWritable) {
-            this.value = value;
-            if (defineWritable) {
-                writable = (attributes & READONLY) == 0;
-            }
-            enumerable = (attributes & DONTENUM) == 0;
-            configurable = (attributes & PERMANENT) == 0;
-        }
-
-        Scriptable toObject(VarScope scope) {
-            ScriptableObject desc = new NativeObject();
-            ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-            if (hasValue()) desc.defineProperty("value", value, EMPTY);
-            if (hasWritable()) desc.defineProperty("writable", writable, EMPTY);
-            if (hasGetter()) desc.defineProperty("get", getter, EMPTY);
-            if (hasSetter()) desc.defineProperty("set", setter, EMPTY);
-            if (hasEnumerable()) desc.defineProperty("enumerable", enumerable, EMPTY);
-            if (hasConfigurable()) desc.defineProperty("configurable", configurable, EMPTY);
-            return desc;
-        }
-
-        public boolean isWritable() {
-            return Boolean.TRUE.equals(writable);
-        }
-
-        public boolean isWritable(boolean value) {
-            return ((Boolean) value).equals(writable);
-        }
-
-        public boolean hasWritable() {
-            return writable != NOT_FOUND;
-        }
-
-        public boolean isEnumerable() {
-            return Boolean.TRUE.equals(enumerable);
-        }
-
-        public boolean isEnumerable(boolean value) {
-            return ((Boolean) value).equals(enumerable);
-        }
-
-        public boolean hasEnumerable() {
-            return enumerable != NOT_FOUND;
-        }
-
-        public boolean isConfigurable() {
-            return Boolean.TRUE.equals(configurable);
-        }
-
-        public boolean isConfigurable(boolean value) {
-            return ((Boolean) value).equals(configurable);
-        }
-
-        public boolean hasConfigurable() {
-            return configurable != NOT_FOUND;
-        }
-
-        public boolean hasValue() {
-            return value != NOT_FOUND;
-        }
-
-        public boolean hasGetter() {
-            return getter != NOT_FOUND;
-        }
-
-        public boolean hasSetter() {
-            return setter != NOT_FOUND;
-        }
-
-        public boolean isDataDescriptor() {
-            return hasValue() || hasWritable();
-        }
-
-        public boolean isAccessorDescriptor() {
-            return hasGetter() || hasSetter();
-        }
-
-        public boolean isGenericDescriptor() {
-            return !isDataDescriptor() && !isAccessorDescriptor();
-        }
-    }
-
     static boolean defineOrdinaryProperty(
             PropDescValueSetter descValueSetter,
             ScriptableObject owner,
             CompoundOperationMap<Scriptable> compoundOp,
             Object id,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             boolean checkValid,
             Object key,
             int index) {
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
+        var booleanResult = new AtomicBoolean();
         compoundOp.compute(
                 owner,
                 compoundOp,
@@ -1746,32 +1613,36 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                                         info.configurable);
                     }
 
-                    slot = descValueSetter.execute(owner, info, key, existing, map, slot);
+                    slot =
+                            descValueSetter.execute(
+                                    owner, info, key, existing, map, slot, booleanResult);
 
                     // After all that, whatever we return now ends up in the map
                     slot.setAttributes(attributes);
                     return slot;
                 });
-        return true;
+        return booleanResult.get();
     }
 
     interface PropDescValueSetter {
         Slot<Scriptable> execute(
                 ScriptableObject owner,
-                DescriptorInfo info,
+                PropertyDescriptor info,
                 Object key,
                 Slot<Scriptable> existing,
                 CompoundOperationMap<Scriptable> map,
-                Slot<Scriptable> slot);
+                Slot<Scriptable> slot,
+                AtomicBoolean booleanResult);
     }
 
     static Slot<Scriptable> setSlotValue(
             ScriptableObject owner,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             Object key,
             Slot<Scriptable> existing,
             CompoundOperationMap<Scriptable> map,
-            Slot<Scriptable> slot) {
+            Slot<Scriptable> slot,
+            AtomicBoolean booleanResult) {
         if (info.accessorDescriptor) {
             AccessorSlot fslot;
             if (slot instanceof AccessorSlot) {
@@ -1793,9 +1664,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
             }
             fslot.value = Undefined.instance;
+            booleanResult.set(true);
         } else if (slot instanceof BuiltInSlot bis) {
             if (info.value != NOT_FOUND) {
-                bis.setValueFromDescriptor(info.value, owner, owner, true);
+                booleanResult.set(bis.setValueFromDescriptor(info.value, owner, owner, true));
+            } else {
+                booleanResult.set(true);
             }
         } else {
             if (!slot.isValueSlot() && info.isDataDescriptor()) {
@@ -1809,8 +1683,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
                 // Ensure we don't get a zombie value if we have switched a lot
                 slot.value = Undefined.instance;
             }
+            booleanResult.set(true);
         }
-
         return slot;
     }
 
@@ -1841,7 +1715,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * "defineProperty" method.
      */
     public interface LambdaGetterFunction extends Serializable {
-        Object apply(Scriptable scope);
+        Object apply(Object scope);
     }
 
     /**
@@ -1849,7 +1723,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * "defineProperty" method.
      */
     public interface LambdaSetterFunction extends Serializable {
-        void accept(Scriptable owner, Object value);
+        void accept(Object owner, Object value);
     }
 
     /**
@@ -1968,7 +1842,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
-    protected static void checkPropertyDefinition(DescriptorInfo desc) {
+    protected static void checkPropertyDefinition(PropertyDescriptor desc) {
         Object getter = desc.getter;
         if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
             throw ScriptRuntime.notFunctionError(getter);
@@ -1984,11 +1858,11 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
 
     protected final void checkPropertyChangeForSlot(
             Object id, Slot<?> current, ScriptableObject desc) {
-        checkPropertyChangeForSlot(id, current, new DescriptorInfo(desc));
+        checkPropertyChangeForSlot(id, current, new PropertyDescriptor(desc));
     }
 
     protected final void checkPropertyChangeForSlot(
-            Object id, Slot<?> current, DescriptorInfo info) {
+            Object id, Slot<?> current, PropertyDescriptor info) {
 
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
@@ -2118,7 +1992,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return hasProperty(desc, "get") || hasProperty(desc, "set");
     }
 
-    protected static boolean isAccessorDescriptor(DescriptorInfo desc) {
+    protected static boolean isAccessorDescriptor(PropertyDescriptor desc) {
         return desc.hasGetter() || desc.hasSetter();
     }
 
@@ -2132,11 +2006,18 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
-    protected static boolean isGenericDescriptor(DescriptorInfo desc) {
+    protected static boolean isGenericDescriptor(PropertyDescriptor desc) {
         return desc.isDataDescriptor() && !desc.isAccessorDescriptor();
     }
 
     protected static Scriptable ensureScriptable(Object arg) {
+        if (!(arg instanceof Scriptable))
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
+        return (Scriptable) arg;
+    }
+
+    protected static Scriptable ensureScriptableOrNull(Object arg) {
+        if (arg == null) return null;
         if (!(arg instanceof Scriptable))
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
         return (Scriptable) arg;
@@ -2289,10 +2170,12 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         }
     }
 
+    @Override
     public boolean isExtensible() {
         return isExtensible;
     }
 
+    @Override
     public boolean preventExtensions() {
         isExtensible = false;
         return true;
@@ -2575,14 +2458,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
-    public static void putProperty(Scriptable obj, String name, Object value) {
+    public static boolean putProperty(Scriptable obj, String name, Object value) {
         Scriptable base = getBase(obj, name);
         if (base == null) base = obj;
-        base.put(name, obj, value);
+        return base.put(name, obj, value);
     }
 
-    public static void putProperty(VarScope obj, String name, Object value) {
-        obj.put(name, obj, value);
+    public static boolean putProperty(VarScope obj, String name, Object value) {
+        return obj.put(name, obj, value);
     }
 
     /** Variant of putProperty to handle super.name = value */
@@ -2598,7 +2481,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static void putProperty(Scriptable obj, Symbol key, Object value) {
         Scriptable base = getBase(obj, key);
         if (base == null) base = obj;
-        ensureSymbolScriptable(base).put(key, obj, value);
+        base.put(key, obj, value);
     }
 
     /** Variant of putProperty to handle super[key] = value where key is a symbol */
@@ -2607,7 +2490,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         // in contrast to putProperty we start searching at superObj
         Scriptable base = getBase(superObj, key);
         if (base == null) base = superObj;
-        ensureSymbolScriptable(base).put(key, thisObj, value);
+        base.put(key, thisObj, value);
     }
 
     /**
@@ -2681,8 +2564,7 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static boolean deleteProperty(Scriptable obj, String name) {
         Scriptable base = getBase(obj, name);
         if (base == null) return true;
-        base.delete(name);
-        return !base.has(name, obj);
+        return base.delete(name);
     }
 
     /**
@@ -2699,17 +2581,14 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
     public static boolean deleteProperty(Scriptable obj, int index) {
         Scriptable base = getBase(obj, index);
         if (base == null) return true;
-        base.delete(index);
-        return !base.has(index, obj);
+        return base.delete(index);
     }
 
     /** A version of deleteProperty for properties with Symbol keys. */
     public static boolean deleteProperty(Scriptable obj, Symbol key) {
         Scriptable base = getBase(obj, key);
         if (base == null) return true;
-        SymbolScriptable scriptable = ensureSymbolScriptable(base);
-        scriptable.delete(key);
-        return !scriptable.has(key, obj);
+        return base.delete(key);
     }
 
     /**
@@ -2903,7 +2782,6 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      */
     private boolean putConstImpl(
             Context cx, String name, int index, Scriptable start, Object value, int constFlag) {
-        assert (constFlag != EMPTY);
         if (!isExtensible) {
             if (cx.isStrictMode()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
@@ -2923,16 +2801,29 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            slot = getMap().modify(this, name, index, LEGACY_CONST);
-            int attr = slot.getAttributes();
-            if ((attr & READONLY) == 0)
-                throw Context.reportRuntimeErrorById("msg.var.redecl", name);
-            if ((attr & UNINITIALIZED_CONST) != 0) {
-                slot.value = value;
-                // clear the bit on const initialization
-                if (constFlag != UNINITIALIZED_CONST)
-                    slot.setAttributes(attr & ~UNINITIALIZED_CONST);
-            }
+            slot =
+                    getMap().compute(
+                                    this,
+                                    name,
+                                    index,
+                                    (n, i, e, c, o) -> {
+                                        if (e == null) {
+                                            var newSlot =
+                                                    new StandardSlot<Scriptable>(
+                                                            n, i, LEGACY_CONST);
+                                            newSlot.value = value;
+                                            return newSlot;
+                                        } else {
+                                            int attr = e.getAttributes();
+                                            if ((attr & READONLY) == 0)
+                                                throw Context.reportRuntimeErrorById(
+                                                        "msg.var.redecl", name);
+                                            if (e.value == VarScope.UNINITIALIZED) {
+                                                e.value = value;
+                                            }
+                                            return e;
+                                        }
+                                    });
             return true;
         }
         return slot.setValue(value, this, start);
@@ -3056,7 +2947,8 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
         throw new InvalidObjectException("Missing serialized ScriptableObject data");
     }
 
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    @Override
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         var slot = querySlot(cx, id);
         if (slot == null) return null;
         return slot.getPropertyDescriptor(cx, this);

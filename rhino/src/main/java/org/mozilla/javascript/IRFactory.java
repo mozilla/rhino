@@ -1203,7 +1203,7 @@ public final class IRFactory {
             parser.pushScope(outer);
             try {
                 String tempName = parser.currentScriptOrFn.getNextTempName();
-                parser.defineSymbol(Token.LET, tempName, false);
+                parser.defineSymbol(Symbol.Type.TEMP, tempName, false);
                 outer.addChildToBack(
                         new Node(
                                 Token.EXPR_VOID,
@@ -1775,12 +1775,14 @@ public final class IRFactory {
         }
         List<Object> names = new ArrayList<>(symbolTable.size());
         List<Boolean> consts = new ArrayList<>(symbolTable.size());
+        List<Boolean> lets = new ArrayList<>(symbolTable.size());
         for (Symbol symbol : symbolTable.values()) {
             if (!symbol.isDeclTypeLexical()) {
                 continue;
             }
             names.add(symbol.getName());
             consts.add(symbol.getDeclType() == Symbol.Type.CONST);
+            lets.add(symbol.getDeclType() == Symbol.Type.LET);
         }
         if (names.isEmpty()) {
             return null;
@@ -1792,6 +1794,7 @@ public final class IRFactory {
         Node node = new Node(Token.ITERATION_SCOPE, loop.getLineno(), loop.getColumn());
         node.putProp(Node.OBJECT_IDS_PROP, names.toArray());
         node.putProp(Node.CONST_IDS_PROP, constFlags);
+        NodeTransformer.putFlags(node, Node.LET_IDS_PROP, lets);
         return node;
     }
 
@@ -1840,13 +1843,18 @@ public final class IRFactory {
                 }
             }
 
+            boolean legacyKeyValue =
+                    destructuring != -1
+                            && !isForEach
+                            && !isForOf
+                            && parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6;
             Node localBlock = new Node(Token.LOCAL_BLOCK);
             int initType =
                     isForEach
                             ? Token.ENUM_INIT_VALUES
                             : isForOf
                                     ? Token.ENUM_INIT_VALUES_IN_ORDER
-                                    : (destructuring != -1
+                                    : (legacyKeyValue
                                             ? Token.ENUM_INIT_ARRAY
                                             : Token.ENUM_INIT_KEYS);
             Node init = new Node(initType, obj);
@@ -1861,9 +1869,7 @@ public final class IRFactory {
             if (destructuring != -1) {
                 assign =
                         parser.createDestructuringAssignment(declType, lvalue, id, this::transform);
-                if (!isForEach
-                        && !isForOf
-                        && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
+                if (legacyKeyValue && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
                     // destructuring assignment is only allowed in for..each or
                     // with an array type of length 2 (to hold key and value)
                     parser.reportError("msg.bad.for.in.destruct");
@@ -1873,6 +1879,10 @@ public final class IRFactory {
                 // assigning to it; a plain assignment would be refused as a write to a const.
                 lvalue.setType(Token.BINDNAME);
                 assign = new Node(Token.SETCONST, lvalue, id);
+            } else if (declType == Token.LET
+                    && parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                lvalue.setType(Token.BINDNAME);
+                assign = new Node(Token.INIT_LET, lvalue, id);
             } else {
                 assign = parser.simpleAssignment(lvalue, id);
             }
@@ -1887,7 +1897,13 @@ public final class IRFactory {
 
             loop = createLoop((Jump) loop, LOOP_WHILE, newBody, cond, null, null, false);
             loop.addChildToFront(init);
-            if (type == Token.VAR || type == Token.LET) loop.addChildToFront(lhs);
+            // An ES6 let is declared by each iteration's scope, so declaring it here as well
+            // would initialize it before the iterated expression is evaluated.
+            if (type == Token.VAR
+                    || (type == Token.LET
+                            && parser.compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
+                loop.addChildToFront(lhs);
+            }
             localBlock.addChildToBack(loop);
 
             return localBlock;
@@ -2537,6 +2553,7 @@ public final class IRFactory {
         switch (nodeType) {
             case Token.NAME:
                 {
+                    parser.checkStrictAssignmentTarget(left.getString());
                     Node op = new Node(assignOp, left, right);
                     Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
                     return propagateSuperFromLhs(new Node(Token.SETNAME, lvalueLeft, op), left);

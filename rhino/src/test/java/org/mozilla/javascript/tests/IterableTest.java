@@ -242,27 +242,32 @@ public class IterableTest {
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public boolean put(String name, Scriptable start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public boolean put(int index, Scriptable start, Object value) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void delete(String name) {
+        public boolean delete(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void delete(int index) {
+        public boolean delete(int index) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void setPrototype(Scriptable prototype) {
+        public boolean delete(Symbol name) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean setPrototype(Scriptable prototype) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -306,14 +311,14 @@ public class IterableTest {
         }
 
         @Override
-        public void put(Symbol key, Scriptable start, Object value) {
+        public boolean put(Symbol key, Scriptable start, Object value) {
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.
         }
 
         @Override
-        public void delete(Symbol key) {
+        public boolean delete(Symbol key) {
             throw new UnsupportedOperationException(
                     "Not supported yet."); // To change body of generated methods, choose Tools |
             // Templates.

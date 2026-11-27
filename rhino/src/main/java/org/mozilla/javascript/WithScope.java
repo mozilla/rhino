@@ -22,10 +22,14 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void delete(int index) {}
+    public boolean delete(int index) {
+        return false;
+    }
 
     @Override
-    public void delete(Symbol arg0) {}
+    public boolean delete(Symbol arg0) {
+        return false;
+    }
 
     @Override
     public Object get(int index, VarScope start) {
@@ -48,10 +52,14 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void put(int index, VarScope start, Object value) {}
+    public boolean put(int index, VarScope start, Object value) {
+        return false;
+    }
 
     @Override
-    public void put(Symbol arg0, VarScope arg1, Object arg2) {}
+    public boolean put(Symbol arg0, VarScope arg1, Object arg2) {
+        return false;
+    }
 
     @Override
     public void defineConst(Context cx, String name, VarScope start) {
@@ -74,8 +82,8 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void put(String name, VarScope start, Object value) {
-        ScriptableObject.putProperty(obj, name, value);
+    public boolean put(String name, VarScope start, Object value) {
+        return ScriptableObject.putProperty(obj, name, value);
     }
 
     @Override
@@ -84,8 +92,8 @@ public class WithScope implements VarScope {
     }
 
     @Override
-    public void delete(String name) {
-        ScriptableObject.deleteProperty(obj, name);
+    public boolean delete(String name) {
+        return ScriptableObject.deleteProperty(obj, name);
     }
 
     @Override
@@ -105,6 +113,23 @@ public class WithScope implements VarScope {
 
     @Override
     public boolean isNestedScope() {
+        return true;
+    }
+
+    @Override
+    public boolean createMutableBinding(String name, boolean deletable) {
+        Kit.codeBug();
+        return false;
+    }
+
+    @Override
+    public boolean createImmutableBinding(String name, boolean strict) {
+        Kit.codeBug();
+        return false;
+    }
+
+    public boolean initializeBinding(String name, Object value) {
+        Kit.codeBug();
         return true;
     }
 }

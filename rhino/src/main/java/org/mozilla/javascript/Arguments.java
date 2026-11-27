@@ -105,7 +105,7 @@ class Arguments extends ScriptableObject {
         return activation.get(argName, activation);
     }
 
-    private void replaceArg(int index, Object value) {
+    private boolean replaceArg(int index, Object value) {
         if (sharedWithActivation(index)) {
             putIntoActivation(index, value);
         }
@@ -115,6 +115,7 @@ class Arguments extends ScriptableObject {
             }
             args[index] = value;
         }
+        return true;
     }
 
     private void removeArg(int index) {
@@ -179,30 +180,30 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (arg(index) == NOT_FOUND) {
-            super.put(index, start, value);
+            return super.put(index, start, value);
         } else {
-            replaceArg(index, value);
+            return replaceArg(index, value);
         }
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
-        super.put(name, start, value);
+    public boolean put(String name, Scriptable start, Object value) {
+        return super.put(name, start, value);
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value) {
-        super.put(key, start, value);
+    public boolean put(Symbol key, Scriptable start, Object value) {
+        return super.put(key, start, value);
     }
 
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         if (0 <= index && index < args.length) {
             removeArg(index);
         }
-        super.delete(index);
+        return super.delete(index);
     }
 
     @Override
@@ -250,7 +251,7 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    protected DescriptorInfo getOwnPropertyDescriptor(Context cx, Object id) {
+    public PropertyDescriptor getOwnPropertyDescriptor(Context cx, Object id) {
         if (ScriptRuntime.isSymbol(id) || id instanceof Scriptable) {
             return super.getOwnPropertyDescriptor(cx, id);
         }
@@ -268,7 +269,7 @@ class Arguments extends ScriptableObject {
             value = getFromActivation(index);
         }
         if (super.has(index, this)) { // the descriptor has been redefined
-            DescriptorInfo desc = super.getOwnPropertyDescriptor(cx, id);
+            PropertyDescriptor desc = super.getOwnPropertyDescriptor(cx, id);
             desc.value = value;
             return desc;
         }
@@ -276,8 +277,8 @@ class Arguments extends ScriptableObject {
     }
 
     @Override
-    protected boolean defineOwnProperty(
-            Context cx, Object id, DescriptorInfo desc, boolean checkValid) {
+    public boolean defineOwnProperty(
+            Context cx, Object id, PropertyDescriptor desc, boolean checkValid) {
         super.defineOwnProperty(cx, id, desc, checkValid);
         if (ScriptRuntime.isSymbol(id)) {
             return true;
@@ -315,51 +316,51 @@ class Arguments extends ScriptableObject {
         }
 
         @Override
-        public void put(int index, Scriptable start, Object value) {
+        public boolean put(int index, Scriptable start, Object value) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.put(index, start, value);
+            return super.put(index, start, value);
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public boolean put(String name, Scriptable start, Object value) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.put(name, start, value);
+            return super.put(name, start, value);
         }
 
         @Override
-        public void put(Symbol key, Scriptable start, Object value) {
+        public boolean put(Symbol key, Scriptable start, Object value) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.put(key, start, value);
+            return super.put(key, start, value);
         }
 
         @Override
-        public void delete(int index) {
+        public boolean delete(int index) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.delete(index);
+            return super.delete(index);
         }
 
         @Override
-        public void delete(String name) {
+        public boolean delete(String name) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.delete(name);
+            return super.delete(name);
         }
 
         @Override
-        public void delete(Symbol key) {
+        public boolean delete(Symbol key) {
             if (initialized) {
-                return;
+                return false;
             }
-            super.delete(key);
+            return super.delete(key);
         }
     }
 }

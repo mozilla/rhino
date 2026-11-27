@@ -137,15 +137,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
             }
         }
 
-        int varCount = desc.getParamAndVarCount();
-        for (int i = 0; i < varCount; i++) {
-            if (desc.getParamOrVarConst(i))
-                stackAttributes[i] =
-                        (byte)
-                                ((cx.getLanguageVersion() >= Context.VERSION_ES6)
-                                        ? ScriptableObject.CONST
-                                        : ScriptableObject.LEGACY_CONST);
-        }
         int definedArgs = desc.getParamCount();
         if (definedArgs > argCount) {
             definedArgs = argCount;
@@ -153,6 +144,22 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
 
         // Fill the frame structure
 
+        for (int i = definedArgs; i != compilerData.maxVars; ++i) {
+            stack[i] = Undefined.instance;
+        }
+        int varCount = desc.getParamAndVarCount();
+        for (int i = 0; i < varCount; i++) {
+            if (desc.getParamOrVarConst(i)) {
+                stackAttributes[i] =
+                        (byte)
+                                ((cx.getLanguageVersion() >= Context.VERSION_ES6)
+                                        ? ScriptableObject.CONST
+                                        : ScriptableObject.LEGACY_CONST);
+                stack[i] = VarScope.UNINITIALIZED;
+            } else if (desc.getParamOrVarLet(i)) {
+                stack[i] = VarScope.UNINITIALIZED;
+            }
+        }
         int blen = 0;
         if (boundArgs != null) {
             blen = Math.min(definedArgs, boundArgs.length);
@@ -162,9 +169,6 @@ final class CallFrame extends ACallFrame<CallFrame, InterpreterData<?>> implemen
         System.arraycopy(args, argShift, stack, blen, definedArgs - blen);
         if (argsDbl != null) {
             System.arraycopy(argsDbl, argShift, doubleStack, blen, definedArgs - blen);
-        }
-        for (int i = definedArgs; i != compilerData.maxVars; ++i) {
-            stack[i] = Undefined.instance;
         }
 
         if (desc.hasRestArg()) {

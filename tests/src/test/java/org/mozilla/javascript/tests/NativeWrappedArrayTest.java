@@ -146,18 +146,19 @@ public class NativeWrappedArrayTest {
         }
 
         @Override
-        public void put(int ix, Scriptable start, Object val) {
+        public boolean put(int ix, Scriptable start, Object val) {
             // Ensure enough capacity for array expansion
             // by automatically expanding the array like JavaScript sort of does.
             for (int ax = list.size(); ax <= ix; ax++) {
                 list.add(null);
             }
             list.set(ix, val.toString());
+            return true;
         }
 
         @Override
-        public void delete(int ix) {
-            list.set(ix, null);
+        public boolean delete(int ix) {
+            return null != list.set(ix, null);
         }
 
         @Override

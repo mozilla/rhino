@@ -75,7 +75,7 @@ public class NativePromise extends ScriptableObject {
         NativePromise promise = new NativePromise();
         ResolvingFunctions resolving = new ResolvingFunctions(f.getDeclarationScope(), promise);
 
-        thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+        thisObj = Undefined.instance;
         if (!cx.isStrictMode()) {
             TopLevel tcs = cx.topCallScope;
             if (tcs != null) {
@@ -83,13 +83,11 @@ public class NativePromise extends ScriptableObject {
             }
         }
 
-        var thisArg = (Scriptable) thisObj;
-
         try {
-            executor.call(cx, s, thisArg, new Object[] {resolving.resolve, resolving.reject});
+            executor.call(cx, s, thisObj, new Object[] {resolving.resolve, resolving.reject});
         } catch (RhinoException re) {
             resolving.reject.call(
-                    cx, s, thisArg, new Object[] {getErrorObject(cx, f.getDeclarationScope(), re)});
+                    cx, s, thisObj, new Object[] {getErrorObject(cx, f.getDeclarationScope(), re)});
         }
 
         ScriptRuntime.setBuiltinProtoAndParent(promise, f, nt, s, TopLevel.Builtins.Promise);
@@ -230,7 +228,7 @@ public class NativePromise extends ScriptableObject {
             }
         }
         Capability cap = new Capability(cx, scope, constructor);
-        cap.resolve.call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {arg});
+        cap.resolve.call(cx, scope, Undefined.instance, new Object[] {arg});
         return cap.promise;
     }
 
@@ -242,8 +240,7 @@ public class NativePromise extends ScriptableObject {
         }
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
         Capability cap = new Capability(cx, f.getDeclarationScope(), thisObj);
-        cap.reject.call(
-                cx, f.getDeclarationScope(), Undefined.SCRIPTABLE_UNDEFINED, new Object[] {arg});
+        cap.reject.call(cx, f.getDeclarationScope(), Undefined.instance, new Object[] {arg});
         return cap.promise;
     }
 
@@ -258,10 +255,7 @@ public class NativePromise extends ScriptableObject {
             iterable = new IteratorLikeIterable(cx, scope, maybeIterable);
         } catch (RhinoException re) {
             cap.reject.call(
-                    cx,
-                    scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, scope, re)});
+                    cx, scope, Undefined.instance, new Object[] {getErrorObject(cx, scope, re)});
             return cap.promise;
         }
 
@@ -278,10 +272,7 @@ public class NativePromise extends ScriptableObject {
             }
         } catch (RhinoException re) {
             cap.reject.call(
-                    cx,
-                    scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, scope, re)});
+                    cx, scope, Undefined.instance, new Object[] {getErrorObject(cx, scope, re)});
             return cap.promise;
         }
     }
@@ -311,10 +302,7 @@ public class NativePromise extends ScriptableObject {
             iterable = new IteratorLikeIterable(cx, fscope, maybeIterable);
         } catch (RhinoException re) {
             cap.reject.call(
-                    cx,
-                    fscope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, fscope, re)});
+                    cx, fscope, Undefined.instance, new Object[] {getErrorObject(cx, fscope, re)});
             return cap.promise;
         }
 
@@ -329,10 +317,7 @@ public class NativePromise extends ScriptableObject {
             }
         } catch (RhinoException re) {
             cap.reject.call(
-                    cx,
-                    fscope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, fscope, re)});
+                    cx, fscope, Undefined.instance, new Object[] {getErrorObject(cx, fscope, re)});
             return cap.promise;
         }
     }
@@ -388,10 +373,7 @@ public class NativePromise extends ScriptableObject {
             iterable = new IteratorLikeIterable(cx, fscope, maybeIterable);
         } catch (RhinoException re) {
             cap.reject.call(
-                    cx,
-                    fscope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, fscope, re)});
+                    cx, fscope, Undefined.instance, new Object[] {getErrorObject(cx, fscope, re)});
             return cap.promise;
         }
 
@@ -408,10 +390,7 @@ public class NativePromise extends ScriptableObject {
             }
         } catch (RhinoException re) {
             cap.reject.call(
-                    cx,
-                    fscope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, fscope, re)});
+                    cx, fscope, Undefined.instance, new Object[] {getErrorObject(cx, fscope, re)});
             return cap.promise;
         }
     }
@@ -459,17 +438,14 @@ public class NativePromise extends ScriptableObject {
 
         try {
             // Call the function synchronously
-            Object result = func.call(cx, fscope, Undefined.SCRIPTABLE_UNDEFINED, funcArgs);
+            Object result = func.call(cx, fscope, Undefined.instance, funcArgs);
 
             // Resolve the promise with the result
-            cap.resolve.call(cx, fscope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {result});
+            cap.resolve.call(cx, fscope, Undefined.instance, new Object[] {result});
         } catch (RhinoException re) {
             // If the function throws, reject the promise with the error
             cap.reject.call(
-                    cx,
-                    fscope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, fscope, re)});
+                    cx, fscope, Undefined.instance, new Object[] {getErrorObject(cx, fscope, re)});
         }
 
         return cap.promise;
@@ -543,7 +519,7 @@ public class NativePromise extends ScriptableObject {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
-        Object onFinally = args.length > 0 ? args[0] : Undefined.SCRIPTABLE_UNDEFINED;
+        Object onFinally = args.length > 0 ? args[0] : Undefined.instance;
         Object thenFinally = onFinally;
         Object catchFinally = onFinally;
         var ctor =
@@ -574,11 +550,7 @@ public class NativePromise extends ScriptableObject {
                                     0,
                                     (Context vc, VarScope vs, Object vt, Object[] va) -> value);
                     Object result =
-                            onFinally.call(
-                                    cx,
-                                    ls,
-                                    Undefined.SCRIPTABLE_UNDEFINED,
-                                    ScriptRuntime.emptyArgs);
+                            onFinally.call(cx, ls, Undefined.instance, ScriptRuntime.emptyArgs);
                     Object promise = resolveInternal(cx, scope, constructor, result);
                     var thenFunc = ScriptRuntime.getPropAndThis(promise, "then", cx, scope);
                     return thenFunc.call(cx, scope, new Object[] {valueThunk});
@@ -601,11 +573,7 @@ public class NativePromise extends ScriptableObject {
                                         throw new JavaScriptException(reason, null, 0);
                                     });
                     Object result =
-                            onFinally.call(
-                                    cx,
-                                    ls,
-                                    Undefined.SCRIPTABLE_UNDEFINED,
-                                    ScriptRuntime.emptyArgs);
+                            onFinally.call(cx, ls, Undefined.instance, ScriptRuntime.emptyArgs);
                     Object promise = resolveInternal(cx, scope, constructor, result);
                     var thenFunc = ScriptRuntime.getPropAndThis(promise, "then", cx, scope);
                     return thenFunc.call(cx, scope, new Object[] {reasonThrower});
@@ -684,18 +652,13 @@ public class NativePromise extends ScriptableObject {
     // This gets called by the "resolving func" as a microtask.
     private void callThenable(Context cx, VarScope scope, Object resolution, Callable thenFunc) {
         ResolvingFunctions resolving = new ResolvingFunctions(scope, this);
-        Scriptable thisObj =
-                (resolution instanceof Scriptable
-                        ? (Scriptable) resolution
-                        : Undefined.SCRIPTABLE_UNDEFINED);
+        Object thisObj =
+                (resolution instanceof Scriptable ? (Scriptable) resolution : Undefined.instance);
         try {
             thenFunc.call(cx, scope, thisObj, new Object[] {resolving.resolve, resolving.reject});
         } catch (RhinoException re) {
             resolving.reject.call(
-                    cx,
-                    scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, scope, re)});
+                    cx, scope, Undefined.instance, new Object[] {getErrorObject(cx, scope, re)});
         }
     }
 
@@ -799,22 +762,19 @@ public class NativePromise extends ScriptableObject {
                             break;
                         case REJECT:
                             capability.reject.call(
-                                    cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {arg});
+                                    cx, scope, Undefined.instance, new Object[] {arg});
                             return;
                     }
                 } else {
-                    result =
-                            handler.call(
-                                    cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {arg});
+                    result = handler.call(cx, scope, Undefined.instance, new Object[] {arg});
                 }
-                capability.resolve.call(
-                        cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {result});
+                capability.resolve.call(cx, scope, Undefined.instance, new Object[] {result});
 
             } catch (RhinoException re) {
                 capability.reject.call(
                         cx,
                         scope,
-                        Undefined.SCRIPTABLE_UNDEFINED,
+                        Undefined.instance,
                         new Object[] {getErrorObject(cx, scope, re)});
             }
         }
@@ -976,8 +936,7 @@ public class NativePromise extends ScriptableObject {
 
         void finalResolution(Context cx, VarScope scope) {
             Scriptable newArray = cx.newArray(scope, values.toArray());
-            capability.resolve.call(
-                    cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {newArray});
+            capability.resolve.call(cx, scope, Undefined.instance, new Object[] {newArray});
         }
     }
 
@@ -1072,7 +1031,7 @@ public class NativePromise extends ScriptableObject {
             Scriptable newArray = cx.newArray(scope, errors.toArray());
             NativeError error =
                     (NativeError) cx.newObject(scope, "AggregateError", new Object[] {newArray});
-            capability.reject.call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, new Object[] {error});
+            capability.reject.call(cx, scope, Undefined.instance, new Object[] {error});
         }
     }
 

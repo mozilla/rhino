@@ -1,9 +1,9 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.ScriptableObject.EMPTY;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.ScriptableObject.STRICTLY_READONLY;
-import static org.mozilla.javascript.ScriptableObject.UNINITIALIZED_CONST;
 
 import java.io.IOException;
 import java.io.InvalidObjectException;
@@ -44,11 +44,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      * @param value value to set the property to
      */
     @Override
-    public void put(String name, VarScope start, Object value) {
-        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(String name, VarScope start, Object value) {
+        if (putOwnProperty(name, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(name, start, value);
+        return start.put(name, start, value);
     }
 
     /**
@@ -71,11 +71,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      */
     @SuppressWarnings("resource")
     @Override
-    public void put(int index, VarScope start, Object value) {
-        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(int index, VarScope start, Object value) {
+        if (putOwnProperty(index, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(index, start, value);
+        return start.put(index, start, value);
     }
 
     /**
@@ -91,11 +91,11 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
 
     /** Implementation of put required by SymbolScriptable objects. */
     @Override
-    public void put(Symbol key, VarScope start, Object value) {
-        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return;
+    public boolean put(Symbol key, VarScope start, Object value) {
+        if (putOwnProperty(key, start, value, Context.isCurrentContextStrict())) return true;
 
         if (start == this) throw Kit.codeBug();
-        start.put(key, start, value);
+        return start.put(key, start, value);
     }
 
     /**
@@ -206,18 +206,18 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
     }
 
     @Override
-    public void delete(String name) {
-        getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
+    public boolean delete(String name) {
+        return null == getMap().compute(this, name, 0, ScriptableObject::checkSlotRemoval);
     }
 
     @Override
-    public void delete(int index) {
-        getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
+    public boolean delete(int index) {
+        return null == getMap().compute(this, null, index, ScriptableObject::checkSlotRemoval);
     }
 
     @Override
-    public void delete(Symbol key) {
-        getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
+    public boolean delete(Symbol key) {
+        return null == getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
     /**
@@ -302,9 +302,7 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
 
     @Override
     public void defineConst(Context cx, String name, VarScope start) {
-        if (putConstImpl(
-                cx, name, 0, start, Undefined.instance, ScriptableObject.UNINITIALIZED_CONST))
-            return;
+        if (putConstImpl(cx, name, 0, start, VarScope.UNINITIALIZED, 0)) return;
 
         if (start == this) throw Kit.codeBug();
         start.defineConst(cx, name, start);
@@ -341,7 +339,6 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
      */
     private boolean putConstImpl(
             Context cx, String name, int index, VarScope start, Object value, int constFlag) {
-        assert (constFlag != ScriptableObject.EMPTY);
         Slot<VarScope> slot;
         if (this != start) {
             slot = getMap().query(name, index);
@@ -354,19 +351,83 @@ public class ScopeObject extends SlotMapOwner<VarScope> implements VarScope, Ser
                     cx.getLanguageVersion() >= Context.VERSION_ES6
                             ? ScriptableObject.CONST
                             : ScriptableObject.LEGACY_CONST;
-            slot = getMap().modify(this, name, index, flags);
-            int attr = slot.getAttributes();
-            if ((attr & READONLY) == 0)
-                throw Context.reportRuntimeErrorById("msg.var.redecl", name);
-            if ((attr & UNINITIALIZED_CONST) != 0) {
-                slot.value = value;
-                // clear the bit on const initialization
-                if (constFlag != UNINITIALIZED_CONST)
-                    slot.setAttributes(attr & ~UNINITIALIZED_CONST);
-            }
+            slot =
+                    getMap().compute(
+                                    this,
+                                    name,
+                                    index,
+                                    (n, i, e, c, o) -> {
+                                        if (e == null) {
+                                            var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                            newSlot.value = value;
+                                            return newSlot;
+                                        } else {
+                                            int attr = e.getAttributes();
+                                            if ((attr & READONLY) == 0)
+                                                throw Context.reportRuntimeErrorById(
+                                                        "msg.var.redecl", name);
+                                            if (e.value == VarScope.UNINITIALIZED) {
+                                                e.value = value;
+                                            }
+                                        }
+                                        return e;
+                                    });
             return true;
         }
         return slot.setValue(value, this, start);
+    }
+
+    @Override
+    public boolean createMutableBinding(String name, boolean deletable) {
+        var flags = deletable ? EMPTY : PERMANENT;
+        var slot =
+                getMap().compute(
+                                this,
+                                name,
+                                0,
+                                (n, i, e, c, o) -> {
+                                    if (e == null) {
+                                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                        newSlot.value = VarScope.UNINITIALIZED;
+                                        return newSlot;
+                                    }
+                                    return e;
+                                });
+        return slot.value == VarScope.UNINITIALIZED;
+    }
+
+    @Override
+    public boolean createImmutableBinding(String name, boolean strict) {
+        var flags = strict ? ScriptableObject.CONST : ScriptableObject.LEGACY_CONST;
+        var slot =
+                getMap().compute(
+                                this,
+                                name,
+                                0,
+                                (n, i, e, c, o) -> {
+                                    if (e == null) {
+                                        var newSlot = new StandardSlot<VarScope>(n, i, flags);
+                                        newSlot.value = VarScope.UNINITIALIZED;
+                                        return newSlot;
+                                    }
+                                    return e;
+                                });
+        return slot.value == VarScope.UNINITIALIZED;
+    }
+
+    @Override
+    public boolean initializeBinding(String name, Object value) {
+        var slot = getMap().query(name, 0);
+        if (slot == null) {
+            // Not created by createMutableBinding, as for a let in pre-ES6 eval code.
+            return put(name, this, value);
+        }
+        if ((slot.getAttributes() & READONLY) != 0 && slot.value != VarScope.UNINITIALIZED) {
+            return false;
+        } else {
+            slot.value = value;
+        }
+        return true;
     }
 
     @Serial

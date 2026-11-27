@@ -110,7 +110,7 @@ class SpecialRef extends Ref {
                         final String typeOfTarget = ScriptRuntime.typeof(target);
                         if ("function".equals(typeOfTarget)) {
                             if (value == null) {
-                                target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
+                                target.setPrototype(null);
                                 return value;
                             }
 

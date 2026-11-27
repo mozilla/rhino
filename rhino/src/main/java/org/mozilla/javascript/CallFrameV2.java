@@ -97,6 +97,16 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
         }
 
         int varCount = desc.getParamAndVarCount();
+        int definedArgs = desc.getParamCount();
+        if (definedArgs > argCount) {
+            definedArgs = argCount;
+        }
+
+        // Fill the frame structure
+
+        for (int i = definedArgs; i != compilerData.maxVars; ++i) {
+            stack[i] = Undefined.instance;
+        }
         for (int i = 0; i < varCount; i++) {
             if (desc.getParamOrVarConst(i)) {
                 this.stackAttributes[i] =
@@ -104,14 +114,11 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
                                 ((cx.getLanguageVersion() >= Context.VERSION_ES6)
                                         ? ScriptableObject.CONST
                                         : ScriptableObject.LEGACY_CONST);
+                this.stack[i] = VarScope.UNINITIALIZED;
+            } else if (desc.getParamOrVarLet(i)) {
+                this.stack[i] = VarScope.UNINITIALIZED;
             }
         }
-        int definedArgs = desc.getParamCount();
-        if (definedArgs > argCount) {
-            definedArgs = argCount;
-        }
-
-        // Fill the frame structure
 
         if (frameIndex > cx.getMaximumInterpreterStackDepth()) {
             throw Context.reportRuntimeError("Exceeded maximum stack depth");
@@ -123,10 +130,6 @@ public class CallFrameV2 extends ACallFrame<CallFrameV2, CompilerData<?>> implem
         if (doubleArgs != null) {
             System.arraycopy(doubleArgs, argShift, doubleStack, 0, definedArgs);
         }
-        for (int i = definedArgs; i != compilerData.maxVars; ++i) {
-            stack[i] = Undefined.instance;
-        }
-
         if (desc.hasRestArg()) {
             Object[] vals;
             int offset = desc.getParamCount() - 1;

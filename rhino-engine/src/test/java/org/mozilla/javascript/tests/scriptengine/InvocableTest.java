@@ -45,20 +45,20 @@ public class InvocableTest {
     @Test
     public void invokeScriptFunctionTest() throws ScriptException, NoSuchMethodException {
         Object scriptObj =
-                engine.eval("let o = {};\n" + "o.test = function(x) { return x + 2; }\n" + "o;");
+                engine.eval("var o = {};\n" + "o.test = function(x) { return x + 2; }\n" + "o;");
         assertEquals(4L, iEngine.invokeMethod(scriptObj, "test", 2));
     }
 
     @Test
     public void invokeGenericFunctionTest() throws ScriptException, NoSuchMethodException {
-        engine.eval("let o = {};\n" + "o.test = function(x) { return x + 2; }\n");
+        engine.eval("var o = {};\n" + "o.test = function(x) { return x + 2; }\n");
         Object result = engine.eval(engine.getFactory().getMethodCallSyntax("o", "test", "1"));
         assertEquals(3L, result);
     }
 
     @Test
     public void invokeGenericFunctionTest2() throws ScriptException, NoSuchMethodException {
-        engine.eval("let o = {};\n" + "o.test = function(x, y) { return x + y; }\n");
+        engine.eval("var o = {};\n" + "o.test = function(x, y) { return x + y; }\n");
         Object result = engine.eval(engine.getFactory().getMethodCallSyntax("o", "test", "1", "7"));
         assertEquals(8L, result);
     }
@@ -76,7 +76,7 @@ public class InvocableTest {
                             + "f.set(2, 2);\n"
                             + "assertEquals(f.x, 4);");
 
-            Object fooObj = engine.eval("let y = new FooObj(); y");
+            Object fooObj = engine.eval("var y = new FooObj(); y");
             assertNotNull(fooObj);
             iEngine.invokeMethod(fooObj, "set", 3, 3);
             Object result = engine.eval("y.x");

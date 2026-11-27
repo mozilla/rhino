@@ -20,7 +20,6 @@ import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.VarScope;
@@ -117,11 +116,11 @@ public class NativeDataView extends NativeArrayBufferView {
         return ScriptRuntime.toBoolean(args[arg]);
     }
 
-    private static Object js_buffer(Scriptable thisObj) {
+    private static Object js_buffer(Object thisObj) {
         return realThis(thisObj).arrayBuffer;
     }
 
-    private static Object js_byteLength(Scriptable thisObj) {
+    private static Object js_byteLength(Object thisObj) {
         NativeDataView self = realThis(thisObj);
         if (self.isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");
@@ -129,7 +128,7 @@ public class NativeDataView extends NativeArrayBufferView {
         return self.getByteLength();
     }
 
-    private static Object js_byteOffset(Scriptable thisObj) {
+    private static Object js_byteOffset(Object thisObj) {
         NativeDataView self = realThis(thisObj);
         if (self.isDataViewOutOfBounds()) {
             throw ScriptRuntime.typeErrorById("msg.dataview.bounds");

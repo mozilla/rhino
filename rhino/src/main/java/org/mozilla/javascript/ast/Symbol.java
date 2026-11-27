@@ -18,7 +18,11 @@ public class Symbol {
         LP,
         VAR,
         LET,
-        CONST;
+        CONST,
+        /** A block scoped generator declaration, which is initialized on entry to its block. */
+        GENERATOR_LET,
+        /** A compiler generated temporary, which is always initialized before it is read. */
+        TEMP;
 
         public static Type fromToken(int token) {
             return switch (token) {
@@ -125,11 +129,19 @@ public class Symbol {
     }
 
     public boolean isDeclTypeLexical() {
-        return declType == Type.FUNCTION_LET || declType == Type.LET || declType == Type.CONST;
+        return isDeclTypeLexical(declType);
     }
 
     public static boolean isDeclTypeLexical(Type declType) {
-        return declType == Type.FUNCTION_LET || declType == Type.LET || declType == Type.CONST;
+        return switch (declType) {
+            case FUNCTION_LET, LET, CONST, GENERATOR_LET, TEMP -> true;
+            default -> false;
+        };
+    }
+
+    /** Returns true if this is a {@code let} binding, including its synthetic variants. */
+    public static boolean isDeclTypeLet(Type declType) {
+        return declType == Type.LET || declType == Type.GENERATOR_LET || declType == Type.TEMP;
     }
 
     @Override

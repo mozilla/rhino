@@ -2270,18 +2270,14 @@ public class ScriptRuntime {
             if (target instanceof VarScope) {
                 Kit.codeBug();
             }
-            SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(target);
             Symbol s = (Symbol) elem;
-            so.delete(s);
-            return !so.has(s, (Scriptable) target);
+            return target.delete(s);
         }
         StringIdOrIndex s = toStringIdOrIndex(elem);
         if (s.stringId == null) {
-            target.delete(s.index);
-            return !target.has(s.index, target);
+            return target.delete(s.index);
         }
-        target.delete(s.stringId);
-        return !target.has(s.stringId, target);
+        return target.delete(s.stringId);
     }
 
     public static boolean hasObjectElem(Scriptable target, Object elem, Context cx) {
@@ -2384,6 +2380,9 @@ public class ScriptRuntime {
             }
             result = deleteObjectElem(sobj, id, cx);
         }
+        if (!result && cx.isStrictMode()) {
+            throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", id);
+        }
         return wrapBoolean(result);
     }
 
@@ -2409,8 +2408,7 @@ public class ScriptRuntime {
             boolean asFunctionCall,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj =
-                Undefined.SCRIPTABLE_UNDEFINED; // It is used only if asFunctionCall==true.
+        Object thisObj = Undefined.instance; // It is used only if asFunctionCall==true.
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2470,6 +2468,7 @@ public class ScriptRuntime {
             }
         }
 
+        result = checkInitialized(cx, result, name);
         if (asFunctionCall) {
             if (!(result instanceof Callable)) {
                 if (isOptionalChainingCall
@@ -2494,7 +2493,7 @@ public class ScriptRuntime {
             String name,
             boolean isOptionalChainingCall) {
         Object result;
-        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+        Object thisObj = Undefined.instance;
 
         XMLObject firstXMLObject = null;
         for (; ; ) {
@@ -2547,6 +2546,7 @@ public class ScriptRuntime {
             }
         }
 
+        result = checkInitialized(cx, result, name);
         if (!(result instanceof Callable)) {
             if (isOptionalChainingCall
                     && (result == Scriptable.NOT_FOUND
@@ -2562,7 +2562,39 @@ public class ScriptRuntime {
         if (cx.useDynamicScope) {
             scope = checkDynamicScope(cx.topCallScope, scope);
         }
-        return ScriptableObject.getProperty(scope, name);
+        return checkInitialized(cx, ScriptableObject.getProperty(scope, name), name);
+    }
+
+    /**
+     * Throws a ReferenceError if a name lookup found a binding that has not been initialized yet.
+     * Before ES6 there is no temporal dead zone, and an uninitialized const reads as undefined.
+     */
+    private static Object checkInitialized(Context cx, Object value, String name) {
+        if (value == VarScope.UNINITIALIZED) {
+            if (cx.getLanguageVersion() < Context.VERSION_ES6) {
+                return Undefined.instance;
+            }
+            throw uninitializedBindingError(name);
+        }
+        return value;
+    }
+
+    /** Checks a local variable slot that holds the uninitialized marker until it is initialized. */
+    public static void checkVarInitialized(Object value, String name) {
+        if (value == VarScope.UNINITIALIZED) {
+            throw uninitializedBindingError(name);
+        }
+    }
+
+    /** Checks a local variable whose slot is paired with an "has been initialized" flag. */
+    public static void checkVarInitialized(int initialized, String name) {
+        if (initialized == 0) {
+            throw uninitializedBindingError(name);
+        }
+    }
+
+    public static RuntimeException uninitializedBindingError(String name) {
+        return constructError("ReferenceError", getMessageById("msg.uninitialized.binding", name));
     }
 
     /**
@@ -2635,9 +2667,11 @@ public class ScriptRuntime {
     public static Object setName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
-            // TODO: we used to special-case XMLObject here, but putProperty
-            // seems to work for E4X and it's better to optimize  the common case
-            ScriptableObject.putProperty(bound, id, value);
+            if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                bound.setMutableBinding(id, value, cx.isStrictMode());
+            } else {
+                ScriptableObject.putProperty(bound, id, value);
+            }
         } else {
             // "newname = 7;", where 'newname' has not yet
             // been defined, creates a new property in the
@@ -2659,15 +2693,7 @@ public class ScriptRuntime {
     public static Object strictSetName(
             VarScope bound, Object value, Context cx, VarScope scope, String id) {
         if (bound != null) {
-            // TODO: The LeftHandSide also may not be a reference to a
-            // data property with the attribute value {[[Writable]]:false},
-            // to an accessor property with the attribute value
-            // {[[Put]]:undefined}, nor to a non-existent property of an
-            // object whose [[Extensible]] internal property has the value
-            // false. In these cases a TypeError exception is thrown (11.13.1).
-            // TODO: we used to special-case XMLObject here, but putProperty
-            // seems to work for E4X and we should optimize  the common case
-            ScriptableObject.putProperty(bound, id, value);
+            bound.setMutableBinding(id, value, true);
             return value;
         }
         // See ES5 8.7.2
@@ -2677,6 +2703,12 @@ public class ScriptRuntime {
 
     public static Object setConst(VarScope bound, Object value, Context cx, String id) {
         ScriptableObject.putConstProperty(cx, bound, id, value);
+        return value;
+    }
+
+    /** Initializes the let binding {@code id}, which its scope created uninitialized. */
+    public static Object initLet(VarScope bound, Object value, Context cx, String id) {
+        bound.initializeBinding(id, value);
         return value;
     }
 
@@ -2897,7 +2929,6 @@ public class ScriptRuntime {
     private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
-            new Error(String.format("%s", v)).printStackTrace();
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
@@ -3126,7 +3157,7 @@ public class ScriptRuntime {
             // Top scope is not a with scope or an activation frame,
             // the called function will resolve `globalThis` in its
             // realm.
-            storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
+            storeScriptable(cx, Undefined.instance);
             return (Callable) result;
         }
 
@@ -3172,7 +3203,7 @@ public class ScriptRuntime {
                     result,
                     scope instanceof WithScope
                             ? ((WithScope) scope).getObject()
-                            : Undefined.SCRIPTABLE_UNDEFINED,
+                            : Undefined.instance,
                     name);
         }
 
@@ -3480,7 +3511,7 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        storeScriptable(cx, Undefined.SCRIPTABLE_UNDEFINED);
+        storeScriptable(cx, Undefined.instance);
         return f;
     }
 
@@ -3509,7 +3540,7 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable) value;
-        return new LookupResult(f, Undefined.SCRIPTABLE_UNDEFINED, value);
+        return new LookupResult(f, Undefined.instance, value);
     }
 
     /**
@@ -3520,7 +3551,7 @@ public class ScriptRuntime {
     public static Object callIterator(Object obj, Context cx, VarScope scope) {
         final Callable getIterator =
                 ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
-        final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
+        final Object iterable = ScriptRuntime.lastStoredScriptable(cx);
         return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
     }
 
@@ -3571,7 +3602,7 @@ public class ScriptRuntime {
     public static Object callSpecial(
             Context cx,
             Callable fun,
-            Scriptable thisObj,
+            Object thisObj,
             Object[] args,
             VarScope scope,
             Object callerThis,
@@ -3584,7 +3615,10 @@ public class ScriptRuntime {
         }
 
         if (callType == Node.SPECIALCALL_EVAL) {
-            if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
+            if (NativeGlobal.isEvalFunction(fun)
+                    && (Undefined.isUndefined(thisObj)
+                            || !(thisObj instanceof Scriptable)
+                            || ((Scriptable) thisObj).getParentScope() == null)) {
                 return evalSpecial(
                         cx, scope, callerThis, args, filename, lineNumber, cx.isStrictMode());
             }
@@ -3618,7 +3652,7 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis =
+        Object callThis =
                 getApplyOrCallThis(cx, scope, L == 0 ? null : args[0], L, (Function) function);
 
         Object[] callArgs;
@@ -3638,9 +3672,9 @@ public class ScriptRuntime {
         return function.call(cx, scope, callThis, callArgs);
     }
 
-    public static Scriptable getApplyOrCallThis(
+    public static Object getApplyOrCallThis(
             Context cx, VarScope scope, Object arg0, int l, Function target) {
-        Scriptable callThis;
+        Object callThis;
         if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             // Legacy behavior
             if (l != 0) {
@@ -3656,12 +3690,9 @@ public class ScriptRuntime {
         } else {
             // Spec-compliant behavior
             if (l != 0) {
-                callThis =
-                        arg0 == Undefined.instance
-                                ? Undefined.SCRIPTABLE_UNDEFINED
-                                : toObjectOrNull(cx, arg0, scope);
+                callThis = arg0;
             } else {
-                callThis = Undefined.SCRIPTABLE_UNDEFINED;
+                callThis = Undefined.instance;
             }
         }
 
@@ -3757,8 +3788,8 @@ public class ScriptRuntime {
         // mode.
         Consumer<CompilerEnvirons> compilerEnvironsProcessor =
                 compilerEnvs -> {
-                    // `eval` propagates strict mode
-                    compilerEnvs.setStrictMode(cx.isStrictMode());
+                    // Direct `eval` propagates strict mode, indirect eval is never strict.
+                    compilerEnvs.setStrictMode(isStrict);
 
                     // If we are inside a method, we need to allow super. Methods have the home
                     // object set and propagated via the activation (i.e. the NativeCall),
@@ -3780,14 +3811,16 @@ public class ScriptRuntime {
                         1,
                         null,
                         compilerEnvironsProcessor);
-        Scriptable thisObject =
-                thisArg == Undefined.instance
-                        ? Undefined.SCRIPTABLE_UNDEFINED
-                        : (Scriptable) thisArg;
+        Object thisObject =
+                thisArg == Undefined.instance ? Undefined.instance : (Scriptable) thisArg;
         VarScope evalScope;
         if (isStrict
                 || (script instanceof JSScript && ((JSScript) script).getDescriptor().isStrict())) {
             evalScope = new ScopeObject(scope);
+        } else if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            // Lexical declarations get their own scope, while var declarations go to the
+            // caller's variable scope.
+            evalScope = new LocalScope(scope);
         } else {
             evalScope = scope;
         }
@@ -3813,7 +3846,7 @@ public class ScriptRuntime {
     public static String typeofName(Context cx, VarScope scope, String id) {
         VarScope val = bind(cx, scope, id);
         if (val == null) return "undefined";
-        return typeof(getObjectProp(val, id, cx));
+        return typeof(checkInitialized(cx, getObjectProp(val, id, cx), id));
     }
 
     public static boolean isObject(Object value) {
@@ -4183,6 +4216,7 @@ public class ScriptRuntime {
             } while (scopeChain != null);
             throw notFoundError(null, id);
         }
+        value = checkInitialized(cx, value, id);
         return doScopeIncrDecr(target, id, value, incrDecrMask);
     }
 
@@ -5092,12 +5126,32 @@ public class ScriptRuntime {
                 varScope = varScope.getParentScope();
             }
 
+            boolean es6Eval = evalScript && cx.getLanguageVersion() >= Context.VERSION_ES6;
+            if (es6Eval && varScope != scope) {
+                checkEvalVarConflicts(desc, scope, varScope);
+                if (varScope instanceof TopLevel) {
+                    checkGlobalEvalDeclarations(cx, desc, ((TopLevel) varScope).getGlobalThis());
+                }
+            }
+            // ES6 eval code has its own lexical scope, so existing vars are found in the
+            // variable scope.
+            VarScope existingScope = es6Eval ? varScope : scope;
+
             for (int i = varCount; i-- != 0; ) {
                 String name = desc.getParamOrVarName(i);
                 boolean isConst = desc.getParamOrVarConst(i);
+                boolean isLet = desc.getParamOrVarLet(i);
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
-                if (!ScriptableObject.hasProperty(scope, name)) {
+                if (es6Eval && isLet) {
+                    // Lexical declarations in eval code bind in the eval's own scope.
+                    scope.createMutableBinding(name, false);
+                } else if (es6Eval && isConst) {
+                    scope.createImmutableBinding(name, true);
+                } else if (isLet && !evalScript) {
+                    // Lexical declarations bind on the top level scope, not the global object.
+                    varScope.createMutableBinding(name, false);
+                } else if (!ScriptableObject.hasProperty(existingScope, name)) {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(cx, varScope, name);
                     } else if (!evalScript) {
@@ -5110,10 +5164,91 @@ public class ScriptRuntime {
                         varScope.put(name, varScope, Undefined.instance);
                     }
                 } else {
-                    ScriptableObject.redefineProperty(cx, scope, name, isConst);
+                    ScriptableObject.redefineProperty(cx, existingScope, name, isConst);
                 }
             }
         }
+    }
+
+    /**
+     * Throws a SyntaxError if a var or function declared by non-strict eval code would conflict
+     * with a lexical declaration between the eval and its variable scope, or in that variable scope
+     * itself.
+     *
+     * <p>See ECMA 19.2.1.3 EvalDeclarationInstantiation, step 3.
+     */
+    private static void checkEvalVarConflicts(
+            JSDescriptor<?> desc, VarScope evalScope, VarScope varScope) {
+        for (int i = 0; i < desc.getParamAndVarCount(); i++) {
+            if (desc.getParamOrVarLet(i) || desc.getParamOrVarConst(i)) {
+                continue;
+            }
+            String name = desc.getParamOrVarName(i);
+            for (VarScope s = evalScope.getParentScope(); s != varScope; s = s.getParentScope()) {
+                // Catch parameters may be redeclared by var (Annex B.3.4), and with
+                // scopes are object environments.
+                if (s instanceof LocalScope && s.has(name, s)) {
+                    throw evalRedeclarationError(name);
+                }
+            }
+            if (isLexicalDeclarationOf(varScope, name)) {
+                throw evalRedeclarationError(name);
+            }
+        }
+    }
+
+    /**
+     * Throws a TypeError if a var or function declared by non-strict eval code cannot be created on
+     * the global object.
+     *
+     * <p>See ECMA 19.2.1.3 EvalDeclarationInstantiation, steps 8 and 10, and 9.1.1.4.15-16
+     * CanDeclareGlobalVar and CanDeclareGlobalFunction.
+     */
+    private static void checkGlobalEvalDeclarations(
+            Context cx, JSDescriptor<?> desc, ScriptableObject global) {
+        for (int i = 0; i < desc.getParamAndVarCount(); i++) {
+            if (desc.getParamOrVarLet(i) || desc.getParamOrVarConst(i)) {
+                continue;
+            }
+            String name = desc.getParamOrVarName(i);
+            boolean isFunction = !desc.hasNoFunctionStatementNamed(name);
+            var existing = global.getOwnPropertyDescriptor(cx, name);
+            boolean definable;
+            if (existing == null) {
+                definable = global.isExtensible();
+            } else if (!isFunction) {
+                definable = true;
+            } else {
+                definable =
+                        existing.isConfigurable()
+                                || (existing.isDataDescriptor()
+                                        && existing.isWritable()
+                                        && existing.isEnumerable());
+            }
+            if (!definable) {
+                throw typeErrorById("msg.global.not.definable", name);
+            }
+        }
+    }
+
+    private static boolean isLexicalDeclarationOf(VarScope varScope, String name) {
+        if (varScope instanceof TopLevel) {
+            return ((TopLevel) varScope).getMap().query(name, 0) != null;
+        }
+        if (varScope instanceof NativeCall) {
+            var fdesc = ((NativeCall) varScope).function.getDescriptor();
+            for (int i = 0; i < fdesc.getParamAndVarCount(); i++) {
+                if ((fdesc.getParamOrVarLet(i) || fdesc.getParamOrVarConst(i))
+                        && fdesc.getParamOrVarName(i).equals(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static EcmaError evalRedeclarationError(String name) {
+        return constructError("SyntaxError", getMessageById("msg.var.redecl", name));
     }
 
     /**
@@ -5551,6 +5686,23 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * Creates the global binding for a function declared by eval code.
+     *
+     * <p>See ECMA 9.1.1.4.18 CreateGlobalFunctionBinding.
+     */
+    private static void defineGlobalEvalFunction(
+            Context cx, TopLevel top, String name, JSFunction function) {
+        ScriptableObject global = top.getGlobalThis();
+        var existing = global.getOwnPropertyDescriptor(cx, name);
+        if (existing == null || existing.isConfigurable()) {
+            global.defineOwnProperty(
+                    cx, name, new PropertyDescriptor(function, ScriptableObject.EMPTY, true));
+        } else {
+            top.put(name, top, function);
+        }
+    }
+
     public static void initFunction(
             Context cx, VarScope scope, JSFunction function, int type, boolean fromEvalCode) {
         if (type == FunctionNode.FUNCTION_STATEMENT) {
@@ -5562,6 +5714,16 @@ public class ScriptRuntime {
                     ScriptableObject.defineProperty(
                             scope, name, function, ScriptableObject.PERMANENT);
                 } else {
+                    if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                        // Function declarations in eval code bind in the variable scope.
+                        while (scope.isNestedScope()) {
+                            scope = scope.getParentScope();
+                        }
+                        if (scope instanceof TopLevel) {
+                            defineGlobalEvalFunction(cx, (TopLevel) scope, name, function);
+                            return;
+                        }
+                    }
                     scope.put(name, scope, function);
                 }
             }
@@ -5683,8 +5845,7 @@ public class ScriptRuntime {
             if (getterSetter == 0) {
                 if (id instanceof Symbol) {
                     Symbol sym = (Symbol) id;
-                    SymbolScriptable so = (SymbolScriptable) object;
-                    so.put(sym, object, value);
+                    object.put(sym, object, value);
                 } else if (id instanceof Integer && ((Integer) id) >= 0) {
                     int index = (Integer) id;
                     object.put(index, object, value);
@@ -6170,15 +6331,15 @@ public class ScriptRuntime {
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
-    private static void storeScriptable(Context cx, Scriptable value) {
+    private static void storeScriptable(Context cx, Object value) {
         // The previously stored scratchScriptable should be consumed
         if (cx.scratchScriptable != null) throw new IllegalStateException();
         cx.scratchScriptable = value;
     }
 
     @Deprecated(since = "1.8.1", forRemoval = true)
-    public static Scriptable lastStoredScriptable(Context cx) {
-        Scriptable result = cx.scratchScriptable;
+    public static Object lastStoredScriptable(Context cx) {
+        Object result = cx.scratchScriptable;
         cx.scratchScriptable = null;
         return result;
     }
@@ -6310,9 +6471,9 @@ public class ScriptRuntime {
         }
     }
 
-    public static Scriptable getThisForScope(VarScope scope, Object callThisArg) {
+    public static Object getThisForScope(VarScope scope, Object callThisArg) {
         if (Undefined.isUndefined(callThisArg)) {
-            return Undefined.SCRIPTABLE_UNDEFINED;
+            return Undefined.instance;
         }
         if (callThisArg == null) {
             return null;
@@ -6329,10 +6490,10 @@ public class ScriptRuntime {
         private static final long serialVersionUID = 8491017987326545970L;
 
         private final Object result;
-        private final Scriptable thisObj;
+        private final Object thisObj;
         private final Object name;
 
-        LookupResult(Object result, Scriptable thisObj, Object name) {
+        LookupResult(Object result, Object thisObj, Object name) {
             this.result = result;
             this.thisObj = thisObj;
             this.name = name;
@@ -6342,7 +6503,7 @@ public class ScriptRuntime {
             return result;
         }
 
-        public Scriptable getThis() {
+        public Object getThis() {
             return thisObj;
         }
 

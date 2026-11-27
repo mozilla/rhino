@@ -128,7 +128,7 @@ public class Bug782363Test {
         // adds internal fields that consume local slots, or upward if fields are removed.
         test(338);
         try {
-            test(339);
+            test(1023);
             fail("test(339) did not throw");
         } catch (EvaluatorException e) {
             // may fail with 'out of locals' exception

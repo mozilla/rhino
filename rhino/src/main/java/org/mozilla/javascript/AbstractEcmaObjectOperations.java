@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * Abstract Object Operations as defined by EcmaScript
@@ -84,7 +83,7 @@ public class AbstractEcmaObjectOperations {
             ids = obj.getIds(map, true, true);
         }
         for (Object name : ids) {
-            DescriptorInfo desc = obj.getOwnPropertyDescriptor(cx, name);
+            PropertyDescriptor desc = obj.getOwnPropertyDescriptor(cx, name);
             if (desc.isConfigurable()) return false;
 
             if (level == INTEGRITY_LEVEL.FROZEN && desc.isDataDescriptor() && desc.isWritable())
@@ -150,7 +149,7 @@ public class AbstractEcmaObjectOperations {
             ids = obj.getIds(map, true, true);
         }
         for (Object key : ids) {
-            DescriptorInfo desc = obj.getOwnPropertyDescriptor(cx, key);
+            PropertyDescriptor desc = obj.getOwnPropertyDescriptor(cx, key);
 
             if (level == INTEGRITY_LEVEL.SEALED) {
                 if (desc.isConfigurable()) {
@@ -269,9 +268,9 @@ public class AbstractEcmaObjectOperations {
         if (base instanceof ScriptableObject) {
             if (((ScriptableObject) base).putOwnProperty(p, o, v, isThrow)) return;
 
-            ScriptableObject.ensureSymbolScriptable(o).put(p, o, v);
+            o.put(p, o, v);
         } else {
-            ScriptableObject.ensureSymbolScriptable(base).put(p, o, v);
+            base.put(p, o, v);
         }
     }
 
@@ -323,8 +322,7 @@ public class AbstractEcmaObjectOperations {
                 }
 
                 Object[] args = {o, i};
-                Object key =
-                        ((Callable) callback).call(cx, scope, Undefined.SCRIPTABLE_UNDEFINED, args);
+                Object key = ((Callable) callback).call(cx, scope, Undefined.instance, args);
                 if (keyCoercion == KEY_COERCION.PROPERTY) {
                     if (!ScriptRuntime.isSymbol(key)) {
                         key = ScriptRuntime.toString(key);
@@ -401,14 +399,9 @@ public class AbstractEcmaObjectOperations {
      * IsCompatiblePropertyDescriptor (Extensible, Desc, Current)</a>
      */
     static boolean isCompatiblePropertyDescriptor(
-            Context cx, boolean extensible, DescriptorInfo desc, DescriptorInfo current) {
+            Context cx, boolean extensible, PropertyDescriptor desc, PropertyDescriptor current) {
         return validateAndApplyPropertyDescriptor(
-                cx,
-                Undefined.SCRIPTABLE_UNDEFINED,
-                Undefined.SCRIPTABLE_UNDEFINED,
-                extensible,
-                desc,
-                current);
+                cx, Undefined.instance, Undefined.instance, extensible, desc, current);
     }
 
     /**
@@ -420,11 +413,11 @@ public class AbstractEcmaObjectOperations {
      */
     static boolean validateAndApplyPropertyDescriptor(
             Context cx,
-            Scriptable o,
-            Scriptable p,
+            Object o,
+            Object p,
             boolean extensible,
-            DescriptorInfo desc,
-            DescriptorInfo current) {
+            PropertyDescriptor desc,
+            PropertyDescriptor current) {
         if (Undefined.isUndefined(current)) {
             if (!extensible) {
                 return false;
@@ -563,7 +556,7 @@ public class AbstractEcmaObjectOperations {
          * 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
          * 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
          */
-        DescriptorInfo ownDesc =
+        PropertyDescriptor ownDesc =
                 ScriptRuntime.isSymbol(p)
                         ? o.getOwnPropertyDescriptor(cx, p)
                         : o.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
@@ -584,7 +577,7 @@ public class AbstractEcmaObjectOperations {
             Object p,
             Object v,
             Scriptable receiver,
-            DescriptorInfo ownDesc) {
+            PropertyDescriptor ownDesc) {
         /*
          * 1. If ownDesc is undefined, then
          *    a. Let parent be ? O.[[GetPrototypeOf]]().
@@ -626,7 +619,7 @@ public class AbstractEcmaObjectOperations {
                 return true;
             }
 
-            ownDesc = new DescriptorInfo(true, true, true, Undefined.instance);
+            ownDesc = new PropertyDescriptor(true, true, true, Undefined.instance);
         }
 
         if (ownDesc.isDataDescriptor()) {
@@ -635,7 +628,7 @@ public class AbstractEcmaObjectOperations {
             }
             ScriptableObject receiverObj = (ScriptableObject) receiver;
 
-            DescriptorInfo existingDesc =
+            PropertyDescriptor existingDesc =
                     ScriptRuntime.isSymbol(p)
                             ? receiverObj.getOwnPropertyDescriptor(cx, p)
                             : receiverObj.getOwnPropertyDescriptor(cx, ScriptRuntime.toString(p));
@@ -644,13 +637,13 @@ public class AbstractEcmaObjectOperations {
                 if (existingDesc.isAccessorDescriptor() || existingDesc.isWritable(false)) {
                     return false;
                 }
-                DescriptorInfo valueDesc =
-                        new DescriptorInfo(
+                PropertyDescriptor valueDesc =
+                        new PropertyDescriptor(
                                 NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, NOT_FOUND, v);
                 return receiverObj.defineOwnProperty(cx, p, valueDesc);
             }
 
-            DescriptorInfo newDesc = new DescriptorInfo(true, true, true, v);
+            PropertyDescriptor newDesc = new PropertyDescriptor(true, true, true, v);
             receiverObj.defineOwnProperty(cx, p, newDesc);
             return true;
         }

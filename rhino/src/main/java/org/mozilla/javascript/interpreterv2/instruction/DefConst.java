@@ -2,7 +2,6 @@ package org.mozilla.javascript.interpreterv2.instruction;
 
 import org.mozilla.javascript.CallFrameV2;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.interpreterv2.InstructionFormatter;
 
 public class DefConst extends Instruction {
@@ -14,7 +13,7 @@ public class DefConst extends Instruction {
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        ScriptRuntime.defineConst(cx, frame.scope, varName);
+        frame.scope.createImmutableBinding(varName, cx.getLanguageVersion() >= Context.VERSION_ES6);
         frame.pc += 1;
     }
 

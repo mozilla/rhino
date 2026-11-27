@@ -60,6 +60,12 @@ final class NativeBigInt extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeBigInt.class);
     }
 
+    private static BigInteger toBigInt(Object thisObj) {
+        return thisObj instanceof BigInteger
+                ? (BigInteger) thisObj
+                : (LambdaConstructor.convertThisObject(thisObj, NativeBigInt.class)).bigIntValue;
+    }
+
     private static Object js_constructorFunc(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         return (args.length >= 1) ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
@@ -76,7 +82,7 @@ final class NativeBigInt extends ScriptableObject {
                 (args.length == 0 || args[0] == Undefined.instance)
                         ? 10
                         : ScriptRuntime.toInt32(args[0]);
-        BigInteger value = toSelf(thisObj).bigIntValue;
+        BigInteger value = toBigInt(thisObj);
         return ScriptRuntime.bigIntToString(value, base);
     }
 
@@ -86,13 +92,13 @@ final class NativeBigInt extends ScriptableObject {
             return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
         }
 
-        BigInteger value = toSelf(thisObj).bigIntValue;
+        BigInteger value = toBigInt(thisObj);
         return NativeNumber.getLocaleNumberFormat(cx, args).format(value);
     }
 
     private static Object js_toSource(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return "(new BigInt(" + ScriptRuntime.toString(toSelf(thisObj).bigIntValue) + "))";
+        return "(new BigInt(" + ScriptRuntime.toString(toBigInt(thisObj)) + "))";
     }
 
     private static Object js_asIntN(
@@ -107,7 +113,7 @@ final class NativeBigInt extends ScriptableObject {
 
     private static Object js_valueOf(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return toSelf(thisObj).bigIntValue;
+        return toBigInt(thisObj);
     }
 
     private static Object js_asIntOrUintN(boolean isSigned, Object[] args) {

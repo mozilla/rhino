@@ -315,8 +315,8 @@ public class Test262SuiteTest {
             return cx.evaluateString(scope, source, "<evalScript>", 1, null);
         }
 
-        public static Object getGlobal(Scriptable scriptable) {
-            return ((TopLevel) scriptable.getParentScope()).getGlobalThis();
+        public static Object getGlobal(Object scriptable) {
+            return ((TopLevel) ((Scriptable) scriptable).getParentScope()).getGlobalThis();
         }
 
         public static $262 createRealm(Context cx, VarScope scope, Object thisObj, Object[] args) {
@@ -333,7 +333,7 @@ public class Test262SuiteTest {
             return Undefined.instance;
         }
 
-        public static Object getAgent(Scriptable scriptable) {
+        public static Object getAgent(Object scriptable) {
             throw new UnsupportedOperationException("$262.agent property not yet implemented");
         }
 

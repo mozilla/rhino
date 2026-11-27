@@ -286,11 +286,12 @@ public class LambdaFunctionTest {
         }
 
         @Override
-        public void put(String name, Scriptable start, Object value) {
+        public boolean put(String name, Scriptable start, Object value) {
             if ("value".equals(name)) {
                 instanceVal = ScriptRuntime.toString(value);
+                return true;
             } else {
-                super.put(name, start, value);
+                return super.put(name, start, value);
             }
         }
 
@@ -336,13 +337,13 @@ public class LambdaFunctionTest {
             constructor.definePrototypeProperty(
                     cx,
                     "value",
-                    (Scriptable s) -> {
+                    (Object s) -> {
                         SpecialConstructorClass thisObj =
                                 LambdaConstructor.convertThisObject(
                                         s, SpecialConstructorClass.class);
                         return thisObj.value;
                     },
-                    (Scriptable s, Object newVal) -> {
+                    (Object s, Object newVal) -> {
                         SpecialConstructorClass thisObj =
                                 LambdaConstructor.convertThisObject(
                                         s, SpecialConstructorClass.class);

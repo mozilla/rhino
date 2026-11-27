@@ -81,10 +81,11 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     @Override
-    public void delete(int index) {
+    public boolean delete(int index) {
         if (isWithValidIndex(index)) {
             list.set(index, null);
         }
+        return list.size() < index;
     }
 
     @Override
@@ -125,7 +126,7 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         if (index >= 0) {
             Object javaValue = Context.jsToJava(value, elementType);
             if (index == list.size()) {
@@ -134,18 +135,18 @@ public class NativeJavaList extends NativeJavaObject {
                 ensureCapacity(index + 1);
                 list.set(index, javaValue);
             }
-            return;
+            return true;
         }
-        super.put(index, start, value);
+        return super.put(index, start, value);
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         if (list != null && "length".equals(name)) {
             setLength(value);
-            return;
+            return true;
         }
-        super.put(name, start, value);
+        return super.put(name, start, value);
     }
 
     private void ensureCapacity(int minCapacity) {

@@ -2,7 +2,6 @@ package org.mozilla.javascript;
 
 import java.io.Serial;
 import java.io.Serializable;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * This is a specialization of property access using some lambda functions designed for properties
@@ -44,7 +43,7 @@ public class BuiltInSlot<T extends ScriptableObject>
                 T builtIn,
                 BuiltInSlot<T> current,
                 Object id,
-                DescriptorInfo info,
+                PropertyDescriptor info,
                 boolean checkValid,
                 Object key,
                 int index);
@@ -160,7 +159,7 @@ public class BuiltInSlot<T extends ScriptableObject>
             T builtIn,
             BuiltInSlot<T> current,
             Object id,
-            DescriptorInfo info,
+            PropertyDescriptor info,
             boolean checkValid,
             Object key,
             int index) {
@@ -190,14 +189,14 @@ public class BuiltInSlot<T extends ScriptableObject>
     /* When setting a property descriptor we need to set the property
     _without_ the normal checks on readonly and similar. */
     @SuppressWarnings("unchecked")
-    public void setValueFromDescriptor(
+    public boolean setValueFromDescriptor(
             Object value, Scriptable owner, Scriptable start, boolean isThrow) {
-        descriptor.setter.apply(((T) this.value), value, owner, start, isThrow);
+        return descriptor.setter.apply(((T) this.value), value, owner, start, isThrow);
     }
 
     @SuppressWarnings("unchecked")
     boolean applyNewDescriptor(
-            Object id, DescriptorInfo info, boolean checkValid, Object key, int index) {
+            Object id, PropertyDescriptor info, boolean checkValid, Object key, int index) {
         return descriptor.propDescSetter.apply(
                 ((T) this.value), this, id, info, checkValid, key, index);
     }

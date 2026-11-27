@@ -24,9 +24,7 @@ public class SerializationCoverageTest {
                     Arrays.asList(
                             "org.mozilla.javascript.ScriptStackElement",
                             "org.mozilla.javascript.SymbolKey",
-                            "org.mozilla.javascript.Undefined",
-                            "org.mozilla.javascript.Undefined$ScriptableUndefined",
-                            "org.mozilla.javascript.UniqueTag"));
+                            "org.mozilla.javascript.Undefined"));
 
     @Test
     public void serializationRootsHaveAllPolicyHooks() throws Exception {
@@ -82,7 +80,17 @@ public class SerializationCoverageTest {
             hook(type, "readObjectNoData");
         }
         assertEquals(51, roots);
-        assertTrue(remainingValues.isEmpty());
+        assertTrue(
+                remainingValues.isEmpty(),
+                () -> {
+                    var sb = new StringBuilder();
+                    sb.append("Remaining values was not empty, ");
+                    for (var s : remainingValues) {
+                        sb.append(s).append(", ");
+                    }
+                    sb.append("were still in there.");
+                    return sb.toString();
+                });
         assertTrue(consStringFound);
     }
 

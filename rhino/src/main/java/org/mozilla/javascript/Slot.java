@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
-import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * A Slot is the base class for all properties stored in the ScriptableObject class. There are a
@@ -58,7 +57,7 @@ public abstract class Slot<T extends PropHolder<T>> implements Serializable {
 
     abstract void setAttributes(int value);
 
-    DescriptorInfo getPropertyDescriptor(Context cx, T scope) {
+    PropertyDescriptor getPropertyDescriptor(Context cx, T scope) {
         return ScriptableObject.buildDataDescriptor(value, getAttributes());
     }
 

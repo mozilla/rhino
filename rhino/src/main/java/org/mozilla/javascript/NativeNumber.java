@@ -71,12 +71,14 @@ final class NativeNumber extends ScriptableObject {
                                 CTOR,
                                 "parseFloat",
                                 (c, s, o) ->
-                                        new DescriptorInfo(s.get("parseFloat", s), DONTENUM, true))
+                                        new PropertyDescriptor(
+                                                s.get("parseFloat", s), DONTENUM, true))
                         .withProp(
                                 CTOR,
                                 "parseInt",
                                 (c, s, o) ->
-                                        new DescriptorInfo(s.get("parseInt", s), DONTENUM, true))
+                                        new PropertyDescriptor(
+                                                s.get("parseInt", s), DONTENUM, true))
                         .withMethod(PROTO, "toString", 1, NativeNumber::js_toString)
                         .withMethod(PROTO, "toLocaleString", 0, NativeNumber::js_toLocaleString)
                         .withMethod(PROTO, "toSource", 0, NativeNumber::js_toSource)
@@ -117,12 +119,12 @@ final class NativeNumber extends ScriptableObject {
 
     private static Object js_valueOf(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        return toSelf(thisObj).doubleValue;
+        return toDbl(thisObj);
     }
 
     private static Object js_toFixed(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        double value = toSelf(thisObj).doubleValue;
+        double value = toDbl(thisObj);
 
         int fractionDigits;
         if (args.length > 0 && !Undefined.isUndefined(args[0])) {
@@ -144,7 +146,7 @@ final class NativeNumber extends ScriptableObject {
 
     private static Object js_toExponential(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        double value = toSelf(thisObj).doubleValue;
+        double value = toDbl(thisObj);
 
         double p;
         boolean wasUndefined;
@@ -170,7 +172,7 @@ final class NativeNumber extends ScriptableObject {
 
     private static Object js_toPrecision(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
-        double value = toSelf(thisObj).doubleValue;
+        double value = toDbl(thisObj);
         // Undefined precision, fall back to ToString()
         if (args.length == 0 || Undefined.isUndefined(args[0])) {
             return ScriptRuntime.toString(value);
@@ -198,6 +200,16 @@ final class NativeNumber extends ScriptableObject {
         return LambdaConstructor.convertThisObject(thisObj, NativeNumber.class);
     }
 
+    private static double toDbl(Object thisObj) {
+        if (thisObj instanceof Double) {
+            return (Double) thisObj;
+        } else if (thisObj instanceof Integer) {
+            return (Integer) thisObj;
+        } else {
+            return (LambdaConstructor.convertThisObject(thisObj, NativeNumber.class)).doubleValue;
+        }
+    }
+
     private static Object js_toString(
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         int base =
@@ -213,7 +225,7 @@ final class NativeNumber extends ScriptableObject {
             return js_toString(cx, f, nt, s, thisObj, ScriptRuntime.emptyArgs);
         }
 
-        return getLocaleNumberFormat(cx, args).format(toSelf(thisObj).doubleValue);
+        return getLocaleNumberFormat(cx, args).format(toDbl(thisObj));
     }
 
     /**

@@ -109,30 +109,35 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public boolean put(String name, Scriptable start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
-        if (prototype == null || members.has(name, false))
+        if (prototype == null || members.has(name, false)) {
             members.put(this, parent, name, javaObject, value, false);
-        else prototype.put(name, prototype, value);
+            return true;
+        } else {
+            return prototype.put(name, prototype, value);
+        }
     }
 
     @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
+    public boolean put(Symbol symbol, Scriptable start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
         if (prototype == null || members.has(name, false)) {
             members.put(this, parent, name, javaObject, value, false);
+            return true;
         } else if (prototype instanceof SymbolScriptable) {
-            ((SymbolScriptable) prototype).put(symbol, prototype, value);
+            return prototype.put(symbol, prototype, value);
         }
+        return false;
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public boolean put(int index, Scriptable start, Object value) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
@@ -143,13 +148,19 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     }
 
     @Override
-    public void delete(String name) {}
+    public boolean delete(String name) {
+        return false;
+    }
 
     @Override
-    public void delete(Symbol key) {}
+    public boolean delete(Symbol key) {
+        return false;
+    }
 
     @Override
-    public void delete(int index) {}
+    public boolean delete(int index) {
+        return false;
+    }
 
     @Override
     public Scriptable getPrototype() {
@@ -162,8 +173,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     /** Sets the prototype of the object. */
     @Override
-    public void setPrototype(Scriptable m) {
+    public boolean setPrototype(Scriptable m) {
         prototype = m;
+        return true;
     }
 
     /** Returns the parent (enclosing) scope of the object. */
