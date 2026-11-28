@@ -262,6 +262,24 @@ class NativeProxy extends ScriptableObject {
      */
     @Override
     Object[] getIds(CompoundOperationMap map, boolean getNonEnumerable, boolean getSymbols) {
+        Object[] keys = ownPropertyKeys(getSymbols);
+        if (getNonEnumerable) {
+            return keys;
+        }
+        // Enumerability is decided by [[GetOwnProperty]] of the proxy, i.e. the
+        // getOwnPropertyDescriptor trap, as in EnumerableOwnProperties.
+        Context cx = Context.getContext();
+        ArrayList<Object> enumerable = new ArrayList<>(keys.length);
+        for (Object key : keys) {
+            DescriptorInfo desc = getOwnPropertyDescriptor(cx, key);
+            if (desc != null && desc.isEnumerable()) {
+                enumerable.add(key);
+            }
+        }
+        return enumerable.toArray();
+    }
+
+    private Object[] ownPropertyKeys(boolean getSymbols) {
         /*
         * 1. Let handler be O.[[ProxyHandler]].
         * 2. If handler is null, throw a TypeError exception.
@@ -376,7 +394,7 @@ class NativeProxy extends ScriptableObject {
         }
 
         try (var targetMap = target.startCompoundOp(false)) {
-            return target.getIds(targetMap, getNonEnumerable, getSymbols);
+            return target.getIds(targetMap, true, getSymbols);
         }
     }
 

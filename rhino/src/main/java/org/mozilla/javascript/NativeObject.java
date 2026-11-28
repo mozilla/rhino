@@ -413,19 +413,19 @@ public class NativeObject extends ScriptableObject implements Map {
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         Scriptable obj = getCompatibleObject(cx, s, arg);
-        Object[] ids = obj.getIds();
+        Object[] ids = ownKeysForEnumeration(obj, false);
         int j = 0;
         for (int i = 0; i < ids.length; i++) {
             if (ids[i] instanceof Integer) {
                 int intId = (Integer) ids[i];
-                if (obj.has(intId, obj) && isEnumerable(intId, obj)) {
+                if (isOwnEnumerable(cx, obj, ids[i])) {
                     String stringId = ScriptRuntime.toString(ids[i]);
                     Object[] entry = new Object[] {stringId, obj.get(intId, obj)};
                     ids[j++] = cx.newArray(s, entry);
                 }
             } else {
                 String stringId = ScriptRuntime.toString(ids[i]);
-                if (obj.has(stringId, obj) && isEnumerable(stringId, obj)) {
+                if (isOwnEnumerable(cx, obj, stringId)) {
                     Object[] entry = new Object[] {stringId, obj.get(stringId, obj)};
                     ids[j++] = cx.newArray(s, entry);
                 }
@@ -467,18 +467,18 @@ public class NativeObject extends ScriptableObject implements Map {
             Context cx, JSFunction f, Object nt, VarScope s, Object thisObj, Object[] args) {
         Object arg = args.length < 1 ? Undefined.instance : args[0];
         Scriptable obj = getCompatibleObject(cx, s, arg);
-        Object[] ids = obj.getIds();
+        Object[] ids = ownKeysForEnumeration(obj, false);
         int j = 0;
         for (int i = 0; i < ids.length; i++) {
             if (ids[i] instanceof Integer) {
                 int intId = (Integer) ids[i];
-                if (obj.has(intId, obj) && isEnumerable(intId, obj)) {
+                if (isOwnEnumerable(cx, obj, ids[i])) {
                     ids[j++] = obj.get(intId, obj);
                 }
             } else {
                 String stringId = ScriptRuntime.toString(ids[i]);
                 // getter may remove keys
-                if (obj.has(stringId, obj) && isEnumerable(stringId, obj)) {
+                if (isOwnEnumerable(cx, obj, stringId)) {
                     ids[j++] = obj.get(stringId, obj);
                 }
             }
@@ -700,15 +700,7 @@ public class NativeObject extends ScriptableObject implements Map {
                 continue;
             }
             Scriptable sourceObj = ScriptRuntime.toObject(cx, s, args[i]);
-            Object[] ids;
-            if (sourceObj instanceof ScriptableObject) {
-                var scriptable = (ScriptableObject) sourceObj;
-                try (var map = scriptable.startCompoundOp(false)) {
-                    ids = scriptable.getIds(map, false, true);
-                }
-            } else {
-                ids = sourceObj.getIds();
-            }
+            Object[] ids = ownKeysForEnumeration(sourceObj, true);
             // Issue #2126: when the target is a NativeArray,
             // AbstractEcmaObjectOperations.put() routes through
             // ScriptableObject.putOwnProperty()/putImpl(), which bypasses
@@ -719,7 +711,7 @@ public class NativeObject extends ScriptableObject implements Map {
             for (Object key : ids) {
                 if (key instanceof Integer) {
                     int intId = (Integer) key;
-                    if (sourceObj.has(intId, sourceObj) && isEnumerable(intId, sourceObj)) {
+                    if (isOwnEnumerable(cx, sourceObj, key)) {
                         Object val = sourceObj.get(intId, sourceObj);
                         if (targetIsArray) {
                             targetObj.put(intId, targetObj, val);
@@ -729,7 +721,7 @@ public class NativeObject extends ScriptableObject implements Map {
                     }
                 } else if (key instanceof String) {
                     String stringId = ScriptRuntime.toString(key);
-                    if (sourceObj.has(stringId, sourceObj) && isEnumerable(stringId, sourceObj)) {
+                    if (isOwnEnumerable(cx, sourceObj, stringId)) {
                         Object val = sourceObj.get(stringId, sourceObj);
                         if (targetIsArray) {
                             targetObj.put(stringId, targetObj, val);
@@ -746,8 +738,7 @@ public class NativeObject extends ScriptableObject implements Map {
                 for (Object key : ids) {
                     if (key instanceof Symbol) {
                         Symbol sym = (Symbol) key;
-                        if (((ScriptableObject) sourceObj).has(sym, sourceObj)
-                                && isEnumerable(sym, sourceObj)) {
+                        if (isOwnEnumerable(cx, sourceObj, sym)) {
                             Object val = ((ScriptableObject) sourceObj).get(sym, sourceObj);
                             AbstractEcmaObjectOperations.put(cx, targetObj, sym, val, true);
                         }
@@ -795,6 +786,44 @@ public class NativeObject extends ScriptableObject implements Map {
         }
 
         return obj;
+    }
+
+    /**
+     * Returns all own keys, enumerable or not. Callers check enumerability with {@link
+     * #isOwnEnumerable} when they reach each key, as EnumerableOwnProperties and CopyDataProperties
+     * do, so that a getter that changes enumerability is seen by the keys that follow it.
+     */
+    static Object[] ownKeysForEnumeration(Scriptable obj, boolean getSymbols) {
+        if (obj instanceof ScriptableObject) {
+            var so = (ScriptableObject) obj;
+            try (var map = so.startCompoundOp(false)) {
+                return so.getIds(map, true, getSymbols);
+            }
+        }
+        return obj.getIds();
+    }
+
+    /**
+     * Returns {@code true} if {@code key} is currently an own enumerable property of {@code obj}.
+     * For a proxy this is answered by its getOwnPropertyDescriptor trap.
+     */
+    static boolean isOwnEnumerable(Context cx, Scriptable obj, Object key) {
+        if (obj instanceof NativeProxy) {
+            DescriptorInfo desc = ((NativeProxy) obj).getOwnPropertyDescriptor(cx, key);
+            return desc != null && desc.isEnumerable();
+        }
+        if (key instanceof Integer) {
+            int index = (Integer) key;
+            return obj.has(index, obj) && isEnumerable(index, obj);
+        }
+        if (key instanceof Symbol) {
+            Symbol sym = (Symbol) key;
+            return obj instanceof ScriptableObject
+                    && ((ScriptableObject) obj).has(sym, obj)
+                    && isEnumerable(sym, obj);
+        }
+        String name = ScriptRuntime.toString(key);
+        return obj.has(name, obj) && isEnumerable(name, obj);
     }
 
     private static boolean isEnumerable(int index, Object obj) {

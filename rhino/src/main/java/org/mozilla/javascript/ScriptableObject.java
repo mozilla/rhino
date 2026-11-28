@@ -1486,19 +1486,23 @@ public abstract class ScriptableObject extends SlotMapOwner<Scriptable>
      * @param props a map of property ids to property descriptors
      */
     public void defineOwnProperties(Context cx, ScriptableObject props) {
-        Object[] ids;
-        try (var map = props.startCompoundOp(false)) {
-            ids = props.getIds(map, false, true);
-        }
-        DescriptorInfo[] descs = new DescriptorInfo[ids.length];
-        for (int i = 0, len = ids.length; i < len; ++i) {
-            Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
+        Object[] allIds = NativeObject.ownKeysForEnumeration(props, true);
+        // Enumerability is checked when each key is reached, so a getter that changes it is
+        // seen by the keys that follow.
+        List<Object> ids = new ArrayList<>(allIds.length);
+        List<DescriptorInfo> descs = new ArrayList<>(allIds.length);
+        for (Object id : allIds) {
+            if (!NativeObject.isOwnEnumerable(cx, props, id)) {
+                continue;
+            }
+            Object descObj = ScriptRuntime.getObjectElem(props, id, cx);
             var desc = new DescriptorInfo(ensureScriptableObject(descObj));
             checkPropertyDefinition(desc);
-            descs[i] = desc;
+            ids.add(id);
+            descs.add(desc);
         }
-        for (int i = 0, len = ids.length; i < len; ++i) {
-            defineOwnProperty(cx, ids[i], descs[i]);
+        for (int i = 0, len = ids.size(); i < len; ++i) {
+            defineOwnProperty(cx, ids.get(i), descs.get(i));
         }
     }
 
