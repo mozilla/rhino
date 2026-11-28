@@ -26,7 +26,27 @@ public class ShellResultTest {
                 Arguments.of("Symbol.for('shared')", "Symbol(shared)"),
                 Arguments.of("42", "42"),
                 Arguments.of("'plain'", "plain"),
-                Arguments.of("({ toString() { return 'object'; } })", "object"),
+                Arguments.of("/abc/i", "/abc/i"),
+                Arguments.of(
+                        "[Symbol('item'), undefined, , 'text']",
+                        "[Symbol(item), undefined, <empty>, \"text\"]"),
+                Arguments.of(
+                        "({nested: [{value: Symbol('leaf')}]})",
+                        "{\"nested\": [{\"value\": Symbol(leaf)}]}"),
+                Arguments.of(
+                        "(function() { var value = {}; value.self = value; return value; })()",
+                        "{\"self\": [Circular]}"),
+                Arguments.of(
+                        "(function() { var value = {a: 1}; return [value, value]; })()",
+                        "[{\"a\": 1}, {\"a\": 1}]"),
+                Arguments.of(
+                        "({get value() { throw Error('getter called'); }})",
+                        "{\"value\": [Getter]}"),
+                Arguments.of(
+                        "(function() { var value = []; Object.defineProperty(value, '0', {get: function() { throw Error('getter called'); }}); return value; })()",
+                        "[[Getter]]"),
+                Arguments.of("[[[[[Symbol('deep')]]]]]", "[[[[[Array]]]]]"),
+                Arguments.of("new Array(100)", "[" + "<empty>, ".repeat(20) + "...]"),
                 Arguments.of("undefined", ""));
     }
 
