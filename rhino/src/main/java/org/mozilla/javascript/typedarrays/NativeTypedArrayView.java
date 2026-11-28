@@ -183,6 +183,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return super.get(name, start);
     }
 
+    /** A typed array has an own indexed property for every element in its bounds. */
+    @Override
+    protected boolean mayHaveIndexedProperties() {
+        return true;
+    }
+
     @Override
     public boolean has(int index, Scriptable start) {
         return !checkIndex(index);

@@ -58,6 +58,11 @@ public class NativeJavaPackage extends ScriptableObject {
     }
 
     @Override
+    protected boolean mayHaveIndexedProperties() {
+        return true;
+    }
+
+    @Override
     public boolean has(int index, Scriptable start) {
         return false;
     }

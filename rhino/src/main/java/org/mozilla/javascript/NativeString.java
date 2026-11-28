@@ -179,6 +179,12 @@ final class NativeString extends ScriptableObject {
         defineProperty("length", s::length, null, DONTENUM | READONLY | PERMANENT);
     }
 
+    /** A String provides an own indexed property for every character. */
+    @Override
+    protected boolean mayHaveIndexedProperties() {
+        return true;
+    }
+
     @Override
     public String getClassName() {
         return CLASS_NAME;
