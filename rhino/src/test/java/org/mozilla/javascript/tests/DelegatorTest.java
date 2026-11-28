@@ -111,6 +111,28 @@ public class DelegatorTest {
     }
 
     @Test
+    public void setPrototypeOfOnDelegator() {
+        // A Delegator is a Scriptable but not a ScriptableObject, and setting the
+        // prototype of one has to reach it (#1629).
+        assertEquals(
+                Boolean.TRUE,
+                eval(
+                        "var proto = {};"
+                                + "Object.setPrototypeOf(TestDelegator2, proto);"
+                                + "Object.getPrototypeOf(TestDelegator2) === proto;"));
+    }
+
+    @Test
+    public void protoPropertySetterOnDelegator() {
+        assertEquals(
+                Boolean.TRUE,
+                eval(
+                        "var proto = {};"
+                                + "TestDelegator2.__proto__ = proto;"
+                                + "Object.getPrototypeOf(TestDelegator2) === proto;"));
+    }
+
+    @Test
     public void map() {
         String script =
                 "var result = '';\n"
