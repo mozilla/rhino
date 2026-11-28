@@ -1410,7 +1410,9 @@ final class NativeDate extends ScriptableObject {
                 } else if (n >= 70 || (prevc == '/' && mon >= 0 && mday >= 0 && year < 0)) {
                     if (year >= 0) return ScriptRuntime.NaN;
                     else if (c <= ' ' || c == ',' || c == '/' || i >= limit)
-                        year = n < 100 ? n + 1900 : n;
+                        // two-digit years follow the browser rule: 0-49 -> 2000-2049,
+                        // 50-99 -> 1950-1999 (see issue #2504)
+                        year = n < 50 ? n + 2000 : (n < 100 ? n + 1900 : n);
                     else return ScriptRuntime.NaN;
                 } else if (c == ':') {
                     if (hour < 0) hour = /*byte*/ n;

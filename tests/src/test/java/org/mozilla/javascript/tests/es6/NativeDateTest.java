@@ -932,6 +932,16 @@ public class NativeDateTest {
         timezoneOffset(-540, "JST");
     }
 
+    @Test
+    public void testDateParseIssue2504() {
+        // Two-digit years in slash format follow the browser rule:
+        // 0-49 map to 2000-2049, 50-99 map to 1950-1999.
+        ctorDateTimeString("1770854400000", "String(Date.parse('02/12/26'))");
+        ctorDateTimeString("2493072000000", "String(Date.parse('01/01/49'))");
+        ctorDateTimeString("-631152000000", "String(Date.parse('01/01/50'))");
+        ctorDateTimeString("-599702400000", "String(Date.parse('12/31/50'))");
+    }
+
     private static void timezoneOffset(final int expected, final String tz) {
         final String js = "new Date(0).getTimezoneOffset()";
         Utils.runWithAllModes(
