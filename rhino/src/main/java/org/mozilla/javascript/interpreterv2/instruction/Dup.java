@@ -11,8 +11,8 @@ public class Dup extends Instruction {
 
     @Override
     public void interpret(Context cx, CallFrameV2 frame) {
-        frame.pc += 1;
         frame.push(frame.peek(), frame.peekDouble());
+        frame.pc += 1;
     }
 
     @Override

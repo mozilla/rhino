@@ -20,7 +20,7 @@ public class V8Benchmark {
         Context cx;
         TopLevel scope;
 
-        @Param({"Interpreter", "Compiler"})
+        @Param({"Interpreter", "InterpreterV2", "Compiler"})
         public EvaluationMethod evalMethod;
 
         Callable getFunc(String name) {
