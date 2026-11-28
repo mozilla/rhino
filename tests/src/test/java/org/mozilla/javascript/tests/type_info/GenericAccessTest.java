@@ -186,6 +186,27 @@ public class GenericAccessTest {
         expect(js, "Integer 4 Long 2 Long 2");
     }
 
+    @Test
+    public void testCharacters() {
+        String js = "bean.primitiveChar = 'a';\nbean.primitiveChar";
+        FieldBasedBean fieldBasedBean = new FieldBasedBean();
+        MethodBasedBean methodBasedBean = new MethodBasedBean();
+        expect(js, "97", Map.of("bean", fieldBasedBean));
+        Assertions.assertEquals('a', fieldBasedBean.primitiveChar);
+        expect(js, "97", Map.of("bean", methodBasedBean));
+        Assertions.assertEquals('a', methodBasedBean.getPrimitiveChar());
+
+        js = "bean.complexChar = 'b';\nbean.complexChar";
+        expect(js, "b", Map.of("bean", fieldBasedBean));
+        Assertions.assertEquals('b', fieldBasedBean.complexChar);
+        expect(js, "b", Map.of("bean", methodBasedBean));
+        Assertions.assertEquals('b', methodBasedBean.getComplexChar());
+
+        js = "bean.setComplexChar('c');\nbean.complexChar";
+        expect(js, "c", Map.of("bean", methodBasedBean));
+        Assertions.assertEquals('c', methodBasedBean.getComplexChar());
+    }
+
     private static void expect(String script, String expected) {
         var bindings = new HashMap<String, Object>();
         bindings.put("intList", IntegerArrayList.createTestObject());
