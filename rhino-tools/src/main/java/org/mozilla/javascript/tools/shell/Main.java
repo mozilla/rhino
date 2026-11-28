@@ -499,7 +499,7 @@ public class Main {
                                 && !(result instanceof Function
                                         && finalSource.trim().startsWith("function"))) {
                             try {
-                                console.println(Context.toString(result));
+                                console.println(ShellResultFormatter.format(result));
                             } catch (RhinoException rex) {
                                 ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
                             }
